@@ -1,0 +1,41 @@
+{
+  "name": "TruckZen",
+  "short_name": "TruckZen",
+  "description": "Your Shop. Powered.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#060708",
+  "theme_color": "#060708",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "New Service Order",
+      "short_name": "New SO",
+      "description": "Create a new service order",
+      "url": "/orders/new",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Shop Floor",
+      "short_name": "Floor",
+      "description": "View live shop floor",
+      "url": "/floor",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

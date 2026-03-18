@@ -1,0 +1,48 @@
+// app/api/invoices/[id]/send/route.ts
+import { NextResponse } from 'next/server'
+import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { sendInvoiceEmail } from '@/lib/integrations/resend'
+import { generatePaymentQR } from '@/lib/payments/qr'
+
+type P = { params: { id: string } }
+
+export async function POST(_req: Request, { params }: P) {
+  const supabase = createServerSupabaseClient()
+  const user = await getCurrentUser(supabase)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: inv } = await supabase
+    .from('invoices')
+    .select(`*, service_orders(so_number, complaint, cause, correction, assets(unit_number,year,make,model,odometer), users!assigned_tech(full_name)), customers(company_name,contact_name,email,phone), shops(name,dba,phone,email,address)`)
+    .eq('id', params.id).eq('shop_id', user.shop_id).single()
+
+  if (!inv) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!(inv.customers as any)?.email) return NextResponse.json({ error: 'Customer has no email address' }, { status: 400 })
+
+  // Generate QR payment link
+  let paymentUrl: string | undefined
+  try {
+    const qr = await generatePaymentQR(params.id)
+    paymentUrl = qr.paymentUrl
+  } catch { /* non-critical */ }
+
+  const so    = inv.service_orders as any
+  const shop  = inv.shops as any
+  const asset = so?.assets
+
+  const emailData = {
+    shop:        { name: shop?.name, dba: shop?.dba, phone: shop?.phone, email: shop?.email, address: shop?.address },
+    customer:    { company_name: (inv.customers as any).company_name, contact_name: (inv.customers as any).contact_name, email: (inv.customers as any).email },
+    invoice:     { invoice_number: inv.invoice_number, due_date: inv.due_date, subtotal: inv.subtotal, tax_amount: inv.tax_amount, total: inv.total, amount_paid: inv.amount_paid, balance_due: inv.balance_due, notes: inv.notes },
+    serviceOrder:{ so_number: so?.so_number, complaint: so?.complaint, cause: so?.cause, correction: so?.correction, truck_unit: asset?.unit_number, truck_make_model: `${asset?.year} ${asset?.make} ${asset?.model}`, technician_name: so?.users?.full_name, odometer_in: asset?.odometer },
+    lines:       [],
+    paymentUrl,
+  }
+
+  const result = await sendInvoiceEmail(emailData)
+  if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 })
+
+  // Mark as sent
+  await supabase.from('invoices').update({ status: 'sent' }).eq('id', params.id)
+  return NextResponse.json({ success: true, messageId: result.id })
+}

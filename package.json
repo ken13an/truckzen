@@ -1,0 +1,40 @@
+{
+  "name": "truckzen",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "migrate:monday": "node migration-scripts/migrate-monday.js",
+    "migrate:fleetio": "node migration-scripts/migrate-fleetio.js",
+    "migrate:fullbay": "node migration-scripts/migrate-fullbay.js",
+    "migrate:all": "npm run migrate:monday && npm run migrate:fleetio && npm run migrate:fullbay",
+    "setup:webhook": "node telegram-bot/setup-webhook.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "@supabase/supabase-js": "^2.43.0",
+    "@supabase/ssr": "^0.3.0",
+    "next": "14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "csv-parse": "^5.5.6",
+    "node-fetch": "^3.3.2",
+    "stripe": "^15.0.0",
+    "twilio": "^5.1.0",
+    "resend": "^3.2.0",
+    "date-fns": "^3.6.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.4.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.0",
+    "dotenv": "^16.4.0"
+  }
+}
