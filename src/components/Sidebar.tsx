@@ -2,53 +2,17 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-
-const NAV: {
-  label: string
-  href: string
-  icon: string
-  roles?: string[]
-  badge?: string
-}[] = [
-  { label: 'Dashboard',    href: '/dashboard',     icon: '▦'  },
-  { label: 'Shop Floor',   href: '/floor',         icon: '⬡'  },
-  { label: 'Service Orders',href: '/orders',       icon: '≡'  },
-  { label: 'Invoices',     href: '/invoices',      icon: '$'  },
-  { label: 'Parts',        href: '/parts',         icon: '⬡', roles: ['owner','gm','it_person','shop_manager','parts_manager','service_advisor','service_writer','technician','office_admin'] },
-  { label: 'Fleet',        href: '/fleet',         icon: '◈'  },
-  { label: 'Drivers',      href: '/drivers',       icon: '◉', roles: ['owner','gm','it_person','shop_manager','fleet_manager','office_admin'] },
-  { label: 'Maintenance',  href: '/maintenance',   icon: '⚙'  },
-  { label: 'Compliance',   href: '/compliance',    icon: '✓', roles: ['owner','gm','it_person','shop_manager','fleet_manager','office_admin'] },
-  { label: 'Customers',    href: '/customers',     icon: '◎', roles: ['owner','gm','it_person','shop_manager','service_advisor','service_writer','office_admin'] },
-  { label: 'Accounting',   href: '/accounting',    icon: '◈', roles: ['owner','gm','it_person','accountant','office_admin'] },
-  { label: 'Reports',      href: '/reports',       icon: '▤', roles: ['owner','gm','it_person','shop_manager','accountant','office_admin'] },
-  { label: 'Cleaning',     href: '/cleaning',      icon: '◇'  },
-  { label: 'Time Tracking',href: '/time-tracking', icon: '⏲', roles: ['owner','gm','it_person','shop_manager','office_admin'] },
-  { label: 'Smart Drop',   href: '/smart-drop',    icon: '↓', roles: ['owner','gm','it_person','shop_manager','office_admin'] },
-  { label: 'Settings',     href: '/settings',      icon: '⚙', roles: ['owner','gm','it_person','shop_manager','office_admin'] },
-]
-
-const ROLE_LABEL: Record<string, string> = {
-  owner:'Owner', gm:'GM', it_person:'IT', shop_manager:'Shop Manager',
-  service_advisor:'Advisor', service_writer:'Writer', technician:'Tech',
-  parts_manager:'Parts Mgr', fleet_manager:'Fleet Mgr', maintenance_manager:'Maint. Mgr',
-  maintenance_technician:'Maint. Tech', accountant:'Accountant',
-  office_admin:'Admin', dispatcher:'Dispatcher', driver:'Driver',
-}
-
-const ROLE_COLOR: Record<string, string> = {
-  owner:'#D94F4F', gm:'#D94F4F', it_person:'#D94F4F',
-  shop_manager:'#D4882A', service_advisor:'#4D9EFF', technician:'#1DB870',
-  parts_manager:'#8B5CF6', fleet_manager:'#0E9F8E', accountant:'#E8692A',
-}
+import { getSidebarItems, ROLE_LABEL, ROLE_COLOR } from '@/lib/permissions'
 
 export default function Sidebar() {
   const pathname = usePathname()
   const supabase = createClient()
-  const [user,       setUser]       = useState<any>(null)
-  const [collapsed,  setCollapsed]  = useState(false)
-  const [lowStock,   setLowStock]   = useState(0)
-  const [openJobs,   setOpenJobs]   = useState(0)
+  const [user, setUser] = useState<any>(null)
+  const [collapsed, setCollapsed] = useState(false)
+  const [lowStock, setLowStock] = useState(0)
+  const [openJobs, setOpenJobs] = useState(0)
+  const [rolePerms, setRolePerms] = useState<Record<string, boolean>>({})
+  const [userOverrides, setUserOverrides] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     async function load() {
@@ -58,12 +22,18 @@ export default function Sidebar() {
       if (!data) return
       setUser(data)
 
-      // Load badge counts
+      // Load custom role permissions
+      const { data: rp } = await supabase.from('role_permissions').select('module, allowed').eq('shop_id', data.shop_id).eq('role', data.role)
+      if (rp) setRolePerms(Object.fromEntries(rp.map((r: any) => [r.module, r.allowed])))
+
+      // Load user overrides
+      const { data: uo } = await supabase.from('user_permission_overrides').select('module, allowed').eq('user_id', data.id)
+      if (uo) setUserOverrides(Object.fromEntries(uo.map((r: any) => [r.module, r.allowed])))
+
+      // Badge counts
       const [{ count: ls }, { count: oj }] = await Promise.all([
-        supabase.from('parts').select('*', { count:'exact', head:true })
-          .eq('shop_id', data.shop_id).lte('on_hand', 2),
-        supabase.from('service_orders').select('*', { count:'exact', head:true })
-          .eq('shop_id', data.shop_id).not('status', 'in', '("good_to_go","void")'),
+        supabase.from('parts').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).lte('on_hand', 2),
+        supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).not('status', 'in', '("good_to_go","void")'),
       ])
       setLowStock(ls || 0)
       setOpenJobs(oj || 0)
@@ -73,15 +43,13 @@ export default function Sidebar() {
 
   if (!user) return null
 
-  // Filter nav by role
-  const visible = NAV.filter(item => !item.roles || item.roles.includes(user.role))
-
+  const visible = getSidebarItems(user.role, rolePerms, userOverrides)
   const roleColor = ROLE_COLOR[user.role] || '#7C8BA0'
-  const initials  = user.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+  const initials = user.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard'
-    return pathname.startsWith(href)
+    return pathname?.startsWith(href)
   }
 
   const W = collapsed ? 56 : 220
@@ -94,7 +62,6 @@ export default function Sidebar() {
       transition: 'width .2s ease', flexShrink: 0,
       position: 'sticky', top: 0,
     }}>
-
       {/* Logo */}
       <div style={{ padding: collapsed ? '16px 14px' : '16px 18px', borderBottom: '1px solid rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', minHeight: 56 }}>
         {!collapsed && (
@@ -111,9 +78,9 @@ export default function Sidebar() {
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto', overflowX: 'hidden' }}>
         {visible.map(item => {
           const active = isActive(item.href)
-          const badge  = item.href === '/parts' && lowStock > 0 ? lowStock
-                       : item.href === '/orders' && openJobs > 0 ? openJobs
-                       : null
+          const badge = item.href === '/parts' && lowStock > 0 ? lowStock
+            : item.href === '/orders' && openJobs > 0 ? openJobs
+            : null
 
           return (
             <a key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
@@ -136,7 +103,7 @@ export default function Sidebar() {
                     <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : '#7C8BA0', flex: 1, whiteSpace: 'nowrap' }}>
                       {item.label}
                     </span>
-                    {badge && badge > 0 && (
+                    {badge != null && badge > 0 && (
                       <span style={{ background: item.href === '/parts' ? '#D94F4F' : '#1D6FE8', color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>
                         {badge > 99 ? '99+' : badge}
                       </span>

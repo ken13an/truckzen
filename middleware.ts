@@ -1,40 +1,71 @@
-// ============================================================
-// middleware.ts — Auth protection + role routing
-// Place at: /middleware.ts (project root, next to package.json)
-// ============================================================
-
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Routes that don't need authentication
 const PUBLIC_ROUTES = [
-  '/login',
-  '/setup',
-  '/kiosk',
-  '/portal',     // customer portal (uses token auth)
-  '/api/telegram',
-  '/api/stripe/webhook',
-  '/api/kiosk',
+  '/login', '/setup', '/kiosk', '/portal', '/pay',
+  '/api/telegram', '/api/stripe/webhook', '/api/kiosk',
+  '/api/pay', '/offline', '/waiting', '/forgot-password', '/reset-password',
 ]
 
-// Role → allowed route prefixes
-const ROLE_ROUTES: Record<string, string[]> = {
-  owner:                   ['/'],         // everything
-  gm:                      ['/'],         // everything
-  it_person:               ['/'],         // everything
-  shop_manager:            ['/', '/fleet', '/customers', '/technicians', '/pm'],
-  service_advisor:         ['/orders', '/customers', '/floor', '/aiwriter', '/invoices'],
-  service_writer:          ['/orders', '/customers', '/floor', '/aiwriter'],
-  technician:              ['/floor', '/aiwriter', '/dvir'],
-  parts_manager:           ['/parts', '/orders'],
-  fleet_manager:           ['/fleet', '/drivers', '/compliance', '/maintenance', '/pm'],
-  maintenance_manager:     ['/maintenance', '/pm', '/fleet'],
-  maintenance_technician:  ['/maintenance', '/dvir'],
-  accountant:              ['/invoices', '/accounting', '/reports'],
-  office_admin:            ['/customers', '/invoices', '/settings'],
-  dispatcher:              ['/fleet', '/drivers'],
-  driver:                  ['/dvir'],
-  customer:                ['/portal'],
+// Module → route prefixes
+const MODULE_ROUTES: Record<string, string[]> = {
+  dashboard:        ['/dashboard'],
+  floor:            ['/floor'],
+  orders:           ['/orders', '/api/service-orders', '/api/so-lines'],
+  invoices:         ['/invoices', '/api/invoices'],
+  parts:            ['/parts', '/api/parts'],
+  fleet:            ['/fleet', '/api/assets'],
+  drivers:          ['/drivers', '/api/drivers'],
+  maintenance:      ['/maintenance'],
+  tires:            ['/maintenance/tires', '/api/tires'],
+  parts_lifecycle:  ['/maintenance/parts-lifecycle', '/api/parts-lifecycle'],
+  compliance:       ['/compliance', '/api/compliance'],
+  customers:        ['/customers', '/api/customers'],
+  accounting:       ['/accounting'],
+  reports:          ['/reports', '/api/reports'],
+  cleaning:         ['/cleaning'],
+  time_tracking:    ['/time-tracking', '/api/time-tracking'],
+  smart_drop:       ['/smart-drop'],
+  settings:         ['/settings'],
+  import:           ['/settings/import', '/api/import'],
+  admin_permissions:['/admin'],
+  tech_mobile:      ['/tech'],
+  dvir:             ['/dvir'],
+  billing:          ['/settings/billing'],
+  integrations:     ['/settings/integrations'],
+  audit_log:        ['/settings/audit'],
+}
+
+// Default role → module access (kept in sync with lib/permissions.ts)
+const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
+
+const DEFAULT_PERMS: Record<string, string[]> = {
+  shop_manager:           ['dashboard','floor','orders','invoices','parts','fleet','drivers','maintenance','tires','parts_lifecycle','compliance','customers','reports','cleaning','time_tracking','smart_drop','settings','import','dvir','tech_mobile'],
+  service_advisor:        ['dashboard','floor','orders','invoices','customers','parts'],
+  service_writer:         ['dashboard','floor','orders','customers','parts'],
+  technician:             ['floor','parts','cleaning','time_tracking','tech_mobile','dvir'],
+  parts_manager:          ['dashboard','floor','orders','parts','parts_lifecycle'],
+  fleet_manager:          ['dashboard','fleet','drivers','maintenance','tires','parts_lifecycle','compliance','reports','dvir'],
+  maintenance_manager:    ['dashboard','floor','parts','fleet','maintenance','tires','parts_lifecycle','compliance','reports','time_tracking','dvir'],
+  maintenance_technician: ['floor','parts','maintenance','tires','parts_lifecycle','cleaning','time_tracking','tech_mobile','dvir'],
+  accountant:             ['dashboard','invoices','accounting','reports'],
+  office_admin:           ['dashboard','floor','orders','invoices','customers','parts','accounting','reports','time_tracking','smart_drop','settings','import'],
+  dispatcher:             ['dashboard','floor','fleet','drivers'],
+  driver:                 ['dvir'],
+  customer:               [],
+}
+
+function getModuleForPath(path: string): string | null {
+  // Check specific paths first (longest match)
+  const sorted = Object.entries(MODULE_ROUTES).sort((a, b) => {
+    const maxA = Math.max(...a[1].map(r => r.length))
+    const maxB = Math.max(...b[1].map(r => r.length))
+    return maxB - maxA
+  })
+  for (const [mod, routes] of sorted) {
+    if (routes.some(r => path.startsWith(r))) return mod
+  }
+  return null
 }
 
 export async function middleware(request: NextRequest) {
@@ -63,44 +94,72 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
 
-  // Allow public routes without auth
+  // Allow public routes
   if (PUBLIC_ROUTES.some(r => pathname.startsWith(r))) {
-    // Redirect logged-in users away from login page
-    if (pathname === '/login' && user) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
+    if (pathname === '/login' && user) return NextResponse.redirect(new URL('/', request.url))
     return response
   }
 
-  // Not logged in → redirect to login
-  if (!user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // Allow static/api routes that don't need role checks
+  if (pathname.startsWith('/api/ai') || pathname.startsWith('/api/cron') || pathname.startsWith('/api/shop')) return response
+
+  // Not logged in → login
+  if (!user) return NextResponse.redirect(new URL('/login', request.url))
+
+  // Get user profile
+  const { data: profile } = await supabase.from('users').select('role, shop_id').eq('id', user.id).single()
+  if (!profile) return NextResponse.redirect(new URL('/login', request.url))
+
+  // Unlimited roles can access everything
+  if (UNLIMITED_ROLES.includes(profile.role)) {
+    // Check setup
+    const { data: shop } = await supabase.from('shops').select('setup_complete').eq('id', profile.shop_id).single()
+    if (shop && !shop.setup_complete && pathname !== '/setup') return NextResponse.redirect(new URL('/setup', request.url))
+    return response
   }
 
-  // Check if first-time setup is needed
-  const { data: shop } = await supabase
-    .from('shops')
-    .select('setup_complete')
-    .single()
+  // Check setup for other roles
+  const { data: shop } = await supabase.from('shops').select('setup_complete').eq('id', profile.shop_id).single()
+  if (shop && !shop.setup_complete) return NextResponse.redirect(new URL('/waiting', request.url))
 
-  if (shop && !shop.setup_complete && pathname !== '/setup') {
-    // Only office_admin and owner can complete setup
-    const { data: profile } = await supabase
-      .from('users').select('role').eq('id', user.id).single()
-
-    if (profile?.role === 'office_admin' || profile?.role === 'owner') {
-      return NextResponse.redirect(new URL('/setup', request.url))
-    } else {
-      // Other users see a "waiting for setup" page
-      return NextResponse.redirect(new URL('/waiting', request.url))
-    }
+  // Root path → redirect to role's default page
+  if (pathname === '/') {
+    const redirect = DEFAULT_PERMS[profile.role]?.[0] || 'dashboard'
+    const mod = Object.entries(MODULE_ROUTES).find(([k]) => k === redirect)
+    return NextResponse.redirect(new URL(mod?.[1]?.[0] || '/dashboard', request.url))
   }
+
+  // Check module access
+  const module = getModuleForPath(pathname)
+  if (!module) return response // Unknown routes pass through
+
+  const defaultAllowed = DEFAULT_PERMS[profile.role]?.includes(module) ?? false
+
+  // Check DB overrides (user-level first, then role-level)
+  const { data: userOverride } = await supabase.from('user_permission_overrides')
+    .select('allowed').eq('user_id', user.id).eq('module', module).single()
+
+  if (userOverride) {
+    if (!userOverride.allowed) return NextResponse.redirect(new URL('/403', request.url))
+    return response
+  }
+
+  const { data: roleOverride } = await supabase.from('role_permissions')
+    .select('allowed').eq('shop_id', profile.shop_id).eq('role', profile.role).eq('module', module).single()
+
+  if (roleOverride) {
+    if (!roleOverride.allowed) return NextResponse.redirect(new URL('/403', request.url))
+    return response
+  }
+
+  // Use default
+  if (!defaultAllowed) return NextResponse.redirect(new URL('/403', request.url))
 
   return response
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.json|icon-|apple-touch-icon|splash-|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }

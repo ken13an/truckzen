@@ -1,69 +1,140 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/auth'
 
-type ImportType = 'parts' | 'fleet' | 'customers' | 'drivers'
+type Mode = 'import' | 'export' | 'history'
+type ImportType = 'customers' | 'vehicles' | 'parts' | 'work_orders' | 'invoices' | 'drivers'
+type ExportType = 'customers' | 'vehicles' | 'parts' | 'invoices' | 'service_orders'
 
-const IMPORT_TYPES = [
-  { value:'parts',     label:'Parts Inventory',  icon:'🔧', desc:'Import your parts catalog from Excel or CSV' },
-  { value:'fleet',     label:'Fleet / Trucks',   icon:'🚛', desc:'Import vehicle list with VINs and odometers' },
-  { value:'customers', label:'Customers',        icon:'🏢', desc:'Import customer and fleet company contacts' },
-  { value:'drivers',   label:'Drivers',          icon:'👤', desc:'Import driver list with CDL and medical dates' },
-] as const
+const IMPORT_TYPES: { value: ImportType; label: string; icon: string; desc: string }[] = [
+  { value: 'customers', label: 'Customers', icon: '🏢', desc: 'Company contacts, phone, email, address' },
+  { value: 'vehicles', label: 'Vehicles / Fleet', icon: '🚛', desc: 'Unit #, VIN, year, make, model, customer' },
+  { value: 'parts', label: 'Parts Inventory', icon: '🔧', desc: 'Part #, description, qty, cost, vendor' },
+  { value: 'work_orders', label: 'Work Orders → SOs', icon: '📋', desc: 'WO #, customer, truck, complaint, totals' },
+  { value: 'invoices', label: 'Invoices', icon: '💰', desc: 'Invoice #, customer, total, tax, status' },
+  { value: 'drivers', label: 'Drivers', icon: '👤', desc: 'Name, CDL, medical card, phone' },
+]
+
+const EXPORT_TYPES: { value: ExportType; label: string; icon: string }[] = [
+  { value: 'customers', label: 'Customers', icon: '🏢' },
+  { value: 'vehicles', label: 'Vehicles', icon: '🚛' },
+  { value: 'parts', label: 'Parts Inventory', icon: '🔧' },
+  { value: 'invoices', label: 'Invoices', icon: '💰' },
+  { value: 'service_orders', label: 'Service Orders', icon: '📋' },
+]
+
+const EXPORT_COLUMNS: Record<ExportType, { key: string; label: string }[]> = {
+  customers: [
+    { key: 'company_name', label: 'Company Name' }, { key: 'contact_name', label: 'Contact' },
+    { key: 'phone', label: 'Phone' }, { key: 'email', label: 'Email' }, { key: 'address', label: 'Address' },
+    { key: 'unit_count', label: 'Unit Count' }, { key: 'total_invoices', label: 'Total Invoices' },
+    { key: 'balance_due', label: 'Balance Due' }, { key: 'visit_count', label: 'Visit Count' },
+    { key: 'total_spent', label: 'Total Spent' }, { key: 'source', label: 'Source' }, { key: 'created_at', label: 'Created' },
+  ],
+  vehicles: [
+    { key: 'unit_number', label: 'Unit #' }, { key: 'asset_type', label: 'Type' }, { key: 'status', label: 'Status' },
+    { key: 'year', label: 'Year' }, { key: 'make', label: 'Make' }, { key: 'model', label: 'Model' },
+    { key: 'vin', label: 'VIN' }, { key: 'license_plate', label: 'Plate' }, { key: 'odometer', label: 'Odometer' },
+    { key: 'customer', label: 'Customer' }, { key: 'created_at', label: 'Created' },
+  ],
+  parts: [
+    { key: 'part_number', label: 'Part #' }, { key: 'description', label: 'Description' }, { key: 'category', label: 'Category' },
+    { key: 'on_hand', label: 'On Hand' }, { key: 'reorder_point', label: 'Reorder At' },
+    { key: 'cost_price', label: 'Cost' }, { key: 'sell_price', label: 'Sell Price' },
+    { key: 'vendor', label: 'Vendor' }, { key: 'bin_location', label: 'Bin' },
+  ],
+  invoices: [
+    { key: 'invoice_number', label: 'Invoice #' }, { key: 'customer', label: 'Customer' }, { key: 'status', label: 'Status' },
+    { key: 'subtotal', label: 'Subtotal' }, { key: 'tax_amount', label: 'Tax' }, { key: 'total', label: 'Total' },
+    { key: 'amount_paid', label: 'Paid' }, { key: 'balance_due', label: 'Balance Due' },
+    { key: 'due_date', label: 'Due Date' }, { key: 'paid_at', label: 'Paid At' }, { key: 'created_at', label: 'Created' },
+  ],
+  service_orders: [
+    { key: 'so_number', label: 'SO #' }, { key: 'unit_number', label: 'Unit #' }, { key: 'customer', label: 'Customer' },
+    { key: 'technician', label: 'Technician' }, { key: 'status', label: 'Status' }, { key: 'priority', label: 'Priority' },
+    { key: 'complaint', label: 'Complaint' }, { key: 'grand_total', label: 'Total' },
+    { key: 'created_at', label: 'Created' }, { key: 'completed_at', label: 'Completed' },
+  ],
+}
+
+// FullBay auto-detect patterns
+const FULLBAY_SIGNATURES: Record<string, string[]> = {
+  customers: ['Company Name', 'Contact Name', 'Phone', 'Email'],
+  vehicles: ['Unit', 'VIN', 'Year', 'Make', 'Model'],
+  work_orders: ['Work Order', 'Complaint', 'Status', 'Customer', 'Unit'],
+  invoices: ['Invoice', 'Total', 'Amount Paid', 'Status', 'Customer'],
+  parts: ['Part Number', 'Description', 'Quantity', 'Cost', 'Sell Price'],
+}
 
 export default function SmartDropPage() {
-  const [importType, setImportType] = useState<ImportType>('parts')
-  const [file,       setFile]       = useState<File | null>(null)
-  const [preview,    setPreview]    = useState<any[]>([])
-  const [headers,    setHeaders]    = useState<string[]>([])
-  const [mapping,    setMapping]    = useState<Record<string, string>>({})
-  const [importing,  setImporting]  = useState(false)
-  const [result,     setResult]     = useState<{ imported: number; skipped: number; errors: string[] } | null>(null)
-  const [step,       setStep]       = useState<1|2|3>(1)
-  const [dragging,   setDragging]   = useState(false)
+  const supabase = createClient()
+  const [user, setUser] = useState<any>(null)
+  const [mode, setMode] = useState<Mode>('import')
 
-  const FIELD_MAPS: Record<ImportType, { field: string; label: string; required: boolean }[]> = {
-    parts: [
-      { field:'part_number',    label:'Part Number',    required:false },
-      { field:'description',    label:'Description',    required:true  },
-      { field:'category',       label:'Category',       required:false },
-      { field:'on_hand',        label:'Qty On Hand',    required:false },
-      { field:'reorder_point',  label:'Reorder At',     required:false },
-      { field:'cost_price',     label:'Cost Price',     required:false },
-      { field:'sell_price',     label:'Sell Price',     required:false },
-      { field:'vendor',         label:'Vendor',         required:false },
-      { field:'bin_location',   label:'Bin Location',   required:false },
-    ],
-    fleet: [
-      { field:'unit_number',    label:'Unit Number',    required:true  },
-      { field:'year',           label:'Year',           required:false },
-      { field:'make',           label:'Make',           required:false },
-      { field:'model',          label:'Model',          required:false },
-      { field:'vin',            label:'VIN',            required:false },
-      { field:'odometer',       label:'Odometer',       required:false },
-      { field:'customer_name',  label:'Owner/Company',  required:false },
-    ],
-    customers: [
-      { field:'company_name',   label:'Company Name',   required:true  },
-      { field:'contact_name',   label:'Contact Name',   required:false },
-      { field:'phone',          label:'Phone',          required:false },
-      { field:'email',          label:'Email',          required:false },
-      { field:'payment_terms',  label:'Payment Terms',  required:false },
-    ],
-    drivers: [
-      { field:'full_name',          label:'Full Name',       required:true  },
-      { field:'phone',              label:'Phone',           required:false },
-      { field:'cdl_number',         label:'CDL Number',      required:false },
-      { field:'cdl_class',          label:'CDL Class',       required:false },
-      { field:'cdl_expiry',         label:'CDL Expiry',      required:false },
-      { field:'medical_card_expiry',label:'Medical Expiry',  required:false },
-    ],
+  // Import state
+  const [importType, setImportType] = useState<ImportType>('customers')
+  const [file, setFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<any[]>([])
+  const [headers, setHeaders] = useState<string[]>([])
+  const [importing, setImporting] = useState(false)
+  const [result, setResult] = useState<any>(null)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [dragging, setDragging] = useState(false)
+  const [detectedFormat, setDetectedFormat] = useState<string | null>(null)
+
+  // Export state
+  const [exportType, setExportType] = useState<ExportType>('customers')
+  const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set())
+  const [exporting, setExporting] = useState(false)
+
+  // History state
+  const [history, setHistory] = useState<any[]>([])
+  const [undoing, setUndoing] = useState<string | null>(null)
+
+  const [toast, setToast] = useState('')
+  function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2500) }
+
+  useEffect(() => {
+    getCurrentUser(supabase).then((p: any) => {
+      if (!p) { window.location.href = '/login'; return }
+      setUser(p)
+    })
+  }, [])
+
+  // Init export columns
+  useEffect(() => {
+    setSelectedCols(new Set(EXPORT_COLUMNS[exportType]?.map(c => c.key) || []))
+  }, [exportType])
+
+  // Load history
+  useEffect(() => {
+    if (mode !== 'history' || !user) return
+    supabase.from('import_export_log').select('*')
+      .eq('shop_id', user.shop_id).order('created_at', { ascending: false }).limit(50)
+      .then(({ data }: any) => setHistory(data || []))
+  }, [mode, user])
+
+  // ── FULLBAY AUTO-DETECT ────────────────────────────────
+  function detectFullBay(hdrs: string[]): ImportType | null {
+    const lower = hdrs.map(h => h.toLowerCase())
+    let bestMatch: ImportType | null = null
+    let bestScore = 0
+
+    for (const [type, sigs] of Object.entries(FULLBAY_SIGNATURES)) {
+      const score = sigs.filter(s => lower.some(h => h.includes(s.toLowerCase()))).length
+      if (score > bestScore) { bestScore = score; bestMatch = type as ImportType }
+    }
+
+    return bestScore >= 2 ? bestMatch : null
   }
 
+  // ── FILE HANDLING ──────────────────────────────────────
   function parseCSV(text: string) {
     const lines = text.trim().split('\n')
-    const hdrs  = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''))
-    const rows  = lines.slice(1, 6).map(l => {
-      const vals = l.split(',').map(v => v.trim().replace(/^"|"$/g,''))
+    const hdrs = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
+    const rows = lines.slice(1, 6).map(l => {
+      const vals = l.split(',').map(v => v.trim().replace(/^"|"$/g, ''))
       const obj: Record<string, string> = {}
       hdrs.forEach((h, i) => { obj[h] = vals[i] || '' })
       return obj
@@ -78,63 +149,88 @@ export default function SmartDropPage() {
     setHeaders(hdrs)
     setPreview(rows)
 
-    // Auto-map columns by fuzzy match
-    const autoMap: Record<string, string> = {}
-    const fields = FIELD_MAPS[importType]
-    for (const field of fields) {
-      const match = hdrs.find(h =>
-        h.toLowerCase().includes(field.field.toLowerCase().replace(/_/g,' ')) ||
-        h.toLowerCase().includes(field.label.toLowerCase()) ||
-        field.field.toLowerCase().includes(h.toLowerCase())
-      )
-      if (match) autoMap[field.field] = match
+    // Auto-detect FullBay format
+    const detected = detectFullBay(hdrs)
+    if (detected) {
+      setImportType(detected)
+      setDetectedFormat('FullBay')
+    } else {
+      setDetectedFormat(null)
     }
-    setMapping(autoMap)
+
     setStep(2)
   }
 
+  // ── IMPORT ─────────────────────────────────────────────
   async function runImport() {
-    if (!file) return
+    if (!file || !user) return
     setImporting(true)
-    const text = await file.text()
-    const lines = text.trim().split('\n')
-    const hdrs  = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''))
-    const rows  = lines.slice(1).map(l => {
-      const vals = l.split(',').map(v => v.trim().replace(/^"|"$/g,''))
-      const obj: Record<string, string> = {}
-      hdrs.forEach((h, i) => { obj[h] = vals[i] || '' })
-      return obj
-    })
 
-    // Map rows using column mapping
-    const mapped = rows.map(row => {
-      const out: Record<string, any> = {}
-      for (const [field, col] of Object.entries(mapping)) {
-        out[field] = row[col] || ''
-      }
-      return out
-    }).filter(row => {
-      const required = FIELD_MAPS[importType].filter(f => f.required).map(f => f.field)
-      return required.every(f => row[f])
-    })
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('shop_id', user.shop_id)
+    formData.append('type', importType)
 
-    let imported = 0; let skipped = 0; const errors: string[] = []
+    const res = await fetch('/api/import/fullbay', { method: 'POST', body: formData })
+    const data = await res.json()
 
-    // Send in batches of 50
-    for (let i = 0; i < mapped.length; i += 50) {
-      const batch = mapped.slice(i, i + 50)
-      const res = await fetch(`/api/${importType === 'fleet' ? 'assets' : importType}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ batch }),
+    if (res.ok) {
+      // Log the import
+      await supabase.from('import_export_log').insert({
+        shop_id: user.shop_id, user_id: user.id, user_name: user.full_name,
+        action: 'import', data_type: importType, file_name: file.name,
+        record_count: data.total, created_count: data.created, skipped_count: data.skipped, error_count: data.errors,
       })
-      if (res.ok) { const d = await res.json(); imported += d.imported || batch.length }
-      else { skipped += batch.length; errors.push(`Batch ${Math.floor(i/50)+1} failed`) }
+      setResult(data)
+      setStep(3)
+    } else {
+      flash(data.error || 'Import failed')
     }
 
-    setResult({ imported, skipped, errors })
-    setStep(3)
     setImporting(false)
+  }
+
+  // ── EXPORT ─────────────────────────────────────────────
+  async function runExport() {
+    if (!user) return
+    setExporting(true)
+    const cols = Array.from(selectedCols).join(',')
+    const url = `/api/export?shop_id=${user.shop_id}&type=${exportType}&columns=${cols}&user_id=${user.id}&user_name=${encodeURIComponent(user.full_name)}`
+
+    const res = await fetch(url)
+    if (res.ok) {
+      const blob = await res.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `${exportType}-${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      flash('Export downloaded')
+    } else {
+      flash('Export failed')
+    }
+    setExporting(false)
+  }
+
+  // ── UNDO IMPORT ────────────────────────────────────────
+  async function undoImport(logId: string) {
+    if (!user) return
+    setUndoing(logId)
+    const res = await fetch('/api/import/undo', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ log_id: logId, shop_id: user.shop_id }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      flash(`Undo complete — ${data.deleted} records removed`)
+      setHistory(prev => prev.map(h => h.id === logId ? { ...h, undone: true, undone_at: new Date().toISOString() } : h))
+    } else {
+      flash(data.error || 'Undo failed')
+    }
+    setUndoing(null)
+  }
+
+  function resetImport() {
+    setStep(1); setFile(null); setPreview([]); setHeaders([]); setResult(null); setDetectedFormat(null)
   }
 
   const onDrop = useCallback((e: React.DragEvent) => {
@@ -143,140 +239,198 @@ export default function SmartDropPage() {
     if (f && (f.name.endsWith('.csv') || f.name.endsWith('.xlsx'))) handleFile(f)
   }, [importType])
 
-  const S: Record<string, React.CSSProperties> = {
-    page:   { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    title:  { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:4 },
-    card:   { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:20, marginBottom:14 },
-    label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#48536A', marginBottom:6, display:'block' },
-    select: { padding:'8px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#DDE3EE', outline:'none', fontFamily:'inherit', appearance:'none' as any, cursor:'pointer', minHeight:36 },
-  }
+  if (!user) return null
 
   return (
     <div style={S.page}>
-      <a href="/dashboard" style={{ fontSize:12, color:'#7C8BA0', textDecoration:'none', display:'block', marginBottom:20 }}>← Dashboard</a>
-      <div style={S.title}>Smart Drop</div>
-      <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:20 }}>Import your existing data from any spreadsheet. AI maps the columns automatically.</div>
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
-      {/* Step indicators */}
-      <div style={{ display:'flex', gap:6, marginBottom:20 }}>
-        {[['1','Upload File'],['2','Map Columns'],['3','Done']].map(([n, l], i) => (
-          <div key={n} style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <div style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, fontFamily:'monospace', background: step > i+1 ? '#1DB870' : step === i+1 ? '#1D6FE8' : '#1C2130', color:'#fff' }}>{step > i+1 ? '✓' : n}</div>
-            <span style={{ fontSize:11, color: step === i+1 ? '#F0F4FF' : '#48536A' }}>{l}</span>
-            {i < 2 && <div style={{ width:20, height:1, background:'rgba(255,255,255,.1)' }}/>}
-          </div>
+      <div style={S.title}>Smart Drop</div>
+      <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>Import data from any spreadsheet, export to CSV, or review history. FullBay CSVs are auto-detected.</div>
+
+      {/* Mode tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#0D0F12', borderRadius: 10, padding: 4 }}>
+        {([['import', 'Import'], ['export', 'Export'], ['history', 'History']] as const).map(([k, l]) => (
+          <button key={k} onClick={() => { setMode(k); if (k === 'import') resetImport() }}
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: mode === k ? '#1A1D23' : 'transparent', color: mode === k ? '#F0F4FF' : '#48536A' }}>{l}</button>
         ))}
       </div>
 
-      {step === 1 && (
-        <>
-          {/* Import type selection */}
+      {/* ═══ IMPORT TAB ═══ */}
+      {mode === 'import' && <>
+        {step === 1 && <>
           <div style={S.card}>
-            <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', marginBottom:12 }}>What are you importing?</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>1. What are you importing?</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 8 }}>
               {IMPORT_TYPES.map(t => (
                 <div key={t.value} onClick={() => setImportType(t.value)}
-                  style={{ padding:'12px 14px', borderRadius:10, cursor:'pointer', border:`1px solid ${importType===t.value?'rgba(29,111,232,.4)':'rgba(255,255,255,.06)'}`, background: importType===t.value?'rgba(29,111,232,.08)':'#1C2130' }}>
-                  <div style={{ fontSize:18, marginBottom:5 }}>{t.icon}</div>
-                  <div style={{ fontSize:12, fontWeight:700, color: importType===t.value?'#4D9EFF':'#F0F4FF' }}>{t.label}</div>
-                  <div style={{ fontSize:10, color:'#7C8BA0', marginTop:2 }}>{t.desc}</div>
+                  style={{ padding: '12px', borderRadius: 10, cursor: 'pointer', border: importType === t.value ? '1px solid rgba(29,111,232,.4)' : '1px solid #1A1D23', background: importType === t.value ? 'rgba(29,111,232,.08)' : '#0D0F12' }}>
+                  <div style={{ fontSize: 18, marginBottom: 4 }}>{t.icon}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: importType === t.value ? '#4D9EFF' : '#F0F4FF' }}>{t.label}</div>
+                  <div style={{ fontSize: 10, color: '#48536A', marginTop: 2 }}>{t.desc}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Drop zone */}
-          <div style={{ ...S.card, border:`2px dashed ${dragging?'rgba(29,111,232,.6)':'rgba(255,255,255,.1)'}`, background: dragging?'rgba(29,111,232,.05)':'#161B24', textAlign:'center', padding:40, cursor:'pointer' }}
+          <div style={{ ...S.card, border: `2px dashed ${dragging ? 'rgba(29,111,232,.6)' : '#1A1D23'}`, textAlign: 'center', padding: 40, cursor: 'pointer' }}
             onDragOver={e => { e.preventDefault(); setDragging(true) }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
             onClick={() => document.getElementById('fileInput')?.click()}>
-            <div style={{ fontSize:40, marginBottom:12 }}>📂</div>
-            <div style={{ fontSize:14, fontWeight:700, color:'#F0F4FF', marginBottom:6 }}>Drop your CSV or Excel file here</div>
-            <div style={{ fontSize:12, color:'#7C8BA0' }}>or click to browse — supports .csv and .xlsx</div>
-            <input id="fileInput" type="file" accept=".csv,.xlsx" style={{ display:'none' }} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}/>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>📂</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>Drop your CSV file here</div>
+            <div style={{ fontSize: 12, color: '#7C8BA0' }}>or click to browse — FullBay exports auto-detected</div>
+            <input id="fileInput" type="file" accept=".csv" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
           </div>
+        </>}
 
-          {/* Template download hints */}
-          <div style={{ fontSize:11, color:'#48536A', textAlign:'center' }}>
-            Export from Monday.com, Fleetio, Fullbay, or any spreadsheet. First row must be column headers.
-          </div>
-        </>
-      )}
-
-      {step === 2 && (
-        <>
-          <div style={S.card}>
-            <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', marginBottom:4 }}>Map Columns</div>
-            <div style={{ fontSize:11, color:'#7C8BA0', marginBottom:14 }}>Match your spreadsheet columns to TruckZen fields. Auto-mapped where possible.</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-              {FIELD_MAPS[importType].map(field => (
-                <div key={field.field}>
-                  <label style={S.label}>{field.label}{field.required ? ' *' : ''}</label>
-                  <select style={{ ...S.select, width:'100%' }} value={mapping[field.field] || ''} onChange={e => setMapping(m => ({ ...m, [field.field]: e.target.value }))}>
-                    <option value="">— Skip this field —</option>
-                    {headers.map(h => <option key={h} value={h}>{h}</option>)}
-                  </select>
-                </div>
-              ))}
+        {step === 2 && <>
+          {detectedFormat && (
+            <div style={{ ...S.card, borderColor: 'rgba(29,111,232,.3)', background: 'rgba(29,111,232,.05)', display: 'flex', alignItems: 'center', gap: 10, padding: 14 }}>
+              <span style={{ fontSize: 20 }}>✨</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#4D9EFF' }}>FullBay format detected</div>
+                <div style={{ fontSize: 11, color: '#7C8BA0' }}>Auto-selected "{IMPORT_TYPES.find(t => t.value === importType)?.label}" — columns will be mapped automatically</div>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Preview */}
           <div style={S.card}>
-            <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', marginBottom:12 }}>Preview (first 5 rows)</div>
-            <div style={{ overflowX:'auto' }}>
-              <table style={{ width:'100%', borderCollapse:'collapse', fontSize:10 }}>
-                <thead>
-                  <tr>{Object.entries(mapping).filter(([,v])=>v).map(([k]) => (
-                    <th key={k} style={{ fontFamily:'monospace', fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.08em', padding:'5px 8px', textAlign:'left', background:'#0B0D11' }}>{k}</th>
-                  ))}</tr>
-                </thead>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 8 }}>Preview — {headers.length} columns, {file?.name}</div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={S.table}>
+                <thead><tr>{headers.map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
                 <tbody>
                   {preview.map((row, i) => (
-                    <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,.025)' }}>
-                      {Object.entries(mapping).filter(([,v])=>v).map(([field, col]) => (
-                        <td key={field} style={{ padding:'6px 8px', color:'#DDE3EE' }}>{row[col] || '—'}</td>
-                      ))}
-                    </tr>
+                    <tr key={i}>{headers.map(h => <td key={h} style={S.td}>{row[h]}</td>)}</tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
 
-          <div style={{ display:'flex', gap:8 }}>
-            <button onClick={() => { setStep(1); setFile(null); setPreview([]) }} style={{ padding:'10px 20px', background:'transparent', border:'1px solid rgba(255,255,255,.1)', borderRadius:9, color:'#7C8BA0', fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>Back</button>
-            <button onClick={runImport} disabled={importing} style={{ flex:1, padding:'12px 24px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', opacity: importing?0.7:1 }}>
-              {importing ? 'Importing...' : `Import ${IMPORT_TYPES.find(t=>t.value===importType)?.label}`}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={resetImport} style={S.btnSecondary}>Back</button>
+            <button onClick={runImport} disabled={importing} style={{ ...S.btnPrimary, flex: 1, opacity: importing ? 0.6 : 1 }}>
+              {importing ? 'Importing...' : `Import ${IMPORT_TYPES.find(t => t.value === importType)?.label}`}
             </button>
           </div>
-        </>
-      )}
+        </>}
 
-      {step === 3 && result && (
-        <div style={{ ...S.card, textAlign:'center', padding:40 }}>
-          <div style={{ fontSize:48, marginBottom:16 }}>{result.errors.length === 0 ? '✅' : '⚠️'}</div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:8 }}>Import Complete</div>
-          <div style={{ display:'flex', gap:20, justifyContent:'center', margin:'20px 0' }}>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:36, color:'#1DB870' }}>{result.imported}</div>
-              <div style={{ fontSize:11, color:'#7C8BA0' }}>Imported</div>
+        {step === 3 && result && (
+          <div style={{ ...S.card, textAlign: 'center', padding: 40 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>{result.errors === 0 ? '✅' : '⚠️'}</div>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 26, color: '#F0F4FF', marginBottom: 16 }}>Import Complete</div>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 20 }}>
+              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#22C55E' }}>{result.created}</div><div style={{ fontSize: 10, color: '#7C8BA0' }}>Created</div></div>
+              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#F59E0B' }}>{result.skipped}</div><div style={{ fontSize: 10, color: '#7C8BA0' }}>Skipped</div></div>
+              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#EF4444' }}>{result.errors}</div><div style={{ fontSize: 10, color: '#7C8BA0' }}>Errors</div></div>
             </div>
-            {result.skipped > 0 && <div style={{ textAlign:'center' }}>
-              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:36, color:'#D4882A' }}>{result.skipped}</div>
-              <div style={{ fontSize:11, color:'#7C8BA0' }}>Skipped</div>
-            </div>}
+            {result.details?.length > 0 && (
+              <div style={{ background: '#060708', borderRadius: 8, padding: 12, maxHeight: 150, overflowY: 'auto', textAlign: 'left', marginBottom: 16 }}>
+                {result.details.slice(0, 20).map((d: string, i: number) => (
+                  <div key={i} style={{ fontSize: 11, color: '#7C8BA0', padding: '2px 0' }}>{d}</div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+              <button onClick={resetImport} style={S.btnSecondary}>Import More</button>
+              <a href={`/${importType === 'vehicles' ? 'fleet' : importType === 'work_orders' ? 'orders' : importType}`} style={{ ...S.btnPrimary, textDecoration: 'none', display: 'inline-block' }}>View Data</a>
+            </div>
           </div>
-          {result.errors.length > 0 && result.errors.map((e,i) => (
-            <div key={i} style={{ fontSize:11, color:'#D94F4F', marginBottom:4 }}>{e}</div>
-          ))}
-          <div style={{ display:'flex', gap:8, justifyContent:'center', marginTop:20 }}>
-            <button onClick={() => { setStep(1); setFile(null); setPreview([]); setResult(null) }} style={{ padding:'10px 20px', background:'transparent', border:'1px solid rgba(255,255,255,.1)', borderRadius:9, color:'#7C8BA0', fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>Import More</button>
-            <a href={`/${importType === 'fleet' ? 'fleet' : importType}`} style={{ padding:'10px 20px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none' }}>View {IMPORT_TYPES.find(t=>t.value===importType)?.label}</a>
+        )}
+      </>}
+
+      {/* ═══ EXPORT TAB ═══ */}
+      {mode === 'export' && <>
+        <div style={S.card}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>1. Select data to export</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {EXPORT_TYPES.map(t => (
+              <button key={t.value} onClick={() => setExportType(t.value)}
+                style={{ padding: '10px 16px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 600, border: exportType === t.value ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: exportType === t.value ? 'rgba(29,111,232,.08)' : '#0D0F12', color: exportType === t.value ? '#4D9EFF' : '#7C8BA0' }}>
+                {t.icon} {t.label}
+              </button>
+            ))}
           </div>
         </div>
-      )}
+
+        <div style={S.card}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>2. Select columns</div>
+          <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 12 }}>Click to toggle. All selected by default.</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {(EXPORT_COLUMNS[exportType] || []).map(c => {
+              const on = selectedCols.has(c.key)
+              return (
+                <button key={c.key}
+                  onClick={() => setSelectedCols(prev => { const n = new Set(prev); on ? n.delete(c.key) : n.add(c.key); return n })}
+                  style={{ padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: on ? '1px solid #22C55E' : '1px solid #1A1D23', background: on ? 'rgba(34,197,94,.08)' : '#0D0F12', color: on ? '#22C55E' : '#48536A' }}>
+                  {c.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <button onClick={runExport} disabled={exporting || selectedCols.size === 0} style={{ ...S.btnPrimary, width: '100%', opacity: exporting || selectedCols.size === 0 ? 0.5 : 1 }}>
+          {exporting ? 'Exporting...' : `Download ${EXPORT_TYPES.find(t => t.value === exportType)?.label} CSV (${selectedCols.size} columns)`}
+        </button>
+      </>}
+
+      {/* ═══ HISTORY TAB ═══ */}
+      {mode === 'history' && <>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Import / Export History</div>
+        {history.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#48536A' }}>No history yet</div>}
+        <table style={S.table}>
+          <thead><tr>
+            <th style={S.th}>When</th><th style={S.th}>User</th><th style={S.th}>Action</th><th style={S.th}>Type</th><th style={S.th}>File</th><th style={S.th}>Records</th><th style={S.th}>Result</th><th style={S.th}>Undo</th>
+          </tr></thead>
+          <tbody>
+            {history.map(h => {
+              const age = (Date.now() - new Date(h.created_at).getTime()) / 3600000
+              const canUndo = h.action === 'import' && !h.undone && age <= 24 && (h.record_ids?.length || 0) > 0
+
+              return (
+                <tr key={h.id} style={{ opacity: h.undone ? 0.4 : 1 }}>
+                  <td style={S.td}>{new Date(h.created_at).toLocaleString()}</td>
+                  <td style={S.td}>{h.user_name}</td>
+                  <td style={S.td}>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: h.action === 'import' ? '#1D6FE8' : '#22C55E' }}>{h.action}</span>
+                  </td>
+                  <td style={S.td}>{h.data_type}</td>
+                  <td style={S.td}>{h.file_name || '—'}</td>
+                  <td style={S.td}>{h.record_count}</td>
+                  <td style={S.td}>
+                    {h.action === 'import' ? (
+                      <span>{h.created_count} created, {h.skipped_count} skipped{h.error_count > 0 ? `, ${h.error_count} errors` : ''}</span>
+                    ) : '—'}
+                  </td>
+                  <td style={S.td}>
+                    {h.undone ? <span style={{ color: '#7C8BA0', fontSize: 10 }}>Undone</span> : canUndo ? (
+                      <button onClick={() => undoImport(h.id)} disabled={undoing === h.id}
+                        style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #EF4444', background: 'none', color: '#EF4444', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
+                        {undoing === h.id ? '...' : 'Undo'}
+                      </button>
+                    ) : '—'}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </>}
     </div>
   )
+}
+
+const S: Record<string, React.CSSProperties> = {
+  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 },
+  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 14 },
+  table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 11 },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '8px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
+  td: { padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' },
+  btnPrimary: { padding: '12px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
+  btnSecondary: { padding: '10px 20px', background: 'transparent', border: '1px solid #1A1D23', borderRadius: 9, color: '#7C8BA0', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' },
 }

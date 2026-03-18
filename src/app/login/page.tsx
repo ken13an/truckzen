@@ -4,27 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-// ── ROLE → REDIRECT MAP ──────────────────────────────────────
-// Each role lands on their most relevant page after login
-// This is the ONLY place roles map to routes
-const ROLE_REDIRECT: Record<string, string> = {
-  owner:                   '/dashboard',
-  gm:                      '/dashboard',
-  it_person:               '/dashboard',
-  shop_manager:            '/dashboard',
-  service_advisor:         '/orders',
-  service_writer:          '/orders',
-  technician:              '/floor',
-  parts_manager:           '/parts',
-  fleet_manager:           '/fleet',
-  maintenance_manager:     '/maintenance',
-  maintenance_technician:  '/maintenance',
-  accountant:              '/accounting',
-  office_admin:            '/settings',
-  dispatcher:              '/fleet',
-  driver:                  '/dvir',
-  customer:                '/portal',
-}
+import { ROLE_REDIRECT } from '@/lib/permissions'
 
 export default function LoginPage() {
   const router = useRouter()

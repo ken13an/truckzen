@@ -4,7 +4,7 @@ import Sidebar from '@/components/Sidebar'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 
 // These routes show full-screen with NO sidebar
-const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password']
+const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password', '/tech']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
