@@ -72,7 +72,7 @@ export default function CustomersPage() {
               : filtered.length === 0 ? <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#7C8BA0', padding:40 }}>No customers found</td></tr>
               : filtered.map(c => (
                 <tr key={c.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = `/customers/${c.id}`}>
-                  <td style={{ ...S.td, fontWeight:700, color:'#F0F4FF' }}>{c.company_name}</td>
+                  <td style={{ ...S.td, fontWeight:700, color:'#F0F4FF' }}>{c.company_name || 'Unnamed'}</td>
                   <td style={{ ...S.td, color:'#DDE3EE' }}>{c.contact_name || '—'}</td>
                   <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#7C8BA0' }}>{c.phone || '—'}</td>
                   <td style={{ ...S.td, fontSize:11, color:'#7C8BA0' }}>{c.email || '—'}</td>
