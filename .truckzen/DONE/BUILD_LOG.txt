@@ -1,0 +1,3 @@
+# Build Log
+
+CC: Overwrite this file with the full output of `npm run build` after every task.
