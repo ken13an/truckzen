@@ -1,18 +1,18 @@
 'use client'
+import { WifiOff } from 'lucide-react'
 
 export default function OfflinePage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans',sans-serif", padding: 20 }}>
-      <div style={{ maxWidth: 440, textAlign: 'center' }}>
-        <div style={{ fontSize: 60, marginBottom: 16 }}>📡</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F4FF', marginBottom: 8 }}>You're offline</div>
-        <div style={{ fontSize: 14, color: '#7C8BA0', lineHeight: 1.6, marginBottom: 24 }}>
+    <div className="min-h-screen bg-bg flex items-center justify-center p-5">
+      <div className="max-w-md text-center">
+        <WifiOff size={48} strokeWidth={1.5} className="text-text-tertiary mx-auto mb-4" />
+        <h1 className="text-xl font-bold text-text-primary mb-2">You are offline</h1>
+        <p className="text-sm text-text-secondary leading-relaxed mb-6">
           TruckZen needs an internet connection to sync with the shop database. Check your connection and try again.
-        </div>
+        </p>
         <button
           onClick={() => window.location.reload()}
-          style={{ padding: '12px 28px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
-        >
+          className="px-6 py-2.5 bg-teal text-bg rounded-md text-sm font-bold hover:bg-teal-hover transition-colors duration-150">
           Retry
         </button>
       </div>

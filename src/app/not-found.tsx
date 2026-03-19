@@ -1,20 +1,18 @@
 import type { Metadata } from 'next'
+import { FileQuestion } from 'lucide-react'
 
-export const metadata: Metadata = {
-  title: 'Page Not Found',
-  robots: { index: false, follow: false },
-}
+export const metadata: Metadata = { title: 'Page Not Found', robots: { index: false, follow: false } }
 
 export default function NotFound() {
   return (
-    <div style={{ minHeight:'100vh', background:'#060708', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Instrument Sans',sans-serif", padding:20 }}>
-      <div style={{ maxWidth:440, textAlign:'center' }}>
-        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:100, letterSpacing:'.04em', color:'rgba(29,111,232,.1)', lineHeight:1 }}>404</div>
-        <div style={{ fontSize:20, fontWeight:700, color:'#F0F4FF', margin:'12px 0 8px' }}>Page not found</div>
-        <div style={{ fontSize:13, color:'#7C8BA0', lineHeight:1.6, marginBottom:24 }}>
-          The page you're looking for doesn't exist or you don't have access.
-        </div>
-        <a href="/dashboard" style={{ display:'inline-block', padding:'11px 24px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:9, color:'#fff', fontSize:13, fontWeight:700, textDecoration:'none' }}>
+    <div className="min-h-screen bg-bg flex items-center justify-center p-5">
+      <div className="max-w-md text-center">
+        <FileQuestion size={48} strokeWidth={1.5} className="text-text-tertiary mx-auto mb-4" />
+        <h1 className="text-xl font-bold text-text-primary mb-2">Page not found</h1>
+        <p className="text-sm text-text-secondary leading-relaxed mb-6">
+          The page you are looking for does not exist or you do not have access.
+        </p>
+        <a href="/dashboard" className="inline-block px-6 py-2.5 bg-teal text-bg rounded-md text-sm font-bold hover:bg-teal-hover transition-colors duration-150 no-underline">
           Back to Dashboard
         </a>
       </div>
