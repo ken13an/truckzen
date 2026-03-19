@@ -1,51 +1,56 @@
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+@theme {
+  /* Backgrounds */
+  --color-bg: #08080C;
+  --color-surface: #111117;
+  --color-surface-2: #1C1C24;
+  --color-brand-border: #28283A;
+
+  /* Brand accent: Teal */
+  --color-teal: #00E0B0;
+  --color-teal-hover: #00B892;
+  --color-teal-active: #00805F;
+
+  /* AI accent: Purple */
+  --color-purple: #7C6CF0;
+  --color-purple-light: #9D91F5;
+  --color-purple-dark: #5B4CC4;
+
+  /* Text */
+  --color-text-primary: #EDEDF0;
+  --color-text-secondary: #9898A5;
+  --color-text-tertiary: #5A5A68;
+
+  /* Status */
+  --color-success: #00D48E;
+  --color-warning: #FFBE2E;
+  --color-error: #FF6B6B;
+
+  /* Fonts */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Courier, monospace;
+}
 
 :root {
-  /* Backgrounds */
+  /* CSS variables for inline style fallbacks */
   --bg: #08080C;
   --surface: #111117;
   --surface-2: #1C1C24;
   --border: #28283A;
-  /* Brand */
   --teal: #00E0B0;
   --teal-hover: #00B892;
   --teal-active: #00805F;
-  /* AI */
   --purple: #7C6CF0;
   --purple-light: #9D91F5;
   --purple-dark: #5B4CC4;
-  /* Text */
   --text-primary: #EDEDF0;
   --text-secondary: #9898A5;
   --text-tertiary: #5A5A68;
-  /* Status */
   --success: #00D48E;
   --warning: #FFBE2E;
   --error: #FF6B6B;
-  /* Light mode */
-  --light-bg: #F4F4F6;
-  --light-surface: #FFFFFF;
-  --light-border: #E2E2E6;
-  --light-text: #1A1A22;
-  /* Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
-  --space-2xl: 32px;
-  --space-3xl: 48px;
-  --space-4xl: 64px;
-  /* Motion */
-  --transition-micro: 150ms ease-out;
-  --transition-std: 250ms ease-in-out;
-  --transition-emphasis: 400ms cubic-bezier(.4,0,.2,1);
-  --transition-exit: 200ms ease-in;
 }
 
 * {
@@ -72,18 +77,7 @@ body {
   }
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
