@@ -97,12 +97,6 @@ const nextConfig = {
         destination: '/dashboard',
         permanent: false,
       },
-      // Old URL patterns → new ones
-      {
-        source: '/orders',
-        destination: '/service-orders',
-        permanent: true,
-      },
     ]
   },
 
