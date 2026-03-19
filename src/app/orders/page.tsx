@@ -2,19 +2,20 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { Loader2, Plus } from 'lucide-react'
 
 type Tab = 'orders' | 'requests' | 'mechanic' | 'completed'
 
-const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  draft: { label: 'Draft', color: '#7C8BA0' },
-  not_approved: { label: 'Not Approved', color: '#D4882A' },
-  waiting_approval: { label: 'Waiting Approval', color: '#D4882A' },
-  in_progress: { label: 'In Progress', color: '#4D9EFF' },
-  waiting_parts: { label: 'Waiting Parts', color: '#E8692A' },
-  done: { label: 'Done', color: '#1DB870' },
-  ready_final_inspection: { label: 'Ready Inspection', color: '#8B5CF6' },
-  good_to_go: { label: 'Good to Go', color: '#1DB870' },
-  failed_inspection: { label: 'Failed Inspection', color: '#D94F4F' },
+const STATUS_MAP: Record<string, { label: string; cls: string }> = {
+  draft:                  { label: 'Draft',           cls: 'text-text-tertiary bg-text-tertiary/15' },
+  not_approved:           { label: 'Not Approved',    cls: 'text-warning bg-warning/15' },
+  waiting_approval:       { label: 'Waiting Approval',cls: 'text-warning bg-warning/15' },
+  in_progress:            { label: 'In Progress',     cls: 'text-teal bg-teal/15' },
+  waiting_parts:          { label: 'Waiting Parts',   cls: 'text-warning bg-warning/15' },
+  done:                   { label: 'Done',            cls: 'text-success bg-success/15' },
+  ready_final_inspection: { label: 'Ready Inspection',cls: 'text-purple bg-purple/15' },
+  good_to_go:             { label: 'Good to Go',      cls: 'text-success bg-success/15' },
+  failed_inspection:      { label: 'Failed',          cls: 'text-error bg-error/15' },
 }
 
 export default function OrdersPage() {
@@ -29,13 +30,10 @@ export default function OrdersPage() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [teamFilter, setTeamFilter] = useState('all')
 
   useEffect(() => {
     let cancelled = false
-    const timeout = setTimeout(() => {
-      if (!cancelled && loading) { setLoading(false); setError('Page took too long to load. Please refresh.') }
-    }, 15000)
+    const timeout = setTimeout(() => { if (!cancelled && loading) { setLoading(false); setError('Page took too long to load.') } }, 15000)
 
     async function load() {
       try {
@@ -46,39 +44,35 @@ export default function OrdersPage() {
 
         const shopId = profile.shop_id
         const results = await Promise.allSettled([
-          fetch(`/api/service-orders?shop_id=${shopId}&role=${profile.role}&user_team=${profile.team || ''}&limit=100`).then(r => r.ok ? r.json() : []),
+          fetch(`/api/service-orders?shop_id=${shopId}&role=${profile.role}&user_team=${profile.team ?? ''}&limit=100`).then(r => r.ok ? r.json() : []),
           fetch(`/api/service-requests?shop_id=${shopId}`).then(r => r.ok ? r.json() : []),
           fetch(`/api/mechanic-requests?shop_id=${shopId}`).then(r => r.ok ? r.json() : []),
           fetch(`/api/service-orders?shop_id=${shopId}&status=good_to_go&limit=50`).then(r => r.ok ? r.json() : []),
         ])
 
         if (cancelled) return
-        const [ordersResult, reqResult, mechResult, compResult] = results
-        setOrders(ordersResult.status === 'fulfilled' && Array.isArray(ordersResult.value) ? ordersResult.value : [])
-        setRequests(reqResult.status === 'fulfilled' && Array.isArray(reqResult.value) ? reqResult.value : [])
-        setMechRequests(mechResult.status === 'fulfilled' && Array.isArray(mechResult.value) ? mechResult.value : [])
-        setCompletedOrders(compResult.status === 'fulfilled' && Array.isArray(compResult.value) ? compResult.value : [])
+        const [o, r, m, c] = results
+        setOrders(o.status === 'fulfilled' && Array.isArray(o.value) ? o.value : [])
+        setRequests(r.status === 'fulfilled' && Array.isArray(r.value) ? r.value : [])
+        setMechRequests(m.status === 'fulfilled' && Array.isArray(m.value) ? m.value : [])
+        setCompletedOrders(c.status === 'fulfilled' && Array.isArray(c.value) ? c.value : [])
       } catch (e: any) {
-        if (!cancelled) setError(e.message || 'Failed to load service orders')
+        if (!cancelled) setError(e.message ?? 'Failed to load')
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
-
     load()
-    // Check URL param for tab
     if (typeof window !== 'undefined') {
-      const urlTab = new URLSearchParams(window.location.search).get('tab')
-      if (urlTab === 'requests') setTab('requests')
-      if (urlTab === 'mechanic') setTab('mechanic')
+      const t = new URLSearchParams(window.location.search).get('tab')
+      if (t === 'requests') setTab('requests')
+      if (t === 'mechanic') setTab('mechanic')
     }
-
     return () => { cancelled = true; clearTimeout(timeout) }
   }, [])
 
   const filtered = orders.filter(so => {
     if (statusFilter !== 'all' && so.status !== statusFilter) return false
-    if (teamFilter !== 'all' && so.team !== teamFilter) return false
     if (search) {
       const q = search.toLowerCase()
       if (!(so.so_number?.toLowerCase().includes(q) || (so.assets as any)?.unit_number?.toLowerCase().includes(q) || (so.customers as any)?.company_name?.toLowerCase().includes(q) || so.complaint?.toLowerCase().includes(q))) return false
@@ -86,8 +80,8 @@ export default function OrdersPage() {
     return true
   })
 
-  const newRequests = requests.filter(r => r.status === 'new')
-  const pendingMech = mechRequests.filter(r => r.status === 'pending')
+  const newReqs = (requests ?? []).filter((r: any) => r.status === 'new')
+  const pendingMech = (mechRequests ?? []).filter((r: any) => r.status === 'pending')
 
   async function convertRequest(id: string) {
     const res = await fetch('/api/service-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'convert', request_id: id, user_id: user?.id }) })
@@ -100,183 +94,191 @@ export default function OrdersPage() {
     setRequests(prev => prev.filter(r => r.id !== id))
   }
 
-  async function respondMechRequest(id: string, st: string) {
+  async function respondMech(id: string, st: string) {
     await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'respond', request_id: id, status: st, response_note: st === 'approved' ? 'Approved' : 'Denied', responded_by: user?.id }) })
     setMechRequests(prev => prev.map(r => r.id === id ? { ...r, status: st } : r))
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
-      <div style={{ width: 28, height: 28, border: '2px solid rgba(29,111,232,.2)', borderTopColor: '#1D6FE8', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
-      <div style={{ color: '#7C8BA0', fontSize: 12 }}>Loading service orders...</div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    <div className="min-h-screen bg-bg flex items-center justify-center flex-col gap-3">
+      <Loader2 size={24} className="animate-spin text-teal" />
+      <span className="text-sm text-text-secondary">Loading repair orders...</span>
     </div>
   )
 
+  const TABS: { key: Tab; label: string; badge?: number; cls: string }[] = [
+    { key: 'orders', label: `All Orders (${orders.length})`, cls: 'text-teal' },
+    { key: 'requests', label: 'Service Requests', badge: newReqs.length, cls: 'text-warning' },
+    { key: 'mechanic', label: 'Mechanic Actions', badge: pendingMech.length, cls: 'text-purple' },
+    { key: 'completed', label: `Completed (${completedOrders.length})`, cls: 'text-success' },
+  ]
+
   return (
-    <div style={S.page}>
-      {error && <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.2)', borderRadius: 8, color: '#EF4444', fontSize: 12, marginBottom: 14 }}>{error}</div>}
+    <div className="bg-bg min-h-screen text-text-primary p-6">
+      {error && <div className="px-3 py-2.5 bg-error/10 border border-error/20 rounded-md text-xs text-error mb-4">{error}</div>}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div>
-          <div style={S.title}>Service Orders</div>
-          <div style={{ fontSize: 12, color: '#7C8BA0' }}>{filtered.length} orders · {newRequests.length} requests · {pendingMech.length} mechanic actions</div>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Repair Orders</h1>
+          <p className="text-sm text-text-secondary">{filtered.length} orders &middot; {newReqs.length} requests &middot; {pendingMech.length} mechanic actions</p>
         </div>
-        <button style={S.btn} onClick={() => window.location.href = '/orders/new'}>+ New Service Order</button>
+        <a href="/orders/new" className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-teal text-bg rounded-md text-sm font-bold hover:bg-teal-hover transition-colors duration-150 no-underline">
+          <Plus size={16} strokeWidth={2} /> New Repair Order
+        </a>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16, flexWrap: 'wrap' }}>
-        {[
-          { key: 'orders' as Tab, label: `All Orders (${orders.length})`, color: '#4D9EFF' },
-          { key: 'requests' as Tab, label: 'Service Requests', badge: newRequests.length, color: '#F59E0B' },
-          { key: 'mechanic' as Tab, label: 'Mechanic Actions', badge: pendingMech.length, color: '#8B5CF6' },
-          { key: 'completed' as Tab, label: `Completed (${completedOrders.length})`, color: '#1DB870' },
-        ].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: tab === t.key ? `${t.color}15` : '#0D0F12', color: tab === t.key ? t.color : '#48536A',
-          }}>
+      <div className="flex gap-1 mb-4 flex-wrap">
+        {TABS.map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)} className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-150 ${tab === t.key ? `bg-surface-2 ${t.cls}` : 'text-text-tertiary hover:text-text-secondary'}`}>
             {t.label}
-            {t.badge && t.badge > 0 ? <span style={{ background: t.color, color: '#000', fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 10, marginLeft: 6 }}>{t.badge}</span> : null}
+            {(t.badge ?? 0) > 0 && <span className={`ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${t.key === 'requests' ? 'bg-warning text-bg' : 'bg-purple text-white'}`}>{t.badge}</span>}
           </button>
         ))}
       </div>
 
       {/* TAB 1: ALL ORDERS */}
       {tab === 'orders' && <>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
-          <input style={{ padding: '7px 12px', borderRadius: 8, background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', color: '#DDE3EE', fontSize: 11, outline: 'none', fontFamily: 'inherit', width: 200 }}
-            placeholder="SO #, truck, customer..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div className="flex gap-2 flex-wrap mb-3 items-center">
+          <input className="px-3 py-2 bg-surface-2 border border-brand-border rounded-md text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-teal transition-colors duration-150 w-52"
+            placeholder="RO, unit, customer..." value={search} onChange={e => setSearch(e.target.value)} />
           {['all', 'draft', 'in_progress', 'waiting_parts', 'good_to_go'].map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '5px 12px', borderRadius: 100, fontSize: 10, fontWeight: 600, cursor: 'pointer', border: statusFilter === s ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)', background: statusFilter === s ? 'rgba(29,111,232,.1)' : '#1C2130', color: statusFilter === s ? '#4D9EFF' : '#7C8BA0' }}>
-              {s === 'all' ? 'All' : STATUS_MAP[s]?.label || s}
+            <button key={s} onClick={() => setStatusFilter(s)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors duration-150 ${statusFilter === s ? 'bg-teal/10 text-teal border border-teal/30' : 'bg-surface-2 text-text-tertiary border border-brand-border hover:text-text-secondary'}`}>
+              {s === 'all' ? 'All' : STATUS_MAP[s]?.label ?? s}
             </button>
           ))}
         </div>
-        <div style={S.card}>
+        <div className="bg-surface border border-brand-border rounded-lg overflow-hidden">
           {filtered.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#7C8BA0' }}>No service orders yet. Click "+ New Service Order" to create one.</div>
+            <div className="py-12 text-center text-text-secondary text-sm">No repair orders yet. Create one to get started.</div>
           ) : (
-            <table style={S.table}>
-              <thead><tr>{['SO #', 'Truck', 'Customer', 'Complaint', 'Tech', 'Status', 'Priority', 'Total'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
-              <tbody>
-                {filtered.map(so => {
-                  const st = STATUS_MAP[so.status] || { label: so.status, color: '#7C8BA0' }
-                  return (
-                    <tr key={so.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/orders/${so.id}`}>
-                      <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 10, color: '#4D9EFF', fontWeight: 700 }}>{so.so_number}</td>
-                      <td style={{ ...S.td, fontWeight: 700, color: '#F0F4FF' }}>#{(so.assets as any)?.unit_number || '—'}</td>
-                      <td style={{ ...S.td, color: '#DDE3EE' }}>{(so.customers as any)?.company_name || '—'}</td>
-                      <td style={{ ...S.td, color: '#7C8BA0', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{so.complaint || '—'}</td>
-                      <td style={{ ...S.td, color: '#DDE3EE' }}>{(so.users as any)?.full_name || '—'}</td>
-                      <td style={S.td}><span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 8, fontWeight: 700, background: `${st.color}18`, color: st.color }}>{st.label}</span></td>
-                      <td style={{ ...S.td, fontSize: 9, fontWeight: 700, color: so.priority === 'critical' ? '#D94F4F' : so.priority === 'high' ? '#D4882A' : '#7C8BA0' }}>{so.priority?.toUpperCase()}</td>
-                      <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 10 }}>{so.grand_total ? `$${so.grand_total.toFixed(0)}` : '—'}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead><tr className="bg-surface-2">
+                  {['RO', 'Unit', 'Customer', 'Complaint', 'Tech', 'Status', 'Priority', 'Total'].map(h => (
+                    <th key={h} className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono px-3 py-2 text-left whitespace-nowrap">{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {filtered.map(so => {
+                    const st = STATUS_MAP[so.status] ?? { label: so.status, cls: 'text-text-tertiary bg-text-tertiary/15' }
+                    return (
+                      <tr key={so.id} className="border-b border-brand-border/50 hover:bg-surface-2 cursor-pointer transition-colors duration-150" onClick={() => window.location.href = `/orders/${so.id}`}>
+                        <td className="px-3 py-2.5 font-mono text-xs text-teal font-bold">{so.so_number}</td>
+                        <td className="px-3 py-2.5 text-sm font-semibold text-text-primary">#{(so.assets as any)?.unit_number ?? '?'}</td>
+                        <td className="px-3 py-2.5 text-sm text-text-secondary">{(so.customers as any)?.company_name ?? '—'}</td>
+                        <td className="px-3 py-2.5 text-sm text-text-secondary max-w-[180px] truncate">{so.complaint ?? '—'}</td>
+                        <td className="px-3 py-2.5 text-sm text-text-secondary">{(so.users as any)?.full_name ?? '—'}</td>
+                        <td className="px-3 py-2.5"><span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-sm ${st.cls}`}>{st.label}</span></td>
+                        <td className="px-3 py-2.5"><span className={`text-[10px] font-bold uppercase font-mono ${so.priority === 'critical' ? 'text-error' : so.priority === 'high' ? 'text-warning' : 'text-text-tertiary'}`}>{so.priority?.toUpperCase()}</span></td>
+                        <td className="px-3 py-2.5 font-mono text-sm">{so.grand_total ? `$${so.grand_total.toFixed(0)}` : '—'}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </>}
 
       {/* TAB 2: SERVICE REQUESTS */}
       {tab === 'requests' && (
-        <div style={S.card}>
-          {requests.length === 0 ? <div style={{ padding: 40, textAlign: 'center', color: '#7C8BA0' }}>No service requests. Check-ins from the kiosk will appear here.</div> : (
-            <table style={S.table}>
-              <thead><tr>{['Source', 'Customer', 'Unit', 'Description', 'Created', 'Status', 'Actions'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
-              <tbody>
-                {requests.map(r => (
-                  <tr key={r.id}>
-                    <td style={{ ...S.td, fontSize: 9, textTransform: 'uppercase', color: '#7C8BA0' }}>{r.source?.replace(/_/g, ' ')}</td>
-                    <td style={{ ...S.td, fontWeight: 700, color: '#F0F4FF' }}>{r.company_name || '—'}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#4D9EFF' }}>#{r.unit_number || '—'}</td>
-                    <td style={{ ...S.td, color: '#DDE3EE', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description}</td>
-                    <td style={{ ...S.td, fontSize: 10, fontFamily: 'monospace', color: '#7C8BA0' }}>{new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: r.status === 'new' ? '#F59E0B' : r.status === 'converted' ? '#1DB870' : '#D94F4F' }}>{r.status}</span></td>
-                    <td style={S.td}>
-                      {r.status === 'new' ? (
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => convertRequest(r.id)} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Convert to SO</button>
-                          <button onClick={() => rejectRequest(r.id)} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(239,68,68,.3)', background: 'none', color: '#EF4444', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Reject</button>
-                        </div>
-                      ) : r.converted_so_id ? <a href={`/orders/${r.converted_so_id}`} style={{ fontSize: 10, color: '#4D9EFF', textDecoration: 'none' }}>View SO →</a> : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="bg-surface border border-brand-border rounded-lg overflow-hidden">
+          {(requests ?? []).length === 0 ? <div className="py-12 text-center text-text-secondary text-sm">No service requests. Check-ins from the kiosk appear here.</div> : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead><tr className="bg-surface-2">
+                  {['Source', 'Customer', 'Unit', 'Description', 'Created', 'Status', 'Actions'].map(h => <th key={h} className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono px-3 py-2 text-left whitespace-nowrap">{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {requests.map((r: any) => (
+                    <tr key={r.id} className="border-b border-brand-border/50">
+                      <td className="px-3 py-2.5 text-[10px] uppercase text-text-tertiary">{r.source?.replace(/_/g, ' ')}</td>
+                      <td className="px-3 py-2.5 text-sm font-semibold text-text-primary">{r.company_name ?? '—'}</td>
+                      <td className="px-3 py-2.5 font-mono text-xs text-teal">#{r.unit_number ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-sm text-text-secondary max-w-[220px] truncate">{r.description}</td>
+                      <td className="px-3 py-2.5 text-xs font-mono text-text-tertiary">{new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
+                      <td className="px-3 py-2.5"><span className={`text-[10px] font-bold uppercase ${r.status === 'new' ? 'text-warning' : r.status === 'converted' ? 'text-success' : 'text-error'}`}>{r.status}</span></td>
+                      <td className="px-3 py-2.5">
+                        {r.status === 'new' ? (
+                          <div className="flex gap-1.5">
+                            <button onClick={() => convertRequest(r.id)} className="px-2.5 py-1 bg-teal text-bg rounded-sm text-[10px] font-bold hover:bg-teal-hover transition-colors">Convert to RO</button>
+                            <button onClick={() => rejectRequest(r.id)} className="px-2.5 py-1 border border-error/30 text-error rounded-sm text-[10px] font-semibold hover:bg-error/10 transition-colors">Reject</button>
+                          </div>
+                        ) : r.converted_so_id ? <a href={`/orders/${r.converted_so_id}`} className="text-xs text-teal no-underline hover:underline">View RO</a> : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
 
       {/* TAB 3: MECHANIC ACTIONS */}
       {tab === 'mechanic' && (
-        <div style={S.card}>
-          {mechRequests.length === 0 ? <div style={{ padding: 40, textAlign: 'center', color: '#7C8BA0' }}>No mechanic action requests. These appear when mechanics request parts or approvals.</div> : (
-            <table style={S.table}>
-              <thead><tr>{['SO #', 'Mechanic', 'Type', 'Description', 'Created', 'Status', 'Actions'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
-              <tbody>
-                {mechRequests.map(r => (
-                  <tr key={r.id}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 10, color: '#4D9EFF' }}>{(r.service_orders as any)?.so_number || '—'}</td>
-                    <td style={{ ...S.td, color: '#F0F4FF' }}>{(r.users as any)?.full_name || '—'}</td>
-                    <td style={{ ...S.td, fontSize: 10, textTransform: 'uppercase', color: '#8B5CF6' }}>{r.request_type?.replace(/_/g, ' ')}</td>
-                    <td style={{ ...S.td, color: '#DDE3EE', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description}</td>
-                    <td style={{ ...S.td, fontSize: 10, fontFamily: 'monospace', color: '#7C8BA0' }}>{new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: r.status === 'pending' ? '#F59E0B' : r.status === 'approved' ? '#1DB870' : '#D94F4F' }}>{r.status}</span></td>
-                    <td style={S.td}>
-                      {r.status === 'pending' && (
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button onClick={() => respondMechRequest(r.id, 'approved')} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: '#1DB870', color: '#000', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>Approve</button>
-                          <button onClick={() => respondMechRequest(r.id, 'denied')} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(239,68,68,.3)', background: 'none', color: '#EF4444', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>Deny</button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="bg-surface border border-brand-border rounded-lg overflow-hidden">
+          {(mechRequests ?? []).length === 0 ? <div className="py-12 text-center text-text-secondary text-sm">No mechanic action requests.</div> : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead><tr className="bg-surface-2">
+                  {['RO', 'Mechanic', 'Type', 'Description', 'Created', 'Status', 'Actions'].map(h => <th key={h} className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono px-3 py-2 text-left whitespace-nowrap">{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {mechRequests.map((r: any) => (
+                    <tr key={r.id} className="border-b border-brand-border/50">
+                      <td className="px-3 py-2.5 font-mono text-xs text-teal">{(r.service_orders as any)?.so_number ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-sm text-text-primary">{(r.users as any)?.full_name ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-[10px] uppercase text-purple font-bold">{r.request_type?.replace(/_/g, ' ')}</td>
+                      <td className="px-3 py-2.5 text-sm text-text-secondary max-w-[200px] truncate">{r.description}</td>
+                      <td className="px-3 py-2.5 text-xs font-mono text-text-tertiary">{new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
+                      <td className="px-3 py-2.5"><span className={`text-[10px] font-bold uppercase ${r.status === 'pending' ? 'text-warning' : r.status === 'approved' ? 'text-success' : 'text-error'}`}>{r.status}</span></td>
+                      <td className="px-3 py-2.5">
+                        {r.status === 'pending' && (
+                          <div className="flex gap-1.5">
+                            <button onClick={() => respondMech(r.id, 'approved')} className="px-2.5 py-1 bg-success text-bg rounded-sm text-[10px] font-bold hover:opacity-90 transition-opacity">Approve</button>
+                            <button onClick={() => respondMech(r.id, 'denied')} className="px-2.5 py-1 border border-error/30 text-error rounded-sm text-[10px] font-semibold hover:bg-error/10 transition-colors">Deny</button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
 
       {/* TAB 4: COMPLETED */}
       {tab === 'completed' && (
-        <div style={S.card}>
-          {completedOrders.length === 0 ? <div style={{ padding: 40, textAlign: 'center', color: '#7C8BA0' }}>No completed orders yet.</div> : (
-            <table style={S.table}>
-              <thead><tr>{['SO #', 'Truck', 'Customer', 'Complaint', 'Total', 'Completed'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
-              <tbody>
-                {completedOrders.map(so => (
-                  <tr key={so.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/orders/${so.id}`}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 10, color: '#4D9EFF', fontWeight: 700 }}>{so.so_number}</td>
-                    <td style={{ ...S.td, fontWeight: 700, color: '#F0F4FF' }}>#{(so.assets as any)?.unit_number}</td>
-                    <td style={{ ...S.td, color: '#DDE3EE' }}>{(so.customers as any)?.company_name}</td>
-                    <td style={{ ...S.td, color: '#7C8BA0', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{so.complaint}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace' }}>{so.grand_total ? `$${so.grand_total.toFixed(0)}` : '—'}</td>
-                    <td style={{ ...S.td, fontSize: 10, color: '#7C8BA0' }}>{so.completed_at ? new Date(so.completed_at).toLocaleDateString() : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="bg-surface border border-brand-border rounded-lg overflow-hidden">
+          {(completedOrders ?? []).length === 0 ? <div className="py-12 text-center text-text-secondary text-sm">No completed orders yet.</div> : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[500px]">
+                <thead><tr className="bg-surface-2">
+                  {['RO', 'Unit', 'Customer', 'Complaint', 'Total', 'Completed'].map(h => <th key={h} className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono px-3 py-2 text-left whitespace-nowrap">{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {completedOrders.map((so: any) => (
+                    <tr key={so.id} className="border-b border-brand-border/50 hover:bg-surface-2 cursor-pointer transition-colors" onClick={() => window.location.href = `/orders/${so.id}`}>
+                      <td className="px-3 py-2.5 font-mono text-xs text-teal font-bold">{so.so_number}</td>
+                      <td className="px-3 py-2.5 text-sm font-semibold text-text-primary">#{(so.assets as any)?.unit_number}</td>
+                      <td className="px-3 py-2.5 text-sm text-text-secondary">{(so.customers as any)?.company_name}</td>
+                      <td className="px-3 py-2.5 text-sm text-text-secondary max-w-[200px] truncate">{so.complaint}</td>
+                      <td className="px-3 py-2.5 font-mono text-sm">{so.grand_total ? `$${so.grand_total.toFixed(0)}` : '—'}</td>
+                      <td className="px-3 py-2.5 text-xs text-text-tertiary">{so.completed_at ? new Date(so.completed_at).toLocaleDateString() : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
     </div>
   )
-}
-
-const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' },
-  card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' },
-  btn: { padding: '8px 16px', borderRadius: 8, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
-  table: { width: '100%', borderCollapse: 'collapse' as const, minWidth: 640 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { fontSize: 11, padding: '10px', borderBottom: '1px solid rgba(255,255,255,.025)' },
 }
