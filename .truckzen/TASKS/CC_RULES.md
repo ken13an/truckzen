@@ -166,3 +166,22 @@ git checkout main && git merge dev --no-edit && git push origin main && git chec
 ```
 
 Never skip this step. If you push to dev without merging to main, the changes will NOT appear on truckzen.pro.
+
+---
+
+## Visual Verification Rule
+
+After every page restyle, before committing, verify these visually:
+
+1. Buttons have visible solid backgrounds, not just borders
+2. Cards have visible background fills (not transparent)
+3. Text colors are correct: #EDEDF0 for primary, #9898A5 for secondary, #00E0B0 for teal accents
+4. No element looks unstyled, flat, or invisible
+
+If any Tailwind class you used does not produce a visible style, switch to raw hex bracket notation immediately. Examples:
+- `bg-teal` does not work → use `bg-[#00E0B0]`
+- `bg-surface` does not work → use `bg-[#111117]`
+- `text-text-primary` does not work → use `text-[#EDEDF0]`
+- `border-brand-border` does not work → use `border-[#28283A]`
+
+Never commit a page that would look broken to a user. When in doubt, use raw hex values — they always compile correctly in any Tailwind version.
