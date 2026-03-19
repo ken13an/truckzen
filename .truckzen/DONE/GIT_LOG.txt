@@ -1,3 +1,2 @@
-# Git Log
-
-CC: Overwrite this file with the output of `git push` after every task.
+To https://github.com/ken13an/truckzen.git
+   04fbb51..140f65b  dev -> dev
