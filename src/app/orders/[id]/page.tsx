@@ -9,7 +9,7 @@ const STATUS_CFG: Record<string, { label: string; color: string }> = {
   not_started:           { label:'Not Started',          color:'#7C8BA0' },
   not_approved:          { label:'Not Approved',          color:'#D4882A' },
   waiting_approval:      { label:'Waiting Approval',      color:'#D4882A' },
-  in_progress:           { label:'In Progress',           color:'#4D9EFF' },
+  in_progress:           { label:'In Progress',           color:'#00E0B0' },
   waiting_parts:         { label:'Waiting Parts',         color:'#E8692A' },
   done:                  { label:'Done',                  color:'#1DB870' },
   ready_final_inspection:{ label:'Ready for Inspection',  color:'#8B5CF6' },
@@ -133,7 +133,7 @@ export default function SODetailPage() {
       {/* Header */}
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:'#4D9EFF', fontWeight:700, marginBottom:4 }}>{so.so_number}</div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:'#00E0B0', fontWeight:700, marginBottom:4 }}>{so.so_number}</div>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', letterSpacing:'.02em' }}>
             {asset?.year} {asset?.make} {asset?.model} — Unit #{asset?.unit_number}
           </div>
@@ -168,12 +168,12 @@ export default function SODetailPage() {
             <div style={{ ...S.card, border:'1px solid rgba(139,92,246,.2)', background:'rgba(139,92,246,.03)' }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                 <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', display:'flex', alignItems:'center', gap:7 }}>
-                  <div style={{ width:20, height:20, background:'linear-gradient(135deg,#8B5CF6,#1D6FE8)', borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <div style={{ width:20, height:20, background:'linear-gradient(135deg,#8B5CF6,#00E0B0)', borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="white" strokeWidth="2"><path d="M12 2a3 3 0 013 3v7a3 3 0 01-6 0V5a3 3 0 013-3z"/></svg>
                   </div>
                   AI Service Writer
                 </div>
-                <button style={{ ...S.btn, background:'linear-gradient(135deg,#8B5CF6,#1D6FE8)', color:'#fff', padding:'6px 14px' }}
+                <button style={{ ...S.btn, background:'linear-gradient(135deg,#8B5CF6,#00E0B0)', color:'#fff', padding:'6px 14px' }}
                   onClick={generateAI} disabled={aiLoading}>
                   {aiLoading ? 'Generating...' : so.cause ? 'Regenerate' : 'Generate from Complaint'}
                 </button>
@@ -191,7 +191,7 @@ export default function SODetailPage() {
               </div>
 
               <div style={{ marginTop:10, display:'flex', gap:8 }}>
-                <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }}
+                <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00805F)', color:'#fff' }}
                   onClick={saveCauseCorrection} disabled={saving}>
                   {saving ? 'Saving...' : 'Save to Service Order'}
                 </button>
@@ -203,7 +203,7 @@ export default function SODetailPage() {
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                 <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Labor & Parts</div>
                 <div style={{ display:'flex', gap:6 }}>
-                  <button style={{ ...S.btn, background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.2)' }}>+ Labor</button>
+                  <button style={{ ...S.btn, background:'rgba(0,224,176,.1)', color:'#00E0B0', border:'1px solid rgba(0,224,176,.2)' }}>+ Labor</button>
                   <button style={{ ...S.btn, background:'rgba(29,184,112,.1)', color:'#1DB870', border:'1px solid rgba(29,184,112,.2)' }}>+ Part</button>
                 </div>
               </div>
@@ -220,7 +220,7 @@ export default function SODetailPage() {
                     {lines.map((l: any) => (
                       <tr key={l.id} style={{ borderBottom:'1px solid rgba(255,255,255,.03)' }}>
                         <td style={{ padding:'7px 8px' }}>
-                          <span style={{ fontSize:8, fontWeight:700, fontFamily:'monospace', padding:'2px 6px', borderRadius:4, background: l.line_type==='labor'?'rgba(29,111,232,.15)':'rgba(29,184,112,.15)', color: l.line_type==='labor'?'#4D9EFF':'#1DB870' }}>
+                          <span style={{ fontSize:8, fontWeight:700, fontFamily:'monospace', padding:'2px 6px', borderRadius:4, background: l.line_type==='labor'?'rgba(0,224,176,.15)':'rgba(29,184,112,.15)', color: l.line_type==='labor'?'#00E0B0':'#1DB870' }}>
                             {l.line_type.toUpperCase()}
                           </span>
                         </td>
@@ -237,7 +237,7 @@ export default function SODetailPage() {
                 <div style={{ display:'flex', justifyContent:'flex-end', gap:24, paddingTop:10, marginTop:10, borderTop:'1px solid rgba(255,255,255,.06)' }}>
                   <div style={{ textAlign:'right' }}>
                     <div style={{ fontSize:10, color:'#48536A', fontFamily:'monospace' }}>LABOR</div>
-                    <div style={{ fontFamily:'monospace', fontWeight:700, color:'#4D9EFF' }}>${laborTotal.toFixed(2)}</div>
+                    <div style={{ fontFamily:'monospace', fontWeight:700, color:'#00E0B0' }}>${laborTotal.toFixed(2)}</div>
                   </div>
                   <div style={{ textAlign:'right' }}>
                     <div style={{ fontSize:10, color:'#48536A', fontFamily:'monospace' }}>PARTS</div>
@@ -261,7 +261,7 @@ export default function SODetailPage() {
               <div style={{ fontSize:12, color:'#DDE3EE' }}>{asset?.year} {asset?.make} {asset?.model}</div>
               {asset?.vin && <div style={{ fontSize:10, color:'#48536A', fontFamily:'monospace', marginTop:4 }}>VIN: {asset.vin}</div>}
               {asset?.odometer && <div style={{ fontSize:11, color:'#7C8BA0', marginTop:4 }}>{asset.odometer.toLocaleString()} mi</div>}
-              <a href={`/fleet/${asset?.id}`} style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none', display:'block', marginTop:8 }}>View vehicle history →</a>
+              <a href={`/fleet/${asset?.id}`} style={{ fontSize:11, color:'#00E0B0', textDecoration:'none', display:'block', marginTop:8 }}>View vehicle history →</a>
             </div>
 
             {/* Customer */}
@@ -287,10 +287,10 @@ export default function SODetailPage() {
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <div>
                     <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF', fontFamily:'monospace' }}>{inv.invoice_number}</div>
-                    <div style={{ fontSize:11, color: inv.status==='paid'?'#1DB870':'#4D9EFF', marginTop:2 }}>{inv.status?.toUpperCase()} · ${(inv.total||0).toFixed(0)}</div>
+                    <div style={{ fontSize:11, color: inv.status==='paid'?'#1DB870':'#00E0B0', marginTop:2 }}>{inv.status?.toUpperCase()} · ${(inv.total||0).toFixed(0)}</div>
                   </div>
                   {inv.balance_due > 0 && (
-                    <a href={`/invoices/${inv.id}`} style={{ padding:'6px 12px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, textDecoration:'none' }}>
+                    <a href={`/invoices/${inv.id}`} style={{ padding:'6px 12px', background:'linear-gradient(135deg,#00E0B0,#00805F)', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, textDecoration:'none' }}>
                       View Invoice
                     </a>
                   )}

@@ -240,7 +240,7 @@ export default function TechMobilePage() {
   }
 
   const statusColor: Record<string, string> = {
-    draft: '#48536A', in_progress: '#1D6FE8', waiting_parts: '#F59E0B',
+    draft: '#48536A', in_progress: '#00E0B0', waiting_parts: '#F59E0B',
     waiting_approval: '#F59E0B', done: '#22C55E', good_to_go: '#22C55E',
     ready_final_inspection: '#8B5CF6', not_approved: '#EF4444',
   }
@@ -259,7 +259,7 @@ export default function TechMobilePage() {
       {/* Header */}
       <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #1A1D23', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {view === 'detail' ? (
-          <button onClick={() => { setView('list'); setSelected(null); setShowParts(false) }} style={{ background: 'none', border: 'none', color: '#4D9EFF', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+          <button onClick={() => { setView('list'); setSelected(null); setShowParts(false) }} style={{ background: 'none', border: 'none', color: '#00E0B0', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0 }}>
             ← Back
           </button>
         ) : (
@@ -270,10 +270,10 @@ export default function TechMobilePage() {
 
       {/* Clock banner */}
       {clockedIn && (
-        <div style={{ background: 'rgba(29,111,232,.1)', borderBottom: '1px solid rgba(29,111,232,.2)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: 'rgba(0,224,176,.1)', borderBottom: '1px solid rgba(0,224,176,.2)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <span style={{ fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em' }}>Clocked in </span>
-            <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 16, fontWeight: 600, color: '#4D9EFF' }}>{fmtTime(elapsed)}</span>
+            <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 16, fontWeight: 600, color: '#00E0B0' }}>{fmtTime(elapsed)}</span>
           </div>
           <button onClick={clockOut} style={{ ...S.smallBtn, background: '#1A1D23', color: '#EF4444', borderColor: '#EF4444' }}>Clock Out</button>
         </div>
@@ -281,7 +281,7 @@ export default function TechMobilePage() {
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 16, left: 20, right: 20, zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
+        <div style={{ position: 'fixed', top: 16, left: 20, right: 20, zIndex: 100, background: '#00E0B0', color: '#fff', padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
           {toast}
         </div>
       )}
@@ -301,7 +301,7 @@ export default function TechMobilePage() {
           <button key={k} onClick={() => { setTab(k); setView('list'); setSelected(null); setShowParts(false); setShowDVIR(false) }}
             style={{ flex: 1, padding: '10px 0 12px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center' }}>
             <div style={{ fontSize: 20 }}>{icon}</div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: tab === k ? '#4D9EFF' : '#48536A', marginTop: 2 }}>{label}</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: tab === k ? '#00E0B0' : '#48536A', marginTop: 2 }}>{label}</div>
           </button>
         ))}
       </div>
@@ -337,7 +337,7 @@ export default function TechMobilePage() {
           style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 16, marginBottom: 10, cursor: 'pointer' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
             <div>
-              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 13, fontWeight: 600, color: '#4D9EFF' }}>{so.so_number}</span>
+              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 13, fontWeight: 600, color: '#00E0B0' }}>{so.so_number}</span>
               {so.priority === 'high' || so.priority === 'critical' ? (
                 <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: so.priority === 'critical' ? '#EF4444' : '#F59E0B', textTransform: 'uppercase' }}>
                   {priorityIcon[so.priority]} {so.priority}
@@ -357,7 +357,7 @@ export default function TechMobilePage() {
           <div style={{ fontSize: 12, color: '#7C8BA0' }}>{(so.customers as any)?.company_name || '—'}</div>
           {so.complaint && <div style={{ fontSize: 12, color: '#A0AABF', marginTop: 6, lineHeight: 1.5 }}>{so.complaint.slice(0, 100)}{so.complaint.length > 100 ? '...' : ''}</div>}
           {clockedIn === so.id && (
-            <div style={{ marginTop: 8, fontSize: 12, color: '#4D9EFF', fontWeight: 600 }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: '#00E0B0', fontWeight: 600 }}>
               ⏱ Clocked in — {fmtTime(elapsed)}
             </div>
           )}
@@ -402,7 +402,7 @@ export default function TechMobilePage() {
         <div>
           <div style={{ fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em' }}>Time</div>
           {isClockedHere ? (
-            <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 20, fontWeight: 700, color: '#4D9EFF' }}>{fmtTime(elapsed)}</div>
+            <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 20, fontWeight: 700, color: '#00E0B0' }}>{fmtTime(elapsed)}</div>
           ) : (
             <div style={{ fontSize: 14, color: '#48536A' }}>{clockedIn ? 'On another job' : 'Not clocked in'}</div>
           )}
@@ -432,7 +432,7 @@ export default function TechMobilePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {so.status !== 'in_progress' && (
             <button onClick={() => updateStatus(so.id, 'in_progress')} disabled={saving}
-              style={{ ...S.bigBtn, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)' }}>
+              style={{ ...S.bigBtn, background: 'linear-gradient(135deg,#00E0B0,#00805F)' }}>
               Start Work
             </button>
           )}
@@ -450,7 +450,7 @@ export default function TechMobilePage() {
           )}
           {so.status === 'waiting_parts' && (
             <button onClick={() => updateStatus(so.id, 'in_progress')} disabled={saving}
-              style={{ ...S.bigBtn, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)' }}>
+              style={{ ...S.bigBtn, background: 'linear-gradient(135deg,#00E0B0,#00805F)' }}>
               Resume Work (Parts Received)
             </button>
           )}
@@ -462,7 +462,7 @@ export default function TechMobilePage() {
         <div style={{ ...S.card, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
           <div><div style={{ fontSize: 10, color: '#7C8BA0' }}>LABOR</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.labor_total?.toFixed(0)}</div></div>
           <div><div style={{ fontSize: 10, color: '#7C8BA0' }}>PARTS</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.parts_total?.toFixed(0)}</div></div>
-          <div><div style={{ fontSize: 10, color: '#7C8BA0' }}>TOTAL</div><div style={{ fontSize: 16, fontWeight: 700, color: '#4D9EFF' }}>${so.grand_total?.toFixed(0)}</div></div>
+          <div><div style={{ fontSize: 10, color: '#7C8BA0' }}>TOTAL</div><div style={{ fontSize: 16, fontWeight: 700, color: '#00E0B0' }}>${so.grand_total?.toFixed(0)}</div></div>
         </div>
       )}
     </>
@@ -477,7 +477,7 @@ export default function TechMobilePage() {
         <div key={so.id} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10, padding: 12, marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#4D9EFF' }}>{so.so_number}</span>
+              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#00E0B0' }}>{so.so_number}</span>
               {so.bay && <span style={{ fontSize: 10, color: '#48536A', background: '#1A1D23', padding: '2px 6px', borderRadius: 4 }}>Bay {so.bay}</span>}
             </div>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F4FF', marginTop: 4 }}>#{(so.assets as any)?.unit_number || '—'}</div>
@@ -514,7 +514,7 @@ export default function TechMobilePage() {
         <div key={p.part_number} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10, padding: 12, marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#4D9EFF' }}>{p.part_number}</div>
+              <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#00E0B0' }}>{p.part_number}</div>
               <div style={{ fontSize: 14, color: '#F0F4FF', marginTop: 2 }}>{p.description}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -552,7 +552,7 @@ export default function TechMobilePage() {
         <div style={{ display: 'flex', gap: 10 }}>
           {(['pre_trip', 'post_trip'] as const).map(t => (
             <button key={t} onClick={() => setDvirType(t)}
-              style={{ flex: 1, padding: '12px 0', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: dvirType === t ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: dvirType === t ? 'rgba(29,111,232,.1)' : '#0D0F12', color: dvirType === t ? '#4D9EFF' : '#7C8BA0' }}>
+              style={{ flex: 1, padding: '12px 0', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: dvirType === t ? '1px solid #00E0B0' : '1px solid #1A1D23', background: dvirType === t ? 'rgba(0,224,176,.1)' : '#0D0F12', color: dvirType === t ? '#00E0B0' : '#7C8BA0' }}>
               {t === 'pre_trip' ? 'Pre-Trip' : 'Post-Trip'}
             </button>
           ))}
@@ -582,8 +582,8 @@ const S: Record<string, React.CSSProperties> = {
   sectionLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 },
   fieldLabel: { fontSize: 12, fontWeight: 600, color: '#7C8BA0', marginBottom: 6 },
   input: { width: '100%', padding: '12px 14px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 9, color: '#DDE3EE', fontSize: 14, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' },
-  actionBtn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', whiteSpace: 'nowrap' },
-  bigBtn: { padding: '16px 24px', borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', textAlign: 'center', width: '100%' },
+  actionBtn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', whiteSpace: 'nowrap' },
+  bigBtn: { padding: '16px 24px', borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', textAlign: 'center', width: '100%' },
   tileBtn: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '16px 12px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, cursor: 'pointer', color: '#DDE3EE', fontSize: 13, fontWeight: 600, fontFamily: "'Instrument Sans',sans-serif" },
   smallBtn: { padding: '6px 14px', borderRadius: 7, border: '1px solid #1A1D23', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'none' },
   modal: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', zIndex: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: 16 },

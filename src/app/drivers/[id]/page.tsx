@@ -127,7 +127,7 @@ export default function DriverDetailPage() {
               </div>
             </div>
             <div style={{ marginBottom:12 }}><label style={S.label}>Notes</label><textarea style={{ ...S.input, minHeight:60, resize:'vertical' as const }} value={edit?.notes||''} onChange={e=>setEdit((d:any)=>({...d,notes:e.target.value}))}/></div>
-            <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
+            <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00805F)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
           </div>
         </div>
 

@@ -46,7 +46,7 @@ export async function sendWelcomeEmail(to: string, name: string, shopName: strin
         <div style="font-family:sans-serif;background:#060708;color:#DDE3EE;padding:40px;max-width:480px;margin:0 auto">
           <div style="font-size:22px;font-weight:700;margin-bottom:16px">Welcome, ${name}</div>
           <p style="color:#7C8BA0;line-height:1.7">You've been added to TruckZen for ${shopName}. Click below to set your password and log in.</p>
-          <a href="${loginUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:linear-gradient(135deg,#1D6FE8,#1248B0);color:#fff;text-decoration:none;border-radius:9px;font-weight:700">Set Password & Log In</a>
+          <a href="${loginUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:linear-gradient(135deg,#00E0B0,#00805F);color:#fff;text-decoration:none;border-radius:9px;font-weight:700">Set Password & Log In</a>
           <p style="color:#48536A;font-size:12px">If you didn't expect this email, you can ignore it.</p>
         </div>`,
     })
@@ -66,7 +66,7 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
         <div style="font-family:sans-serif;background:#060708;color:#DDE3EE;padding:40px;max-width:480px;margin:0 auto">
           <div style="font-size:22px;font-weight:700;margin-bottom:16px">Reset Password</div>
           <p style="color:#7C8BA0;line-height:1.7">Hi ${name}, click below to reset your TruckZen password. This link expires in 1 hour.</p>
-          <a href="${resetUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:linear-gradient(135deg,#1D6FE8,#1248B0);color:#fff;text-decoration:none;border-radius:9px;font-weight:700">Reset Password</a>
+          <a href="${resetUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:linear-gradient(135deg,#00E0B0,#00805F);color:#fff;text-decoration:none;border-radius:9px;font-weight:700">Reset Password</a>
           <p style="color:#48536A;font-size:12px">If you didn't request this, ignore it. Your password won't change.</p>
         </div>`,
     })

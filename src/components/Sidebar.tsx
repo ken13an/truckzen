@@ -9,6 +9,7 @@ import {
   RefreshCw, ShieldCheck, Contact, Upload, Lock, Smartphone, ClipboardCheck,
   CreditCard, Plug, ScrollText, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react'
+import Logo, { LogoIcon } from '@/components/Logo'
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {
   'layout-dashboard': LayoutDashboard, 'kanban': Kanban, 'clipboard-list': ClipboardList,
@@ -71,10 +72,10 @@ export default function Sidebar() {
     >
       {/* Logo */}
       <div className={`flex items-center border-b border-brand-border min-h-14 ${collapsed ? 'justify-center px-2 py-4' : 'justify-between px-4 py-4'}`}>
-        {!collapsed && (
-          <span className="text-base font-bold tracking-wide text-text-primary">
-            truck<span className="text-teal">zen</span><span className="text-teal">.</span>
-          </span>
+        {!collapsed ? (
+          <Logo size="sm" />
+        ) : (
+          <LogoIcon size="sm" />
         )}
         <button
           onClick={() => setCollapsed(c => !c)}

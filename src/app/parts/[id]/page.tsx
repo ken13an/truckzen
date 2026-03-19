@@ -55,7 +55,7 @@ export default function PartDetailPage() {
 
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
         <div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:'#4D9EFF', marginBottom:4 }}>{part.part_number || 'No Part #'}</div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:'#00E0B0', marginBottom:4 }}>{part.part_number || 'No Part #'}</div>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'#F0F4FF' }}>{part.description}</div>
           <div style={{ fontSize:12, color:'#7C8BA0', marginTop:4 }}>{part.category}</div>
         </div>
@@ -92,7 +92,7 @@ export default function PartDetailPage() {
             <div><label style={S.label}>Vendor</label><input style={S.input} value={edit.vendor||''} onChange={e=>setEdit((p:any)=>({...p,vendor:e.target.value}))}/></div>
             <div><label style={S.label}>Core Charge</label><input style={S.input} type="number" value={edit.core_charge||0} onChange={e=>setEdit((p:any)=>({...p,core_charge:parseFloat(e.target.value)||0}))}/></div>
           </div>
-          <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
+          <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00805F)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
         </div>
       )}
 

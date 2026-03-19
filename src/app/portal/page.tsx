@@ -31,7 +31,7 @@ export default function PortalPage() {
   }, [])
 
   const STATUS_COLOR: Record<string, string> = {
-    in_progress:'#4D9EFF', waiting_parts:'#E8692A', good_to_go:'#1DB870', done:'#1DB870',
+    in_progress:'#00E0B0', waiting_parts:'#E8692A', good_to_go:'#1DB870', done:'#1DB870',
     not_started:'#7C8BA0', waiting_approval:'#D4882A',
   }
   const STATUS_LABEL: Record<string, string> = {
@@ -50,10 +50,10 @@ export default function PortalPage() {
     <div style={S.page}>
       <div style={S.header}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <div style={{ width:28, height:28, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ width:28, height:28, background:'linear-gradient(135deg,#00E0B0,#00805F)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-          <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:'#F0F4FF' }}>TRUCK<span style={{ color:'#4D9EFF' }}>ZEN</span></span>
+          <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:'#F0F4FF' }}>TRUCK<span style={{ color:'#00E0B0' }}>ZEN</span></span>
         </div>
         <button onClick={() => supabase.auth.signOut().then(() => window.location.href='/login')}
           style={{ padding:'5px 12px', background:'transparent', border:'1px solid rgba(255,255,255,.08)', borderRadius:7, color:'#7C8BA0', fontSize:11, cursor:'pointer', fontFamily:'inherit' }}>Sign Out</button>
@@ -72,7 +72,7 @@ export default function PortalPage() {
           <div key={so.id} style={S.card}>
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
               <div>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#4D9EFF', marginBottom:3 }}>{so.so_number}</div>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#00E0B0', marginBottom:3 }}>{so.so_number}</div>
                 <div style={{ fontSize:14, fontWeight:700, color:'#F0F4FF' }}>Unit #{asset?.unit_number} — {asset?.year} {asset?.make}</div>
                 <div style={{ fontSize:11, color:'#7C8BA0', marginTop:3, lineHeight:1.4 }}>{so.complaint}</div>
               </div>
@@ -85,7 +85,7 @@ export default function PortalPage() {
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 {so.grand_total && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, fontWeight:700, color:'#DDE3EE' }}>${so.grand_total.toFixed(0)}</span>}
                 {inv && inv.balance_due > 0 && (
-                  <a href={`/pay/${inv.id}`} style={{ padding:'5px 12px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, textDecoration:'none' }}>
+                  <a href={`/pay/${inv.id}`} style={{ padding:'5px 12px', background:'linear-gradient(135deg,#00E0B0,#00805F)', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, textDecoration:'none' }}>
                     Pay ${inv.balance_due.toFixed(0)}
                   </a>
                 )}

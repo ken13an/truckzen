@@ -51,7 +51,7 @@ export default function FleetDetailPage() {
 
   if (loading) return <div style={{ ...S.page, color:'#7C8BA0', padding:60 }}>Loading...</div>
 
-  const statusColor: Record<string, string> = { active:'#1DB870', in_shop:'#4D9EFF', inactive:'#7C8BA0', decommissioned:'#D94F4F' }
+  const statusColor: Record<string, string> = { active:'#1DB870', in_shop:'#00E0B0', inactive:'#7C8BA0', decommissioned:'#D94F4F' }
 
   return (
     <div style={S.page}>
@@ -96,14 +96,14 @@ export default function FleetDetailPage() {
                 </select>
               </div>
             </div>
-            <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
+            <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00805F)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
           </div>
 
           {/* Service history */}
           <div style={S.card}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
               <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Service History ({history.length})</div>
-              <a href={`/orders/new`} style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>+ New SO</a>
+              <a href={`/orders/new`} style={{ fontSize:11, color:'#00E0B0', textDecoration:'none' }}>+ New SO</a>
             </div>
             {history.length === 0 ? (
               <div style={{ textAlign:'center', padding:20, color:'#48536A', fontSize:12 }}>No service history</div>
@@ -113,7 +113,7 @@ export default function FleetDetailPage() {
                 <tbody>
                   {history.map(so => (
                     <tr key={so.id} style={{ cursor:'pointer' }} onClick={() => window.location.href=`/orders/${so.id}`}>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>{so.so_number}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#00E0B0' }}>{so.so_number}</td>
                       <td style={{ ...S.td, color:'#7C8BA0' }}>{new Date(so.created_at).toLocaleDateString()}</td>
                       <td style={{ ...S.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{so.complaint}</td>
                       <td style={{ ...S.td, fontFamily:'monospace' }}>{so.grand_total?`$${so.grand_total.toFixed(0)}`:'—'}</td>
@@ -130,7 +130,7 @@ export default function FleetDetailPage() {
         <div style={S.card}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
             <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>PM Schedules</div>
-            <a href="/maintenance/new" style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>+ Add</a>
+            <a href="/maintenance/new" style={{ fontSize:11, color:'#00E0B0', textDecoration:'none' }}>+ Add</a>
           </div>
           {pms.length === 0 ? (
             <div style={{ textAlign:'center', padding:20, color:'#48536A', fontSize:12 }}>No PM schedules</div>

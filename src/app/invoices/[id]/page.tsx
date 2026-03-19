@@ -87,7 +87,7 @@ export default function InvoiceDetailPage() {
   const partLines   = lines.filter((l: any) => l.line_type === 'part')
   const otherLines  = lines.filter((l: any) => !['labor','part'].includes(l.line_type))
 
-  const statusColor: Record<string, string> = { draft:'#7C8BA0', sent:'#4D9EFF', paid:'#1DB870', voided:'#48536A' }
+  const statusColor: Record<string, string> = { draft:'#7C8BA0', sent:'#00E0B0', paid:'#1DB870', voided:'#48536A' }
   const stColor = statusColor[invoice.status] || '#7C8BA0'
 
   function lineSection(title: string, color: string, items: any[]) {
@@ -115,7 +115,7 @@ export default function InvoiceDetailPage() {
       {/* Header */}
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:'#4D9EFF', fontWeight:700, marginBottom:4 }}>{invoice.invoice_number}</div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:'#00E0B0', fontWeight:700, marginBottom:4 }}>{invoice.invoice_number}</div>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'#F0F4FF' }}>{cust?.company_name}</div>
           <div style={{ fontSize:12, color:'#7C8BA0', marginTop:4 }}>Unit #{asset?.unit_number} · {so?.so_number}</div>
         </div>
@@ -123,7 +123,7 @@ export default function InvoiceDetailPage() {
           <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:stColor+'18', color:stColor, border:`1px solid ${stColor}33` }}>
             {invoice.status.toUpperCase()}
           </span>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color: isPaid?'#1DB870':'#4D9EFF' }}>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color: isPaid?'#1DB870':'#00E0B0' }}>
             ${(invoice.total||0).toFixed(2)}
           </div>
           {invoice.balance_due > 0 && <div style={{ fontSize:12, color:'#7C8BA0' }}>Balance due: ${invoice.balance_due.toFixed(2)}</div>}
@@ -155,7 +155,7 @@ export default function InvoiceDetailPage() {
               <table style={{ width:'100%', borderCollapse:'collapse', minWidth:440 }}>
                 <thead><tr>{['Description','Part #','Qty','Rate','Amount'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                 <tbody>
-                  {lineSection('Labor', '#4D9EFF', laborLines)}
+                  {lineSection('Labor', '#00E0B0', laborLines)}
                   {lineSection('Parts', '#1DB870', partLines)}
                   {lineSection('Other', '#D4882A', otherLines)}
                 </tbody>
@@ -175,7 +175,7 @@ export default function InvoiceDetailPage() {
               ))}
               <div style={{ display:'flex', gap:40, paddingTop:8, marginTop:4, borderTop:'1px solid rgba(255,255,255,.08)' }}>
                 <span style={{ fontSize:15, fontWeight:700, color:'#F0F4FF' }}>Total</span>
-                <span style={{ fontFamily:'monospace', fontSize:18, fontWeight:700, color: isPaid?'#1DB870':'#4D9EFF', minWidth:80, textAlign:'right' }}>${(invoice.total||0).toFixed(2)}</span>
+                <span style={{ fontFamily:'monospace', fontSize:18, fontWeight:700, color: isPaid?'#1DB870':'#00E0B0', minWidth:80, textAlign:'right' }}>${(invoice.total||0).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -198,7 +198,7 @@ export default function InvoiceDetailPage() {
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {!isPaid && invoice.status !== 'voided' && (
                 <>
-                  <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff', width:'100%' }}
+                  <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00805F)', color:'#fff', width:'100%' }}
                     onClick={sendInvoice} disabled={sending}>
                     {sending ? 'Sending...' : invoice.status === 'draft' ? 'Send to Customer' : 'Resend Invoice'}
                   </button>

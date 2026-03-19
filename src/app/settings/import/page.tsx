@@ -103,12 +103,12 @@ export default function ImportPage() {
     label: { fontSize: 12, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 10, display: 'block' },
     typeBtn: (active: boolean) => ({
       display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 9,
-      border: active ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: active ? 'rgba(29,111,232,.08)' : '#0D0F12',
+      border: active ? '1px solid #00E0B0' : '1px solid #1A1D23', background: active ? 'rgba(0,224,176,.08)' : '#0D0F12',
       cursor: 'pointer', transition: 'all .15s', width: '100%', textAlign: 'left' as const,
     }),
     btn: (disabled: boolean) => ({
       padding: '12px 28px', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, cursor: disabled ? 'not-allowed' : 'pointer',
-      background: disabled ? '#1A1D23' : 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: disabled ? '#48536A' : '#fff',
+      background: disabled ? '#1A1D23' : 'linear-gradient(135deg,#00E0B0,#00805F)', color: disabled ? '#48536A' : '#fff',
       opacity: disabled ? 0.6 : 1,
     }),
     dropzone: {
@@ -209,8 +209,8 @@ export default function ImportPage() {
         <div style={sty.card}>
           <div style={sty.label}>Import Complete</div>
           <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-            <div style={sty.stat('#1D6FE8')}>
-              <div style={sty.statNum('#1D6FE8')}>{result.total}</div>
+            <div style={sty.stat('#00E0B0')}>
+              <div style={sty.statNum('#00E0B0')}>{result.total}</div>
               <div style={sty.statLabel}>Total Rows</div>
             </div>
             <div style={sty.stat('#22C55E')}>

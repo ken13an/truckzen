@@ -11,7 +11,7 @@ const STATUS_CFG: Record<string, { label: string; color: string; dot: string }> 
   not_started:           { label:'Not Started',          color:'rgba(72,83,106,.12)',    dot:'#7C8BA0' },
   not_approved:          { label:'Not Approved',          color:'rgba(212,136,42,.10)',   dot:'#D4882A' },
   waiting_approval:      { label:'Waiting Approval',      color:'rgba(212,136,42,.10)',   dot:'#D4882A' },
-  in_progress:           { label:'In Progress',           color:'rgba(29,111,232,.10)',   dot:'#4D9EFF' },
+  in_progress:           { label:'In Progress',           color:'rgba(0,224,176,.10)',   dot:'#00E0B0' },
   waiting_parts:         { label:'Waiting Parts',         color:'rgba(232,105,42,.10)',   dot:'#E8692A' },
   done:                  { label:'Done',                  color:'rgba(29,184,112,.10)',   dot:'#1DB870' },
   ready_final_inspection:{ label:'Ready for Inspection',  color:'rgba(139,92,246,.10)',   dot:'#8B5CF6' },
@@ -70,7 +70,7 @@ export default function FloorPage() {
     header:  { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 },
     title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:'.02em', color:'#F0F4FF' },
     viewBtn: { padding:'6px 14px', borderRadius:7, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:'#1C2130', color:'#7C8BA0', fontFamily:'inherit' },
-    viewOn:  { background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.3)' },
+    viewOn:  { background:'rgba(0,224,176,.1)', color:'#00E0B0', border:'1px solid rgba(0,224,176,.3)' },
   }
 
   const pill = (status: string) => {
@@ -123,7 +123,7 @@ export default function FloorPage() {
                   const nextCfg   = nextStatus ? STATUS_CFG[nextStatus] : null
                   return (
                     <tr key={j.id} style={{ borderBottom:'1px solid rgba(255,255,255,.025)' }}>
-                      <td style={{ padding:'10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:'#4D9EFF' }}>
+                      <td style={{ padding:'10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:'#00E0B0' }}>
                         {j.team && `T${j.team}`} {j.bay || '—'}
                       </td>
                       <td style={{ padding:'10px' }}>
@@ -171,7 +171,7 @@ export default function FloorPage() {
                     return (
                       <div key={j.id} style={{ background:'#1C2130', border:'1px solid rgba(255,255,255,.055)', borderRadius:8, padding:10, cursor:'pointer' }}
                         onClick={() => window.location.href = `/orders/${j.id}`}>
-                        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#4D9EFF', marginBottom:3 }}>{j.so_number}</div>
+                        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#00E0B0', marginBottom:3 }}>{j.so_number}</div>
                         <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>#{asset?.unit_number}</div>
                         <div style={{ fontSize:10, color:'#7C8BA0', marginTop:2 }}>{cust?.company_name}</div>
                         <div style={{ fontSize:10, color:'#48536A', marginTop:4 }}>{j.bay || 'No bay'}</div>

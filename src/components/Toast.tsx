@@ -16,7 +16,7 @@ const COLORS: Record<ToastType, { bg: string; border: string; icon: string; text
   success: { bg:'rgba(29,184,112,.1)',  border:'rgba(29,184,112,.3)',  icon:'✓', text:'#1DB870' },
   error:   { bg:'rgba(217,79,79,.1)',   border:'rgba(217,79,79,.3)',   icon:'✗', text:'#D94F4F' },
   warning: { bg:'rgba(212,136,42,.1)',  border:'rgba(212,136,42,.3)',  icon:'⚠', text:'#D4882A' },
-  info:    { bg:'rgba(29,111,232,.1)',  border:'rgba(29,111,232,.3)',  icon:'i', text:'#4D9EFF' },
+  info:    { bg:'rgba(0,224,176,.1)',  border:'rgba(0,224,176,.3)',  icon:'i', text:'#00E0B0' },
 }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {

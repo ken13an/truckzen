@@ -35,7 +35,7 @@ export default function TimeTrackingPage() {
     th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.1em', padding:'6px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
     td:    { padding:'8px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
     chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:'#1C2130', color:'#7C8BA0', fontFamily:'inherit' },
-    on:    { background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.3)' },
+    on:    { background:'rgba(0,224,176,.1)', color:'#00E0B0', border:'1px solid rgba(0,224,176,.3)' },
   }
 
   return (
@@ -63,12 +63,12 @@ export default function TimeTrackingPage() {
               <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF' }}>{tech.name}</div>
               {tech.team && <div style={{ fontSize:10, color:'#7C8BA0' }}>Team {tech.team}</div>}
             </div>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, color:'#4D9EFF' }}>{fmtMin(tech.total_minutes)}</div>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, color:'#00E0B0' }}>{fmtMin(tech.total_minutes)}</div>
           </div>
 
           {/* Bar showing proportion */}
           <div style={{ height:4, background:'#1C2130', borderRadius:100, marginBottom:10, overflow:'hidden' }}>
-            <div style={{ height:'100%', width:`${Math.min(100, tech.total_minutes / (data.total_minutes / data.by_tech.length) * 50)}%`, background:'linear-gradient(90deg,#1D6FE8,#4D9EFF)', borderRadius:100, transition:'width .3s' }}/>
+            <div style={{ height:'100%', width:`${Math.min(100, tech.total_minutes / (data.total_minutes / data.by_tech.length) * 50)}%`, background:'linear-gradient(90deg,#00E0B0,#00E0B0)', borderRadius:100, transition:'width .3s' }}/>
           </div>
 
           <div style={{ overflowX:'auto' }}>
@@ -78,7 +78,7 @@ export default function TimeTrackingPage() {
                 {tech.entries.map((e: any, i: number) => (
                   <tr key={i}>
                     <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#48536A' }}>{e.date}</td>
-                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>{e.so_number || '—'}</td>
+                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#00E0B0' }}>{e.so_number || '—'}</td>
                     <td style={{ ...S.td, color:'#DDE3EE' }}>{e.truck || '—'}</td>
                     <td style={{ ...S.td, color:'#7C8BA0' }}>{e.customer || '—'}</td>
                     <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:'#1DB870' }}>{fmtMin(e.minutes)}</td>

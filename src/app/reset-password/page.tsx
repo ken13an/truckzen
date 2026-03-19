@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, XCircle, CheckCircle2, ShieldX } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 export default function ResetPasswordPage() {
   const supabase = createClient()
@@ -75,16 +76,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-5">
       <div className={card}>
-        <div className="flex items-center gap-2.5 mb-6">
-          <div className="w-7 h-7 bg-teal rounded-md flex items-center justify-center">
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--bg)" strokeWidth="2.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <span className="text-base font-bold tracking-wide text-text-primary">
-            truck<span className="text-teal">zen</span><span className="text-teal">.</span>
-          </span>
-        </div>
+        <Logo size="sm" className="mb-6" />
         <h1 className="text-xl font-bold text-text-primary mb-1">Set New Password</h1>
         <p className="text-sm text-text-secondary mb-6">Choose a strong password for your account.</p>
         {error && (

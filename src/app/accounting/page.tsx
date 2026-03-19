@@ -50,7 +50,7 @@ export default function AccountingPage() {
   }
 
   const statusCfg: Record<string, { color: string; label: string }> = {
-    draft:  { color:'#7C8BA0', label:'Draft' }, sent:  { color:'#4D9EFF', label:'Sent' },
+    draft:  { color:'#7C8BA0', label:'Draft' }, sent:  { color:'#00E0B0', label:'Sent' },
     paid:   { color:'#1DB870', label:'Paid' },  voided:{ color:'#48536A', label:'Voided' },
   }
 
@@ -74,7 +74,7 @@ export default function AccountingPage() {
           </div>
 
           <div style={{ display:'flex', gap:8, marginBottom:14 }}>
-            <button style={{ padding:'7px 14px', background:'rgba(29,111,232,.1)', border:'1px solid rgba(29,111,232,.25)', borderRadius:8, color:'#4D9EFF', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>Sync to QuickBooks</button>
+            <button style={{ padding:'7px 14px', background:'rgba(0,224,176,.1)', border:'1px solid rgba(0,224,176,.25)', borderRadius:8, color:'#00E0B0', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>Sync to QuickBooks</button>
             <button style={{ padding:'7px 14px', background:'#161B24', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#7C8BA0', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>Export CSV</button>
           </div>
 
@@ -90,10 +90,10 @@ export default function AccountingPage() {
                     const over  = inv.status === 'sent' && inv.due_date < today
                     return (
                       <tr key={inv.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = '/invoices/' + inv.id}>
-                        <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#4D9EFF', fontWeight:700 }}>{inv.invoice_number}</td>
+                        <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#00E0B0', fontWeight:700 }}>{inv.invoice_number}</td>
                         <td style={{ ...S.td, color:'#F0F4FF' }}>{(inv.customers as any)?.company_name}</td>
                         <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#DDE3EE', fontWeight:700 }}>{fmt(inv.total || 0)}</td>
-                        <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color: inv.balance_due > 0 ? '#4D9EFF' : '#1DB870', fontWeight:700 }}>{fmt(inv.balance_due || 0)}</td>
+                        <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color: inv.balance_due > 0 ? '#00E0B0' : '#1DB870', fontWeight:700 }}>{fmt(inv.balance_due || 0)}</td>
                         <td style={{ ...S.td, color: over ? '#D94F4F' : '#7C8BA0' }}>{inv.due_date || '—'}</td>
                         <td style={S.td as any}>
                           <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:(over?'#D94F4F':cfg.color)+'18', color:over?'#D94F4F':cfg.color, border:'1px solid '+(over?'#D94F4F':cfg.color)+'33' }}>

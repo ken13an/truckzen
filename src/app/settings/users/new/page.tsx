@@ -110,9 +110,9 @@ export default function NewUserPage() {
             ].map(d => (
               <div key={d.key} style={{
                 padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: form.department === d.key ? 'rgba(29,111,232,.1)' : '#1C2130',
-                color: form.department === d.key ? '#4D9EFF' : '#48536A',
-                border: form.department === d.key ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.06)',
+                background: form.department === d.key ? 'rgba(0,224,176,.1)' : '#1C2130',
+                color: form.department === d.key ? '#00E0B0' : '#48536A',
+                border: form.department === d.key ? '1px solid rgba(0,224,176,.3)' : '1px solid rgba(255,255,255,.06)',
               }}>
                 {d.icon} {d.label}
               </div>
@@ -147,7 +147,7 @@ export default function NewUserPage() {
           </select>
         </div>
 
-        <div style={{ background: 'rgba(29,111,232,.06)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 9, padding: '12px 14px', fontSize: 11, color: '#7C8BA0', marginBottom: 12 }}>
+        <div style={{ background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 9, padding: '12px 14px', fontSize: 11, color: '#7C8BA0', marginBottom: 12 }}>
           A welcome email will be sent with a login link. They set their own password on first login.
         </div>
 
@@ -162,6 +162,6 @@ const S: Record<string, React.CSSProperties> = {
   card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
   label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A', marginBottom: 5, display: 'block' },
   input: { width: '100%', padding: '9px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const, marginBottom: 10 },
-  btn: { width: '100%', padding: '12px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 },
+  btn: { width: '100%', padding: '12px 24px', background: 'linear-gradient(135deg,#00E0B0,#00805F)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 },
   error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 12 },
 }

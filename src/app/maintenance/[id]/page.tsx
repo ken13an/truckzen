@@ -87,7 +87,7 @@ export default function PMDetailPage() {
             {isOver?'OVERDUE':isSoon?'DUE SOON':'OK'} · {pm.next_due_date||'No date set'}
           </span>
           {pm.next_due_reading && (
-            <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.2)' }}>
+            <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:'rgba(0,224,176,.1)', color:'#00E0B0', border:'1px solid rgba(0,224,176,.2)' }}>
               {pm.next_due_reading.toLocaleString()} mi
             </span>
           )}
@@ -109,7 +109,7 @@ export default function PMDetailPage() {
             </div>
             <div style={{ marginBottom:10 }}><label style={S.label}>Notes</label><textarea style={{ ...S.input, minHeight:64, resize:'vertical' as const }} value={edit?.notes||''} onChange={e=>setEdit((p:any)=>({...p,notes:e.target.value}))}/></div>
             <div style={{ display:'flex', gap:8 }}>
-              <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
+              <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00805F)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
               <a href={`/orders/new`} style={{ ...S.btn, background:'rgba(29,184,112,.1)', color:'#1DB870', border:'1px solid rgba(29,184,112,.2)', textDecoration:'none', display:'inline-flex', alignItems:'center' }}>
                 Create Service Order
               </a>
@@ -126,7 +126,7 @@ export default function PMDetailPage() {
                 <tbody>
                   {history.map(h => (
                     <tr key={h.id} style={{ cursor:'pointer' }} onClick={()=>window.location.href=`/orders/${h.id}`}>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>{h.so_number}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#00E0B0' }}>{h.so_number}</td>
                       <td style={{ ...S.td, color:'#7C8BA0' }}>{new Date(h.created_at).toLocaleDateString()}</td>
                       <td style={{ ...S.td, fontFamily:'monospace' }}>{h.grand_total?`$${h.grand_total.toFixed(0)}`:'—'}</td>
                       <td style={{ ...S.td, fontSize:9, color:'#7C8BA0', fontFamily:'monospace' }}>{h.status?.replace(/_/g,' ')}</td>
@@ -154,7 +154,7 @@ export default function PMDetailPage() {
               <span style={{ color:'#DDE3EE' }}>{r.val}</span>
             </div>
           ))}
-          <a href={`/fleet`} style={{ display:'block', marginTop:12, fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>View full truck profile →</a>
+          <a href={`/fleet`} style={{ display:'block', marginTop:12, fontSize:11, color:'#00E0B0', textDecoration:'none' }}>View full truck profile →</a>
         </div>
       </div>
     </div>

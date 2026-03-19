@@ -84,7 +84,7 @@ export function InstallPrompt() {
       {!isIOS && (
         <button onClick={handleInstall} style={{
           padding: '8px 16px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
-          background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap',
+          background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap',
         }}>Install</button>
       )}
       <button onClick={dismiss} style={{

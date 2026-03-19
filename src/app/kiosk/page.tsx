@@ -171,17 +171,17 @@ export default function KioskPage() {
     <div style={S.page}>
       {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg,#00E0B0,#00805F)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         </div>
-        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, letterSpacing: '.1em', color: '#F0F4FF' }}>TRUCK<span style={{ color: '#4D9EFF' }}>ZEN</span></span>
+        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, letterSpacing: '.1em', color: '#F0F4FF' }}>TRUCK<span style={{ color: '#00E0B0' }}>ZEN</span></span>
       </div>
 
       {/* Language selector */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
         {LANGS.map(l => (
           <button key={l} onClick={() => { setLang(l); setAutoIdx(LANGS.indexOf(l)) }}
-            style={{ padding: '6px 16px', borderRadius: 100, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: lang === l ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)', background: lang === l ? 'rgba(29,111,232,.1)' : '#161B24', color: lang === l ? '#4D9EFF' : '#7C8BA0', fontFamily: 'inherit' }}>
+            style={{ padding: '6px 16px', borderRadius: 100, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: lang === l ? '1px solid rgba(0,224,176,.3)' : '1px solid rgba(255,255,255,.08)', background: lang === l ? 'rgba(0,224,176,.1)' : '#161B24', color: lang === l ? '#00E0B0' : '#7C8BA0', fontFamily: 'inherit' }}>
             {l === 'en' ? 'EN' : l === 'ru' ? 'RU' : l === 'uz' ? 'UZ' : 'ES'}
           </button>
         ))}
@@ -235,7 +235,7 @@ export default function KioskPage() {
             <div style={S.fieldLabel}>{t.unit}</div>
             <input style={{ ...S.input, fontSize: 24, textAlign: 'center', letterSpacing: '.05em' }} value={unit} onChange={e => setUnit(e.target.value)} onBlur={lookupTruck} placeholder="e.g. 2717" autoFocus />
             {truckInfo && (
-              <div style={{ padding: '12px 16px', background: 'rgba(29,111,232,.06)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 10, marginBottom: 12 }}>
+              <div style={{ padding: '12px 16px', background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 10, marginBottom: 12 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>#{truckInfo.unit_number} — {truckInfo.year} {truckInfo.make} {truckInfo.model}</div>
               </div>
             )}
@@ -254,7 +254,7 @@ export default function KioskPage() {
             <div style={S.heading}>{t.problem}</div>
             {!showType && !complaintEn && (
               <button onClick={isRecording ? stopRecording : startRecording}
-                style={{ ...S.bigBtn, width: '100%', padding: 24, fontSize: 18, background: isRecording ? '#EF4444' : 'linear-gradient(135deg,#1D6FE8,#1248B0)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                style={{ ...S.bigBtn, width: '100%', padding: 24, fontSize: 18, background: isRecording ? '#EF4444' : 'linear-gradient(135deg,#00E0B0,#00805F)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                 <span style={{ fontSize: 28 }}>{isRecording ? '⏹' : '🎙'}</span>
                 {isRecording ? t.tapStop : t.record}
               </button>
@@ -264,10 +264,10 @@ export default function KioskPage() {
                 {complaintRaw}
               </div>
             )}
-            {aiProcessing && <div style={{ textAlign: 'center', padding: 20, color: '#4D9EFF', fontSize: 14 }}>{t.processing}</div>}
+            {aiProcessing && <div style={{ textAlign: 'center', padding: 20, color: '#00E0B0', fontSize: 14 }}>{t.processing}</div>}
             {complaintEn && !aiProcessing && (
               <>
-                <div style={{ marginTop: 12, padding: 14, background: 'rgba(29,111,232,.06)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 10, fontSize: 14, color: '#DDE3EE', lineHeight: 1.6 }}>
+                <div style={{ marginTop: 12, padding: 14, background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 10, fontSize: 14, color: '#DDE3EE', lineHeight: 1.6 }}>
                   {complaintEn}
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
@@ -277,7 +277,7 @@ export default function KioskPage() {
               </>
             )}
             {!isRecording && !complaintEn && !aiProcessing && (
-              <button onClick={() => setShowType(true)} style={{ background: 'none', border: 'none', color: '#4D9EFF', fontSize: 13, cursor: 'pointer', marginTop: 12, fontFamily: 'inherit' }}>{t.typeInstead}</button>
+              <button onClick={() => setShowType(true)} style={{ background: 'none', border: 'none', color: '#00E0B0', fontSize: 13, cursor: 'pointer', marginTop: 12, fontFamily: 'inherit' }}>{t.typeInstead}</button>
             )}
             {showType && !complaintEn && (
               <>
@@ -323,7 +323,7 @@ export default function KioskPage() {
             <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
             <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 36, color: '#F0F4FF', marginBottom: 8 }}>{t.done}</div>
             <div style={{ fontSize: 14, color: '#7C8BA0', marginBottom: 20 }}>{t.sub}</div>
-            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 28, fontWeight: 700, color: '#4D9EFF', margin: '16px 0 24px', letterSpacing: '.08em' }}>{refNum}</div>
+            <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 28, fontWeight: 700, color: '#00E0B0', margin: '16px 0 24px', letterSpacing: '.08em' }}>{refNum}</div>
             <button style={S.bigBtn} onClick={resetAll}>{t.newCheckin}</button>
           </div>
         )}
@@ -338,6 +338,6 @@ const S: Record<string, React.CSSProperties> = {
   heading: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 20 },
   fieldLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', marginBottom: 6, marginTop: 12, textTransform: 'uppercase' as const, letterSpacing: '.05em' },
   input: { width: '100%', padding: '14px 16px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 16, color: '#F0F4FF', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
-  bigBtn: { padding: '16px 28px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
+  bigBtn: { padding: '16px 28px', background: 'linear-gradient(135deg,#00E0B0,#00805F)', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
   backBtn: { padding: '14px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, fontSize: 14, color: '#7C8BA0', cursor: 'pointer', fontFamily: 'inherit' },
 }

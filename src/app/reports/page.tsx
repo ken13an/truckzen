@@ -52,7 +52,7 @@ export default function ReportsPage() {
     lbl:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase', color:'#48536A', marginBottom:6 },
     val:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, lineHeight:1 },
     chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:'#1C2130', color:'#7C8BA0', fontFamily:'inherit', minHeight:30 },
-    on:    { background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.3)' },
+    on:    { background:'rgba(0,224,176,.1)', color:'#00E0B0', border:'1px solid rgba(0,224,176,.3)' },
   }
 
   // Simple bar chart for revenue by day
@@ -81,7 +81,7 @@ export default function ReportsPage() {
               { label:'Revenue',          val: fmt(overview?.revenue),          color:'#F0F4FF' },
               { label:'Outstanding',      val: fmt(overview?.outstanding),       color: overview?.outstanding>0?'#D4882A':'#1DB870' },
               { label:'Jobs Completed',   val: overview?.so_completed || 0,      color:'#1DB870' },
-              { label:'Avg Cycle Time',   val: `${overview?.avg_cycle_hours}h`,  color:'#4D9EFF' },
+              { label:'Avg Cycle Time',   val: `${overview?.avg_cycle_hours}h`,  color:'#00E0B0' },
               { label:'Inventory Value',  val: fmt(overview?.inventory_value),   color:'#8B5CF6' },
               { label:'Total Jobs',       val: overview?.so_count || 0,          color:'#F0F4FF' },
             ].map(s => (
@@ -101,7 +101,7 @@ export default function ReportsPage() {
                 <div style={{ display:'flex', alignItems:'flex-end', gap:4, height:100 }}>
                   {byDay.slice(-14).map((d, i) => (
                     <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, position:'relative' }}>
-                      <div title={`$${d.revenue.toFixed(0)}`} style={{ width:'100%', background:'linear-gradient(0deg,#1D6FE8,#4D9EFF)', borderRadius:'3px 3px 0 0', height:`${Math.max(4, (d.revenue / maxRev) * 90)}px`, transition:'height .2s' }}/>
+                      <div title={`$${d.revenue.toFixed(0)}`} style={{ width:'100%', background:'linear-gradient(0deg,#00E0B0,#00E0B0)', borderRadius:'3px 3px 0 0', height:`${Math.max(4, (d.revenue / maxRev) * 90)}px`, transition:'height .2s' }}/>
                     </div>
                   ))}
                 </div>
@@ -118,9 +118,9 @@ export default function ReportsPage() {
                   <div key={i} style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
                     <div style={{ width:90, fontSize:11, color:'#DDE3EE', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flexShrink:0 }}>{t.name?.split(' ')[0] || 'Unknown'}</div>
                     <div style={{ flex:1, height:6, background:'#1C2130', borderRadius:100, overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${(t.revenue/maxT*100).toFixed(0)}%`, background:'linear-gradient(90deg,#1D6FE8,#4D9EFF)', borderRadius:100 }}/>
+                      <div style={{ height:'100%', width:`${(t.revenue/maxT*100).toFixed(0)}%`, background:'linear-gradient(90deg,#00E0B0,#00E0B0)', borderRadius:100 }}/>
                     </div>
-                    <div style={{ fontFamily:'monospace', fontSize:10, color:'#4D9EFF', width:60, textAlign:'right', flexShrink:0 }}>{fmt(t.revenue)}</div>
+                    <div style={{ fontFamily:'monospace', fontSize:10, color:'#00E0B0', width:60, textAlign:'right', flexShrink:0 }}>{fmt(t.revenue)}</div>
                   </div>
                 )
               })}
@@ -138,7 +138,7 @@ export default function ReportsPage() {
                   : topParts.slice(0,10).map((p, i) => (
                     <tr key={i}>
                       <td style={{ ...S.td, color:'#DDE3EE', maxWidth:300, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.description}</td>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:'#4D9EFF' }}>{fmt(p.revenue)}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:'#00E0B0' }}>{fmt(p.revenue)}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', color:'#7C8BA0' }}>{p.qty}</td>
                     </tr>
                   ))}

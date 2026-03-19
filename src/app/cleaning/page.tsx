@@ -99,7 +99,7 @@ export default function CleaningPage() {
 
         {/* Progress */}
         <div style={{ height:6, background:'#1C2130', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
-          <div style={{ height:'100%', width:`${done/zone.checklist.length*100}%`, background:'linear-gradient(90deg,#1D6FE8,#1DB870)', borderRadius:100, transition:'width .2s' }}/>
+          <div style={{ height:'100%', width:`${done/zone.checklist.length*100}%`, background:'linear-gradient(90deg,#00E0B0,#1DB870)', borderRadius:100, transition:'width .2s' }}/>
         </div>
 
         {zone.checklist.map(item => (
@@ -113,7 +113,7 @@ export default function CleaningPage() {
         ))}
 
         <button onClick={() => completeZone(zone)} disabled={saving}
-          style={{ width:'100%', marginTop:12, padding:14, background: done===zone.checklist.length?'linear-gradient(135deg,#1DB870,#14875A)':'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:12, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', opacity:saving?0.7:1 }}>
+          style={{ width:'100%', marginTop:12, padding:14, background: done===zone.checklist.length?'linear-gradient(135deg,#1DB870,#14875A)':'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:12, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', opacity:saving?0.7:1 }}>
           {saving ? 'Saving...' : done===zone.checklist.length ? '✅ Mark Zone Clean' : `Submit (${done}/${zone.checklist.length} done)`}
         </button>
       </div>
@@ -137,7 +137,7 @@ export default function CleaningPage() {
 
       {/* Overall progress bar */}
       <div style={{ height:6, background:'#1C2130', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
-        <div style={{ height:'100%', width:`${completedCount/totalZones*100}%`, background:'linear-gradient(90deg,#1D6FE8,#1DB870)', borderRadius:100, transition:'width .3s' }}/>
+        <div style={{ height:'100%', width:`${completedCount/totalZones*100}%`, background:'linear-gradient(90deg,#00E0B0,#1DB870)', borderRadius:100, transition:'width .3s' }}/>
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:10 }}>
@@ -162,7 +162,7 @@ export default function CleaningPage() {
               <div style={{ fontSize:10, color:'#7C8BA0', marginBottom:12 }}>{zone.checklist.length} items</div>
               {!done && (
                 <button onClick={() => startZone(zone)}
-                  style={{ width:'100%', padding:'9px 0', background:'rgba(29,111,232,.1)', border:'1px solid rgba(29,111,232,.25)', borderRadius:8, color:'#4D9EFF', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+                  style={{ width:'100%', padding:'9px 0', background:'rgba(0,224,176,.1)', border:'1px solid rgba(0,224,176,.25)', borderRadius:8, color:'#00E0B0', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
                   Start Cleaning
                 </button>
               )}

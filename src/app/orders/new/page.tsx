@@ -259,9 +259,9 @@ export default function NewSOPage() {
                 {filteredAssets.map(a => (
                   <div key={a.id} style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 13 }}
                     onClick={() => selectAsset(a)}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,224,176,.08)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#4D9EFF' }}>#{a.unit_number}</span>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#00E0B0' }}>#{a.unit_number}</span>
                     <span style={{ color: '#DDE3EE', marginLeft: 8 }}>{a.year} {a.make} {a.model}</span>
                   </div>
                 ))}
@@ -269,7 +269,7 @@ export default function NewSOPage() {
             )}
           </div>
           {selectedAsset && (
-            <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(29,111,232,.06)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 8 }}>
+            <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 8 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>Unit #{selectedAsset.unit_number} — {selectedAsset.year} {selectedAsset.make} {selectedAsset.model}</div>
               {selectedAsset.engine_make && <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 2 }}>Engine: {selectedAsset.engine_make}</div>}
             </div>
@@ -277,7 +277,7 @@ export default function NewSOPage() {
         </div>
 
         {/* ═══ AI SERVICE WRITER ═══ */}
-        <div style={{ ...S.card, borderColor: 'rgba(29,111,232,.15)' }}>
+        <div style={{ ...S.card, borderColor: 'rgba(0,224,176,.15)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <span style={{ fontSize: 18 }}>🤖</span>
             <div style={S.cardTitle}>2. AI Service Writer</div>
@@ -288,7 +288,7 @@ export default function NewSOPage() {
             <label style={S.label}>Voice Input — Speak the complaint in any language</label>
             <div style={{ display: 'flex', gap: 10 }}>
               <button type="button" onClick={recording ? stopVoice : startVoice}
-                style={{ ...S.voiceBtn, background: recording ? '#EF4444' : 'linear-gradient(135deg,#1D6FE8,#1248B0)', flex: 'none', width: 56, height: 56 }}>
+                style={{ ...S.voiceBtn, background: recording ? '#EF4444' : 'linear-gradient(135deg,#00E0B0,#00805F)', flex: 'none', width: 56, height: 56 }}>
                 <span style={{ fontSize: 24 }}>{recording ? '⏹' : '🎙'}</span>
               </button>
               <div style={{ flex: 1 }}>
@@ -327,11 +327,11 @@ export default function NewSOPage() {
           {(form.cause || form.correction) && (
             <>
               <label style={S.label}>Cause — AI-generated technical diagnosis</label>
-              <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical', borderColor: 'rgba(29,111,232,.2)' }}
+              <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical', borderColor: 'rgba(0,224,176,.2)' }}
                 value={form.cause} onChange={e => setForm(f => ({ ...f, cause: e.target.value }))} />
 
               <label style={{ ...S.label, marginTop: 12 }}>Correction — AI-generated repair procedure</label>
-              <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical', borderColor: 'rgba(29,111,232,.2)' }}
+              <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical', borderColor: 'rgba(0,224,176,.2)' }}
                 value={form.correction} onChange={e => setForm(f => ({ ...f, correction: e.target.value }))} />
             </>
           )}
@@ -367,7 +367,7 @@ export default function NewSOPage() {
                     )}
                   </div>
                   <button type="button" onClick={() => addPart(p)} disabled={added}
-                    style={{ padding: '6px 14px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 700, cursor: added ? 'default' : 'pointer', background: added ? '#1A1D23' : 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: added ? '#48536A' : '#fff' }}>
+                    style={{ padding: '6px 14px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 700, cursor: added ? 'default' : 'pointer', background: added ? '#1A1D23' : 'linear-gradient(135deg,#00E0B0,#00805F)', color: added ? '#48536A' : '#fff' }}>
                     {added ? 'Added' : '+ Add'}
                   </button>
                 </div>
@@ -419,7 +419,7 @@ export default function NewSOPage() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: 16, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 8 }}>
               <span style={{ fontWeight: 700, color: '#F0F4FF' }}>Total:</span>
-              <span style={{ fontWeight: 700, color: '#4D9EFF' }}>${grandTotal.toFixed(2)}</span>
+              <span style={{ fontWeight: 700, color: '#00E0B0' }}>${grandTotal.toFixed(2)}</span>
             </div>
           </div>
         )}
@@ -498,5 +498,5 @@ const S: Record<string, React.CSSProperties> = {
   error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 14 },
   voiceBtn: { borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   aiBtn: { width: '100%', padding: '14px 24px', background: 'linear-gradient(135deg,#8B5CF6,#6D28D9)', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  submitBtn: { width: '100%', padding: '15px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', minHeight: 52 },
+  submitBtn: { width: '100%', padding: '15px 24px', background: 'linear-gradient(135deg,#00E0B0,#00805F)', border: 'none', borderRadius: 9, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', minHeight: 52 },
 }

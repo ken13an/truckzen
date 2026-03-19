@@ -60,9 +60,9 @@ export default function WaitingPage() {
         {/* Logo */}
         <div style={{
           width: '56px', height: '56px', borderRadius: '14px',
-          background: 'linear-gradient(135deg,#1D6FE8,#1248B0)',
+          background: 'linear-gradient(135deg,#00E0B0,#00805F)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 24px', boxShadow: '0 0 24px rgba(29,111,232,0.3)',
+          margin: '0 auto 24px', boxShadow: '0 0 24px rgba(0,224,176,0.3)',
         }}>
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="white" strokeWidth="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -82,16 +82,16 @@ export default function WaitingPage() {
           {[0, 1, 2].map(i => (
             <div key={i} style={{
               width: '8px', height: '8px', borderRadius: '50%',
-              background: '#1D6FE8', opacity: 0.4,
+              background: '#00E0B0', opacity: 0.4,
               animation: `pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
             }}/>
           ))}
         </div>
 
         <div style={{
-          padding: '12px 16px', background: 'rgba(29,111,232,0.06)',
-          border: '1px solid rgba(29,111,232,0.15)', borderRadius: '9px',
-          fontSize: '12px', color: '#4D9EFF', lineHeight: 1.6, marginBottom: '24px',
+          padding: '12px 16px', background: 'rgba(0,224,176,0.06)',
+          border: '1px solid rgba(0,224,176,0.15)', borderRadius: '9px',
+          fontSize: '12px', color: '#00E0B0', lineHeight: 1.6, marginBottom: '24px',
         }}>
           Checking every 10 seconds for updates
         </div>

@@ -53,7 +53,7 @@ export default function BillingPage() {
 
   return (
     <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#00E0B0', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={S.title}>Billing & Subscription</div>
       <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 24 }}>{billing?.shop_name}</div>
@@ -76,8 +76,8 @@ export default function BillingPage() {
           </div>
         </div>
         {plan === 'free' && (
-          <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(29,111,232,.06)', borderRadius: 8, border: '1px solid rgba(29,111,232,.15)' }}>
-            <div style={{ fontSize: 12, color: '#4D9EFF', fontWeight: 600 }}>Beta Access</div>
+          <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(0,224,176,.06)', borderRadius: 8, border: '1px solid rgba(0,224,176,.15)' }}>
+            <div style={{ fontSize: 12, color: '#00E0B0', fontWeight: 600 }}>Beta Access</div>
             <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 4 }}>You have full access to all TruckZen features during the beta period. Add a payment method to be ready when paid plans launch.</div>
           </div>
         )}
@@ -129,5 +129,5 @@ const S: Record<string, React.CSSProperties> = {
   page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
   title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 },
   card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 16 },
-  btn: { padding: '8px 16px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff' },
+  btn: { padding: '8px 16px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff' },
 }

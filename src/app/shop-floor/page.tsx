@@ -171,7 +171,7 @@ export default function ShopFloorPage() {
                   <tbody>
                     {groupJobs.map(j => (
                       <tr key={j.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/orders/${j.id}`}>
-                        <td style={{ ...S.td, fontWeight: 700, color: '#4D9EFF' }}>#{(j.assets as any)?.unit_number || '—'}</td>
+                        <td style={{ ...S.td, fontWeight: 700, color: '#00E0B0' }}>#{(j.assets as any)?.unit_number || '—'}</td>
                         <td style={S.td}>{j.team ? `Team ${j.team}` : '—'}{j.bay ? ` · ${j.bay}` : ''}</td>
                         <td style={S.td}>{(j.customers as any)?.company_name || '—'}</td>
                         <td style={{ ...S.td, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.complaint || '—'}</td>
@@ -257,7 +257,7 @@ function KanbanCard({ job: j }: { job: any }) {
     <div onClick={() => window.location.href = `/orders/${j.id}`}
       style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || '#7C8BA0'}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: '#4D9EFF' }}>#{(j.assets as any)?.unit_number || '—'}</span>
+        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: '#00E0B0' }}>#{(j.assets as any)?.unit_number || '—'}</span>
         <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: PRIORITY_COLOR[j.priority], padding: '2px 6px', borderRadius: 4, background: `${PRIORITY_COLOR[j.priority]}15` }}>{j.priority}</span>
       </div>
       <div style={{ fontSize: 12, color: '#DDE3EE', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>

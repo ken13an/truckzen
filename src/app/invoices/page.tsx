@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 
 const STATUS_CFG: Record<string, { label:string; color:string }> = {
   draft:   { label:'Draft',    color:'#7C8BA0' },
-  sent:    { label:'Sent',     color:'#4D9EFF' },
+  sent:    { label:'Sent',     color:'#00E0B0' },
   paid:    { label:'Paid',     color:'#1DB870' },
   overdue: { label:'Overdue',  color:'#D94F4F' },
   voided:  { label:'Voided',   color:'#48536A' },
@@ -43,11 +43,11 @@ export default function InvoicesPage() {
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF' }}>Invoices</div>
           <div style={{ fontSize:12, color:'#7C8BA0' }}>Outstanding: \${total_outstanding.toFixed(0)} · Paid MTD: \${total_paid_month.toFixed(0)}</div>
         </div>
-        <button onClick={() => window.location.href = '/invoices/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ New Invoice</button>
+        <button onClick={() => window.location.href = '/invoices/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ New Invoice</button>
       </div>
       <div style={{ display:'flex', gap:6, marginBottom:14, flexWrap:'wrap' }}>
         {['all','draft','sent','paid','overdue'].map(s => (
-          <button key={s} onClick={() => setFilter(s)} style={{ padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background: filter===s?'rgba(29,111,232,.1)':'#1C2130', color: filter===s?'#4D9EFF':'#7C8BA0', fontFamily:'inherit', minHeight:30 }}>
+          <button key={s} onClick={() => setFilter(s)} style={{ padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background: filter===s?'rgba(0,224,176,.1)':'#1C2130', color: filter===s?'#00E0B0':'#7C8BA0', fontFamily:'inherit', minHeight:30 }}>
             {s==='all'?'All':STATUS_CFG[s]?.label||s}
           </button>
         ))}
@@ -67,11 +67,11 @@ export default function InvoicesPage() {
                 const isOverdue = inv.status === 'sent' && inv.due_date && inv.due_date < new Date().toISOString().split('T')[0]
                 return (
                   <tr key={inv.id} style={{ borderBottom:'1px solid rgba(255,255,255,.025)', cursor:'pointer' }} onClick={() => window.location.href = '/invoices/' + inv.id}>
-                    <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#4D9EFF', fontWeight:700 }}>{inv.invoice_number}</td>
+                    <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#00E0B0', fontWeight:700 }}>{inv.invoice_number}</td>
                     <td style={{ padding:'9px 10px', color:'#F0F4FF' }}>{cust?.company_name}</td>
                     <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#7C8BA0' }}>{so?.so_number}{so?.assets?.unit_number ? ' · #'+so.assets.unit_number : ''}</td>
                     <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:'#DDE3EE', fontWeight:700 }}>\${(inv.total||0).toFixed(2)}</td>
-                    <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color: inv.balance_due>0?'#4D9EFF':'#1DB870', fontWeight:700 }}>\${(inv.balance_due||0).toFixed(2)}</td>
+                    <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color: inv.balance_due>0?'#00E0B0':'#1DB870', fontWeight:700 }}>\${(inv.balance_due||0).toFixed(2)}</td>
                     <td style={{ padding:'9px 10px', fontSize:11, color: isOverdue?'#D94F4F':'#7C8BA0' }}>{inv.due_date||'—'}</td>
                     <td style={{ padding:'9px 10px' }}>
                       <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:cfg.color+'18', color:cfg.color, border:'1px solid '+cfg.color+'33' }}>
@@ -80,7 +80,7 @@ export default function InvoicesPage() {
                     </td>
                     <td style={{ padding:'9px 10px' }}>
                       <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={e => { e.stopPropagation(); window.open('/pay/'+inv.id+'/qr') }} style={{ padding:'3px 8px', borderRadius:5, background:'rgba(29,111,232,.1)', border:'1px solid rgba(29,111,232,.2)', color:'#4D9EFF', fontSize:9, cursor:'pointer', fontFamily:'inherit' }}>QR Pay</button>
+                        <button onClick={e => { e.stopPropagation(); window.open('/pay/'+inv.id+'/qr') }} style={{ padding:'3px 8px', borderRadius:5, background:'rgba(0,224,176,.1)', border:'1px solid rgba(0,224,176,.2)', color:'#00E0B0', fontSize:9, cursor:'pointer', fontFamily:'inherit' }}>QR Pay</button>
                       </div>
                     </td>
                   </tr>

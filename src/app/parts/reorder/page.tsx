@@ -70,11 +70,11 @@ export default function PartsReorderPage() {
       <div style={{ textAlign:'center', maxWidth:400 }}>
         <div style={{ fontSize:48, marginBottom:16 }}>✅</div>
         <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:8 }}>PO Created</div>
-        <div style={{ fontSize:13, color:'#7C8BA0', marginBottom:4 }}>Purchase Order <strong style={{ color:'#4D9EFF' }}>{done.po_number}</strong></div>
+        <div style={{ fontSize:13, color:'#7C8BA0', marginBottom:4 }}>Purchase Order <strong style={{ color:'#00E0B0' }}>{done.po_number}</strong></div>
         <div style={{ fontSize:13, color:'#7C8BA0', marginBottom:24 }}>{selectedParts.length} parts · ${totalCost.toFixed(0)} estimated cost</div>
         <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
           <button onClick={() => { setDone(null); setSelected(new Set()) }} style={{ padding:'10px 20px', background:'transparent', border:'1px solid rgba(255,255,255,.1)', borderRadius:9, color:'#7C8BA0', fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>Back to Reorder</button>
-          <a href="/parts" style={{ padding:'10px 20px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none' }}>View Parts</a>
+          <a href="/parts" style={{ padding:'10px 20px', background:'linear-gradient(135deg,#00E0B0,#00805F)', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none' }}>View Parts</a>
         </div>
       </div>
     </div>
@@ -92,10 +92,10 @@ export default function PartsReorderPage() {
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             <div style={{ textAlign:'right' }}>
               <div style={{ fontSize:12, color:'#7C8BA0' }}>{selected.size} selected</div>
-              <div style={{ fontFamily:'monospace', fontSize:14, fontWeight:700, color:'#4D9EFF' }}>~${totalCost.toFixed(0)} cost</div>
+              <div style={{ fontFamily:'monospace', fontSize:14, fontWeight:700, color:'#00E0B0' }}>~${totalCost.toFixed(0)} cost</div>
             </div>
             <button onClick={createPO} disabled={creating}
-              style={{ padding:'10px 20px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+              style={{ padding:'10px 20px', background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
               {creating ? 'Creating...' : 'Create Purchase Order'}
             </button>
           </div>
@@ -127,16 +127,16 @@ export default function PartsReorderPage() {
                   const lineCost  = (p.cost_price || 0) * orderQty
                   const isOut     = p.on_hand === 0
                   return (
-                    <tr key={p.id} style={{ cursor:'pointer', background: selected.has(p.id)?'rgba(29,111,232,.04)':'' }}
+                    <tr key={p.id} style={{ cursor:'pointer', background: selected.has(p.id)?'rgba(0,224,176,.04)':'' }}
                       onClick={() => setSelected(s => { const n = new Set(s); n.has(p.id)?n.delete(p.id):n.add(p.id); return n })}>
                       <td style={{ ...S.td, textAlign:'center' }}>
                         <input type="checkbox" checked={selected.has(p.id)} onChange={() => {}} style={{ cursor:'pointer' }}/>
                       </td>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>{p.part_number || '—'}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#00E0B0' }}>{p.part_number || '—'}</td>
                       <td style={{ ...S.td, color:'#F0F4FF', maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.description}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color: isOut?'#D94F4F':'#D4882A', textAlign:'center' }}>{p.on_hand}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', color:'#7C8BA0', textAlign:'center' }}>{p.reorder_point}</td>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:'#4D9EFF', textAlign:'center' }}>{orderQty}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:'#00E0B0', textAlign:'center' }}>{orderQty}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', color:'#7C8BA0' }}>${(p.cost_price||0).toFixed(2)}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:'#DDE3EE' }}>${lineCost.toFixed(2)}</td>
                       <td style={{ ...S.td, fontSize:11, color:'#48536A' }}>{p.vendor || '—'}</td>

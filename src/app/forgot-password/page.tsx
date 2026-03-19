@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Mail, Loader2, XCircle } from 'lucide-react'
+import Logo from '@/components/Logo'
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()
@@ -25,16 +26,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-bg flex items-center justify-center p-5">
       <div className="w-full max-w-[400px] bg-surface border border-brand-border rounded-xl p-8 shadow-2xl">
         {/* Logo */}
-        <div className="flex items-center gap-2.5 mb-7">
-          <div className="w-8 h-8 bg-teal rounded-md flex items-center justify-center shadow-[0_0_14px_rgba(0,224,176,0.3)]">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--bg)" strokeWidth="2.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <span className="text-base font-bold tracking-wide text-text-primary">
-            truck<span className="text-teal">zen</span><span className="text-teal">.</span>
-          </span>
-        </div>
+        <Logo size="md" className="mb-7" />
 
         {sent ? (
           <div className="text-center py-4">

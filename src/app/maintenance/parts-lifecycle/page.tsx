@@ -118,7 +118,7 @@ export default function PartsLifecyclePage() {
 
   return (
     <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#00E0B0', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
@@ -189,7 +189,7 @@ export default function PartsLifecyclePage() {
 
       {/* ASSET DETAIL */}
       {tab === 'fleet' && selectedAsset && <>
-        <button onClick={() => setSelectedAsset(null)} style={{ background: 'none', border: 'none', color: '#4D9EFF', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 16 }}>← Back</button>
+        <button onClick={() => setSelectedAsset(null)} style={{ background: 'none', border: 'none', color: '#00E0B0', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 16 }}>← Back</button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F4FF' }}>#{selectedAsset.unit_number}</div>
@@ -271,7 +271,7 @@ export default function PartsLifecyclePage() {
           <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
             {[30, 60, 90].map(d => (
               <button key={d} onClick={() => setForecastDays(d)}
-                style={{ padding: '6px 14px', borderRadius: 6, border: forecastDays === d ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: forecastDays === d ? 'rgba(29,111,232,.1)' : 'transparent', color: forecastDays === d ? '#4D9EFF' : '#48536A', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ padding: '6px 14px', borderRadius: 6, border: forecastDays === d ? '1px solid #00E0B0' : '1px solid #1A1D23', background: forecastDays === d ? 'rgba(0,224,176,.1)' : 'transparent', color: forecastDays === d ? '#00E0B0' : '#48536A', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                 {d}d
               </button>
             ))}
@@ -327,7 +327,7 @@ export default function PartsLifecyclePage() {
                 <div key={key} style={S.card}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{type}</div>
                   <div style={{ fontSize: 11, color: '#7C8BA0' }}>{brand}</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#4D9EFF', marginTop: 4 }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: '#00E0B0', marginTop: 4 }}>
                     ${d.miles > 0 ? (d.cost / d.miles).toFixed(3) : '—'}<span style={{ fontSize: 11, color: '#7C8BA0', fontWeight: 400 }}>/mi</span>
                   </div>
                   <div style={{ fontSize: 10, color: '#48536A', marginTop: 2 }}>{d.count} installs · ${d.cost.toLocaleString()} total</div>
@@ -454,8 +454,8 @@ const S: Record<string, React.CSSProperties> = {
   sectionLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 },
   fl: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', marginBottom: 4 },
   input: { width: '100%', padding: '10px 12px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 8, color: '#DDE3EE', fontSize: 13, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' as const },
-  btn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff' },
-  bigBtn: { padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', width: '100%', textAlign: 'center' as const },
+  btn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff' },
+  bigBtn: { padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', width: '100%', textAlign: 'center' as const },
   smallBtn: { padding: '5px 10px', borderRadius: 6, border: '1px solid #1A1D23', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'none', color: '#7C8BA0' },
   table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 },
   th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '8px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },

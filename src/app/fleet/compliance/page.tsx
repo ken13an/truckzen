@@ -53,7 +53,7 @@ export default function FleetCompliancePage() {
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
         {(['all', 'expired', 'expiring', 'current'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            style={{ padding: '6px 14px', borderRadius: 6, border: filter === f ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: filter === f ? 'rgba(29,111,232,.08)' : '#0D0F12', color: filter === f ? '#4D9EFF' : '#48536A', fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
+            style={{ padding: '6px 14px', borderRadius: 6, border: filter === f ? '1px solid #00E0B0' : '1px solid #1A1D23', background: filter === f ? 'rgba(0,224,176,.08)' : '#0D0F12', color: filter === f ? '#00E0B0' : '#48536A', fontSize: 12, fontWeight: 600, cursor: 'pointer', textTransform: 'capitalize' }}>
             {f}
           </button>
         ))}
@@ -93,7 +93,7 @@ const S: Record<string, React.CSSProperties> = {
   page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
   title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 },
   tab: { padding: '8px 16px', fontSize: 12, fontWeight: 600, color: '#7C8BA0', textDecoration: 'none', borderRadius: 8, background: '#0D0F12' },
-  tabActive: { color: '#4D9EFF', background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.2)' },
+  tabActive: { color: '#00E0B0', background: 'rgba(0,224,176,.1)', border: '1px solid rgba(0,224,176,.2)' },
   th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 12px', textAlign: 'left' as const, background: '#0B0D11' },
   td: { padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 12, color: '#A0AABF' },
 }

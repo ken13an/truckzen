@@ -47,7 +47,7 @@ export function generateInvoiceHTML(data: InvoicePDFData): string {
 <body style="max-width:800px;margin:0 auto;padding:32px">
 
   <!-- Header -->
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #1D6FE8">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #00E0B0">
     <div>
       <div style="font-size:24px;font-weight:800;letter-spacing:.5px;color:#1a1a2e">${shopName.toUpperCase()}</div>
       <div style="font-size:11px;color:#666;margin-top:3px">${data.shop.address || ''} ${data.shop.city || ''}, ${data.shop.state || ''} ${data.shop.zip || ''}</div>
@@ -55,7 +55,7 @@ export function generateInvoiceHTML(data: InvoicePDFData): string {
       <div style="font-size:11px;color:#666">${data.shop.email || ''}</div>
     </div>
     <div style="text-align:right">
-      <div style="font-size:28px;font-weight:800;color:${isPaid ? '#16a34a' : '#1D6FE8'}">${isPaid ? 'PAID' : 'INVOICE'}</div>
+      <div style="font-size:28px;font-weight:800;color:${isPaid ? '#16a34a' : '#00E0B0'}">${isPaid ? 'PAID' : 'INVOICE'}</div>
       <div style="font-family:monospace;font-size:14px;font-weight:700;color:#1a1a2e;margin-top:4px">${data.invoice.invoice_number}</div>
       ${data.invoice.due_date ? `<div style="font-size:11px;color:#888;margin-top:2px">Due: ${data.invoice.due_date}</div>` : ''}
     </div>
@@ -85,7 +85,7 @@ export function generateInvoiceHTML(data: InvoicePDFData): string {
 
   <!-- Work Performed -->
   ${data.serviceOrder.cause ? `
-  <div style="background:#f8f9ff;border-left:3px solid #1D6FE8;padding:10px 14px;margin-bottom:20px;border-radius:0 6px 6px 0">
+  <div style="background:#f8f9ff;border-left:3px solid #00E0B0;padding:10px 14px;margin-bottom:20px;border-radius:0 6px 6px 0">
     <div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:5px">Work Performed</div>
     <div style="font-size:11px;color:#333;line-height:1.5"><strong>Cause:</strong> ${data.serviceOrder.cause}</div>
     ${data.serviceOrder.correction ? `<div style="font-size:11px;color:#333;line-height:1.5;margin-top:4px"><strong>Correction:</strong> ${data.serviceOrder.correction}</div>` : ''}
@@ -102,7 +102,7 @@ export function generateInvoiceHTML(data: InvoicePDFData): string {
       </tr>
     </thead>
     <tbody>
-      ${laborLines.length ? `<tr><td colspan="4" style="padding:5px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#EEF3FF;color:#1D6FE8;font-weight:700">Labor</td></tr>${lineRows(laborLines,'#1D6FE8')}` : ''}
+      ${laborLines.length ? `<tr><td colspan="4" style="padding:5px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#EEF3FF;color:#00E0B0;font-weight:700">Labor</td></tr>${lineRows(laborLines,'#00E0B0')}` : ''}
       ${partLines.length  ? `<tr><td colspan="4" style="padding:5px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#EEFFF6;color:#16a34a;font-weight:700">Parts</td></tr>${lineRows(partLines,'#16a34a')}` : ''}
       ${otherLines.length ? `<tr><td colspan="4" style="padding:5px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#FFF8EE;color:#d97706;font-weight:700">Other</td></tr>${lineRows(otherLines,'#d97706')}` : ''}
     </tbody>
@@ -119,7 +119,7 @@ export function generateInvoiceHTML(data: InvoicePDFData): string {
       ].map(r => `
         <div style="display:flex;justify-content:space-between;padding:5px 0;${r.bold ? 'border-top:2px solid #1a1a2e;margin-top:4px' : 'border-bottom:1px solid #f0f0f8'}">
           <span style="font-size:${r.bold?'14':'11'}px;${r.bold?'font-weight:800':'color:#555'}">${r.label}</span>
-          <span style="font-family:monospace;font-size:${r.bold?'18':'11'}px;font-weight:${r.bold?800:400};color:${r.bold?(isPaid?'#16a34a':'#1D6FE8'):'#333'}">${r.val}</span>
+          <span style="font-family:monospace;font-size:${r.bold?'18':'11'}px;font-weight:${r.bold?800:400};color:${r.bold?(isPaid?'#16a34a':'#00E0B0'):'#333'}">${r.val}</span>
         </div>
       `).join('')}
     </div>
@@ -127,12 +127,12 @@ export function generateInvoiceHTML(data: InvoicePDFData): string {
 
   <!-- QR Payment -->
   ${data.paymentUrl && !isPaid ? `
-  <div style="display:flex;align-items:center;gap:20px;background:#f0f6ff;border:2px solid #1D6FE8;border-radius:10px;padding:16px;margin-bottom:24px">
+  <div style="display:flex;align-items:center;gap:20px;background:#f0f6ff;border:2px solid #00E0B0;border-radius:10px;padding:16px;margin-bottom:24px">
     ${data.qrCodeUrl ? `<img src="${data.qrCodeUrl}" width="80" height="80" style="border-radius:6px"/>` : ''}
     <div>
-      <div style="font-weight:700;font-size:13px;color:#1D6FE8">Pay Online</div>
+      <div style="font-weight:700;font-size:13px;color:#00E0B0">Pay Online</div>
       <div style="font-size:11px;color:#555;margin-top:3px">Scan QR code or visit:</div>
-      <div style="font-family:monospace;font-size:10px;color:#1D6FE8;word-break:break-all">${data.paymentUrl}</div>
+      <div style="font-family:monospace;font-size:10px;color:#00E0B0;word-break:break-all">${data.paymentUrl}</div>
     </div>
   </div>` : ''}
 
@@ -145,7 +145,7 @@ export function generateInvoiceHTML(data: InvoicePDFData): string {
 
   <!-- Print button (hidden when printing) -->
   <div class="no-print" style="margin-top:24px;text-align:center">
-    <button onclick="window.print()" style="padding:10px 24px;background:#1D6FE8;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Print / Save as PDF</button>
+    <button onclick="window.print()" style="padding:10px 24px;background:#00E0B0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Print / Save as PDF</button>
   </div>
 
 </body>

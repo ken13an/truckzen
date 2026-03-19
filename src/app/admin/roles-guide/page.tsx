@@ -37,7 +37,7 @@ export default function RolesGuidePage() {
           <div style={S.title}>Role & Permissions Guide</div>
           <div style={{ fontSize: 12, color: '#7C8BA0' }}>Complete reference for all {ALL_ROLES.length} roles and {MODULES.length} modules</div>
         </div>
-        <button onClick={() => window.print()} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff' }}>
+        <button onClick={() => window.print()} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff' }}>
           Print / Save PDF
         </button>
       </div>

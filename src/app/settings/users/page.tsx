@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 
 const ROLE_COLOR: Record<string, string> = {
   owner:'#D4882A', gm:'#D4882A', it_person:'#8B5CF6',
-  shop_manager:'#4D9EFF', service_writer:'#4D9EFF',
+  shop_manager:'#00E0B0', service_writer:'#00E0B0',
   technician:'#1DB870', maintenance_technician:'#1DB870',
   parts_manager:'#E8692A', fleet_manager:'#0E9F8E',
   accountant:'#DDE3EE', office_admin:'#DDE3EE', dispatcher:'#DDE3EE',
@@ -68,7 +68,7 @@ export default function UsersPage() {
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or email..." style={{ padding:'7px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#DDE3EE', fontSize:11, fontFamily:'inherit', outline:'none' }}/>
-          <button onClick={()=>window.location.href='/settings/users/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Invite Staff</button>
+          <button onClick={()=>window.location.href='/settings/users/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Invite Staff</button>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export default function UsersPage() {
                     </td>
                     <td style={S.td as any}>
                       <div style={{ display:'flex', gap:4 }}>
-                        <button style={{ ...S.btn, background:'rgba(29,111,232,.1)', color:'#4D9EFF' }} onClick={()=>setEditing(u)}>Edit</button>
+                        <button style={{ ...S.btn, background:'rgba(0,224,176,.1)', color:'#00E0B0' }} onClick={()=>setEditing(u)}>Edit</button>
                         {u.active && <button style={{ ...S.btn, background:'rgba(217,79,79,.08)', color:'#D94F4F' }} onClick={()=>deactivate(u.id)}>Deactivate</button>}
                       </div>
                     </td>
@@ -135,7 +135,7 @@ export default function UsersPage() {
             </div>
             <div style={{ display:'flex', gap:8, justifyContent:'flex-end', paddingTop:14, borderTop:'1px solid rgba(255,255,255,.06)' }}>
               <button style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', padding:'8px 16px' }} onClick={()=>setEditing(null)}>Cancel</button>
-              <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff', padding:'8px 16px' }} onClick={saveUser} disabled={saving}>{saving?'Saving...':'Save'}</button>
+              <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00805F)', color:'#fff', padding:'8px 16px' }} onClick={saveUser} disabled={saving}>{saving?'Saving...':'Save'}</button>
             </div>
           </div>
         </div>

@@ -88,7 +88,7 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
             const isActive = displayRole === r.key && (!r.team || r.label.includes(r.team || ''))
             return (
               <button key={i} onClick={() => switchRole(r.key)} disabled={switching}
-                style={{ ...S.item, color: isActive ? '#4D9EFF' : '#DDE3EE', background: isActive ? 'rgba(29,111,232,.06)' : 'transparent' }}>
+                style={{ ...S.item, color: isActive ? '#00E0B0' : '#DDE3EE', background: isActive ? 'rgba(0,224,176,.06)' : 'transparent' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: ROLE_COLOR[r.key] || '#7C8BA0', flexShrink: 0 }} />
                 {r.label}
               </button>

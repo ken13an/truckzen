@@ -243,7 +243,7 @@ export default function SmartDropPage() {
 
   return (
     <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#00E0B0', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={S.title}>Smart Drop</div>
       <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>Import data from any spreadsheet, export to CSV, or review history. FullBay CSVs are auto-detected.</div>
@@ -264,16 +264,16 @@ export default function SmartDropPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 8 }}>
               {IMPORT_TYPES.map(t => (
                 <div key={t.value} onClick={() => setImportType(t.value)}
-                  style={{ padding: '12px', borderRadius: 10, cursor: 'pointer', border: importType === t.value ? '1px solid rgba(29,111,232,.4)' : '1px solid #1A1D23', background: importType === t.value ? 'rgba(29,111,232,.08)' : '#0D0F12' }}>
+                  style={{ padding: '12px', borderRadius: 10, cursor: 'pointer', border: importType === t.value ? '1px solid rgba(0,224,176,.4)' : '1px solid #1A1D23', background: importType === t.value ? 'rgba(0,224,176,.08)' : '#0D0F12' }}>
                   <div style={{ fontSize: 18, marginBottom: 4 }}>{t.icon}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: importType === t.value ? '#4D9EFF' : '#F0F4FF' }}>{t.label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: importType === t.value ? '#00E0B0' : '#F0F4FF' }}>{t.label}</div>
                   <div style={{ fontSize: 10, color: '#48536A', marginTop: 2 }}>{t.desc}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ ...S.card, border: `2px dashed ${dragging ? 'rgba(29,111,232,.6)' : '#1A1D23'}`, textAlign: 'center', padding: 40, cursor: 'pointer' }}
+          <div style={{ ...S.card, border: `2px dashed ${dragging ? 'rgba(0,224,176,.6)' : '#1A1D23'}`, textAlign: 'center', padding: 40, cursor: 'pointer' }}
             onDragOver={e => { e.preventDefault(); setDragging(true) }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
@@ -287,10 +287,10 @@ export default function SmartDropPage() {
 
         {step === 2 && <>
           {detectedFormat && (
-            <div style={{ ...S.card, borderColor: 'rgba(29,111,232,.3)', background: 'rgba(29,111,232,.05)', display: 'flex', alignItems: 'center', gap: 10, padding: 14 }}>
+            <div style={{ ...S.card, borderColor: 'rgba(0,224,176,.3)', background: 'rgba(0,224,176,.05)', display: 'flex', alignItems: 'center', gap: 10, padding: 14 }}>
               <span style={{ fontSize: 20 }}>✨</span>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#4D9EFF' }}>FullBay format detected</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#00E0B0' }}>FullBay format detected</div>
                 <div style={{ fontSize: 11, color: '#7C8BA0' }}>Auto-selected "{IMPORT_TYPES.find(t => t.value === importType)?.label}" — columns will be mapped automatically</div>
               </div>
             </div>
@@ -349,7 +349,7 @@ export default function SmartDropPage() {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {EXPORT_TYPES.map(t => (
               <button key={t.value} onClick={() => setExportType(t.value)}
-                style={{ padding: '10px 16px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 600, border: exportType === t.value ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: exportType === t.value ? 'rgba(29,111,232,.08)' : '#0D0F12', color: exportType === t.value ? '#4D9EFF' : '#7C8BA0' }}>
+                style={{ padding: '10px 16px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 600, border: exportType === t.value ? '1px solid #00E0B0' : '1px solid #1A1D23', background: exportType === t.value ? 'rgba(0,224,176,.08)' : '#0D0F12', color: exportType === t.value ? '#00E0B0' : '#7C8BA0' }}>
                 {t.icon} {t.label}
               </button>
             ))}
@@ -396,7 +396,7 @@ export default function SmartDropPage() {
                   <td style={S.td}>{new Date(h.created_at).toLocaleString()}</td>
                   <td style={S.td}>{h.user_name}</td>
                   <td style={S.td}>
-                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: h.action === 'import' ? '#1D6FE8' : '#22C55E' }}>{h.action}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: h.action === 'import' ? '#00E0B0' : '#22C55E' }}>{h.action}</span>
                   </td>
                   <td style={S.td}>{h.data_type}</td>
                   <td style={S.td}>{h.file_name || '—'}</td>
@@ -431,6 +431,6 @@ const S: Record<string, React.CSSProperties> = {
   table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 11 },
   th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '8px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
   td: { padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' },
-  btnPrimary: { padding: '12px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
+  btnPrimary: { padding: '12px 24px', background: 'linear-gradient(135deg,#00E0B0,#00805F)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
   btnSecondary: { padding: '10px 20px', background: 'transparent', border: '1px solid #1A1D23', borderRadius: 9, color: '#7C8BA0', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' },
 }

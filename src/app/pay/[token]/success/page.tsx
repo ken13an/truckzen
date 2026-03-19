@@ -150,14 +150,14 @@ const s: Record<string, any> = {
   },
   logoMark: {
     width: '28px', height: '28px', borderRadius: '6px',
-    background: 'linear-gradient(135deg,#1D6FE8,#1248B0)',
+    background: 'linear-gradient(135deg,#00E0B0,#00805F)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   logoText: {
     fontFamily: "'Bebas Neue',sans-serif",
     fontSize: '14px', letterSpacing: '0.1em', color: '#F0F4FF',
   },
-  logoAccent: { color: '#4D9EFF' },
+  logoAccent: { color: '#00E0B0' },
   iconWrap: { margin: '0 auto 20px' },
   title: {
     fontSize: '24px', fontWeight: 700, color: '#F0F4FF',

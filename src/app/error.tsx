@@ -18,7 +18,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
           {error?.digest && <div style={{ fontFamily:'monospace', fontSize:10, color:'#48536A', marginTop:8 }}>Error ID: {error.digest}</div>}
         </div>
         <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
-          <button onClick={reset} style={{ padding:'10px 20px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+          <button onClick={reset} style={{ padding:'10px 20px', background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
             Try Again
           </button>
           <a href="/dashboard" style={{ padding:'10px 20px', background:'#161B24', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#DDE3EE', fontSize:13, fontWeight:600, textDecoration:'none' }}>

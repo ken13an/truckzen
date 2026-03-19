@@ -88,7 +88,7 @@ export default function PaymentPage() {
   if (loading) return (
     <Page>
       <div style={s.loadWrap}>
-        <Spinner color="#1D6FE8" size={32}/>
+        <Spinner color="#00E0B0" size={32}/>
         <p style={s.loadText}>Loading invoice...</p>
       </div>
     </Page>
@@ -297,22 +297,22 @@ const s: Record<string, any> = {
   },
   logoMark: {
     width: '30px', height: '30px', borderRadius: '7px', flexShrink: 0,
-    background: 'linear-gradient(135deg,#1D6FE8,#1248B0)',
+    background: 'linear-gradient(135deg,#00E0B0,#00805F)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    boxShadow: '0 0 12px rgba(29,111,232,0.3)',
+    boxShadow: '0 0 12px rgba(0,224,176,0.3)',
   },
   logoText: {
     fontFamily: "'Bebas Neue',sans-serif",
     fontSize: '15px', letterSpacing: '0.1em', color: '#F0F4FF',
   },
-  logoAccent: { color: '#4D9EFF' },
+  logoAccent: { color: '#00E0B0' },
   logoShop:  { fontSize: '11px', color: '#7C8BA0', marginTop: '1px' },
 
   truckPill: {
     display: 'flex', alignItems: 'center', gap: '10px',
     padding: '12px 14px',
-    background: 'rgba(29,111,232,0.06)',
-    border: '1px solid rgba(29,111,232,0.15)',
+    background: 'rgba(0,224,176,0.06)',
+    border: '1px solid rgba(0,224,176,0.15)',
     borderRadius: '10px', marginBottom: '14px',
   },
   truckIcon: { fontSize: '20px' },
@@ -329,7 +329,7 @@ const s: Record<string, any> = {
     color: '#48536A', fontFamily: 'monospace',
   },
   invoiceRefNum: {
-    fontSize: '13px', fontWeight: 700, color: '#4D9EFF', fontFamily: 'monospace',
+    fontSize: '13px', fontWeight: 700, color: '#00E0B0', fontFamily: 'monospace',
   },
 
   workBlock: {
@@ -356,7 +356,7 @@ const s: Record<string, any> = {
   divider:  { height: '1px', background: 'rgba(255,255,255,0.07)', margin: '10px 0' },
   balanceKey: { fontSize: '16px', fontWeight: 700, color: '#F0F4FF' },
   balanceVal: {
-    fontSize: '22px', fontWeight: 700, color: '#4D9EFF',
+    fontSize: '22px', fontWeight: 700, color: '#00E0B0',
     fontFamily: 'monospace',
   },
 
@@ -369,11 +369,11 @@ const s: Record<string, any> = {
 
   btn: {
     width: '100%', padding: '16px',
-    background: 'linear-gradient(135deg,#1D6FE8,#1248B0)',
+    background: 'linear-gradient(135deg,#00E0B0,#00805F)',
     border: 'none', borderRadius: '11px',
     fontSize: '16px', fontWeight: 700, color: '#fff',
     cursor: 'pointer', marginBottom: '12px',
-    boxShadow: '0 4px 24px rgba(29,111,232,0.4)',
+    boxShadow: '0 4px 24px rgba(0,224,176,0.4)',
     fontFamily: 'inherit', minHeight: '56px',
     WebkitTapHighlightColor: 'transparent',
   },
@@ -400,7 +400,7 @@ const s: Record<string, any> = {
   },
   shopContactName:   { fontSize: '12px', fontWeight: 600, color: '#DDE3EE' },
   shopContactDetail: { fontSize: '11px', color: '#48536A', marginTop: '3px' },
-  shopPhone:         { color: '#4D9EFF', textDecoration: 'none' },
+  shopPhone:         { color: '#00E0B0', textDecoration: 'none' },
   techName:          { fontSize: '10px', color: '#48536A', marginTop: '3px' },
 
   poweredBy: {
@@ -434,10 +434,10 @@ const s: Record<string, any> = {
   },
   callBtn: {
     display: 'block', padding: '13px',
-    background: 'rgba(29,111,232,0.08)',
-    border: '1px solid rgba(29,111,232,0.2)',
+    background: 'rgba(0,224,176,0.08)',
+    border: '1px solid rgba(0,224,176,0.2)',
     borderRadius: '9px', textAlign: 'center',
-    color: '#4D9EFF', textDecoration: 'none',
+    color: '#00E0B0', textDecoration: 'none',
     fontSize: '14px', fontWeight: 600,
   },
 }

@@ -67,7 +67,7 @@ export default function CustomerPortalPage() {
 
   return (
     <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#00E0B0', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <a href="/customers" style={{ fontSize: 12, color: '#7C8BA0', textDecoration: 'none', display: 'block', marginBottom: 16 }}>← Customers</a>
 
@@ -76,14 +76,14 @@ export default function CustomerPortalPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={S.title}>{customer.company_name}</div>
-            <button onClick={() => setEditing(!editing)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#4D9EFF', padding: 4 }} title="Edit">✏️</button>
+            <button onClick={() => setEditing(!editing)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#00E0B0', padding: 4 }} title="Edit">✏️</button>
           </div>
           <div style={{ fontSize: 12, color: '#7C8BA0', marginTop: 4 }}>
             {vehicles.length} unit{vehicles.length !== 1 ? 's' : ''} · {allSOs.length} service order{allSOs.length !== 1 ? 's' : ''} · {invoices.length} invoice{invoices.length !== 1 ? 's' : ''}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <a href={`/orders/new?customer=${params.id}`} style={{ ...S.btn, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', textDecoration: 'none' }}>+ New Service Order</a>
+          <a href={`/orders/new?customer=${params.id}`} style={{ ...S.btn, background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', textDecoration: 'none' }}>+ New Service Order</a>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export default function CustomerPortalPage() {
         {[
           { label: 'Total Spent', value: `$${totalSpent.toLocaleString()}`, color: '#22C55E' },
           { label: 'Outstanding', value: `$${outstanding.toLocaleString()}`, color: outstanding > 0 ? '#F59E0B' : '#48536A' },
-          { label: 'Open Orders', value: String(openSOs.length), color: openSOs.length > 0 ? '#4D9EFF' : '#48536A' },
+          { label: 'Open Orders', value: String(openSOs.length), color: openSOs.length > 0 ? '#00E0B0' : '#48536A' },
           { label: 'Last Service', value: lastService || 'Never', color: '#7C8BA0' },
         ].map(s => (
           <div key={s.label} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10, padding: '12px 18px', flex: '1 1 120px' }}>
@@ -105,7 +105,7 @@ export default function CustomerPortalPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,.06)', paddingBottom: 0 }}>
         {([['overview', 'Overview'], ['fleet', `Fleet (${vehicles.length})`], ['history', 'Service History'], ['open', `Open Orders (${openSOs.length})`], ['invoices', `Invoices (${invoices.length})`]] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderBottom: tab === k ? '2px solid #4D9EFF' : '2px solid transparent', color: tab === k ? '#4D9EFF' : '#7C8BA0', background: 'none', border: 'none', borderBottomWidth: 2, borderBottomStyle: 'solid', borderBottomColor: tab === k ? '#4D9EFF' : 'transparent' }}>
+          <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderBottom: tab === k ? '2px solid #00E0B0' : '2px solid transparent', color: tab === k ? '#00E0B0' : '#7C8BA0', background: 'none', border: 'none', borderBottomWidth: 2, borderBottomStyle: 'solid', borderBottomColor: tab === k ? '#00E0B0' : 'transparent' }}>
             {l}
           </button>
         ))}
@@ -128,7 +128,7 @@ export default function CustomerPortalPage() {
               <div><label style={S.label}>Address</label><input style={S.input} value={edit?.address || ''} onChange={e => setEdit((c: any) => ({ ...c, address: e.target.value }))} /></div>
               <div style={{ marginTop: 10 }}><label style={S.label}>Notes</label><textarea style={{ ...S.input, minHeight: 60, resize: 'vertical' }} value={edit?.notes || ''} onChange={e => setEdit((c: any) => ({ ...c, notes: e.target.value }))} /></div>
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                <button onClick={save} disabled={saving} style={{ ...S.btn, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff' }}>{saving ? 'Saving...' : 'Save'}</button>
+                <button onClick={save} disabled={saving} style={{ ...S.btn, background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff' }}>{saving ? 'Saving...' : 'Save'}</button>
                 <button onClick={() => setEditing(false)} style={{ ...S.btn, background: '#1A1D23', color: '#7C8BA0' }}>Cancel</button>
               </div>
             </>
@@ -185,7 +185,7 @@ export default function CustomerPortalPage() {
               <tbody>
                 {vehicles.map((v: any) => (
                   <tr key={v.id}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: '#4D9EFF' }}>#{v.unit_number}</td>
+                    <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: '#00E0B0' }}>#{v.unit_number}</td>
                     <td style={S.td}>{v.year}</td>
                     <td style={S.td}>{v.make}</td>
                     <td style={S.td}>{v.model}</td>
@@ -193,7 +193,7 @@ export default function CustomerPortalPage() {
                     <td style={{ ...S.td, fontFamily: 'monospace' }}>{v.odometer?.toLocaleString() || '—'}</td>
                     <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: v.status === 'on_road' ? '#22C55E' : '#7C8BA0' }}>{v.status?.replace(/_/g, ' ')}</span></td>
                     <td style={S.td}>
-                      <a href={`/orders/new?customer=${params.id}&asset=${v.id}`} style={{ fontSize: 10, color: '#4D9EFF', textDecoration: 'none', fontWeight: 600 }}>+ SO</a>
+                      <a href={`/orders/new?customer=${params.id}&asset=${v.id}`} style={{ fontSize: 10, color: '#00E0B0', textDecoration: 'none', fontWeight: 600 }}>+ SO</a>
                     </td>
                   </tr>
                 ))}
@@ -215,7 +215,7 @@ export default function CustomerPortalPage() {
               <tbody>
                 {closedSOs.map((so: any) => (
                   <tr key={so.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/orders/${so.id}`)}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#4D9EFF', fontWeight: 600 }}>{so.so_number}</td>
+                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#00E0B0', fontWeight: 600 }}>{so.so_number}</td>
                     <td style={S.td}>{so.created_at?.split('T')[0]}</td>
                     <td style={S.td}>#{(so.assets as any)?.unit_number || '—'}</td>
                     <td style={{ ...S.td, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{so.complaint || '—'}</td>
@@ -243,7 +243,7 @@ export default function CustomerPortalPage() {
               <tbody>
                 {openSOs.map((so: any) => (
                   <tr key={so.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/orders/${so.id}`)}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#4D9EFF', fontWeight: 600 }}>{so.so_number}</td>
+                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#00E0B0', fontWeight: 600 }}>{so.so_number}</td>
                     <td style={S.td}>#{(so.assets as any)?.unit_number || '—'}</td>
                     <td style={{ ...S.td, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{so.complaint || '—'}</td>
                     <td style={S.td}>{(so.users as any)?.full_name || <span style={{ color: '#48536A' }}>Unassigned</span>}</td>
@@ -270,13 +270,13 @@ export default function CustomerPortalPage() {
               <tbody>
                 {invoices.map((inv: any) => (
                   <tr key={inv.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/invoices/${inv.id}`)}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#4D9EFF', fontWeight: 600 }}>{inv.invoice_number}</td>
+                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#00E0B0', fontWeight: 600 }}>{inv.invoice_number}</td>
                     <td style={S.td}>{inv.created_at?.split('T')[0]}</td>
                     <td style={S.td}>{inv.due_date || '—'}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace' }}>${(inv.total || 0).toFixed(2)}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace' }}>${(inv.amount_paid || 0).toFixed(2)}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: (inv.balance_due || 0) > 0 ? '#F59E0B' : '#22C55E' }}>${(inv.balance_due || 0).toFixed(2)}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: inv.status === 'paid' ? '#22C55E' : inv.status === 'sent' ? '#4D9EFF' : inv.status === 'overdue' ? '#EF4444' : '#7C8BA0' }}>{inv.status}</span></td>
+                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: inv.status === 'paid' ? '#22C55E' : inv.status === 'sent' ? '#00E0B0' : inv.status === 'overdue' ? '#EF4444' : '#7C8BA0' }}>{inv.status}</span></td>
                   </tr>
                 ))}
               </tbody>

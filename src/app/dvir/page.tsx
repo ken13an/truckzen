@@ -55,7 +55,7 @@ export default function DVIRPage() {
     title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:24, color:'#F0F4FF', marginBottom:4 },
     label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#7C8BA0', marginBottom:4, display:'block' },
     input: { width:'100%', padding:'10px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:13, color:'#DDE3EE', outline:'none', fontFamily:'inherit', minHeight:40, boxSizing:'border-box' as const, marginBottom:12 },
-    btn:   { width:'100%', padding:14, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginTop:16 },
+    btn:   { width:'100%', padding:14, background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginTop:16 },
   }
 
   if (submitted) return (

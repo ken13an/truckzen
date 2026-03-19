@@ -118,7 +118,7 @@ export default function PermissionsPage() {
 
   return (
     <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#00E0B0', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={{ marginBottom: 20 }}>
         <div style={S.title}>Permissions & Access Control</div>
@@ -195,8 +195,8 @@ export default function PermissionsPage() {
               <button key={u.id} onClick={() => setSelectedUser(u)}
                 style={{
                   padding: '8px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                  border: selectedUser?.id === u.id ? '1px solid #1D6FE8' : '1px solid #1A1D23',
-                  background: selectedUser?.id === u.id ? 'rgba(29,111,232,.1)' : '#0D0F12',
+                  border: selectedUser?.id === u.id ? '1px solid #00E0B0' : '1px solid #1A1D23',
+                  background: selectedUser?.id === u.id ? 'rgba(0,224,176,.1)' : '#0D0F12',
                   color: selectedUser?.id === u.id ? '#F0F4FF' : '#7C8BA0',
                 }}>
                 {u.full_name}
@@ -223,8 +223,8 @@ export default function PermissionsPage() {
                     <div key={m.key} onClick={() => toggleUserPerm(selectedUser.id, m.key)}
                       style={{
                         padding: '10px 12px', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        border: hasOvr ? '1px solid #1D6FE8' : '1px solid #1A1D23',
-                        background: hasOvr ? 'rgba(29,111,232,.06)' : '#0D0F12',
+                        border: hasOvr ? '1px solid #00E0B0' : '1px solid #1A1D23',
+                        background: hasOvr ? 'rgba(0,224,176,.06)' : '#0D0F12',
                       }}>
                       <span style={{ fontSize: 12, color: effective ? '#F0F4FF' : '#48536A' }}>{m.icon} {m.label}</span>
                       <div style={{

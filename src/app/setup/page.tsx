@@ -62,13 +62,13 @@ export default function SetupPage() {
     card:    { width:'100%', maxWidth:560, background:'#161B24', border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'32px 28px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
     steps:   { display:'flex', gap:6, marginBottom:28 },
     stepDot: { flex:1, height:4, borderRadius:100, background:'rgba(255,255,255,.08)', transition:'all .2s' },
-    stepOn:  { background:'#1D6FE8' },
+    stepOn:  { background:'#00E0B0' },
     stepDone:{ background:'#1DB870' },
     title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:'#F0F4FF', marginBottom:6 },
     sub:     { fontSize:12, color:'#7C8BA0', marginBottom:20, lineHeight:1.5 },
     label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#7C8BA0', marginBottom:4, display:'block' },
     input:   { width:'100%', padding:'9px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#DDE3EE', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
-    btn:     { padding:'12px 24px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:8 },
+    btn:     { padding:'12px 24px', background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:8 },
     grid2:   { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   }
 
@@ -85,11 +85,11 @@ export default function SetupPage() {
       <div style={S.card}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24 }}>
-          <div style={{ width:28, height:28, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ width:28, height:28, background:'linear-gradient(135deg,#00E0B0,#00805F)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
           <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:'#F0F4FF' }}>
-            TRUCK<span style={{ color:'#4D9EFF' }}>ZEN</span>
+            TRUCK<span style={{ color:'#00E0B0' }}>ZEN</span>
           </span>
           <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#7C8BA0' }}>Step {step + 1} of {STEPS.length}</span>
         </div>
@@ -127,7 +127,7 @@ export default function SetupPage() {
             <div style={S.title}>Teams & Bays</div>
             <div style={S.sub}>Your shop is already configured with 4 teams and 12 bays. You can adjust anytime in Settings.</div>
             {[
-              { team:'A', bays:'Bays 1–4', dept:'Engine & Diagnostics', color:'#4D9EFF' },
+              { team:'A', bays:'Bays 1–4', dept:'Engine & Diagnostics', color:'#00E0B0' },
               { team:'B', bays:'Bays 5–8', dept:'Electrical', color:'#8B5CF6' },
               { team:'C', bays:'Bays 9–10', dept:'Body & Chassis', color:'#E8692A' },
               { team:'D', bays:'Bays 11–12', dept:'Inspection', color:'#1DB870' },
@@ -174,7 +174,7 @@ export default function SetupPage() {
                 )}
               </div>
             ))}
-            <button style={{ ...S.btn, background:'transparent', border:'1px dashed rgba(29,111,232,.3)', color:'#4D9EFF', marginBottom:8, display:'block', width:'100%', textAlign:'center' as const }}
+            <button style={{ ...S.btn, background:'transparent', border:'1px dashed rgba(0,224,176,.3)', color:'#00E0B0', marginBottom:8, display:'block', width:'100%', textAlign:'center' as const }}
               onClick={() => setStaffRows(r => [...r, { full_name:'', email:'', role:'technician', team:'A' }])}>
               + Add Another
             </button>
@@ -218,7 +218,7 @@ export default function SetupPage() {
               <div style={{ fontSize:48, marginBottom:16 }}>🎉</div>
               <div style={S.title}>TruckZen is ready</div>
               <div style={{ fontSize:13, color:'#7C8BA0', lineHeight:1.7, marginBottom:24 }}>
-                Your shop is set up. Kiosk is live at <strong style={{ color:'#4D9EFF' }}>truckzen.com/kiosk</strong>.<br/>
+                Your shop is set up. Kiosk is live at <strong style={{ color:'#00E0B0' }}>truckzen.com/kiosk</strong>.<br/>
                 Staff accounts have been created. Data migration is ready to run.<br/>
                 Everything is connected and waiting for your first job.
               </div>

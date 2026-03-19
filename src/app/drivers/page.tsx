@@ -53,7 +53,7 @@ export default function DriversPage() {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, CDL..."
             style={{ padding:'7px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#DDE3EE', fontSize:11, fontFamily:'inherit', outline:'none', width:200 }}/>
           <button onClick={() => window.location.href='/drivers/new'}
-            style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+            style={{ padding:'7px 14px', background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
             + Add Driver
           </button>
         </div>
@@ -75,7 +75,7 @@ export default function DriversPage() {
                     onClick={() => window.location.href = `/drivers/${d.id}`}>
                     <td style={{ ...S.td, fontWeight:700, color:'#F0F4FF' }}>{d.full_name}</td>
                     <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#7C8BA0' }}>{d.phone || '—'}</td>
-                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#4D9EFF' }}>{d.cdl_number || '—'}</td>
+                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#00E0B0' }}>{d.cdl_number || '—'}</td>
                     <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#7C8BA0' }}>{d.cdl_class || '—'}</td>
                     <td style={{ ...S.td }}>
                       <span style={{ fontFamily:'monospace', fontSize:10, fontWeight:700, color:cdlSt.color }}>{d.cdl_expiry || '—'}</span>

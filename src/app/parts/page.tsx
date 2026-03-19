@@ -41,7 +41,7 @@ export default function PartsPage() {
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ padding:'7px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#DDE3EE', fontSize:11, fontFamily:'inherit', outline:'none' }}/>
-          <button onClick={() => window.location.href = '/parts/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add Part</button>
+          <button onClick={() => window.location.href = '/parts/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add Part</button>
         </div>
       </div>
       <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
@@ -60,7 +60,7 @@ export default function PartsPage() {
                 const m = margin(p)
                 return (
                   <tr key={p.id} style={{ borderBottom:'1px solid rgba(255,255,255,.025)', cursor:'pointer' }} onClick={() => window.location.href = '/parts/' + p.id}>
-                    <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#4D9EFF' }}>{p.part_number}</td>
+                    <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#00E0B0' }}>{p.part_number}</td>
                     <td style={{ padding:'9px 10px', color:'#F0F4FF', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.description}</td>
                     <td style={{ padding:'9px 10px', fontSize:10, color:'#7C8BA0' }}>{p.category}</td>
                     <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color: isOut?'#D94F4F':isLow?'#D4882A':'#DDE3EE', textAlign:'center' }}>{p.on_hand}</td>

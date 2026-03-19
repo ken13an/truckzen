@@ -40,7 +40,7 @@ export default function MaintenancePage() {
           <div style={S.title}>Maintenance & PM</div>
           <div style={{ fontSize:12, color:'#7C8BA0' }}>{pms.filter(p => p.next_due_date < today).length} overdue · {pms.length} total schedules</div>
         </div>
-        <button onClick={() => window.location.href='/maintenance/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add PM Schedule</button>
+        <button onClick={() => window.location.href='/maintenance/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#00E0B0,#00805F)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add PM Schedule</button>
       </div>
       <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
         <div style={{ overflowX:'auto' }}>
@@ -56,7 +56,7 @@ export default function MaintenancePage() {
                 const color   = isOver ? '#D94F4F' : isSoon ? '#D4882A' : '#1DB870'
                 return (
                   <tr key={pm.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = '/maintenance/' + pm.id}>
-                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#4D9EFF', fontWeight:700 }}>#{asset?.unit_number}</td>
+                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#00E0B0', fontWeight:700 }}>#{asset?.unit_number}</td>
                     <td style={{ ...S.td, color:'#F0F4FF', fontWeight:600 }}>{pm.service_name}</td>
                     <td style={{ ...S.td, color:'#7C8BA0' }}>{pm.interval_miles ? `${pm.interval_miles.toLocaleString()} mi` : `${pm.interval_days}d`}</td>
                     <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color }}>{pm.next_due_date || '—'}</td>
