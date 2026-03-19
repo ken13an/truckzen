@@ -16,6 +16,18 @@ All changes made by Claude Code, in reverse chronological order.
 
 -->
 
+## 2026-03-19 -- [000] Logo Fix + Global Blue→Teal Color Replace
+- Created Logo.tsx with correct brand mark: white rounded square, bold TZ, teal dot bottom-left
+- Wordmark: "truckzen." lowercase — "truck" white, "zen." teal (with period)
+- Updated sidebar, login, forgot-password, reset-password to use Logo component
+- Global replacement of ALL blue accent colors (#1D6FE8, #4D9EFF, #1248B0) → teal (#00E0B0, #00805F)
+- 198 references across 51 files updated to teal
+- Zero remaining blue accent references
+- Files created: src/components/Logo.tsx
+- Files modified: 55 files (all pages, components, and libs)
+- Build status: PASS (84 pages, 0 errors)
+- Git commit: c1f4dd2
+
 ## 2026-03-19 -- [000] Brand Redesign Session 2 (Settings + Auth pages)
 - Restyled settings page: brand tabs, inputs, cards, Lucide LogOut/UserPlus/ExternalLink/Copy
 - Restyled 403 page: Lucide ShieldX, teal CTA
