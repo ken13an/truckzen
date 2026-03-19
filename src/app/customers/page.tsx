@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { Loader2, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function CustomersPage() {
   const supabase = createClient()
@@ -16,7 +17,6 @@ export default function CustomersPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [shopId, setShopId] = useState('')
 
-  // Debounce search
   useEffect(() => {
     const t = setTimeout(() => { setSearchDebounced(search); setPage(1) }, 300)
     return () => clearTimeout(t)
@@ -29,9 +29,9 @@ export default function CustomersPage() {
     const res = await fetch(`/api/customers?${params}`)
     if (!res.ok) { setError('Failed to load customers'); setLoading(false); return }
     const data = await res.json()
-    setCustomers(data.data || [])
-    setTotal(data.total || 0)
-    setTotalPages(data.total_pages || 0)
+    setCustomers(data.data ?? [])
+    setTotal(data.total ?? 0)
+    setTotalPages(data.total_pages ?? 0)
     setLoading(false)
   }, [])
 
@@ -43,7 +43,6 @@ export default function CustomersPage() {
     })
   }, [])
 
-  // Reload on page/search/perPage change
   useEffect(() => {
     if (!shopId) return
     loadCustomers(shopId, page, perPage, searchDebounced)
@@ -53,73 +52,69 @@ export default function CustomersPage() {
   const to = Math.min(page * perPage, total)
 
   return (
-    <div style={S.page}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+    <div className="bg-bg min-h-screen text-text-primary p-6">
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>
-          <div style={S.title}>Customers</div>
-          <div style={{ fontSize: 12, color: '#7C8BA0' }}>{total.toLocaleString()} companies</div>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Customers</h1>
+          <p className="text-sm text-text-secondary">{total.toLocaleString()} companies</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="flex gap-2">
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, phone, email..."
-            style={{ padding: '7px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#DDE3EE', fontSize: 11, fontFamily: 'inherit', outline: 'none', width: 220 }} />
-          <button onClick={() => window.location.href = '/customers/new'}
-            style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-            + Add Customer
-          </button>
+            className="px-3 py-2 bg-surface-2 border border-brand-border rounded-md text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-teal transition-colors duration-150 w-56" />
+          <a href="/customers/new" className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-teal text-bg rounded-md text-sm font-bold hover:bg-teal-hover transition-colors duration-150 no-underline">
+            <Plus size={14} strokeWidth={2} /> Add Customer
+          </a>
         </div>
       </div>
 
-      {error && <div style={{ background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 12, color: '#EF4444' }}>{error}</div>}
+      {error && <div className="px-3 py-2.5 bg-error/10 border border-error/20 rounded-md text-xs text-error mb-4">{error}</div>}
 
-      <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
-            <thead><tr>{['Company', 'Contact', 'Phone', 'Email', 'Address', 'Visits', 'Spent'].map(h =>
-              <th key={h} style={S.th}>{h}</th>)}</tr></thead>
+      <div className="bg-surface border border-brand-border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
+            <thead><tr className="bg-surface-2">
+              {['Company', 'Contact', 'Phone', 'Email', 'Address', 'Visits', 'Spent'].map(h =>
+                <th key={h} className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono px-3 py-2 text-left whitespace-nowrap">{h}</th>)}
+            </tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={7} style={{ ...S.td, textAlign: 'center', color: '#7C8BA0', padding: 40 }}>Loading...</td></tr>
-              : customers.length === 0 ? <tr><td colSpan={7} style={{ ...S.td, textAlign: 'center', color: '#7C8BA0', padding: 40 }}>{search ? 'No customers match your search' : 'No customers found'}</td></tr>
+              {loading ? <tr><td colSpan={7} className="text-center text-text-secondary py-12 text-sm">Loading...</td></tr>
+              : customers.length === 0 ? <tr><td colSpan={7} className="text-center text-text-secondary py-12 text-sm">{search ? 'No customers match your search' : 'No customers found'}</td></tr>
               : customers.map(c => (
-                <tr key={c.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/customers/${c.id}`}>
-                  <td style={{ ...S.td, fontWeight: 700, color: '#F0F4FF' }}>{c.company_name || 'Unnamed'}</td>
-                  <td style={{ ...S.td, color: '#DDE3EE' }}>{c.contact_name || '—'}</td>
-                  <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 11, color: '#7C8BA0' }}>{c.phone || '—'}</td>
-                  <td style={{ ...S.td, fontSize: 11, color: '#7C8BA0' }}>{c.email || '—'}</td>
-                  <td style={{ ...S.td, fontSize: 11, color: '#48536A', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.address || '—'}</td>
-                  <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 11, color: '#4D9EFF', textAlign: 'center' }}>{c.visit_count || 0}</td>
-                  <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 11, color: '#DDE3EE' }}>{c.total_spent ? `$${Number(c.total_spent).toLocaleString()}` : '—'}</td>
+                <tr key={c.id} className="border-b border-brand-border/50 hover:bg-surface-2 cursor-pointer transition-colors duration-150" onClick={() => window.location.href = `/customers/${c.id}`}>
+                  <td className="px-3 py-2.5 text-sm font-semibold text-text-primary">{c.company_name ?? 'Unnamed'}</td>
+                  <td className="px-3 py-2.5 text-sm text-text-secondary">{c.contact_name ?? '—'}</td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-text-secondary">{c.phone ?? '—'}</td>
+                  <td className="px-3 py-2.5 text-xs text-text-tertiary">{c.email ?? '—'}</td>
+                  <td className="px-3 py-2.5 text-xs text-text-tertiary max-w-[180px] truncate">{c.address ?? '—'}</td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-teal text-center">{c.visit_count ?? 0}</td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-text-primary">{c.total_spent ? `$${Number(c.total_spent).toLocaleString()}` : '—'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination */}
         {total > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.04)', flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ fontSize: 11, color: '#7C8BA0' }}>
-              Showing {from}–{to} of {total.toLocaleString()}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 10, color: '#48536A' }}>Per page:</span>
+          <div className="flex justify-between items-center px-4 py-2.5 border-t border-brand-border flex-wrap gap-2">
+            <span className="text-xs text-text-tertiary">Showing {from}–{to} of {total.toLocaleString()}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-text-tertiary">Per page:</span>
               {[25, 50, 100, 250].map(n => (
                 <button key={n} onClick={() => { setPerPage(n); setPage(1) }}
-                  style={{ padding: '3px 8px', borderRadius: 4, border: perPage === n ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.06)', background: perPage === n ? 'rgba(29,111,232,.1)' : 'transparent', color: perPage === n ? '#4D9EFF' : '#48536A', fontSize: 10, cursor: 'pointer' }}>
+                  className={`px-2 py-0.5 rounded-sm text-[10px] font-semibold transition-colors ${perPage === n ? 'bg-teal/10 text-teal border border-teal/30' : 'text-text-tertiary border border-brand-border hover:text-text-secondary'}`}>
                   {n}
                 </button>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className="flex gap-1">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-                style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid rgba(255,255,255,.06)', background: 'transparent', color: page <= 1 ? '#2A2D35' : '#7C8BA0', fontSize: 11, cursor: page <= 1 ? 'default' : 'pointer' }}>
-                ← Prev
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs border border-brand-border transition-colors ${page <= 1 ? 'text-brand-border cursor-default' : 'text-text-secondary hover:text-text-primary cursor-pointer'}`}>
+                <ChevronLeft size={12} /> Prev
               </button>
-              <span style={{ padding: '4px 10px', fontSize: 11, color: '#7C8BA0' }}>
-                Page {page} of {totalPages}
-              </span>
+              <span className="px-2.5 py-1 text-xs text-text-tertiary">Page {page} of {totalPages}</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid rgba(255,255,255,.06)', background: 'transparent', color: page >= totalPages ? '#2A2D35' : '#7C8BA0', fontSize: 11, cursor: page >= totalPages ? 'default' : 'pointer' }}>
-                Next →
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-sm text-xs border border-brand-border transition-colors ${page >= totalPages ? 'text-brand-border cursor-default' : 'text-text-secondary hover:text-text-primary cursor-pointer'}`}>
+                Next <ChevronRight size={12} />
               </button>
             </div>
           </div>
@@ -127,11 +122,4 @@ export default function CustomersPage() {
       </div>
     </div>
   )
-}
-
-const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 12px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 12 },
 }
