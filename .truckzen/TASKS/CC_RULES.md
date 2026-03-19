@@ -154,3 +154,15 @@ If any step above fails, you are NOT done. Fix it first.
 ## Large Prompt Protocol
 
 When a prompt in `.truckzen/TASKS/PROMPTS/` is too large to complete in one session: read the full prompt first, break it into logical chunks, work through one chunk at a time. After each chunk run `npm run build` (must pass 0 errors), `git add . && git commit -m "PROMPT_NUMBER: chunk description" && git push origin dev`, log what you completed in `.truckzen/DONE/CHANGELOG.md`, update `.truckzen/DONE/CURRENT_STATUS.md` with what is done and what remains. If you hit context limits, STOP and write exactly where you left off in `CURRENT_STATUS.md` so the next session picks up from that point. Next session: read `CURRENT_STATUS.md` first, then continue from where you stopped. Never skip verification between chunks. Never mark a prompt complete until every part is done and pushed.
+
+---
+
+## Deploy Rule (MANDATORY after every push)
+
+Vercel deploys from the `main` branch. After every `git push origin dev`, you MUST also merge dev into main and push main so the changes go live on truckzen.pro. Run this exact sequence after every dev push:
+
+```bash
+git checkout main && git merge dev --no-edit && git push origin main && git checkout dev
+```
+
+Never skip this step. If you push to dev without merging to main, the changes will NOT appear on truckzen.pro.
