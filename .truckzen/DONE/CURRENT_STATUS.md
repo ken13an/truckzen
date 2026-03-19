@@ -1,65 +1,57 @@
 # TruckZen -- Current Status
 
 **Last Updated:** 2026-03-19
-**Last Task Completed:** 000 (in progress -- 12 pages restyled)
+**Last Task Completed:** 000 (in progress -- 13 pages restyled + logo + color fix)
 **Build Status:** PASS (Next.js 16.2.0, 84 pages, 0 errors)
-**Branch:** dev
-**Last Commit:** 3961737
+**Branch:** dev (synced to main)
+**Last Commit:** a3ac7be
 
 ---
 
 ## Prompt 000 Progress (Brand Redesign)
 
-### Pages Restyled (12 done)
-1. Sidebar (Lucide icons, brand colors, collapse)
-2. Login (full Tailwind, Lucide Eye/Loader2, teal CTA)
-3. Dashboard (brand stat cards, brand table, Lucide Truck)
-4. Orders / Repair Orders (4 tabs, status badges, Lucide Plus)
-5. Customers (pagination, Lucide ChevronLeft/Right/Plus)
-6. Fleet (sub-nav tabs, status badges, Lucide Plus)
-7. Settings (brand tabs, inputs, Lucide LogOut/UserPlus/ExternalLink/Copy)
-8. 403 (Lucide ShieldX)
-9. not-found (Lucide FileQuestion)
-10. offline (Lucide WifiOff)
-11. forgot-password (Lucide Mail/Loader2/XCircle)
-12. reset-password (Lucide Loader2/XCircle/CheckCircle2/ShieldX)
+### Completed
+- Step 1: Foundation — Tailwind 4, globals.css, brand variables, Inter font, Lucide
+- Step 2: Sidebar — 22 Lucide icons, brand colors, collapse/expand, Logo component
+- Step 3 (13 pages):
+  1. Login — full Tailwind, Logo component, Lucide icons, teal CTA
+  2. Dashboard — brand stat cards, brand table, Lucide Truck
+  3. Orders (4 tabs) — status badges, Lucide Plus, brand filters
+  4. Customers (pagination) — Lucide ChevronLeft/Right/Plus
+  5. Fleet (sub-nav) — status badges, Lucide Plus
+  6. Settings — brand tabs/inputs, Lucide LogOut/UserPlus/ExternalLink/Copy
+  7. 403 — Lucide ShieldX
+  8. not-found — Lucide FileQuestion
+  9. offline — Lucide WifiOff
+  10. forgot-password — Lucide Mail/Loader2/XCircle
+  11. reset-password — Lucide Loader2/XCircle/CheckCircle2/ShieldX
+  12. orders/new — AI panel with PURPLE accent, Lucide Mic/Sparkles/Loader2
+  13. Logo component (Logo.tsx) — TZ icon mark + "truckzen." wordmark
+- Logo fix: correct TZ mark with teal dot, lowercase wordmark
+- Global color fix: ALL blue (#1D6FE8/#4D9EFF/#1248B0) replaced with teal (#00E0B0/#00805F) across 51 files
+- Deploy rule added to CC_RULES.md
 
-### Pages Remaining (37 — CONTINUE FROM HERE)
-All have the `Record<string, React.CSSProperties>` pattern to replace:
-- **High priority (user-facing daily):**
-  - orders/new (AI panel — also needs Step 4 purple accent)
-  - orders/[id] (SO detail)
-  - customers/[id] (customer detail with 5 tabs)
+### Remaining (36 pages — CONTINUE FROM HERE)
+- **High priority (next session):**
+  - customers/[id] (5-tab customer detail — 302 lines)
+  - orders/[id] (RO detail view)
   - shop-floor (3 views: table/kanban/monitor)
   - tech (mechanic mobile view)
   - kiosk (4 languages)
 - **Medium priority:**
   - drivers, drivers/[id], drivers/new
-  - invoices/[id]
-  - parts/page, parts/[id], parts/new, parts/reorder
+  - invoices/[id], invoices (list)
+  - parts, parts/[id], parts/new, parts/reorder
   - maintenance, maintenance/[id], maintenance/new
   - fleet/[id], fleet/new, fleet/compliance
   - settings/users, settings/users/new, settings/billing
   - accounting, reports, time-tracking
 - **Lower priority:**
   - admin/permissions, admin/roles-guide
-  - smart-drop, portal, setup, cleaning
+  - smart-drop, portal, setup, cleaning, waiting
   - dvir, floor (old), maintenance/tires, maintenance/parts-lifecycle
-  - orders/[id]/history
-
-### Pattern for each page (copy-paste for consistency)
-1. Replace `const S: Record<string, React.CSSProperties> = {...}` — DELETE entirely
-2. Replace `style={S.page}` → `className="bg-bg min-h-screen text-text-primary p-6"`
-3. Replace `style={S.title}` → `className="text-2xl font-bold text-text-primary tracking-tight"`
-4. Replace `style={S.th}` → `className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono px-3 py-2 text-left whitespace-nowrap"`
-5. Replace `style={S.td}` → `className="px-3 py-2.5 text-sm border-b border-brand-border/50"`
-6. Replace `style={S.card}` → `className="bg-surface border border-brand-border rounded-lg p-5"`
-7. Replace `style={S.input}` → `className="w-full px-3 py-2 bg-surface-2 border border-brand-border rounded-md text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-teal transition-colors"`
-8. Replace `style={S.btn}` → `className="px-4 py-2.5 bg-teal text-bg rounded-md text-sm font-bold hover:bg-teal-hover transition-colors"`
-9. Replace emojis with Lucide: `import { IconName } from 'lucide-react'`
-10. Replace old fonts: delete any `fontFamily:"'Bebas Neue'..."` or `"'Instrument Sans'..."` or `"'IBM Plex Mono'..."` — these are now handled by globals.css
-
-### Steps 4-6 remaining
-- Step 4: AI features purple accent (orders/new AI panel, AI badges)
-- Step 5: Sweep all files for remaining emoji icons → replace with Lucide
-- Step 6: Responsive check (sidebar mobile hamburger, table scroll, card stacking)
+  - orders/[id]/history, pay/[token], pay/[token]/success, error
+- **Steps 4-6:**
+  - Step 4: purple accent done on orders/new AI panel. Check other AI features.
+  - Step 5: Emoji sweep remaining (kiosk, tech, shop-floor, settings/users/new have emojis)
+  - Step 6: Responsive check (sidebar hamburger, table scroll)
