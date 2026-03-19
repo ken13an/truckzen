@@ -13,9 +13,9 @@ export function useToast() {
 }
 
 const COLORS: Record<ToastType, { bg: string; border: string; icon: string; text: string }> = {
-  success: { bg:'rgba(29,184,112,.1)',  border:'rgba(29,184,112,.3)',  icon:'✓', text:'#1DB870' },
-  error:   { bg:'rgba(217,79,79,.1)',   border:'rgba(217,79,79,.3)',   icon:'✗', text:'#D94F4F' },
-  warning: { bg:'rgba(212,136,42,.1)',  border:'rgba(212,136,42,.3)',  icon:'⚠', text:'#D4882A' },
+  success: { bg:'rgba(29,184,112,.1)',  border:'rgba(29,184,112,.3)',  icon:'✓', text:'#00E0B0' },
+  error:   { bg:'rgba(217,79,79,.1)',   border:'rgba(217,79,79,.3)',   icon:'✗', text:'#FF5C5C' },
+  warning: { bg:'rgba(212,136,42,.1)',  border:'rgba(212,136,42,.3)',  icon:'⚠', text:'#FFB84D' },
   info:    { bg:'rgba(0,224,176,.1)',  border:'rgba(0,224,176,.3)',  icon:'i', text:'#00E0B0' },
 }
 
@@ -41,7 +41,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               background: c.bg, border: `1px solid ${c.border}`,
               boxShadow: '0 8px 32px rgba(0,0,0,.4)',
               fontFamily: "'Instrument Sans',sans-serif",
-              fontSize: 13, color: '#DDE3EE',
+              fontSize: 13, color: '#EDEDF0',
               pointerEvents: 'all',
               animation: 'slideIn .2s ease',
               maxWidth: 360, minWidth: 200,
@@ -49,7 +49,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <span style={{ fontSize: 12, fontWeight: 700, color: c.text, flexShrink: 0 }}>{c.icon}</span>
               <span style={{ flex: 1 }}>{t.message}</span>
               <button onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
-                style={{ background: 'none', border: 'none', color: '#48536A', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}>×</button>
+                style={{ background: 'none', border: 'none', color: '#9D9DA1', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}>×</button>
             </div>
           )
         })}

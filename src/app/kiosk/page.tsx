@@ -171,17 +171,17 @@ export default function KioskPage() {
     <div style={S.page}>
       {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg,#00E0B0,#00805F)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         </div>
-        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, letterSpacing: '.1em', color: '#F0F4FF' }}>TRUCK<span style={{ color: '#00E0B0' }}>ZEN</span></span>
+        <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, letterSpacing: '.1em', color: '#EDEDF0' }}>TRUCK<span style={{ color: '#00E0B0' }}>ZEN</span></span>
       </div>
 
       {/* Language selector */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
         {LANGS.map(l => (
           <button key={l} onClick={() => { setLang(l); setAutoIdx(LANGS.indexOf(l)) }}
-            style={{ padding: '6px 16px', borderRadius: 100, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: lang === l ? '1px solid rgba(0,224,176,.3)' : '1px solid rgba(255,255,255,.08)', background: lang === l ? 'rgba(0,224,176,.1)' : '#161B24', color: lang === l ? '#00E0B0' : '#7C8BA0', fontFamily: 'inherit' }}>
+            style={{ padding: '6px 16px', borderRadius: 100, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: lang === l ? '1px solid rgba(0,224,176,.3)' : '1px solid rgba(255,255,255,.08)', background: lang === l ? 'rgba(0,224,176,.1)' : '#1A1A24', color: lang === l ? '#00E0B0' : '#9D9DA1', fontFamily: 'inherit' }}>
             {l === 'en' ? 'EN' : l === 'ru' ? 'RU' : l === 'uz' ? 'UZ' : 'ES'}
           </button>
         ))}
@@ -206,12 +206,12 @@ export default function KioskPage() {
             <div style={{ position: 'relative' }}>
               <input style={S.input} value={company} onChange={e => searchCompanies(e.target.value)} placeholder="e.g. ABC Trucking" autoFocus />
               {suggestions.length > 0 && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1C2130', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, overflow: 'hidden', zIndex: 50 }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1A1A24', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, overflow: 'hidden', zIndex: 50 }}>
                   {suggestions.map((s: any) => (
                     <div key={s.id} style={{ padding: '14px 16px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 14 }}
                       onClick={() => { setCompany(s.company_name); setPhone(s.phone || ''); setEmail(s.email || ''); setSuggestions([]) }}>
-                      <div style={{ fontWeight: 700, color: '#F0F4FF' }}>{s.company_name}</div>
-                      {s.phone && <div style={{ fontSize: 12, color: '#7C8BA0' }}>{s.phone}</div>}
+                      <div style={{ fontWeight: 700, color: '#EDEDF0' }}>{s.company_name}</div>
+                      {s.phone && <div style={{ fontSize: 12, color: '#9D9DA1' }}>{s.phone}</div>}
                     </div>
                   ))}
                 </div>
@@ -236,7 +236,7 @@ export default function KioskPage() {
             <input style={{ ...S.input, fontSize: 24, textAlign: 'center', letterSpacing: '.05em' }} value={unit} onChange={e => setUnit(e.target.value)} onBlur={lookupTruck} placeholder="e.g. 2717" autoFocus />
             {truckInfo && (
               <div style={{ padding: '12px 16px', background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 10, marginBottom: 12 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>#{truckInfo.unit_number} — {truckInfo.year} {truckInfo.make} {truckInfo.model}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>#{truckInfo.unit_number} — {truckInfo.year} {truckInfo.make} {truckInfo.model}</div>
               </div>
             )}
             <div style={S.fieldLabel}>{t.odometer}</div>
@@ -254,20 +254,20 @@ export default function KioskPage() {
             <div style={S.heading}>{t.problem}</div>
             {!showType && !complaintEn && (
               <button onClick={isRecording ? stopRecording : startRecording}
-                style={{ ...S.bigBtn, width: '100%', padding: 24, fontSize: 18, background: isRecording ? '#EF4444' : 'linear-gradient(135deg,#00E0B0,#00805F)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                style={{ ...S.bigBtn, width: '100%', padding: 24, fontSize: 18, background: isRecording ? '#FF5C5C' : 'linear-gradient(135deg,#00E0B0,#00E0B0)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                 <span style={{ fontSize: 28 }}>{isRecording ? '⏹' : '🎙'}</span>
                 {isRecording ? t.tapStop : t.record}
               </button>
             )}
             {isRecording && complaintRaw && (
-              <div style={{ marginTop: 12, padding: 14, background: '#1C2130', borderRadius: 10, fontSize: 14, color: '#DDE3EE', lineHeight: 1.6, minHeight: 60 }}>
+              <div style={{ marginTop: 12, padding: 14, background: '#1A1A24', borderRadius: 10, fontSize: 14, color: '#EDEDF0', lineHeight: 1.6, minHeight: 60 }}>
                 {complaintRaw}
               </div>
             )}
             {aiProcessing && <div style={{ textAlign: 'center', padding: 20, color: '#00E0B0', fontSize: 14 }}>{t.processing}</div>}
             {complaintEn && !aiProcessing && (
               <>
-                <div style={{ marginTop: 12, padding: 14, background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 10, fontSize: 14, color: '#DDE3EE', lineHeight: 1.6 }}>
+                <div style={{ marginTop: 12, padding: 14, background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 10, fontSize: 14, color: '#EDEDF0', lineHeight: 1.6 }}>
                   {complaintEn}
                 </div>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
@@ -295,7 +295,7 @@ export default function KioskPage() {
         {(step as number) === 4.5 && (
           <>
             <div style={S.heading}>{t.review}</div>
-            <div style={{ background: '#1C2130', borderRadius: 10, padding: 16, marginBottom: 16 }}>
+            <div style={{ background: '#1A1A24', borderRadius: 10, padding: 16, marginBottom: 16 }}>
               {[
                 [t.company, company],
                 [t.contact, contact],
@@ -304,11 +304,11 @@ export default function KioskPage() {
                 [t.odometer, odometer || '—'],
               ].map(([l, v]) => (
                 <div key={l as string} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
-                  <span style={{ fontSize: 12, color: '#7C8BA0' }}>{l}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{v}</span>
+                  <span style={{ fontSize: 12, color: '#9D9DA1' }}>{l}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#EDEDF0' }}>{v}</span>
                 </div>
               ))}
-              <div style={{ marginTop: 8, fontSize: 13, color: '#DDE3EE', lineHeight: 1.5 }}>{complaintEn || complaintRaw}</div>
+              <div style={{ marginTop: 8, fontSize: 13, color: '#EDEDF0', lineHeight: 1.5 }}>{complaintEn || complaintRaw}</div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setStep(3)} style={S.backBtn}>{t.back}</button>
@@ -321,8 +321,8 @@ export default function KioskPage() {
         {step === 4 && (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 36, color: '#F0F4FF', marginBottom: 8 }}>{t.done}</div>
-            <div style={{ fontSize: 14, color: '#7C8BA0', marginBottom: 20 }}>{t.sub}</div>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 36, color: '#EDEDF0', marginBottom: 8 }}>{t.done}</div>
+            <div style={{ fontSize: 14, color: '#9D9DA1', marginBottom: 20 }}>{t.sub}</div>
             <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 28, fontWeight: 700, color: '#00E0B0', margin: '16px 0 24px', letterSpacing: '.08em' }}>{refNum}</div>
             <button style={S.bigBtn} onClick={resetAll}>{t.newCheckin}</button>
           </div>
@@ -333,11 +333,11 @@ export default function KioskPage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', background: '#060708', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans',sans-serif" },
-  card: { width: '100%', maxWidth: 520, background: '#161B24', border: '1px solid rgba(255,255,255,.08)', borderRadius: 20, padding: '36px 32px', boxShadow: '0 32px 80px rgba(0,0,0,.6)' },
-  heading: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 20 },
-  fieldLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', marginBottom: 6, marginTop: 12, textTransform: 'uppercase' as const, letterSpacing: '.05em' },
-  input: { width: '100%', padding: '14px 16px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 16, color: '#F0F4FF', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
-  bigBtn: { padding: '16px 28px', background: 'linear-gradient(135deg,#00E0B0,#00805F)', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
-  backBtn: { padding: '14px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, fontSize: 14, color: '#7C8BA0', cursor: 'pointer', fontFamily: 'inherit' },
+  page: { minHeight: '100vh', background: '#08080C', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans',sans-serif" },
+  card: { width: '100%', maxWidth: 520, background: '#1A1A24', border: '1px solid rgba(255,255,255,.08)', borderRadius: 20, padding: '36px 32px', boxShadow: '0 32px 80px rgba(0,0,0,.6)' },
+  heading: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#EDEDF0', marginBottom: 20 },
+  fieldLabel: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', marginBottom: 6, marginTop: 12, textTransform: 'uppercase' as const, letterSpacing: '.05em' },
+  input: { width: '100%', padding: '14px 16px', background: '#1A1A24', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 16, color: '#EDEDF0', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
+  bigBtn: { padding: '16px 28px', background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
+  backBtn: { padding: '14px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, fontSize: 14, color: '#9D9DA1', cursor: 'pointer', fontFamily: 'inherit' },
 }

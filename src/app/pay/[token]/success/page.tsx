@@ -54,11 +54,11 @@ export default function PaymentSuccessPage() {
         <div style={s.iconWrap}>
           <svg viewBox="0 0 52 52" width="52" height="52">
             <circle cx="26" cy="26" r="25" fill="none"
-              stroke="#1DB870" strokeWidth="2"
+              stroke="#00E0B0" strokeWidth="2"
               strokeDasharray="157" strokeDashoffset="0"
               style={{ animation: 'draw-circle 0.6s ease-out forwards' }}/>
             <path d="M14.5 26.5l8 8 15-15" fill="none"
-              stroke="#1DB870" strokeWidth="2.5" strokeLinecap="round"
+              stroke="#00E0B0" strokeWidth="2.5" strokeLinecap="round"
               strokeDasharray="30" strokeDashoffset="30"
               style={{ animation: 'draw-check 0.4s 0.5s ease-out forwards' }}/>
           </svg>
@@ -84,12 +84,12 @@ export default function PaymentSuccessPage() {
           {amount && (
             <div style={s.summaryRow}>
               <span style={s.sumKey}>Amount Paid</span>
-              <span style={{ ...s.sumVal, color: '#1DB870' }}>{amount}</span>
+              <span style={{ ...s.sumVal, color: '#00E0B0' }}>{amount}</span>
             </div>
           )}
           <div style={s.summaryRow}>
             <span style={s.sumKey}>Status</span>
-            <span style={{ ...s.sumVal, color: '#1DB870' }}>Paid</span>
+            <span style={{ ...s.sumVal, color: '#00E0B0' }}>Paid</span>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function PaymentSuccessPage() {
 
 const s: Record<string, any> = {
   page: {
-    minHeight: '100vh', background: '#060708',
+    minHeight: '100vh', background: '#08080C',
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center',
     padding: '20px',
@@ -137,7 +137,7 @@ const s: Record<string, any> = {
   },
   card: {
     width: '100%', maxWidth: '400px',
-    background: '#161B24',
+    background: '#1A1A24',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '16px', padding: '32px 28px',
     textAlign: 'center',
@@ -150,25 +150,25 @@ const s: Record<string, any> = {
   },
   logoMark: {
     width: '28px', height: '28px', borderRadius: '6px',
-    background: 'linear-gradient(135deg,#00E0B0,#00805F)',
+    background: 'linear-gradient(135deg,#00E0B0,#00E0B0)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   logoText: {
     fontFamily: "'Bebas Neue',sans-serif",
-    fontSize: '14px', letterSpacing: '0.1em', color: '#F0F4FF',
+    fontSize: '14px', letterSpacing: '0.1em', color: '#EDEDF0',
   },
   logoAccent: { color: '#00E0B0' },
   iconWrap: { margin: '0 auto 20px' },
   title: {
-    fontSize: '24px', fontWeight: 700, color: '#F0F4FF',
+    fontSize: '24px', fontWeight: 700, color: '#EDEDF0',
     margin: '0 0 10px',
   },
   sub: {
-    fontSize: '14px', color: '#7C8BA0',
+    fontSize: '14px', color: '#9D9DA1',
     lineHeight: 1.6, margin: '0 0 20px',
   },
   summaryBox: {
-    background: '#1C2130', border: '1px solid rgba(255,255,255,0.06)',
+    background: '#1A1A24', border: '1px solid rgba(255,255,255,0.06)',
     borderRadius: '10px', padding: '14px', marginBottom: '16px',
     textAlign: 'left',
   },
@@ -176,18 +176,18 @@ const s: Record<string, any> = {
     display: 'flex', justifyContent: 'space-between',
     padding: '5px 0',
   },
-  sumKey: { fontSize: '12px', color: '#7C8BA0' },
-  sumVal: { fontSize: '13px', fontWeight: 600, color: '#DDE3EE', fontFamily: 'monospace' },
-  receipt: { fontSize: '11px', color: '#48536A', margin: '0 0 20px' },
+  sumKey: { fontSize: '12px', color: '#9D9DA1' },
+  sumVal: { fontSize: '13px', fontWeight: 600, color: '#EDEDF0', fontFamily: 'monospace' },
+  receipt: { fontSize: '11px', color: '#9D9DA1', margin: '0 0 20px' },
   callBtn: {
     display: 'block', padding: '12px',
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '9px', color: '#7C8BA0',
+    borderRadius: '9px', color: '#9D9DA1',
     textDecoration: 'none', fontSize: '13px',
   },
   poweredBy: {
-    marginTop: '20px', fontSize: '10px', color: '#48536A',
+    marginTop: '20px', fontSize: '10px', color: '#9D9DA1',
     fontFamily: 'monospace', letterSpacing: '0.06em', zIndex: 1,
   },
 }

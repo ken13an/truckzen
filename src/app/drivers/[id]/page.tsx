@@ -45,39 +45,39 @@ export default function DriverDetailPage() {
   const in30days = new Date(Date.now() + 30*86400000).toISOString().split('T')[0]
 
   const expiryStatus = (date?: string) => {
-    if (!date) return { color:'#48536A', label:'No date set' }
-    if (date < today)     return { color:'#D94F4F', label:'EXPIRED' }
-    if (date <= in30days) return { color:'#D4882A', label:'Expiring soon' }
-    return { color:'#1DB870', label:'Valid' }
+    if (!date) return { color:'#9D9DA1', label:'No date set' }
+    if (date < today)     return { color:'#FF5C5C', label:'EXPIRED' }
+    if (date <= in30days) return { color:'#FFB84D', label:'Expiring soon' }
+    return { color:'#00E0B0', label:'Valid' }
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:720, margin:'0 auto' },
-    card:  { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:18, marginBottom:12 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#48536A', marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'9px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#DDE3EE', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
+    page:  { background:'#08080C', minHeight:'100vh', color:'#EDEDF0', fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:720, margin:'0 auto' },
+    card:  { background:'#1A1A24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:18, marginBottom:12 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#9D9DA1', marginBottom:5, display:'block' },
+    input: { width:'100%', padding:'9px 12px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#EDEDF0', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
     row3:  { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background:'#0B0D11' },
+    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#9D9DA1', textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background:'#08080C' },
     td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
     btn:   { padding:'9px 18px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
   }
 
-  if (loading) return <div style={{ ...S.page, color:'#7C8BA0', padding:60 }}>Loading...</div>
+  if (loading) return <div style={{ ...S.page, color:'#9D9DA1', padding:60 }}>Loading...</div>
 
   const cdlSt = expiryStatus(driver.cdl_expiry)
   const medSt = expiryStatus(driver.medical_card_expiry)
 
   return (
     <div style={S.page}>
-      <a href="/drivers" style={{ fontSize:12, color:'#7C8BA0', textDecoration:'none', display:'block', marginBottom:20 }}>← Drivers</a>
+      <a href="/drivers" style={{ fontSize:12, color:'#9D9DA1', textDecoration:'none', display:'block', marginBottom:20 }}>← Drivers</a>
 
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF' }}>{driver.full_name}</div>
-          <div style={{ fontSize:12, color:'#7C8BA0', marginTop:4 }}>{(driver.customers as any)?.company_name}</div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#EDEDF0' }}>{driver.full_name}</div>
+          <div style={{ fontSize:12, color:'#9D9DA1', marginTop:4 }}>{(driver.customers as any)?.company_name}</div>
         </div>
-        <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background: driver.status==='active'?'rgba(29,184,112,.1)':'rgba(72,83,106,.1)', color: driver.status==='active'?'#1DB870':'#48536A', border:`1px solid currentColor` }}>
+        <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background: driver.status==='active'?'rgba(29,184,112,.1)':'rgba(72,83,106,.1)', color: driver.status==='active'?'#00E0B0':'#9D9DA1', border:`1px solid currentColor` }}>
           {driver.status?.toUpperCase()}
         </span>
       </div>
@@ -88,8 +88,8 @@ export default function DriverDetailPage() {
           { label:'CDL Expiry',     date: driver.cdl_expiry,           st: cdlSt, sub: driver.cdl_class ? `Class ${driver.cdl_class}` : 'No class set' },
           { label:'Medical Card',   date: driver.medical_card_expiry,  st: medSt, sub: 'DOT Medical Certificate' },
         ].map(item => (
-          <div key={item.label} style={{ background:'#161B24', border:`1px solid ${item.st.color}33`, borderRadius:12, padding:14 }}>
-            <div style={{ fontFamily:'monospace', fontSize:8, letterSpacing:'.1em', textTransform:'uppercase', color:'#48536A', marginBottom:6 }}>{item.label}</div>
+          <div key={item.label} style={{ background:'#1A1A24', border:`1px solid ${item.st.color}33`, borderRadius:12, padding:14 }}>
+            <div style={{ fontFamily:'monospace', fontSize:8, letterSpacing:'.1em', textTransform:'uppercase', color:'#9D9DA1', marginBottom:6 }}>{item.label}</div>
             <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, color:item.st.color }}>{item.date || '—'}</div>
             <div style={{ fontSize:10, color:item.st.color, marginTop:3 }}>{item.st.label} · {item.sub}</div>
           </div>
@@ -100,7 +100,7 @@ export default function DriverDetailPage() {
         <div>
           {/* Edit form */}
           <div style={S.card}>
-            <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', marginBottom:12 }}>Driver Details</div>
+            <div style={{ fontSize:12, fontWeight:700, color:'#EDEDF0', marginBottom:12 }}>Driver Details</div>
             <div style={S.row2}>
               <div><label style={S.label}>Full Name</label><input style={S.input} value={edit?.full_name||''} onChange={e=>setEdit((d:any)=>({...d,full_name:e.target.value}))}/></div>
               <div><label style={S.label}>Phone</label><input style={S.input} value={edit?.phone||''} onChange={e=>setEdit((d:any)=>({...d,phone:e.target.value}))}/></div>
@@ -127,23 +127,23 @@ export default function DriverDetailPage() {
               </div>
             </div>
             <div style={{ marginBottom:12 }}><label style={S.label}>Notes</label><textarea style={{ ...S.input, minHeight:60, resize:'vertical' as const }} value={edit?.notes||''} onChange={e=>setEdit((d:any)=>({...d,notes:e.target.value}))}/></div>
-            <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00805F)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
+            <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00E0B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
           </div>
         </div>
 
         {/* DVIR history sidebar */}
         <div style={S.card}>
-          <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', marginBottom:12 }}>Recent DVIRs</div>
-          {dvirs.length === 0 ? <div style={{ color:'#48536A', fontSize:12, textAlign:'center', padding:16 }}>No DVIRs on file</div>
+          <div style={{ fontSize:12, fontWeight:700, color:'#EDEDF0', marginBottom:12 }}>Recent DVIRs</div>
+          {dvirs.length === 0 ? <div style={{ color:'#9D9DA1', fontSize:12, textAlign:'center', padding:16 }}>No DVIRs on file</div>
           : dvirs.map((d:any) => (
             <div key={d.id} style={{ padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,.04)' }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <div style={{ fontSize:11, color:'#DDE3EE' }}>{d.submitted_at?.split('T')[0]}</div>
-                <span style={{ fontSize:9, fontWeight:700, fontFamily:'monospace', color: d.defects_found?'#D94F4F':'#1DB870' }}>
+                <div style={{ fontSize:11, color:'#EDEDF0' }}>{d.submitted_at?.split('T')[0]}</div>
+                <span style={{ fontSize:9, fontWeight:700, fontFamily:'monospace', color: d.defects_found?'#FF5C5C':'#00E0B0' }}>
                   {d.defects_found ? 'DEFECTS' : 'CLEAN'}
                 </span>
               </div>
-              <div style={{ fontSize:10, color:'#48536A', marginTop:2 }}>{d.trip_type === 'pre' ? 'Pre-Trip' : 'Post-Trip'}</div>
+              <div style={{ fontSize:10, color:'#9D9DA1', marginTop:2 }}>{d.trip_type === 'pre' ? 'Pre-Trip' : 'Post-Trip'}</div>
             </div>
           ))}
         </div>

@@ -48,19 +48,19 @@ export default function WaitingPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#060708',
+      minHeight: '100vh', background: '#08080C',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Instrument Sans', sans-serif", padding: '20px',
     }}>
       <div style={{
         maxWidth: '440px', textAlign: 'center',
-        background: '#161B24', border: '1px solid rgba(255,255,255,0.08)',
+        background: '#1A1A24', border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: '16px', padding: '48px 36px',
       }}>
         {/* Logo */}
         <div style={{
           width: '56px', height: '56px', borderRadius: '14px',
-          background: 'linear-gradient(135deg,#00E0B0,#00805F)',
+          background: 'linear-gradient(135deg,#00E0B0,#00E0B0)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 24px', boxShadow: '0 0 24px rgba(0,224,176,0.3)',
         }}>
@@ -69,11 +69,11 @@ export default function WaitingPage() {
           </svg>
         </div>
 
-        <div style={{ fontSize: '22px', fontWeight: 700, color: '#F0F4FF', marginBottom: '8px' }}>
+        <div style={{ fontSize: '22px', fontWeight: 700, color: '#EDEDF0', marginBottom: '8px' }}>
           {userName ? `Hi ${userName}` : 'Almost ready'}
         </div>
 
-        <div style={{ fontSize: '14px', color: '#7C8BA0', lineHeight: 1.7, marginBottom: '28px' }}>
+        <div style={{ fontSize: '14px', color: '#9D9DA1', lineHeight: 1.7, marginBottom: '28px' }}>
           Your shop admin is finishing setup. This page will update automatically once TruckZen is ready for you.
         </div>
 
@@ -100,7 +100,7 @@ export default function WaitingPage() {
           onClick={handleSignOut}
           style={{
             background: 'none', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '8px', padding: '9px 20px', color: '#48536A',
+            borderRadius: '8px', padding: '9px 20px', color: '#9D9DA1',
             fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit',
             transition: 'all 0.14s',
           }}

@@ -70,25 +70,25 @@ export function InstallPrompt() {
   return (
     <div style={{
       position: 'fixed', bottom: 20, left: 20, right: 20, zIndex: 9999,
-      background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 14,
+      background: '#08080C', border: '1px solid #1A1A24', borderRadius: 14,
       padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14,
       boxShadow: '0 8px 32px rgba(0,0,0,.6)', maxWidth: 440, margin: '0 auto',
     }}>
       <img src="/icon-48.png" alt="TruckZen" width={40} height={40} style={{ borderRadius: 8 }}/>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>Install TruckZen</div>
-        <div style={{ fontSize: 12, color: '#7C8BA0', marginTop: 2 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Install TruckZen</div>
+        <div style={{ fontSize: 12, color: '#9D9DA1', marginTop: 2 }}>
           {isIOS ? 'Tap Share, then "Add to Home Screen"' : 'Add to your home screen for quick access'}
         </div>
       </div>
       {!isIOS && (
         <button onClick={handleInstall} style={{
           padding: '8px 16px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700,
-          background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap',
+          background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap',
         }}>Install</button>
       )}
       <button onClick={dismiss} style={{
-        background: 'none', border: 'none', color: '#48536A', cursor: 'pointer', fontSize: 18, padding: 4, lineHeight: 1,
+        background: 'none', border: 'none', color: '#9D9DA1', cursor: 'pointer', fontSize: 18, padding: 4, lineHeight: 1,
       }}>x</button>
     </div>
   )

@@ -246,13 +246,13 @@ export default function SmartDropPage() {
       {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#00E0B0', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={S.title}>Smart Drop</div>
-      <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>Import data from any spreadsheet, export to CSV, or review history. FullBay CSVs are auto-detected.</div>
+      <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 20 }}>Import data from any spreadsheet, export to CSV, or review history. FullBay CSVs are auto-detected.</div>
 
       {/* Mode tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#0D0F12', borderRadius: 10, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#08080C', borderRadius: 10, padding: 4 }}>
         {([['import', 'Import'], ['export', 'Export'], ['history', 'History']] as const).map(([k, l]) => (
           <button key={k} onClick={() => { setMode(k); if (k === 'import') resetImport() }}
-            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: mode === k ? '#1A1D23' : 'transparent', color: mode === k ? '#F0F4FF' : '#48536A' }}>{l}</button>
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: mode === k ? '#1A1A24' : 'transparent', color: mode === k ? '#EDEDF0' : '#9D9DA1' }}>{l}</button>
         ))}
       </div>
 
@@ -260,27 +260,27 @@ export default function SmartDropPage() {
       {mode === 'import' && <>
         {step === 1 && <>
           <div style={S.card}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>1. What are you importing?</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 12 }}>1. What are you importing?</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 8 }}>
               {IMPORT_TYPES.map(t => (
                 <div key={t.value} onClick={() => setImportType(t.value)}
-                  style={{ padding: '12px', borderRadius: 10, cursor: 'pointer', border: importType === t.value ? '1px solid rgba(0,224,176,.4)' : '1px solid #1A1D23', background: importType === t.value ? 'rgba(0,224,176,.08)' : '#0D0F12' }}>
+                  style={{ padding: '12px', borderRadius: 10, cursor: 'pointer', border: importType === t.value ? '1px solid rgba(0,224,176,.4)' : '1px solid #1A1A24', background: importType === t.value ? 'rgba(0,224,176,.08)' : '#08080C' }}>
                   <div style={{ fontSize: 18, marginBottom: 4 }}>{t.icon}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: importType === t.value ? '#00E0B0' : '#F0F4FF' }}>{t.label}</div>
-                  <div style={{ fontSize: 10, color: '#48536A', marginTop: 2 }}>{t.desc}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: importType === t.value ? '#00E0B0' : '#EDEDF0' }}>{t.label}</div>
+                  <div style={{ fontSize: 10, color: '#9D9DA1', marginTop: 2 }}>{t.desc}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ ...S.card, border: `2px dashed ${dragging ? 'rgba(0,224,176,.6)' : '#1A1D23'}`, textAlign: 'center', padding: 40, cursor: 'pointer' }}
+          <div style={{ ...S.card, border: `2px dashed ${dragging ? 'rgba(0,224,176,.6)' : '#1A1A24'}`, textAlign: 'center', padding: 40, cursor: 'pointer' }}
             onDragOver={e => { e.preventDefault(); setDragging(true) }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
             onClick={() => document.getElementById('fileInput')?.click()}>
             <div style={{ fontSize: 40, marginBottom: 8 }}>📂</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>Drop your CSV file here</div>
-            <div style={{ fontSize: 12, color: '#7C8BA0' }}>or click to browse — FullBay exports auto-detected</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0', marginBottom: 4 }}>Drop your CSV file here</div>
+            <div style={{ fontSize: 12, color: '#9D9DA1' }}>or click to browse — FullBay exports auto-detected</div>
             <input id="fileInput" type="file" accept=".csv" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
           </div>
         </>}
@@ -291,13 +291,13 @@ export default function SmartDropPage() {
               <span style={{ fontSize: 20 }}>✨</span>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#00E0B0' }}>FullBay format detected</div>
-                <div style={{ fontSize: 11, color: '#7C8BA0' }}>Auto-selected "{IMPORT_TYPES.find(t => t.value === importType)?.label}" — columns will be mapped automatically</div>
+                <div style={{ fontSize: 11, color: '#9D9DA1' }}>Auto-selected "{IMPORT_TYPES.find(t => t.value === importType)?.label}" — columns will be mapped automatically</div>
               </div>
             </div>
           )}
 
           <div style={S.card}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 8 }}>Preview — {headers.length} columns, {file?.name}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 8 }}>Preview — {headers.length} columns, {file?.name}</div>
             <div style={{ overflowX: 'auto' }}>
               <table style={S.table}>
                 <thead><tr>{headers.map(h => <th key={h} style={S.th}>{h}</th>)}</tr></thead>
@@ -321,16 +321,16 @@ export default function SmartDropPage() {
         {step === 3 && result && (
           <div style={{ ...S.card, textAlign: 'center', padding: 40 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>{result.errors === 0 ? '✅' : '⚠️'}</div>
-            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 26, color: '#F0F4FF', marginBottom: 16 }}>Import Complete</div>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 26, color: '#EDEDF0', marginBottom: 16 }}>Import Complete</div>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 20 }}>
-              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#22C55E' }}>{result.created}</div><div style={{ fontSize: 10, color: '#7C8BA0' }}>Created</div></div>
-              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#F59E0B' }}>{result.skipped}</div><div style={{ fontSize: 10, color: '#7C8BA0' }}>Skipped</div></div>
-              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#EF4444' }}>{result.errors}</div><div style={{ fontSize: 10, color: '#7C8BA0' }}>Errors</div></div>
+              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#00E0B0' }}>{result.created}</div><div style={{ fontSize: 10, color: '#9D9DA1' }}>Created</div></div>
+              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#FFB84D' }}>{result.skipped}</div><div style={{ fontSize: 10, color: '#9D9DA1' }}>Skipped</div></div>
+              <div><div style={{ fontSize: 28, fontWeight: 700, color: '#FF5C5C' }}>{result.errors}</div><div style={{ fontSize: 10, color: '#9D9DA1' }}>Errors</div></div>
             </div>
             {result.details?.length > 0 && (
-              <div style={{ background: '#060708', borderRadius: 8, padding: 12, maxHeight: 150, overflowY: 'auto', textAlign: 'left', marginBottom: 16 }}>
+              <div style={{ background: '#08080C', borderRadius: 8, padding: 12, maxHeight: 150, overflowY: 'auto', textAlign: 'left', marginBottom: 16 }}>
                 {result.details.slice(0, 20).map((d: string, i: number) => (
-                  <div key={i} style={{ fontSize: 11, color: '#7C8BA0', padding: '2px 0' }}>{d}</div>
+                  <div key={i} style={{ fontSize: 11, color: '#9D9DA1', padding: '2px 0' }}>{d}</div>
                 ))}
               </div>
             )}
@@ -345,11 +345,11 @@ export default function SmartDropPage() {
       {/* ═══ EXPORT TAB ═══ */}
       {mode === 'export' && <>
         <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>1. Select data to export</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 12 }}>1. Select data to export</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {EXPORT_TYPES.map(t => (
               <button key={t.value} onClick={() => setExportType(t.value)}
-                style={{ padding: '10px 16px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 600, border: exportType === t.value ? '1px solid #00E0B0' : '1px solid #1A1D23', background: exportType === t.value ? 'rgba(0,224,176,.08)' : '#0D0F12', color: exportType === t.value ? '#00E0B0' : '#7C8BA0' }}>
+                style={{ padding: '10px 16px', borderRadius: 9, cursor: 'pointer', fontSize: 12, fontWeight: 600, border: exportType === t.value ? '1px solid #00E0B0' : '1px solid #1A1A24', background: exportType === t.value ? 'rgba(0,224,176,.08)' : '#08080C', color: exportType === t.value ? '#00E0B0' : '#9D9DA1' }}>
                 {t.icon} {t.label}
               </button>
             ))}
@@ -357,15 +357,15 @@ export default function SmartDropPage() {
         </div>
 
         <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>2. Select columns</div>
-          <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 12 }}>Click to toggle. All selected by default.</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 4 }}>2. Select columns</div>
+          <div style={{ fontSize: 11, color: '#9D9DA1', marginBottom: 12 }}>Click to toggle. All selected by default.</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {(EXPORT_COLUMNS[exportType] || []).map(c => {
               const on = selectedCols.has(c.key)
               return (
                 <button key={c.key}
                   onClick={() => setSelectedCols(prev => { const n = new Set(prev); on ? n.delete(c.key) : n.add(c.key); return n })}
-                  style={{ padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: on ? '1px solid #22C55E' : '1px solid #1A1D23', background: on ? 'rgba(34,197,94,.08)' : '#0D0F12', color: on ? '#22C55E' : '#48536A' }}>
+                  style={{ padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: on ? '1px solid #00E0B0' : '1px solid #1A1A24', background: on ? 'rgba(34,197,94,.08)' : '#08080C', color: on ? '#00E0B0' : '#9D9DA1' }}>
                   {c.label}
                 </button>
               )
@@ -380,8 +380,8 @@ export default function SmartDropPage() {
 
       {/* ═══ HISTORY TAB ═══ */}
       {mode === 'history' && <>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Import / Export History</div>
-        {history.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#48536A' }}>No history yet</div>}
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>Import / Export History</div>
+        {history.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9D9DA1' }}>No history yet</div>}
         <table style={S.table}>
           <thead><tr>
             <th style={S.th}>When</th><th style={S.th}>User</th><th style={S.th}>Action</th><th style={S.th}>Type</th><th style={S.th}>File</th><th style={S.th}>Records</th><th style={S.th}>Result</th><th style={S.th}>Undo</th>
@@ -396,7 +396,7 @@ export default function SmartDropPage() {
                   <td style={S.td}>{new Date(h.created_at).toLocaleString()}</td>
                   <td style={S.td}>{h.user_name}</td>
                   <td style={S.td}>
-                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: h.action === 'import' ? '#00E0B0' : '#22C55E' }}>{h.action}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', color: h.action === 'import' ? '#00E0B0' : '#00E0B0' }}>{h.action}</span>
                   </td>
                   <td style={S.td}>{h.data_type}</td>
                   <td style={S.td}>{h.file_name || '—'}</td>
@@ -407,9 +407,9 @@ export default function SmartDropPage() {
                     ) : '—'}
                   </td>
                   <td style={S.td}>
-                    {h.undone ? <span style={{ color: '#7C8BA0', fontSize: 10 }}>Undone</span> : canUndo ? (
+                    {h.undone ? <span style={{ color: '#9D9DA1', fontSize: 10 }}>Undone</span> : canUndo ? (
                       <button onClick={() => undoImport(h.id)} disabled={undoing === h.id}
-                        style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #EF4444', background: 'none', color: '#EF4444', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
+                        style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #FF5C5C', background: 'none', color: '#FF5C5C', fontSize: 10, fontWeight: 600, cursor: 'pointer' }}>
                         {undoing === h.id ? '...' : 'Undo'}
                       </button>
                     ) : '—'}
@@ -425,12 +425,12 @@ export default function SmartDropPage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 },
-  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 14 },
+  page: { background: '#08080C', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#EDEDF0', marginBottom: 4 },
+  card: { background: '#08080C', border: '1px solid #1A1A24', borderRadius: 12, padding: 20, marginBottom: 14 },
   table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 11 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '8px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' },
-  btnPrimary: { padding: '12px 24px', background: 'linear-gradient(135deg,#00E0B0,#00805F)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
-  btnSecondary: { padding: '10px 20px', background: 'transparent', border: '1px solid #1A1D23', borderRadius: 9, color: '#7C8BA0', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '8px 10px', textAlign: 'left' as const, background: '#08080C', whiteSpace: 'nowrap' as const },
+  td: { padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#9D9DA1' },
+  btnPrimary: { padding: '12px 24px', background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
+  btnSecondary: { padding: '10px 20px', background: 'transparent', border: '1px solid #1A1A24', borderRadius: 9, color: '#9D9DA1', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' },
 }

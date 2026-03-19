@@ -53,7 +53,7 @@ export default function CustomerPortalPage() {
     setSaving(false)
   }
 
-  if (loading) return <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
+  if (loading) return <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1' }}>Loading...</div>
 
   const vehicles = customer?.assets || []
   const kioskCheckins = customer?.kiosk_checkins || []
@@ -69,7 +69,7 @@ export default function CustomerPortalPage() {
     <div style={S.page}>
       {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#00E0B0', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
-      <a href="/customers" style={{ fontSize: 12, color: '#7C8BA0', textDecoration: 'none', display: 'block', marginBottom: 16 }}>← Customers</a>
+      <a href="/customers" style={{ fontSize: 12, color: '#9D9DA1', textDecoration: 'none', display: 'block', marginBottom: 16 }}>← Customers</a>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
@@ -78,26 +78,26 @@ export default function CustomerPortalPage() {
             <div style={S.title}>{customer.company_name}</div>
             <button onClick={() => setEditing(!editing)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#00E0B0', padding: 4 }} title="Edit">✏️</button>
           </div>
-          <div style={{ fontSize: 12, color: '#7C8BA0', marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: '#9D9DA1', marginTop: 4 }}>
             {vehicles.length} unit{vehicles.length !== 1 ? 's' : ''} · {allSOs.length} service order{allSOs.length !== 1 ? 's' : ''} · {invoices.length} invoice{invoices.length !== 1 ? 's' : ''}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <a href={`/orders/new?customer=${params.id}`} style={{ ...S.btn, background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', textDecoration: 'none' }}>+ New Service Order</a>
+          <a href={`/orders/new?customer=${params.id}`} style={{ ...S.btn, background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', color: '#fff', textDecoration: 'none' }}>+ New Service Order</a>
         </div>
       </div>
 
       {/* Stats bar */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
         {[
-          { label: 'Total Spent', value: `$${totalSpent.toLocaleString()}`, color: '#22C55E' },
-          { label: 'Outstanding', value: `$${outstanding.toLocaleString()}`, color: outstanding > 0 ? '#F59E0B' : '#48536A' },
-          { label: 'Open Orders', value: String(openSOs.length), color: openSOs.length > 0 ? '#00E0B0' : '#48536A' },
-          { label: 'Last Service', value: lastService || 'Never', color: '#7C8BA0' },
+          { label: 'Total Spent', value: `$${totalSpent.toLocaleString()}`, color: '#00E0B0' },
+          { label: 'Outstanding', value: `$${outstanding.toLocaleString()}`, color: outstanding > 0 ? '#FFB84D' : '#9D9DA1' },
+          { label: 'Open Orders', value: String(openSOs.length), color: openSOs.length > 0 ? '#00E0B0' : '#9D9DA1' },
+          { label: 'Last Service', value: lastService || 'Never', color: '#9D9DA1' },
         ].map(s => (
-          <div key={s.label} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10, padding: '12px 18px', flex: '1 1 120px' }}>
+          <div key={s.label} style={{ background: '#08080C', border: '1px solid #1A1A24', borderRadius: 10, padding: '12px 18px', flex: '1 1 120px' }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "'IBM Plex Mono'" }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: 2 }}>{s.label}</div>
+            <div style={{ fontSize: 10, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -105,7 +105,7 @@ export default function CustomerPortalPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,.06)', paddingBottom: 0 }}>
         {([['overview', 'Overview'], ['fleet', `Fleet (${vehicles.length})`], ['history', 'Service History'], ['open', `Open Orders (${openSOs.length})`], ['invoices', `Invoices (${invoices.length})`]] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderBottom: tab === k ? '2px solid #00E0B0' : '2px solid transparent', color: tab === k ? '#00E0B0' : '#7C8BA0', background: 'none', border: 'none', borderBottomWidth: 2, borderBottomStyle: 'solid', borderBottomColor: tab === k ? '#00E0B0' : 'transparent' }}>
+          <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderBottom: tab === k ? '2px solid #00E0B0' : '2px solid transparent', color: tab === k ? '#00E0B0' : '#9D9DA1', background: 'none', border: 'none', borderBottomWidth: 2, borderBottomStyle: 'solid', borderBottomColor: tab === k ? '#00E0B0' : 'transparent' }}>
             {l}
           </button>
         ))}
@@ -114,7 +114,7 @@ export default function CustomerPortalPage() {
       {/* OVERVIEW TAB */}
       {tab === 'overview' && (<>
         <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 }}>Contact Information</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 14 }}>Contact Information</div>
           {editing ? (
             <>
               <div style={S.row2}>
@@ -128,8 +128,8 @@ export default function CustomerPortalPage() {
               <div><label style={S.label}>Address</label><input style={S.input} value={edit?.address || ''} onChange={e => setEdit((c: any) => ({ ...c, address: e.target.value }))} /></div>
               <div style={{ marginTop: 10 }}><label style={S.label}>Notes</label><textarea style={{ ...S.input, minHeight: 60, resize: 'vertical' }} value={edit?.notes || ''} onChange={e => setEdit((c: any) => ({ ...c, notes: e.target.value }))} /></div>
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                <button onClick={save} disabled={saving} style={{ ...S.btn, background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff' }}>{saving ? 'Saving...' : 'Save'}</button>
-                <button onClick={() => setEditing(false)} style={{ ...S.btn, background: '#1A1D23', color: '#7C8BA0' }}>Cancel</button>
+                <button onClick={save} disabled={saving} style={{ ...S.btn, background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', color: '#fff' }}>{saving ? 'Saving...' : 'Save'}</button>
+                <button onClick={() => setEditing(false)} style={{ ...S.btn, background: '#1A1A24', color: '#9D9DA1' }}>Cancel</button>
               </div>
             </>
           ) : (
@@ -143,8 +143,8 @@ export default function CustomerPortalPage() {
                 ['Notes', customer.notes],
               ].map(([l, v]) => (
                 <div key={l as string}>
-                  <div style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>{l}</div>
-                  <div style={{ fontSize: 13, color: v ? '#DDE3EE' : '#48536A' }}>{(v as string) || '—'}</div>
+                  <div style={{ fontSize: 10, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>{l}</div>
+                  <div style={{ fontSize: 13, color: v ? '#EDEDF0' : '#9D9DA1' }}>{(v as string) || '—'}</div>
                 </div>
               ))}
             </div>
@@ -154,16 +154,16 @@ export default function CustomerPortalPage() {
         {/* Recent Check-ins in Overview */}
         {kioskCheckins.length > 0 && (
           <div style={S.card}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Recent Check-ins</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 12 }}>Recent Check-ins</div>
             {kioskCheckins.slice(0, 5).map((ci: any) => (
               <div key={ci.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
                 <div>
-                  <div style={{ fontSize: 12, color: '#F0F4FF' }}>#{ci.unit_number} — {ci.contact_name || 'Driver'}</div>
-                  <div style={{ fontSize: 10, color: '#7C8BA0', marginTop: 1 }}>{ci.complaint_en ? ci.complaint_en.slice(0, 60) : 'No description'}</div>
+                  <div style={{ fontSize: 12, color: '#EDEDF0' }}>#{ci.unit_number} — {ci.contact_name || 'Driver'}</div>
+                  <div style={{ fontSize: 10, color: '#9D9DA1', marginTop: 1 }}>{ci.complaint_en ? ci.complaint_en.slice(0, 60) : 'No description'}</div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: 10, fontFamily: 'monospace', color: '#7C8BA0' }}>{new Date(ci.created_at).toLocaleDateString()}</div>
-                  <div style={{ fontSize: 9, color: '#48536A', fontFamily: 'monospace' }}>{ci.checkin_ref}</div>
+                  <div style={{ fontSize: 10, fontFamily: 'monospace', color: '#9D9DA1' }}>{new Date(ci.created_at).toLocaleDateString()}</div>
+                  <div style={{ fontSize: 9, color: '#9D9DA1', fontFamily: 'monospace' }}>{ci.checkin_ref}</div>
                 </div>
               </div>
             ))}
@@ -175,9 +175,9 @@ export default function CustomerPortalPage() {
       {tab === 'fleet' && (
         <div style={S.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Fleet — {vehicles.length} units</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0' }}>Fleet — {vehicles.length} units</div>
           </div>
-          {vehicles.length === 0 ? <div style={{ color: '#48536A', textAlign: 'center', padding: 24 }}>No vehicles</div> : (
+          {vehicles.length === 0 ? <div style={{ color: '#9D9DA1', textAlign: 'center', padding: 24 }}>No vehicles</div> : (
             <table style={S.table}>
               <thead><tr>
                 {['Unit #', 'Year', 'Make', 'Model', 'VIN', 'Odometer', 'Status', ''].map(h => <th key={h} style={S.th}>{h}</th>)}
@@ -191,7 +191,7 @@ export default function CustomerPortalPage() {
                     <td style={S.td}>{v.model}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 10 }}>{v.vin || '—'}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace' }}>{v.odometer?.toLocaleString() || '—'}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: v.status === 'on_road' ? '#22C55E' : '#7C8BA0' }}>{v.status?.replace(/_/g, ' ')}</span></td>
+                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: v.status === 'on_road' ? '#00E0B0' : '#9D9DA1' }}>{v.status?.replace(/_/g, ' ')}</span></td>
                     <td style={S.td}>
                       <a href={`/orders/new?customer=${params.id}&asset=${v.id}`} style={{ fontSize: 10, color: '#00E0B0', textDecoration: 'none', fontWeight: 600 }}>+ SO</a>
                     </td>
@@ -206,8 +206,8 @@ export default function CustomerPortalPage() {
       {/* SERVICE HISTORY TAB */}
       {tab === 'history' && (
         <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 }}>Service History — {closedSOs.length} completed</div>
-          {closedSOs.length === 0 ? <div style={{ color: '#48536A', textAlign: 'center', padding: 24 }}>No completed service orders</div> : (
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 14 }}>Service History — {closedSOs.length} completed</div>
+          {closedSOs.length === 0 ? <div style={{ color: '#9D9DA1', textAlign: 'center', padding: 24 }}>No completed service orders</div> : (
             <table style={S.table}>
               <thead><tr>
                 {['SO #', 'Date', 'Truck', 'Complaint', 'Labor', 'Parts', 'Total', 'Status'].map(h => <th key={h} style={S.th}>{h}</th>)}
@@ -222,7 +222,7 @@ export default function CustomerPortalPage() {
                     <td style={{ ...S.td, fontFamily: 'monospace' }}>${so.labor_total || 0}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace' }}>${so.parts_total || 0}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700 }}>${so.grand_total || 0}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.status === 'good_to_go' ? '#22C55E' : '#7C8BA0' }}>{so.status?.replace(/_/g, ' ')}</span></td>
+                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.status === 'good_to_go' ? '#00E0B0' : '#9D9DA1' }}>{so.status?.replace(/_/g, ' ')}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -234,8 +234,8 @@ export default function CustomerPortalPage() {
       {/* OPEN ORDERS TAB */}
       {tab === 'open' && (
         <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 }}>Open Orders — {openSOs.length} active</div>
-          {openSOs.length === 0 ? <div style={{ color: '#48536A', textAlign: 'center', padding: 24 }}>No open orders</div> : (
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 14 }}>Open Orders — {openSOs.length} active</div>
+          {openSOs.length === 0 ? <div style={{ color: '#9D9DA1', textAlign: 'center', padding: 24 }}>No open orders</div> : (
             <table style={S.table}>
               <thead><tr>
                 {['SO #', 'Truck', 'Complaint', 'Mechanic', 'Status', 'Priority', 'Total'].map(h => <th key={h} style={S.th}>{h}</th>)}
@@ -246,9 +246,9 @@ export default function CustomerPortalPage() {
                     <td style={{ ...S.td, fontFamily: 'monospace', color: '#00E0B0', fontWeight: 600 }}>{so.so_number}</td>
                     <td style={S.td}>#{(so.assets as any)?.unit_number || '—'}</td>
                     <td style={{ ...S.td, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{so.complaint || '—'}</td>
-                    <td style={S.td}>{(so.users as any)?.full_name || <span style={{ color: '#48536A' }}>Unassigned</span>}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.status === 'in_progress' ? '#F59E0B' : so.status === 'waiting_parts' ? '#F59E0B' : '#7C8BA0' }}>{so.status?.replace(/_/g, ' ')}</span></td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.priority === 'critical' ? '#EF4444' : so.priority === 'high' ? '#F59E0B' : '#7C8BA0' }}>{so.priority}</span></td>
+                    <td style={S.td}>{(so.users as any)?.full_name || <span style={{ color: '#9D9DA1' }}>Unassigned</span>}</td>
+                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.status === 'in_progress' ? '#FFB84D' : so.status === 'waiting_parts' ? '#FFB84D' : '#9D9DA1' }}>{so.status?.replace(/_/g, ' ')}</span></td>
+                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.priority === 'critical' ? '#FF5C5C' : so.priority === 'high' ? '#FFB84D' : '#9D9DA1' }}>{so.priority}</span></td>
                     <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700 }}>${so.grand_total || 0}</td>
                   </tr>
                 ))}
@@ -261,8 +261,8 @@ export default function CustomerPortalPage() {
       {/* INVOICES TAB */}
       {tab === 'invoices' && (
         <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 }}>Invoices — {invoices.length} total</div>
-          {invoices.length === 0 ? <div style={{ color: '#48536A', textAlign: 'center', padding: 24 }}>No invoices</div> : (
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0', marginBottom: 14 }}>Invoices — {invoices.length} total</div>
+          {invoices.length === 0 ? <div style={{ color: '#9D9DA1', textAlign: 'center', padding: 24 }}>No invoices</div> : (
             <table style={S.table}>
               <thead><tr>
                 {['Invoice #', 'Date', 'Due Date', 'Total', 'Paid', 'Balance', 'Status'].map(h => <th key={h} style={S.th}>{h}</th>)}
@@ -275,8 +275,8 @@ export default function CustomerPortalPage() {
                     <td style={S.td}>{inv.due_date || '—'}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace' }}>${(inv.total || 0).toFixed(2)}</td>
                     <td style={{ ...S.td, fontFamily: 'monospace' }}>${(inv.amount_paid || 0).toFixed(2)}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: (inv.balance_due || 0) > 0 ? '#F59E0B' : '#22C55E' }}>${(inv.balance_due || 0).toFixed(2)}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: inv.status === 'paid' ? '#22C55E' : inv.status === 'sent' ? '#00E0B0' : inv.status === 'overdue' ? '#EF4444' : '#7C8BA0' }}>{inv.status}</span></td>
+                    <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: (inv.balance_due || 0) > 0 ? '#FFB84D' : '#00E0B0' }}>${(inv.balance_due || 0).toFixed(2)}</td>
+                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: inv.status === 'paid' ? '#00E0B0' : inv.status === 'sent' ? '#00E0B0' : inv.status === 'overdue' ? '#FF5C5C' : '#9D9DA1' }}>{inv.status}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -289,14 +289,14 @@ export default function CustomerPortalPage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' },
-  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 16 },
-  label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A', marginBottom: 4, display: 'block' },
-  input: { width: '100%', padding: '9px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
+  page: { background: '#08080C', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#EDEDF0' },
+  card: { background: '#08080C', border: '1px solid #1A1A24', borderRadius: 12, padding: 20, marginBottom: 16 },
+  label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#9D9DA1', marginBottom: 4, display: 'block' },
+  input: { width: '100%', padding: '9px 12px', background: '#1A1A24', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#EDEDF0', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
   row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
   btn: { padding: '9px 18px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-block' },
   table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 11 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '7px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '7px 10px', textAlign: 'left' as const, background: '#08080C', whiteSpace: 'nowrap' as const },
+  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#9D9DA1' },
 }

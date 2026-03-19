@@ -3,31 +3,28 @@
 @source "../../src";
 
 @theme {
-  /* Backgrounds */
-  --color-bg: #08080C;
-  --color-surface: #111117;
-  --color-surface-2: #1C1C24;
-  --color-brand-border: #28283A;
-
-  /* Brand accent: Teal */
+  /* Brand Book v1.1 — PRIMARY */
   --color-teal: #00E0B0;
-  --color-teal-hover: #00B892;
-  --color-teal-active: #00805F;
+  --color-bg: #08080C;
 
-  /* AI accent: Purple */
-  --color-purple: #7C6CF0;
-  --color-purple-light: #9D91F5;
-  --color-purple-dark: #5B4CC4;
+  /* Brand Book v1.1 — SECONDARY */
+  --color-surface: #111117;
+  --color-elevated: #1A1A24;
+  --color-snow: #EDEDF0;
+  --color-mist: #9D9DA1;
 
-  /* Text */
+  /* Brand Book v1.1 — FUNCTIONAL */
+  --color-error: #FF5C5C;
+  --color-warning: #FFB84D;
+  --color-info: #4D9EFF;
+
+  /* Aliases for existing class usage */
+  --color-surface-2: #1A1A24;
+  --color-brand-border: #1A1A24;
   --color-text-primary: #EDEDF0;
-  --color-text-secondary: #9898A5;
-  --color-text-tertiary: #5A5A68;
-
-  /* Status */
-  --color-success: #00D48E;
-  --color-warning: #FFBE2E;
-  --color-error: #FF6B6B;
+  --color-text-secondary: #9D9DA1;
+  --color-text-tertiary: #9D9DA1;
+  --color-success: #00E0B0;
 
   /* Fonts */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -35,23 +32,21 @@
 }
 
 :root {
-  /* CSS variables for inline style fallbacks */
   --bg: #08080C;
   --surface: #111117;
-  --surface-2: #1C1C24;
-  --border: #28283A;
+  --elevated: #1A1A24;
+  --surface-2: #1A1A24;
+  --border: #1A1A24;
   --teal: #00E0B0;
-  --teal-hover: #00B892;
-  --teal-active: #00805F;
-  --purple: #7C6CF0;
-  --purple-light: #9D91F5;
-  --purple-dark: #5B4CC4;
+  --snow: #EDEDF0;
+  --mist: #9D9DA1;
   --text-primary: #EDEDF0;
-  --text-secondary: #9898A5;
-  --text-tertiary: #5A5A68;
-  --success: #00D48E;
-  --warning: #FFBE2E;
-  --error: #FF6B6B;
+  --text-secondary: #9D9DA1;
+  --text-tertiary: #9D9DA1;
+  --success: #00E0B0;
+  --warning: #FFB84D;
+  --error: #FF5C5C;
+  --info: #4D9EFF;
 }
 
 * {
@@ -81,4 +76,4 @@ body {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+::-webkit-scrollbar-thumb:hover { background: var(--mist); }

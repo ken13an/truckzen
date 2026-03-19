@@ -50,36 +50,36 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
   const displayLabel = current
     ? IMPERSONATE_ROLES.find(r => r.key === current)?.label || ROLE_LABEL[current] || current
     : ROLE_LABEL[actualRole] || actualRole
-  const color = ROLE_COLOR[displayRole] || '#7C8BA0'
+  const color = ROLE_COLOR[displayRole] || '#9D9DA1'
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(!open)} style={{
         display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px',
-        background: current ? 'rgba(245,158,11,.08)' : '#0D0F12',
-        border: current ? '1px solid rgba(245,158,11,.3)' : '1px solid #1A1D23',
+        background: current ? 'rgba(245,158,11,.08)' : '#08080C',
+        border: current ? '1px solid rgba(245,158,11,.3)' : '1px solid #1A1A24',
         borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-        color: current ? '#F59E0B' : color,
+        color: current ? '#FFB84D' : color,
       }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
         {current ? `Impersonating: ${displayLabel}` : displayLabel}
-        <span style={{ fontSize: 8, color: '#48536A', marginLeft: 2 }}>▼</span>
+        <span style={{ fontSize: 8, color: '#9D9DA1', marginLeft: 2 }}>▼</span>
       </button>
 
       {open && (
         <div style={{
           position: 'absolute', top: 36, right: 0, width: 220,
-          background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10,
+          background: '#08080C', border: '1px solid #1A1A24', borderRadius: 10,
           boxShadow: '0 8px 32px rgba(0,0,0,.5)', zIndex: 999, overflow: 'hidden',
         }}>
-          <div style={{ padding: '8px 12px', borderBottom: '1px solid #1A1D23', fontSize: 9, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+          <div style={{ padding: '8px 12px', borderBottom: '1px solid #1A1A24', fontSize: 9, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.06em' }}>
             Switch Role
           </div>
 
           {/* Reset to actual role */}
           {current && (
             <button onClick={() => switchRole(null)} disabled={switching}
-              style={{ ...S.item, color: '#22C55E', fontWeight: 700, borderBottom: '1px solid #1A1D23' }}>
+              style={{ ...S.item, color: '#00E0B0', fontWeight: 700, borderBottom: '1px solid #1A1A24' }}>
               ↩ Back to {ROLE_LABEL[actualRole]}
             </button>
           )}
@@ -88,8 +88,8 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
             const isActive = displayRole === r.key && (!r.team || r.label.includes(r.team || ''))
             return (
               <button key={i} onClick={() => switchRole(r.key)} disabled={switching}
-                style={{ ...S.item, color: isActive ? '#00E0B0' : '#DDE3EE', background: isActive ? 'rgba(0,224,176,.06)' : 'transparent' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ROLE_COLOR[r.key] || '#7C8BA0', flexShrink: 0 }} />
+                style={{ ...S.item, color: isActive ? '#00E0B0' : '#EDEDF0', background: isActive ? 'rgba(0,224,176,.06)' : 'transparent' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ROLE_COLOR[r.key] || '#9D9DA1', flexShrink: 0 }} />
                 {r.label}
               </button>
             )

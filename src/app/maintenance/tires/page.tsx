@@ -20,7 +20,7 @@ const POSITIONS = [
   { key: 'spare', label: 'Spare', short: 'SP' },
 ]
 
-function lifeColor(pct: number) { return pct > 20 ? '#22C55E' : pct > 10 ? '#F59E0B' : '#EF4444' }
+function lifeColor(pct: number) { return pct > 20 ? '#00E0B0' : pct > 10 ? '#FFB84D' : '#FF5C5C' }
 function lifeBg(pct: number) { return pct > 20 ? 'rgba(34,197,94,.08)' : pct > 10 ? 'rgba(245,158,11,.08)' : 'rgba(239,68,68,.08)' }
 
 export default function TireTrackerPage() {
@@ -135,9 +135,9 @@ export default function TireTrackerPage() {
   function treadStatus(tire: any) {
     const depth = tire.current_tread || 0
     const min = tire.legal_min_tread || 2
-    if (depth <= min) return { color: '#EF4444', label: 'ILLEGAL' }
-    if (depth <= min + 2) return { color: '#F59E0B', label: 'LOW' }
-    return { color: '#22C55E', label: 'OK' }
+    if (depth <= min) return { color: '#FF5C5C', label: 'ILLEGAL' }
+    if (depth <= min + 2) return { color: '#FFB84D', label: 'LOW' }
+    return { color: '#00E0B0', label: 'OK' }
   }
 
   function costPerMile(tire: any, odo: number) {
@@ -145,7 +145,7 @@ export default function TireTrackerPage() {
     return (tire.cost || 0) / used
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: '#08080C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1' }}>Loading...</div>
 
   const filteredFleet = fleet.filter(a => {
     if (search && !a.unit_number?.toLowerCase().includes(search.toLowerCase()) && !(a.customers as any)?.company_name?.toLowerCase().includes(search.toLowerCase())) return false
@@ -160,10 +160,10 @@ export default function TireTrackerPage() {
   for (const a of fleet) {
     for (const t of a.tires || []) {
       const { remaining } = tireLife(t, a.odometer || 0)
-      if (remaining <= 10000 && remaining > 0) alerts.push({ type: 'mileage', msg: `#${a.unit_number} ${POSITIONS.find(p => p.key === t.position)?.short || t.position}: ${remaining.toLocaleString()} mi remaining`, color: '#F59E0B', assetId: a.id })
-      if (remaining <= 0) alerts.push({ type: 'expired', msg: `#${a.unit_number} ${POSITIONS.find(p => p.key === t.position)?.short || t.position}: PAST expected life`, color: '#EF4444', assetId: a.id })
+      if (remaining <= 10000 && remaining > 0) alerts.push({ type: 'mileage', msg: `#${a.unit_number} ${POSITIONS.find(p => p.key === t.position)?.short || t.position}: ${remaining.toLocaleString()} mi remaining`, color: '#FFB84D', assetId: a.id })
+      if (remaining <= 0) alerts.push({ type: 'expired', msg: `#${a.unit_number} ${POSITIONS.find(p => p.key === t.position)?.short || t.position}: PAST expected life`, color: '#FF5C5C', assetId: a.id })
       const ts = treadStatus(t)
-      if (ts.label === 'ILLEGAL') alerts.push({ type: 'tread', msg: `#${a.unit_number} ${POSITIONS.find(p => p.key === t.position)?.short}: Tread ${t.current_tread}/32" — BELOW LEGAL MIN`, color: '#EF4444', assetId: a.id })
+      if (ts.label === 'ILLEGAL') alerts.push({ type: 'tread', msg: `#${a.unit_number} ${POSITIONS.find(p => p.key === t.position)?.short}: Tread ${t.current_tread}/32" — BELOW LEGAL MIN`, color: '#FF5C5C', assetId: a.id })
     }
   }
 
@@ -176,15 +176,15 @@ export default function TireTrackerPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
           <div style={S.title}>Tire Tracker</div>
-          <div style={{ fontSize: 12, color: '#7C8BA0' }}>{fleet.length} units · {fleet.reduce((s, a) => s + (a.tire_count || 0), 0)} active tires · {alerts.length} alerts</div>
+          <div style={{ fontSize: 12, color: '#9D9DA1' }}>{fleet.length} units · {fleet.reduce((s, a) => s + (a.tire_count || 0), 0)} active tires · {alerts.length} alerts</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#0D0F12', borderRadius: 10, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#08080C', borderRadius: 10, padding: 4 }}>
         {([['fleet', 'Fleet'], ['inventory', 'All Tires'], ['costs', 'Costs'], ['alerts', 'Alerts']] as const).map(([k, l]) => (
           <button key={k} onClick={() => { setTab(k); setSelectedAsset(null); if (k === 'costs') loadPrices(user.shop_id) }}
-            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: tab === k ? '#1A1D23' : 'transparent', color: tab === k ? '#F0F4FF' : '#48536A' }}>
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: tab === k ? '#1A1A24' : 'transparent', color: tab === k ? '#EDEDF0' : '#9D9DA1' }}>
             {l} {k === 'alerts' && alerts.length > 0 ? `(${alerts.length})` : ''}
           </button>
         ))}
@@ -210,21 +210,21 @@ export default function TireTrackerPage() {
                 style={{ ...S.card, cursor: 'pointer', borderColor: `${lifeColor(a.worst_life_pct)}20` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF' }}>#{a.unit_number}</div>
-                    <div style={{ fontSize: 11, color: '#7C8BA0' }}>{a.year} {a.make} {a.model}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>#{a.unit_number}</div>
+                    <div style={{ fontSize: 11, color: '#9D9DA1' }}>{a.year} {a.make} {a.model}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 20, fontWeight: 700, color: lifeColor(a.worst_life_pct) }}>{a.worst_life_pct}%</div>
-                    <div style={{ fontSize: 9, color: '#48536A', textTransform: 'uppercase' }}>Worst tire</div>
+                    <div style={{ fontSize: 9, color: '#9D9DA1', textTransform: 'uppercase' }}>Worst tire</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#7C8BA0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9D9DA1' }}>
                   <span>{a.tire_count} tires</span>
                   <span>{(a.odometer || 0).toLocaleString()} mi</span>
                   <span>${(a.total_tire_cost || 0).toLocaleString()}</span>
                 </div>
                 {/* Mini life bar */}
-                <div style={{ marginTop: 8, height: 4, background: '#1A1D23', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ marginTop: 8, height: 4, background: '#1A1A24', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ width: `${a.worst_life_pct}%`, height: '100%', background: lifeColor(a.worst_life_pct), borderRadius: 2 }} />
                 </div>
               </div>
@@ -240,8 +240,8 @@ export default function TireTrackerPage() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F4FF' }}>#{selectedAsset.unit_number}</div>
-              <div style={{ fontSize: 13, color: '#7C8BA0' }}>{selectedAsset.year} {selectedAsset.make} {selectedAsset.model} · {(selectedAsset.odometer || 0).toLocaleString()} mi</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#EDEDF0' }}>#{selectedAsset.unit_number}</div>
+              <div style={{ fontSize: 13, color: '#9D9DA1' }}>{selectedAsset.year} {selectedAsset.make} {selectedAsset.model} · {(selectedAsset.odometer || 0).toLocaleString()} mi</div>
             </div>
             <button onClick={() => { setModal('install'); setF({ asset_id: selectedAsset.id, install_mileage: selectedAsset.odometer || 0 }) }} style={S.btn}>+ Install Tire</button>
           </div>
@@ -252,8 +252,8 @@ export default function TireTrackerPage() {
               const tire = assetTires.find(t => t.position === pos.key && t.status === 'active')
               if (!tire) return (
                 <div key={pos.key} style={{ ...S.card, borderStyle: 'dashed', opacity: 0.5, textAlign: 'center', padding: 16 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#48536A' }}>{pos.label}</div>
-                  <div style={{ fontSize: 11, color: '#48536A', marginTop: 4 }}>Empty</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#9D9DA1' }}>{pos.label}</div>
+                  <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 4 }}>Empty</div>
                 </div>
               )
 
@@ -264,27 +264,27 @@ export default function TireTrackerPage() {
               return (
                 <div key={pos.key} style={{ ...S.card, background: lifeBg(life.pct), borderColor: `${lifeColor(life.pct)}20` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#7C8BA0', textTransform: 'uppercase' }}>{pos.label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9D9DA1', textTransform: 'uppercase' }}>{pos.label}</span>
                     <span style={{ fontSize: 18, fontWeight: 700, color: lifeColor(life.pct) }}>{life.pct}%</span>
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F4FF' }}>{tire.brand} {tire.model || ''}</div>
-                  <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 2 }}>{tire.size} {tire.is_recap ? '· RECAP' : ''}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginTop: 8, fontSize: 10, color: '#7C8BA0' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#EDEDF0' }}>{tire.brand} {tire.model || ''}</div>
+                  <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 2 }}>{tire.size} {tire.is_recap ? '· RECAP' : ''}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginTop: 8, fontSize: 10, color: '#9D9DA1' }}>
                     <div>Tread: <span style={{ color: tread.color, fontWeight: 600 }}>{tire.current_tread}/32"</span></div>
                     <div>Remaining: <span style={{ fontWeight: 600 }}>{life.remaining.toLocaleString()}</span></div>
                     <div>CPM: <span style={{ fontWeight: 600 }}>${cpm.toFixed(3)}</span></div>
                   </div>
                   {/* Life bar */}
-                  <div style={{ marginTop: 6, height: 3, background: '#1A1D23', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ marginTop: 6, height: 3, background: '#1A1A24', borderRadius: 2, overflow: 'hidden' }}>
                     <div style={{ width: `${life.pct}%`, height: '100%', background: lifeColor(life.pct), borderRadius: 2 }} />
                   </div>
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                     <button onClick={() => { setModalTire(tire); setModal('tread'); setF({}) }} style={S.smallBtn}>Tread</button>
                     <button onClick={() => { setModalTire(tire); setModal('pressure'); setF({}) }} style={S.smallBtn}>PSI</button>
-                    <button onClick={() => { setModalTire(tire); setModal('remove'); setF({}) }} style={{ ...S.smallBtn, color: '#EF4444', borderColor: '#EF4444' }}>Remove</button>
+                    <button onClick={() => { setModalTire(tire); setModal('remove'); setF({}) }} style={{ ...S.smallBtn, color: '#FF5C5C', borderColor: '#FF5C5C' }}>Remove</button>
                   </div>
-                  {tire.qr_token && <div style={{ fontSize: 9, color: '#48536A', marginTop: 6 }}>QR: {tire.qr_token}</div>}
+                  {tire.qr_token && <div style={{ fontSize: 9, color: '#9D9DA1', marginTop: 6 }}>QR: {tire.qr_token}</div>}
                 </div>
               )
             })}
@@ -307,7 +307,7 @@ export default function TireTrackerPage() {
                         <td style={S.td}>{t.brand} {t.size}</td>
                         <td style={S.td}>{used.toLocaleString()}</td>
                         <td style={S.td}>${used > 0 ? ((t.cost || 0) / used).toFixed(3) : '—'}</td>
-                        <td style={{ ...S.td, color: t.status === 'failed' ? '#EF4444' : '#7C8BA0', textTransform: 'uppercase', fontSize: 10, fontWeight: 600 }}>{t.status}</td>
+                        <td style={{ ...S.td, color: t.status === 'failed' ? '#FF5C5C' : '#9D9DA1', textTransform: 'uppercase', fontSize: 10, fontWeight: 600 }}>{t.status}</td>
                         <td style={S.td}>{t.removal_reason || '—'}</td>
                       </tr>
                     )
@@ -378,12 +378,12 @@ export default function TireTrackerPage() {
                 return cpmA - cpmB
               }).map(([brand, d]) => (
                 <div key={brand} style={S.card}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>{brand}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>{brand}</div>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#00E0B0', marginTop: 4 }}>
                     ${d.totalMiles > 0 ? (d.totalCost / d.totalMiles).toFixed(3) : '—'}
-                    <span style={{ fontSize: 11, color: '#7C8BA0', fontWeight: 400 }}>/mi</span>
+                    <span style={{ fontSize: 11, color: '#9D9DA1', fontWeight: 400 }}>/mi</span>
                   </div>
-                  <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 4 }}>{d.count} tires · ${d.totalCost.toLocaleString()} total</div>
+                  <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 4 }}>{d.count} tires · ${d.totalCost.toLocaleString()} total</div>
                 </div>
               ))
             })()}
@@ -417,14 +417,14 @@ export default function TireTrackerPage() {
       {tab === 'alerts' && (
         <>
           <div style={S.sectionLabel}>Active Alerts ({alerts.length})</div>
-          {alerts.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#48536A' }}>No tire alerts</div>}
+          {alerts.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9D9DA1' }}>No tire alerts</div>}
           {alerts.map((a, i) => (
             <div key={i} onClick={() => { const asset = fleet.find(f => f.id === a.assetId); if (asset) { setTab('fleet'); setSelectedAsset(asset); loadAssetTires(user.shop_id, asset.id) } }}
               style={{ ...S.card, borderLeftWidth: 3, borderLeftColor: a.color, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px' }}>
               <div style={{ fontSize: 20 }}>{a.type === 'tread' ? '⚠️' : a.type === 'expired' ? '🔴' : '🟡'}</div>
               <div>
-                <div style={{ fontSize: 13, color: '#F0F4FF', fontWeight: 600 }}>{a.msg}</div>
-                <div style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', marginTop: 2 }}>{a.type}</div>
+                <div style={{ fontSize: 13, color: '#EDEDF0', fontWeight: 600 }}>{a.msg}</div>
+                <div style={{ fontSize: 10, color: '#9D9DA1', textTransform: 'uppercase', marginTop: 2 }}>{a.type}</div>
               </div>
             </div>
           ))}
@@ -455,7 +455,7 @@ export default function TireTrackerPage() {
                 <div><div style={S.fieldLabel}>Tread Depth (32nds)</div><input value={f.current_tread || '12'} onChange={e => upd('current_tread', parseFloat(e.target.value))} type="number" step="0.5" style={S.input} /></div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <label style={{ fontSize: 12, color: '#7C8BA0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <label style={{ fontSize: 12, color: '#9D9DA1', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <input type="checkbox" checked={f.is_recap || false} onChange={e => upd('is_recap', e.target.checked)} /> Recap/Retread
                 </label>
               </div>
@@ -469,7 +469,7 @@ export default function TireTrackerPage() {
             {/* LOG TREAD */}
             {modal === 'tread' && <>
               <div style={S.modalTitle}>Log Tread Depth</div>
-              <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 12 }}>{modalTire?.brand} · {POSITIONS.find(p => p.key === modalTire?.position)?.label}</div>
+              <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 12 }}>{modalTire?.brand} · {POSITIONS.find(p => p.key === modalTire?.position)?.label}</div>
               <div style={S.fieldLabel}>Tread Depth (32nds of inch)</div>
               <input value={f.tread_depth || ''} onChange={e => upd('tread_depth', e.target.value)} type="number" step="0.5" style={S.input} placeholder="e.g. 8.0" autoFocus />
               <div style={{ ...S.fieldLabel, marginTop: 12 }}>Current Mileage</div>
@@ -480,7 +480,7 @@ export default function TireTrackerPage() {
             {/* LOG PRESSURE */}
             {modal === 'pressure' && <>
               <div style={S.modalTitle}>Log Tire Pressure</div>
-              <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 12 }}>{modalTire?.brand} · {POSITIONS.find(p => p.key === modalTire?.position)?.label}</div>
+              <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 12 }}>{modalTire?.brand} · {POSITIONS.find(p => p.key === modalTire?.position)?.label}</div>
               <div style={S.fieldLabel}>PSI Reading</div>
               <input value={f.psi || ''} onChange={e => upd('psi', e.target.value)} type="number" style={S.input} placeholder="e.g. 100" autoFocus />
               <div style={{ ...S.fieldLabel, marginTop: 12 }}>Target PSI</div>
@@ -491,7 +491,7 @@ export default function TireTrackerPage() {
             {/* REMOVE TIRE */}
             {modal === 'remove' && <>
               <div style={S.modalTitle}>Remove Tire</div>
-              <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 12 }}>{modalTire?.brand} {modalTire?.size} · {POSITIONS.find(p => p.key === modalTire?.position)?.label}</div>
+              <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 12 }}>{modalTire?.brand} {modalTire?.size} · {POSITIONS.find(p => p.key === modalTire?.position)?.label}</div>
               <div style={S.fieldLabel}>Reason</div>
               <select value={f.removal_reason || 'worn'} onChange={e => upd('removal_reason', e.target.value)} style={S.input}>
                 <option value="worn">Worn Out</option>
@@ -504,7 +504,7 @@ export default function TireTrackerPage() {
               <input value={f.removed_mileage || ''} onChange={e => upd('removed_mileage', e.target.value)} type="number" style={S.input} />
               <div style={{ ...S.fieldLabel, marginTop: 12 }}>Notes</div>
               <textarea value={f.failure_notes || ''} onChange={e => upd('failure_notes', e.target.value)} style={{ ...S.input, height: 60, resize: 'none' }} />
-              <button onClick={removeTire} disabled={saving} style={{ ...S.bigBtn, marginTop: 16, background: '#EF4444', opacity: saving ? 0.5 : 1 }}>Remove Tire</button>
+              <button onClick={removeTire} disabled={saving} style={{ ...S.bigBtn, marginTop: 16, background: '#FF5C5C', opacity: saving ? 0.5 : 1 }}>Remove Tire</button>
             </>}
 
             {/* ADD VENDOR PRICE */}
@@ -529,19 +529,19 @@ export default function TireTrackerPage() {
 
 // ── STYLES ─────────────────────────────────────────────────
 const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', letterSpacing: '.03em' },
-  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 16, marginBottom: 10 },
-  sectionLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 },
-  fieldLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', marginBottom: 4 },
-  input: { width: '100%', padding: '10px 12px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 8, color: '#DDE3EE', fontSize: 13, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' as const },
-  btn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff' },
-  bigBtn: { padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', width: '100%', textAlign: 'center' as const },
-  smallBtn: { padding: '5px 10px', borderRadius: 6, border: '1px solid #1A1D23', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'none', color: '#7C8BA0' },
+  page: { background: '#08080C', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#EDEDF0', letterSpacing: '.03em' },
+  card: { background: '#08080C', border: '1px solid #1A1A24', borderRadius: 12, padding: 16, marginBottom: 10 },
+  sectionLabel: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 },
+  fieldLabel: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', marginBottom: 4 },
+  input: { width: '100%', padding: '10px 12px', background: '#08080C', border: '1px solid #1A1A24', borderRadius: 8, color: '#EDEDF0', fontSize: 13, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' as const },
+  btn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', color: '#fff' },
+  bigBtn: { padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', color: '#fff', width: '100%', textAlign: 'center' as const },
+  smallBtn: { padding: '5px 10px', borderRadius: 6, border: '1px solid #1A1A24', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'none', color: '#9D9DA1' },
   table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '8px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 12, color: '#A0AABF' },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '8px 10px', textAlign: 'left' as const, background: '#08080C', whiteSpace: 'nowrap' as const },
+  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 12, color: '#9D9DA1' },
   overlay: { position: 'fixed' as const, inset: 0, background: 'rgba(0,0,0,.65)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 },
-  modalCard: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto' as const },
-  modalTitle: { fontSize: 18, fontWeight: 700, color: '#F0F4FF', marginBottom: 16 },
+  modalCard: { background: '#08080C', border: '1px solid #1A1A24', borderRadius: 16, padding: 24, width: '100%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto' as const },
+  modalTitle: { fontSize: 18, fontWeight: 700, color: '#EDEDF0', marginBottom: 16 },
 }

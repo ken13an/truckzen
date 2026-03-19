@@ -6,21 +6,21 @@ import { getCurrentUser } from '@/lib/auth'
 type View = 'table' | 'kanban' | 'monitor'
 
 const STATUS_GROUPS = [
-  { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: '#7C8BA0' },
-  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: '#F59E0B' },
-  { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: '#F59E0B' },
-  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection', 'done'], color: '#06B6D4' },
-  { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: '#22C55E' },
-  { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: '#EF4444' },
+  { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: '#9D9DA1' },
+  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: '#FFB84D' },
+  { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: '#FFB84D' },
+  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection', 'done'], color: '#00E0B0' },
+  { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: '#00E0B0' },
+  { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: '#FF5C5C' },
 ]
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: '#7C8BA0', not_approved: '#8B5CF6', waiting_approval: '#F59E0B',
-  in_progress: '#F59E0B', waiting_parts: '#F59E0B', done: '#06B6D4',
-  ready_final_inspection: '#06B6D4', good_to_go: '#22C55E', failed_inspection: '#EF4444',
+  draft: '#9D9DA1', not_approved: '#00E0B0', waiting_approval: '#FFB84D',
+  in_progress: '#FFB84D', waiting_parts: '#FFB84D', done: '#00E0B0',
+  ready_final_inspection: '#00E0B0', good_to_go: '#00E0B0', failed_inspection: '#FF5C5C',
 }
 
-const PRIORITY_COLOR: Record<string, string> = { low: '#48536A', normal: '#7C8BA0', high: '#F59E0B', critical: '#EF4444' }
+const PRIORITY_COLOR: Record<string, string> = { low: '#9D9DA1', normal: '#9D9DA1', high: '#FFB84D', critical: '#FF5C5C' }
 
 function timeAgo(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000)
@@ -87,22 +87,22 @@ export default function ShopFloorPage() {
     total: jobs.length,
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: '#08080C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1' }}>Loading...</div>
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: view === 'monitor' ? 16 : 24 }}>
+    <div style={{ background: '#08080C', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans',sans-serif", padding: view === 'monitor' ? 16 : 24 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: view === 'monitor' ? 22 : 28, color: '#F0F4FF', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: view === 'monitor' ? 22 : 28, color: '#EDEDF0', display: 'flex', alignItems: 'center', gap: 10 }}>
             Shop Floor
-            {view === 'monitor' && <span style={{ fontSize: 10, background: '#22C55E', color: '#000', padding: '3px 8px', borderRadius: 10, fontFamily: "'Instrument Sans'", fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: '#000', animation: 'pulse 2s infinite' }} />LIVE</span>}
+            {view === 'monitor' && <span style={{ fontSize: 10, background: '#00E0B0', color: '#000', padding: '3px 8px', borderRadius: 10, fontFamily: "'Instrument Sans'", fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: '#000', animation: 'pulse 2s infinite' }} />LIVE</span>}
           </div>
         </div>
         {/* View tabs */}
-        <div style={{ display: 'flex', gap: 4, background: '#0D0F12', borderRadius: 8, padding: 3 }}>
+        <div style={{ display: 'flex', gap: 4, background: '#08080C', borderRadius: 8, padding: 3 }}>
           {(['table', 'kanban', 'monitor'] as const).map(v => (
-            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: view === v ? '#1A1D23' : 'transparent', color: view === v ? '#F0F4FF' : '#48536A', textTransform: 'capitalize' }}>{v}</button>
+            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: view === v ? '#1A1A24' : 'transparent', color: view === v ? '#EDEDF0' : '#9D9DA1', textTransform: 'capitalize' }}>{v}</button>
           ))}
         </div>
       </div>
@@ -110,15 +110,15 @@ export default function ShopFloorPage() {
       {/* Stats bar */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {[
-          { label: 'Active', value: stats.active, color: '#F59E0B' },
-          { label: 'Waiting Parts', value: stats.waiting, color: '#F59E0B' },
-          { label: 'Inspection', value: stats.inspection, color: '#06B6D4' },
-          { label: 'Failed', value: stats.failed, color: '#EF4444' },
-          { label: 'Total', value: stats.total, color: '#7C8BA0' },
+          { label: 'Active', value: stats.active, color: '#FFB84D' },
+          { label: 'Waiting Parts', value: stats.waiting, color: '#FFB84D' },
+          { label: 'Inspection', value: stats.inspection, color: '#00E0B0' },
+          { label: 'Failed', value: stats.failed, color: '#FF5C5C' },
+          { label: 'Total', value: stats.total, color: '#9D9DA1' },
         ].map(s => (
-          <div key={s.label} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div key={s.label} style={{ background: '#08080C', border: '1px solid #1A1A24', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{s.value}</span>
-            <span style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.05em' }}>{s.label}</span>
+            <span style={{ fontSize: 10, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{s.label}</span>
           </div>
         ))}
       </div>
@@ -159,8 +159,8 @@ export default function ShopFloorPage() {
               <div key={group.key} style={{ marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: group.color }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{group.label}</span>
-                  <span style={{ fontSize: 10, color: '#48536A' }}>({groupJobs.length})</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#EDEDF0' }}>{group.label}</span>
+                  <span style={{ fontSize: 10, color: '#9D9DA1' }}>({groupJobs.length})</span>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
                   <thead><tr>
@@ -175,10 +175,10 @@ export default function ShopFloorPage() {
                         <td style={S.td}>{j.team ? `Team ${j.team}` : '—'}{j.bay ? ` · ${j.bay}` : ''}</td>
                         <td style={S.td}>{(j.customers as any)?.company_name || '—'}</td>
                         <td style={{ ...S.td, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.complaint || '—'}</td>
-                        <td style={S.td}><span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: STATUS_COLOR[j.status] || '#7C8BA0', background: `${STATUS_COLOR[j.status] || '#7C8BA0'}15` }}>{j.status?.replace(/_/g, ' ')}</span></td>
-                        <td style={S.td}><span style={{ color: PRIORITY_COLOR[j.priority] || '#7C8BA0', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' }}>{j.priority}</span></td>
-                        <td style={S.td}>{(j.users as any)?.full_name || <span style={{ color: '#48536A' }}>Unassigned</span>}</td>
-                        <td style={{ ...S.td, color: '#48536A', fontSize: 10 }}>{timeAgo(j.updated_at || j.created_at)}</td>
+                        <td style={S.td}><span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: STATUS_COLOR[j.status] || '#9D9DA1', background: `${STATUS_COLOR[j.status] || '#9D9DA1'}15` }}>{j.status?.replace(/_/g, ' ')}</span></td>
+                        <td style={S.td}><span style={{ color: PRIORITY_COLOR[j.priority] || '#9D9DA1', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' }}>{j.priority}</span></td>
+                        <td style={S.td}>{(j.users as any)?.full_name || <span style={{ color: '#9D9DA1' }}>Unassigned</span>}</td>
+                        <td style={{ ...S.td, color: '#9D9DA1', fontSize: 10 }}>{timeAgo(j.updated_at || j.created_at)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -197,10 +197,10 @@ export default function ShopFloorPage() {
               const groupJobs = filtered.filter(j => group.statuses.includes(j.status))
               return (
                 <div key={group.key} style={{ minWidth: 260, maxWidth: 300, flex: '0 0 280px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: '#0D0F12', borderRadius: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: '#08080C', borderRadius: 8 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: group.color }} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{group.label}</span>
-                    <span style={{ fontSize: 10, color: '#48536A', marginLeft: 'auto' }}>{groupJobs.length}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#EDEDF0' }}>{group.label}</span>
+                    <span style={{ fontSize: 10, color: '#9D9DA1', marginLeft: 'auto' }}>{groupJobs.length}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {groupJobs.map(j => <KanbanCard key={j.id} job={j} />)}
@@ -214,9 +214,9 @@ export default function ShopFloorPage() {
               if (!teamJobs.length && team) return null
               return (
                 <div key={team || 'unassigned'} style={{ minWidth: 260, maxWidth: 300, flex: '0 0 280px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: '#0D0F12', borderRadius: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{team ? `Team ${team}` : 'Unassigned'}</span>
-                    <span style={{ fontSize: 10, color: '#48536A', marginLeft: 'auto' }}>{teamJobs.length}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: '#08080C', borderRadius: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#EDEDF0' }}>{team ? `Team ${team}` : 'Unassigned'}</span>
+                    <span style={{ fontSize: 10, color: '#9D9DA1', marginLeft: 'auto' }}>{teamJobs.length}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {teamJobs.map(j => <KanbanCard key={j.id} job={j} />)}
@@ -232,13 +232,13 @@ export default function ShopFloorPage() {
       {view === 'monitor' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
           {filtered.map(j => (
-            <div key={j.id} style={{ background: '#0D0F12', border: `2px solid ${STATUS_COLOR[j.status] || '#1A1D23'}30`, borderLeft: `4px solid ${PRIORITY_COLOR[j.priority] || '#7C8BA0'}`, borderRadius: 12, padding: 16 }}>
+            <div key={j.id} style={{ background: '#08080C', border: `2px solid ${STATUS_COLOR[j.status] || '#1A1A24'}30`, borderLeft: `4px solid ${PRIORITY_COLOR[j.priority] || '#9D9DA1'}`, borderRadius: 12, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#F0F4FF', fontFamily: "'IBM Plex Mono'" }}>#{(j.assets as any)?.unit_number || '—'}</div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#EDEDF0', fontFamily: "'IBM Plex Mono'" }}>#{(j.assets as any)?.unit_number || '—'}</div>
                 <span style={{ padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: STATUS_COLOR[j.status], background: `${STATUS_COLOR[j.status]}15` }}>{j.status?.replace(/_/g, ' ')}</span>
               </div>
-              <div style={{ fontSize: 14, color: '#DDE3EE', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#7C8BA0' }}>
+              <div style={{ fontSize: 14, color: '#EDEDF0', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#9D9DA1' }}>
                 <span>{j.team ? `Team ${j.team}` : '—'}{j.bay ? ` · ${j.bay}` : ''}</span>
                 <span>{(j.users as any)?.full_name || 'Unassigned'}</span>
               </div>
@@ -255,14 +255,14 @@ export default function ShopFloorPage() {
 function KanbanCard({ job: j }: { job: any }) {
   return (
     <div onClick={() => window.location.href = `/orders/${j.id}`}
-      style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || '#7C8BA0'}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
+      style={{ background: '#08080C', border: '1px solid #1A1A24', borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || '#9D9DA1'}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: '#00E0B0' }}>#{(j.assets as any)?.unit_number || '—'}</span>
         <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: PRIORITY_COLOR[j.priority], padding: '2px 6px', borderRadius: 4, background: `${PRIORITY_COLOR[j.priority]}15` }}>{j.priority}</span>
       </div>
-      <div style={{ fontSize: 12, color: '#DDE3EE', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
-      {j.complaint && <div style={{ fontSize: 11, color: '#7C8BA0', lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: '#48536A' }}>
+      <div style={{ fontSize: 12, color: '#EDEDF0', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
+      {j.complaint && <div style={{ fontSize: 11, color: '#9D9DA1', lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: '#9D9DA1' }}>
         <span>{(j.users as any)?.full_name || 'Unassigned'}</span>
         <span>{j.team ? `Team ${j.team}` : ''}{j.bay ? ` · ${j.bay}` : ''}</span>
       </div>
@@ -271,7 +271,7 @@ function KanbanCard({ job: j }: { job: any }) {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  input: { padding: '8px 12px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 8, color: '#DDE3EE', fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' },
+  input: { padding: '8px 12px', background: '#08080C', border: '1px solid #1A1A24', borderRadius: 8, color: '#EDEDF0', fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: '#08080C', whiteSpace: 'nowrap' as const },
+  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#9D9DA1' },
 }

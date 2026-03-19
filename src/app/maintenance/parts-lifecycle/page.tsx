@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/auth'
 type Tab = 'fleet' | 'forecast' | 'costs' | 'configs'
 type Modal = null | 'install' | 'replace' | 'price' | 'config'
 
-function lifeColor(pct: number) { return pct > 20 ? '#22C55E' : pct > 10 ? '#F59E0B' : '#EF4444' }
+function lifeColor(pct: number) { return pct > 20 ? '#00E0B0' : pct > 10 ? '#FFB84D' : '#FF5C5C' }
 function lifeBg(pct: number) { return pct > 20 ? 'rgba(34,197,94,.06)' : pct > 10 ? 'rgba(245,158,11,.06)' : 'rgba(239,68,68,.06)' }
 
 export default function PartsLifecyclePage() {
@@ -114,7 +114,7 @@ export default function PartsLifecyclePage() {
     return true
   })
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: '#08080C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1' }}>Loading...</div>
 
   return (
     <div style={S.page}>
@@ -124,17 +124,17 @@ export default function PartsLifecyclePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
           <div style={S.title}>Parts Lifecycle</div>
-          <div style={{ fontSize: 12, color: '#7C8BA0' }}>
+          <div style={{ fontSize: 12, color: '#9D9DA1' }}>
             {fleet.length} units · {fleet.reduce((s: number, a: any) => s + (a.part_count || 0), 0)} tracked parts · {configs.length} part types
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#0D0F12', borderRadius: 10, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#08080C', borderRadius: 10, padding: 4 }}>
         {([['fleet', 'Fleet'], ['forecast', 'Forecast'], ['costs', 'Costs'], ['configs', 'Part Types']] as const).map(([k, l]) => (
           <button key={k} onClick={() => { setTab(k); setSelectedAsset(null) }}
-            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: tab === k ? '#1A1D23' : 'transparent', color: tab === k ? '#F0F4FF' : '#48536A' }}>{l}</button>
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: tab === k ? '#1A1A24' : 'transparent', color: tab === k ? '#EDEDF0' : '#9D9DA1' }}>{l}</button>
         ))}
       </div>
 
@@ -157,12 +157,12 @@ export default function PartsLifecyclePage() {
               style={{ ...S.card, cursor: 'pointer', borderColor: `${lifeColor(a.worst_life_pct)}20` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF' }}>#{a.unit_number}</div>
-                  <div style={{ fontSize: 11, color: '#7C8BA0' }}>{a.year} {a.make} {a.model}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>#{a.unit_number}</div>
+                  <div style={{ fontSize: 11, color: '#9D9DA1' }}>{a.year} {a.make} {a.model}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 20, fontWeight: 700, color: lifeColor(a.worst_life_pct) }}>{a.worst_life_pct}%</div>
-                  <div style={{ fontSize: 9, color: '#48536A', textTransform: 'uppercase' }}>Worst part</div>
+                  <div style={{ fontSize: 9, color: '#9D9DA1', textTransform: 'uppercase' }}>Worst part</div>
                 </div>
               </div>
               {/* Part chips */}
@@ -172,12 +172,12 @@ export default function PartsLifecyclePage() {
                     {cfgIcon(p.part_type)} {p.life_pct}%
                   </span>
                 ))}
-                {(a.parts || []).length > 8 && <span style={{ fontSize: 10, color: '#48536A' }}>+{a.parts.length - 8}</span>}
+                {(a.parts || []).length > 8 && <span style={{ fontSize: 10, color: '#9D9DA1' }}>+{a.parts.length - 8}</span>}
               </div>
-              <div style={{ marginTop: 8, height: 3, background: '#1A1D23', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ marginTop: 8, height: 3, background: '#1A1A24', borderRadius: 2, overflow: 'hidden' }}>
                 <div style={{ width: `${a.worst_life_pct}%`, height: '100%', background: lifeColor(a.worst_life_pct), borderRadius: 2 }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#48536A', marginTop: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#9D9DA1', marginTop: 6 }}>
                 <span>{a.part_count} parts tracked</span>
                 <span>{(a.odometer || 0).toLocaleString()} mi</span>
                 <span>${(a.total_parts_cost || 0).toLocaleString()}</span>
@@ -192,8 +192,8 @@ export default function PartsLifecyclePage() {
         <button onClick={() => setSelectedAsset(null)} style={{ background: 'none', border: 'none', color: '#00E0B0', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 16 }}>← Back</button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F4FF' }}>#{selectedAsset.unit_number}</div>
-            <div style={{ fontSize: 13, color: '#7C8BA0' }}>{selectedAsset.year} {selectedAsset.make} {selectedAsset.model} · {(selectedAsset.odometer || 0).toLocaleString()} mi</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#EDEDF0' }}>#{selectedAsset.unit_number}</div>
+            <div style={{ fontSize: 13, color: '#9D9DA1' }}>{selectedAsset.year} {selectedAsset.make} {selectedAsset.model} · {(selectedAsset.odometer || 0).toLocaleString()} mi</div>
           </div>
           <button onClick={() => { setModal('install'); setF({ asset_id: selectedAsset.id, install_mileage: selectedAsset.odometer || 0 }) }} style={S.btn}>+ Install Part</button>
         </div>
@@ -216,21 +216,21 @@ export default function PartsLifecyclePage() {
                   <span style={{ fontSize: 18 }}>{cfgIcon(p.part_type)}</span>
                   <span style={{ fontSize: 18, fontWeight: 700, color: lifeColor(pct) }}>{pct}%</span>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{cfgName(p.part_type)}</div>
-                <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 2 }}>{p.brand || '—'} {p.part_number || ''}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, marginTop: 6, fontSize: 10, color: '#7C8BA0' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#EDEDF0' }}>{cfgName(p.part_type)}</div>
+                <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 2 }}>{p.brand || '—'} {p.part_number || ''}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, marginTop: 6, fontSize: 10, color: '#9D9DA1' }}>
                   {remainMi !== null && <div>Mi left: <span style={{ fontWeight: 600 }}>{remainMi.toLocaleString()}</span></div>}
                   {remainDays !== null && <div>Days left: <span style={{ fontWeight: 600 }}>{remainDays}</span></div>}
                   <div>Cost: <span style={{ fontWeight: 600 }}>${p.cost || 0}</span></div>
                   <div>Installed: {new Date(p.install_date).toLocaleDateString()}</div>
                 </div>
-                <div style={{ marginTop: 6, height: 3, background: '#1A1D23', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ marginTop: 6, height: 3, background: '#1A1A24', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ width: `${pct}%`, height: '100%', background: lifeColor(pct), borderRadius: 2 }} />
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                   <button onClick={() => { setModalItem(p); setModal('replace'); setF({ mileage: selectedAsset.odometer }) }} style={S.smallBtn}>Replace</button>
                   <button onClick={async () => { await post({ action: 'fail', install_id: p.id, mileage: selectedAsset.odometer }); flash('Marked failed'); loadAssetDetail(selectedAsset.id); loadFleet() }}
-                    style={{ ...S.smallBtn, color: '#EF4444', borderColor: '#EF4444' }}>Failed</button>
+                    style={{ ...S.smallBtn, color: '#FF5C5C', borderColor: '#FF5C5C' }}>Failed</button>
                 </div>
               </div>
             )
@@ -255,7 +255,7 @@ export default function PartsLifecyclePage() {
                     <td style={S.td}>{p.replaced_date ? new Date(p.replaced_date).toLocaleDateString() : '—'}</td>
                     <td style={S.td}>{used > 0 ? used.toLocaleString() : '—'}</td>
                     <td style={S.td}>{used > 0 ? `$${((p.cost || 0) / used).toFixed(3)}` : '—'}</td>
-                    <td style={{ ...S.td, color: p.status === 'failed' ? '#EF4444' : '#7C8BA0', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' }}>{p.status}</td>
+                    <td style={{ ...S.td, color: p.status === 'failed' ? '#FF5C5C' : '#9D9DA1', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' }}>{p.status}</td>
                   </tr>
                 )
               })}
@@ -271,13 +271,13 @@ export default function PartsLifecyclePage() {
           <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
             {[30, 60, 90].map(d => (
               <button key={d} onClick={() => setForecastDays(d)}
-                style={{ padding: '6px 14px', borderRadius: 6, border: forecastDays === d ? '1px solid #00E0B0' : '1px solid #1A1D23', background: forecastDays === d ? 'rgba(0,224,176,.1)' : 'transparent', color: forecastDays === d ? '#00E0B0' : '#48536A', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                style={{ padding: '6px 14px', borderRadius: 6, border: forecastDays === d ? '1px solid #00E0B0' : '1px solid #1A1A24', background: forecastDays === d ? 'rgba(0,224,176,.1)' : 'transparent', color: forecastDays === d ? '#00E0B0' : '#9D9DA1', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                 {d}d
               </button>
             ))}
           </div>
         </div>
-        {forecast.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#48536A' }}>No replacements due in next {forecastDays} days</div>}
+        {forecast.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#9D9DA1' }}>No replacements due in next {forecastDays} days</div>}
         <table style={S.table}>
           <thead><tr>
             <th style={S.th}>Due In</th><th style={S.th}>Unit</th><th style={S.th}>Part</th><th style={S.th}>Brand</th><th style={S.th}>Mi Remaining</th><th style={S.th}>Installed</th>
@@ -285,7 +285,7 @@ export default function PartsLifecyclePage() {
           <tbody>
             {forecast.map((p: any) => (
               <tr key={p.id} style={{ cursor: 'pointer' }} onClick={() => { const a = fleet.find((x: any) => x.id === p.asset_id); if (a) { setTab('fleet'); setSelectedAsset(a); loadAssetDetail(a.id) } }}>
-                <td style={{ ...S.td, color: p.days_until <= 7 ? '#EF4444' : p.days_until <= 30 ? '#F59E0B' : '#7C8BA0', fontWeight: 700 }}>
+                <td style={{ ...S.td, color: p.days_until <= 7 ? '#FF5C5C' : p.days_until <= 30 ? '#FFB84D' : '#9D9DA1', fontWeight: 700 }}>
                   {p.days_until <= 0 ? 'OVERDUE' : `${p.days_until}d`}
                 </td>
                 <td style={S.td}>#{(p.assets as any)?.unit_number}</td>
@@ -325,12 +325,12 @@ export default function PartsLifecyclePage() {
               const [type, brand] = key.split('|')
               return (
                 <div key={key} style={S.card}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{type}</div>
-                  <div style={{ fontSize: 11, color: '#7C8BA0' }}>{brand}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#EDEDF0' }}>{type}</div>
+                  <div style={{ fontSize: 11, color: '#9D9DA1' }}>{brand}</div>
                   <div style={{ fontSize: 22, fontWeight: 700, color: '#00E0B0', marginTop: 4 }}>
-                    ${d.miles > 0 ? (d.cost / d.miles).toFixed(3) : '—'}<span style={{ fontSize: 11, color: '#7C8BA0', fontWeight: 400 }}>/mi</span>
+                    ${d.miles > 0 ? (d.cost / d.miles).toFixed(3) : '—'}<span style={{ fontSize: 11, color: '#9D9DA1', fontWeight: 400 }}>/mi</span>
                   </div>
-                  <div style={{ fontSize: 10, color: '#48536A', marginTop: 2 }}>{d.count} installs · ${d.cost.toLocaleString()} total</div>
+                  <div style={{ fontSize: 10, color: '#9D9DA1', marginTop: 2 }}>{d.count} installs · ${d.cost.toLocaleString()} total</div>
                 </div>
               )
             })
@@ -359,9 +359,9 @@ export default function PartsLifecyclePage() {
               style={{ ...S.card, cursor: 'pointer' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                 <span style={{ fontSize: 22 }}>{c.icon}</span>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F4FF' }}>{c.display_name}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#EDEDF0' }}>{c.display_name}</div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 11, color: '#7C8BA0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 11, color: '#9D9DA1' }}>
                 {c.default_life_mi && <div>Life: {c.default_life_mi.toLocaleString()} mi</div>}
                 {c.default_life_days && <div>Life: {c.default_life_days} days</div>}
                 {c.preferred_vendor && <div>Vendor: {c.preferred_vendor}</div>}
@@ -400,7 +400,7 @@ export default function PartsLifecyclePage() {
 
             {modal === 'replace' && <>
               <div style={S.modalTitle}>Replace Part</div>
-              <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 12 }}>{cfgIcon(modalItem?.part_type)} {cfgName(modalItem?.part_type)} — {modalItem?.brand}</div>
+              <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 12 }}>{cfgIcon(modalItem?.part_type)} {cfgName(modalItem?.part_type)} — {modalItem?.brand}</div>
               <div style={S.fl}>Mileage at Replacement</div>
               <input value={f.mileage || ''} onChange={e => upd('mileage', e.target.value)} type="number" style={S.input} />
               <div style={{ ...S.fl, marginTop: 12 }}>Reason</div>
@@ -448,19 +448,19 @@ export default function PartsLifecyclePage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', letterSpacing: '.03em' },
-  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 16, marginBottom: 0 },
-  sectionLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 },
-  fl: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', marginBottom: 4 },
-  input: { width: '100%', padding: '10px 12px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 8, color: '#DDE3EE', fontSize: 13, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' as const },
-  btn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff' },
-  bigBtn: { padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00805F)', color: '#fff', width: '100%', textAlign: 'center' as const },
-  smallBtn: { padding: '5px 10px', borderRadius: 6, border: '1px solid #1A1D23', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'none', color: '#7C8BA0' },
+  page: { background: '#08080C', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#EDEDF0', letterSpacing: '.03em' },
+  card: { background: '#08080C', border: '1px solid #1A1A24', borderRadius: 12, padding: 16, marginBottom: 0 },
+  sectionLabel: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 },
+  fl: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', marginBottom: 4 },
+  input: { width: '100%', padding: '10px 12px', background: '#08080C', border: '1px solid #1A1A24', borderRadius: 8, color: '#EDEDF0', fontSize: 13, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' as const },
+  btn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', color: '#fff' },
+  bigBtn: { padding: '14px 24px', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', color: '#fff', width: '100%', textAlign: 'center' as const },
+  smallBtn: { padding: '5px 10px', borderRadius: 6, border: '1px solid #1A1A24', fontSize: 11, fontWeight: 600, cursor: 'pointer', background: 'none', color: '#9D9DA1' },
   table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '8px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 12, color: '#A0AABF' },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '8px 10px', textAlign: 'left' as const, background: '#08080C', whiteSpace: 'nowrap' as const },
+  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 12, color: '#9D9DA1' },
   overlay: { position: 'fixed' as const, inset: 0, background: 'rgba(0,0,0,.65)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 },
-  modalCard: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 16, padding: 24, width: '100%', maxWidth: 520, maxHeight: '85vh', overflowY: 'auto' as const },
-  modalTitle: { fontSize: 18, fontWeight: 700, color: '#F0F4FF', marginBottom: 16 },
+  modalCard: { background: '#08080C', border: '1px solid #1A1A24', borderRadius: 16, padding: 24, width: '100%', maxWidth: 520, maxHeight: '85vh', overflowY: 'auto' as const },
+  modalTitle: { fontSize: 18, fontWeight: 700, color: '#EDEDF0', marginBottom: 16 },
 }
