@@ -16,6 +16,17 @@ All changes made by Claude Code, in reverse chronological order.
 
 -->
 
+## 2026-03-19 -- [000] Brand Redesign Session 2 (Settings + Auth pages)
+- Restyled settings page: brand tabs, inputs, cards, Lucide LogOut/UserPlus/ExternalLink/Copy
+- Restyled 403 page: Lucide ShieldX, teal CTA
+- Restyled not-found page: Lucide FileQuestion, teal CTA
+- Restyled offline page: Lucide WifiOff, teal retry
+- Restyled forgot-password: Lucide Mail/Loader2/XCircle, brand form
+- Restyled reset-password: Lucide Loader2/XCircle/CheckCircle2/ShieldX, brand form
+- Files modified: settings/page.tsx, 403/page.tsx, not-found.tsx, offline/page.tsx, forgot-password/page.tsx, reset-password/page.tsx
+- Build status: PASS (84 pages, 0 errors)
+- Git commit: 3961737
+
 ## 2026-03-19 -- [000] Brand Redesign Core Pages
 - Restyled sidebar: 22 Lucide icons mapped, brand colors (teal active, surface bg), collapse/expand
 - Restyled login page: Tailwind, Lucide Eye/Loader2, teal CTA, brand card, ambient glow
