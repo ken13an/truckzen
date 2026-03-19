@@ -148,3 +148,9 @@ NEVER push directly to main. Ken merges dev into main when features are tested a
 
 ### 6. ONLY THEN say you are done.
 If any step above fails, you are NOT done. Fix it first.
+
+---
+
+## Large Prompt Protocol
+
+When a prompt in `.truckzen/TASKS/PROMPTS/` is too large to complete in one session: read the full prompt first, break it into logical chunks, work through one chunk at a time. After each chunk run `npm run build` (must pass 0 errors), `git add . && git commit -m "PROMPT_NUMBER: chunk description" && git push origin dev`, log what you completed in `.truckzen/DONE/CHANGELOG.md`, update `.truckzen/DONE/CURRENT_STATUS.md` with what is done and what remains. If you hit context limits, STOP and write exactly where you left off in `CURRENT_STATUS.md` so the next session picks up from that point. Next session: read `CURRENT_STATUS.md` first, then continue from where you stopped. Never skip verification between chunks. Never mark a prompt complete until every part is done and pushed.
