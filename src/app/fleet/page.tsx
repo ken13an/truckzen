@@ -2,72 +2,91 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { Loader2, Plus } from 'lucide-react'
+
+const STATUS_CLS: Record<string, string> = {
+  on_road: 'text-success bg-success/15', in_shop: 'text-teal bg-teal/15',
+  out_of_service: 'text-error bg-error/15', retired: 'text-text-tertiary bg-text-tertiary/15',
+}
 
 export default function FleetPage() {
   const supabase = createClient()
-  const [assets,  setAssets]  = useState<any[]>([])
+  const [assets, setAssets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [search,  setSearch]  = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
       const res = await fetch(`/api/assets?shop_id=${profile.shop_id}`)
-      if (res.ok) {
-        const data = await res.json()
-        setAssets(Array.isArray(data) ? data : [])
-      }
+      if (res.ok) { const data = await res.json(); setAssets(Array.isArray(data) ? data : []) }
       setLoading(false)
     }
     load()
   }, [])
 
-  const filtered = assets.filter(a => {
+  const filtered = (assets ?? []).filter(a => {
     if (!search) return true
     const q = search.toLowerCase()
     return a.unit_number?.toLowerCase().includes(q) || a.make?.toLowerCase().includes(q) || (a.customers as any)?.company_name?.toLowerCase().includes(q)
   })
 
-  const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:4 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
-    td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
-  }
-
-  const statusColor: Record<string, string> = { active:'#1DB870', inactive:'#7C8BA0', in_shop:'#4D9EFF', decommissioned:'#D94F4F' }
+  if (loading) return <div className="min-h-screen bg-bg flex items-center justify-center"><Loader2 size={24} className="animate-spin text-teal" /></div>
 
   return (
-    <div style={S.page}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
+    <div className="bg-bg min-h-screen text-text-primary p-6">
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>
-          <div style={S.title}>Fleet</div>
-          <div style={{ fontSize:12, color:'#7C8BA0' }}>{filtered.length} vehicles</div>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Fleet</h1>
+          <p className="text-sm text-text-secondary">{filtered.length} vehicles</p>
         </div>
-        <div style={{ display:'flex', gap:8 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search unit, make, customer..." style={{ padding:'7px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#DDE3EE', fontSize:11, fontFamily:'inherit', outline:'none', width:220 }}/>
-          <button onClick={() => window.location.href='/fleet/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add Vehicle</button>
+        <div className="flex gap-2">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search unit, make, customer..."
+            className="px-3 py-2 bg-surface-2 border border-brand-border rounded-md text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-teal transition-colors duration-150 w-56" />
+          <a href="/fleet/new" className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-teal text-bg rounded-md text-sm font-bold hover:bg-teal-hover transition-colors duration-150 no-underline">
+            <Plus size={14} strokeWidth={2} /> Add Vehicle
+          </a>
         </div>
       </div>
-      <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', minWidth:560 }}>
-            <thead><tr>{['Unit #','Year','Make / Model','VIN','Odometer','Owner','Status'].map(h =>
-              <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
+
+      {/* Sub-nav */}
+      <div className="flex gap-2 mb-4">
+        {[
+          { href: '/fleet', label: 'Vehicles', active: true },
+          { href: '/drivers', label: 'Drivers', active: false },
+          { href: '/dvir', label: 'DVIR', active: false },
+          { href: '/maintenance', label: 'Maintenance', active: false },
+          { href: '/fleet/compliance', label: 'Compliance', active: false },
+        ].map(t => (
+          <a key={t.href} href={t.href}
+            className={`px-3 py-1.5 rounded-md text-sm font-semibold no-underline transition-colors duration-150 ${t.active ? 'bg-teal/10 text-teal' : 'text-text-tertiary hover:text-text-secondary'}`}>
+            {t.label}
+          </a>
+        ))}
+      </div>
+
+      <div className="bg-surface border border-brand-border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px]">
+            <thead><tr className="bg-surface-2">
+              {['Unit', 'Year', 'Make / Model', 'VIN', 'Odometer', 'Owner', 'Status'].map(h =>
+                <th key={h} className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono px-3 py-2 text-left whitespace-nowrap">{h}</th>)}
+            </tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={7} style={{ ...S.td, textAlign:'center', color:'#7C8BA0' }}>Loading...</td></tr>
-              : filtered.map(a => (
-                <tr key={a.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = '/fleet/' + a.id}>
-                  <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#4D9EFF', fontWeight:700 }}>{a.unit_number}</td>
-                  <td style={{ ...S.td, color:'#7C8BA0' }}>{a.year}</td>
-                  <td style={{ ...S.td, color:'#F0F4FF', fontWeight:600 }}>{a.make} {a.model}</td>
-                  <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#48536A' }}>{a.vin || '—'}</td>
-                  <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#DDE3EE' }}>{a.odometer?.toLocaleString() || '—'}</td>
-                  <td style={{ ...S.td, color:'#DDE3EE' }}>{(a.customers as any)?.company_name || '—'}</td>
-                  <td style={S.td as any}>
-                    <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:(statusColor[a.status]||'#7C8BA0')+'18', color:statusColor[a.status]||'#7C8BA0', border:'1px solid '+(statusColor[a.status]||'#7C8BA0')+'33' }}>
-                      <span style={{ width:4, height:4, borderRadius:'50%', background:'currentColor' }}/>{(a.status||'active').replace(/_/g,' ').toUpperCase()}
+              {filtered.length === 0 ? (
+                <tr><td colSpan={7} className="text-center text-text-secondary py-12 text-sm">No vehicles found</td></tr>
+              ) : filtered.map(a => (
+                <tr key={a.id} className="border-b border-brand-border/50 hover:bg-surface-2 cursor-pointer transition-colors duration-150" onClick={() => window.location.href = '/fleet/' + a.id}>
+                  <td className="px-3 py-2.5 font-mono text-xs text-teal font-bold">{a.unit_number}</td>
+                  <td className="px-3 py-2.5 text-sm text-text-secondary">{a.year}</td>
+                  <td className="px-3 py-2.5 text-sm font-semibold text-text-primary">{a.make} {a.model}</td>
+                  <td className="px-3 py-2.5 font-mono text-[10px] text-text-tertiary">{a.vin ?? '—'}</td>
+                  <td className="px-3 py-2.5 font-mono text-sm text-text-primary">{a.odometer?.toLocaleString() ?? '—'}</td>
+                  <td className="px-3 py-2.5 text-sm text-text-secondary">{(a.customers as any)?.company_name ?? '—'}</td>
+                  <td className="px-3 py-2.5">
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-sm ${STATUS_CLS[a.status] ?? 'text-text-tertiary bg-text-tertiary/15'}`}>
+                      {(a.status ?? 'on_road').replace(/_/g, ' ')}
                     </span>
                   </td>
                 </tr>
