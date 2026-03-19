@@ -27,6 +27,12 @@ export default function TechMobilePage() {
   const [dvirOdo, setDvirOdo] = useState('')
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
+  const [showActionRequest, setShowActionRequest] = useState(false)
+  const [actionType, setActionType] = useState('need_parts')
+  const [actionDesc, setActionDesc] = useState('')
+  const [actionHours, setActionHours] = useState('')
+  const [myRequests, setMyRequests] = useState<any[]>([])
+  const [showMyRequests, setShowMyRequests] = useState(false)
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2500) }
 
@@ -177,6 +183,52 @@ export default function TechMobilePage() {
       flash('Photo uploaded')
     }
     input.click()
+  }
+
+  // ── MECHANIC JOB ACTIONS ─────────────────────────────────
+  async function acceptJob(soId: string) {
+    await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'job_action', so_id: soId, mechanic_action: 'accept', mechanic_id: user.id }) })
+    flash('Job accepted')
+    await loadJobs(user)
+  }
+
+  async function declineJob(soId: string) {
+    await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'job_action', so_id: soId, mechanic_action: 'decline', mechanic_id: user.id }) })
+    flash('Job declined — supervisor notified')
+    await loadJobs(user)
+  }
+
+  async function startJob(soId: string) {
+    await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'job_action', so_id: soId, mechanic_action: 'start' }) })
+    flash('Job started')
+    await clockIn(soId)
+    await loadJobs(user)
+  }
+
+  async function completeJob(soId: string) {
+    await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'job_action', so_id: soId, mechanic_action: 'complete' }) })
+    if (clockedIn === soId) await clockOut()
+    flash('Job completed — ready for inspection')
+    await loadJobs(user)
+  }
+
+  async function submitActionRequest(soId: string) {
+    if (!actionDesc.trim()) return
+    setSaving(true)
+    await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+      action: 'create', shop_id: user.shop_id, so_id: soId, mechanic_id: user.id,
+      request_type: actionType, description: actionDesc.trim(),
+      hours_requested: actionType === 'labor_extension' ? parseFloat(actionHours) || null : null,
+    }) })
+    setShowActionRequest(false); setActionDesc(''); setActionHours('')
+    flash('Request sent to supervisor')
+    setSaving(false)
+  }
+
+  async function loadMyRequests() {
+    const res = await fetch(`/api/mechanic-requests?shop_id=${user.shop_id}&mechanic_id=${user.id}`)
+    if (res.ok) setMyRequests(await res.json())
+    setShowMyRequests(true)
   }
 
   // ── HELPERS ──────────────────────────────────────────────

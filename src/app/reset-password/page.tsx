@@ -10,11 +10,25 @@ export default function ResetPasswordPage() {
   const [done,      setDone]      = useState(false)
   const [error,     setError]     = useState('')
   const [validSession, setValid]  = useState(false)
+  const [checking, setChecking]   = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }: any) => {
-      setValid(!!session)
+    // Listen for auth state change — Supabase processes the URL hash token
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setValid(true)
+        setChecking(false)
+      }
     })
+
+    // Also check existing session after a delay (URL hash processing)
+    const timer = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession() as any
+      if (session) setValid(true)
+      setChecking(false)
+    }, 2000)
+
+    return () => { subscription.unsubscribe(); clearTimeout(timer) }
   }, [])
 
   async function handleReset(e: React.FormEvent) {
@@ -38,6 +52,14 @@ export default function ResetPasswordPage() {
     btn:   { width:'100%', padding:13, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:4, minHeight:48 },
     error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#D94F4F', marginBottom:14 },
   }
+
+  if (checking) return (
+    <div style={S.page}>
+      <div style={{ ...S.card, textAlign:'center' as const }}>
+        <div style={{ fontSize: 14, color: '#7C8BA0' }}>Verifying reset link...</div>
+      </div>
+    </div>
+  )
 
   if (!validSession) return (
     <div style={S.page}>

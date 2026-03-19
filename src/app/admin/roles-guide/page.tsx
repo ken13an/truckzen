@@ -21,12 +21,12 @@ export default function RolesGuidePage() {
   if (loading) return <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
 
   const roleGroups = [
-    { title: 'Administration', roles: ['owner', 'gm', 'it_person'], desc: 'Full system access. Can manage all modules, users, billing, integrations, and permissions.' },
-    { title: 'Shop Operations', roles: ['shop_manager', 'service_advisor', 'service_writer'], desc: 'Day-to-day shop management: service orders, customers, invoices, parts.' },
-    { title: 'Technical', roles: ['technician', 'maintenance_technician'], desc: 'Hands-on work: assigned jobs, time tracking, parts requests, DVIRs.' },
-    { title: 'Parts & Inventory', roles: ['parts_manager'], desc: 'Inventory management, purchase orders, vendor relations, stock alerts.' },
-    { title: 'Fleet & Maintenance', roles: ['fleet_manager', 'maintenance_manager'], desc: 'Asset management, compliance, tire tracking, PM schedules, DVIRs.' },
-    { title: 'Finance', roles: ['accountant', 'office_admin'], desc: 'Invoices, payments, reports, QuickBooks sync.' },
+    { title: 'Owner / Admin', roles: ['owner', 'gm', 'it_person'], desc: 'Full access to all modules, billing, permissions, integrations.' },
+    { title: 'Service Writers (Office)', roles: ['shop_manager', 'service_writer', 'office_admin'], desc: 'Office staff — service orders, customers, invoices. Not assigned to floor teams.' },
+    { title: 'Floor Supervisor & Mechanics', roles: ['technician', 'maintenance_technician', 'maintenance_manager'], desc: 'Floor employees — assigned to teams. Supervisors lead one or more teams of mechanics.' },
+    { title: 'Parts Department', roles: ['parts_manager'], desc: 'Own group — inventory, POs, vendor management. Not in floor teams.' },
+    { title: 'Fleet & Compliance', roles: ['fleet_manager'], desc: 'Assets, drivers, compliance, tire health, PM schedules, DVIRs.' },
+    { title: 'Accounting (Office)', roles: ['accountant'], desc: 'Office staff — invoices, payments, reports. Not assigned to floor teams.' },
     { title: 'Field', roles: ['dispatcher', 'driver'], desc: 'Fleet dispatch, driver assignments, DVIRs.' },
   ]
 

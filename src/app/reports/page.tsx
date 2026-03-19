@@ -6,31 +6,40 @@ import { getCurrentUser } from '@/lib/auth'
 export default function ReportsPage() {
   const supabase = createClient()
   const [overview,  setOverview]  = useState<any>(null)
-  const [byDay,     setByDay]     = useState<any[]>([])
-  const [byTech,    setByTech]    = useState<any[]>([])
-  const [topParts,  setTopParts]  = useState<any[]>([])
-  const [loading,   setLoading]   = useState(true)
-  const [range,     setRange]     = useState('30')
+  const [byDay,     setByDay]    = useState<any[]>([])
+  const [byTech,    setByTech]   = useState<any[]>([])
+  const [topParts,  setTopParts] = useState<any[]>([])
+  const [loading,   setLoading]  = useState(true)
+  const [range,     setRange]    = useState('30')
+  const [shopId,    setShopId]   = useState<string|null>(null)
 
   useEffect(() => {
-    async function load() {
+    async function init() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
+      setShopId(profile.shop_id)
+    }
+    init()
+  }, [])
 
+  useEffect(() => {
+    if (!shopId) return
+    async function load() {
+      setLoading(true)
       const from = new Date(Date.now() - parseInt(range) * 86400000).toISOString().split('T')[0]
       const to   = new Date().toISOString().split('T')[0]
 
       const [ov, rev, tech, parts] = await Promise.all([
-        fetch(`/api/reports?type=overview&from=${from}&to=${to}`).then(r => r.json()),
-        fetch(`/api/reports?type=revenue_by_day&from=${from}&to=${to}`).then(r => r.json()),
-        fetch(`/api/reports?type=labor_by_tech&from=${from}&to=${to}`).then(r => r.json()),
-        fetch(`/api/reports?type=parts_profitability&from=${from}&to=${to}`).then(r => r.json()),
+        fetch(`/api/reports?type=overview&from=${from}&to=${to}&shop_id=${shopId}`).then(r => r.json()),
+        fetch(`/api/reports?type=revenue_by_day&from=${from}&to=${to}&shop_id=${shopId}`).then(r => r.json()),
+        fetch(`/api/reports?type=labor_by_tech&from=${from}&to=${to}&shop_id=${shopId}`).then(r => r.json()),
+        fetch(`/api/reports?type=parts_profitability&from=${from}&to=${to}&shop_id=${shopId}`).then(r => r.json()),
       ])
       setOverview(ov); setByDay(rev || []); setByTech(tech || []); setTopParts(parts || [])
       setLoading(false)
     }
     load()
-  }, [range])
+  }, [range, shopId])
 
   const fmt = (n: number) => '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits:0, maximumFractionDigits:0 })
 

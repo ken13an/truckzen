@@ -158,7 +158,6 @@ export default function SetupPage() {
                 <select style={{ ...S.input, marginBottom:0, fontSize:10, appearance:'none' as any }} value={row.role}
                   onChange={e => setStaffRows(rows => rows.map((r,j) => j===i ? {...r, role: e.target.value} : r))}>
                   <option value="technician">Tech</option>
-                  <option value="service_advisor">Advisor</option>
                   <option value="parts_manager">Parts</option>
                   <option value="fleet_manager">Fleet</option>
                   <option value="accountant">Accountant</option>

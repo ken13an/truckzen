@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
-import { checkRateLimit, schemas, securityMiddleware } from '@/lib/security'
-import { log } from '@/lib/security'
+import { createClient } from '@supabase/supabase-js'
+import { notifyRole } from '@/lib/notify'
+
+function db() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
 
 export async function GET(req: Request) {
-  const supabase = createServerSupabaseClient()
-  const user     = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
+  const supabase = db()
   const { searchParams } = new URL(req.url)
+  const shopId = searchParams.get('shop_id')
+  if (!shopId) return NextResponse.json({ error: 'shop_id is required' }, { status: 400 })
+
   const status = searchParams.get('status')
-  const team   = searchParams.get('team')
-  const limit  = Math.min(parseInt(searchParams.get('limit') ?? '50'), 200)
+  const team = searchParams.get('team')
+  const role = searchParams.get('role') ?? ''
+  const userTeam = searchParams.get('user_team') ?? ''
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 200)
 
   let q = supabase
     .from('service_orders')
@@ -22,18 +27,15 @@ export async function GET(req: Request) {
       customers(id, company_name),
       users!assigned_tech(id, full_name)
     `)
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .not('status', 'eq', 'void')
     .order('created_at', { ascending: false })
     .limit(limit)
 
-  // Techs only see their team
   const limitedRoles = ['technician', 'maintenance_technician']
-  if (limitedRoles.includes(user.role) && user.team) {
-    q = q.eq('team', user.team)
-  }
+  if (limitedRoles.includes(role) && userTeam) q = q.eq('team', userTeam)
   if (status) q = q.eq('status', status)
-  if (team && !limitedRoles.includes(user.role)) q = q.eq('team', team)
+  if (team && !limitedRoles.includes(role)) q = q.eq('team', team)
 
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -41,65 +43,67 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const supabase = createServerSupabaseClient()
-  const user     = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  // Only these roles can create SOs
-  const allowed = ['owner','gm','it_person','shop_manager','service_advisor','service_writer','office_admin']
-  if (!allowed.includes(user.role)) {
-    return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-  }
-
-  const ip    = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
-  const check = await checkRateLimit('api', `${user.id}:${ip}`)
-  if (!check.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  const supabase = db()
 
   let body: any
   try { body = await req.json() } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const validated = schemas.serviceOrder.safeParse(body)
-  if (!validated.success) {
-    return NextResponse.json({ error: validated.error.issues.map(i => i.message).join(', ') }, { status: 400 })
+  const { shop_id, user_id, role, asset_id, customer_id, complaint, cause, correction, source, priority, team, bay } = body
+
+  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  if (!asset_id) return NextResponse.json({ error: 'Select a truck' }, { status: 400 })
+  if (!complaint || complaint.trim().length === 0) return NextResponse.json({ error: 'Describe the complaint' }, { status: 400 })
+
+  // Check can_create_so permission
+  if (user_id) {
+    const { data: userRecord } = await supabase.from('users').select('role, can_create_so').eq('id', user_id).single()
+    if (userRecord) {
+      const canCreate = ['owner', 'gm', 'it_person', 'service_writer', 'shop_manager', 'office_admin'].includes(userRecord.role) || userRecord.can_create_so === true
+      if (!canCreate) return NextResponse.json({ error: 'You do not have permission to create service orders' }, { status: 403 })
+    }
   }
 
-  const data = validated.data
-
-  // Generate SO number: SO-YYYY-NNNN
-  const { count } = await supabase
-    .from('service_orders')
-    .select('*', { count: 'exact', head: true })
-    .eq('shop_id', user.shop_id)
-
-  const year   = new Date().getFullYear()
-  const soNum  = `SO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
+  // Generate SO number
+  const { count } = await supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id)
+  const year = new Date().getFullYear()
+  const soNum = `SO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
 
   const { data: so, error } = await supabase
     .from('service_orders')
     .insert({
-      shop_id:    user.shop_id,
-      so_number:  soNum,
-      asset_id:   data.asset_id,
-      customer_id:data.customer_id ?? null,
-      complaint:  data.complaint,
-      source:     data.source,
-      priority:   data.priority,
-      team:       data.team ?? null,
-      bay:        data.bay ?? null,
-      status:     'not_started',
-      created_by: user.id,
+      shop_id: shop_id,
+      so_number: soNum,
+      asset_id: asset_id,
+      customer_id: customer_id || null,
+      complaint: complaint.trim(),
+      cause: cause || null,
+      correction: correction || null,
+      source: source || 'walk_in',
+      priority: priority || 'normal',
+      team: team || null,
+      bay: bay || null,
+      status: 'draft',
+      advisor_id: user_id || null,
     })
     .select()
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  await log('so.created', user.shop_id, user.id, {
-    table: 'service_orders', recordId: so.id,
-    newData: { so_number: soNum, complaint: data.complaint },
-  })
+  // Notify floor supervisors
+  try {
+    const { data: asset } = await supabase.from('assets').select('unit_number').eq('id', asset_id).single()
+    const unitNum = asset?.unit_number || '?'
+    await notifyRole({
+      shopId: shop_id,
+      role: ['shop_manager', 'maintenance_manager'],
+      title: `New ${soNum} — Truck #${unitNum}`,
+      body: complaint.trim().slice(0, 100),
+      link: `/orders/${so.id}`,
+    })
+  } catch {}
 
   return NextResponse.json(so, { status: 201 })
 }

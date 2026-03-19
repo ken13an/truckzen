@@ -11,7 +11,7 @@ export async function GET(_req: Request, { params }: P) {
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const allowed = ['owner','gm','it_person','shop_manager','service_advisor','accountant','office_admin']
+  const allowed = ['owner','gm','it_person','shop_manager','accountant','office_admin']
   if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
   try {

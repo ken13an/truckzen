@@ -171,7 +171,7 @@ export async function GET(
   }
 
   // Only roles that handle invoices can generate QR codes
-  const allowed = ['owner','gm','it_person','shop_manager','service_advisor','accountant','office_admin']
+  const allowed = ['owner','gm','it_person','shop_manager','service_writer','accountant','office_admin']
   if (!allowed.includes(user.role)) {
     return NextResponse.json({ error: 'Access denied' }, { status: 403 })
   }

@@ -13,12 +13,11 @@ export default function FleetPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
-      const { data } = await supabase
-        .from('assets')
-        .select('id, unit_number, year, make, model, vin, odometer, status, customers(company_name)')
-        .eq('shop_id', profile.shop_id)
-        .order('unit_number')
-      setAssets(data || [])
+      const res = await fetch(`/api/assets?shop_id=${profile.shop_id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setAssets(Array.isArray(data) ? data : [])
+      }
       setLoading(false)
     }
     load()

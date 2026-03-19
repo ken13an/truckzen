@@ -6,7 +6,7 @@
 // All modules in the system
 export const MODULES = [
   { key: 'dashboard',        label: 'Dashboard',           icon: '▦',  path: '/dashboard' },
-  { key: 'floor',            label: 'Shop Floor',          icon: '⬡',  path: '/floor' },
+  { key: 'floor',            label: 'Shop Floor',          icon: '⬡',  path: '/shop-floor' },
   { key: 'orders',           label: 'Service Orders',      icon: '≡',  path: '/orders' },
   { key: 'invoices',         label: 'Invoices',            icon: '$',  path: '/invoices' },
   { key: 'parts',            label: 'Parts Inventory',     icon: '⬡',  path: '/parts' },
@@ -19,9 +19,7 @@ export const MODULES = [
   { key: 'customers',        label: 'Customers',           icon: '◎',  path: '/customers' },
   { key: 'accounting',       label: 'Accounting',          icon: '◈',  path: '/accounting' },
   { key: 'reports',          label: 'Reports',             icon: '▤',  path: '/reports' },
-  { key: 'cleaning',         label: 'Cleaning',            icon: '◇',  path: '/cleaning' },
   { key: 'time_tracking',    label: 'Time Tracking',       icon: '⏲',  path: '/time-tracking' },
-  { key: 'smart_drop',       label: 'Smart Drop',          icon: '↓',  path: '/smart-drop' },
   { key: 'settings',         label: 'Settings',            icon: '⚙',  path: '/settings' },
   { key: 'import',           label: 'Data Import',         icon: '📥', path: '/settings/import' },
   { key: 'admin_permissions',label: 'Permissions Admin',   icon: '🔒', path: '/admin/permissions' },
@@ -42,20 +40,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
 
   shop_manager: Object.fromEntries(MODULES.map(m => [m.key, !['billing', 'admin_permissions', 'integrations', 'audit_log'].includes(m.key)])),
 
-  service_advisor: {
-    dashboard: true, floor: true, orders: true, invoices: true, customers: true,
-    parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
-    parts_lifecycle: false, compliance: false, accounting: false, reports: false,
-    cleaning: false, time_tracking: false, smart_drop: false, settings: false,
-    import: false, admin_permissions: false, tech_mobile: false, dvir: false,
-    billing: false, integrations: false, audit_log: false,
-  },
-
   technician: {
     dashboard: false, floor: true, orders: false, invoices: false, customers: false,
     parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: false, reports: false,
-    cleaning: true, time_tracking: true, smart_drop: false, settings: false,
+    time_tracking: true, settings: false,
     import: false, admin_permissions: false, tech_mobile: true, dvir: true,
     billing: false, integrations: false, audit_log: false,
   },
@@ -64,7 +53,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: true, floor: true, orders: true, invoices: false, customers: false,
     parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: true, compliance: false, accounting: false, reports: false,
-    cleaning: false, time_tracking: false, smart_drop: false, settings: false,
+    time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false,
   },
@@ -73,7 +62,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: true, floor: true, orders: false, invoices: false, customers: false,
     parts: true, fleet: true, drivers: false, maintenance: true, tires: true,
     parts_lifecycle: true, compliance: true, accounting: false, reports: true,
-    cleaning: false, time_tracking: true, smart_drop: false, settings: false,
+    time_tracking: true, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: true,
     billing: false, integrations: false, audit_log: false,
   },
@@ -82,7 +71,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: false, floor: true, orders: false, invoices: false, customers: false,
     parts: true, fleet: false, drivers: false, maintenance: true, tires: true,
     parts_lifecycle: true, compliance: false, accounting: false, reports: false,
-    cleaning: true, time_tracking: true, smart_drop: false, settings: false,
+    time_tracking: true, settings: false,
     import: false, admin_permissions: false, tech_mobile: true, dvir: true,
     billing: false, integrations: false, audit_log: false,
   },
@@ -91,7 +80,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: true, floor: false, orders: false, invoices: false, customers: false,
     parts: false, fleet: true, drivers: true, maintenance: true, tires: true,
     parts_lifecycle: true, compliance: true, accounting: false, reports: true,
-    cleaning: false, time_tracking: false, smart_drop: false, settings: false,
+    time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: true,
     billing: false, integrations: false, audit_log: false,
   },
@@ -100,7 +89,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: true, floor: false, orders: false, invoices: true, customers: false,
     parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: true, reports: true,
-    cleaning: false, time_tracking: false, smart_drop: false, settings: false,
+    time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false,
   },
@@ -109,7 +98,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: true, floor: true, orders: true, invoices: true, customers: true,
     parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: true, reports: true,
-    cleaning: false, time_tracking: true, smart_drop: true, settings: true,
+    time_tracking: true, settings: true,
     import: true, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false,
   },
@@ -118,7 +107,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: true, floor: true, orders: true, invoices: false, customers: true,
     parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: false, reports: false,
-    cleaning: false, time_tracking: false, smart_drop: false, settings: false,
+    time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false,
   },
@@ -127,7 +116,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: true, floor: true, orders: false, invoices: false, customers: false,
     parts: false, fleet: true, drivers: true, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: false, reports: false,
-    cleaning: false, time_tracking: false, smart_drop: false, settings: false,
+    time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false,
   },
@@ -136,7 +125,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: false, floor: false, orders: false, invoices: false, customers: false,
     parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: false, reports: false,
-    cleaning: false, time_tracking: false, smart_drop: false, settings: false,
+    time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: true,
     billing: false, integrations: false, audit_log: false,
   },
@@ -145,7 +134,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     dashboard: false, floor: false, orders: false, invoices: false, customers: false,
     parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: false, reports: false,
-    cleaning: false, time_tracking: false, smart_drop: false, settings: false,
+    time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false,
   },
@@ -154,7 +143,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
 // Role redirect after login
 export const ROLE_REDIRECT: Record<string, string> = {
   owner: '/dashboard', gm: '/dashboard', it_person: '/dashboard',
-  shop_manager: '/dashboard', service_advisor: '/orders', service_writer: '/orders',
+  shop_manager: '/dashboard', service_writer: '/orders',
   technician: '/tech', parts_manager: '/parts', fleet_manager: '/fleet',
   maintenance_manager: '/maintenance', maintenance_technician: '/tech',
   accountant: '/accounting', office_admin: '/dashboard', dispatcher: '/fleet',
@@ -164,7 +153,7 @@ export const ROLE_REDIRECT: Record<string, string> = {
 // Role labels and colors
 export const ROLE_LABEL: Record<string, string> = {
   owner: 'Owner', gm: 'GM', it_person: 'IT Admin', shop_manager: 'Shop Manager',
-  service_advisor: 'Service Advisor', service_writer: 'Service Writer', technician: 'Technician',
+  service_writer: 'Service Writer', technician: 'Technician',
   parts_manager: 'Parts Dept', fleet_manager: 'Fleet Manager', maintenance_manager: 'Maint. Manager',
   maintenance_technician: 'Maint. Tech', accountant: 'Accounting', office_admin: 'Office Admin',
   dispatcher: 'Dispatcher', driver: 'Driver', customer: 'Customer',
@@ -172,7 +161,7 @@ export const ROLE_LABEL: Record<string, string> = {
 
 export const ROLE_COLOR: Record<string, string> = {
   owner: '#D94F4F', gm: '#D94F4F', it_person: '#D94F4F', shop_manager: '#D4882A',
-  service_advisor: '#4D9EFF', service_writer: '#4D9EFF', technician: '#1DB870',
+  service_writer: '#4D9EFF', technician: '#1DB870',
   parts_manager: '#8B5CF6', fleet_manager: '#0E9F8E', maintenance_manager: '#0E9F8E',
   maintenance_technician: '#1DB870', accountant: '#E8692A', office_admin: '#D4882A',
   dispatcher: '#0E9F8E', driver: '#7C8BA0',
@@ -180,7 +169,7 @@ export const ROLE_COLOR: Record<string, string> = {
 
 // All roles in display order
 export const ALL_ROLES = [
-  'owner', 'gm', 'it_person', 'shop_manager', 'service_advisor', 'service_writer',
+  'owner', 'gm', 'it_person', 'shop_manager', 'service_writer',
   'technician', 'parts_manager', 'fleet_manager', 'maintenance_manager',
   'maintenance_technician', 'accountant', 'office_admin', 'dispatcher', 'driver',
 ]
@@ -223,9 +212,9 @@ export function hasAccess(
 // Sidebar nav items derived from modules
 export function getSidebarItems(role: string, rolePerms?: Record<string, boolean>, userOverrides?: Record<string, boolean>) {
   const sidebarModules = [
-    'dashboard', 'floor', 'orders', 'invoices', 'parts', 'fleet', 'drivers',
-    'maintenance', 'compliance', 'customers', 'accounting', 'reports',
-    'cleaning', 'time_tracking', 'smart_drop', 'settings',
+    'dashboard', 'floor', 'orders', 'invoices', 'parts', 'fleet',
+    'maintenance', 'customers', 'accounting', 'reports',
+    'time_tracking', 'settings',
   ]
 
   return sidebarModules

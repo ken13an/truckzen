@@ -58,7 +58,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
   // Allowed fields per role
   const unlimitedRoles = ['owner', 'gm', 'it_person', 'shop_manager']
-  const advisorRoles   = ['service_advisor', 'service_writer', 'office_admin', 'accountant']
+  const advisorRoles   = [ 'service_writer', 'office_admin', 'accountant']
   const techRoles      = ['technician', 'maintenance_technician']
 
   let allowedFields: string[]

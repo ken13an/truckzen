@@ -66,7 +66,7 @@ export default function NewUserPage() {
               <label style={S.label}>Role</label>
               <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))}>
                 {[
-                  ['technician','Technician'],['service_advisor','Service Advisor'],['service_writer','Service Writer'],
+                  ['technician','Technician'],['service_writer','Service Writer'],
                   ['parts_manager','Parts Manager'],['fleet_manager','Fleet Manager'],['maintenance_manager','Maintenance Manager'],
                   ['maintenance_technician','Maintenance Tech'],['accountant','Accountant'],['office_admin','Office Admin'],
                   ['dispatcher','Dispatcher'],['driver','Driver'],['shop_manager','Shop Manager'],['gm','GM'],

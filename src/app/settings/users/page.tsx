@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 
 const ROLE_COLOR: Record<string, string> = {
   owner:'#D4882A', gm:'#D4882A', it_person:'#8B5CF6',
-  shop_manager:'#4D9EFF', service_advisor:'#4D9EFF', service_writer:'#4D9EFF',
+  shop_manager:'#4D9EFF', service_writer:'#4D9EFF',
   technician:'#1DB870', maintenance_technician:'#1DB870',
   parts_manager:'#E8692A', fleet_manager:'#0E9F8E',
   accountant:'#DDE3EE', office_admin:'#DDE3EE', dispatcher:'#DDE3EE',
@@ -118,7 +118,7 @@ export default function UsersPage() {
             <div style={{ marginBottom:10 }}>
               <label style={S.label}>Role</label>
               <select style={{ ...S.input, appearance:'none' }} value={editing.role} onChange={e=>setEditing((u:any)=>({...u,role:e.target.value}))}>
-                {['owner','gm','shop_manager','service_advisor','service_writer','technician','parts_manager','fleet_manager','maintenance_manager','maintenance_technician','accountant','office_admin','dispatcher','driver','customer','it_person'].map(r=><option key={r} value={r}>{r.replace(/_/g,' ')}</option>)}
+                {['owner','gm','shop_manager','service_writer','technician','parts_manager','fleet_manager','maintenance_manager','maintenance_technician','accountant','office_admin','dispatcher','driver','customer','it_person'].map(r=><option key={r} value={r}>{r.replace(/_/g,' ')}</option>)}
               </select>
             </div>
             <div style={{ marginBottom:10 }}>

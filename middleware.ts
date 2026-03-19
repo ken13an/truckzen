@@ -10,7 +10,7 @@ const PUBLIC_ROUTES = [
 // Module → route prefixes
 const MODULE_ROUTES: Record<string, string[]> = {
   dashboard:        ['/dashboard'],
-  floor:            ['/floor'],
+  floor:            ['/floor', '/shop-floor'],
   orders:           ['/orders', '/api/service-orders', '/api/so-lines'],
   invoices:         ['/invoices', '/api/invoices'],
   parts:            ['/parts', '/api/parts'],
@@ -23,9 +23,7 @@ const MODULE_ROUTES: Record<string, string[]> = {
   customers:        ['/customers', '/api/customers'],
   accounting:       ['/accounting'],
   reports:          ['/reports', '/api/reports'],
-  cleaning:         ['/cleaning'],
   time_tracking:    ['/time-tracking', '/api/time-tracking'],
-  smart_drop:       ['/smart-drop'],
   settings:         ['/settings'],
   import:           ['/settings/import', '/api/import'],
   admin_permissions:['/admin'],
@@ -40,16 +38,15 @@ const MODULE_ROUTES: Record<string, string[]> = {
 const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
 
 const DEFAULT_PERMS: Record<string, string[]> = {
-  shop_manager:           ['dashboard','floor','orders','invoices','parts','fleet','drivers','maintenance','tires','parts_lifecycle','compliance','customers','reports','cleaning','time_tracking','smart_drop','settings','import','dvir','tech_mobile'],
-  service_advisor:        ['dashboard','floor','orders','invoices','customers','parts'],
-  service_writer:         ['dashboard','floor','orders','customers','parts'],
-  technician:             ['floor','parts','cleaning','time_tracking','tech_mobile','dvir'],
+  shop_manager:           ['dashboard','floor','orders','invoices','parts','fleet','drivers','maintenance','tires','parts_lifecycle','compliance','customers','reports','time_tracking','settings','import','dvir','tech_mobile'],
+  service_writer:         ['dashboard','floor','orders','invoices','customers','parts'],
+  technician:             ['floor','parts','time_tracking','tech_mobile','dvir'],
   parts_manager:          ['dashboard','floor','orders','parts','parts_lifecycle'],
   fleet_manager:          ['dashboard','fleet','drivers','maintenance','tires','parts_lifecycle','compliance','reports','dvir'],
   maintenance_manager:    ['dashboard','floor','parts','fleet','maintenance','tires','parts_lifecycle','compliance','reports','time_tracking','dvir'],
-  maintenance_technician: ['floor','parts','maintenance','tires','parts_lifecycle','cleaning','time_tracking','tech_mobile','dvir'],
+  maintenance_technician: ['floor','parts','maintenance','tires','parts_lifecycle','time_tracking','tech_mobile','dvir'],
   accountant:             ['dashboard','invoices','accounting','reports'],
-  office_admin:           ['dashboard','floor','orders','invoices','customers','parts','accounting','reports','time_tracking','smart_drop','settings','import'],
+  office_admin:           ['dashboard','floor','orders','invoices','customers','parts','accounting','reports','time_tracking','settings','import'],
   dispatcher:             ['dashboard','floor','fleet','drivers'],
   driver:                 ['dvir'],
   customer:               [],
@@ -100,8 +97,8 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Allow static/api routes that don't need role checks
-  if (pathname.startsWith('/api/ai') || pathname.startsWith('/api/cron') || pathname.startsWith('/api/shop')) return response
+  // API routes handle their own auth — skip middleware permission checks
+  if (pathname.startsWith('/api/')) return response
 
   // Not logged in → login
   if (!user) return NextResponse.redirect(new URL('/login', request.url))

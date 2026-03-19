@@ -27,7 +27,7 @@ export async function PATCH(req: Request, { params }: P) {
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const allowed = ['owner','gm','it_person','shop_manager','fleet_manager','service_advisor','office_admin']
+  const allowed = ['owner','gm','it_person','shop_manager','fleet_manager','office_admin']
   if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
   const body = await req.json()

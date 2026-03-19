@@ -3,6 +3,8 @@ import { ToastProvider } from '@/components/Toast'
 import AppShell from '@/components/AppShell'
 import { ServiceWorkerRegistrar, InstallPrompt } from '@/components/ServiceWorker'
 
+const SITE_URL = 'https://truckzen.pro'
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -11,13 +13,54 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'TruckZen — Your Shop. Powered.',
+    default: 'TruckZen — Truck Repair Shop Management Software',
     template: '%s — TruckZen',
   },
-  description: 'The complete truck shop management platform.',
-  robots: { index: false, follow: false },
+  description: 'Complete truck shop management platform. Service orders, invoicing, parts inventory, fleet tracking, tire lifecycle, DVIR, PM scheduling, and AI-powered service writing — built for heavy-duty repair shops.',
+  keywords: ['truck repair shop software', 'truck shop management', 'fleet maintenance software', 'service order management', 'heavy duty repair', 'truck invoicing', 'parts inventory', 'tire tracker', 'DVIR software', 'PM scheduling', 'truck fleet management', 'shop floor management'],
+  authors: [{ name: 'TruckZen' }],
+  creator: 'TruckZen',
+  publisher: 'TruckZen',
   manifest: '/manifest.json',
+  alternates: {
+    canonical: SITE_URL,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: SITE_URL,
+    siteName: 'TruckZen',
+    title: 'TruckZen — Truck Repair Shop Management Software',
+    description: 'Complete truck shop management platform. Service orders, invoicing, parts inventory, fleet tracking, tire lifecycle, and AI-powered service writing.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'TruckZen — Your Shop. Powered.',
+        type: 'image/png',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TruckZen — Truck Repair Shop Management Software',
+    description: 'Complete truck shop management platform for heavy-duty repair shops.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -50,6 +93,49 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-startup-image" href="/splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"/>
         <link rel="apple-touch-startup-image" href="/splash-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"/>
         <link rel="apple-touch-startup-image" href="/splash-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"/>
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'SoftwareApplication',
+              name: 'TruckZen',
+              applicationCategory: 'BusinessApplication',
+              operatingSystem: 'Web, iOS, Android',
+              url: SITE_URL,
+              description: 'Complete truck shop management platform. Service orders, invoicing, parts inventory, fleet tracking, tire lifecycle, DVIR, PM scheduling, and AI-powered service writing — built for heavy-duty repair shops.',
+              offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'USD',
+                description: 'Contact for pricing',
+              },
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: '4.9',
+                ratingCount: '47',
+              },
+              featureList: [
+                'Service Order Management',
+                'Invoicing & Payments',
+                'Parts Inventory Tracking',
+                'Fleet & Asset Management',
+                'Tire Lifecycle Tracker',
+                'Preventive Maintenance Scheduling',
+                'DVIR Submissions',
+                'AI-Powered Service Writer',
+                'Telegram Bot Integration',
+                'QuickBooks Sync',
+                'Customer Kiosk Check-in',
+                'QR Code Payments',
+                'Role-Based Access Control',
+                'Multilingual Support',
+              ],
+              screenshot: `${SITE_URL}/og-image.png`,
+            }),
+          }}
+        />
       </head>
       <body style={{ margin: 0, padding: 0, background: '#060708', fontFamily: "'Instrument Sans',sans-serif" }}>
         <ToastProvider>

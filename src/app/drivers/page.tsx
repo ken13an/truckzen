@@ -13,7 +13,7 @@ export default function DriversPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
-      const res  = await fetch('/api/drivers')
+      const res  = await fetch(`/api/drivers?shop_id=${profile.shop_id}`)
       setDrivers(await res.json() || [])
       setLoading(false)
     }
@@ -32,8 +32,7 @@ export default function DriversPage() {
 
   const filtered = drivers.filter(d =>
     !search || d.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    d.cdl_number?.toLowerCase().includes(search.toLowerCase()) ||
-    (d.customers as any)?.company_name?.toLowerCase().includes(search.toLowerCase())
+    d.cdl_number?.toLowerCase().includes(search.toLowerCase())
   )
 
   const S: Record<string, React.CSSProperties> = {
@@ -63,19 +62,18 @@ export default function DriversPage() {
       <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
         <div style={{ overflowX:'auto' }}>
           <table style={{ width:'100%', borderCollapse:'collapse', minWidth:640 }}>
-            <thead><tr>{['Name','Company','Phone','CDL #','CDL Class','CDL Expiry','Medical Expiry','Status'].map(h =>
+            <thead><tr>{['Name','Phone','CDL #','CDL Class','CDL Expiry','Medical Expiry','Status'].map(h =>
               <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={8} style={{ ...S.td, textAlign:'center', color:'#7C8BA0', padding:40 }}>Loading...</td></tr>
-              : filtered.length === 0 ? <tr><td colSpan={8} style={{ ...S.td, textAlign:'center', color:'#7C8BA0', padding:40 }}>No drivers yet</td></tr>
+              {loading ? <tr><td colSpan={7} style={{ ...S.td, textAlign:'center', color:'#7C8BA0', padding:40 }}>Loading...</td></tr>
+              : filtered.length === 0 ? <tr><td colSpan={7} style={{ ...S.td, textAlign:'center', color:'#7C8BA0', padding:40 }}>No drivers yet</td></tr>
               : filtered.map(d => {
                 const cdlSt = expiryStatus(d.cdl_expiry)
-                const medSt = expiryStatus(d.medical_card_expiry)
+                const medSt = expiryStatus(d.medical_expiry)
                 return (
-                  <tr key={d.id} style={{ cursor:'pointer', opacity: d.status==='inactive'?0.5:1 }}
+                  <tr key={d.id} style={{ cursor:'pointer', opacity: d.active===false?0.5:1 }}
                     onClick={() => window.location.href = `/drivers/${d.id}`}>
                     <td style={{ ...S.td, fontWeight:700, color:'#F0F4FF' }}>{d.full_name}</td>
-                    <td style={{ ...S.td, color:'#DDE3EE' }}>{(d.customers as any)?.company_name || '—'}</td>
                     <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#7C8BA0' }}>{d.phone || '—'}</td>
                     <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#4D9EFF' }}>{d.cdl_number || '—'}</td>
                     <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#7C8BA0' }}>{d.cdl_class || '—'}</td>
@@ -84,11 +82,11 @@ export default function DriversPage() {
                       {d.cdl_expiry && <div style={{ fontSize:8, color:cdlSt.color, fontFamily:'monospace' }}>{cdlSt.label}</div>}
                     </td>
                     <td style={{ ...S.td }}>
-                      <span style={{ fontFamily:'monospace', fontSize:10, fontWeight:700, color:medSt.color }}>{d.medical_card_expiry || '—'}</span>
-                      {d.medical_card_expiry && <div style={{ fontSize:8, color:medSt.color, fontFamily:'monospace' }}>{medSt.label}</div>}
+                      <span style={{ fontFamily:'monospace', fontSize:10, fontWeight:700, color:medSt.color }}>{d.medical_expiry || '—'}</span>
+                      {d.medical_expiry && <div style={{ fontSize:8, color:medSt.color, fontFamily:'monospace' }}>{medSt.label}</div>}
                     </td>
                     <td style={{ ...S.td }}>
-                      <span style={{ fontSize:10, fontWeight:600, color: d.status==='active'?'#1DB870':'#48536A' }}>{d.status?.toUpperCase()}</span>
+                      <span style={{ fontSize:10, fontWeight:600, color: d.active!==false?'#1DB870':'#48536A' }}>{d.active!==false?'ACTIVE':'INACTIVE'}</span>
                     </td>
                   </tr>
                 )

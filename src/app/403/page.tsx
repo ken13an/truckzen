@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Access Denied',
+  robots: { index: false, follow: false },
+}
+
 export default function ForbiddenPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans',sans-serif", padding: 20 }}>

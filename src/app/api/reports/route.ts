@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+function db() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
 
 export async function GET(req: Request) {
-  const supabase = createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const allowed = ['owner','gm','it_person','shop_manager','accountant','office_admin']
-  if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-
   const { searchParams } = new URL(req.url)
+  const shopId = searchParams.get('shop_id')
   const type   = searchParams.get('type') || 'overview'
   const from   = searchParams.get('from') || new Date(Date.now() - 30*86400000).toISOString().split('T')[0]
   const to     = searchParams.get('to')   || new Date().toISOString().split('T')[0]
-  const shopId = user.shop_id
+
+  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+
+  const supabase = db()
 
   switch (type) {
 

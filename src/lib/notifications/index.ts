@@ -181,11 +181,11 @@ export async function notifyPartsReady(shopId: string, techId: string, soNumber:
 }
 
 export async function notifyJobDone(shopId: string, customerId: string, truckUnit: string, paymentUrl?: string) {
-  return notify({ event:'job_done', shop_id:shopId, role:'service_advisor', truck_unit:truckUnit, payment_url:paymentUrl })
+  return notify({ event:'job_done', shop_id:shopId, role:'service_writer', truck_unit:truckUnit, payment_url:paymentUrl })
 }
 
 export async function notifyKioskCheckin(shopId: string, truckUnit: string, customerName?: string) {
-  return notify({ event:'kiosk_checkin', shop_id:shopId, role:'service_advisor', truck_unit:truckUnit, customer_name:customerName })
+  return notify({ event:'kiosk_checkin', shop_id:shopId, role:'service_writer', truck_unit:truckUnit, customer_name:customerName })
 }
 
 export async function notifyNewJobAssigned(shopId: string, techId: string, soNumber: string, truckUnit: string) {

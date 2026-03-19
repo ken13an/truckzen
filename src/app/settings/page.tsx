@@ -63,6 +63,21 @@ export default function SettingsPage() {
           <label style={S.label}>Address</label>
           <input style={S.input} value={shop.address||''} onChange={e => setShop((s:any) => ({...s, address:e.target.value}))}/>
           <button style={S.btn} onClick={saveShop} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
+
+          <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid rgba(255,255,255,.06)' }}>
+            <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF', marginBottom:8 }}>Kiosk Mode</div>
+            <div style={{ fontSize:11, color:'#7C8BA0', marginBottom:12 }}>Open the self-service check-in kiosk on a tablet in your waiting area. Supports English, Russian, and Uzbek.</div>
+            <div style={{ display:'flex', gap:8 }}>
+              <a href={`/kiosk?shop=${shop.id}`} target="_blank" rel="noopener"
+                style={{ padding:'10px 20px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', display:'inline-block' }}>
+                Open Kiosk
+              </a>
+              <button onClick={() => { navigator.clipboard.writeText(`https://truckzen.pro/kiosk?shop=${shop.id}`); alert('Kiosk URL copied!') }}
+                style={{ padding:'10px 16px', background:'transparent', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#7C8BA0', fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>
+                Copy URL
+              </button>
+            </div>
+          </div>
         </div>
       )}
       {tab === 'Users' && (
@@ -95,6 +110,33 @@ export default function SettingsPage() {
       {tab !== 'Shop' && tab !== 'Users' && tab !== 'Integrations' && (
         <div style={{ color:'#7C8BA0', fontSize:13 }}>{tab} settings — coming soon</div>
       )}
+
+      {/* Account & Security — always visible at bottom */}
+      <div style={{ ...S.card, marginTop:32, maxWidth:540, borderColor:'rgba(239,68,68,.15)' }}>
+        <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF', marginBottom:14 }}>Account & Security</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:12 }}>
+            <span style={{ color:'#7C8BA0' }}>Logged in as</span>
+            <span style={{ color:'#F0F4FF', fontWeight:600 }}>{user?.email}</span>
+          </div>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:12 }}>
+            <span style={{ color:'#7C8BA0' }}>Role</span>
+            <span style={{ color:'#4D9EFF', fontWeight:600 }}>{user?.role?.replace(/_/g,' ').replace(/\b\w/g, (c:string) => c.toUpperCase())}</span>
+          </div>
+          <div style={{ display:'flex', justifyContent:'space-between', fontSize:12 }}>
+            <span style={{ color:'#7C8BA0' }}>Company</span>
+            <span style={{ color:'#F0F4FF', fontWeight:600 }}>{shop?.dba || shop?.name || '—'}</span>
+          </div>
+        </div>
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut()
+            window.location.href = '/login'
+          }}
+          style={{ width:'100%', padding:'13px 20px', background:'#EF4444', border:'none', borderRadius:9, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit' }}>
+          Sign Out
+        </button>
+      </div>
     </div>
   )
 }

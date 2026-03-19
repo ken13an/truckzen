@@ -1,69 +1,67 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { decodeVIN } from '@/lib/integrations/nhtsa'
 
-export async function GET(req: Request) {
-  const supabase = createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+function db() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
 
+export async function GET(req: Request) {
+  const s = db()
   const { searchParams } = new URL(req.url)
-  const search = searchParams.get('q')
+  const shopId = searchParams.get('shop_id')
+  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+
+  const search = searchParams.get('search') || searchParams.get('q')
   const status = searchParams.get('status')
 
-  let q = supabase
+  let q = s
     .from('assets')
-    .select('id, unit_number, year, make, model, vin, odometer, engine, status, customer_id, customers(company_name)')
-    .eq('shop_id', user.shop_id)
+    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, customers(company_name)')
+    .eq('shop_id', shopId)
     .order('unit_number')
 
   if (status) q = q.eq('status', status)
   if (search) q = q.or(`unit_number.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%,vin.ilike.%${search}%`)
 
-  const { data, error } = await q.limit(200)
+  const { data, error } = await q.limit(300)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
 
 export async function POST(req: Request) {
-  const supabase = createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const allowed = ['owner','gm','it_person','shop_manager','fleet_manager','service_advisor','office_admin']
-  if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-
+  const s = db()
   const body = await req.json()
-  let { unit_number, vin, year, make, model, engine, odometer, customer_id, status } = body
+  let { shop_id, unit_number, vin, year, make, model, engine, odometer, customer_id, status: assetStatus } = body
 
+  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!unit_number) return NextResponse.json({ error: 'Unit number required' }, { status: 400 })
 
-  // Auto-decode VIN if provided and fields missing
+  // Auto-decode VIN
   if (vin && (!year || !make || !model)) {
     const decoded = await decodeVIN(vin)
     if (decoded.valid) {
-      year  = year  || decoded.year
-      make  = make  || decoded.make
+      year = year || decoded.year
+      make = make || decoded.make
       model = model || decoded.model
       engine = engine || decoded.engine
     }
   }
 
-  // Check unit number not already in use
-  const { data: existing } = await supabase.from('assets').select('id').eq('shop_id', user.shop_id).eq('unit_number', unit_number.trim()).single()
+  // Check duplicate
+  const { data: existing } = await s.from('assets').select('id').eq('shop_id', shop_id).eq('unit_number', unit_number.trim()).single()
   if (existing) return NextResponse.json({ error: `Unit #${unit_number} already exists` }, { status: 409 })
 
-  const { data, error } = await supabase.from('assets').insert({
-    shop_id:     user.shop_id,
+  const { data, error } = await s.from('assets').insert({
+    shop_id,
     unit_number: unit_number.trim(),
-    vin:         vin?.trim().toUpperCase() || null,
-    year:        parseInt(year) || null,
-    make:        make || null,
-    model:       model || null,
-    engine:      engine || null,
-    odometer:    parseInt(odometer) || 0,
+    vin: vin?.trim().toUpperCase() || null,
+    year: parseInt(year) || null,
+    make: make || null,
+    model: model || null,
+    odometer: parseInt(odometer) || 0,
     customer_id: customer_id || null,
-    status:      status || 'active',
+    status: assetStatus || 'on_road',
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

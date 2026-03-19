@@ -1,0 +1,105 @@
+'use client'
+import { useState, useEffect, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
+
+export default function NotificationBell({ userId }: { userId: string }) {
+  const supabase = createClient()
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!userId) return
+    loadNotifications()
+    const iv = setInterval(loadNotifications, 30000)
+    return () => clearInterval(iv)
+  }, [userId])
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  async function loadNotifications() {
+    const { data } = await supabase.from('notifications')
+      .select('id, title, body, link, read, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    setNotifications(data || [])
+  }
+
+  async function markRead(id: string) {
+    await supabase.from('notifications').update({ read: true }).eq('id', id)
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+  }
+
+  async function markAllRead() {
+    const unread = notifications.filter(n => !n.read).map(n => n.id)
+    if (!unread.length) return
+    for (const id of unread) {
+      await supabase.from('notifications').update({ read: true }).eq('id', id)
+    }
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }
+
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  function timeAgo(date: string) {
+    const mins = Math.floor((Date.now() - new Date(date).getTime()) / 60000)
+    if (mins < 1) return 'now'
+    if (mins < 60) return `${mins}m`
+    if (mins < 1440) return `${Math.floor(mins / 60)}h`
+    return `${Math.floor(mins / 1440)}d`
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(!open)} style={{
+        background: 'none', border: 'none', cursor: 'pointer', padding: 6, position: 'relative', color: '#7C8BA0', fontSize: 18,
+      }}>
+        🔔
+        {unreadCount > 0 && (
+          <span style={{
+            position: 'absolute', top: 2, right: 0, background: '#EF4444', color: '#fff',
+            fontSize: 9, fontWeight: 700, borderRadius: 10, padding: '1px 5px', minWidth: 14, textAlign: 'center',
+          }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+        )}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 36, right: 0, width: 340, maxHeight: 420, overflowY: 'auto',
+          background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,.5)', zIndex: 999,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #1A1D23' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Notifications</span>
+            {unreadCount > 0 && (
+              <button onClick={markAllRead} style={{ background: 'none', border: 'none', color: '#4D9EFF', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
+            )}
+          </div>
+          {notifications.length === 0 ? (
+            <div style={{ padding: 24, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No notifications</div>
+          ) : (
+            notifications.map(n => (
+              <a key={n.id} href={n.link || '#'} onClick={() => markRead(n.id)} style={{
+                display: 'block', padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,.03)', textDecoration: 'none',
+                background: n.read ? 'transparent' : 'rgba(29,111,232,.04)',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ fontSize: 12, fontWeight: n.read ? 400 : 600, color: n.read ? '#7C8BA0' : '#F0F4FF', lineHeight: 1.4 }}>{n.title}</div>
+                  <span style={{ fontSize: 10, color: '#48536A', whiteSpace: 'nowrap', marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
+                </div>
+                {n.body && <div style={{ fontSize: 11, color: '#48536A', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
+                {!n.read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#1D6FE8', marginTop: 4 }} />}
+              </a>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

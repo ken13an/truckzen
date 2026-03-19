@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [user,  setUser]  = useState<UserProfile | null>(null)
   const [stats, setStats] = useState<DashStats | null>(null)
   const [recentSOs, setRecentSOs] = useState<any[]>([])
+  const [checkins, setCheckins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -68,6 +69,11 @@ export default function DashboardPage() {
         .limit(8)
 
       setRecentSOs(sos || [])
+
+      // Recent kiosk check-ins
+      const ciRes = await fetch(`/api/kiosk?shop_id=${shopId}&limit=5`)
+      if (ciRes.ok) { const ciData = await ciRes.json(); setCheckins(Array.isArray(ciData) ? ciData : []) }
+
       setLoading(false)
     }
     load()
@@ -200,6 +206,37 @@ export default function DashboardPage() {
           </table>
         </div>
       </div>
+
+      {/* Recent Kiosk Check-ins */}
+      {checkins.length > 0 && (
+        <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden', marginTop:16 }}>
+          <div style={{ padding:'11px 14px', borderBottom:'1px solid rgba(255,255,255,.055)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Recent Check-ins</div>
+            <a href="/kiosk" target="_blank" style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>Open Kiosk →</a>
+          </div>
+          {checkins.map((ci: any) => (
+            <div key={ci.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderBottom:'1px solid rgba(255,255,255,.025)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{ width:32, height:32, borderRadius:8, background:'rgba(29,111,232,.08)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>🚛</div>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:600, color:'#F0F4FF' }}>
+                    {ci.company_name || (ci.customers as any)?.company_name || 'Walk-in'} — #{ci.unit_number}
+                  </div>
+                  <div style={{ fontSize:10, color:'#7C8BA0', marginTop:1 }}>
+                    {ci.complaint_en ? ci.complaint_en.slice(0, 60) + (ci.complaint_en.length > 60 ? '...' : '') : 'No description'}
+                  </div>
+                </div>
+              </div>
+              <div style={{ textAlign:'right', flexShrink:0 }}>
+                <div style={{ fontSize:11, fontFamily:"'IBM Plex Mono',monospace", color:'#7C8BA0' }}>
+                  {new Date(ci.created_at).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })}
+                </div>
+                <div style={{ fontSize:9, color:'#48536A', fontFamily:'monospace' }}>{ci.checkin_ref}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
     </div>
   )

@@ -8,14 +8,23 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([])
   const [loading,   setLoading]   = useState(true)
   const [search,    setSearch]    = useState('')
+  const [error,     setError]     = useState('')
 
   useEffect(() => {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
-      const res  = await fetch('/api/customers')
+
+      // Use API route with service role (bypasses RLS)
+      const res = await fetch(`/api/customers?shop_id=${profile.shop_id}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed to load' }))
+        setError(err.error || 'Failed to load customers')
+        setLoading(false)
+        return
+      }
       const data = await res.json()
-      setCustomers(data || [])
+      setCustomers(Array.isArray(data) ? data : [])
       setLoading(false)
     }
     load()
@@ -51,24 +60,24 @@ export default function CustomersPage() {
         </div>
       </div>
 
+      {error && <div style={{ background:'rgba(239,68,68,.1)', border:'1px solid rgba(239,68,68,.3)', borderRadius:8, padding:12, marginBottom:16, fontSize:12, color:'#EF4444' }}>{error}</div>}
+
       <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
         <div style={{ overflowX:'auto' }}>
           <table style={{ width:'100%', borderCollapse:'collapse', minWidth:560 }}>
-            <thead><tr>{['Company','Contact','Phone','Email','Payment Terms','Vehicles'].map(h =>
+            <thead><tr>{['Company','Contact','Phone','Email','Address','Visits'].map(h =>
               <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
             <tbody>
               {loading ? <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#7C8BA0', padding:40 }}>Loading...</td></tr>
-              : filtered.length === 0 ? <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#7C8BA0', padding:40 }}>No customers yet</td></tr>
+              : filtered.length === 0 ? <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#7C8BA0', padding:40 }}>No customers found</td></tr>
               : filtered.map(c => (
                 <tr key={c.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = `/customers/${c.id}`}>
                   <td style={{ ...S.td, fontWeight:700, color:'#F0F4FF' }}>{c.company_name}</td>
                   <td style={{ ...S.td, color:'#DDE3EE' }}>{c.contact_name || '—'}</td>
                   <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#7C8BA0' }}>{c.phone || '—'}</td>
                   <td style={{ ...S.td, fontSize:11, color:'#7C8BA0' }}>{c.email || '—'}</td>
-                  <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#48536A' }}>{c.payment_terms || 'Net 30'}</td>
-                  <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#4D9EFF' }}>
-                    {c.assets?.length || 0}
-                  </td>
+                  <td style={{ ...S.td, fontSize:11, color:'#48536A', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.address || '—'}</td>
+                  <td style={{ ...S.td, fontFamily:'monospace', fontSize:11, color:'#4D9EFF', textAlign:'center' }}>{c.visit_count || 0}</td>
                 </tr>
               ))}
             </tbody>

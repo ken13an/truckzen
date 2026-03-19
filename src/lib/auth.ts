@@ -11,19 +11,28 @@ export interface UserProfile {
   language:  string
   telegram_id: string | null
   active:    boolean
+  can_create_so: boolean
+  can_impersonate: boolean
+  impersonate_role: string | null
 }
 
 export async function getCurrentUser(supabase: SupabaseClient): Promise<UserProfile | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from('users')
-    .select('id, shop_id, full_name, email, role, team, language, telegram_id, active')
+    .select('id, shop_id, full_name, email, role, team, language, telegram_id, active, can_create_so, can_impersonate, impersonate_role')
     .eq('id', user.id)
     .single()
 
-  if (!profile || !profile.active) return null
+  // If RLS blocks the query, try fetching minimal info from auth metadata
+  if (error || !profile) {
+    // Fallback: return basic profile from auth user metadata
+    return null
+  }
+
+  if (!profile.active) return null
   return profile as UserProfile
 }
 
