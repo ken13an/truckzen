@@ -1,6 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/auth'
 
 const OFFICE_ROLES = ['service_writer', 'accountant', 'office_admin', 'shop_manager', 'gm', 'dispatcher']
 const FLOOR_ROLES = ['technician', 'maintenance_technician', 'maintenance_manager']
@@ -8,10 +10,19 @@ const OTHER_ROLES = ['parts_manager', 'fleet_manager', 'driver']
 
 export default function NewUserPage() {
   const router = useRouter()
+  const supabase = createClient()
+  const [user, setUser] = useState<any>(null)
   const [form, setForm] = useState({ full_name: '', email: '', role: 'technician', department: 'floor' as 'floor' | 'office' | 'parts' | 'fleet', team: 'A', language: 'en' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    getCurrentUser(supabase).then((p: any) => {
+      if (!p) { window.location.href = '/login'; return }
+      setUser(p)
+    })
+  }, [])
 
   // Auto-set department when role changes
   function setRole(role: string) {
@@ -28,7 +39,7 @@ export default function NewUserPage() {
     e.preventDefault()
     if (!form.full_name || !form.email) { setError('Name and email required'); return }
     setSaving(true); setError('')
-    const payload = { full_name: form.full_name, email: form.email, role: form.role, team: needsTeam ? form.team : null, language: form.language }
+    const payload = { shop_id: user?.shop_id, user_id: user?.id, full_name: form.full_name, email: form.email, role: form.role, team: needsTeam ? form.team : null, language: form.language }
     const res = await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     const data = await res.json()
     if (!res.ok) { setError(data.error || 'Failed to invite staff member'); setSaving(false); return }

@@ -10,20 +10,38 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const shopId = searchParams.get('shop_id')
   const search = searchParams.get('q')
+  const page = parseInt(searchParams.get('page') || '1')
+  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 2000)
 
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
-  let q = s
-    .from('customers')
+  // Get total count
+  let countQ = s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId)
+  if (search) countQ = countQ.or(`company_name.ilike.%${search}%,contact_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+  const { count: total } = await countQ
+
+  // Get page data
+  const from = (page - 1) * perPage
+  const to = from + perPage - 1
+
+  let q = s.from('customers')
     .select('id, company_name, contact_name, phone, email, address, notes, source, visit_count, total_spent, created_at')
     .eq('shop_id', shopId)
     .order('company_name')
+    .range(from, to)
 
-  if (search) q = q.or(`company_name.ilike.%${search}%,contact_name.ilike.%${search}%,email.ilike.%${search}%`)
+  if (search) q = q.or(`company_name.ilike.%${search}%,contact_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
 
-  const { data, error } = await q.limit(500)
+  const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  return NextResponse.json({
+    data: data || [],
+    total: total || 0,
+    page,
+    per_page: perPage,
+    total_pages: Math.ceil((total || 0) / perPage),
+  })
 }
 
 export async function POST(req: Request) {
@@ -34,14 +52,14 @@ export async function POST(req: Request) {
   if (!body.company_name) return NextResponse.json({ error: 'Company name required' }, { status: 400 })
 
   const { data, error } = await s.from('customers').insert({
-    shop_id:       body.shop_id,
-    company_name:  body.company_name.trim(),
-    contact_name:  body.contact_name || null,
-    phone:         body.phone || null,
-    email:         body.email?.toLowerCase() || null,
-    address:       body.address || null,
-    notes:         body.notes || null,
-    source:        body.source || 'walk_in',
+    shop_id: body.shop_id,
+    company_name: body.company_name.trim(),
+    contact_name: body.contact_name || null,
+    phone: body.phone || null,
+    email: body.email?.toLowerCase() || null,
+    address: body.address || null,
+    notes: body.notes || null,
+    source: body.source || 'walk_in',
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
