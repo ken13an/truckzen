@@ -24,6 +24,11 @@ export default function NewSOPage() {
   const [filteredCustomers, setFilteredCustomers] = useState<any[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
 
+  // AI action items review
+  const [showReview, setShowReview] = useState(false)
+  const [actionItems, setActionItems] = useState<string[]>([])
+  const [aiItemsLoading, setAiItemsLoading] = useState(false)
+
   // AI panel state
   const [recording, setRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
@@ -199,14 +204,52 @@ export default function NewSOPage() {
   const laborTotal = laborHours * shopRate
   const grandTotal = partsTotal + laborTotal
 
-  // ── SUBMIT ─────────────────────────────────────────────
-  async function handleSubmit(e: React.FormEvent) {
+  // ── STEP 1: Generate AI action items before submit ──
+  async function handlePreSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.asset_id) { setError('Select a truck'); return }
     if (!form.complaint) { setError('Describe the complaint'); return }
+
+    setAiItemsLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/ai/action-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ complaint: form.complaint }),
+      })
+      const data = await res.json()
+      setActionItems(data.action_items || [form.complaint.trim().toUpperCase()])
+    } catch {
+      setActionItems([form.complaint.trim().toUpperCase()])
+    }
+
+    setAiItemsLoading(false)
+    setShowReview(true)
+  }
+
+  function updateActionItem(idx: number, val: string) {
+    setActionItems(prev => prev.map((item, i) => i === idx ? val : item))
+  }
+
+  function removeActionItem(idx: number) {
+    setActionItems(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  function addActionItem() {
+    setActionItems(prev => [...prev, ''])
+  }
+
+  // ── STEP 2: Final submit with confirmed action items ──
+  async function handleFinalSubmit() {
+    if (!form.asset_id) { setError('Select a truck'); return }
+    if (actionItems.filter(i => i.trim()).length === 0) { setError('At least one action item required'); return }
 
     setSubmitting(true)
     setError('')
+
+    // Use the first action item as the main complaint, all items joined as full complaint
+    const fullComplaint = actionItems.filter(i => i.trim()).join('\n')
 
     const res = await fetch('/api/service-orders', {
       method: 'POST',
@@ -217,7 +260,7 @@ export default function NewSOPage() {
         role: user.role,
         asset_id: form.asset_id,
         customer_id: form.customer_id || null,
-        complaint: form.complaint,
+        complaint: fullComplaint,
         cause: form.cause || null,
         correction: form.correction || null,
         source: form.source,
@@ -234,8 +277,24 @@ export default function NewSOPage() {
       return
     }
 
-    // Add line items (parts + labor)
+    // Add each action item as a separate labor line
     const soId = data.id
+    for (const item of actionItems.filter(i => i.trim())) {
+      await fetch('/api/so-lines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          so_id: soId,
+          line_type: 'labor',
+          description: item.trim(),
+          quantity: 0,
+          unit_price: 0,
+        }),
+      })
+    }
+
+    // Add parts line items
+    const soIdForParts = soId
     for (const part of addedParts) {
       await fetch('/api/so-lines', {
         method: 'POST',
@@ -278,7 +337,7 @@ export default function NewSOPage() {
 
       {error && <div style={S.error}>{error}</div>}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={showReview ? (e => { e.preventDefault(); handleFinalSubmit() }) : handlePreSubmit}>
         {/* ═══ CUSTOMER ═══ */}
         <div style={S.card}>
           <div style={S.cardTitle}>1. Customer</div>
@@ -532,8 +591,40 @@ export default function NewSOPage() {
           </div>
         </div>
 
-        <button type="submit" style={{ ...S.submitBtn, opacity: submitting ? 0.6 : 1 }} disabled={submitting}>
-          {submitting ? 'Creating...' : 'Create Service Order →'}
+        {/* ═══ AI ACTION ITEMS REVIEW ═══ */}
+        {showReview && (
+          <div style={{ ...S.card, borderColor: 'rgba(29,111,232,.2)', background: '#0E1219' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>Review Action Items</div>
+            <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 14 }}>AI split your complaint into professional action items. Edit, add, or remove before saving.</div>
+
+            {actionItems.map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#48536A', fontFamily: 'monospace', width: 20, flexShrink: 0 }}>{i + 1}.</span>
+                <input
+                  style={{ ...S.input, fontWeight: 600, textTransform: 'uppercase' }}
+                  value={item}
+                  onChange={e => updateActionItem(i, e.target.value)}
+                />
+                <button type="button" onClick={() => removeActionItem(i)}
+                  style={{ background: 'none', border: 'none', color: '#D94F4F', cursor: 'pointer', fontSize: 16, padding: 4, flexShrink: 0 }}>x</button>
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button type="button" onClick={addActionItem}
+                style={{ padding: '6px 14px', background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 8, color: '#4D9EFF', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                + Add Item
+              </button>
+              <button type="button" onClick={() => setShowReview(false)}
+                style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#7C8BA0', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Back to Edit
+              </button>
+            </div>
+          </div>
+        )}
+
+        <button type="submit" style={{ ...S.submitBtn, opacity: (submitting || aiItemsLoading) ? 0.6 : 1 }} disabled={submitting || aiItemsLoading}>
+          {aiItemsLoading ? 'AI Processing...' : submitting ? 'Creating...' : showReview ? 'Confirm & Create Service Order' : 'Review Action Items →'}
         </button>
       </form>
 

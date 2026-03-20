@@ -48,31 +48,29 @@ export default function SODetailPage() {
       if (!profile) { router.push('/login'); return }
       setUser(profile)
 
-      // Fetch SO with related data using service role via API
-      const res = await fetch(`/api/service-orders/${params.id}`)
-      if (!res.ok) {
-        // Fallback: try direct supabase query
-        const { data: soData } = await supabase
-          .from('service_orders')
-          .select(`*, assets(id, unit_number, year, make, model, vin, odometer, engine), customers(id, company_name, contact_name, phone, email), so_lines(id, line_type, description, part_number, quantity, unit_price, total_price, created_at)`)
-          .eq('id', params.id)
-          .single()
-        if (!soData) { router.push('/orders'); return }
-        setSO(soData)
-        setLines(soData.so_lines || [])
-        setEditCause(soData.cause || '')
-        setEditCorr(soData.correction || '')
-        if (soData.assets?.odometer) setMileage(String(soData.assets.odometer))
-        setLoading(false)
+      // Fetch SO directly via client supabase (auth handled via cookies automatically)
+      const { data: soData, error: soError } = await supabase
+        .from('service_orders')
+        .select(`
+          *,
+          assets(id, unit_number, year, make, model, vin, odometer, engine),
+          customers(id, company_name, contact_name, phone, email),
+          so_lines(id, line_type, description, part_number, quantity, unit_price, total_price, created_at)
+        `)
+        .eq('id', params.id as string)
+        .single()
+
+      if (soError || !soData) {
+        console.error('[SO Detail] Failed to load:', soError?.message)
+        router.push('/orders')
         return
       }
 
-      const data = await res.json()
-      setSO(data)
-      setLines(data.so_lines || [])
-      setEditCause(data.cause || '')
-      setEditCorr(data.correction || '')
-      if (data.assets?.odometer) setMileage(String(data.assets.odometer))
+      setSO(soData)
+      setLines(soData.so_lines || [])
+      setEditCause(soData.cause || '')
+      setEditCorr(soData.correction || '')
+      if (soData.assets?.odometer) setMileage(String(soData.assets.odometer))
       setLoading(false)
     }
     load()
@@ -80,22 +78,16 @@ export default function SODetailPage() {
 
   async function updateStatus(newStatus: string) {
     setSaving(true)
-    await fetch(`/api/service-orders/${so.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    })
+    const update: any = { status: newStatus, updated_at: new Date().toISOString() }
+    if (newStatus === 'good_to_go' && so.status !== 'good_to_go') update.completed_at = new Date().toISOString()
+    await supabase.from('service_orders').update(update).eq('id', so.id)
     setSO((s: any) => ({ ...s, status: newStatus }))
     setSaving(false)
   }
 
   async function saveCauseCorrection() {
     setSaving(true)
-    await fetch(`/api/service-orders/${so.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cause: editCause, correction: editCorr }),
-    })
+    await supabase.from('service_orders').update({ cause: editCause, correction: editCorr, updated_at: new Date().toISOString() }).eq('id', so.id)
     setSO((s: any) => ({ ...s, cause: editCause, correction: editCorr }))
     setSaving(false)
   }
