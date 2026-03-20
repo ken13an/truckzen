@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { getSidebarItems, ROLE_LABEL, ROLE_COLOR } from '@/lib/permissions'
+import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
 import { LayoutDashboard, Monitor, Wrench, Users2, Truck, FileText, Package, UserCircle, Factory, Settings, Timer, ShieldCheck, BarChart3, Calculator, LogOut, Clipboard, BookOpen, Cog } from 'lucide-react'
 
@@ -70,9 +70,6 @@ export default function Sidebar() {
   // Separate settings from main items
   const mainItems = visible.filter(i => i.href !== '/settings' && !i.href.startsWith('/settings/'))
   const settingsItem = visible.find(i => i.href === '/settings')
-
-  const roleColor = ROLE_COLOR[user.role] || '#7C8BA0'
-  const initials = user.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -165,21 +162,8 @@ export default function Sidebar() {
         </a>
       </div>
 
-      {/* User profile */}
-      <div style={{ padding: collapsed ? '10px 0' : '10px 14px', borderTop: '1px solid rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', gap: 10, justifyContent: collapsed ? 'center' : 'flex-start' }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: `linear-gradient(135deg,${roleColor}66,${roleColor}33)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: roleColor, flexShrink: 0 }}>
-          {initials}
-        </div>
-        {!collapsed && (
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#DDE3EE', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user.full_name?.split(' ')[0]}
-            </div>
-            <div style={{ fontSize: 9, color: roleColor, fontFamily: 'monospace' }}>
-              {ROLE_LABEL[user.role] || user.role}
-            </div>
-          </div>
-        )}
+      {/* Bottom spacing */}
+      <div style={{ height: 4 }}>
       </div>
     </aside>
   )
