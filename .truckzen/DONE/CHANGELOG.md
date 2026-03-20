@@ -16,6 +16,20 @@ All changes made by Claude Code, in reverse chronological order.
 
 -->
 
+## 2026-03-19 -- [003] Service Writer In-Person Check-in (Path B)
+- Built /service-requests/new — full form with 4 sections: customer search/create, unit select/create, complaint, internal notes
+- Built /service-requests — list page with status badges, check-in type badges, filter pills
+- Added 'create' action to POST /api/service-requests for Path B check-in
+- Added customer_id filter to GET /api/assets for loading units per customer
+- Customer search with debounced 300ms typeahead against existing customers API
+- New customer inline form: company name, contact, phone, email
+- New unit inline form: unit number, VIN, year, make, model, type, mileage
+- Auto-shows new unit form when customer has no existing units
+- Service request created with check_in_type='service_writer' and created_by=user ID
+- Files created: src/app/service-requests/page.tsx, src/app/service-requests/new/page.tsx
+- Files modified: src/app/api/service-requests/route.ts, src/app/api/assets/route.ts
+- Build status: PASS (86 pages, 0 errors)
+
 ## 2026-03-19 -- [001] Fix Build + [002] Phase 1 Mega SQL Migration
 - Prompt 001: Build already passes clean. All known problem files verified (no Upstash, no invalid config, Resend lazy pattern, null safety on customers page). Next.js already at 16.2.0. Skipped.
 - Prompt 002: Ran Phase 1 SQL migration via psql against Supabase.

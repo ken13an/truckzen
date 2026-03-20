@@ -26,12 +26,85 @@ export async function GET(req: Request) {
   return NextResponse.json(data)
 }
 
-// POST /api/service-requests — convert, schedule, or reject
+// POST /api/service-requests — create, convert, schedule, or reject
 export async function POST(req: Request) {
   const s = db()
   const body = await req.json()
-  const { action, request_id, shop_id, user_id } = body
+  const { action } = body
 
+  // ── CREATE (service writer check-in Path B) ──
+  if (action === 'create') {
+    const { shop_id, user_id, customer_id, new_customer, unit_id, new_unit, description, priority, internal_notes } = body
+    if (!shop_id || !description) return NextResponse.json({ error: 'shop_id and description required' }, { status: 400 })
+
+    let finalCustomerId = customer_id || null
+    let finalUnitId = unit_id || null
+    let companyName = ''
+    let contactName = ''
+    let phone = ''
+    let unitNumber = ''
+
+    // Create new customer if needed
+    if (new_customer && !finalCustomerId) {
+      const { data: cust, error: custErr } = await s.from('customers').insert({
+        shop_id,
+        company_name: new_customer.company_name || 'Walk-in',
+        contact_name: new_customer.contact_name || null,
+        phone: new_customer.phone || null,
+        email: new_customer.email || null,
+      }).select().single()
+      if (custErr) return NextResponse.json({ error: 'Failed to create customer: ' + custErr.message }, { status: 500 })
+      finalCustomerId = cust.id
+      companyName = cust.company_name
+      contactName = cust.contact_name || ''
+      phone = cust.phone || ''
+    } else if (finalCustomerId) {
+      const { data: c } = await s.from('customers').select('company_name, contact_name, phone').eq('id', finalCustomerId).single()
+      if (c) { companyName = c.company_name || ''; contactName = c.contact_name || ''; phone = c.phone || '' }
+    }
+
+    // Create new unit if needed
+    if (new_unit && !finalUnitId) {
+      const { data: u, error: uErr } = await s.from('units').insert({
+        shop_id,
+        customer_id: finalCustomerId,
+        unit_number: new_unit.unit_number || null,
+        year: new_unit.year ? parseInt(new_unit.year) : null,
+        make: new_unit.make || null,
+        model: new_unit.model || null,
+        vin: new_unit.vin || null,
+        unit_type: new_unit.unit_type || 'truck',
+        current_mileage: new_unit.mileage ? parseInt(new_unit.mileage) : null,
+      }).select().single()
+      if (uErr) return NextResponse.json({ error: 'Failed to create unit: ' + uErr.message }, { status: 500 })
+      finalUnitId = u.id
+      unitNumber = u.unit_number || ''
+    } else if (finalUnitId) {
+      const { data: u } = await s.from('units').select('unit_number').eq('id', finalUnitId).single()
+      if (u) unitNumber = u.unit_number || ''
+    }
+
+    const { data: sr, error: srErr } = await s.from('service_requests').insert({
+      shop_id,
+      customer_id: finalCustomerId,
+      unit_id: finalUnitId,
+      unit_number: unitNumber,
+      company_name: companyName,
+      contact_name: contactName,
+      phone,
+      description,
+      source: 'service_writer',
+      check_in_type: 'service_writer',
+      created_by: user_id || 'service_writer',
+      status: 'new',
+    }).select().single()
+
+    if (srErr) return NextResponse.json({ error: 'Failed to create service request: ' + srErr.message }, { status: 500 })
+    return NextResponse.json({ ok: true, service_request: sr })
+  }
+
+  // ── CONVERT / SCHEDULE / REJECT ──
+  const { request_id, shop_id, user_id } = body
   if (!request_id || !action) return NextResponse.json({ error: 'request_id and action required' }, { status: 400 })
 
   const { data: sr } = await s.from('service_requests').select('*').eq('id', request_id).single()

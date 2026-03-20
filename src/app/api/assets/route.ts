@@ -21,6 +21,8 @@ export async function GET(req: Request) {
     .eq('shop_id', shopId)
     .order('unit_number')
 
+  const customerId = searchParams.get('customer_id')
+  if (customerId) q = q.eq('customer_id', customerId)
   if (status) q = q.eq('status', status)
   if (search) q = q.or(`unit_number.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%,vin.ilike.%${search}%`)
 
