@@ -1,22 +1,41 @@
 # TruckZen -- Current Status
 
 **Last Updated:** 2026-03-20
-**Last Task Completed:** Work Order System (Chunk 2)
-**Build Status:** PASS (Next.js 16.2.0, 96 pages, 0 errors)
+**Last Task Completed:** Customer & Unit System Build
+**Build Status:** PASS (Next.js 16.2.0, 101 pages, 0 errors)
 **Branch:** dev (synced to main)
-**Last Commit:** b8874af
 
 ---
 
-## Work Order System -- BUILT
+## What Is Built
 
-- /work-orders list, /work-orders/new (AI job lines), /work-orders/[id] (5-tab detail)
-- API routes: work-orders, wo-notes, wo-files, wo-activity, wo-charges, wo-assign
-- DB: wo_notes, wo_files, wo_activity_log, wo_shop_charges tables + so_lines columns
-- Tax settings: Illinois, Cook, 10.25% on shops table
-- Homepage: public landing page at /
-- Email invites: Resend with recovery link
-- File uploads: wo-files Supabase Storage bucket
-- Print CSS, Delete/Duplicate WO, all buttons functional
-- Sidebar renamed: "Work Orders", /work-orders path
-- Middleware: / public, /orders redirects to /work-orders
+### Core
+- 101 pages, 40+ API routes
+- Work Orders system (5-tab detail, AI job lines, mechanic assignment with percentage split)
+- Customer system (profile with 5 tabs: fleet, WOs, contacts, billing, documents)
+- Kiosk check-in (9-screen wizard, 4 languages, AI job line generation)
+- Customer Portal (4-tab public page: status, estimate, pay, history)
+- 10 seeded customers with 119 units and 16 contacts
+
+### Database
+- 30+ tables with RLS policies
+- wo_parts, wo_job_assignments, customer_contacts, customer_documents tables
+- shops: tax, labor rate, address, state/county
+- assets: unit_type, warranty, ownership_type
+- Duplicate WO prevention on API level
+
+### Features
+- 4 teams of mechanics (24 total) with skills
+- Multi-language kiosk (EN/ES/RU/UZ) with Cyrillic Russian
+- AI service writer (Claude API breaks concerns into professional job lines)
+- Supabase Storage: wo-files, customer-docs buckets
+- Resend email: invites, portal links, estimates
+- Sentry error monitoring (configured, awaiting DSN)
+
+### Remaining
+- Unit profile page (/customers/[id]/units/[unitId])
+- Downloadable registration form PDF
+- Customer portal account-level view
+- Invoicing + payments module
+- Shop floor board
+- Reports + analytics
