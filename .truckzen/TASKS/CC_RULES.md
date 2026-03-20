@@ -61,6 +61,8 @@ Never edit anything in TASKS/. Always write your output to DONE/.
 - Server components by default
 - No inline styles -- use Tailwind classes with brand tokens (see .truckzen/TASKS/BRAND_GUIDE.md)
 - PERMANENT RULE -- NO EMOJIS: No emoji characters anywhere in the codebase. Not in UI text, labels, placeholders, status badges, navigation, comments, logs, API responses, Telegram messages, or any other context. Use Lucide React icons for visual indicators. Use text labels like [WARNING], [EXPIRED], [OVERDUE] for status in API/bot messages. This rule is non-negotiable and applies to every file in src/.
+- BACK BUTTON RULE: Every page deeper than sidebar level must have a back arrow + parent page name at top left. No exceptions. Examples: Kiosk -> Dashboard, WO detail -> Work Orders, Customer detail -> Customers, any settings sub-page -> Settings.
+- SOFT DELETE RULE: When deleting users, set deleted_at = now() instead of hard delete. Show "Deleted" status in Team Members. 30-day grace period before actual removal.
 - All UI text must be professional and clean
 - BRAND GUIDE IS LAW: every color, font, spacing, radius, icon, and animation must follow .truckzen/TASKS/BRAND_GUIDE.md. Do not invent colors. Do not use generic Tailwind colors like bg-blue-500 or text-gray-400. Use ONLY brand colors: bg-surface, text-teal, border-brand-border, etc.
 - Dark mode is the default. Page background is always var(--bg) / bg-bg

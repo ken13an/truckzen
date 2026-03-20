@@ -25,6 +25,7 @@ export default function KioskAdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0C0C12', color: '#EDEDF0', fontFamily: font, padding: 24 }}>
+      <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#9D9DA1', textDecoration: 'none', marginBottom: 20 }}>{'<-'} Dashboard</a>
       <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Kiosk</div>
       <div style={{ fontSize: 13, color: '#9D9DA1', marginBottom: 24 }}>Self-service check-in for your waiting area. Open on a tablet in full-screen mode.</div>
 

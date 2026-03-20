@@ -109,6 +109,7 @@ export default function UsersPage() {
   })
 
   const getStatus = (u: any) => {
+    if (u.deleted_at) return { label: `Deleted ${new Date(u.deleted_at).toLocaleDateString()}`, bg: 'rgba(150,150,150,.12)', color: '#9CA3AF' }
     if (!u.active) return { label: 'Disabled', bg: 'rgba(220,38,38,.12)', color: '#FF453A' }
     if (!u.last_sign_in_at) return { label: 'Invited', bg: 'rgba(217,119,6,.12)', color: '#FFD60A' }
     return { label: 'Active', bg: 'rgba(29,184,112,.12)', color: '#1DB870' }
@@ -174,17 +175,20 @@ export default function UsersPage() {
                     <td style={{ padding: '12px 14px', fontSize: 10, color: '#9D9DA1', fontFamily: 'monospace' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : 'Never'}</td>
                     <td style={{ padding: '12px 14px' }}>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => setEditing({ ...u })} style={{ padding: '4px 10px', background: 'none', color: '#4D9EFF', border: '1px solid rgba(29,111,232,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Edit</button>
-                        {!u.last_sign_in_at && u.active && (
+                        {!u.deleted_at && (
+                          <button onClick={() => setEditing({ ...u })} style={{ padding: '4px 10px', background: 'none', color: '#4D9EFF', border: '1px solid rgba(29,111,232,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Edit</button>
+                        )}
+                        {!u.last_sign_in_at && u.active && !u.deleted_at && (
                           <button onClick={() => resendInvite(u)} disabled={saving} style={{ padding: '4px 10px', background: 'none', color: '#FFD60A', border: '1px solid rgba(217,119,6,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Resend</button>
                         )}
-                        {u.id !== me?.id && (
+                        {u.id !== me?.id && !u.deleted_at && (
                           u.active ? (
                             <button onClick={() => { setRemoving(u); setConfirmText('') }} style={{ padding: '4px 10px', background: 'none', color: '#FF453A', border: '1px solid rgba(220,38,38,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Remove</button>
                           ) : (
                             <button onClick={() => enableUser(u)} style={{ padding: '4px 10px', background: 'none', color: '#1DB870', border: '1px solid rgba(29,184,112,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Enable</button>
                           )
                         )}
+                        {u.deleted_at && <span style={{ fontSize: 10, color: '#9CA3AF' }}>Pending removal</span>}
                       </div>
                     </td>
                   </tr>

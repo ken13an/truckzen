@@ -27,6 +27,7 @@ export async function PATCH(req: Request, { params }: P) {
 export async function DELETE(_req: Request, { params }: P) {
   const { id } = await params
   const s = db()
-  await s.from('users').update({ active: false }).eq('id', id)
+  // Soft delete: set deleted_at + deactivate. Actual removal after 30 days.
+  await s.from('users').update({ active: false, deleted_at: new Date().toISOString() }).eq('id', id)
   return NextResponse.json({ success: true })
 }
