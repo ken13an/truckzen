@@ -48,24 +48,15 @@ export default function SODetailPage() {
       if (!profile) { router.push('/login'); return }
       setUser(profile)
 
-      // Fetch SO directly via client supabase (auth handled via cookies automatically)
-      const { data: soData, error: soError } = await supabase
-        .from('service_orders')
-        .select(`
-          *,
-          assets(id, unit_number, year, make, model, vin, odometer, engine),
-          customers(id, company_name, contact_name, phone, email),
-          so_lines(id, line_type, description, part_number, quantity, unit_price, total_price, created_at)
-        `)
-        .eq('id', params.id as string)
-        .single()
-
-      if (soError || !soData) {
-        console.error('[SO Detail] Failed to load:', soError?.message)
+      // Fetch SO via API route (uses service role key — bypasses RLS)
+      const res = await fetch(`/api/service-orders/${params.id}?shop_id=${profile.shop_id}`)
+      if (!res.ok) {
+        console.error('[SO Detail] API returned', res.status)
         router.push('/orders')
         return
       }
 
+      const soData = await res.json()
       setSO(soData)
       setLines(soData.so_lines || [])
       setEditCause(soData.cause || '')
@@ -78,16 +69,22 @@ export default function SODetailPage() {
 
   async function updateStatus(newStatus: string) {
     setSaving(true)
-    const update: any = { status: newStatus, updated_at: new Date().toISOString() }
-    if (newStatus === 'good_to_go' && so.status !== 'good_to_go') update.completed_at = new Date().toISOString()
-    await supabase.from('service_orders').update(update).eq('id', so.id)
+    await fetch(`/api/service-orders/${so.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    })
     setSO((s: any) => ({ ...s, status: newStatus }))
     setSaving(false)
   }
 
   async function saveCauseCorrection() {
     setSaving(true)
-    await supabase.from('service_orders').update({ cause: editCause, correction: editCorr, updated_at: new Date().toISOString() }).eq('id', so.id)
+    await fetch(`/api/service-orders/${so.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cause: editCause, correction: editCorr }),
+    })
     setSO((s: any) => ({ ...s, cause: editCause, correction: editCorr }))
     setSaving(false)
   }
