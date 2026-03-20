@@ -278,7 +278,7 @@ export default function UsersPage() {
 
             <div style={{ marginBottom: 16 }}>
               <label style={S.label}>Type CONFIRM to proceed</label>
-              <input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder="CONFIRM" style={{ ...S.input, textTransform: 'uppercase' }} />
+              <input value={confirmText} onChange={e => setConfirmText(e.target.value.toUpperCase())} placeholder="CONFIRM" style={S.input} />
             </div>
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
