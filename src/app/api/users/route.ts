@@ -53,6 +53,20 @@ export async function POST(req: Request) {
 
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
+  // Check for existing user with this email — prevent duplicates
+  const { data: existingProfile } = await s.from('users').select('id, email').eq('email', email.toLowerCase().trim()).single()
+  if (existingProfile) {
+    // User already exists — just resend the invite email
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'
+    try {
+      const { data: linkData } = await s.auth.admin.generateLink({ type: 'recovery', email: email.toLowerCase().trim(), options: { redirectTo: `${appUrl}/reset-password` } })
+      const setupUrl = linkData?.properties?.action_link || `${appUrl}/forgot-password`
+      const { sendWelcomeEmail } = await import('@/lib/integrations/resend')
+      await sendWelcomeEmail(email, full_name, 'TruckZen', setupUrl)
+    } catch {}
+    return NextResponse.json({ ...existingProfile, resent: true }, { status: 200 })
+  }
+
   // Create auth user with temporary password
   const tempPassword = `TZ-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
   const { data: auth, error: authErr } = await s.auth.admin.createUser({

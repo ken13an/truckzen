@@ -33,6 +33,13 @@ export async function GET(req: Request, { params }: Params) {
   // Get shop tax settings
   const { data: shop } = await s.from('shops').select('tax_rate, tax_labor, state, county, name, labor_rate').eq('id', wo.shop_id).single()
 
+  // Resolve creator name
+  let createdByName = null
+  if (wo.created_by_user_id) {
+    const { data: creator } = await s.from('users').select('full_name').eq('id', wo.created_by_user_id).single()
+    createdByName = creator?.full_name || null
+  }
+
   // Resolve assigned_to names for job lines
   const techIds = (wo.so_lines || []).map((l: any) => l.assigned_to).filter(Boolean)
   let techMap: Record<string, string> = {}
@@ -53,7 +60,7 @@ export async function GET(req: Request, { params }: Params) {
     if (users) userMap = Object.fromEntries(users.map((u: any) => [u.id, u.full_name]))
   }
 
-  return NextResponse.json({ ...wo, shop, techMap, userMap })
+  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName })
 }
 
 export async function PATCH(req: Request, { params }: Params) {

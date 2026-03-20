@@ -178,14 +178,27 @@ export default function WorkOrderDetailPage() {
     window.location.href = '/work-orders'
   }
 
-  function quickAction(idx: number) {
-    if (idx === 3 || idx === 4) setActiveTab(3) // Files & Notes
-    if (idx === 5) setActiveTab(4) // Activity
-    if (idx === 6) setActiveTab(2) // Estimate & Billing
-    if (idx === 7) setShowMenu(!showMenu) // Menu toggle
+  const [showTeamModal, setShowTeamModal] = useState(false)
+  const [teamAssign, setTeamAssign] = useState({ writer: wo?.service_writer_id || '', tech: wo?.assigned_tech || '', parts: wo?.parts_person_id || '' })
+
+  async function saveTeamAssign() {
+    await fetch(`/api/work-orders/${wo.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service_writer_id: teamAssign.writer || null, assigned_tech: teamAssign.tech || null, parts_person_id: teamAssign.parts || null, user_id: user?.id }),
+    })
+    setShowTeamModal(false)
+    await loadData()
   }
 
-  const quickIcons = [Truck, Calendar, Users, MessageSquare, Paperclip, Clock, DollarSign, MoreHorizontal]
+  function quickAction(idx: number) {
+    if (idx === 0) setShowTeamModal(true) // Team assign
+    if (idx === 1 || idx === 2) setActiveTab(3) // Notes / Files
+    if (idx === 3) setActiveTab(4) // Activity
+    if (idx === 4) setActiveTab(2) // Billing
+    if (idx === 5) setShowMenu(!showMenu) // Menu
+  }
+
+  const quickIcons = [Users, MessageSquare, Paperclip, Clock, DollarSign, MoreHorizontal]
 
   return (
     <>
@@ -215,10 +228,11 @@ export default function WorkOrderDetailPage() {
                     {customer.company_name}
                   </a>
                 )}
-                {wo.payment_type === 'cod' && (
-                  <span style={{ background: '#FEF2F2', color: '#DC2626', fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 100 }}>COD</span>
-                )}
+                <span style={{ background: '#FEF2F2', color: '#DC2626', fontSize: 11, fontWeight: 700, padding: '2px 10px', borderRadius: 100 }}>COD</span>
               </div>
+              {wo.createdByName && (
+                <div style={{ fontSize: 12, color: '#6B7280' }}>Opened by: <strong style={{ color: '#374151' }}>{wo.createdByName}</strong></div>
+              )}
             </div>
             <div style={{ textAlign: 'right' }}>
               {asset.unit_number && (
@@ -280,12 +294,18 @@ export default function WorkOrderDetailPage() {
               <Icon size={16} color="#6B7280" />
             </button>
           ))}
-          {showMenu && (
-            <div style={{ position: 'absolute', right: 24, top: 48, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 50, overflow: 'hidden', minWidth: 160 }}>
-              <button onClick={() => { setShowMenu(false); window.print() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#374151', cursor: 'pointer', fontFamily: font }}>Print WO</button>
-              <button onClick={() => { setShowMenu(false); deleteWO() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#DC2626', cursor: 'pointer', fontFamily: font, borderTop: '1px solid #F3F4F6' }}>Delete WO</button>
-            </div>
-          )}
+          {/* Menu dropdown anchored to last button */}
+          <div style={{ position: 'relative' }}>
+            {showMenu && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setShowMenu(false)} />
+                <div style={{ position: 'absolute', right: 0, top: 36, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.12)', zIndex: 50, overflow: 'hidden', minWidth: 150 }}>
+                  <button onClick={() => { setShowMenu(false); window.print() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#374151', cursor: 'pointer', fontFamily: font }}>Print WO</button>
+                  <button onClick={() => { setShowMenu(false); deleteWO() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#DC2626', cursor: 'pointer', fontFamily: font, borderTop: '1px solid #F3F4F6' }}>Delete WO</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* TAB CONTENT */}
@@ -302,6 +322,36 @@ export default function WorkOrderDetailPage() {
           Powered by TruckZen
         </div>
       </div>
+
+      {/* Team Assign Modal */}
+      {showTeamModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setShowTeamModal(false) }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 400, boxShadow: '0 8px 32px rgba(0,0,0,.15)' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A', marginBottom: 16 }}>Team & Contacts</div>
+            {[
+              { label: 'Service Writer', key: 'writer', filter: (u: any) => ['owner', 'gm', 'service_writer', 'office_admin', 'shop_manager'].includes(u.role) },
+              { label: 'Lead Technician', key: 'tech', filter: (u: any) => ['technician', 'maintenance_technician', 'shop_manager'].includes(u.role) },
+              { label: 'Parts Person', key: 'parts', filter: (u: any) => ['parts_manager', 'owner', 'gm', 'office_admin'].includes(u.role) },
+            ].map(field => (
+              <div key={field.key} style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>{field.label}</label>
+                <select value={(teamAssign as any)[field.key] || ''} onChange={e => setTeamAssign({ ...teamAssign, [field.key]: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13, fontFamily: font }}>
+                  <option value="">Unassigned</option>
+                  {mechanics.filter(field.filter).map((u: any) => (
+                    <option key={u.id} value={u.id}>{u.full_name} ({u.role?.replace(/_/g, ' ')})</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+              <button onClick={() => setShowTeamModal(false)} style={{ padding: '8px 18px', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={saveTeamAssign} style={{ padding: '8px 18px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 

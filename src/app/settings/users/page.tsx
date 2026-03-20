@@ -33,6 +33,8 @@ export default function UsersPage() {
   const [inviteForm, setInviteForm] = useState({ email: '', full_name: '', role: 'technician', team: '' })
   const [inviteError, setInviteError] = useState('')
   const [toast, setToast] = useState('')
+  const [removing, setRemoving] = useState<any>(null)
+  const [confirmText, setConfirmText] = useState('')
 
   async function load() {
     const profile = await getCurrentUser(supabase)
@@ -58,15 +60,21 @@ export default function UsersPage() {
     setEditing(null); setSaving(false); showToast('User updated'); load()
   }
 
-  async function toggleActive(u: any) {
-    const action = u.active ? 'Disable' : 'Enable'
-    if (!confirm(`${action} ${u.full_name}?`)) return
-    if (u.active) {
-      await fetch(`/api/users/${u.id}`, { method: 'DELETE' })
-    } else {
-      await fetch(`/api/users/${u.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: true }) })
-    }
-    showToast(`${u.full_name} ${u.active ? 'disabled' : 'enabled'}`); load()
+  async function disableUser(u: any) {
+    if (confirmText !== 'CONFIRM') return
+    await fetch(`/api/users/${u.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: false }) })
+    setRemoving(null); setConfirmText(''); showToast(`${u.full_name} disabled`); load()
+  }
+
+  async function deleteUser(u: any) {
+    if (confirmText !== 'CONFIRM') return
+    await fetch(`/api/users/${u.id}`, { method: 'DELETE' })
+    setRemoving(null); setConfirmText(''); showToast(`${u.full_name} removed`); load()
+  }
+
+  async function enableUser(u: any) {
+    await fetch(`/api/users/${u.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: true }) })
+    showToast(`${u.full_name} enabled`); load()
   }
 
   async function resendInvite(u: any) {
@@ -160,15 +168,17 @@ export default function UsersPage() {
                     </td>
                     <td style={{ padding: '12px 14px', fontSize: 10, color: '#9D9DA1', fontFamily: 'monospace' }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : 'Never'}</td>
                     <td style={{ padding: '12px 14px' }}>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => setEditing({ ...u })} style={{ padding: '4px 10px', background: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'none', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>Edit</button>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button onClick={() => setEditing({ ...u })} style={{ padding: '4px 10px', background: 'none', color: '#4D9EFF', border: '1px solid rgba(29,111,232,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Edit</button>
                         {!u.last_sign_in_at && u.active && (
-                          <button onClick={() => resendInvite(u)} disabled={saving} style={{ padding: '4px 10px', background: 'rgba(217,119,6,.12)', color: '#FFD60A', border: 'none', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>Resend</button>
+                          <button onClick={() => resendInvite(u)} disabled={saving} style={{ padding: '4px 10px', background: 'none', color: '#FFD60A', border: '1px solid rgba(217,119,6,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Resend</button>
                         )}
                         {u.id !== me?.id && (
-                          <button onClick={() => toggleActive(u)} style={{ padding: '4px 10px', background: u.active ? 'rgba(220,38,38,.1)' : 'rgba(29,184,112,.1)', color: u.active ? '#FF453A' : '#1DB870', border: 'none', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>
-                            {u.active ? 'Disable' : 'Enable'}
-                          </button>
+                          u.active ? (
+                            <button onClick={() => { setRemoving(u); setConfirmText('') }} style={{ padding: '4px 10px', background: 'none', color: '#FF453A', border: '1px solid rgba(220,38,38,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Remove</button>
+                          ) : (
+                            <button onClick={() => enableUser(u)} style={{ padding: '4px 10px', background: 'none', color: '#1DB870', border: '1px solid rgba(29,184,112,.3)', borderRadius: 6, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: font, height: 26 }}>Enable</button>
+                          )
                         )}
                       </div>
                     </td>
@@ -248,6 +258,37 @@ export default function UsersPage() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
               <button onClick={() => { setInviting(false); setInviteError('') }} style={{ padding: '8px 18px', background: 'transparent', color: '#9D9DA1', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
               <button onClick={sendInvite} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Sending...' : 'Send Invite'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Modal */}
+      {removing && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) { setRemoving(null); setConfirmText('') } }}>
+          <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 440 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Remove {removing.full_name}</div>
+            <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 16 }}>Choose how to handle this user:</div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={S.label}>Type CONFIRM to proceed</label>
+              <input value={confirmText} onChange={e => setConfirmText(e.target.value)} placeholder="CONFIRM" style={{ ...S.input, textTransform: 'uppercase' }} />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button onClick={() => { setRemoving(null); setConfirmText('') }} style={{ padding: '8px 16px', background: 'transparent', color: '#9D9DA1', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={() => disableUser(removing)} disabled={confirmText !== 'CONFIRM'}
+                style={{ padding: '8px 16px', background: 'rgba(217,119,6,.15)', color: '#FFD60A', border: '1px solid rgba(217,119,6,.3)', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: confirmText === 'CONFIRM' ? 'pointer' : 'not-allowed', fontFamily: font, opacity: confirmText === 'CONFIRM' ? 1 : 0.4 }}>
+                Disable Account
+              </button>
+              <button onClick={() => deleteUser(removing)} disabled={confirmText !== 'CONFIRM'}
+                style={{ padding: '8px 16px', background: 'rgba(220,38,38,.15)', color: '#FF453A', border: '1px solid rgba(220,38,38,.3)', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: confirmText === 'CONFIRM' ? 'pointer' : 'not-allowed', fontFamily: font, opacity: confirmText === 'CONFIRM' ? 1 : 0.4 }}>
+                Delete Permanently
+              </button>
+            </div>
+            <div style={{ fontSize: 10, color: '#9D9DA1', marginTop: 12 }}>
+              Disable: blocks login, keeps name in historical records. Delete: removes from system, name stays in WO history.
             </div>
           </div>
         </div>

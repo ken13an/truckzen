@@ -74,6 +74,7 @@ export async function POST(req: Request) {
       status: 'draft',
       advisor_id: user_id || null,
       service_writer_id: user_id || null,
+      created_by_user_id: user_id || null,
     })
     .select()
     .single()
