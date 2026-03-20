@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     customer_id: finalCustomerId || null,
     complaint: concern_text.trim(),
     source: 'kiosk',
-    priority: priority || 'normal',
+    priority: priority === 'breakdown' ? 'critical' : priority === 'urgent' ? 'high' : 'normal',
     status: 'draft',
     portal_token: portalToken,
     auth_type: auth_type || 'estimate_first',
