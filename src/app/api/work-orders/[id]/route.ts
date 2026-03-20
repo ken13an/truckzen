@@ -31,7 +31,10 @@ export async function GET(req: Request, { params }: Params) {
   if (error || !wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Get shop tax settings
-  const { data: shop } = await s.from('shops').select('tax_rate, tax_labor, state, county, name, labor_rate').eq('id', wo.shop_id).single()
+  const { data: shop } = await s.from('shops').select('tax_rate, tax_labor, state, county, name, labor_rate, default_labor_rate, dba, phone, email, address').eq('id', wo.shop_id).single()
+
+  // Get wo_parts
+  const { data: woParts } = await s.from('wo_parts').select('*').eq('wo_id', id).order('created_at')
 
   // Resolve creator name
   let createdByName = null
@@ -68,7 +71,7 @@ export async function GET(req: Request, { params }: Params) {
     jobAssignments = ja || []
   }
 
-  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, jobAssignments })
+  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, jobAssignments, woParts: woParts || [] })
 }
 
 export async function PATCH(req: Request, { params }: Params) {
