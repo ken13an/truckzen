@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const s = db()
   const body = await req.json()
-  const { so_id, line_type, description, part_number, quantity, unit_price } = body
+  const { so_id, line_type, description, part_number, quantity, unit_price, line_status } = body
 
   if (!so_id || !line_type || !description)
     return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     part_number: part_number?.trim() || null,
     quantity: qty,
     unit_price: price,
+    line_status: line_status || null,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -81,7 +81,7 @@ export default function WorkOrderDetailPage() {
     await fetch('/api/wo-assign', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ so_line_id: lineId, user_id: userId, wo_id: wo.id }),
+      body: JSON.stringify({ line_id: lineId, tech_id: userId, user_id: user?.id, wo_id: wo.id }),
     })
     await loadData()
   }
@@ -92,7 +92,7 @@ export default function WorkOrderDetailPage() {
     await fetch('/api/wo-notes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wo_id: wo.id, text: noteText, visible_to_customer: noteVisible, user_id: user?.id }),
+      body: JSON.stringify({ wo_id: wo.id, note_text: noteText, visible_to_customer: noteVisible, user_id: user?.id }),
     })
     setNoteText('')
     setNoteVisible(false)
@@ -176,26 +176,6 @@ export default function WorkOrderDetailPage() {
     if (!confirm('Delete this work order? This cannot be undone.')) return
     await fetch(`/api/work-orders/${wo.id}`, { method: 'DELETE' })
     window.location.href = '/work-orders'
-  }
-
-  async function duplicateWO() {
-    const res = await fetch('/api/work-orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        shop_id: wo.shop_id,
-        user_id: user?.id,
-        asset_id: wo.asset_id,
-        customer_id: wo.customer_id,
-        complaint: wo.complaint,
-        priority: wo.priority,
-        job_lines: jobLines.map((l: any) => l.description),
-      }),
-    })
-    if (res.ok) {
-      const newWo = await res.json()
-      window.location.href = `/work-orders/${newWo.id}`
-    }
   }
 
   function quickAction(idx: number) {
@@ -302,8 +282,7 @@ export default function WorkOrderDetailPage() {
           ))}
           {showMenu && (
             <div style={{ position: 'absolute', right: 24, top: 48, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 50, overflow: 'hidden', minWidth: 160 }}>
-              <button onClick={() => { setShowMenu(false); duplicateWO() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#374151', cursor: 'pointer', fontFamily: font }}>Duplicate WO</button>
-              <button onClick={() => { window.print() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#374151', cursor: 'pointer', fontFamily: font, borderTop: '1px solid #F3F4F6' }}>Print WO</button>
+              <button onClick={() => { setShowMenu(false); window.print() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#374151', cursor: 'pointer', fontFamily: font }}>Print WO</button>
               <button onClick={() => { setShowMenu(false); deleteWO() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#DC2626', cursor: 'pointer', fontFamily: font, borderTop: '1px solid #F3F4F6' }}>Delete WO</button>
             </div>
           )}
@@ -334,7 +313,7 @@ export default function WorkOrderDetailPage() {
           <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF' }}>No job lines yet.</div>
         )}
         {jobLines.map((line: any, idx: number) => {
-          const status = line.status || 'unassigned'
+          const status = line.line_status || line.status || 'unassigned'
           const color = STATUS_COLORS[status] || '#6B7280'
           const assignedName = line.assigned_to && techMap[line.assigned_to] ? techMap[line.assigned_to] : null
 
@@ -360,9 +339,9 @@ export default function WorkOrderDetailPage() {
                       const newStatus = e.target.value
                       const updated = { ...wo }
                       const li = updated.so_lines.find((l: any) => l.id === line.id)
-                      if (li) li.status = newStatus
+                      if (li) li.line_status = newStatus
                       setWo(updated)
-                      await patchLine(line.id, { status: newStatus })
+                      await patchLine(line.id, { line_status: newStatus })
                     }}
                     style={{
                       fontSize: 12,
@@ -500,7 +479,14 @@ export default function WorkOrderDetailPage() {
                   Add Parts
                 </button>
                 <button
-                  onClick={() => {/* Could open a hours logging modal */ }}
+                  onClick={() => {
+                    const hrs = prompt('Enter hours worked:', String(line.actual_hours || 0))
+                    if (hrs !== null) {
+                      const v = parseFloat(hrs) || 0
+                      patchLine(line.id, { actual_hours: v })
+                      const updated = { ...wo }; const li = updated.so_lines.find((l: any) => l.id === line.id); if (li) li.actual_hours = v; setWo(updated)
+                    }
+                  }}
                   style={{
                     fontSize: 12, fontWeight: 600, color: '#1D6FE8', background: '#EFF6FF',
                     border: '1px solid #BFDBFE', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontFamily: font,
@@ -529,7 +515,7 @@ export default function WorkOrderDetailPage() {
               await fetch('/api/so-lines', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ wo_id: wo.id, so_id: wo.id, line_type: 'job', description: '', status: 'unassigned' }),
+                body: JSON.stringify({ so_id: wo.id, line_type: 'labor', description: 'New job line', line_status: 'unassigned' }),
               })
               await loadData()
             }}
@@ -652,16 +638,25 @@ export default function WorkOrderDetailPage() {
 
   // ─── TAB 3: ESTIMATE & BILLING ──────────────────────────────────────────────
   function renderBilling() {
+    const inp = { padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: 4, fontSize: 12, width: 80, fontFamily: 'monospace', textAlign: 'right' as const, outline: 'none' }
+
+    // Recalculate live from current wo state
+    const liveLabor = jobLines.reduce((s: number, l: any) => s + (parseFloat(l.billed_hours || 0) * parseFloat(l.labor_rate || shop.labor_rate || 0)), 0)
+    const liveParts = partLines.reduce((s: number, l: any) => s + (parseFloat(l.quantity || 0) * parseFloat(l.unit_price || 0)), 0)
+    const liveCharges = shopCharges.reduce((s: number, c: any) => s + parseFloat(c.amount || 0), 0)
+    const liveTax = liveParts * taxRate / 100
+    const liveTotal = liveLabor + liveParts + liveCharges + liveTax
+
     return (
       <div>
         {/* Summary cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
           {[
-            { label: 'Labor', value: laborTotal, color: '#1D6FE8' },
-            { label: 'Parts', value: partsTotal, color: '#7C3AED' },
-            { label: 'Shop Charges', value: chargesTotal, color: '#EA580C' },
-            { label: `Tax (${taxRate}%)`, value: tax, color: '#6B7280' },
-            { label: 'Grand Total', value: grandTotal, color: '#059669' },
+            { label: 'Labor', value: liveLabor, color: '#1D6FE8' },
+            { label: 'Parts', value: liveParts, color: '#7C3AED' },
+            { label: 'Shop Charges', value: liveCharges, color: '#EA580C' },
+            { label: `Tax (${taxRate}%)`, value: liveTax, color: '#6B7280' },
+            { label: 'Grand Total', value: liveTotal, color: '#059669' },
           ].map(c => (
             <div key={c.label} style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8, padding: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div>
@@ -670,13 +665,13 @@ export default function WorkOrderDetailPage() {
           ))}
         </div>
 
-        {/* Job lines breakdown */}
+        {/* Editable job lines */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Job Lines</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                {['Job', 'Description', 'Hours', 'Rate', 'Labor Total'].map(h => (
+                {['Job', 'Description', 'Hours', 'Rate ($/hr)', 'Labor Total'].map(h => (
                   <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
@@ -685,37 +680,98 @@ export default function WorkOrderDetailPage() {
               {jobLines.map((l: any, i: number) => (
                 <tr key={l.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
                   <td style={{ padding: '8px 12px', fontWeight: 600 }}>Job {i + 1}</td>
-                  <td style={{ padding: '8px 12px' }}>{(l.description || '').slice(0, 60) || '—'}</td>
-                  <td style={{ padding: '8px 12px' }}>{l.billed_hours ?? l.actual_hours ?? '—'}</td>
-                  <td style={{ padding: '8px 12px' }}>${parseFloat(l.labor_rate || 0).toFixed(2)}</td>
-                  <td style={{ padding: '8px 12px', fontWeight: 600 }}>${(parseFloat(l.billed_hours || 0) * parseFloat(l.labor_rate || 0)).toFixed(2)}</td>
+                  <td style={{ padding: '8px 12px', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(l.description || '').slice(0, 50) || '—'}</td>
+                  <td style={{ padding: '8px 12px' }}>
+                    <input type="number" step="0.5" min="0" defaultValue={l.billed_hours || 0} style={inp}
+                      onBlur={e => {
+                        const v = parseFloat(e.target.value) || 0
+                        patchLine(l.id, { billed_hours: v })
+                        const updated = { ...wo }; const li = updated.so_lines.find((x: any) => x.id === l.id); if (li) li.billed_hours = v; setWo(updated)
+                      }} />
+                  </td>
+                  <td style={{ padding: '8px 12px' }}>
+                    <input type="number" step="1" min="0" defaultValue={l.labor_rate || shop.labor_rate || 145} style={inp}
+                      onBlur={e => {
+                        const v = parseFloat(e.target.value) || 0
+                        patchLine(l.id, { labor_rate: v })
+                        const updated = { ...wo }; const li = updated.so_lines.find((x: any) => x.id === l.id); if (li) li.labor_rate = v; setWo(updated)
+                      }} />
+                  </td>
+                  <td style={{ padding: '8px 12px', fontWeight: 600, fontFamily: 'monospace' }}>${(parseFloat(l.billed_hours || 0) * parseFloat(l.labor_rate || shop.labor_rate || 0)).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* Shop charges */}
-        {shopCharges.length > 0 && (
+        {/* Editable parts */}
+        {partLines.length > 0 && (
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Shop Charges</div>
-            {shopCharges.map((c: any) => (
-              <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F3F4F6', fontSize: 13 }}>
-                <span>{c.description || 'Shop charge'}</span>
-                <span style={{ fontWeight: 600 }}>${parseFloat(c.amount || 0).toFixed(2)}</span>
-              </div>
-            ))}
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Parts</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                  {['Part #', 'Description', 'Qty', 'Unit Cost', 'Total'].map(h => (
+                    <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {partLines.map((p: any) => (
+                  <tr key={p.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                    <td style={{ padding: '8px 12px', fontFamily: 'monospace' }}>{p.part_number || '—'}</td>
+                    <td style={{ padding: '8px 12px' }}>{p.description || '—'}</td>
+                    <td style={{ padding: '8px 12px' }}>
+                      <input type="number" min="0" step="1" defaultValue={p.quantity || 0} style={{ ...inp, width: 60 }}
+                        onBlur={e => {
+                          const v = parseFloat(e.target.value) || 0
+                          patchLine(p.id, { quantity: v, total_price: v * parseFloat(p.unit_price || 0) })
+                          const updated = { ...wo }; const li = updated.so_lines.find((x: any) => x.id === p.id); if (li) { li.quantity = v; li.total_price = v * parseFloat(li.unit_price || 0) }; setWo(updated)
+                        }} />
+                    </td>
+                    <td style={{ padding: '8px 12px' }}>
+                      <input type="number" min="0" step="0.01" defaultValue={p.unit_price || 0} style={inp}
+                        onBlur={e => {
+                          const v = parseFloat(e.target.value) || 0
+                          patchLine(p.id, { unit_price: v, total_price: parseFloat(p.quantity || 0) * v })
+                          const updated = { ...wo }; const li = updated.so_lines.find((x: any) => x.id === p.id); if (li) { li.unit_price = v; li.total_price = parseFloat(li.quantity || 0) * v }; setWo(updated)
+                        }} />
+                    </td>
+                    <td style={{ padding: '8px 12px', fontWeight: 600, fontFamily: 'monospace' }}>${(parseFloat(p.quantity || 0) * parseFloat(p.unit_price || 0)).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {/* Tax line */}
+        {/* Editable shop charges */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Shop Charges</div>
+          {shopCharges.length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 8 }}>No shop charges</div>}
+          {shopCharges.map((c: any) => (
+            <div key={c.id} style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #F3F4F6' }}>
+              <input defaultValue={c.description || ''} style={{ flex: 1, padding: '6px 8px', border: '1px solid #D1D5DB', borderRadius: 4, fontSize: 12, outline: 'none' }}
+                onBlur={async e => { await fetch('/api/wo-charges', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, description: e.target.value }) }) }} />
+              <input type="number" step="0.01" defaultValue={c.amount || 0} style={inp}
+                onBlur={async e => {
+                  const v = parseFloat(e.target.value) || 0
+                  await fetch('/api/wo-charges', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, amount: v }) })
+                  const updated = { ...wo }; const ch = updated.wo_shop_charges.find((x: any) => x.id === c.id); if (ch) ch.amount = v; setWo(updated)
+                }} />
+              <button onClick={async () => { await fetch(`/api/wo-charges?id=${c.id}`, { method: 'DELETE' }); await loadData() }} style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 14 }}>x</button>
+            </div>
+          ))}
+        </div>
+
+        {/* Tax + Total */}
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, color: '#6B7280' }}>
           <span>Tax ({taxRate}% on parts)</span>
-          <span>${tax.toFixed(2)}</span>
+          <span>${liveTax.toFixed(2)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: 16, fontWeight: 800, borderTop: '2px solid #1A1A1A', marginTop: 8 }}>
           <span>Grand Total</span>
-          <span>${grandTotal.toFixed(2)}</span>
+          <span>${liveTotal.toFixed(2)}</span>
         </div>
       </div>
     )
@@ -775,7 +831,7 @@ export default function WorkOrderDetailPage() {
                     <span style={{ fontSize: 10, background: '#EFF6FF', color: '#1D6FE8', padding: '1px 6px', borderRadius: 100 }}>Customer visible</span>
                   )}
                 </div>
-                <div style={{ fontSize: 13 }}>{n.text}</div>
+                <div style={{ fontSize: 13 }}>{n.note_text || n.text}</div>
               </div>
             ))}
           </div>
@@ -813,7 +869,7 @@ export default function WorkOrderDetailPage() {
                 rel="noopener noreferrer"
                 style={{ fontSize: 13, color: '#1D6FE8', textDecoration: 'none' }}
               >
-                {f.file_name || f.name || 'File'}
+                {f.filename || f.file_name || 'File'}
               </a>
               <span style={{ fontSize: 11, color: '#9CA3AF' }}>
                 {f.created_at ? new Date(f.created_at).toLocaleString() : ''}

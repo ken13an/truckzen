@@ -39,8 +39,7 @@ export async function POST(req: Request) {
   await s.from('wo_activity_log').insert({
     wo_id,
     user_id: user_id || null,
-    action: 'file_uploaded',
-    details: `Uploaded file: ${filename.trim()}`,
+    action: `Uploaded file: ${filename.trim()}`,
   })
 
   return NextResponse.json(data, { status: 201 })

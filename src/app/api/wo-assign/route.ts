@@ -25,20 +25,18 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Build activity log message
-  let details: string
+  let actionText: string
   if (tech_id) {
     const { data: tech } = await s.from('users').select('full_name').eq('id', tech_id).single()
-    const techName = tech?.full_name || 'Unknown'
-    details = `Assigned Job ${line_id} to ${techName}`
+    actionText = `Assigned job to ${tech?.full_name || 'Unknown'}`
   } else {
-    details = `Unassigned Job ${line_id}`
+    actionText = 'Unassigned job'
   }
 
   await s.from('wo_activity_log').insert({
     wo_id,
     user_id: user_id || null,
-    action: 'tech_assigned',
-    details,
+    action: actionText,
   })
 
   return NextResponse.json(data)

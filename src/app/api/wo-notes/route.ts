@@ -37,8 +37,7 @@ export async function POST(req: Request) {
   await s.from('wo_activity_log').insert({
     wo_id,
     user_id: user_id || null,
-    action: 'note_added',
-    details: `Added a note`,
+    action: 'Added a note',
   })
 
   return NextResponse.json(data, { status: 201 })
