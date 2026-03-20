@@ -213,9 +213,21 @@ export function hasAccess(
 // Sidebar nav items derived from modules
 export function getSidebarItems(role: string, rolePerms?: Record<string, boolean>, userOverrides?: Record<string, boolean>) {
   const sidebarModules = [
-    'dashboard', 'floor', 'orders', 'invoices', 'parts', 'fleet',
-    'maintenance', 'customers', 'accounting', 'reports',
-    'time_tracking', 'settings',
+    'dashboard',
+    'kiosk_admin',
+    'orders',
+    'customers',
+    'fleet',
+    'drivers',
+    'floor',
+    'invoices',
+    'parts',
+    'maintenance',
+    'compliance',
+    'accounting',
+    'reports',
+    'time_tracking',
+    'settings',
   ]
 
   return sidebarModules
