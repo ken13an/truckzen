@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -48,7 +49,9 @@ export default function NewDriverPage() {
 
   return (
     <div style={S.page}>
-      <a href="/drivers" style={{ fontSize:12, color:'#7C8BA0', textDecoration:'none', display:'block', marginBottom:20 }}>← Drivers</a>
+      <a href="/drivers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+  <ChevronLeft size={16} strokeWidth={2} /> Drivers
+</a>
       <div style={S.title}>Add Driver</div>
       <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:20 }}>Add a driver to track CDL and medical card expiry.</div>
       {error && <div style={S.error}>{error}</div>}

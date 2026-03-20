@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 
@@ -238,18 +239,9 @@ export default function NewWorkOrderPage() {
     <div style={{ minHeight: '100vh', background: '#F4F5F7', fontFamily: FONT, padding: 24 }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         {/* Back link */}
-        <a
-          href="/work-orders"
-          style={{
-            fontSize: 13,
-            color: '#1D6FE8',
-            textDecoration: 'none',
-            fontWeight: 600,
-            fontFamily: FONT,
-          }}
-        >
-          &larr; Work Orders
-        </a>
+        <a href="/work-orders" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#F3F4F6', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#374151', textDecoration: 'none', marginBottom: 20 }}>
+  <ChevronLeft size={16} strokeWidth={2} /> Work Orders
+</a>
 
         {/* Title */}
         <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A', marginTop: 12, marginBottom: 28, fontFamily: FONT }}>

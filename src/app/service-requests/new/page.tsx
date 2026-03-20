@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 
@@ -149,7 +150,9 @@ export default function NewServiceRequestPage() {
 
   return (
     <div style={S.page}>
-      <a href="/service-requests" style={S.back}>{'<-'} Service Requests</a>
+      <a href="/service-requests" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+  <ChevronLeft size={16} strokeWidth={2} /> Service Requests
+</a>
       <div style={S.title}>New Service Request</div>
       <div style={S.sub}>Service writer check-in — create a request on behalf of the customer</div>
 

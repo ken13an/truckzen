@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ChevronLeft } from 'lucide-react'
 
 export default function NewPartPage() {
   const router = useRouter()
@@ -38,7 +39,9 @@ export default function NewPartPage() {
 
   return (
     <div style={S.page}>
-      <a href="/parts" style={{ fontSize:12, color:'#7C8BA0', textDecoration:'none', display:'block', marginBottom:20 }}>← Parts Inventory</a>
+      <a href="/parts" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+  <ChevronLeft size={16} strokeWidth={2} /> Parts
+</a>
       <div style={S.title}>Add New Part</div>
       <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:20 }}>Add a part to your catalog. You can edit it anytime.</div>
       {error && <div style={S.error}>{error}</div>}

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -33,6 +34,9 @@ export default function FleetCompliancePage() {
 
   return (
     <div style={S.page}>
+      <a href="/fleet" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+  <ChevronLeft size={16} strokeWidth={2} /> Fleet
+</a>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         <a href="/fleet" style={S.tab}>Vehicles</a>
         <a href="/drivers" style={S.tab}>Drivers</a>

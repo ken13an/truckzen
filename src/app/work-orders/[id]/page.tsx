@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
-import { Truck, Calendar, Users, MessageSquare, Paperclip, Clock, DollarSign, MoreHorizontal, Plus, Mic } from 'lucide-react'
+import { Truck, Calendar, Users, MessageSquare, Paperclip, Clock, DollarSign, MoreHorizontal, Plus, Mic, ChevronLeft } from 'lucide-react'
 
 const STATUS_COLORS: Record<string, string> = {
   unassigned: '#DC2626',
@@ -251,6 +251,9 @@ export default function WorkOrderDetailPage() {
       <div style={{ minHeight: '100vh', background: '#fff', fontFamily: font, color: '#1A1A1A' }}>
         {/* HEADER */}
         <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: '16px 24px' }}>
+          <a href="/work-orders" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#F3F4F6', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#374151', textDecoration: 'none', marginBottom: 20 }}>
+  <ChevronLeft size={16} strokeWidth={2} /> Work Orders
+</a>
           <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
             <a href="/work-orders" style={{ color: '#1D6FE8', textDecoration: 'none' }}>Work Orders</a>
             <span style={{ margin: '0 6px' }}>/</span>
