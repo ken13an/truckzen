@@ -1,11 +1,12 @@
-// TruckZen Logo — brand book compliant
-// Icon: white rounded square with bold TZ + teal dot bottom-right
-// Wordmark: "truck" in white, "zen." in teal #00E0B0
+// TruckZen Logo — brand book
+// Icon: white rounded square, bold TZ, blue dot bottom-left
+// Wordmark: "truck" white, "zen." blue #1D6FE8
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg'
   showWordmark?: boolean
   className?: string
+  style?: React.CSSProperties
 }
 
 export function LogoIcon({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
@@ -16,24 +17,24 @@ export function LogoIcon({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
       <text x="20" y="26" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fontSize="20" fill="#0A0A0A" letterSpacing="-0.5">
         TZ
       </text>
-      <circle cx="33" cy="33" r="3.5" fill="#00E0B0" />
+      <circle cx="9" cy="33" r="3.5" fill="#1D6FE8" />
     </svg>
   )
 }
 
 export function LogoWordmark({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const cls = size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-lg' : 'text-base'
+  const fontSize = size === 'sm' ? '14px' : size === 'lg' ? '18px' : '16px'
   return (
-    <span className={`${cls} font-bold tracking-wide`}>
-      <span className="text-[#FFFFFF]">truck</span>
-      <span className="text-[#00E0B0]">zen.</span>
+    <span style={{ fontSize, fontWeight: 700, letterSpacing: '0.02em', fontFamily: "'Instrument Sans', -apple-system, sans-serif" }}>
+      <span style={{ color: '#EDEDF0' }}>truck</span>
+      <span style={{ color: '#1D6FE8' }}>zen.</span>
     </span>
   )
 }
 
-export default function Logo({ size = 'md', showWordmark = true, className = '' }: LogoProps) {
+export default function Logo({ size = 'md', showWordmark = true, className, style }: LogoProps) {
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', ...style }}>
       <LogoIcon size={size} />
       {showWordmark && <LogoWordmark size={size} />}
     </div>

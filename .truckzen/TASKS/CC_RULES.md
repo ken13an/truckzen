@@ -59,7 +59,7 @@ Never edit anything in TASKS/. Always write your output to DONE/.
 - Use "use client" directive only when the component needs interactivity
 - Server components by default
 - No inline styles -- use Tailwind classes with brand tokens (see .truckzen/TASKS/BRAND_GUIDE.md)
-- No emojis anywhere in the UI, comments, or logs
+- PERMANENT RULE -- NO EMOJIS: No emoji characters anywhere in the codebase. Not in UI text, labels, placeholders, status badges, navigation, comments, logs, API responses, Telegram messages, or any other context. Use Lucide React icons for visual indicators. Use text labels like [WARNING], [EXPIRED], [OVERDUE] for status in API/bot messages. This rule is non-negotiable and applies to every file in src/.
 - All UI text must be professional and clean
 - BRAND GUIDE IS LAW: every color, font, spacing, radius, icon, and animation must follow .truckzen/TASKS/BRAND_GUIDE.md. Do not invent colors. Do not use generic Tailwind colors like bg-blue-500 or text-gray-400. Use ONLY brand colors: bg-surface, text-teal, border-brand-border, etc.
 - Dark mode is the default. Page background is always var(--bg) / bg-bg

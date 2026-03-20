@@ -51,18 +51,18 @@ export default function DVIRPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#0A0A0A', minHeight:'100vh', color:'#F5F5F7', fontFamily:"'Instrument Sans',sans-serif", padding:20, maxWidth:480, margin:'0 auto' },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:24, color:'#F5F5F7', marginBottom:4 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#8E8E93', marginBottom:4, display:'block' },
-    input: { width:'100%', padding:'10px 12px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:13, color:'#F5F5F7', outline:'none', fontFamily:'inherit', minHeight:40, boxSizing:'border-box' as const, marginBottom:12 },
-    btn:   { width:'100%', padding:14, background:'linear-gradient(135deg,#0A84FF,#0A84FF)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginTop:16 },
+    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:20, maxWidth:480, margin:'0 auto' },
+    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:24, color:'#F0F4FF', marginBottom:4 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#7C8BA0', marginBottom:4, display:'block' },
+    input: { width:'100%', padding:'10px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:13, color:'#DDE3EE', outline:'none', fontFamily:'inherit', minHeight:40, boxSizing:'border-box' as const, marginBottom:12 },
+    btn:   { width:'100%', padding:14, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:10, color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit', marginTop:16 },
   }
 
   if (submitted) return (
     <div style={{ ...S.page, textAlign:'center', paddingTop:80 }}>
-      <div style={{ fontSize:24, fontWeight: 700, color: hasDefects ? '#FFD60A' : '#0A84FF' }}>{hasDefects ? 'DEFECTS REPORTED' : 'COMPLETE'}</div>
+      <div style={{ fontSize:16, fontWeight:700, color: hasDefects ? '#F59E0B' : '#1DB870' }}>{hasDefects ? 'Defects Reported' : 'Complete'}</div>
       <div style={{ ...S.title, marginTop:16 }}>{hasDefects ? 'DVIR Submitted — Defects Reported' : 'DVIR Complete — No Defects'}</div>
-      <div style={{ fontSize:13, color:'#8E8E93', lineHeight:1.6, marginTop:8 }}>
+      <div style={{ fontSize:13, color:'#7C8BA0', lineHeight:1.6, marginTop:8 }}>
         {hasDefects ? 'Maintenance team has been notified. Do not operate the vehicle until defects are cleared.' : 'Vehicle is safe to operate. Have a safe trip.'}
       </div>
       <button style={{ ...S.btn, marginTop:24 }} onClick={() => { setSubmitted(false); setChecks({}); setTruck(''); setNotes('') }}>New DVIR</button>
@@ -72,7 +72,7 @@ export default function DVIRPage() {
   return (
     <div style={S.page}>
       <div style={S.title}>Driver Vehicle Inspection</div>
-      <div style={{ fontSize:11, color:'#8E8E93', marginBottom:20 }}>Pre-trip or post-trip inspection report</div>
+      <div style={{ fontSize:11, color:'#7C8BA0', marginBottom:20 }}>Pre-trip or post-trip inspection report</div>
       <label style={S.label}>Truck Unit Number</label>
       <input style={S.input} placeholder="e.g. 2717" value={truck} onChange={e => setTruck(e.target.value)}/>
       <label style={S.label}>Odometer Reading</label>
@@ -80,16 +80,16 @@ export default function DVIRPage() {
 
       {DVIR_ITEMS.map(cat => (
         <div key={cat.category} style={{ marginBottom:16 }}>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'#8E8E93', marginBottom:8 }}>{cat.category}</div>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'#48536A', marginBottom:8 }}>{cat.category}</div>
           {cat.items.map(item => (
-            <div key={item} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.06)', borderRadius:8, marginBottom:6 }}>
-              <span style={{ fontSize:12, color:'#F5F5F7' }}>{item}</span>
+            <div key={item} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'#161B24', border:'1px solid rgba(255,255,255,.06)', borderRadius:8, marginBottom:6 }}>
+              <span style={{ fontSize:12, color:'#DDE3EE' }}>{item}</span>
               <div style={{ display:'flex', gap:6 }}>
                 {(['ok','defect'] as const).map(v => (
                   <button key={v} onClick={() => setChecks(c => ({...c, [item]: checks[item]===v ? null : v}))}
                     style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:700, cursor:'pointer', fontFamily:'inherit', border:'none',
-                      background: checks[item]===v ? (v==='ok'?'#0A84FF':'#FF453A') : '#2A2A2A',
-                      color: checks[item]===v ? '#fff' : '#8E8E93' }}>
+                      background: checks[item]===v ? (v==='ok'?'#1DB870':'#D94F4F') : '#1C2130',
+                      color: checks[item]===v ? '#fff' : '#7C8BA0' }}>
                     {v === 'ok' ? 'OK' : 'Defect'}
                   </button>
                 ))}

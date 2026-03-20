@@ -240,48 +240,48 @@ export default function TechMobilePage() {
   }
 
   const statusColor: Record<string, string> = {
-    draft: '#8E8E93', in_progress: '#0A84FF', waiting_parts: '#FFD60A',
-    waiting_approval: '#FFD60A', done: '#0A84FF', good_to_go: '#0A84FF',
-    ready_final_inspection: '#0A84FF', not_approved: '#FF453A',
+    draft: '#48536A', in_progress: '#1D6FE8', waiting_parts: '#F59E0B',
+    waiting_approval: '#F59E0B', done: '#22C55E', good_to_go: '#22C55E',
+    ready_final_inspection: '#8B5CF6', not_approved: '#EF4444',
   }
 
   const priorityIcon: Record<string, string> = { low: '', normal: '', high: '!', critical: '!!' }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#0A0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ color: '#8E8E93', fontSize: 14 }}>Loading...</div>
+    <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ color: '#7C8BA0', fontSize: 14 }}>Loading...</div>
     </div>
   )
 
   // ── RENDER ───────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0A0A', color: '#F5F5F7', fontFamily: "'Instrument Sans',sans-serif", paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: '#060708', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", paddingBottom: 80 }}>
       {/* Header */}
-      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #2A2A2A', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #1A1D23', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {view === 'detail' ? (
-          <button onClick={() => { setView('list'); setSelected(null); setShowParts(false) }} style={{ background: 'none', border: 'none', color: '#0A84FF', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+          <button onClick={() => { setView('list'); setSelected(null); setShowParts(false) }} style={{ background: 'none', border: 'none', color: '#4D9EFF', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0 }}>
             ← Back
           </button>
         ) : (
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#F5F5F7' }}>TruckZen</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#F0F4FF' }}>TruckZen</div>
         )}
-        <div style={{ fontSize: 12, color: '#8E8E93' }}>{user?.full_name} · {user?.team ? `Team ${user.team}` : user?.role}</div>
+        <div style={{ fontSize: 12, color: '#7C8BA0' }}>{user?.full_name} · {user?.team ? `Team ${user.team}` : user?.role}</div>
       </div>
 
       {/* Clock banner */}
       {clockedIn && (
-        <div style={{ background: 'rgba(0,224,176,.1)', borderBottom: '1px solid rgba(0,224,176,.2)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: 'rgba(29,111,232,.1)', borderBottom: '1px solid rgba(29,111,232,.2)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <span style={{ fontSize: 11, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '.05em' }}>Clocked in </span>
-            <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 16, fontWeight: 600, color: '#0A84FF' }}>{fmtTime(elapsed)}</span>
+            <span style={{ fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em' }}>Clocked in </span>
+            <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 16, fontWeight: 600, color: '#4D9EFF' }}>{fmtTime(elapsed)}</span>
           </div>
-          <button onClick={clockOut} style={{ ...S.smallBtn, background: '#2A2A2A', color: '#FF453A', borderColor: '#FF453A' }}>Clock Out</button>
+          <button onClick={clockOut} style={{ ...S.smallBtn, background: '#1A1D23', color: '#EF4444', borderColor: '#EF4444' }}>Clock Out</button>
         </div>
       )}
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 16, left: 20, right: 20, zIndex: 100, background: '#0A84FF', color: '#fff', padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
+        <div style={{ position: 'fixed', top: 16, left: 20, right: 20, zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
           {toast}
         </div>
       )}
@@ -296,12 +296,12 @@ export default function TechMobilePage() {
       </div>
 
       {/* Bottom nav */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0A0A0A', borderTop: '1px solid #2A2A2A', display: 'flex', zIndex: 50 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0D0F12', borderTop: '1px solid #1A1D23', display: 'flex', zIndex: 50 }}>
         {([['jobs', 'My Jobs', ''], ['floor', 'Floor', ''], ['parts', 'Parts', ''], ['dvir', 'DVIR', '']] as const).map(([k, label, icon]) => (
           <button key={k} onClick={() => { setTab(k); setView('list'); setSelected(null); setShowParts(false); setShowDVIR(false) }}
             style={{ flex: 1, padding: '10px 0 12px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center' }}>
-            {icon && <div style={{ fontSize: 20 }}>{icon}</div>}
-            <div style={{ fontSize: 10, fontWeight: 600, color: tab === k ? '#0A84FF' : '#8E8E93', marginTop: 2 }}>{label}</div>
+            <div style={{ fontSize: 20 }}>{icon}</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: tab === k ? '#4D9EFF' : '#48536A', marginTop: 2 }}>{label}</div>
           </button>
         ))}
       </div>
@@ -310,12 +310,12 @@ export default function TechMobilePage() {
       {showParts && selected && (
         <div style={S.modal}>
           <div style={S.modalCard}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F7', marginBottom: 12 }}>Request Parts</div>
-            <div style={{ fontSize: 12, color: '#8E8E93', marginBottom: 12 }}>{(selected.assets as any)?.unit_number} — {selected.so_number}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Request Parts</div>
+            <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 12 }}>{(selected.assets as any)?.unit_number} — {selected.so_number}</div>
             <textarea value={partsNote} onChange={e => setPartsNote(e.target.value)} placeholder="What parts do you need?"
               style={{ ...S.input, height: 100, resize: 'none' }} />
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-              <button onClick={() => setShowParts(false)} style={{ ...S.actionBtn, background: '#2A2A2A', color: '#8E8E93', flex: 1 }}>Cancel</button>
+              <button onClick={() => setShowParts(false)} style={{ ...S.actionBtn, background: '#1A1D23', color: '#7C8BA0', flex: 1 }}>Cancel</button>
               <button onClick={() => requestParts(selected.id)} disabled={saving || !partsNote.trim()}
                 style={{ ...S.actionBtn, flex: 1, opacity: saving || !partsNote.trim() ? 0.5 : 1 }}>Send Request</button>
             </div>
@@ -328,36 +328,36 @@ export default function TechMobilePage() {
   // ── SUB-VIEWS ────────────────────────────────────────────
   function JobsList() {
     return <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: '#8E8E93', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#7C8BA0', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
         My Jobs ({jobs.length})
       </div>
-      {jobs.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#8E8E93', fontSize: 14 }}>No assigned jobs right now</div>}
+      {jobs.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#48536A', fontSize: 14 }}>No assigned jobs right now</div>}
       {jobs.map(so => (
         <div key={so.id} onClick={() => { setSelected(so); setView('detail') }}
-          style={{ background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 12, padding: 16, marginBottom: 10, cursor: 'pointer' }}>
+          style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 16, marginBottom: 10, cursor: 'pointer' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
             <div>
-              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 13, fontWeight: 600, color: '#0A84FF' }}>{so.so_number}</span>
+              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 13, fontWeight: 600, color: '#4D9EFF' }}>{so.so_number}</span>
               {so.priority === 'high' || so.priority === 'critical' ? (
-                <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: so.priority === 'critical' ? '#FF453A' : '#FFD60A', textTransform: 'uppercase' }}>
+                <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: so.priority === 'critical' ? '#EF4444' : '#F59E0B', textTransform: 'uppercase' }}>
                   {priorityIcon[so.priority]} {so.priority}
                 </span>
               ) : null}
             </div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: statusColor[so.status] || '#8E8E93', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: statusColor[so.status] || '#48536A', textTransform: 'uppercase' }}>
               {so.status?.replace(/_/g, ' ')}
             </span>
           </div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#F5F5F7', marginBottom: 4 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#F0F4FF', marginBottom: 4 }}>
             {(so.assets as any)?.unit_number ? `#${(so.assets as any).unit_number}` : '—'}
-            <span style={{ fontSize: 12, color: '#8E8E93', fontWeight: 400, marginLeft: 8 }}>
+            <span style={{ fontSize: 12, color: '#7C8BA0', fontWeight: 400, marginLeft: 8 }}>
               {(so.assets as any)?.year} {(so.assets as any)?.make} {(so.assets as any)?.model}
             </span>
           </div>
-          <div style={{ fontSize: 12, color: '#8E8E93' }}>{(so.customers as any)?.company_name || '—'}</div>
-          {so.complaint && <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 6, lineHeight: 1.5 }}>{so.complaint.slice(0, 100)}{so.complaint.length > 100 ? '...' : ''}</div>}
+          <div style={{ fontSize: 12, color: '#7C8BA0' }}>{(so.customers as any)?.company_name || '—'}</div>
+          {so.complaint && <div style={{ fontSize: 12, color: '#A0AABF', marginTop: 6, lineHeight: 1.5 }}>{so.complaint.slice(0, 100)}{so.complaint.length > 100 ? '...' : ''}</div>}
           {clockedIn === so.id && (
-            <div style={{ marginTop: 8, fontSize: 12, color: '#0A84FF', fontWeight: 600 }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: '#4D9EFF', fontWeight: 600 }}>
               Clocked in — {fmtTime(elapsed)}
             </div>
           )}
@@ -375,13 +375,13 @@ export default function TechMobilePage() {
     return <>
       {/* Unit + customer */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#F5F5F7' }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F4FF' }}>
           {a?.unit_number ? `#${a.unit_number}` : so.so_number}
         </div>
-        <div style={{ fontSize: 13, color: '#8E8E93', marginTop: 2 }}>
+        <div style={{ fontSize: 13, color: '#7C8BA0', marginTop: 2 }}>
           {a?.year} {a?.make} {a?.model} · {c?.company_name || '—'}
         </div>
-        <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#8E8E93', marginTop: 4 }}>{so.so_number}</div>
+        <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#48536A', marginTop: 4 }}>{so.so_number}</div>
       </div>
 
       {/* Status badge */}
@@ -392,23 +392,23 @@ export default function TechMobilePage() {
       {/* Complaint / Cause / Correction */}
       <div style={S.section}>
         <div style={S.sectionLabel}>Complaint</div>
-        <div style={{ fontSize: 14, color: '#F5F5F7', lineHeight: 1.6 }}>{so.complaint || '—'}</div>
+        <div style={{ fontSize: 14, color: '#DDE3EE', lineHeight: 1.6 }}>{so.complaint || '—'}</div>
       </div>
-      {so.cause && <div style={S.section}><div style={S.sectionLabel}>Cause</div><div style={{ fontSize: 14, color: '#F5F5F7' }}>{so.cause}</div></div>}
-      {so.correction && <div style={S.section}><div style={S.sectionLabel}>Correction</div><div style={{ fontSize: 14, color: '#F5F5F7' }}>{so.correction}</div></div>}
+      {so.cause && <div style={S.section}><div style={S.sectionLabel}>Cause</div><div style={{ fontSize: 14, color: '#DDE3EE' }}>{so.cause}</div></div>}
+      {so.correction && <div style={S.section}><div style={S.sectionLabel}>Correction</div><div style={{ fontSize: 14, color: '#DDE3EE' }}>{so.correction}</div></div>}
 
       {/* Time tracking */}
       <div style={{ ...S.card, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 11, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '.05em' }}>Time</div>
+          <div style={{ fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em' }}>Time</div>
           {isClockedHere ? (
-            <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 20, fontWeight: 700, color: '#0A84FF' }}>{fmtTime(elapsed)}</div>
+            <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 20, fontWeight: 700, color: '#4D9EFF' }}>{fmtTime(elapsed)}</div>
           ) : (
-            <div style={{ fontSize: 14, color: '#8E8E93' }}>{clockedIn ? 'On another job' : 'Not clocked in'}</div>
+            <div style={{ fontSize: 14, color: '#48536A' }}>{clockedIn ? 'On another job' : 'Not clocked in'}</div>
           )}
         </div>
         {isClockedHere ? (
-          <button onClick={clockOut} style={{ ...S.actionBtn, background: '#2A2A2A', color: '#FF453A', borderColor: '#FF453A' }}>Clock Out</button>
+          <button onClick={clockOut} style={{ ...S.actionBtn, background: '#1A1D23', color: '#EF4444', borderColor: '#EF4444' }}>Clock Out</button>
         ) : (
           <button onClick={() => clockIn(so.id)} style={S.actionBtn} disabled={!!saving}>Clock In</button>
         )}
@@ -417,11 +417,11 @@ export default function TechMobilePage() {
       {/* Quick actions */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
         <button onClick={() => uploadPhoto(so.id)} style={S.tileBtn}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#8E8E93' }}>PHOTO</span>
+          <span style={{ fontSize: 12, fontWeight: 700 }}>Photo</span>
           <span>Take Photo</span>
         </button>
         <button onClick={() => setShowParts(true)} style={S.tileBtn}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#8E8E93' }}>PARTS</span>
+          <span style={{ fontSize: 12, fontWeight: 700 }}>Parts</span>
           <span>Request Parts</span>
         </button>
       </div>
@@ -432,25 +432,25 @@ export default function TechMobilePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {so.status !== 'in_progress' && (
             <button onClick={() => updateStatus(so.id, 'in_progress')} disabled={saving}
-              style={{ ...S.bigBtn, background: 'linear-gradient(135deg,#0A84FF,#0A84FF)' }}>
+              style={{ ...S.bigBtn, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)' }}>
               Start Work
             </button>
           )}
           {so.status === 'in_progress' && (
             <>
               <button onClick={() => updateStatus(so.id, 'waiting_parts')} disabled={saving}
-                style={{ ...S.bigBtn, background: '#FFD60A', color: '#000' }}>
+                style={{ ...S.bigBtn, background: '#F59E0B', color: '#000' }}>
                 Waiting for Parts
               </button>
               <button onClick={() => { updateStatus(so.id, 'done'); if (isClockedHere) clockOut() }} disabled={saving}
-                style={{ ...S.bigBtn, background: '#0A84FF', color: '#000' }}>
+                style={{ ...S.bigBtn, background: '#22C55E', color: '#000' }}>
                 Complete Job
               </button>
             </>
           )}
           {so.status === 'waiting_parts' && (
             <button onClick={() => updateStatus(so.id, 'in_progress')} disabled={saving}
-              style={{ ...S.bigBtn, background: 'linear-gradient(135deg,#0A84FF,#0A84FF)' }}>
+              style={{ ...S.bigBtn, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)' }}>
               Resume Work (Parts Received)
             </button>
           )}
@@ -460,9 +460,9 @@ export default function TechMobilePage() {
       {/* Totals */}
       {(so.labor_total > 0 || so.parts_total > 0) && (
         <div style={{ ...S.card, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-          <div><div style={{ fontSize: 10, color: '#8E8E93' }}>LABOR</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.labor_total?.toFixed(0)}</div></div>
-          <div><div style={{ fontSize: 10, color: '#8E8E93' }}>PARTS</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.parts_total?.toFixed(0)}</div></div>
-          <div><div style={{ fontSize: 10, color: '#8E8E93' }}>TOTAL</div><div style={{ fontSize: 16, fontWeight: 700, color: '#0A84FF' }}>${so.grand_total?.toFixed(0)}</div></div>
+          <div><div style={{ fontSize: 10, color: '#7C8BA0' }}>LABOR</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.labor_total?.toFixed(0)}</div></div>
+          <div><div style={{ fontSize: 10, color: '#7C8BA0' }}>PARTS</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.parts_total?.toFixed(0)}</div></div>
+          <div><div style={{ fontSize: 10, color: '#7C8BA0' }}>TOTAL</div><div style={{ fontSize: 16, fontWeight: 700, color: '#4D9EFF' }}>${so.grand_total?.toFixed(0)}</div></div>
         </div>
       )}
     </>
@@ -470,18 +470,18 @@ export default function TechMobilePage() {
 
   function FloorView() {
     return <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: '#8E8E93', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#7C8BA0', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
         Shop Floor ({floorJobs.length})
       </div>
       {floorJobs.map(so => (
-        <div key={so.id} style={{ background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 10, padding: 12, marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div key={so.id} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10, padding: 12, marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#0A84FF' }}>{so.so_number}</span>
-              {so.bay && <span style={{ fontSize: 10, color: '#8E8E93', background: '#2A2A2A', padding: '2px 6px', borderRadius: 4 }}>Bay {so.bay}</span>}
+              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#4D9EFF' }}>{so.so_number}</span>
+              {so.bay && <span style={{ fontSize: 10, color: '#48536A', background: '#1A1D23', padding: '2px 6px', borderRadius: 4 }}>Bay {so.bay}</span>}
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#F5F5F7', marginTop: 4 }}>#{(so.assets as any)?.unit_number || '—'}</div>
-            <div style={{ fontSize: 11, color: '#8E8E93' }}>{(so.customers as any)?.company_name} · {(so.users as any)?.full_name || 'Unassigned'}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F4FF', marginTop: 4 }}>#{(so.assets as any)?.unit_number || '—'}</div>
+            <div style={{ fontSize: 11, color: '#7C8BA0' }}>{(so.customers as any)?.company_name} · {(so.users as any)?.full_name || 'Unassigned'}</div>
           </div>
           <div style={{ fontSize: 10, fontWeight: 700, color: statusColor[so.status], textTransform: 'uppercase', textAlign: 'right' }}>
             {so.status?.replace(/_/g, ' ')}
@@ -507,22 +507,22 @@ export default function TechMobilePage() {
     )
 
     return <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: '#8E8E93', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>Parts Lookup</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#7C8BA0', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>Parts Lookup</div>
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search part # or name..."
         style={{ ...S.input, marginBottom: 12 }} />
       {filtered.slice(0, 30).map(p => (
-        <div key={p.part_number} style={{ background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 10, padding: 12, marginBottom: 8 }}>
+        <div key={p.part_number} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10, padding: 12, marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#0A84FF' }}>{p.part_number}</div>
-              <div style={{ fontSize: 14, color: '#F5F5F7', marginTop: 2 }}>{p.description}</div>
+              <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: '#4D9EFF' }}>{p.part_number}</div>
+              <div style={{ fontSize: 14, color: '#F0F4FF', marginTop: 2 }}>{p.description}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: p.on_hand > 0 ? '#0A84FF' : '#FF453A' }}>{p.on_hand}</div>
-              <div style={{ fontSize: 10, color: '#8E8E93' }}>in stock</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: p.on_hand > 0 ? '#22C55E' : '#EF4444' }}>{p.on_hand}</div>
+              <div style={{ fontSize: 10, color: '#48536A' }}>in stock</div>
             </div>
           </div>
-          {p.bin_location && <div style={{ fontSize: 11, color: '#8E8E93', marginTop: 4 }}>Bin: {p.bin_location}</div>}
+          {p.bin_location && <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 4 }}>Bin: {p.bin_location}</div>}
         </div>
       ))}
     </>
@@ -538,7 +538,7 @@ export default function TechMobilePage() {
     }, [user])
 
     return <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: '#8E8E93', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>DVIR Submission</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#7C8BA0', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>DVIR Submission</div>
 
       <div style={S.card}>
         <div style={S.fieldLabel}>Unit Number</div>
@@ -552,7 +552,7 @@ export default function TechMobilePage() {
         <div style={{ display: 'flex', gap: 10 }}>
           {(['pre_trip', 'post_trip'] as const).map(t => (
             <button key={t} onClick={() => setDvirType(t)}
-              style={{ flex: 1, padding: '12px 0', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: dvirType === t ? '1px solid #0A84FF' : '1px solid #2A2A2A', background: dvirType === t ? 'rgba(0,224,176,.1)' : '#0A0A0A', color: dvirType === t ? '#0A84FF' : '#8E8E93' }}>
+              style={{ flex: 1, padding: '12px 0', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: dvirType === t ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: dvirType === t ? 'rgba(29,111,232,.1)' : '#0D0F12', color: dvirType === t ? '#4D9EFF' : '#7C8BA0' }}>
               {t === 'pre_trip' ? 'Pre-Trip' : 'Post-Trip'}
             </button>
           ))}
@@ -577,15 +577,15 @@ export default function TechMobilePage() {
 
 // ── STYLES ─────────────────────────────────────────────────
 const S: Record<string, React.CSSProperties> = {
-  card: { background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 12, padding: 16, marginBottom: 16 },
+  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 16, marginBottom: 16 },
   section: { marginBottom: 20 },
-  sectionLabel: { fontSize: 11, fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 },
-  fieldLabel: { fontSize: 12, fontWeight: 600, color: '#8E8E93', marginBottom: 6 },
-  input: { width: '100%', padding: '12px 14px', background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 9, color: '#F5F5F7', fontSize: 14, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' },
-  actionBtn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#0A84FF,#0A84FF)', color: '#fff', whiteSpace: 'nowrap' },
-  bigBtn: { padding: '16px 24px', borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#0A84FF,#0A84FF)', color: '#fff', textAlign: 'center', width: '100%' },
-  tileBtn: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '16px 12px', background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 12, cursor: 'pointer', color: '#F5F5F7', fontSize: 13, fontWeight: 600, fontFamily: "'Instrument Sans',sans-serif" },
-  smallBtn: { padding: '6px 14px', borderRadius: 7, border: '1px solid #2A2A2A', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'none' },
+  sectionLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 },
+  fieldLabel: { fontSize: 12, fontWeight: 600, color: '#7C8BA0', marginBottom: 6 },
+  input: { width: '100%', padding: '12px 14px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 9, color: '#DDE3EE', fontSize: 14, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' },
+  actionBtn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', whiteSpace: 'nowrap' },
+  bigBtn: { padding: '16px 24px', borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', textAlign: 'center', width: '100%' },
+  tileBtn: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '16px 12px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, cursor: 'pointer', color: '#DDE3EE', fontSize: 13, fontWeight: 600, fontFamily: "'Instrument Sans',sans-serif" },
+  smallBtn: { padding: '6px 14px', borderRadius: 7, border: '1px solid #1A1D23', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'none' },
   modal: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', zIndex: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: 16 },
-  modalCard: { background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 },
+  modalCard: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 },
 }

@@ -27,9 +27,9 @@ export default function MaintenancePage() {
   const today = new Date().toISOString().split('T')[0]
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#0A0A0A', minHeight:'100vh', color:'#F5F5F7', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F5F5F7', marginBottom:4 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'#0A0A0A', whiteSpace:'nowrap' },
+    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
+    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:4 },
+    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
     td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
   }
 
@@ -38,29 +38,29 @@ export default function MaintenancePage() {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
         <div>
           <div style={S.title}>Maintenance & PM</div>
-          <div style={{ fontSize:12, color:'#8E8E93' }}>{pms.filter(p => p.next_due_date < today).length} overdue · {pms.length} total schedules</div>
+          <div style={{ fontSize:12, color:'#7C8BA0' }}>{pms.filter(p => p.next_due_date < today).length} overdue · {pms.length} total schedules</div>
         </div>
-        <button onClick={() => window.location.href='/maintenance/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#0A84FF,#0A84FF)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add PM Schedule</button>
+        <button onClick={() => window.location.href='/maintenance/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add PM Schedule</button>
       </div>
-      <div style={{ background:'#2A2A2A', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
+      <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
         <div style={{ overflowX:'auto' }}>
           <table style={{ width:'100%', borderCollapse:'collapse', minWidth:520 }}>
             <thead><tr>{['Truck','Service','Interval','Next Due Date','Next Due Miles','Status'].map(h =>
               <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#8E8E93' }}>Loading...</td></tr>
+              {loading ? <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#7C8BA0' }}>Loading...</td></tr>
               : pms.map(pm => {
                 const asset   = pm.assets as any
                 const isOver  = pm.next_due_date && pm.next_due_date < today
                 const isSoon  = pm.next_due_date && pm.next_due_date <= new Date(Date.now() + 7*86400000).toISOString().split('T')[0]
-                const color   = isOver ? '#FF453A' : isSoon ? '#FFD60A' : '#0A84FF'
+                const color   = isOver ? '#D94F4F' : isSoon ? '#D4882A' : '#1DB870'
                 return (
                   <tr key={pm.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = '/maintenance/' + pm.id}>
-                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#0A84FF', fontWeight:700 }}>#{asset?.unit_number}</td>
-                    <td style={{ ...S.td, color:'#F5F5F7', fontWeight:600 }}>{pm.service_name}</td>
-                    <td style={{ ...S.td, color:'#8E8E93' }}>{pm.interval_miles ? `${pm.interval_miles.toLocaleString()} mi` : `${pm.interval_days}d`}</td>
+                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#4D9EFF', fontWeight:700 }}>#{asset?.unit_number}</td>
+                    <td style={{ ...S.td, color:'#F0F4FF', fontWeight:600 }}>{pm.service_name}</td>
+                    <td style={{ ...S.td, color:'#7C8BA0' }}>{pm.interval_miles ? `${pm.interval_miles.toLocaleString()} mi` : `${pm.interval_days}d`}</td>
                     <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color }}>{pm.next_due_date || '—'}</td>
-                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#8E8E93' }}>{pm.next_due_reading ? pm.next_due_reading.toLocaleString() : '—'}</td>
+                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#7C8BA0' }}>{pm.next_due_reading ? pm.next_due_reading.toLocaleString() : '—'}</td>
                     <td style={S.td as any}>
                       <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:color+'18', color, border:'1px solid '+color+'33' }}>
                         <span style={{ width:4, height:4, borderRadius:'50%', background:'currentColor' }}/>{isOver?'OVERDUE':isSoon?'DUE SOON':'OK'}

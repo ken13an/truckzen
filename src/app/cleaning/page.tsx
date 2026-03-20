@@ -82,9 +82,9 @@ export default function CleaningPage() {
   const completedToday = (zoneName: string) => sessions.some(s => s.cleaning_zones?.name === zoneName)
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#0A0A0A', minHeight:'100vh', color:'#F5F5F7', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F5F5F7', marginBottom:4 },
-    card:  { background:'#2A2A2A', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:10 },
+    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
+    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:4 },
+    card:  { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:10 },
   }
 
   // Active zone checklist view
@@ -93,27 +93,27 @@ export default function CleaningPage() {
     const done = zone.checklist.filter(item => checks[item]).length
     return (
       <div style={{ ...S.page, maxWidth:480, margin:'0 auto' }}>
-        <button onClick={() => setActive(null)} style={{ fontSize:12, color:'#8E8E93', background:'none', border:'none', cursor:'pointer', marginBottom:20, fontFamily:'inherit' }}>← Back</button>
-        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'#F5F5F7', marginBottom:4 }}>{zone.name}</div>
-        <div style={{ fontSize:12, color:'#8E8E93', marginBottom:20 }}>{done}/{zone.checklist.length} items complete</div>
+        <button onClick={() => setActive(null)} style={{ fontSize:12, color:'#7C8BA0', background:'none', border:'none', cursor:'pointer', marginBottom:20, fontFamily:'inherit' }}>← Back</button>
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'#F0F4FF', marginBottom:4 }}>{zone.icon} {zone.name}</div>
+        <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:20 }}>{done}/{zone.checklist.length} items complete</div>
 
         {/* Progress */}
-        <div style={{ height:6, background:'#2A2A2A', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
-          <div style={{ height:'100%', width:`${done/zone.checklist.length*100}%`, background:'linear-gradient(90deg,#0A84FF,#0A84FF)', borderRadius:100, transition:'width .2s' }}/>
+        <div style={{ height:6, background:'#1C2130', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
+          <div style={{ height:'100%', width:`${done/zone.checklist.length*100}%`, background:'linear-gradient(90deg,#1D6FE8,#1DB870)', borderRadius:100, transition:'width .2s' }}/>
         </div>
 
         {zone.checklist.map(item => (
           <div key={item} onClick={() => setChecks(c => ({ ...c, [item]: !c[item] }))}
-            style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', background: checks[item]?'rgba(29,184,112,.06)':'#2A2A2A', border:`1px solid ${checks[item]?'rgba(29,184,112,.2)':'rgba(255,255,255,.06)'}`, borderRadius:10, marginBottom:8, cursor:'pointer' }}>
-            <div style={{ width:24, height:24, borderRadius:'50%', border:`2px solid ${checks[item]?'#0A84FF':'rgba(255,255,255,.2)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: checks[item]?'#0A84FF':'transparent', color:'#fff', fontSize:12, fontWeight:700 }}>
-              {checks[item] ? 'v' : ''}
+            style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', background: checks[item]?'rgba(29,184,112,.06)':'#161B24', border:`1px solid ${checks[item]?'rgba(29,184,112,.2)':'rgba(255,255,255,.06)'}`, borderRadius:10, marginBottom:8, cursor:'pointer' }}>
+            <div style={{ width:24, height:24, borderRadius:'50%', border:`2px solid ${checks[item]?'#1DB870':'rgba(255,255,255,.2)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: checks[item]?'#1DB870':'transparent', color:'#fff', fontSize:12, fontWeight:700 }}>
+              {checks[item] ? '✓' : ''}
             </div>
-            <span style={{ fontSize:13, color: checks[item]?'#F5F5F7':'#8E8E93', textDecoration: checks[item]?'line-through':'none' }}>{item}</span>
+            <span style={{ fontSize:13, color: checks[item]?'#DDE3EE':'#7C8BA0', textDecoration: checks[item]?'line-through':'none' }}>{item}</span>
           </div>
         ))}
 
         <button onClick={() => completeZone(zone)} disabled={saving}
-          style={{ width:'100%', marginTop:12, padding:14, background: done===zone.checklist.length?'linear-gradient(135deg,#0A84FF,#0A84FF)':'linear-gradient(135deg,#0A84FF,#0A84FF)', border:'none', borderRadius:12, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', opacity:saving?0.7:1 }}>
+          style={{ width:'100%', marginTop:12, padding:14, background: done===zone.checklist.length?'linear-gradient(135deg,#1DB870,#14875A)':'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:12, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', opacity:saving?0.7:1 }}>
           {saving ? 'Saving...' : done===zone.checklist.length ? 'Mark Zone Clean' : `Submit (${done}/${zone.checklist.length} done)`}
         </button>
       </div>
@@ -128,16 +128,16 @@ export default function CleaningPage() {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
         <div>
           <div style={S.title}>Shop Cleaning</div>
-          <div style={{ fontSize:12, color:'#8E8E93' }}>{completedCount}/{totalZones} zones clean today</div>
+          <div style={{ fontSize:12, color:'#7C8BA0' }}>{completedCount}/{totalZones} zones clean today</div>
         </div>
-        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color: completedCount===totalZones?'#0A84FF':completedCount>0?'#FFD60A':'#8E8E93' }}>
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color: completedCount===totalZones?'#1DB870':completedCount>0?'#D4882A':'#7C8BA0' }}>
           {Math.round(completedCount/totalZones*100)}%
         </div>
       </div>
 
       {/* Overall progress bar */}
-      <div style={{ height:6, background:'#2A2A2A', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
-        <div style={{ height:'100%', width:`${completedCount/totalZones*100}%`, background:'linear-gradient(90deg,#0A84FF,#0A84FF)', borderRadius:100, transition:'width .3s' }}/>
+      <div style={{ height:6, background:'#1C2130', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
+        <div style={{ height:'100%', width:`${completedCount/totalZones*100}%`, background:'linear-gradient(90deg,#1D6FE8,#1DB870)', borderRadius:100, transition:'width .3s' }}/>
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:10 }}>
@@ -145,24 +145,24 @@ export default function CleaningPage() {
           const done = completedToday(zone.name)
           const session = sessions.find(s => s.cleaning_zones?.name === zone.name)
           return (
-            <div key={zone.name} style={{ ...S.card, border:`1px solid ${done?'rgba(29,184,112,.2)':'rgba(255,255,255,.055)'}`, background: done?'rgba(29,184,112,.04)':'#2A2A2A' }}>
+            <div key={zone.name} style={{ ...S.card, border:`1px solid ${done?'rgba(29,184,112,.2)':'rgba(255,255,255,.055)'}`, background: done?'rgba(29,184,112,.04)':'#161B24' }}>
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
                 <div>
-                  {zone.icon && <div style={{ fontSize:20, marginBottom:4 }}>{zone.icon}</div>}
-                  <div style={{ fontSize:13, fontWeight:700, color:'#F5F5F7' }}>{zone.name}</div>
-                  {zone.team && <div style={{ fontSize:10, color:'#8E8E93', marginTop:2 }}>Team {zone.team}</div>}
+                  <div style={{ fontSize:20, marginBottom:4 }}>{zone.icon}</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF' }}>{zone.name}</div>
+                  {zone.team && <div style={{ fontSize:10, color:'#48536A', marginTop:2 }}>Team {zone.team}</div>}
                 </div>
                 {done && (
                   <div style={{ textAlign:'right' }}>
-                    <div style={{ fontSize:12, color:'#0A84FF', fontWeight: 700 }}>DONE</div>
-                    <div style={{ fontSize:10, color:'#0A84FF', fontFamily:'monospace', marginTop:2 }}>{session?.score}%</div>
+                    <div style={{ fontSize:11, fontWeight:700, color:'#1DB870' }}>Done</div>
+                    <div style={{ fontSize:10, color:'#1DB870', fontFamily:'monospace', marginTop:2 }}>{session?.score}%</div>
                   </div>
                 )}
               </div>
-              <div style={{ fontSize:10, color:'#8E8E93', marginBottom:12 }}>{zone.checklist.length} items</div>
+              <div style={{ fontSize:10, color:'#7C8BA0', marginBottom:12 }}>{zone.checklist.length} items</div>
               {!done && (
                 <button onClick={() => startZone(zone)}
-                  style={{ width:'100%', padding:'9px 0', background:'rgba(0,224,176,.1)', border:'1px solid rgba(0,224,176,.25)', borderRadius:8, color:'#0A84FF', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+                  style={{ width:'100%', padding:'9px 0', background:'rgba(29,111,232,.1)', border:'1px solid rgba(29,111,232,.25)', borderRadius:8, color:'#4D9EFF', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
                   Start Cleaning
                 </button>
               )}

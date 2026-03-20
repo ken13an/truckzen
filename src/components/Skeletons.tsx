@@ -23,10 +23,10 @@ function Bone({ w = '100%', h = 16, radius = 6, style = {} }: {
 // ── TABLE SKELETON ────────────────────────────────────────────
 export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: number }) {
   return (
-    <div style={{ background: '#2A2A2A', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+    <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
       <style>{pulse}</style>
       {/* Header */}
-      <div style={{ display: 'flex', gap: 12, padding: '10px 14px', background: '#0A0A0A', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+      <div style={{ display: 'flex', gap: 12, padding: '10px 14px', background: '#0B0D11', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
         {Array.from({ length: cols }).map((_, i) => <Bone key={i} w={`${60 + Math.random() * 60}px`} h={8}/>)}
       </div>
       {/* Rows */}
@@ -47,7 +47,7 @@ export function StatsSkeleton({ count = 6 }: { count?: number }) {
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 10, marginBottom: 20 }}>
       <style>{pulse}</style>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ background: '#2A2A2A', border: '1px solid rgba(255,255,255,.055)', borderRadius: 10, padding: '12px 14px' }}>
+        <div key={i} style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 10, padding: '12px 14px' }}>
           <Bone w="60%" h={8} style={{ marginBottom: 10 }}/>
           <Bone w="50%" h={28} radius={4}/>
         </div>
@@ -59,7 +59,7 @@ export function StatsSkeleton({ count = 6 }: { count?: number }) {
 // ── CARD SKELETON ─────────────────────────────────────────────
 export function CardSkeleton({ lines = 3 }: { lines?: number }) {
   return (
-    <div style={{ background: '#2A2A2A', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16 }}>
+    <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16 }}>
       <style>{pulse}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
         <Bone w="40%" h={16}/>
@@ -96,7 +96,7 @@ export function SOCardSkeleton({ count = 4 }: { count?: number }) {
     <>
       <style>{pulse}</style>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ background: '#2A2A2A', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 14, marginBottom: 10 }}>
+        <div key={i} style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 14, marginBottom: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ flex: 1 }}>
               <Bone w={80} h={10} style={{ marginBottom: 8 }}/>

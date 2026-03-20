@@ -1,15 +1,14 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Mail, Loader2, XCircle } from 'lucide-react'
 import Logo from '@/components/Logo'
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()
-  const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
+  const [email,   setEmail]   = useState('')
+  const [sent,    setSent]    = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error,   setError]   = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -22,42 +21,51 @@ export default function ForgotPasswordPage() {
     setSent(true)
   }
 
+  const S: Record<string, React.CSSProperties> = {
+    page:    { minHeight:'100vh', background:'#060708', display:'flex', alignItems:'center', justifyContent:'center', padding:20, fontFamily:"'Instrument Sans',sans-serif" },
+    card:    { width:'100%', maxWidth:400, background:'#161B24', border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'36px 32px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
+    logo:    { display:'flex', alignItems:'center', gap:10, marginBottom:28 },
+    mark:    { width:32, height:32, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' },
+    title:   { fontSize:22, fontWeight:700, color:'#F0F4FF', marginBottom:6 },
+    sub:     { fontSize:13, color:'#7C8BA0', marginBottom:24, lineHeight:1.5 },
+    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:11, letterSpacing:'.08em', textTransform:'uppercase' as const, color:'#7C8BA0', marginBottom:6, display:'block' },
+    input:   { width:'100%', padding:'11px 14px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:14, color:'#DDE3EE', outline:'none', fontFamily:'inherit', minHeight:44, boxSizing:'border-box' as const },
+    btn:     { width:'100%', padding:13, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', marginTop:16, minHeight:48, fontFamily:'inherit' },
+    error:   { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#D94F4F', marginTop:10 },
+    back:    { display:'block', textAlign:'center' as const, marginTop:20, fontSize:12, color:'#48536A', textDecoration:'none' },
+    success: { textAlign:'center' as const, padding:'20px 0' },
+  }
+
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-5">
-      <div className="w-full max-w-[400px] bg-surface border border-brand-border rounded-xl p-8 shadow-2xl">
-        {/* Logo */}
-        <Logo size="md" className="mb-7" />
+    <div style={S.page}>
+      <div style={S.card}>
+        <Logo size="md" style={{ marginBottom: 28 }} />
 
         {sent ? (
-          <div className="text-center py-4">
-            <Mail size={40} strokeWidth={1.5} className="text-teal mx-auto mb-4" />
-            <h1 className="text-lg font-bold text-text-primary mb-2">Check your email</h1>
-            <p className="text-sm text-text-secondary leading-relaxed">
-              We sent a password reset link to <strong className="text-text-primary">{email}</strong>. Check your inbox and click the link.
-            </p>
-            <a href="/login" className="inline-block mt-6 text-sm text-teal no-underline hover:underline">Back to login</a>
+          <div style={S.success}>
+            <div style={{ fontSize:16, fontWeight:700, color:'#4D9EFF', marginBottom:16 }}>Email Sent</div>
+            <div style={{ fontSize:18, fontWeight:700, color:'#F0F4FF', marginBottom:8 }}>Check your email</div>
+            <div style={{ fontSize:13, color:'#7C8BA0', lineHeight:1.6 }}>
+              We sent a password reset link to <strong style={{ color:'#DDE3EE' }}>{email}</strong>.<br/>
+              Check your inbox and click the link.
+            </div>
+            <a href="/login" style={{ ...S.back, marginTop:24, color:'#4D9EFF' }}>Back to login</a>
           </div>
         ) : (
           <>
-            <h1 className="text-xl font-bold text-text-primary mb-1">Reset password</h1>
-            <p className="text-sm text-text-secondary mb-7">Enter your work email and we will send a reset link.</p>
+            <div style={S.title}>Reset password</div>
+            <div style={S.sub}>Enter your work email and we'll send a reset link.</div>
             <form onSubmit={handleSubmit}>
-              <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono mb-1.5 block">Email</label>
-              <input type="email" autoFocus required value={email}
+              <label style={S.label}>Email</label>
+              <input style={S.input} type="email" autoFocus value={email}
                 onChange={e => { setEmail(e.target.value); setError('') }}
-                placeholder="you@yourshop.com"
-                className="w-full px-3.5 py-2.5 bg-surface-2 border border-brand-border rounded-md text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-teal transition-colors duration-150 min-h-[44px]" />
-              {error && (
-                <div className="flex items-center gap-2 px-3 py-2.5 bg-error/10 border border-error/20 rounded-md text-xs text-error mt-3">
-                  <XCircle size={14} strokeWidth={1.5} className="shrink-0" /> {error}
-                </div>
-              )}
-              <button type="submit" disabled={loading}
-                className={`w-full py-3 rounded-md text-sm font-bold mt-4 min-h-[48px] transition-all duration-150 ${loading ? 'bg-surface-2 text-text-secondary cursor-not-allowed' : 'bg-teal text-bg hover:bg-teal-hover cursor-pointer'}`}>
-                {loading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> Sending...</span> : 'Send Reset Link'}
+                placeholder="you@yourshop.com" required/>
+              {error && <div style={S.error}>{error}</div>}
+              <button style={S.btn} type="submit" disabled={loading}>
+                {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
             </form>
-            <a href="/login" className="block text-center mt-5 text-xs text-text-tertiary no-underline hover:text-teal transition-colors">Back to login</a>
+            <a href="/login" style={S.back}>Back to login</a>
           </>
         )}
       </div>

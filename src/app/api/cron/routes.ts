@@ -137,7 +137,7 @@ export async function GET_COMPLIANCE(req: Request) {
     const list = items.map(i => {
       const who   = (i.assets as any)?.unit_number ? `Unit #${(i.assets as any).unit_number}` : (i.drivers as any)?.full_name || '—'
       const daysLeft = Math.ceil((new Date(i.expiry_date).getTime() - today.getTime()) / 86400000)
-      const icon  = daysLeft < 0 ? '[EXPIRED]' : daysLeft <= 7 ? '[URGENT]' : '[WARNING]'
+      const icon  = daysLeft < 0 ? '[EXPIRED]' : daysLeft <= 7 ? '[WARNING]' : '[DUE]'
       return `${icon} ${who} — ${i.document_name} (${daysLeft < 0 ? `${Math.abs(daysLeft)}d EXPIRED` : `${daysLeft}d left`})`
     }).join('\n')
 

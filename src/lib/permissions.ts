@@ -4,31 +4,30 @@
 // ============================================================
 
 // All modules in the system
-// Icon keys map to Lucide icon names — rendered by sidebar
 export const MODULES = [
-  { key: 'dashboard',        label: 'Dashboard',           icon: 'layout-dashboard', path: '/dashboard' },
-  { key: 'floor',            label: 'Shop Floor',          icon: 'kanban',           path: '/shop-floor' },
-  { key: 'orders',           label: 'Repair Orders',       icon: 'clipboard-list',   path: '/orders' },
-  { key: 'invoices',         label: 'Invoices',            icon: 'file-text',        path: '/invoices' },
-  { key: 'parts',            label: 'Parts',               icon: 'package',          path: '/parts' },
-  { key: 'fleet',            label: 'Fleet',               icon: 'truck',            path: '/fleet' },
-  { key: 'maintenance',      label: 'Maintenance',         icon: 'wrench',           path: '/maintenance' },
-  { key: 'customers',        label: 'Customers',           icon: 'users',            path: '/customers' },
-  { key: 'accounting',       label: 'Accounting',          icon: 'calculator',       path: '/accounting' },
-  { key: 'reports',          label: 'Reports',             icon: 'bar-chart-3',      path: '/reports' },
-  { key: 'time_tracking',    label: 'Time Clock',          icon: 'clock',            path: '/time-tracking' },
-  { key: 'settings',         label: 'Settings',            icon: 'settings',         path: '/settings' },
-  { key: 'tires',            label: 'Tire Tracker',        icon: 'circle-dot',       path: '/maintenance/tires' },
-  { key: 'parts_lifecycle',  label: 'Parts Lifecycle',     icon: 'refresh-cw',       path: '/maintenance/parts-lifecycle' },
-  { key: 'compliance',       label: 'Compliance',          icon: 'shield-check',     path: '/compliance' },
-  { key: 'drivers',          label: 'Drivers',             icon: 'contact',          path: '/drivers' },
-  { key: 'import',           label: 'Data Import',         icon: 'upload',           path: '/settings/import' },
-  { key: 'admin_permissions',label: 'Permissions',         icon: 'lock',             path: '/admin/permissions' },
-  { key: 'tech_mobile',      label: 'Tech Mobile',         icon: 'smartphone',       path: '/tech' },
-  { key: 'dvir',             label: 'DVIR',                icon: 'clipboard-check',  path: '/dvir' },
-  { key: 'billing',          label: 'Billing',             icon: 'credit-card',      path: '/settings/billing' },
-  { key: 'integrations',     label: 'Integrations',        icon: 'plug',             path: '/settings/integrations' },
-  { key: 'audit_log',        label: 'Audit Log',           icon: 'scroll-text',      path: '/settings/audit' },
+  { key: 'dashboard',        label: 'Dashboard',           icon: '▦',  path: '/dashboard' },
+  { key: 'floor',            label: 'Shop Floor',          icon: '⬡',  path: '/shop-floor' },
+  { key: 'orders',           label: 'Service Orders',      icon: '≡',  path: '/orders' },
+  { key: 'invoices',         label: 'Invoices',            icon: '$',  path: '/invoices' },
+  { key: 'parts',            label: 'Parts Inventory',     icon: '⬡',  path: '/parts' },
+  { key: 'fleet',            label: 'Fleet / Assets',      icon: '◈',  path: '/fleet' },
+  { key: 'drivers',          label: 'Drivers',             icon: '◉',  path: '/drivers' },
+  { key: 'maintenance',      label: 'Maintenance',         icon: '⚙',  path: '/maintenance' },
+  { key: 'tires',            label: 'Tire Tracker',        icon: '⭕', path: '/maintenance/tires' },
+  { key: 'parts_lifecycle',  label: 'Parts Lifecycle',     icon: '',  path: '/maintenance/parts-lifecycle' },
+  { key: 'compliance',       label: 'Compliance',          icon: '✓',  path: '/compliance' },
+  { key: 'customers',        label: 'Customers',           icon: '◎',  path: '/customers' },
+  { key: 'accounting',       label: 'Accounting',          icon: '◈',  path: '/accounting' },
+  { key: 'reports',          label: 'Reports',             icon: '▤',  path: '/reports' },
+  { key: 'time_tracking',    label: 'Time Tracking',       icon: '⏲',  path: '/time-tracking' },
+  { key: 'settings',         label: 'Settings',            icon: '⚙',  path: '/settings' },
+  { key: 'import',           label: 'Data Import',         icon: '',  path: '/settings/import' },
+  { key: 'admin_permissions',label: 'Permissions Admin',   icon: '',  path: '/admin/permissions' },
+  { key: 'tech_mobile',      label: 'Tech Mobile',         icon: '',  path: '/tech' },
+  { key: 'dvir',             label: 'DVIR',                icon: '',  path: '/dvir' },
+  { key: 'billing',          label: 'Billing',             icon: '',  path: '/settings/billing' },
+  { key: 'integrations',     label: 'Integrations',        icon: '',  path: '/settings/integrations' },
+  { key: 'audit_log',        label: 'Audit Log',           icon: '',  path: '/settings/audit' },
 ] as const
 
 export type ModuleKey = typeof MODULES[number]['key']
@@ -161,11 +160,11 @@ export const ROLE_LABEL: Record<string, string> = {
 }
 
 export const ROLE_COLOR: Record<string, string> = {
-  owner: '#FF453A', gm: '#FF453A', it_person: '#FF453A', shop_manager: '#FFD60A',
-  service_writer: '#0A84FF', technician: '#0A84FF',
-  parts_manager: '#0A84FF', fleet_manager: '#0A84FF', maintenance_manager: '#0A84FF',
-  maintenance_technician: '#0A84FF', accountant: '#FFD60A', office_admin: '#FFD60A',
-  dispatcher: '#0A84FF', driver: '#8E8E93',
+  owner: '#D94F4F', gm: '#D94F4F', it_person: '#D94F4F', shop_manager: '#D4882A',
+  service_writer: '#4D9EFF', technician: '#1DB870',
+  parts_manager: '#8B5CF6', fleet_manager: '#0E9F8E', maintenance_manager: '#0E9F8E',
+  maintenance_technician: '#1DB870', accountant: '#E8692A', office_admin: '#D4882A',
+  dispatcher: '#0E9F8E', driver: '#7C8BA0',
 }
 
 // All roles in display order

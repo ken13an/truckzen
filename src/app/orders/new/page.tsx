@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
-import { Mic, Square, Sparkles, Loader2, XCircle, Plus, X } from 'lucide-react'
 
 export default function NewSOPage() {
   const supabase = createClient()
@@ -16,11 +15,13 @@ export default function NewSOPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  // Form
   const [form, setForm] = useState({ asset_id: '', customer_id: '', complaint: '', cause: '', correction: '', source: 'walk_in', priority: 'normal', team: '', bay: '' })
   const [assetSearch, setAssetSearch] = useState('')
   const [filteredAssets, setFilteredAssets] = useState<any[]>([])
   const [selectedAsset, setSelectedAsset] = useState<any>(null)
 
+  // AI panel state
   const [recording, setRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
@@ -37,181 +38,336 @@ export default function NewSOPage() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
       setUser(profile)
+
       const [{ data: a }, { data: c }, { data: shop }] = await Promise.all([
         supabase.from('assets').select('id, unit_number, year, make, model, customer_id, engine_make').eq('shop_id', profile.shop_id).not('status', 'eq', 'retired').order('unit_number'),
         supabase.from('customers').select('id, company_name').eq('shop_id', profile.shop_id).order('company_name'),
         supabase.from('shops').select('labor_rate').eq('id', profile.shop_id).single(),
       ])
-      setAssets(a ?? []); setCustomers(c ?? [])
+      setAssets(a || [])
+      setCustomers(c || [])
       if (shop?.labor_rate) setShopRate(parseFloat(shop.labor_rate))
     }
     load()
   }, [])
 
+  // Truck search
   useEffect(() => {
     if (!assetSearch) { setFilteredAssets([]); return }
     const q = assetSearch.toLowerCase()
-    setFilteredAssets(assets.filter(a => a.unit_number?.toLowerCase().includes(q) || a.make?.toLowerCase().includes(q) || a.model?.toLowerCase().includes(q)).slice(0, 8))
+    setFilteredAssets(assets.filter(a =>
+      a.unit_number?.toLowerCase().includes(q) || a.make?.toLowerCase().includes(q) || a.model?.toLowerCase().includes(q)
+    ).slice(0, 8))
   }, [assetSearch, assets])
 
   function selectAsset(asset: any) {
-    setSelectedAsset(asset); setAssetSearch(`#${asset.unit_number} — ${asset.year} ${asset.make} ${asset.model}`); setFilteredAssets([])
+    setSelectedAsset(asset)
+    setAssetSearch(`#${asset.unit_number} — ${asset.year} ${asset.make} ${asset.model}`)
+    setFilteredAssets([])
     setForm(f => ({ ...f, asset_id: asset.id, customer_id: asset.customer_id || '' }))
   }
 
+  // ── VOICE INPUT ────────────────────────────────────────
   function startVoice() {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SR) { setError('Voice input not supported. Use Chrome or Edge.'); return }
-    const r = new SR(); r.continuous = true; r.interimResults = true; r.lang = 'en-US'
-    r.onresult = (e: any) => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; setTranscript(t) }
-    r.onerror = () => setRecording(false); r.onend = () => setRecording(false)
-    r.start(); recognitionRef.current = r; setRecording(true); setTranscript(''); setAiResult(null)
-  }
-  function stopVoice() { recognitionRef.current?.stop(); recognitionRef.current = null; setRecording(false) }
+    if (!SR) { setError('Voice input not supported in this browser. Use Chrome or Edge.'); return }
 
+    const r = new SR()
+    r.continuous = true
+    r.interimResults = true
+    r.lang = 'en-US'
+    r.onresult = (e: any) => {
+      let text = ''
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript
+      setTranscript(text)
+    }
+    r.onerror = (e: any) => { console.log('Speech error:', e.error); setRecording(false) }
+    r.onend = () => setRecording(false)
+    r.start()
+    recognitionRef.current = r
+    setRecording(true)
+    setTranscript('')
+    setAiResult(null)
+  }
+
+  function stopVoice() {
+    if (recognitionRef.current) { recognitionRef.current.stop(); recognitionRef.current = null }
+    setRecording(false)
+  }
+
+  // ── AI GENERATE ────────────────────────────────────────
   async function generateAI() {
     const text = transcript || form.complaint
     if (!text.trim()) { setError('Speak or type a complaint first'); return }
-    setAiLoading(true); setError('')
-    const res = await fetch('/api/ai/service-writer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript: text, language: 'en', truck_info: selectedAsset ? { year: selectedAsset.year, make: selectedAsset.make, model: selectedAsset.model, engine: selectedAsset.engine_make } : null, complaint: form.complaint || text, shop_id: user?.shop_id, role: user?.role }) })
-    if (!res.ok) { setError((await res.json().catch(() => ({}))).error ?? 'AI failed'); setAiLoading(false); return }
-    const data = await res.json(); setAiResult(data)
-    setForm(f => ({ ...f, complaint: data.complaint || f.complaint || text, cause: data.cause || '', correction: data.correction || '' }))
-    if (data.suggested_parts) setSuggestedParts(data.suggested_parts)
+
+    setAiLoading(true)
+    setError('')
+
+    const res = await fetch('/api/ai/service-writer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transcript: text,
+        language: 'en',
+        truck_info: selectedAsset ? { year: selectedAsset.year, make: selectedAsset.make, model: selectedAsset.model, engine: selectedAsset.engine_make } : null,
+        complaint: form.complaint || text,
+        shop_id: user?.shop_id,
+        role: user?.role,
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      setError(err.error || 'AI generation failed — try again')
+      setAiLoading(false)
+      return
+    }
+
+    const data = await res.json()
+    setAiResult(data)
+
+    // Auto-fill form
+    setForm(f => ({
+      ...f,
+      complaint: data.complaint || f.complaint || text,
+      cause: data.cause || '',
+      correction: data.correction || '',
+    }))
+
+    // Parts suggestions
+    if (data.suggested_parts) {
+      setSuggestedParts(data.suggested_parts)
+    }
+
+    // Labor hours
     if (data.labor_hours_min) setLaborHoursMin(data.labor_hours_min)
     if (data.labor_hours_max) setLaborHoursMax(data.labor_hours_max)
-    if (data.labor_hours_min && data.labor_hours_max) setLaborHours(Math.round(((data.labor_hours_min + data.labor_hours_max) / 2) * 10) / 10)
+    if (data.labor_hours_min && data.labor_hours_max) {
+      setLaborHours(Math.round(((data.labor_hours_min + data.labor_hours_max) / 2) * 10) / 10)
+    }
+
     setAiLoading(false)
   }
 
-  function addPart(part: any) { if (addedParts.find(p => p.name === part.name)) return; setAddedParts(prev => [...prev, { ...part, quantity: part.quantity || 1, unit_cost: part.inventory_match?.sell_price || 0 }]) }
-  function removePart(idx: number) { setAddedParts(prev => prev.filter((_, i) => i !== idx)) }
-  function updatePartQty(idx: number, qty: number) { setAddedParts(prev => prev.map((p, i) => i === idx ? { ...p, quantity: Math.max(1, qty) } : p)) }
+  function addPart(part: any) {
+    if (addedParts.find(p => p.name === part.name)) return
+    setAddedParts(prev => [...prev, { ...part, quantity: part.quantity || 1, unit_cost: part.inventory_match?.sell_price || 0 }])
+  }
 
+  function removePart(idx: number) {
+    setAddedParts(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  function updatePartQty(idx: number, qty: number) {
+    setAddedParts(prev => prev.map((p, i) => i === idx ? { ...p, quantity: Math.max(1, qty) } : p))
+  }
+
+  // Totals
   const partsTotal = addedParts.reduce((s, p) => s + (p.unit_cost * p.quantity), 0)
   const laborTotal = laborHours * shopRate
   const grandTotal = partsTotal + laborTotal
 
+  // ── SUBMIT ─────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.asset_id) { setError('Select a truck'); return }
     if (!form.complaint) { setError('Describe the complaint'); return }
-    setSubmitting(true); setError('')
-    const res = await fetch('/api/service-orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, shop_id: user.shop_id, user_id: user.id, role: user.role, team: form.team || null, bay: form.bay || null, customer_id: form.customer_id || null }) })
+
+    setSubmitting(true)
+    setError('')
+
+    const res = await fetch('/api/service-orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shop_id: user.shop_id,
+        user_id: user.id,
+        role: user.role,
+        asset_id: form.asset_id,
+        customer_id: form.customer_id || null,
+        complaint: form.complaint,
+        cause: form.cause || null,
+        correction: form.correction || null,
+        source: form.source,
+        priority: form.priority,
+        team: form.team || null,
+        bay: form.bay || null,
+      }),
+    })
     const data = await res.json()
-    if (!res.ok) { setError(data.error ?? 'Failed to create'); setSubmitting(false); return }
+
+    if (!res.ok) {
+      setError(data.error || 'Failed to create service order')
+      setSubmitting(false)
+      return
+    }
+
+    // Add line items (parts + labor)
     const soId = data.id
-    for (const part of addedParts) { await fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: soId, line_type: 'part', description: part.inventory_match?.description || part.name, part_number: part.inventory_match?.part_number || part.part_number || null, quantity: part.quantity, unit_price: part.unit_cost }) }) }
-    if (laborHours > 0) { await fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: soId, line_type: 'labor', description: `${(form.correction ?? '').slice(0, 60) || 'Repair labor'} — ${laborHours} hrs`, quantity: laborHours, unit_price: shopRate }) }) }
+    for (const part of addedParts) {
+      await fetch('/api/so-lines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          so_id: soId,
+          line_type: 'part',
+          description: part.inventory_match?.description || part.name,
+          part_number: part.inventory_match?.part_number || part.part_number || null,
+          quantity: part.quantity,
+          unit_price: part.unit_cost,
+        }),
+      })
+    }
+
+    if (laborHours > 0) {
+      await fetch('/api/so-lines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          so_id: soId,
+          line_type: 'labor',
+          description: `${form.correction?.slice(0, 60) || 'Repair labor'} — ${laborHours} hrs`,
+          quantity: laborHours,
+          unit_price: shopRate,
+        }),
+      })
+    }
+
     router.push(`/orders/${soId}`)
   }
 
   if (!user) return null
 
-  const inp = "w-full px-3 py-2.5 bg-surface-2 border border-brand-border rounded-md text-sm text-text-primary placeholder:text-text-tertiary outline-none focus:border-teal transition-colors"
-  const sel = "w-full px-3 py-2.5 bg-surface-2 border border-brand-border rounded-md text-sm text-text-primary outline-none focus:border-teal transition-colors"
-  const lbl = "text-[10px] font-bold text-text-tertiary uppercase tracking-widest font-mono mb-1 block"
-
   return (
-    <div className="bg-bg min-h-screen text-text-primary p-6 max-w-2xl mx-auto">
-      <a href="/orders" className="text-xs text-text-tertiary hover:text-teal no-underline mb-5 block">Back to Repair Orders</a>
-      <h1 className="text-2xl font-bold text-text-primary tracking-tight mb-1">New Repair Order</h1>
-      <p className="text-sm text-text-secondary mb-5">AI-assisted — speak or type the complaint, AI generates professional notes and suggests parts.</p>
+    <div style={S.page}>
+      <a href="/orders" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#7C8BA0', textDecoration: 'none', marginBottom: 20 }}>← Orders</a>
+      <div style={S.title}>New Service Order</div>
+      <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>AI-assisted service writing — speak or type the complaint, AI generates professional notes and suggests parts.</div>
 
-      {error && <div className="flex items-center gap-2 px-3 py-2.5 bg-error/10 border border-error/20 rounded-md text-xs text-error mb-4"><XCircle size={14} strokeWidth={1.5} className="shrink-0" />{error}</div>}
+      {error && <div style={S.error}>{error}</div>}
 
       <form onSubmit={handleSubmit}>
-        {/* 1. Vehicle */}
-        <div className="bg-surface border border-brand-border rounded-lg p-5 mb-3">
-          <h3 className="text-sm font-bold text-text-primary mb-3">1. Vehicle</h3>
-          <label className={lbl}>Search by unit number, make, or model</label>
-          <div className="relative">
-            <input className={inp} value={assetSearch} onChange={e => { setAssetSearch(e.target.value); if (!e.target.value) { setSelectedAsset(null); setForm(f => ({ ...f, asset_id: '', customer_id: '' })) } }} placeholder="e.g. TH001 or Volvo or T680" />
+        {/* ═══ VEHICLE ═══ */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>1. Vehicle</div>
+          <label style={S.label}>Search by unit number, make, or model</label>
+          <div style={{ position: 'relative' }}>
+            <input style={S.input} value={assetSearch} onChange={e => { setAssetSearch(e.target.value); if (!e.target.value) { setSelectedAsset(null); setForm(f => ({ ...f, asset_id: '', customer_id: '' })) } }}
+              placeholder="e.g. TH001 or Volvo or T680" />
             {filteredAssets.length > 0 && (
-              <div className="absolute top-full mt-1 left-0 right-0 bg-surface-2 border border-brand-border rounded-lg overflow-hidden z-50 shadow-xl">
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#1C2130', border: '1px solid rgba(255,255,255,.12)', borderRadius: 9, overflow: 'hidden', zIndex: 50, boxShadow: '0 8px 32px rgba(0,0,0,.5)' }}>
                 {filteredAssets.map(a => (
-                  <div key={a.id} className="px-3 py-2.5 cursor-pointer border-b border-brand-border/50 text-sm hover:bg-teal/5 transition-colors" onClick={() => selectAsset(a)}>
-                    <span className="font-mono font-bold text-teal">#{a.unit_number}</span>
-                    <span className="text-text-primary ml-2">{a.year} {a.make} {a.model}</span>
+                  <div key={a.id} style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 13 }}
+                    onClick={() => selectAsset(a)}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#4D9EFF' }}>#{a.unit_number}</span>
+                    <span style={{ color: '#DDE3EE', marginLeft: 8 }}>{a.year} {a.make} {a.model}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
           {selectedAsset && (
-            <div className="mt-2.5 px-3 py-2.5 bg-teal/5 border border-teal/15 rounded-md">
-              <span className="text-sm font-bold text-text-primary">Unit #{selectedAsset.unit_number} — {selectedAsset.year} {selectedAsset.make} {selectedAsset.model}</span>
-              {selectedAsset.engine_make && <span className="text-xs text-text-tertiary ml-2">Engine: {selectedAsset.engine_make}</span>}
+            <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(29,111,232,.06)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 8 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>Unit #{selectedAsset.unit_number} — {selectedAsset.year} {selectedAsset.make} {selectedAsset.model}</div>
+              {selectedAsset.engine_make && <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 2 }}>Engine: {selectedAsset.engine_make}</div>}
             </div>
           )}
         </div>
 
-        {/* 2. AI Service Writer — purple accent */}
-        <div className="bg-surface border border-purple/20 rounded-lg p-5 mb-3">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles size={18} strokeWidth={1.5} className="text-purple" />
-            <h3 className="text-sm font-bold text-text-primary">2. AI Service Writer</h3>
-            <span className="text-[9px] font-bold text-purple-light bg-purple/15 px-1.5 py-0.5 rounded-sm uppercase">AI Powered</span>
+        {/* ═══ AI SERVICE WRITER ═══ */}
+        <div style={{ ...S.card, borderColor: 'rgba(29,111,232,.15)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <span style={{ fontSize: 18 }}>🤖</span>
+            <div style={S.cardTitle}>2. AI Service Writer</div>
           </div>
 
-          {/* Voice */}
-          <label className={lbl}>Voice input — speak the complaint in any language</label>
-          <div className="flex gap-2.5 mb-4">
-            <button type="button" onClick={recording ? stopVoice : startVoice}
-              className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 transition-colors ${recording ? 'bg-error' : 'bg-purple hover:bg-purple-dark'}`}>
-              {recording ? <Square size={20} strokeWidth={1.5} className="text-white" /> : <Mic size={20} strokeWidth={1.5} className="text-white" />}
-            </button>
-            <div className="flex-1">
-              {recording && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-error/10 rounded-md mb-2">
-                  <div className="w-2 h-2 rounded-full bg-error animate-pulse" />
-                  <span className="text-xs text-error font-semibold">Recording... tap stop when done</span>
-                </div>
-              )}
-              {transcript && <div className="px-3 py-2.5 bg-surface-2 rounded-md text-sm text-text-primary leading-relaxed">{transcript}</div>}
+          {/* Voice input */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>Voice Input — Speak the complaint in any language</label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="button" onClick={recording ? stopVoice : startVoice}
+                style={{ ...S.voiceBtn, background: recording ? '#EF4444' : 'linear-gradient(135deg,#1D6FE8,#1248B0)', flex: 'none', width: 56, height: 56 }}>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>{recording ? 'Stop' : 'Rec'}</span>
+              </button>
+              <div style={{ flex: 1 }}>
+                {recording && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'rgba(239,68,68,.08)', borderRadius: 8, marginBottom: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', animation: 'pulse 1s infinite' }} />
+                    <span style={{ fontSize: 12, color: '#EF4444', fontWeight: 600 }}>Recording... tap stop when done</span>
+                  </div>
+                )}
+                {transcript && (
+                  <div style={{ padding: '10px 14px', background: '#1C2130', borderRadius: 8, fontSize: 13, color: '#DDE3EE', lineHeight: 1.5 }}>
+                    {transcript}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <label className={lbl}>Complaint — what the customer reported</label>
-          <textarea className={`${inp} min-h-[80px] resize-y`} value={form.complaint} onChange={e => setForm(f => ({ ...f, complaint: e.target.value }))} placeholder="e.g. Oil leak from rear of engine, getting worse over last 2 weeks" />
+          {/* Complaint text */}
+          <label style={S.label}>Complaint — What the customer reported</label>
+          <textarea style={{ ...S.input, minHeight: 80, resize: 'vertical' }}
+            value={form.complaint} onChange={e => setForm(f => ({ ...f, complaint: e.target.value }))}
+            placeholder="e.g. Oil leak from rear of engine, getting worse over last 2 weeks" />
 
-          {/* Generate button — purple for AI */}
+          {/* Generate button */}
           <button type="button" onClick={generateAI} disabled={aiLoading || (!transcript && !form.complaint)}
-            className={`w-full flex items-center justify-center gap-2 py-3 rounded-md text-sm font-bold mt-2 mb-4 transition-all ${aiLoading || (!transcript && !form.complaint) ? 'bg-surface-2 text-text-tertiary cursor-not-allowed' : 'bg-purple text-white hover:bg-purple-dark cursor-pointer'}`}>
-            {aiLoading ? <><Loader2 size={14} className="animate-spin" /> Generating...</> : <><Sparkles size={14} strokeWidth={1.5} /> Generate Cause, Correction and Parts</>}
+            style={{ ...S.aiBtn, opacity: aiLoading || (!transcript && !form.complaint) ? 0.5 : 1, marginTop: 8, marginBottom: 16 }}>
+            {aiLoading ? (
+              <span>Generating... please wait</span>
+            ) : (
+              <>Generate Cause, Correction & Parts</>
+            )}
           </button>
 
-          {/* AI Results */}
-          {(form.cause || form.correction) && <>
-            <label className={lbl}>Cause — AI-generated technical diagnosis</label>
-            <textarea className={`${inp} min-h-[60px] resize-y border-purple/20`} value={form.cause} onChange={e => setForm(f => ({ ...f, cause: e.target.value }))} />
-            <label className={`${lbl} mt-3`}>Correction — AI-generated repair procedure</label>
-            <textarea className={`${inp} min-h-[60px] resize-y border-purple/20`} value={form.correction} onChange={e => setForm(f => ({ ...f, correction: e.target.value }))} />
-          </>}
-          {aiResult?.confidence && <p className="text-[10px] text-text-tertiary mt-1">AI confidence: {aiResult.confidence} &middot; Department: {aiResult.department ?? '—'}</p>}
+          {/* AI Results: Cause & Correction */}
+          {(form.cause || form.correction) && (
+            <>
+              <label style={S.label}>Cause — AI-generated technical diagnosis</label>
+              <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical', borderColor: 'rgba(29,111,232,.2)' }}
+                value={form.cause} onChange={e => setForm(f => ({ ...f, cause: e.target.value }))} />
+
+              <label style={{ ...S.label, marginTop: 12 }}>Correction — AI-generated repair procedure</label>
+              <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical', borderColor: 'rgba(29,111,232,.2)' }}
+                value={form.correction} onChange={e => setForm(f => ({ ...f, correction: e.target.value }))} />
+            </>
+          )}
+
+          {aiResult?.confidence && (
+            <div style={{ fontSize: 10, color: '#48536A', marginTop: 4 }}>AI confidence: {aiResult.confidence} · Department: {aiResult.department || '—'}</div>
+          )}
         </div>
 
-        {/* 3. Parts Suggestions */}
+        {/* ═══ PARTS SUGGESTIONS ═══ */}
         {suggestedParts.length > 0 && (
-          <div className="bg-surface border border-brand-border rounded-lg p-5 mb-3">
-            <h3 className="text-sm font-bold text-text-primary mb-1">3. Suggested Parts</h3>
-            <p className="text-xs text-text-secondary mb-3">AI-suggested parts. Click to add to the repair order.</p>
+          <div style={S.card}>
+            <div style={S.cardTitle}>3. Suggested Parts</div>
+            <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 12 }}>AI-suggested parts based on the repair. Click to add to the service order.</div>
             {suggestedParts.map((p: any, i: number) => {
-              const inv = p.inventory_match; const added = addedParts.some(ap => ap.name === p.name)
+              const inv = p.inventory_match
+              const added = addedParts.some(ap => ap.name === p.name)
               return (
-                <div key={i} className="flex items-center justify-between py-2.5 border-b border-brand-border/50">
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold text-text-primary">{p.name}</div>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{p.name}</div>
                     {inv ? (
-                      <div className="text-xs text-text-secondary mt-0.5">
-                        <span className="font-mono">{inv.part_number}</span>
-                        <span className={`ml-2 font-semibold ${inv.in_stock ? (inv.low_stock ? 'text-warning' : 'text-success') : 'text-error'}`}>{inv.in_stock ? `${inv.on_hand} in stock` : 'Out of stock'}</span>
-                        <span className="ml-2">${inv.sell_price}</span>
+                      <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 2 }}>
+                        <span style={{ fontFamily: 'monospace' }}>{inv.part_number}</span>
+                        <span style={{ marginLeft: 8, color: inv.in_stock ? (inv.low_stock ? '#F59E0B' : '#22C55E') : '#EF4444', fontWeight: 600 }}>
+                          {inv.in_stock ? `${inv.on_hand} in stock` : 'Out of stock'}
+                        </span>
+                        <span style={{ marginLeft: 8 }}>${inv.sell_price}</span>
+                        {inv.bin_location && <span style={{ marginLeft: 8, color: '#48536A' }}>Bin: {inv.bin_location}</span>}
                       </div>
-                    ) : <div className="text-xs text-text-tertiary">Not found in inventory</div>}
+                    ) : (
+                      <div style={{ fontSize: 11, color: '#48536A' }}>Not found in inventory</div>
+                    )}
                   </div>
                   <button type="button" onClick={() => addPart(p)} disabled={added}
-                    className={`px-3 py-1.5 rounded-sm text-xs font-bold transition-colors ${added ? 'bg-surface-2 text-text-tertiary' : 'bg-teal text-bg hover:bg-teal-hover'}`}>
+                    style={{ padding: '6px 14px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 700, cursor: added ? 'default' : 'pointer', background: added ? '#1A1D23' : 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: added ? '#48536A' : '#fff' }}>
                     {added ? 'Added' : '+ Add'}
                   </button>
                 </div>
@@ -220,52 +376,127 @@ export default function NewSOPage() {
           </div>
         )}
 
-        {/* 4. Line Items */}
+        {/* ═══ LINE ITEMS ═══ */}
         {(addedParts.length > 0 || laborHours > 0) && (
-          <div className="bg-surface border border-brand-border rounded-lg p-5 mb-3">
-            <h3 className="text-sm font-bold text-text-primary mb-3">4. Line Items and Totals</h3>
+          <div style={S.card}>
+            <div style={S.cardTitle}>4. Line Items & Totals</div>
+
+            {/* Parts */}
             {addedParts.map((p, i) => (
-              <div key={i} className="flex items-center gap-2.5 py-2 border-b border-brand-border/50">
-                <span className="flex-1 text-sm text-text-primary">{p.inventory_match?.description || p.name}</span>
-                <input type="number" value={p.quantity} onChange={e => updatePartQty(i, parseInt(e.target.value) || 1)} min={1} className="w-12 px-1.5 py-1 bg-surface-2 border border-brand-border rounded text-sm text-text-primary text-center" />
-                <span className="w-16 text-sm text-text-secondary text-right">${(p.unit_cost * p.quantity).toFixed(2)}</span>
-                <button type="button" onClick={() => removePart(i)} className="text-error hover:text-error/80 p-0.5"><X size={14} strokeWidth={1.5} /></button>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                <div style={{ flex: 1, fontSize: 12, color: '#DDE3EE' }}>{p.inventory_match?.description || p.name}</div>
+                <input type="number" value={p.quantity} onChange={e => updatePartQty(i, parseInt(e.target.value) || 1)} min={1}
+                  style={{ width: 50, padding: '4px 6px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 4, color: '#DDE3EE', fontSize: 12, textAlign: 'center' }} />
+                <div style={{ width: 70, fontSize: 12, color: '#7C8BA0', textAlign: 'right' }}>${(p.unit_cost * p.quantity).toFixed(2)}</div>
+                <button type="button" onClick={() => removePart(i)} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: 14, padding: 4 }}>×</button>
               </div>
             ))}
+
+            {/* Labor */}
             {(laborHoursMin > 0 || laborHours > 0) && (
-              <div className="flex items-center gap-2.5 py-3 border-b border-brand-border/50">
-                <div className="flex-1"><span className="text-sm text-text-primary">Labor</span>{laborHoursMin > 0 && <span className="text-[10px] text-text-tertiary ml-2">AI estimate: {laborHoursMin}–{laborHoursMax} hrs</span>}</div>
-                <input type="number" value={laborHours} onChange={e => setLaborHours(parseFloat(e.target.value) || 0)} step="0.5" min={0} className="w-14 px-1.5 py-1 bg-surface-2 border border-brand-border rounded text-sm text-text-primary text-center" />
-                <span className="text-[10px] text-text-tertiary">hrs x ${shopRate}/hr</span>
-                <span className="w-16 text-sm text-text-secondary text-right">${laborTotal.toFixed(2)}</span>
+              <div style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, color: '#DDE3EE' }}>Labor</div>
+                    {laborHoursMin > 0 && <div style={{ fontSize: 10, color: '#48536A' }}>AI estimate: {laborHoursMin} — {laborHoursMax} hrs</div>}
+                  </div>
+                  <input type="number" value={laborHours} onChange={e => setLaborHours(parseFloat(e.target.value) || 0)} step="0.5" min={0}
+                    style={{ width: 60, padding: '4px 6px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 4, color: '#DDE3EE', fontSize: 12, textAlign: 'center' }} />
+                  <div style={{ fontSize: 10, color: '#48536A' }}>hrs × ${shopRate}/hr</div>
+                  <div style={{ width: 70, fontSize: 12, color: '#7C8BA0', textAlign: 'right' }}>${laborTotal.toFixed(2)}</div>
+                </div>
               </div>
             )}
-            <div className="flex justify-between pt-3 mt-2 border-t border-brand-border text-base">
-              <span className="font-bold text-text-primary">Total</span>
-              <span className="font-bold text-teal">${grandTotal.toFixed(2)}</span>
+
+            {/* Totals */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: 13 }}>
+              <span style={{ color: '#7C8BA0' }}>Parts:</span>
+              <span style={{ fontWeight: 600, color: '#DDE3EE' }}>${partsTotal.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13 }}>
+              <span style={{ color: '#7C8BA0' }}>Labor:</span>
+              <span style={{ fontWeight: 600, color: '#DDE3EE' }}>${laborTotal.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: 16, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 8 }}>
+              <span style={{ fontWeight: 700, color: '#F0F4FF' }}>Total:</span>
+              <span style={{ fontWeight: 700, color: '#4D9EFF' }}>${grandTotal.toFixed(2)}</span>
             </div>
           </div>
         )}
 
-        {/* 5. Details */}
-        <div className="bg-surface border border-brand-border rounded-lg p-5 mb-3">
-          <h3 className="text-sm font-bold text-text-primary mb-3">Details</h3>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div><label className={lbl}>Source</label><select className={sel} value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}><option value="walk_in">Walk In</option><option value="phone">Phone</option><option value="kiosk">Kiosk</option><option value="portal">Customer Portal</option><option value="telegram">Telegram</option></select></div>
-            <div><label className={lbl}>Priority</label><select className={sel} value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="critical">Critical — Truck Down</option></select></div>
+        {/* ═══ DETAILS ═══ */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>Details</div>
+          <div style={S.row}>
+            <div>
+              <label style={S.label}>Source</label>
+              <select style={S.select} value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}>
+                <option value="walk_in">Walk In</option>
+                <option value="phone">Phone</option>
+                <option value="kiosk">Kiosk</option>
+                <option value="portal">Customer Portal</option>
+                <option value="telegram">Telegram</option>
+              </select>
+            </div>
+            <div>
+              <label style={S.label}>Priority</label>
+              <select style={S.select} value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}>
+                <option value="low">Low</option>
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+                <option value="critical">Critical — Truck Down</option>
+              </select>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div><label className={lbl}>Team</label><select className={sel} value={form.team} onChange={e => setForm(f => ({ ...f, team: e.target.value }))}><option value="">Unassigned</option><option value="A">Team A</option><option value="B">Team B</option><option value="C">Team C</option><option value="D">Team D</option></select></div>
-            <div><label className={lbl}>Bay</label><select className={sel} value={form.bay} onChange={e => setForm(f => ({ ...f, bay: e.target.value }))}><option value="">No Bay</option>{Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={`Bay ${i + 1}`}>Bay {i + 1}</option>)}</select></div>
+          <div style={S.row}>
+            <div>
+              <label style={S.label}>Team</label>
+              <select style={S.select} value={form.team} onChange={e => setForm(f => ({ ...f, team: e.target.value }))}>
+                <option value="">Unassigned</option>
+                <option value="A">Team A</option>
+                <option value="B">Team B</option>
+                <option value="C">Team C</option>
+                <option value="D">Team D</option>
+              </select>
+            </div>
+            <div>
+              <label style={S.label}>Bay</label>
+              <select style={S.select} value={form.bay} onChange={e => setForm(f => ({ ...f, bay: e.target.value }))}>
+                <option value="">No Bay</option>
+                {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={`Bay ${i + 1}`}>Bay {i + 1}</option>)}
+              </select>
+            </div>
           </div>
-          <div><label className={lbl}>Customer</label><select className={sel} value={form.customer_id} onChange={e => setForm(f => ({ ...f, customer_id: e.target.value }))}><option value="">No customer linked</option>{(customers ?? []).map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}</select></div>
+          <div>
+            <label style={S.label}>Customer</label>
+            <select style={S.select} value={form.customer_id} onChange={e => setForm(f => ({ ...f, customer_id: e.target.value }))}>
+              <option value="">No customer linked</option>
+              {customers.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+            </select>
+          </div>
         </div>
 
-        <button type="submit" disabled={submitting}
-          className={`w-full py-3.5 rounded-md text-sm font-bold min-h-[52px] transition-all ${submitting ? 'bg-surface-2 text-text-secondary cursor-not-allowed' : 'bg-teal text-bg hover:bg-teal-hover cursor-pointer'}`}>
-          {submitting ? 'Creating...' : 'Create Repair Order'}
+        <button type="submit" style={{ ...S.submitBtn, opacity: submitting ? 0.6 : 1 }} disabled={submitting}>
+          {submitting ? 'Creating...' : 'Create Service Order →'}
         </button>
       </form>
+
+      <style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }`}</style>
     </div>
   )
+}
+
+const S: Record<string, React.CSSProperties> = {
+  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 720, margin: '0 auto' },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 },
+  card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 14 },
+  cardTitle: { fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 },
+  label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A', marginBottom: 5, display: 'block' },
+  input: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
+  select: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
+  row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 },
+  error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 14 },
+  voiceBtn: { borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  aiBtn: { width: '100%', padding: '14px 24px', background: 'linear-gradient(135deg,#8B5CF6,#6D28D9)', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  submitBtn: { width: '100%', padding: '15px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', minHeight: 52 },
 }
