@@ -6,10 +6,10 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY!)
 }
 function getFrom() {
-  return process.env.RESEND_FROM_EMAIL || 'invoices@truckzen.com'
+  return process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL || 'TruckZen <noreply@truckzen.pro>'
 }
 function getReplyTo() {
-  return process.env.RESEND_REPLY_TO || 'service@truckzen.com'
+  return process.env.RESEND_REPLY_TO || 'service@truckzen.pro'
 }
 
 export async function sendInvoiceEmail(data: any) {
@@ -23,7 +23,7 @@ export async function sendInvoiceEmail(data: any) {
 
   try {
     const result = await getResend().emails.send({
-      from:     `${shopName} <${getFrom()}>`,
+      from:     getFrom(),
       to:       data.customer.email,
       reply_to:  data.shop.email || getReplyTo(),
       subject,
@@ -39,7 +39,7 @@ export async function sendInvoiceEmail(data: any) {
 export async function sendWelcomeEmail(to: string, name: string, shopName: string, loginUrl: string) {
   try {
     await getResend().emails.send({
-      from:    `${shopName} <${getFrom()}>`,
+      from:    getFrom(),
       to,
       subject: `Welcome to TruckZen — ${shopName}`,
       html: `
@@ -59,7 +59,7 @@ export async function sendWelcomeEmail(to: string, name: string, shopName: strin
 export async function sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
   try {
     await getResend().emails.send({
-      from:    `TruckZen <${getFrom()}>`,
+      from:    getFrom(),
       to,
       subject: 'Reset your TruckZen password',
       html: `

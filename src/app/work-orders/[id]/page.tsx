@@ -46,6 +46,7 @@ export default function WorkOrderDetailPage() {
   // Files
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -100,14 +101,27 @@ export default function WorkOrderDetailPage() {
   }
 
   async function uploadFiles(files: FileList | null) {
-    if (!files || files.length === 0 || !wo) return
+    if (!files || files.length === 0 || !wo || !user) return
     setUploadingFile(true)
     for (let i = 0; i < files.length; i++) {
-      const form = new FormData()
-      form.append('file', files[i])
-      form.append('wo_id', wo.id)
-      form.append('user_id', user?.id || '')
-      await fetch('/api/wo-files', { method: 'POST', body: form })
+      const file = files[i]
+      const ext = file.name.split('.').pop() || 'bin'
+      const path = `${wo.shop_id}/${wo.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
+      // Upload to Supabase Storage
+      const { error: uploadErr } = await supabase.storage.from('wo-files').upload(path, file)
+      if (uploadErr) { console.error('Upload error:', uploadErr); continue }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage.from('wo-files').getPublicUrl(path)
+      const fileUrl = urlData?.publicUrl || ''
+
+      // Save record
+      await fetch('/api/wo-files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wo_id: wo.id, user_id: user.id, file_url: fileUrl, filename: file.name }),
+      })
     }
     setUploadingFile(false)
     await loadData()
@@ -158,11 +172,37 @@ export default function WorkOrderDetailPage() {
   const vinLast6 = vin.length >= 6 ? vin.slice(0, -6) : ''
   const vinBold = vin.length >= 6 ? vin.slice(-6) : vin
 
+  async function deleteWO() {
+    if (!confirm('Delete this work order? This cannot be undone.')) return
+    await fetch(`/api/work-orders/${wo.id}`, { method: 'DELETE' })
+    window.location.href = '/work-orders'
+  }
+
+  async function duplicateWO() {
+    const res = await fetch('/api/work-orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        shop_id: wo.shop_id,
+        user_id: user?.id,
+        asset_id: wo.asset_id,
+        customer_id: wo.customer_id,
+        complaint: wo.complaint,
+        priority: wo.priority,
+        job_lines: jobLines.map((l: any) => l.description),
+      }),
+    })
+    if (res.ok) {
+      const newWo = await res.json()
+      window.location.href = `/work-orders/${newWo.id}`
+    }
+  }
+
   function quickAction(idx: number) {
-    // 0=Truck, 1=Calendar, 2=Users, 3=MessageSquare(Notes), 4=Paperclip(Files), 5=Clock, 6=DollarSign(Billing), 7=MoreHorizontal(Activity)
     if (idx === 3 || idx === 4) setActiveTab(3) // Files & Notes
-    if (idx === 7) setActiveTab(4) // Activity
+    if (idx === 5) setActiveTab(4) // Activity
     if (idx === 6) setActiveTab(2) // Estimate & Billing
+    if (idx === 7) setShowMenu(!showMenu) // Menu toggle
   }
 
   const quickIcons = [Truck, Calendar, Users, MessageSquare, Paperclip, Clock, DollarSign, MoreHorizontal]
@@ -171,10 +211,11 @@ export default function WorkOrderDetailPage() {
     <>
       <style>{`
         @media print {
-          .sidebar, aside, nav { display: none !important; }
-          .tab-bar, .quick-actions, .no-print { display: none !important; }
-          body { background: #fff !important; }
-          * { color: #1A1A1A !important; }
+          aside, nav, .no-print, [data-no-print] { display: none !important; }
+          body, html { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+          * { color: #1A1A1A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          a { text-decoration: none !important; }
+          button, select, textarea, input { border: 1px solid #ccc !important; }
         }
       `}</style>
       <div style={{ minHeight: '100vh', background: '#fff', fontFamily: font, color: '#1A1A1A' }}>
@@ -218,7 +259,7 @@ export default function WorkOrderDetailPage() {
         </div>
 
         {/* TAB BAR */}
-        <div className="tab-bar" style={{ display: 'flex', gap: 0, borderBottom: '1px solid #E5E7EB', background: '#fff', paddingLeft: 24 }}>
+        <div data-no-print className="tab-bar" style={{ display: 'flex', gap: 0, borderBottom: '1px solid #E5E7EB', background: '#fff', paddingLeft: 24 }}>
           {TABS.map((t, i) => (
             <button
               key={t}
@@ -241,7 +282,7 @@ export default function WorkOrderDetailPage() {
         </div>
 
         {/* QUICK ACTIONS BAR */}
-        <div className="quick-actions" style={{ display: 'flex', gap: 8, padding: '12px 24px', borderBottom: '1px solid #E5E7EB' }}>
+        <div data-no-print className="quick-actions" style={{ display: 'flex', gap: 8, padding: '12px 24px', borderBottom: '1px solid #E5E7EB', position: 'relative' }}>
           {quickIcons.map((Icon, i) => (
             <button
               key={i}
@@ -259,6 +300,13 @@ export default function WorkOrderDetailPage() {
               <Icon size={16} color="#6B7280" />
             </button>
           ))}
+          {showMenu && (
+            <div style={{ position: 'absolute', right: 24, top: 48, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,.1)', zIndex: 50, overflow: 'hidden', minWidth: 160 }}>
+              <button onClick={() => { setShowMenu(false); duplicateWO() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#374151', cursor: 'pointer', fontFamily: font }}>Duplicate WO</button>
+              <button onClick={() => { window.print() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#374151', cursor: 'pointer', fontFamily: font, borderTop: '1px solid #F3F4F6' }}>Print WO</button>
+              <button onClick={() => { setShowMenu(false); deleteWO() }} style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: 13, color: '#DC2626', cursor: 'pointer', fontFamily: font, borderTop: '1px solid #F3F4F6' }}>Delete WO</button>
+            </div>
+          )}
         </div>
 
         {/* TAB CONTENT */}
@@ -495,7 +543,7 @@ export default function WorkOrderDetailPage() {
           </button>
           <button
             onClick={async () => {
-              await fetch('/api/wo-shop-charges', {
+              await fetch('/api/wo-charges', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ wo_id: wo.id, description: 'Shop charge', amount: 0 }),

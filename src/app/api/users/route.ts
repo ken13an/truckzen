@@ -79,13 +79,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: profileErr.message }, { status: 500 })
   }
 
-  // Send welcome email
+  // Generate password reset link so user can set their own password
   try {
     const { data: shop } = await s.from('shops').select('name, dba').eq('id', shopId).single()
     const shopName = shop?.dba || shop?.name || 'TruckZen'
-    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/login`
-    await sendWelcomeEmail(email, full_name, shopName, loginUrl)
-  } catch {}
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'
+
+    // Generate magic link for password setup
+    const { data: linkData } = await s.auth.admin.generateLink({
+      type: 'recovery',
+      email: email.toLowerCase().trim(),
+      options: { redirectTo: `${appUrl}/reset-password` },
+    })
+
+    const setupUrl = linkData?.properties?.action_link || `${appUrl}/forgot-password`
+    await sendWelcomeEmail(email, full_name, shopName, setupUrl)
+  } catch (emailErr) {
+    console.error('[Users] Failed to send invite email:', emailErr)
+  }
 
   return NextResponse.json(profile, { status: 201 })
 }
