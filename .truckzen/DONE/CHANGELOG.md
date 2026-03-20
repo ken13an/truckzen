@@ -16,7 +16,23 @@ All changes made by Claude Code, in reverse chronological order.
 
 -->
 
-## 2026-03-19 -- [000] Logo Fix + Global Blue→Teal Color Replace
+## 2026-03-19 -- [000] FINAL: Revert UI, Logo Swap, Emoji Removal
+- REVERTED entire src/ to pre-redesign state (commit 04fbb51)
+- Removed Tailwind 4: deleted globals.css, tailwind.config.ts, postcss.config.js
+- Restored original package.json (no tailwindcss, no @tailwindcss/postcss, no lucide-react)
+- Created new Logo component: white TZ icon + blue #1D6FE8 dot, "truck" white / "zen." blue
+- Updated logo in: login, forgot-password, reset-password, sidebar
+- Login page restyled: #0a0a10 bg, #12131a card, 16px radius, 48px 40px padding, solid #1D6FE8 button, #1D6FE8 forgot link
+- Removed 106 emoji occurrences across 22+ files
+- Added permanent no-emoji rule to CC_RULES.md
+- Blue accent #1D6FE8 preserved -- zero teal in codebase (except nowhere)
+- Files created: src/components/Logo.tsx
+- Files modified: 77 files
+- Database changes: none
+- Build status: PASS (84 pages, 0 errors)
+- Git commit: ecd5c2f
+
+## 2026-03-19 -- [000] Logo Fix + Global Blue→Teal Color Replace (REVERTED)
 - Created Logo.tsx with correct brand mark: white rounded square, bold TZ, teal dot bottom-left
 - Wordmark: "truckzen." lowercase — "truck" white, "zen." teal (with period)
 - Updated sidebar, login, forgot-password, reset-password to use Logo component

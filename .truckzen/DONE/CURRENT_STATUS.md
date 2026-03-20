@@ -1,57 +1,47 @@
 # TruckZen -- Current Status
 
 **Last Updated:** 2026-03-19
-**Last Task Completed:** 000 (in progress -- 19 pages restyled)
+**Last Task Completed:** 000 (DONE)
 **Build Status:** PASS (Next.js 16.2.0, 84 pages, 0 errors)
 **Branch:** dev (synced to main)
-**Last Commit:** 2d82cb6
+**Last Commit:** ecd5c2f
 
 ---
 
-## Prompt 000 Progress (Brand Redesign)
+## Prompt 000 -- COMPLETE
 
-### Pages Restyled (19 total)
-1. Sidebar + Logo component
-2. Login
-3. Dashboard
-4. Orders (4 tabs)
-5. Customers (pagination)
-6. Fleet (sub-nav)
-7. Settings (tabs, sign out)
-8. 403
-9. not-found
-10. offline
-11. forgot-password
-12. reset-password
-13. orders/new (AI panel with PURPLE accent)
-14. Drivers
-15. Invoices
-16. Parts
-17. Accounting
-18. Time Tracking
-19. Global: logo fix + blue-to-teal color replacement (51 files)
+Brand redesign was attempted (Tailwind 4 migration, full restyle) but reverted due to broken styling. Final state:
 
-### Remaining (33 pages — CONTINUE FROM HERE)
-- **High priority:**
-  - customers/[id] (5-tab detail)
-  - orders/[id] (RO detail)
-  - shop-floor (3 views)
-  - tech (mechanic mobile)
-  - kiosk (4 languages)
-- **Medium:**
-  - reports (153 lines)
-  - drivers/[id], drivers/new
-  - invoices/[id]
-  - parts/[id], parts/new, parts/reorder
-  - maintenance, maintenance/[id], maintenance/new
-  - fleet/[id], fleet/new, fleet/compliance
-  - settings/users, settings/users/new, settings/billing
-- **Lower:**
-  - admin/permissions, admin/roles-guide
-  - smart-drop, portal, setup, cleaning, waiting
-  - dvir, floor (old), maintenance/tires, maintenance/parts-lifecycle
-  - orders/[id]/history, pay/[token], pay/[token]/success, error
-- **Steps 4-6:**
-  - Step 4: purple accent done on orders/new. Other AI features TBD.
-  - Step 5: emoji sweep remaining
-  - Step 6: responsive check
+- **UI reverted** to original pre-redesign inline styles (commit 04fbb51 baseline)
+- **Tailwind 4 removed** -- no globals.css, no tailwind.config.ts, no postcss.config.js
+- **Logo updated** -- new Logo component (src/components/Logo.tsx): white TZ icon with blue #1D6FE8 dot, "truck" white / "zen." blue lowercase wordmark
+- **Logo used in:** login, forgot-password, reset-password, sidebar
+- **Login page** updated to match design spec: #0a0a10 bg, #12131a card, 16px radius, 48px 40px padding, solid #1D6FE8 button
+- **Blue accent #1D6FE8** preserved throughout -- no teal anywhere except zero files
+- **All emojis removed** -- 106 occurrences across 22+ files replaced with text/removed
+- **No-emoji rule** added to CC_RULES.md as permanent rule
+
+---
+
+## What is Built
+
+- 84 pages total (static + dynamic)
+- Service orders, customers, fleet, parts, invoices, accounting, drivers, maintenance, tires, DVIR
+- AI Service Writer (Claude API), kiosk check-in, customer portal, shop floor board
+- RBAC with 15 roles, role impersonation for Ken
+- CSV import (FullBay), Telegram bot, QR code payments
+- PWA support, multilingual kiosk (4 languages)
+
+---
+
+## Next Up
+
+- Prompt 001: Fix Build (if needed)
+- Prompt 002: Mega SQL migration
+- Prompt 003: Service Writer check-in
+- Prompt 004: Repair Orders 3C
+- Prompt 005: AI Service Writer
+- Prompt 006: Unit Profiles
+- Prompt 007: Time Clock
+- Prompt 008: Estimates & Authorization
+- Prompt 009: Invoicing & Payment
