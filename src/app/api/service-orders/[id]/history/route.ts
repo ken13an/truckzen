@@ -1,97 +1,67 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+function db() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
 
 type P = { params: Promise<{ id: string }> }
 
 export async function GET(_req: Request, { params }: P) {
-  const { id } = await params;
-  const supabase = createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { id } = await params
+  const s = db()
 
-  // Verify SO belongs to shop
-  const { data: so } = await supabase.from('service_orders').select('id, so_number').eq('id', id).eq('shop_id', user.shop_id).single()
+  const { data: so } = await s.from('service_orders').select('id, so_number, shop_id').eq('id', id).single()
   if (!so) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Get all audit log entries for this SO
-  const { data: logs } = await supabase
+  const { data: logs } = await s
     .from('audit_log')
     .select('id, action, old_data, new_data, created_at, users(full_name, role)')
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', so.shop_id)
     .eq('record_id', id)
     .order('created_at', { ascending: false })
     .limit(100)
 
-  // Also get time entries
-  const { data: timeEntries } = await supabase
+  const { data: timeEntries } = await s
     .from('so_time_entries')
     .select('id, clocked_in_at, clocked_out_at, duration_minutes, users(full_name)')
     .eq('so_id', id)
     .order('clocked_in_at', { ascending: false })
 
-  // Also get parts requests
-  const { data: partsRequests } = await supabase
+  const { data: partsRequests } = await s
     .from('parts_requests')
     .select('id, description, status, priority, requested_at, users!requested_by(full_name)')
     .eq('so_id', id)
     .order('requested_at', { ascending: false })
 
-  // Merge into unified timeline
   const timeline: any[] = []
 
   for (const log of logs || []) {
     const action = log.action?.replace(/\./g, ' ').replace(/_/g, ' ')
-    const user   = (log as any).users
-    let detail   = ''
-
+    const u = (log as any).users
+    let detail = ''
     if (log.action === 'so.status_changed') {
       detail = `${(log.old_data as any)?.status} → ${(log.new_data as any)?.status}`
     } else if (log.action === 'so.created') {
-      detail = `Created by ${user?.full_name || '—'}`
+      detail = `Created by ${u?.full_name || '—'}`
     } else if (log.action === 'so.updated') {
-      const changed = Object.keys((log.new_data as any) || {}).join(', ')
-      detail = `Updated: ${changed}`
+      detail = `Updated: ${Object.keys((log.new_data as any) || {}).join(', ')}`
     }
-
-    timeline.push({
-      type:       'audit',
-      action,
-      detail,
-      user_name:  user?.full_name,
-      user_role:  user?.role,
-      timestamp:  log.created_at,
-      icon:       '',
-    })
+    timeline.push({ type: 'audit', action, detail, user_name: u?.full_name, user_role: u?.role, timestamp: log.created_at, icon: '' })
   }
 
   for (const te of timeEntries || []) {
-    const user = (te as any).users
+    const u = (te as any).users
     if (te.clocked_out_at && te.duration_minutes) {
-      timeline.push({
-        type:      'time',
-        action:    'Time logged',
-        detail:    `${Math.floor(te.duration_minutes / 60)}h ${te.duration_minutes % 60}m`,
-        user_name: user?.full_name,
-        timestamp: te.clocked_in_at,
-        icon:      '',
-      })
+      timeline.push({ type: 'time', action: 'Time logged', detail: `${Math.floor(te.duration_minutes / 60)}h ${te.duration_minutes % 60}m`, user_name: u?.full_name, timestamp: te.clocked_in_at, icon: '' })
     }
   }
 
   for (const pr of partsRequests || []) {
-    const user = (pr as any).users
-    timeline.push({
-      type:      'parts',
-      action:    `Parts request — ${pr.status}`,
-      detail:    pr.description,
-      user_name: user?.full_name,
-      timestamp: pr.requested_at,
-      icon:      '',
-    })
+    const u = (pr as any).users
+    timeline.push({ type: 'parts', action: `Parts request — ${pr.status}`, detail: pr.description, user_name: u?.full_name, timestamp: pr.requested_at, icon: '' })
   }
 
-  // Sort by timestamp descending
   timeline.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-
   return NextResponse.json({ so_number: so.so_number, timeline })
 }

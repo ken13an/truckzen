@@ -8,7 +8,7 @@ export default function NewFleetPage() {
   const router = useRouter()
   const supabase = createClient()
   const [customers, setCustomers] = useState<any[]>([])
-  const [form, setForm] = useState({ unit_number:'', vin:'', year:'', make:'', model:'', engine:'', odometer:'0', customer_id:'', status:'active' })
+  const [form, setForm] = useState({ unit_number:'', vin:'', year:'', make:'', model:'', engine:'', odometer:'0', customer_id:'', status:'active', ownership_type:'fleet_asset' })
   const [saving,    setSaving]    = useState(false)
   const [decoding,  setDecoding]  = useState(false)
   const [error,     setError]     = useState('')
@@ -115,12 +115,22 @@ export default function NewFleetPage() {
               {['active','inactive','decommissioned'].map(s=><option key={s} value={s}>{s}</option>)}
             </select>
           </div></div>
-          <div>
-            <label style={S.label}>Owner / Customer</label>
-            <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.customer_id} onChange={e=>setForm(f=>({...f,customer_id:e.target.value}))}>
-              <option value="">No customer linked</option>
-              {customers.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
-            </select>
+          <div style={S.row2}>
+            <div>
+              <label style={S.label}>Ownership Type *</label>
+              <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.ownership_type} onChange={e=>setForm(f=>({...f,ownership_type:e.target.value}))}>
+                <option value="fleet_asset">Fleet Asset</option>
+                <option value="owner_operator">Owner Operator</option>
+                <option value="outside_customer">Outside Customer</option>
+              </select>
+            </div>
+            <div>
+              <label style={S.label}>Owner / Customer</label>
+              <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.customer_id} onChange={e=>setForm(f=>({...f,customer_id:e.target.value}))}>
+                <option value="">No customer linked</option>
+                {customers.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+              </select>
+            </div>
           </div>
         </div>
 

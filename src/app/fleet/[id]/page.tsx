@@ -34,7 +34,7 @@ export default function FleetDetailPage() {
 
   async function save() {
     setSaving(true)
-    await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ unit_number:edit.unit_number, year:edit.year, make:edit.make, model:edit.model, engine:edit.engine, odometer:edit.odometer, status:edit.status }) })
+    await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ unit_number:edit.unit_number, year:edit.year, make:edit.make, model:edit.model, engine:edit.engine, odometer:edit.odometer, status:edit.status, ownership_type:edit.ownership_type }) })
     setAsset(edit); setSaving(false)
   }
 
@@ -61,7 +61,7 @@ export default function FleetDetailPage() {
         <div>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:'#F0F4FF', letterSpacing:'.02em' }}>Unit #{asset.unit_number}</div>
           <div style={{ fontSize:14, color:'#DDE3EE', marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
-          <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{(asset.customers as any)?.company_name}</div>
+          <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{(asset.customers as any)?.company_name}{asset.ownership_type && asset.ownership_type !== 'fleet_asset' ? ` — ${asset.ownership_type.replace(/_/g, ' ')}` : ''}</div>
         </div>
         <div style={{ display:'flex', gap:8, flexDirection:'column', alignItems:'flex-end' }}>
           <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]||'#7C8BA0')+'18', color:statusColor[asset.status]||'#7C8BA0', border:`1px solid ${statusColor[asset.status]||'#7C8BA0'}33` }}>
@@ -90,6 +90,15 @@ export default function FleetDetailPage() {
             </div>
             <div style={S.row2}>
               <div><label style={S.label}>Current Odometer</label><input style={S.input} type="number" value={edit?.odometer||0} onChange={e=>setEdit((a:any)=>({...a,odometer:parseInt(e.target.value)||0}))}/></div>
+              <div><label style={S.label}>Ownership Type</label>
+                <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={edit?.ownership_type||'fleet_asset'} onChange={e=>setEdit((a:any)=>({...a,ownership_type:e.target.value}))}>
+                  <option value="fleet_asset">Fleet Asset</option>
+                  <option value="owner_operator">Owner Operator</option>
+                  <option value="outside_customer">Outside Customer</option>
+                </select>
+              </div>
+            </div>
+            <div style={S.row2}>
               <div><label style={S.label}>Status</label>
                 <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={edit?.status||'active'} onChange={e=>setEdit((a:any)=>({...a,status:e.target.value}))}>
                   {['active','in_shop','inactive','decommissioned'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}

@@ -44,7 +44,7 @@ export default function NewSOPage() {
 
       const [{ data: a }, { data: c }, { data: shop }] = await Promise.all([
         supabase.from('assets').select('id, unit_number, year, make, model, customer_id, engine_make').eq('shop_id', profile.shop_id).not('status', 'eq', 'retired').order('unit_number'),
-        supabase.from('customers').select('id, company_name').eq('shop_id', profile.shop_id).order('company_name'),
+        supabase.from('customers').select('id, company_name, contact_name, phone').eq('shop_id', profile.shop_id).order('company_name'),
         supabase.from('shops').select('labor_rate').eq('id', profile.shop_id).single(),
       ])
       setAssets(a || [])
@@ -54,13 +54,15 @@ export default function NewSOPage() {
     load()
   }, [])
 
-  // Customer search
+  // Customer search — case-insensitive partial match on company_name, contact_name, phone
   useEffect(() => {
-    if (!customerSearch) { setFilteredCustomers([]); return }
+    if (!customerSearch || customerSearch.length < 1) { setFilteredCustomers([]); return }
     const q = customerSearch.toLowerCase()
     setFilteredCustomers(customers.filter(c =>
-      c.company_name?.toLowerCase().includes(q)
-    ).slice(0, 8))
+      (c.company_name || '').toLowerCase().includes(q) ||
+      (c.contact_name || '').toLowerCase().includes(q) ||
+      (c.phone || '').toLowerCase().includes(q)
+    ).slice(0, 10))
   }, [customerSearch, customers])
 
   function selectCustomer(cust: any) {
@@ -292,6 +294,8 @@ export default function NewSOPage() {
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                     <span style={{ fontWeight: 700, color: '#F0F4FF' }}>{c.company_name}</span>
+                    {c.contact_name && <span style={{ color: '#7C8BA0', marginLeft: 8, fontSize: 11 }}>{c.contact_name}</span>}
+                    {c.phone && <span style={{ color: '#48536A', marginLeft: 8, fontSize: 10, fontFamily: 'monospace' }}>{c.phone}</span>}
                   </div>
                 ))}
               </div>

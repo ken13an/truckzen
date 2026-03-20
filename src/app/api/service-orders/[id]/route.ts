@@ -1,16 +1,58 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
-import { log } from '@/lib/security'
+import { createClient } from '@supabase/supabase-js'
+
+function db() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+}
+
+async function getUser(req: Request) {
+  const s = db()
+  // Get auth token from cookie or Authorization header
+  const cookieHeader = req.headers.get('cookie') || ''
+  const authHeader = req.headers.get('authorization') || ''
+
+  // Try to get user from Supabase auth
+  // For client-side fetches, the browser sends cookies automatically
+  const anonClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  // Extract access token from cookies
+  const tokenMatch = cookieHeader.match(/sb-[^=]+-auth-token[^=]*=([^;]+)/)
+  let userId: string | null = null
+
+  if (tokenMatch) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(tokenMatch[1]))
+      const accessToken = Array.isArray(parsed) ? parsed[0] : parsed?.access_token
+      if (accessToken) {
+        const { data } = await anonClient.auth.getUser(accessToken)
+        userId = data?.user?.id || null
+      }
+    } catch {}
+  }
+
+  if (!userId && authHeader.startsWith('Bearer ')) {
+    const { data } = await anonClient.auth.getUser(authHeader.slice(7))
+    userId = data?.user?.id || null
+  }
+
+  if (!userId) return null
+
+  const { data: profile } = await s.from('users').select('id, shop_id, full_name, role, team').eq('id', userId).single()
+  return profile
+}
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function GET(_req: Request, { params }: Params) {
-  const { id } = await params;
-  const supabase = createServerSupabaseClient()
-  const user     = await getCurrentUser(supabase)
+export async function GET(req: Request, { params }: Params) {
+  const { id } = await params
+  const s = db()
+  const user = await getUser(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: so, error } = await supabase
+  const { data: so, error } = await s
     .from('service_orders')
     .select(`
       *,
@@ -26,7 +68,6 @@ export async function GET(_req: Request, { params }: Params) {
 
   if (error || !so) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Techs only see their team
   const limitedRoles = ['technician', 'maintenance_technician']
   if (limitedRoles.includes(user.role) && user.team && (so as any).team !== user.team) {
     return NextResponse.json({ error: 'Access denied' }, { status: 403 })
@@ -36,13 +77,12 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function PATCH(req: Request, { params }: Params) {
-  const { id } = await params;
-  const supabase = createServerSupabaseClient()
-  const user     = await getCurrentUser(supabase)
+  const { id } = await params
+  const s = db()
+  const user = await getUser(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Fetch current SO first
-  const { data: current } = await supabase
+  const { data: current } = await s
     .from('service_orders')
     .select('*')
     .eq('id', id)
@@ -56,23 +96,21 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Allowed fields per role
   const unlimitedRoles = ['owner', 'gm', 'it_person', 'shop_manager']
-  const advisorRoles   = [ 'service_writer', 'office_admin', 'accountant']
-  const techRoles      = ['technician', 'maintenance_technician']
+  const advisorRoles = ['service_writer', 'office_admin', 'accountant']
+  const techRoles = ['technician', 'maintenance_technician']
 
   let allowedFields: string[]
   if (unlimitedRoles.includes(user.role)) {
-    allowedFields = ['status','priority','team','bay','assigned_tech','complaint','cause','correction','internal_notes','customer_id','grand_total','due_date']
+    allowedFields = ['status', 'priority', 'team', 'bay', 'assigned_tech', 'complaint', 'cause', 'correction', 'internal_notes', 'customer_id', 'grand_total', 'due_date']
   } else if (advisorRoles.includes(user.role)) {
-    allowedFields = ['status','priority','team','bay','assigned_tech','complaint','cause','correction','customer_id','due_date']
+    allowedFields = ['status', 'priority', 'team', 'bay', 'assigned_tech', 'complaint', 'cause', 'correction', 'customer_id', 'due_date']
   } else if (techRoles.includes(user.role)) {
-    allowedFields = ['status','cause','correction','internal_notes']
+    allowedFields = ['status', 'cause', 'correction', 'internal_notes']
   } else {
     return NextResponse.json({ error: 'Access denied' }, { status: 403 })
   }
 
-  // Strip non-allowed fields
   const update: Record<string, any> = {}
   for (const field of allowedFields) {
     if (body[field] !== undefined) update[field] = body[field]
@@ -83,13 +121,11 @@ export async function PATCH(req: Request, { params }: Params) {
   }
 
   update.updated_at = new Date().toISOString()
-
-  // If status is being closed, record completion time
   if (update.status === 'good_to_go' && current.status !== 'good_to_go') {
     update.completed_at = new Date().toISOString()
   }
 
-  const { data: updated, error } = await supabase
+  const { data: updated, error } = await s
     .from('service_orders')
     .update(update)
     .eq('id', id)
@@ -98,46 +134,31 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  await log('so.updated', user.shop_id, user.id, {
-    table:   'service_orders',
-    recordId: id,
-    oldData: current,
-    newData: update,
-  })
-
-  // If status changed, log it specifically
   if (update.status && update.status !== current.status) {
-    await log('so.status_changed', user.shop_id, user.id, {
-      table:   'service_orders',
-      recordId: id,
-      oldData: { status: current.status },
-      newData: { status: update.status },
-    })
+    try {
+      await s.from('audit_log').insert({
+        shop_id: user.shop_id,
+        user_id: user.id,
+        action: 'so.status_changed',
+        details: { table: 'service_orders', recordId: id, old_status: current.status, new_status: update.status },
+      })
+    } catch {}
   }
 
   return NextResponse.json(updated)
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
-  const { id } = await params;
-  const supabase = createServerSupabaseClient()
-  const user     = await getCurrentUser(supabase)
+export async function DELETE(req: Request, { params }: Params) {
+  const { id } = await params
+  const s = db()
+  const user = await getUser(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Only unlimited roles can delete
   if (!['owner', 'gm', 'it_person'].includes(user.role)) {
     return NextResponse.json({ error: 'Access denied' }, { status: 403 })
   }
 
-  // Soft delete — set status to void, never hard delete
-  const { data: current } = await supabase.from('service_orders').select('so_number').eq('id', id).single()
-
-  await supabase.from('service_orders').update({ status: 'void', updated_at: new Date().toISOString() }).eq('id', id).eq('shop_id', user.shop_id)
-
-  await log('so.deleted', user.shop_id, user.id, {
-    table: 'service_orders', recordId: id,
-    oldData: current,
-  })
+  await s.from('service_orders').update({ status: 'void', updated_at: new Date().toISOString() }).eq('id', id).eq('shop_id', user.shop_id)
 
   return NextResponse.json({ success: true })
 }
