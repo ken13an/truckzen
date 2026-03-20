@@ -1,10 +1,10 @@
 # TruckZen -- Current Status
 
 **Last Updated:** 2026-03-19
-**Last Task Completed:** 000 (DONE)
+**Last Task Completed:** 002 (DONE)
 **Build Status:** PASS (Next.js 16.2.0, 84 pages, 0 errors)
 **Branch:** dev (synced to main)
-**Last Commit:** ecd5c2f
+**Last Commit:** pending
 
 ---
 
@@ -36,8 +36,6 @@ Brand redesign was attempted (Tailwind 4 migration, full restyle) but reverted d
 
 ## Next Up
 
-- Prompt 001: Fix Build (if needed)
-- Prompt 002: Mega SQL migration
 - Prompt 003: Service Writer check-in
 - Prompt 004: Repair Orders 3C
 - Prompt 005: AI Service Writer

@@ -16,6 +16,22 @@ All changes made by Claude Code, in reverse chronological order.
 
 -->
 
+## 2026-03-19 -- [001] Fix Build + [002] Phase 1 Mega SQL Migration
+- Prompt 001: Build already passes clean. All known problem files verified (no Upstash, no invalid config, Resend lazy pattern, null safety on customers page). Next.js already at 16.2.0. Skipped.
+- Prompt 002: Ran Phase 1 SQL migration via psql against Supabase.
+- 13 new tables created: units, repair_orders, repair_order_lines, time_entries, ro_line_parts, estimates, estimate_lines, invoice_lines, payments, job_templates, ai_usage_log, ro_photos, shop_sequences
+- 4 functions: get_next_ro_number, get_next_estimate_number, get_next_invoice_number, update_updated_at
+- 6 triggers: updated_at on units, repair_orders, repair_order_lines, parts, estimates, invoices
+- 15 RLS policies: shop_isolation on all shop_id tables, parent-based access on estimate_lines and invoice_lines
+- get_user_shop_id() helper function created for RLS
+- 4 columns added to service_requests: unit_id, check_in_type, created_by, converted_to_ro_id
+- Created src/types/database.ts with TypeScript interfaces for all 15 table types
+- Saved DATABASE_URL to .env.local for future psql access
+- Files created: src/types/database.ts
+- Files modified: .truckzen/TASKS/PHASE1_SCHEMA.sql (removed DO blocks for Supabase compatibility)
+- Database changes: 13 tables, 4 functions, 6 triggers, 25+ indexes, 15 RLS policies
+- Build status: PASS (84 pages, 0 errors)
+
 ## 2026-03-19 -- [000] FINAL: Revert UI, Logo Swap, Emoji Removal
 - REVERTED entire src/ to pre-redesign state (commit 04fbb51)
 - Removed Tailwind 4: deleted globals.css, tailwind.config.ts, postcss.config.js
