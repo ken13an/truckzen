@@ -18,6 +18,15 @@ export async function GET(req: Request) {
     .order('full_name')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Enrich with last_sign_in_at from auth.users
+  if (data && data.length > 0) {
+    const { data: { users: authUsers } } = await s.auth.admin.listUsers({ perPage: 1000 })
+    const authMap: Record<string, string | null> = {}
+    for (const au of authUsers || []) { authMap[au.id] = au.last_sign_in_at || null }
+    for (const u of data) { (u as any).last_sign_in_at = authMap[u.id] || null }
+  }
+
   return NextResponse.json(data)
 }
 
