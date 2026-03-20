@@ -40,11 +40,8 @@ const T: Record<string, Record<string, string>> = {
     priority_urgent: 'Urgent',
     priority_breakdown: 'Breakdown',
     when_title: 'When Do You Need Your Truck?',
-    when_today: 'Today',
-    when_tomorrow: 'Tomorrow',
-    when_this_week: 'This Week',
-    when_no_rush: 'No Rush',
-    when_pick_date: 'Or pick a specific date',
+    when_pick_date: 'Pick a date',
+    when_pick_time: 'Pick a time',
     auth_title: 'How Should We Handle Repairs?',
     auth_estimate: 'Send Me an Estimate First',
     auth_go_ahead: 'Go Ahead With Repairs',
@@ -70,126 +67,124 @@ const T: Record<string, Record<string, string>> = {
     vin: 'VIN',
     mileage: 'Mileage',
     unit_type: 'Unit Type',
+    new_customer: 'New Customer',
+    keys_label_full: 'Did you leave the keys?',
   },
   es: {
     welcome_title: 'Bienvenido a',
-    welcome_sub: 'Toque abajo para registrar su camion para servicio',
+    welcome_sub: 'Toque abajo para registrar su cami\u00f3n',
     start: 'Iniciar Registro',
-    find_company: 'Buscar Su Empresa',
-    find_company_sub: 'Escriba el nombre de su empresa',
-    company_not_listed: 'Mi empresa no esta en la lista — Agregar Nueva',
-    find_unit: 'Buscar Su Unidad',
-    find_unit_sub: 'Escriba el numero de unidad',
-    unit_not_listed: 'Este camion no esta en la lista — Agregar Unidad',
-    concern_title: 'Que Trabajo Necesita?',
-    concern_sub: 'Diganos que necesita su camion — escriba o hable',
+    find_company: 'Busca Tu Empresa',
+    find_company_sub: 'Escribe el nombre de tu empresa',
+    company_not_listed: 'Mi empresa no est\u00e1 en la lista \u2014 Agregar Nueva',
+    find_unit: 'Busca Tu Unidad',
+    find_unit_sub: 'Escribe el n\u00famero de unidad',
+    unit_not_listed: 'Este cami\u00f3n no est\u00e1 en la lista \u2014 Agregar Unidad',
+    concern_title: '\u00bfQu\u00e9 Trabajo Necesita Su Cami\u00f3n?',
+    concern_sub: 'D\u00edganos qu\u00e9 necesita su cami\u00f3n \u2014 escriba o hable',
     concern_placeholder: 'Ejemplo: Cambio de aceite, frenos hacen ruido, luz de motor...',
-    speak: 'Tocar para Hablar',
+    speak: 'Toque para Hablar',
     stop_speaking: 'Parar',
-    details_title: 'Detalles Rapidos',
-    parked_label: 'Donde esta estacionado el camion?',
-    keys_label: 'Llaves?',
-    keys_in_truck: 'En el Camion',
-    keys_front_desk: 'Recepcion',
+    details_title: 'Detalles R\u00e1pidos',
+    parked_label: '\u00bfD\u00f3nde estacion\u00f3 el cami\u00f3n?',
+    keys_label: '\u00bfDej\u00f3 las llaves?',
+    keys_in_truck: 'S\u00ed \u2014 en el cami\u00f3n',
+    keys_front_desk: 'S\u00ed \u2014 en recepci\u00f3n',
     keys_no: 'No',
-    staying_label: 'Se va a quedar?',
+    staying_label: '\u00bfSe queda?',
     staying_yes: 'Esperando en el taller',
     staying_no: 'Me voy',
     priority_label: 'Prioridad',
     priority_routine: 'Rutina',
     priority_urgent: 'Urgente',
-    priority_breakdown: 'Averia',
-    when_title: 'Cuando Necesita Su Camion?',
-    when_today: 'Hoy',
-    when_tomorrow: 'Manana',
-    when_this_week: 'Esta Semana',
-    when_no_rush: 'Sin Prisa',
-    when_pick_date: 'O elija una fecha',
-    auth_title: 'Como Manejamos las Reparaciones?',
-    auth_estimate: 'Envienme un Presupuesto Primero',
+    priority_breakdown: 'Aver\u00eda',
+    when_title: '\u00bfCu\u00e1ndo Necesita Su Cami\u00f3n?',
+    when_pick_date: 'Seleccione una fecha',
+    when_pick_time: 'Seleccione una hora',
+    auth_title: '\u00bfC\u00f3mo Manejamos las Reparaciones?',
+    auth_estimate: 'Env\u00edenme un Presupuesto Primero',
     auth_go_ahead: 'Procedan con las Reparaciones',
-    auth_limit_label: 'Limite de gasto:',
-    auth_no_limit: 'Sin Limite',
-    email_label: 'Correo Electronico',
-    phone_label: 'Telefono',
+    auth_limit_label: 'L\u00edmite de gasto:',
+    auth_no_limit: 'Sin L\u00edmite',
+    email_label: 'Correo',
+    phone_label: 'Tel\u00e9fono',
     review_title: 'Revise Su Registro',
     submit: 'Enviar Registro',
     submitting: 'Enviando...',
-    confirmed_title: 'Esta Registrado!',
-    confirmed_sub: 'Un enlace para seguir su reparacion se envio a',
+    confirmed_title: '\u00a1Registro Completo!',
+    confirmed_sub: 'Su solicitud de servicio ha sido enviada.',
     new_checkin: 'Nuevo Registro',
-    back: 'Atras',
+    back: 'Atr\u00e1s',
     next: 'Siguiente',
     step: 'Paso',
     of: 'de',
     company_name: 'Nombre de Empresa',
-    dot_number: 'Numero DOT',
-    mc_number: 'Numero MC',
+    dot_number: 'N\u00famero DOT',
+    mc_number: 'N\u00famero MC',
     contact_name: 'Nombre de Contacto',
-    unit_number: 'Numero de Unidad',
+    unit_number: 'N\u00famero de Unidad',
     vin: 'VIN',
     mileage: 'Kilometraje',
     unit_type: 'Tipo de Unidad',
+    new_customer: 'Nuevo Cliente',
   },
   ru: {
-    welcome_title: 'Dobro pozhalovat v',
-    welcome_sub: 'Nazhmite chtoby zaregistrirovat gruzovik na obsluzhivanie',
-    start: 'Nachat Registratsiyu',
-    find_company: 'Naidite Svoyu Kompaniyu',
-    find_company_sub: 'Vvedite nazvanie kompanii',
-    company_not_listed: 'Moei kompanii net v spiske — Dobavit Novuyu',
-    find_unit: 'Naidite Svoyu Mashinu',
-    find_unit_sub: 'Vvedite nomer mashiny',
-    unit_not_listed: 'Etogo gruzovika net v spiske — Dobavit',
-    concern_title: 'Kakaya Rabota Nuzhna?',
-    concern_sub: 'Opishite chto nuzhno vashemu gruzoviku',
-    concern_placeholder: 'Primer: Zamena masla, tormozy shumyat, lampochka dvigatelya...',
-    speak: 'Nazhmite chtoby Govorit',
-    stop_speaking: 'Stop',
-    details_title: 'Bystrye Detali',
-    parked_label: 'Gde stoit gruzovik?',
-    keys_label: 'Klyuchi?',
-    keys_in_truck: 'V Gruzovike',
-    keys_front_desk: 'Na Stoike',
-    keys_no: 'Net',
-    staying_label: 'Vy ostayotes?',
-    staying_yes: 'Zhdu v masterskoi',
-    staying_no: 'Uyezzhayu',
-    priority_label: 'Prioritet',
-    priority_routine: 'Obychnyy',
-    priority_urgent: 'Srochno',
-    priority_breakdown: 'Avaria',
-    when_title: 'Kogda Nuzhen Gruzovik?',
-    when_today: 'Segodnya',
-    when_tomorrow: 'Zavtra',
-    when_this_week: 'Na Etoi Nedele',
-    when_no_rush: 'Ne Srochno',
-    when_pick_date: 'Ili vyberite datu',
-    auth_title: 'Kak Postupit s Remontom?',
-    auth_estimate: 'Snachala Prishlite Smetu',
-    auth_go_ahead: 'Nachninite Remont',
-    auth_limit_label: 'Limit rashodov:',
-    auth_no_limit: 'Bez Limita',
-    email_label: 'Email',
-    phone_label: 'Telefon',
-    review_title: 'Proverite Registratsiyu',
-    submit: 'Otpravit',
-    submitting: 'Otpravka...',
-    confirmed_title: 'Vy Zaregistrirovany!',
-    confirmed_sub: 'Ssylka dlya otslezhivaniya otpravlena na',
-    new_checkin: 'Novaya Registratsiya',
-    back: 'Nazad',
-    next: 'Dalee',
-    step: 'Shag',
-    of: 'iz',
-    company_name: 'Nazvanie Kompanii',
-    dot_number: 'Nomer DOT',
-    mc_number: 'Nomer MC',
-    contact_name: 'Imya Kontakta',
-    unit_number: 'Nomer Mashiny',
+    welcome_title: '\u0414\u043e\u0431\u0440\u043e \u043f\u043e\u0436\u0430\u043b\u043e\u0432\u0430\u0442\u044c \u0432',
+    welcome_sub: '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043d\u0438\u0436\u0435 \u0447\u0442\u043e\u0431\u044b \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0432\u0430\u0448 \u0433\u0440\u0443\u0437\u043e\u0432\u0438\u043a',
+    start: '\u041d\u0430\u0447\u0430\u0442\u044c \u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044e',
+    find_company: '\u041d\u0430\u0439\u0434\u0438\u0442\u0435 \u0412\u0430\u0448\u0443 \u041a\u043e\u043c\u043f\u0430\u043d\u0438\u044e',
+    find_company_sub: '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u0438',
+    company_not_listed: '\u041c\u043e\u0435\u0439 \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u0438 \u043d\u0435\u0442 \u0432 \u0441\u043f\u0438\u0441\u043a\u0435 \u2014 \u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c',
+    find_unit: '\u041d\u0430\u0439\u0434\u0438\u0442\u0435 \u0412\u0430\u0448\u0443 \u0415\u0434\u0438\u043d\u0438\u0446\u0443',
+    find_unit_sub: '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u043c\u0435\u0440 \u0435\u0434\u0438\u043d\u0438\u0446\u044b',
+    unit_not_listed: '\u042d\u0442\u043e\u0433\u043e \u0433\u0440\u0443\u0437\u043e\u0432\u0438\u043a\u0430 \u043d\u0435\u0442 \u0432 \u0441\u043f\u0438\u0441\u043a\u0435 \u2014 \u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c',
+    concern_title: '\u041a\u0430\u043a\u0438\u0435 \u0420\u0430\u0431\u043e\u0442\u044b \u041d\u0443\u0436\u043d\u043e \u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c?',
+    concern_sub: '\u041e\u043f\u0438\u0448\u0438\u0442\u0435 \u0447\u0442\u043e \u043d\u0443\u0436\u043d\u043e \u0441\u0434\u0435\u043b\u0430\u0442\u044c \u2014 \u043d\u0430\u043f\u0438\u0448\u0438\u0442\u0435 \u0438\u043b\u0438 \u0441\u043a\u0430\u0436\u0438\u0442\u0435',
+    concern_placeholder: '\u041f\u0440\u0438\u043c\u0435\u0440: \u0417\u0430\u043c\u0435\u043d\u0430 \u043c\u0430\u0441\u043b\u0430, \u0442\u043e\u0440\u043c\u043e\u0437\u0430 \u0448\u0443\u043c\u044f\u0442, \u043b\u0430\u043c\u043f\u043e\u0447\u043a\u0430 \u0434\u0432\u0438\u0433\u0430\u0442\u0435\u043b\u044f...',
+    speak: '\u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u0447\u0442\u043e\u0431\u044b \u0413\u043e\u0432\u043e\u0440\u0438\u0442\u044c',
+    stop_speaking: '\u0421\u0442\u043e\u043f',
+    details_title: '\u0411\u044b\u0441\u0442\u0440\u044b\u0435 \u0414\u0435\u0442\u0430\u043b\u0438',
+    parked_label: '\u0413\u0434\u0435 \u043f\u0440\u0438\u043f\u0430\u0440\u043a\u043e\u0432\u0430\u043d \u0433\u0440\u0443\u0437\u043e\u0432\u0438\u043a?',
+    keys_label: '\u0412\u044b \u043e\u0441\u0442\u0430\u0432\u0438\u043b\u0438 \u043a\u043b\u044e\u0447\u0438?',
+    keys_in_truck: '\u0414\u0430 \u2014 \u0432 \u043a\u0430\u0431\u0438\u043d\u0435',
+    keys_front_desk: '\u0414\u0430 \u2014 \u043d\u0430 \u0441\u0442\u043e\u0439\u043a\u0435',
+    keys_no: '\u041d\u0435\u0442',
+    staying_label: '\u0412\u044b \u043e\u0441\u0442\u0430\u0451\u0442\u0435\u0441\u044c?',
+    staying_yes: '\u0416\u0434\u0443 \u0432 \u043c\u0430\u0441\u0442\u0435\u0440\u0441\u043a\u043e\u0439',
+    staying_no: '\u0423\u0435\u0437\u0436\u0430\u044e',
+    priority_label: '\u041f\u0440\u0438\u043e\u0440\u0438\u0442\u0435\u0442',
+    priority_routine: '\u041f\u043b\u0430\u043d\u043e\u0432\u044b\u0439',
+    priority_urgent: '\u0421\u0440\u043e\u0447\u043d\u044b\u0439',
+    priority_breakdown: '\u041f\u043e\u043b\u043e\u043c\u043a\u0430',
+    when_title: '\u041a\u043e\u0433\u0434\u0430 \u0412\u0430\u043c \u041d\u0443\u0436\u0435\u043d \u0413\u0440\u0443\u0437\u043e\u0432\u0438\u043a?',
+    when_pick_date: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0434\u0430\u0442\u0443',
+    when_pick_time: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0432\u0440\u0435\u043c\u044f',
+    auth_title: '\u041a\u0430\u043a \u041f\u043e\u0441\u0442\u0443\u043f\u0438\u0442\u044c \u0441 \u0420\u0435\u043c\u043e\u043d\u0442\u043e\u043c?',
+    auth_estimate: '\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u041f\u0440\u0438\u0448\u043b\u0438\u0442\u0435 \u0421\u043c\u0435\u0442\u0443',
+    auth_go_ahead: '\u041f\u0440\u0438\u0441\u0442\u0443\u043f\u0430\u0439\u0442\u0435 \u043a \u0420\u0435\u043c\u043e\u043d\u0442\u0443',
+    auth_limit_label: '\u041b\u0438\u043c\u0438\u0442 \u0440\u0430\u0441\u0445\u043e\u0434\u043e\u0432:',
+    auth_no_limit: '\u0411\u0435\u0437 \u041b\u0438\u043c\u0438\u0442\u0430',
+    email_label: '\u042d\u043b. \u043f\u043e\u0447\u0442\u0430',
+    phone_label: '\u0422\u0435\u043b\u0435\u0444\u043e\u043d',
+    review_title: '\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0412\u0430\u0448\u0443 \u0417\u0430\u044f\u0432\u043a\u0443',
+    submit: '\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0417\u0430\u044f\u0432\u043a\u0443',
+    submitting: '\u041e\u0442\u043f\u0440\u0430\u0432\u043a\u0430...',
+    confirmed_title: '\u0412\u044b \u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u044b!',
+    confirmed_sub: '\u0412\u0430\u0448\u0430 \u0437\u0430\u044f\u0432\u043a\u0430 \u043d\u0430 \u043e\u0431\u0441\u043b\u0443\u0436\u0438\u0432\u0430\u043d\u0438\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0430.',
+    new_checkin: '\u041d\u043e\u0432\u0430\u044f \u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044f',
+    back: '\u041d\u0430\u0437\u0430\u0434',
+    next: '\u0414\u0430\u043b\u0435\u0435',
+    step: '\u0428\u0430\u0433',
+    of: '\u0438\u0437',
+    company_name: '\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u041a\u043e\u043c\u043f\u0430\u043d\u0438\u0438',
+    dot_number: '\u041d\u043e\u043c\u0435\u0440 DOT',
+    mc_number: '\u041d\u043e\u043c\u0435\u0440 MC',
+    contact_name: '\u041a\u043e\u043d\u0442\u0430\u043a\u0442\u043d\u043e\u0435 \u041b\u0438\u0446\u043e',
+    unit_number: '\u041d\u043e\u043c\u0435\u0440 \u0415\u0434\u0438\u043d\u0438\u0446\u044b',
     vin: 'VIN',
-    mileage: 'Probeg',
-    unit_type: 'Tip Mashiny',
+    mileage: '\u041f\u0440\u043e\u0431\u0435\u0433',
+    unit_type: '\u0422\u0438\u043f \u0415\u0434\u0438\u043d\u0438\u0446\u044b',
+    new_customer: '\u041d\u043e\u0432\u044b\u0439 \u041a\u043b\u0438\u0435\u043d\u0442',
   },
   uz: {
     welcome_title: 'Xush kelibsiz',
@@ -209,9 +204,9 @@ const T: Record<string, Record<string, string>> = {
     details_title: 'Tezkor Malumotlar',
     parked_label: 'Mashina qayerda turadi?',
     keys_label: 'Kalitlar?',
-    keys_in_truck: 'Mashinada',
-    keys_front_desk: 'Qabulxonada',
-    keys_no: 'Yoq',
+    keys_in_truck: 'Ha \u2014 mashinada',
+    keys_front_desk: 'Ha \u2014 qabulxonada',
+    keys_no: "Yo'q",
     staying_label: 'Qolasizmi?',
     staying_yes: 'Ustaxonada kutaman',
     staying_no: 'Ketaman',
@@ -219,12 +214,9 @@ const T: Record<string, Record<string, string>> = {
     priority_routine: 'Oddiy',
     priority_urgent: 'Shoshilinch',
     priority_breakdown: 'Buzilish',
-    when_title: 'Mashina Qachon Kerak?',
-    when_today: 'Bugun',
-    when_tomorrow: 'Ertaga',
-    when_this_week: 'Shu Hafta',
-    when_no_rush: 'Shoshilmayman',
-    when_pick_date: 'Yoki sanani tanlang',
+    when_title: 'Yuk mashina qachon kerak?',
+    when_pick_date: 'Sanani tanlang',
+    when_pick_time: 'Vaqtni tanlang',
     auth_title: 'Tamirlash Bilan Qanday Qilamiz?',
     auth_estimate: 'Oldin Smeta Yuboring',
     auth_go_ahead: 'Tamirni Boshlang',
@@ -342,7 +334,10 @@ export default function KioskPage() {
   const [parkedLocation, setParkedLocation] = useState('')
   const [keysLeft, setKeysLeft] = useState<'in_truck' | 'front_desk' | 'no'>('in_truck')
   const [staying, setStaying] = useState<boolean | null>(null)
-  const [needByDate, setNeedByDate] = useState('')
+  const [needByDate, setNeedByDate] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]
+  })
+  const [needByTime, setNeedByTime] = useState('17:00')
   const [priority, setPriority] = useState<'routine' | 'urgent' | 'breakdown'>('routine')
   const [authType, setAuthType] = useState<'estimate_first' | 'go_ahead'>('estimate_first')
   const [authLimit, setAuthLimit] = useState<number | null>(null)
@@ -411,7 +406,8 @@ export default function KioskPage() {
     setParkedLocation('')
     setKeysLeft('in_truck')
     setStaying(null)
-    setNeedByDate('')
+    const d = new Date(); d.setDate(d.getDate() + 1); setNeedByDate(d.toISOString().split('T')[0])
+    setNeedByTime('17:00')
     setPriority('routine')
     setAuthType('estimate_first')
     setAuthLimit(null)
@@ -1059,26 +1055,28 @@ export default function KioskPage() {
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('when_title')}</div>
             <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 5 {t('of')} 7</div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {[
-                ['today', 'when_today'],
-                ['tomorrow', 'when_tomorrow'],
-                ['this_week', 'when_this_week'],
-                ['no_rush', 'when_no_rush'],
-              ].map(([val, tKey]) => (
-                <div key={val} onClick={() => setNeedByDate(val)} style={optionCardStyle(needByDate === val)}>
-                  {t(tKey)}
-                </div>
-              ))}
-            </div>
-
-            <label style={{ ...labelStyle, marginTop: 24 }}>{t('when_pick_date')}</label>
+            <label style={labelStyle}>{t('when_pick_date')}</label>
             <input
               style={{ ...inputStyle, colorScheme: 'dark' }}
               type="date"
-              value={needByDate.length > 10 || ['today', 'tomorrow', 'this_week', 'no_rush'].includes(needByDate) ? '' : needByDate}
+              value={needByDate}
               onChange={e => setNeedByDate(e.target.value)}
             />
+
+            <label style={{ ...labelStyle, marginTop: 16 }}>{t('when_pick_time')}</label>
+            <select
+              style={{ ...inputStyle, appearance: 'auto' }}
+              value={needByTime}
+              onChange={e => setNeedByTime(e.target.value)}
+            >
+              {Array.from({ length: 29 }, (_, i) => {
+                const hr = Math.floor(i / 2) + 6
+                const min = i % 2 === 0 ? '00' : '30'
+                const val = `${String(hr).padStart(2, '0')}:${min}`
+                const label = `${hr > 12 ? hr - 12 : hr}:${min} ${hr >= 12 ? 'PM' : 'AM'}`
+                return <option key={val} value={val}>{label}</option>
+              })}
+            </select>
 
             <div style={{ flex: 1 }} />
             {renderBottomNav()}
