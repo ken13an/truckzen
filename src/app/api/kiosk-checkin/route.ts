@@ -160,35 +160,35 @@ export async function POST(req: Request) {
     })
   }
 
-  // Send portal email
-  if (contact_email) {
-    try {
-      const { sendWelcomeEmail } = await import('@/lib/integrations/resend')
-      const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${portalToken}`
-      const { data: shop } = await s.from('shops').select('name, dba').eq('id', shop_id).single()
-      const shopName = shop?.dba || shop?.name || 'TruckZen'
-
-      const { Resend } = await import('resend')
-      const resend = new Resend(process.env.RESEND_API_KEY!)
-      await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'TruckZen <noreply@truckzen.pro>',
-        to: contact_email,
-        subject: `${woNum} — Your truck is checked in at ${shopName}`,
-        html: `<div style="font-family:sans-serif;background:#151520;color:#EDEDF0;padding:40px;max-width:480px;margin:0 auto">
-          <div style="font-size:22px;font-weight:700;margin-bottom:16px">Your Truck Is Checked In</div>
-          <p style="color:#9D9DA1;line-height:1.7">Work Order <strong>${woNum}</strong> has been created at ${shopName}.</p>
-          <p style="color:#9D9DA1;line-height:1.7">Track your repair status, approve estimates, and pay online:</p>
-          <a href="${portalUrl}" style="display:inline-block;margin:20px 0;padding:14px 28px;background:#1D6FE8;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:16px">View Your Repair Status</a>
-          <p style="color:#9D9DA1;font-size:12px;margin-top:20px">Or copy this link: ${portalUrl}</p>
-        </div>`,
-      })
-    } catch (emailErr) {
-      console.error('[Kiosk] Email send failed:', emailErr)
-    }
-  }
-
   // Log activity
   await s.from('wo_activity_log').insert({ wo_id: wo.id, action: `Kiosk check-in: ${checkinRef}` })
+
+  // Send portal email (fire and forget — do NOT await)
+  if (contact_email) {
+    (async () => {
+      try {
+        const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${portalToken}`
+        const { data: shopData } = await s.from('shops').select('name, dba').eq('id', shop_id).single()
+        const shopName = shopData?.dba || shopData?.name || 'TruckZen'
+        const { Resend } = await import('resend')
+        const resend = new Resend(process.env.RESEND_API_KEY!)
+        await resend.emails.send({
+          from: process.env.EMAIL_FROM || 'TruckZen <noreply@truckzen.pro>',
+          to: contact_email,
+          subject: `${woNum} — Your truck is checked in at ${shopName}`,
+          html: `<div style="font-family:sans-serif;background:#151520;color:#EDEDF0;padding:40px;max-width:480px;margin:0 auto">
+            <div style="font-size:22px;font-weight:700;margin-bottom:16px">Your Truck Is Checked In</div>
+            <p style="color:#9D9DA1;line-height:1.7">Work Order <strong>${woNum}</strong> has been created at ${shopName}.</p>
+            <p style="color:#9D9DA1;line-height:1.7">Track your repair status, approve estimates, and pay online:</p>
+            <a href="${portalUrl}" style="display:inline-block;margin:20px 0;padding:14px 28px;background:#1D6FE8;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:16px">View Your Repair Status</a>
+            <p style="color:#9D9DA1;font-size:12px;margin-top:20px">Or copy this link: ${portalUrl}</p>
+          </div>`,
+        })
+      } catch (emailErr) {
+        console.error('[Kiosk] Email send failed:', emailErr)
+      }
+    })()
+  }
 
   return NextResponse.json({
     ok: true,

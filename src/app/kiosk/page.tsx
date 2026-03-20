@@ -522,9 +522,9 @@ export default function KioskPage() {
       case 1: return !!(selectedCustomer || (showNewCustomer && newCustomer.company_name.trim()))
       case 2: return !!(selectedUnit || (showNewUnit && newUnit.unit_number.trim()))
       case 3: return !!concernText.trim()
-      case 4: return staying !== null
-      case 5: return !!needByDate
-      case 6: return !!contactEmail.trim() && !!contactPhone.trim()
+      case 4: return staying !== null && !!parkedLocation.trim() && !!keysLeft && !!priority
+      case 5: return !!needByDate && !!needByTime
+      case 6: return !!(authType) && !!contactEmail.trim() && !!contactPhone.trim() && (authType === 'estimate_first' || authLimit !== null)
       case 7: return true
       default: return false
     }
@@ -699,8 +699,8 @@ export default function KioskPage() {
               {[
                 { code: 'en', label: 'English' },
                 { code: 'es', label: 'Espanol' },
-                { code: 'ru', label: 'Russkiy' },
-                { code: 'uz', label: 'Ozbek' },
+                { code: 'ru', label: '\u0420\u0443\u0441\u0441\u043a\u0438\u0439' },
+                { code: 'uz', label: "O'zbek" },
               ].map(l => (
                 <button key={l.code} onClick={() => setLang(l.code)} style={{
                   padding: '12px 24px', borderRadius: 12, fontSize: 16, fontWeight: 700, fontFamily: "'Instrument Sans', sans-serif",
