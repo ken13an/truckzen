@@ -49,6 +49,10 @@ export default function WorkOrderDetailPage() {
   const [showMenu, setShowMenu] = useState(false)
   const [showTeamModal, setShowTeamModal] = useState(false)
   const [teamAssign, setTeamAssign] = useState({ writer: '', tech: '', parts: '' })
+  const [assignModal, setAssignModal] = useState<{ lineId: string; lineIdx: number } | null>(null)
+  const [assignList, setAssignList] = useState<{ user_id: string; name: string; percentage: number }[]>([])
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const [jobAssignments, setJobAssignments] = useState<any[]>([])
 
   useEffect(() => {
     loadData()
@@ -67,8 +71,13 @@ export default function WorkOrderDetailPage() {
       const woData = await woRes.json()
       setWo(woData)
       setTeamAssign({ writer: woData.service_writer_id || '', tech: woData.assigned_tech || '', parts: woData.parts_person_id || '' })
+      setJobAssignments(woData.jobAssignments || [])
     }
-    if (mechRes.ok) setMechanics(await mechRes.json())
+    if (mechRes.ok) {
+      const users = await mechRes.json()
+      setAllUsers(users)
+      setMechanics(users.filter((u: any) => ['technician', 'maintenance_technician'].includes(u.role)))
+    }
     setLoading(false)
   }
 
@@ -82,13 +91,38 @@ export default function WorkOrderDetailPage() {
     setSavingLine(null)
   }
 
-  async function assignTech(lineId: string, userId: string) {
-    setAssigningLine(null)
-    await fetch('/api/wo-assign', {
+  function openAssignModal(lineId: string, lineIdx: number) {
+    const existing = jobAssignments.filter((a: any) => a.line_id === lineId)
+    setAssignList(existing.map((a: any) => ({ user_id: a.user_id, name: a.users?.full_name || 'Unknown', percentage: a.percentage || 100 })))
+    setAssignModal({ lineId, lineIdx })
+  }
+
+  function addMechToList(mechId: string) {
+    const m = mechanics.find((u: any) => u.id === mechId)
+    if (!m || assignList.find(a => a.user_id === mechId)) return
+    const newList = [...assignList, { user_id: mechId, name: m.full_name, percentage: 100 }]
+    // Auto-distribute percentages evenly
+    const even = Math.floor(100 / newList.length)
+    const remainder = 100 - even * newList.length
+    setAssignList(newList.map((a, i) => ({ ...a, percentage: even + (i === newList.length - 1 ? remainder : 0) })))
+  }
+
+  function removeMechFromList(idx: number) {
+    const newList = assignList.filter((_, i) => i !== idx)
+    if (newList.length === 0) { setAssignList([]); return }
+    const even = Math.floor(100 / newList.length)
+    const remainder = 100 - even * newList.length
+    setAssignList(newList.map((a, i) => ({ ...a, percentage: even + (i === newList.length - 1 ? remainder : 0) })))
+  }
+
+  async function saveAssignments() {
+    if (!assignModal) return
+    await fetch('/api/wo-job-assignments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ line_id: lineId, tech_id: userId, user_id: user?.id, wo_id: wo.id }),
+      body: JSON.stringify({ line_id: assignModal.lineId, wo_id: wo.id, user_id: user?.id, assignments: assignList }),
     })
+    setAssignModal(null)
     await loadData()
   }
 
@@ -342,7 +376,7 @@ export default function WorkOrderDetailPage() {
                 <select value={(teamAssign as any)[field.key] || ''} onChange={e => setTeamAssign({ ...teamAssign, [field.key]: e.target.value })}
                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13, fontFamily: font }}>
                   <option value="">Unassigned</option>
-                  {mechanics.filter(field.filter).map((u: any) => (
+                  {allUsers.filter(field.filter).map((u: any) => (
                     <option key={u.id} value={u.id}>{u.full_name} ({u.role?.replace(/_/g, ' ')})</option>
                   ))}
                 </select>
@@ -351,6 +385,56 @@ export default function WorkOrderDetailPage() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
               <button onClick={() => setShowTeamModal(false)} style={{ padding: '8px 18px', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
               <button onClick={saveTeamAssign} style={{ padding: '8px 18px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Mechanics Modal */}
+      {assignModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setAssignModal(null) }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: '100%', maxWidth: 440, boxShadow: '0 8px 32px rgba(0,0,0,.15)' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A', marginBottom: 16 }}>Assign Mechanics to Job {assignModal.lineIdx + 1}</div>
+
+            {assignList.length === 0 && <div style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 12 }}>No mechanics assigned yet</div>}
+
+            {assignList.map((a, i) => {
+              const pctTotal = assignList.reduce((s, x) => s + x.percentage, 0)
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '8px 12px', background: '#F9FAFB', borderRadius: 8 }}>
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{a.name}</span>
+                  <input type="number" min={0} max={100} value={a.percentage}
+                    onChange={e => { const v = parseInt(e.target.value) || 0; setAssignList(prev => prev.map((x, j) => j === i ? { ...x, percentage: v } : x)) }}
+                    style={{ width: 60, padding: '4px 8px', border: '1px solid #D1D5DB', borderRadius: 4, fontSize: 12, textAlign: 'center', fontFamily: 'monospace' }} />
+                  <span style={{ fontSize: 12, color: '#6B7280' }}>%</span>
+                  <button onClick={() => removeMechFromList(i)} style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 16, padding: 2 }}>x</button>
+                </div>
+              )
+            })}
+
+            {(() => { const total = assignList.reduce((s, a) => s + a.percentage, 0); return total !== 100 && assignList.length > 0 ? (
+              <div style={{ fontSize: 11, color: total > 100 ? '#DC2626' : '#D97706', marginBottom: 8 }}>Total: {total}% — must equal 100%</div>
+            ) : null })()}
+
+            <div style={{ marginBottom: 16 }}>
+              <select defaultValue=""
+                onChange={e => { if (e.target.value) { addMechToList(e.target.value); e.target.value = '' } }}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13, fontFamily: font, color: '#6B7280' }}>
+                <option value="">+ Add Mechanic...</option>
+                {mechanics.filter(m => !assignList.find(a => a.user_id === m.id)).map((m: any) => (
+                  <option key={m.id} value={m.id}>{m.full_name}{m.team ? ` (Team ${m.team})` : ''}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setAssignModal(null)} style={{ padding: '8px 18px', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={saveAssignments}
+                disabled={assignList.length > 0 && assignList.reduce((s, a) => s + a.percentage, 0) !== 100}
+                style={{ padding: '8px 18px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font, opacity: assignList.length > 0 && assignList.reduce((s, a) => s + a.percentage, 0) !== 100 ? 0.5 : 1 }}>
+                Save
+              </button>
             </div>
           </div>
         </div>
@@ -368,7 +452,10 @@ export default function WorkOrderDetailPage() {
         {jobLines.map((line: any, idx: number) => {
           const status = line.line_status || line.status || 'unassigned'
           const color = STATUS_COLORS[status] || '#6B7280'
-          const assignedName = line.assigned_to && techMap[line.assigned_to] ? techMap[line.assigned_to] : null
+          const lineAssigns = jobAssignments.filter((a: any) => a.line_id === line.id)
+          const assignDisplay = lineAssigns.length > 0
+            ? lineAssigns.map((a: any) => `${a.users?.full_name || 'Unknown'}${lineAssigns.length > 1 ? ` (${a.percentage}%)` : ''}`).join(', ')
+            : null
 
           return (
             <div
@@ -420,46 +507,15 @@ export default function WorkOrderDetailPage() {
 
               {/* Assignment + Hours row */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-                <div style={{ position: 'relative' }}>
-                  {assignedName ? (
-                    <span
-                      style={{ fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-                      onClick={() => setAssigningLine(assigningLine === line.id ? null : line.id)}
-                    >
-                      Assigned: {assignedName}
+                <div>
+                  {assignDisplay ? (
+                    <span style={{ fontSize: 13, fontWeight: 700, cursor: 'pointer' }} onClick={() => openAssignModal(line.id, idx)}>
+                      Assigned: {assignDisplay}
                     </span>
                   ) : (
-                    <span
-                      style={{ fontSize: 13, fontWeight: 700, color: '#DC2626', cursor: 'pointer' }}
-                      onClick={() => setAssigningLine(assigningLine === line.id ? null : line.id)}
-                    >
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#DC2626', cursor: 'pointer' }} onClick={() => openAssignModal(line.id, idx)}>
                       Assign
                     </span>
-                  )}
-                  {assigningLine === line.id && (
-                    <div style={{
-                      position: 'absolute', top: 24, left: 0, background: '#fff',
-                      border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      zIndex: 50, minWidth: 200, padding: 4,
-                    }}>
-                      {mechanics.length === 0 && (
-                        <div style={{ padding: 12, fontSize: 12, color: '#9CA3AF' }}>No technicians found</div>
-                      )}
-                      {mechanics.map((m: any) => (
-                        <div
-                          key={m.id}
-                          onClick={() => assignTech(line.id, m.id)}
-                          style={{
-                            padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderRadius: 4,
-                            fontWeight: line.assigned_to === m.id ? 700 : 400,
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.background = '#F3F4F6')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                        >
-                          {m.full_name || m.email}
-                        </div>
-                      ))}
-                    </div>
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#6B7280' }}>

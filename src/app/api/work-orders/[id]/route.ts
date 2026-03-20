@@ -60,7 +60,15 @@ export async function GET(req: Request, { params }: Params) {
     if (users) userMap = Object.fromEntries(users.map((u: any) => [u.id, u.full_name]))
   }
 
-  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName })
+  // Get job assignments for all lines
+  const lineIds = (wo.so_lines || []).map((l: any) => l.id)
+  let jobAssignments: any[] = []
+  if (lineIds.length > 0) {
+    const { data: ja } = await s.from('wo_job_assignments').select('*, users(id, full_name, team)').in('line_id', lineIds).order('created_at')
+    jobAssignments = ja || []
+  }
+
+  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, jobAssignments })
 }
 
 export async function PATCH(req: Request, { params }: Params) {
