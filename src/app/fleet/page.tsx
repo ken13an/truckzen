@@ -9,6 +9,7 @@ export default function FleetPage() {
   const [loading, setLoading] = useState(true)
   const [search,  setSearch]  = useState('')
   const [ownerFilter, setOwnerFilter] = useState('all')
+  const [unitTypeFilter, setUnitTypeFilter] = useState('all')
 
   useEffect(() => {
     async function load() {
@@ -25,9 +26,11 @@ export default function FleetPage() {
   }, [])
 
   const OWNER_LABELS: Record<string, string> = { fleet_asset: 'Fleet Asset', owner_operator: 'Owner Operator', outside_customer: 'Outside Customer' }
+  const UNIT_TYPE_LABEL: Record<string, string> = { tractor: 'Tractor', trailer_dry_van: 'Dry Van', trailer_reefer: 'Reefer', trailer_flatbed: 'Flatbed', trailer_tanker: 'Tanker', trailer_lowboy: 'Lowboy', trailer_other: 'Trailer' }
 
   const filtered = assets.filter(a => {
     if (ownerFilter !== 'all' && (a.ownership_type || 'fleet_asset') !== ownerFilter) return false
+    if (unitTypeFilter !== 'all' && (a.unit_type || '') !== unitTypeFilter) return false
     if (!search) return true
     const q = search.toLowerCase()
     return a.unit_number?.toLowerCase().includes(q) || a.make?.toLowerCase().includes(q) || (a.customers as any)?.company_name?.toLowerCase().includes(q)
@@ -61,20 +64,31 @@ export default function FleetPage() {
             {l}
           </button>
         ))}
+        <select value={unitTypeFilter} onChange={e => setUnitTypeFilter(e.target.value)} style={{ padding:'5px 12px', borderRadius:100, border:'1px solid rgba(255,255,255,.08)', background:'#1C2130', color: unitTypeFilter === 'all' ? '#7C8BA0' : '#4D9EFF', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', outline:'none', appearance:'auto' as any }}>
+          <option value="all">All Types</option>
+          <option value="tractor">Tractor</option>
+          <option value="trailer_dry_van">Trailer - Dry Van</option>
+          <option value="trailer_reefer">Trailer - Reefer</option>
+          <option value="trailer_flatbed">Trailer - Flatbed</option>
+          <option value="trailer_tanker">Trailer - Tanker</option>
+          <option value="trailer_lowboy">Trailer - Lowboy</option>
+          <option value="trailer_other">Trailer - Other</option>
+        </select>
       </div>
 
       <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
         <div style={{ overflowX:'auto' }}>
           <table style={{ width:'100%', borderCollapse:'collapse', minWidth:700 }}>
-            <thead><tr>{['Unit #','Year','Make / Model','VIN','Odometer','Ownership','Owner','Status'].map(h =>
+            <thead><tr>{['Unit #','Year','Make / Model','Type','VIN','Odometer','Ownership','Owner','Status'].map(h =>
               <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={8} style={{ ...S.td, textAlign:'center', color:'#7C8BA0' }}>Loading...</td></tr>
+              {loading ? <tr><td colSpan={9} style={{ ...S.td, textAlign:'center', color:'#7C8BA0' }}>Loading...</td></tr>
               : filtered.map(a => (
                 <tr key={a.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = '/fleet/' + a.id}>
                   <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#4D9EFF', fontWeight:700 }}>{a.unit_number}</td>
                   <td style={{ ...S.td, color:'#7C8BA0' }}>{a.year}</td>
                   <td style={{ ...S.td, color:'#F0F4FF', fontWeight:600 }}>{a.make} {a.model}</td>
+                  <td style={{ ...S.td, fontSize:10, color:'#7C8BA0' }}>{UNIT_TYPE_LABEL[a.unit_type] || '—'}</td>
                   <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#48536A' }}>{a.vin || '—'}</td>
                   <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#DDE3EE' }}>{a.odometer?.toLocaleString() || '—'}</td>
                   <td style={{ ...S.td, fontSize:10, color:'#7C8BA0' }}>{OWNER_LABELS[a.ownership_type || 'fleet_asset'] || '—'}</td>

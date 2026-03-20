@@ -7,6 +7,253 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
 // ---------------------------------------------------------------------------
+// Translations
+// ---------------------------------------------------------------------------
+
+const T: Record<string, Record<string, string>> = {
+  en: {
+    welcome_title: 'Welcome to',
+    welcome_sub: 'Tap below to check in your truck for service',
+    start: 'Start Check-In',
+    find_company: 'Find Your Company',
+    find_company_sub: 'Type your company name to search',
+    company_not_listed: 'My company is not listed — Add New',
+    find_unit: 'Find Your Unit',
+    find_unit_sub: 'Type unit number',
+    unit_not_listed: 'This truck is not listed — Add New Unit',
+    concern_title: 'What Work Needs to Be Done?',
+    concern_sub: 'Tell us what your truck needs — type or speak',
+    concern_placeholder: 'Example: Oil change, brakes making noise, check engine light...',
+    speak: 'Tap to Speak',
+    stop_speaking: 'Stop',
+    details_title: 'Quick Details',
+    parked_label: 'Where is the truck parked?',
+    keys_label: 'Keys?',
+    keys_in_truck: 'In Truck',
+    keys_front_desk: 'Front Desk',
+    keys_no: 'No',
+    staying_label: 'Are you staying?',
+    staying_yes: 'Waiting at shop',
+    staying_no: 'Leaving',
+    priority_label: 'Priority',
+    priority_routine: 'Routine',
+    priority_urgent: 'Urgent',
+    priority_breakdown: 'Breakdown',
+    when_title: 'When Do You Need Your Truck?',
+    when_today: 'Today',
+    when_tomorrow: 'Tomorrow',
+    when_this_week: 'This Week',
+    when_no_rush: 'No Rush',
+    when_pick_date: 'Or pick a specific date',
+    auth_title: 'How Should We Handle Repairs?',
+    auth_estimate: 'Send Me an Estimate First',
+    auth_go_ahead: 'Go Ahead With Repairs',
+    auth_limit_label: 'Spending limit:',
+    auth_no_limit: 'No Limit',
+    email_label: 'Email',
+    phone_label: 'Phone',
+    review_title: 'Review Your Check-In',
+    submit: 'Submit Check-In',
+    submitting: 'Submitting...',
+    confirmed_title: "You're Checked In!",
+    confirmed_sub: 'A link to track your repair has been sent to',
+    new_checkin: 'New Check-In',
+    back: 'Back',
+    next: 'Next',
+    step: 'Step',
+    of: 'of',
+    company_name: 'Company Name',
+    dot_number: 'DOT Number',
+    mc_number: 'MC Number',
+    contact_name: 'Contact Name',
+    unit_number: 'Unit Number',
+    vin: 'VIN',
+    mileage: 'Mileage',
+    unit_type: 'Unit Type',
+  },
+  es: {
+    welcome_title: 'Bienvenido a',
+    welcome_sub: 'Toque abajo para registrar su camion para servicio',
+    start: 'Iniciar Registro',
+    find_company: 'Buscar Su Empresa',
+    find_company_sub: 'Escriba el nombre de su empresa',
+    company_not_listed: 'Mi empresa no esta en la lista — Agregar Nueva',
+    find_unit: 'Buscar Su Unidad',
+    find_unit_sub: 'Escriba el numero de unidad',
+    unit_not_listed: 'Este camion no esta en la lista — Agregar Unidad',
+    concern_title: 'Que Trabajo Necesita?',
+    concern_sub: 'Diganos que necesita su camion — escriba o hable',
+    concern_placeholder: 'Ejemplo: Cambio de aceite, frenos hacen ruido, luz de motor...',
+    speak: 'Tocar para Hablar',
+    stop_speaking: 'Parar',
+    details_title: 'Detalles Rapidos',
+    parked_label: 'Donde esta estacionado el camion?',
+    keys_label: 'Llaves?',
+    keys_in_truck: 'En el Camion',
+    keys_front_desk: 'Recepcion',
+    keys_no: 'No',
+    staying_label: 'Se va a quedar?',
+    staying_yes: 'Esperando en el taller',
+    staying_no: 'Me voy',
+    priority_label: 'Prioridad',
+    priority_routine: 'Rutina',
+    priority_urgent: 'Urgente',
+    priority_breakdown: 'Averia',
+    when_title: 'Cuando Necesita Su Camion?',
+    when_today: 'Hoy',
+    when_tomorrow: 'Manana',
+    when_this_week: 'Esta Semana',
+    when_no_rush: 'Sin Prisa',
+    when_pick_date: 'O elija una fecha',
+    auth_title: 'Como Manejamos las Reparaciones?',
+    auth_estimate: 'Envienme un Presupuesto Primero',
+    auth_go_ahead: 'Procedan con las Reparaciones',
+    auth_limit_label: 'Limite de gasto:',
+    auth_no_limit: 'Sin Limite',
+    email_label: 'Correo Electronico',
+    phone_label: 'Telefono',
+    review_title: 'Revise Su Registro',
+    submit: 'Enviar Registro',
+    submitting: 'Enviando...',
+    confirmed_title: 'Esta Registrado!',
+    confirmed_sub: 'Un enlace para seguir su reparacion se envio a',
+    new_checkin: 'Nuevo Registro',
+    back: 'Atras',
+    next: 'Siguiente',
+    step: 'Paso',
+    of: 'de',
+    company_name: 'Nombre de Empresa',
+    dot_number: 'Numero DOT',
+    mc_number: 'Numero MC',
+    contact_name: 'Nombre de Contacto',
+    unit_number: 'Numero de Unidad',
+    vin: 'VIN',
+    mileage: 'Kilometraje',
+    unit_type: 'Tipo de Unidad',
+  },
+  ru: {
+    welcome_title: 'Dobro pozhalovat v',
+    welcome_sub: 'Nazhmite chtoby zaregistrirovat gruzovik na obsluzhivanie',
+    start: 'Nachat Registratsiyu',
+    find_company: 'Naidite Svoyu Kompaniyu',
+    find_company_sub: 'Vvedite nazvanie kompanii',
+    company_not_listed: 'Moei kompanii net v spiske — Dobavit Novuyu',
+    find_unit: 'Naidite Svoyu Mashinu',
+    find_unit_sub: 'Vvedite nomer mashiny',
+    unit_not_listed: 'Etogo gruzovika net v spiske — Dobavit',
+    concern_title: 'Kakaya Rabota Nuzhna?',
+    concern_sub: 'Opishite chto nuzhno vashemu gruzoviku',
+    concern_placeholder: 'Primer: Zamena masla, tormozy shumyat, lampochka dvigatelya...',
+    speak: 'Nazhmite chtoby Govorit',
+    stop_speaking: 'Stop',
+    details_title: 'Bystrye Detali',
+    parked_label: 'Gde stoit gruzovik?',
+    keys_label: 'Klyuchi?',
+    keys_in_truck: 'V Gruzovike',
+    keys_front_desk: 'Na Stoike',
+    keys_no: 'Net',
+    staying_label: 'Vy ostayotes?',
+    staying_yes: 'Zhdu v masterskoi',
+    staying_no: 'Uyezzhayu',
+    priority_label: 'Prioritet',
+    priority_routine: 'Obychnyy',
+    priority_urgent: 'Srochno',
+    priority_breakdown: 'Avaria',
+    when_title: 'Kogda Nuzhen Gruzovik?',
+    when_today: 'Segodnya',
+    when_tomorrow: 'Zavtra',
+    when_this_week: 'Na Etoi Nedele',
+    when_no_rush: 'Ne Srochno',
+    when_pick_date: 'Ili vyberite datu',
+    auth_title: 'Kak Postupit s Remontom?',
+    auth_estimate: 'Snachala Prishlite Smetu',
+    auth_go_ahead: 'Nachninite Remont',
+    auth_limit_label: 'Limit rashodov:',
+    auth_no_limit: 'Bez Limita',
+    email_label: 'Email',
+    phone_label: 'Telefon',
+    review_title: 'Proverite Registratsiyu',
+    submit: 'Otpravit',
+    submitting: 'Otpravka...',
+    confirmed_title: 'Vy Zaregistrirovany!',
+    confirmed_sub: 'Ssylka dlya otslezhivaniya otpravlena na',
+    new_checkin: 'Novaya Registratsiya',
+    back: 'Nazad',
+    next: 'Dalee',
+    step: 'Shag',
+    of: 'iz',
+    company_name: 'Nazvanie Kompanii',
+    dot_number: 'Nomer DOT',
+    mc_number: 'Nomer MC',
+    contact_name: 'Imya Kontakta',
+    unit_number: 'Nomer Mashiny',
+    vin: 'VIN',
+    mileage: 'Probeg',
+    unit_type: 'Tip Mashiny',
+  },
+  uz: {
+    welcome_title: 'Xush kelibsiz',
+    welcome_sub: 'Yuk mashinangizni xizmatga royxatdan otkazish uchun bosing',
+    start: 'Royxatni Boshlash',
+    find_company: 'Kompaniyangizni Toping',
+    find_company_sub: 'Kompaniya nomini yozing',
+    company_not_listed: 'Kompaniyam royxatda yoq — Yangi Qoshish',
+    find_unit: 'Mashinangizni Toping',
+    find_unit_sub: 'Mashina raqamini yozing',
+    unit_not_listed: 'Bu mashina royxatda yoq — Yangi Qoshish',
+    concern_title: 'Qanday Ish Kerak?',
+    concern_sub: 'Mashinangizga nima kerakligini yozing yoki gapiring',
+    concern_placeholder: 'Misol: Moy almashtirish, tormoz shovqin qilyapti...',
+    speak: 'Gapirish uchun Bosing',
+    stop_speaking: 'Toxtatish',
+    details_title: 'Tezkor Malumotlar',
+    parked_label: 'Mashina qayerda turadi?',
+    keys_label: 'Kalitlar?',
+    keys_in_truck: 'Mashinada',
+    keys_front_desk: 'Qabulxonada',
+    keys_no: 'Yoq',
+    staying_label: 'Qolasizmi?',
+    staying_yes: 'Ustaxonada kutaman',
+    staying_no: 'Ketaman',
+    priority_label: 'Muhimlik',
+    priority_routine: 'Oddiy',
+    priority_urgent: 'Shoshilinch',
+    priority_breakdown: 'Buzilish',
+    when_title: 'Mashina Qachon Kerak?',
+    when_today: 'Bugun',
+    when_tomorrow: 'Ertaga',
+    when_this_week: 'Shu Hafta',
+    when_no_rush: 'Shoshilmayman',
+    when_pick_date: 'Yoki sanani tanlang',
+    auth_title: 'Tamirlash Bilan Qanday Qilamiz?',
+    auth_estimate: 'Oldin Smeta Yuboring',
+    auth_go_ahead: 'Tamirni Boshlang',
+    auth_limit_label: 'Xarajat chegarasi:',
+    auth_no_limit: 'Chegarasiz',
+    email_label: 'Email',
+    phone_label: 'Telefon',
+    review_title: 'Royxatni Tekshiring',
+    submit: 'Yuborish',
+    submitting: 'Yuborilmoqda...',
+    confirmed_title: 'Royxatdan Otdingiz!',
+    confirmed_sub: 'Tamir holatini kuzatish havolasi yuborildi',
+    new_checkin: 'Yangi Royxat',
+    back: 'Orqaga',
+    next: 'Keyingi',
+    step: 'Qadam',
+    of: 'dan',
+    company_name: 'Kompaniya Nomi',
+    dot_number: 'DOT Raqam',
+    mc_number: 'MC Raqam',
+    contact_name: 'Kontakt Ismi',
+    unit_number: 'Mashina Raqami',
+    vin: 'VIN',
+    mileage: 'Yurgan Masofa',
+    unit_type: 'Mashina Turi',
+  },
+}
+
+// ---------------------------------------------------------------------------
 // Types & constants
 // ---------------------------------------------------------------------------
 
@@ -25,6 +272,7 @@ interface NewUnit {
   mileage: string
   license_plate: string
   state: string
+  unit_type: string
 }
 
 const TOTAL_STEPS = 7 // steps 1-7 shown in dots
@@ -80,6 +328,7 @@ const optionCardStyle = (selected: boolean): React.CSSProperties => ({
 
 export default function KioskPage() {
   // ---- State ----
+  const [lang, setLang] = useState('en')
   const [step, setStep] = useState(0)
   const [shopId, setShopId] = useState('')
   const [shopName, setShopName] = useState('')
@@ -108,7 +357,7 @@ export default function KioskPage() {
   const [showNewCustomer, setShowNewCustomer] = useState(false)
   const [showNewUnit, setShowNewUnit] = useState(false)
   const [newCustomer, setNewCustomer] = useState<NewCustomer>({ company_name: '', dot_number: '', mc_number: '', contact_name: '', phone: '', email: '' })
-  const [newUnit, setNewUnit] = useState<NewUnit>({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '' })
+  const [newUnit, setNewUnit] = useState<NewUnit>({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' })
 
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ wo_number: string; portal_token: string } | null>(null)
@@ -116,6 +365,8 @@ export default function KioskPage() {
 
   const recognitionRef = useRef<any>(null)
   const idleRef = useRef<any>(null)
+
+  const t = (key: string) => T[lang]?.[key] || T.en[key] || key
 
   // ---- Init ----
   useEffect(() => {
@@ -173,7 +424,7 @@ export default function KioskPage() {
     setShowNewCustomer(false)
     setShowNewUnit(false)
     setNewCustomer({ company_name: '', dot_number: '', mc_number: '', contact_name: '', phone: '', email: '' })
-    setNewUnit({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '' })
+    setNewUnit({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' })
     setSubmitting(false)
     setResult(null)
     setRecording(false)
@@ -400,7 +651,7 @@ export default function KioskPage() {
             fontFamily: "'Instrument Sans', sans-serif",
           }}
         >
-          Back
+          {t('back')}
         </button>
         <button
           onClick={onNext || goNext}
@@ -411,7 +662,7 @@ export default function KioskPage() {
             opacity: canAdvance() ? 1 : 0.4,
           }}
         >
-          {nextLabel || 'Next'}
+          {nextLabel || t('next')}
         </button>
       </div>
     )
@@ -443,16 +694,34 @@ export default function KioskPage() {
         {step === 0 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 20 }}>
             <div style={{ fontSize: 36, fontWeight: 700, lineHeight: 1.2, color: '#EDEDF0' }}>
-              Welcome to {shopName || 'Our Shop'}
+              {t('welcome_title')} {shopName || 'Our Shop'}
             </div>
             <div style={{ fontSize: 20, color: '#9D9DA1', maxWidth: 400 }}>
-              Tap below to check in your truck for service
+              {t('welcome_sub')}
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24 }}>
+              {[
+                { code: 'en', label: 'English' },
+                { code: 'es', label: 'Espanol' },
+                { code: 'ru', label: 'Russkiy' },
+                { code: 'uz', label: 'Ozbek' },
+              ].map(l => (
+                <button key={l.code} onClick={() => setLang(l.code)} style={{
+                  padding: '12px 24px', borderRadius: 12, fontSize: 16, fontWeight: 700, fontFamily: "'Instrument Sans', sans-serif",
+                  background: lang === l.code ? '#1D6FE8' : 'rgba(255,255,255,0.06)',
+                  color: lang === l.code ? '#fff' : '#EDEDF0',
+                  border: lang === l.code ? '2px solid #1D6FE8' : '2px solid rgba(255,255,255,0.1)',
+                  cursor: 'pointer',
+                }}>
+                  {l.label}
+                </button>
+              ))}
             </div>
             <button
               onClick={() => setStep(1)}
               style={{ ...primaryBtnStyle, marginTop: 16, padding: '20px 56px', fontSize: 22 }}
             >
-              Start Check-In
+              {t('start')}
             </button>
           </div>
         )}
@@ -462,14 +731,14 @@ export default function KioskPage() {
         {/* ================================================================ */}
         {step === 1 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Find Your Company</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>Step 1 of 7</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>{t('find_company')}</div>
+            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 1 {t('of')} 7</div>
 
             {!showNewCustomer ? (
               <>
                 <input
                   style={inputStyle}
-                  placeholder="Type company name..."
+                  placeholder={t('find_company_sub')}
                   value={customerSearch}
                   onChange={e => handleCustomerSearch(e.target.value)}
                   autoFocus
@@ -522,7 +791,7 @@ export default function KioskPage() {
                   onClick={() => setShowNewCustomer(true)}
                   style={{ background: 'none', border: 'none', color: '#1D6FE8', fontSize: 16, fontWeight: 700, cursor: 'pointer', marginTop: 20, padding: '12px 0', fontFamily: "'Instrument Sans', sans-serif", textAlign: 'left' }}
                 >
-                  + My company is not listed
+                  + {t('company_not_listed')}
                 </button>
               </>
             ) : (
@@ -530,27 +799,27 @@ export default function KioskPage() {
                 {/* New customer form */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div>
-                    <label style={labelStyle}>Company Name *</label>
+                    <label style={labelStyle}>{t('company_name')} *</label>
                     <input style={inputStyle} placeholder="ABC Trucking" value={newCustomer.company_name} onChange={e => setNewCustomer({ ...newCustomer, company_name: e.target.value })} autoFocus />
                   </div>
                   <div>
-                    <label style={labelStyle}>DOT Number</label>
+                    <label style={labelStyle}>{t('dot_number')}</label>
                     <input style={inputStyle} placeholder="1234567" value={newCustomer.dot_number} onChange={e => setNewCustomer({ ...newCustomer, dot_number: e.target.value })} />
                   </div>
                   <div>
-                    <label style={labelStyle}>MC Number</label>
+                    <label style={labelStyle}>{t('mc_number')}</label>
                     <input style={inputStyle} placeholder="MC-123456" value={newCustomer.mc_number} onChange={e => setNewCustomer({ ...newCustomer, mc_number: e.target.value })} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Contact Name</label>
+                    <label style={labelStyle}>{t('contact_name')}</label>
                     <input style={inputStyle} placeholder="John Smith" value={newCustomer.contact_name} onChange={e => setNewCustomer({ ...newCustomer, contact_name: e.target.value })} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Phone</label>
+                    <label style={labelStyle}>{t('phone_label')}</label>
                     <input style={inputStyle} type="tel" placeholder="(555) 123-4567" value={newCustomer.phone} onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Email</label>
+                    <label style={labelStyle}>{t('email_label')}</label>
                     <input style={inputStyle} type="email" placeholder="dispatch@company.com" value={newCustomer.email} onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })} />
                   </div>
                 </div>
@@ -573,16 +842,16 @@ export default function KioskPage() {
         {/* ================================================================ */}
         {step === 2 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Find Your Unit</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('find_unit')}</div>
             <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>
-              Step 2 of 7 — {selectedCustomer?.company_name || newCustomer.company_name || 'Company'}
+              {t('step')} 2 {t('of')} 7 — {selectedCustomer?.company_name || newCustomer.company_name || 'Company'}
             </div>
 
             {!showNewUnit ? (
               <>
                 <input
                   style={inputStyle}
-                  placeholder="Type unit number or VIN..."
+                  placeholder={t('find_unit_sub')}
                   value={unitSearch}
                   onChange={e => handleUnitSearch(e.target.value)}
                   autoFocus
@@ -635,22 +904,34 @@ export default function KioskPage() {
                   onClick={() => setShowNewUnit(true)}
                   style={{ background: 'none', border: 'none', color: '#1D6FE8', fontSize: 16, fontWeight: 700, cursor: 'pointer', marginTop: 20, padding: '12px 0', fontFamily: "'Instrument Sans', sans-serif", textAlign: 'left' }}
                 >
-                  + This truck is not listed
+                  + {t('unit_not_listed')}
                 </button>
               </>
             ) : (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div>
-                    <label style={labelStyle}>Unit Number *</label>
+                    <label style={labelStyle}>{t('unit_number')} *</label>
                     <input style={inputStyle} placeholder="e.g. 2717" value={newUnit.unit_number} onChange={e => setNewUnit({ ...newUnit, unit_number: e.target.value })} autoFocus />
                   </div>
                   <div>
-                    <label style={labelStyle}>VIN (17 characters)</label>
+                    <label style={labelStyle}>{t('unit_type')}</label>
+                    <select style={{ ...inputStyle, cursor: 'pointer' }} value={newUnit.unit_type} onChange={e => setNewUnit({ ...newUnit, unit_type: e.target.value })}>
+                      <option value="tractor">Tractor</option>
+                      <option value="trailer_dry_van">Trailer - Dry Van</option>
+                      <option value="trailer_reefer">Trailer - Reefer</option>
+                      <option value="trailer_flatbed">Trailer - Flatbed</option>
+                      <option value="trailer_tanker">Trailer - Tanker</option>
+                      <option value="trailer_lowboy">Trailer - Lowboy</option>
+                      <option value="trailer_other">Trailer - Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>{t('vin')} (17)</label>
                     <input style={{ ...inputStyle, letterSpacing: '0.05em' }} placeholder="1HGBH41JXMN109186" maxLength={17} value={newUnit.vin} onChange={e => setNewUnit({ ...newUnit, vin: e.target.value.toUpperCase() })} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Mileage</label>
+                    <label style={labelStyle}>{t('mileage')}</label>
                     <input style={inputStyle} type="number" placeholder="e.g. 485000" value={newUnit.mileage} onChange={e => setNewUnit({ ...newUnit, mileage: e.target.value })} />
                   </div>
                   <div style={{ display: 'flex', gap: 12 }}>
@@ -665,7 +946,7 @@ export default function KioskPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => { setShowNewUnit(false); setNewUnit({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '' }) }}
+                  onClick={() => { setShowNewUnit(false); setNewUnit({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' }) }}
                   style={{ background: 'none', border: 'none', color: '#1D6FE8', fontSize: 16, fontWeight: 600, cursor: 'pointer', marginTop: 16, padding: '8px 0', fontFamily: "'Instrument Sans', sans-serif", textAlign: 'left' }}
                 >
                   Search for existing unit instead
@@ -683,12 +964,12 @@ export default function KioskPage() {
         {/* ================================================================ */}
         {step === 3 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>What Work Needs to Be Done?</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>Step 3 of 7</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('concern_title')}</div>
+            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 3 {t('of')} 7</div>
 
             <textarea
               style={{ ...inputStyle, minHeight: 150, resize: 'vertical' }}
-              placeholder="Describe the problem or work needed..."
+              placeholder={t('concern_placeholder')}
               value={concernText}
               onChange={e => setConcernText(e.target.value)}
               autoFocus
@@ -720,7 +1001,7 @@ export default function KioskPage() {
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                   <line x1="12" y1="19" x2="12" y2="22" />
                 </svg>
-                {recording ? 'Tap to Stop Recording' : 'Tap to Speak'}
+                {recording ? t('stop_speaking') : t('speak')}
               </button>
             )}
 
@@ -734,10 +1015,10 @@ export default function KioskPage() {
         {/* ================================================================ */}
         {step === 4 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Quick Details</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>Step 4 of 7</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('details_title')}</div>
+            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 4 {t('of')} 7</div>
 
-            <label style={labelStyle}>Where is the truck parked?</label>
+            <label style={labelStyle}>{t('parked_label')}</label>
             <input
               style={inputStyle}
               placeholder="e.g. Bay 3, Front lot, Spot 12..."
@@ -745,23 +1026,23 @@ export default function KioskPage() {
               onChange={e => setParkedLocation(e.target.value)}
             />
 
-            <label style={{ ...labelStyle, marginTop: 24 }}>Are you leaving the keys?</label>
+            <label style={{ ...labelStyle, marginTop: 24 }}>{t('keys_label')}</label>
             <div style={{ display: 'flex', gap: 10 }}>
-              {([['in_truck', 'In Truck'], ['front_desk', 'Front Desk'], ['no', 'No']] as const).map(([val, label]) => (
-                <div key={val} onClick={() => setKeysLeft(val)} style={optionCardStyle(keysLeft === val)}>{label}</div>
+              {([['in_truck', 'keys_in_truck'], ['front_desk', 'keys_front_desk'], ['no', 'keys_no']] as const).map(([val, tKey]) => (
+                <div key={val} onClick={() => setKeysLeft(val)} style={optionCardStyle(keysLeft === val)}>{t(tKey)}</div>
               ))}
             </div>
 
-            <label style={{ ...labelStyle, marginTop: 24 }}>Are you waiting or leaving?</label>
+            <label style={{ ...labelStyle, marginTop: 24 }}>{t('staying_label')}</label>
             <div style={{ display: 'flex', gap: 10 }}>
-              <div onClick={() => setStaying(true)} style={optionCardStyle(staying === true)}>Waiting</div>
-              <div onClick={() => setStaying(false)} style={optionCardStyle(staying === false)}>Leaving</div>
+              <div onClick={() => setStaying(true)} style={optionCardStyle(staying === true)}>{t('staying_yes')}</div>
+              <div onClick={() => setStaying(false)} style={optionCardStyle(staying === false)}>{t('staying_no')}</div>
             </div>
 
-            <label style={{ ...labelStyle, marginTop: 24 }}>Priority</label>
+            <label style={{ ...labelStyle, marginTop: 24 }}>{t('priority_label')}</label>
             <div style={{ display: 'flex', gap: 10 }}>
-              {([['routine', 'Routine'], ['urgent', 'Urgent'], ['breakdown', 'Breakdown']] as const).map(([val, label]) => (
-                <div key={val} onClick={() => setPriority(val)} style={optionCardStyle(priority === val)}>{label}</div>
+              {([['routine', 'priority_routine'], ['urgent', 'priority_urgent'], ['breakdown', 'priority_breakdown']] as const).map(([val, tKey]) => (
+                <div key={val} onClick={() => setPriority(val)} style={optionCardStyle(priority === val)}>{t(tKey)}</div>
               ))}
             </div>
 
@@ -775,23 +1056,23 @@ export default function KioskPage() {
         {/* ================================================================ */}
         {step === 5 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>When Do You Need Your Truck?</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>Step 5 of 7</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('when_title')}</div>
+            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 5 {t('of')} 7</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {[
-                ['today', 'Today'],
-                ['tomorrow', 'Tomorrow'],
-                ['this_week', 'This Week'],
-                ['no_rush', 'No Rush'],
-              ].map(([val, label]) => (
+                ['today', 'when_today'],
+                ['tomorrow', 'when_tomorrow'],
+                ['this_week', 'when_this_week'],
+                ['no_rush', 'when_no_rush'],
+              ].map(([val, tKey]) => (
                 <div key={val} onClick={() => setNeedByDate(val)} style={optionCardStyle(needByDate === val)}>
-                  {label}
+                  {t(tKey)}
                 </div>
               ))}
             </div>
 
-            <label style={{ ...labelStyle, marginTop: 24 }}>Or pick a specific date</label>
+            <label style={{ ...labelStyle, marginTop: 24 }}>{t('when_pick_date')}</label>
             <input
               style={{ ...inputStyle, colorScheme: 'dark' }}
               type="date"
@@ -809,8 +1090,8 @@ export default function KioskPage() {
         {/* ================================================================ */}
         {step === 6 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>How Should We Handle Repairs?</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>Step 6 of 7</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('auth_title')}</div>
+            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 6 {t('of')} 7</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div
@@ -823,7 +1104,7 @@ export default function KioskPage() {
                   padding: '20px 24px',
                 }}
               >
-                <div style={{ fontSize: 20, fontWeight: 700 }}>Send Me an Estimate First</div>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{t('auth_estimate')}</div>
                 <div style={{ fontSize: 14, color: '#9D9DA1', marginTop: 4, fontWeight: 400 }}>We will diagnose and send you a quote before starting work.</div>
               </div>
 
@@ -837,14 +1118,14 @@ export default function KioskPage() {
                   padding: '20px 24px',
                 }}
               >
-                <div style={{ fontSize: 20, fontWeight: 700 }}>Go Ahead With Repairs</div>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{t('auth_go_ahead')}</div>
                 <div style={{ fontSize: 14, color: '#9D9DA1', marginTop: 4, fontWeight: 400 }}>Authorize us to start work right away.</div>
               </div>
             </div>
 
             {authType === 'go_ahead' && (
               <>
-                <label style={{ ...labelStyle, marginTop: 20 }}>Spending Limit</label>
+                <label style={{ ...labelStyle, marginTop: 20 }}>{t('auth_limit_label')}</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                   {[500, 1000, 2000, 5000, null].map((val) => (
                     <div
@@ -858,14 +1139,14 @@ export default function KioskPage() {
                         minHeight: 'auto',
                       }}
                     >
-                      {val ? `$${val.toLocaleString()}` : 'No Limit'}
+                      {val ? `$${val.toLocaleString()}` : t('auth_no_limit')}
                     </div>
                   ))}
                 </div>
               </>
             )}
 
-            <label style={{ ...labelStyle, marginTop: 24 }}>Email *</label>
+            <label style={{ ...labelStyle, marginTop: 24 }}>{t('email_label')} *</label>
             <input
               style={inputStyle}
               type="email"
@@ -874,7 +1155,7 @@ export default function KioskPage() {
               onChange={e => setContactEmail(e.target.value)}
             />
 
-            <label style={{ ...labelStyle, marginTop: 16 }}>Phone *</label>
+            <label style={{ ...labelStyle, marginTop: 16 }}>{t('phone_label')} *</label>
             <input
               style={inputStyle}
               type="tel"
@@ -893,22 +1174,22 @@ export default function KioskPage() {
         {/* ================================================================ */}
         {step === 7 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Review Your Check-In</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>Step 7 of 7</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('review_title')}</div>
+            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 7 {t('of')} 7</div>
 
             <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 0 }}>
               {[
-                ['Company', selectedCustomer?.company_name || newCustomer.company_name || '—'],
-                ['Unit', selectedUnit ? `#${selectedUnit.unit_number}` : newUnit.unit_number ? `#${newUnit.unit_number}` : '—'],
+                [t('company_name'), selectedCustomer?.company_name || newCustomer.company_name || '—'],
+                [t('unit_number'), selectedUnit ? `#${selectedUnit.unit_number}` : newUnit.unit_number ? `#${newUnit.unit_number}` : '—'],
                 ['Concern', concernText || '—'],
                 ['Parked', parkedLocation || '—'],
-                ['Keys', keysLeft === 'in_truck' ? 'In Truck' : keysLeft === 'front_desk' ? 'Front Desk' : 'No'],
-                ['Staying', staying === true ? 'Waiting' : staying === false ? 'Leaving' : '—'],
-                ...(staying === false ? [['Need By', needByDate === 'today' ? 'Today' : needByDate === 'tomorrow' ? 'Tomorrow' : needByDate === 'this_week' ? 'This Week' : needByDate === 'no_rush' ? 'No Rush' : needByDate || '—']] : []),
-                ['Priority', priority.charAt(0).toUpperCase() + priority.slice(1)],
-                ['Authorization', authType === 'estimate_first' ? 'Estimate First' : `Go Ahead${authLimit ? ` (up to $${authLimit.toLocaleString()})` : ' (No Limit)'}`],
-                ['Email', contactEmail || '—'],
-                ['Phone', contactPhone || '—'],
+                [t('keys_label'), keysLeft === 'in_truck' ? t('keys_in_truck') : keysLeft === 'front_desk' ? t('keys_front_desk') : t('keys_no')],
+                [t('staying_label'), staying === true ? t('staying_yes') : staying === false ? t('staying_no') : '—'],
+                ...(staying === false ? [['Need By', needByDate === 'today' ? t('when_today') : needByDate === 'tomorrow' ? t('when_tomorrow') : needByDate === 'this_week' ? t('when_this_week') : needByDate === 'no_rush' ? t('when_no_rush') : needByDate || '—']] : []),
+                [t('priority_label'), priority === 'routine' ? t('priority_routine') : priority === 'urgent' ? t('priority_urgent') : t('priority_breakdown')],
+                ['Authorization', authType === 'estimate_first' ? t('auth_estimate') : `${t('auth_go_ahead')}${authLimit ? ` (up to $${authLimit.toLocaleString()})` : ` (${t('auth_no_limit')})`}`],
+                [t('email_label'), contactEmail || '—'],
+                [t('phone_label'), contactPhone || '—'],
               ].map(([label, value], idx) => (
                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 0', borderBottom: idx < 10 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
                   <span style={{ fontSize: 14, color: '#9D9DA1', minWidth: 100 }}>{label}</span>
@@ -934,7 +1215,7 @@ export default function KioskPage() {
                   fontFamily: "'Instrument Sans', sans-serif",
                 }}
               >
-                Back
+                {t('back')}
               </button>
               <button
                 onClick={handleSubmit}
@@ -953,7 +1234,7 @@ export default function KioskPage() {
                   opacity: submitting ? 0.7 : 1,
                 }}
               >
-                {submitting ? 'Submitting...' : 'Submit Check-In'}
+                {submitting ? t('submitting') : t('submit')}
               </button>
             </div>
           </div>
@@ -965,18 +1246,18 @@ export default function KioskPage() {
         {step === 8 && result && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 16 }}>
             <CheckCircle2 size={64} color="#16A34A" />
-            <div style={{ fontSize: 36, fontWeight: 700, marginTop: 8 }}>You're Checked In!</div>
+            <div style={{ fontSize: 36, fontWeight: 700, marginTop: 8 }}>{t('confirmed_title')}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: '#1D6FE8', letterSpacing: '0.04em', marginTop: 8 }}>
               {result.wo_number}
             </div>
             <div style={{ fontSize: 18, color: '#9D9DA1', maxWidth: 400, lineHeight: 1.6, marginTop: 8 }}>
-              A link to track your repair has been sent to <strong style={{ color: '#EDEDF0' }}>{contactEmail}</strong>
+              {t('confirmed_sub')} <strong style={{ color: '#EDEDF0' }}>{contactEmail}</strong>
             </div>
             <button
               onClick={resetAll}
               style={{ ...primaryBtnStyle, marginTop: 32, padding: '20px 48px', fontSize: 20 }}
             >
-              New Check-In
+              {t('new_checkin')}
             </button>
           </div>
         )}

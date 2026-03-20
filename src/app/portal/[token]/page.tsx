@@ -9,14 +9,17 @@ import { ChevronLeft } from 'lucide-react'
 interface SOLine {
   id: string
   description: string
-  hours: number
-  rate: number
-  parts_total: number
-  line_total: number
+  line_type: string
+  quantity: number
+  unit_price: number
+  total_price: number
   line_status: string
   is_additional: boolean
   customer_approved: boolean | null
   finding: string | null
+  resolution: string | null
+  estimated_hours: number
+  billed_hours: number
 }
 
 interface ShopCharge {
@@ -249,8 +252,10 @@ export default function CustomerPortalPage() {
   const vinLast6 = vin.length >= 6 ? vin.slice(-6) : vin
   const vinPrefix = vin.length > 6 ? vin.slice(0, -6) : ''
 
-  const partsSubtotal = lines.reduce((s, l) => s + (l.parts_total || 0), 0)
-  const laborSubtotal = lines.reduce((s, l) => s + (l.hours || 0) * (l.rate || 0), 0)
+  const partsLines = lines.filter(l => l.line_type === 'part')
+  const laborLines = lines.filter(l => l.line_type !== 'part')
+  const partsSubtotal = partsLines.reduce((s, l) => s + (l.total_price || (l.quantity || 0) * (l.unit_price || 0)), 0)
+  const laborSubtotal = laborLines.reduce((s, l) => s + ((l.billed_hours || l.quantity || 0) * (l.unit_price || 0)), 0)
   const chargesSubtotal = shopCharges.reduce((s, c) => s + (c.amount || 0), 0)
   const subtotal = partsSubtotal + laborSubtotal + chargesSubtotal
   const taxBase = partsSubtotal + (data.shop?.tax_labor ? laborSubtotal : 0)
@@ -444,10 +449,10 @@ export default function CustomerPortalPage() {
                   {lines.map((line, i) => (
                     <tr key={line.id} style={{ borderBottom: i < lines.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                       <td style={{ padding: '10px 12px', fontWeight: 600 }}>{line.description}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', color: MUTED }}>{line.hours || '—'}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', color: MUTED }}>{line.rate ? `$${line.rate.toFixed(0)}` : '—'}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', color: MUTED }}>{line.parts_total ? `$${line.parts_total.toFixed(2)}` : '—'}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700 }}>${(line.line_total || 0).toFixed(2)}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'right', color: MUTED }}>{line.billed_hours || line.quantity || '—'}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'right', color: MUTED }}>{line.unit_price ? `$${Number(line.unit_price).toFixed(0)}` : '—'}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'right', color: MUTED }}>{line.line_type === 'part' ? `$${(line.total_price || 0).toFixed(2)}` : '—'}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700 }}>${(line.total_price || (line.quantity || 0) * (line.unit_price || 0)).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>

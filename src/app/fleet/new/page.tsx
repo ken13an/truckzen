@@ -9,7 +9,7 @@ export default function NewFleetPage() {
   const router = useRouter()
   const supabase = createClient()
   const [customers, setCustomers] = useState<any[]>([])
-  const [form, setForm] = useState({ unit_number:'', vin:'', year:'', make:'', model:'', engine:'', odometer:'0', customer_id:'', status:'active', ownership_type:'fleet_asset' })
+  const [form, setForm] = useState({ unit_number:'', vin:'', year:'', make:'', model:'', engine:'', odometer:'0', customer_id:'', status:'active', ownership_type:'fleet_asset', unit_type:'tractor' })
   const [saving,    setSaving]    = useState(false)
   const [decoding,  setDecoding]  = useState(false)
   const [error,     setError]     = useState('')
@@ -112,12 +112,27 @@ export default function NewFleetPage() {
           <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', marginBottom:12 }}>Vehicle Information</div>
           <div style={S.row2}>{inp('Unit Number *','unit_number','text','e.g. 2717')}{inp('Odometer (miles)','odometer','number','0')}</div>
           <div style={S.row3}>{inp('Year','year','number','2022')}{inp('Make','make','text','Kenworth')}{inp('Model','model','text','T680')}</div>
-          <div style={S.row2}>{inp('Engine','engine','text','PACCAR MX-13')}<div>
+          <div style={S.row2}>
+            <div>
+              <label style={S.label}>Unit Type</label>
+              <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.unit_type} onChange={e=>setForm(f=>({...f,unit_type:e.target.value}))}>
+                <option value="tractor">Tractor</option>
+                <option value="trailer_dry_van">Trailer - Dry Van</option>
+                <option value="trailer_reefer">Trailer - Reefer</option>
+                <option value="trailer_flatbed">Trailer - Flatbed</option>
+                <option value="trailer_tanker">Trailer - Tanker</option>
+                <option value="trailer_lowboy">Trailer - Lowboy</option>
+                <option value="trailer_other">Trailer - Other</option>
+              </select>
+            </div>
+            {inp('Engine','engine','text','PACCAR MX-13')}
+          </div>
+          <div style={S.row2}><div>
             <label style={S.label}>Status</label>
             <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
               {['active','inactive','decommissioned'].map(s=><option key={s} value={s}>{s}</option>)}
             </select>
-          </div></div>
+          </div><div/></div>
           <div style={S.row2}>
             <div>
               <label style={S.label}>Ownership Type *</label>

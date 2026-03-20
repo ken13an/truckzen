@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 
   let q = s
     .from('assets')
-    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, customers(company_name)')
+    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, unit_type, customers(company_name)')
     .eq('shop_id', shopId)
     .order('unit_number')
 
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const s = db()
   const body = await req.json()
-  let { shop_id, unit_number, vin, year, make, model, engine, odometer, customer_id, status: assetStatus, ownership_type } = body
+  let { shop_id, unit_number, vin, year, make, model, engine, odometer, customer_id, status: assetStatus, ownership_type, unit_type } = body
 
   if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!unit_number) return NextResponse.json({ error: 'Unit number required' }, { status: 400 })
@@ -65,6 +65,7 @@ export async function POST(req: Request) {
     customer_id: customer_id || null,
     status: assetStatus || 'on_road',
     ownership_type: ownership_type || 'fleet_asset',
+    unit_type: unit_type || 'tractor',
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

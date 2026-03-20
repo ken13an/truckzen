@@ -35,7 +35,7 @@ export default function FleetDetailPage() {
 
   async function save() {
     setSaving(true)
-    await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ unit_number:edit.unit_number, year:edit.year, make:edit.make, model:edit.model, engine:edit.engine, odometer:edit.odometer, status:edit.status, ownership_type:edit.ownership_type }) })
+    await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ unit_number:edit.unit_number, year:edit.year, make:edit.make, model:edit.model, engine:edit.engine, odometer:edit.odometer, status:edit.status, ownership_type:edit.ownership_type, unit_type:edit.unit_type }) })
     setAsset(edit); setSaving(false)
   }
 
@@ -52,6 +52,7 @@ export default function FleetDetailPage() {
 
   if (loading) return <div style={{ ...S.page, color:'#7C8BA0', padding:60 }}>Loading...</div>
 
+  const UNIT_TYPE_LABEL: Record<string, string> = { tractor: 'Tractor', trailer_dry_van: 'Dry Van', trailer_reefer: 'Reefer', trailer_flatbed: 'Flatbed', trailer_tanker: 'Tanker', trailer_lowboy: 'Lowboy', trailer_other: 'Trailer' }
   const statusColor: Record<string, string> = { active:'#1DB870', in_shop:'#4D9EFF', inactive:'#7C8BA0', decommissioned:'#D94F4F' }
 
   return (
@@ -64,6 +65,7 @@ export default function FleetDetailPage() {
         <div>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:'#F0F4FF', letterSpacing:'.02em' }}>Unit #{asset.unit_number}</div>
           <div style={{ fontSize:14, color:'#DDE3EE', marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
+          {asset.unit_type && <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{UNIT_TYPE_LABEL[asset.unit_type] || asset.unit_type}</div>}
           <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{(asset.customers as any)?.company_name}{asset.ownership_type && asset.ownership_type !== 'fleet_asset' ? ` — ${asset.ownership_type.replace(/_/g, ' ')}` : ''}</div>
         </div>
         <div style={{ display:'flex', gap:8, flexDirection:'column', alignItems:'flex-end' }}>
@@ -105,6 +107,17 @@ export default function FleetDetailPage() {
               <div><label style={S.label}>Status</label>
                 <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={edit?.status||'active'} onChange={e=>setEdit((a:any)=>({...a,status:e.target.value}))}>
                   {['active','in_shop','inactive','decommissioned'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                </select>
+              </div>
+              <div><label style={S.label}>Unit Type</label>
+                <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={edit?.unit_type||'tractor'} onChange={e=>setEdit((a:any)=>({...a,unit_type:e.target.value}))}>
+                  <option value="tractor">Tractor</option>
+                  <option value="trailer_dry_van">Trailer - Dry Van</option>
+                  <option value="trailer_reefer">Trailer - Reefer</option>
+                  <option value="trailer_flatbed">Trailer - Flatbed</option>
+                  <option value="trailer_tanker">Trailer - Tanker</option>
+                  <option value="trailer_lowboy">Trailer - Lowboy</option>
+                  <option value="trailer_other">Trailer - Other</option>
                 </select>
               </div>
             </div>
