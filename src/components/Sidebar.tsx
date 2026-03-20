@@ -4,6 +4,31 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems, ROLE_LABEL, ROLE_COLOR } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
+import { LayoutDashboard, Monitor, Wrench, Users2, Truck, FileText, Package, UserCircle, Factory, Settings, Timer, ShieldCheck, BarChart3, Calculator, LogOut, Clipboard, BookOpen, Cog } from 'lucide-react'
+
+const ICON_MAP: Record<string, any> = {
+  '/dashboard': LayoutDashboard,
+  '/kiosk-admin': Monitor,
+  '/work-orders': Wrench,
+  '/customers': Users2,
+  '/fleet': Truck,
+  '/invoices': FileText,
+  '/parts': Package,
+  '/drivers': UserCircle,
+  '/shop-floor': Factory,
+  '/maintenance': Cog,
+  '/maintenance/tires': Cog,
+  '/maintenance/parts-lifecycle': Cog,
+  '/compliance': ShieldCheck,
+  '/accounting': Calculator,
+  '/reports': BarChart3,
+  '/time-tracking': Timer,
+  '/settings': Settings,
+  '/settings/import': Clipboard,
+  '/admin/permissions': ShieldCheck,
+  '/tech': Wrench,
+  '/dvir': BookOpen,
+}
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -23,15 +48,12 @@ export default function Sidebar() {
       if (!data) return
       setUser(data)
 
-      // Load custom role permissions
       const { data: rp } = await supabase.from('role_permissions').select('module, allowed').eq('shop_id', data.shop_id).eq('role', data.role)
       if (rp) setRolePerms(Object.fromEntries(rp.map((r: any) => [r.module, r.allowed])))
 
-      // Load user overrides
       const { data: uo } = await supabase.from('user_permission_overrides').select('module, allowed').eq('user_id', data.id)
       if (uo) setUserOverrides(Object.fromEntries(uo.map((r: any) => [r.module, r.allowed])))
 
-      // Badge counts
       const [{ count: ls }, { count: oj }] = await Promise.all([
         supabase.from('parts').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).lte('on_hand', 2),
         supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).not('status', 'in', '("good_to_go","void")'),
@@ -45,6 +67,10 @@ export default function Sidebar() {
   if (!user) return null
 
   const visible = getSidebarItems(user.role, rolePerms, userOverrides)
+  // Separate settings from main items
+  const mainItems = visible.filter(i => i.href !== '/settings' && !i.href.startsWith('/settings/'))
+  const settingsItem = visible.find(i => i.href === '/settings')
+
   const roleColor = ROLE_COLOR[user.role] || '#7C8BA0'
   const initials = user.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
@@ -54,6 +80,46 @@ export default function Sidebar() {
   }
 
   const W = collapsed ? 56 : 220
+
+  function renderItem(item: any) {
+    const active = isActive(item.href)
+    const Icon = ICON_MAP[item.href]
+    const badge = item.href === '/parts' && lowStock > 0 ? lowStock
+      : item.href === '/work-orders' && openJobs > 0 ? openJobs
+      : null
+
+    return (
+      <a key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: collapsed ? '9px 0' : '9px 16px',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          margin: '1px 6px', borderRadius: 8,
+          background: active ? 'rgba(29,111,232,.12)' : 'transparent',
+          borderLeft: active ? '2px solid #1D6FE8' : '2px solid transparent',
+          cursor: 'pointer', transition: 'all .12s',
+        }}
+        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)' }}
+        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+          <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {Icon ? <Icon size={15} strokeWidth={1.5} color={active ? '#4D9EFF' : '#7C8BA0'} /> : <span style={{ fontSize: 13, color: active ? '#4D9EFF' : '#7C8BA0' }}>{item.icon}</span>}
+          </span>
+          {!collapsed && (
+            <>
+              <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : '#7C8BA0', flex: 1, whiteSpace: 'nowrap' }}>
+                {item.label}
+              </span>
+              {badge != null && badge > 0 && (
+                <span style={{ background: item.href === '/parts' ? '#D94F4F' : '#1D6FE8', color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+      </a>
+    )
+  }
 
   return (
     <aside style={{
@@ -71,50 +137,36 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Nav items */}
+      {/* Main nav */}
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto', overflowX: 'hidden' }}>
-        {visible.map(item => {
-          const active = isActive(item.href)
-          const badge = item.href === '/parts' && lowStock > 0 ? lowStock
-            : (item.href === '/work-orders' || item.href === ('/orders' as any)) && openJobs > 0 ? openJobs
-            : null
-
-          return (
-            <a key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: collapsed ? '9px 0' : '9px 16px',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                margin: '1px 6px', borderRadius: 8,
-                background: active ? 'rgba(29,111,232,.12)' : 'transparent',
-                borderLeft: active ? '2px solid #1D6FE8' : '2px solid transparent',
-                cursor: 'pointer', transition: 'all .12s',
-              }}
-              onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)' }}
-              onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
-                <span style={{ fontSize: 13, color: active ? '#4D9EFF' : '#7C8BA0', flexShrink: 0, width: 16, textAlign: 'center' }}>
-                  {item.icon}
-                </span>
-                {!collapsed && (
-                  <>
-                    <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : '#7C8BA0', flex: 1, whiteSpace: 'nowrap' }}>
-                      {item.label}
-                    </span>
-                    {badge != null && badge > 0 && (
-                      <span style={{ background: item.href === '/parts' ? '#D94F4F' : '#1D6FE8', color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>
-                        {badge > 99 ? '99+' : badge}
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-            </a>
-          )
-        })}
+        {mainItems.map(renderItem)}
       </nav>
 
-      {/* User profile footer */}
-      <div style={{ padding: collapsed ? '12px 0' : '12px 14px', borderTop: '1px solid rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', gap: 10, justifyContent: collapsed ? 'center' : 'flex-start' }}>
+      {/* Bottom: Settings + Sign Out */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
+        {settingsItem && renderItem(settingsItem)}
+
+        {/* Sign Out */}
+        <a href="#" onClick={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: collapsed ? '9px 0' : '9px 16px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            margin: '1px 6px', borderRadius: 8,
+            cursor: 'pointer', transition: 'all .12s',
+          }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,.08)'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
+            <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <LogOut size={15} strokeWidth={1.5} color="#7C8BA0" />
+            </span>
+            {!collapsed && <span style={{ fontSize: 12, color: '#7C8BA0' }}>Sign Out</span>}
+          </div>
+        </a>
+      </div>
+
+      {/* User profile */}
+      <div style={{ padding: collapsed ? '10px 0' : '10px 14px', borderTop: '1px solid rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', gap: 10, justifyContent: collapsed ? 'center' : 'flex-start' }}>
         <div style={{ width: 28, height: 28, borderRadius: '50%', background: `linear-gradient(135deg,${roleColor}66,${roleColor}33)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', fontSize: 9, fontWeight: 700, color: roleColor, flexShrink: 0 }}>
           {initials}
         </div>
@@ -125,7 +177,6 @@ export default function Sidebar() {
             </div>
             <div style={{ fontSize: 9, color: roleColor, fontFamily: 'monospace' }}>
               {ROLE_LABEL[user.role] || user.role}
-              {user.team && ` · Team ${user.team}`}
             </div>
           </div>
         )}

@@ -11,6 +11,7 @@ const PUBLIC_ROUTES = [
 // Module → route prefixes
 const MODULE_ROUTES: Record<string, string[]> = {
   dashboard:        ['/dashboard'],
+  kiosk_admin:      ['/kiosk-admin'],
   floor:            ['/floor', '/shop-floor'],
   orders:           ['/orders', '/work-orders', '/api/service-orders', '/api/work-orders', '/api/so-lines'],
   invoices:         ['/invoices', '/api/invoices'],
