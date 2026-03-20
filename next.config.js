@@ -153,4 +153,16 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+// Wrap with Sentry if DSN is configured
+const { withSentryConfig } = require('@sentry/nextjs')
+
+module.exports = withSentryConfig(nextConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG || '',
+  project: process.env.SENTRY_PROJECT || '',
+  disableLogger: true,
+}, {
+  widenClientFileUpload: true,
+  hideSourceMaps: true,
+  disableLogger: true,
+})

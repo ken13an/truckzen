@@ -16,6 +16,7 @@ Read this file BEFORE every task. These rules are non-negotiable.
 - Hosting: Vercel
 - Payments: Stripe
 - Email: Resend (sender: no-reply@truckzen.pro)
+- Error Monitoring: Sentry (NEXT_PUBLIC_SENTRY_DSN in .env.local — do NOT remove sentry configs or next.config.js wrapper)
 
 ---
 
