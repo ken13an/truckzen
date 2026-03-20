@@ -161,11 +161,11 @@ export const ROLE_LABEL: Record<string, string> = {
 }
 
 export const ROLE_COLOR: Record<string, string> = {
-  owner: '#FF5C5C', gm: '#FF5C5C', it_person: '#FF5C5C', shop_manager: '#FFB84D',
-  service_writer: '#00E0B0', technician: '#00E0B0',
-  parts_manager: '#00E0B0', fleet_manager: '#00E0B0', maintenance_manager: '#00E0B0',
-  maintenance_technician: '#00E0B0', accountant: '#FFB84D', office_admin: '#FFB84D',
-  dispatcher: '#00E0B0', driver: '#9D9DA1',
+  owner: '#FF453A', gm: '#FF453A', it_person: '#FF453A', shop_manager: '#FFD60A',
+  service_writer: '#0A84FF', technician: '#0A84FF',
+  parts_manager: '#0A84FF', fleet_manager: '#0A84FF', maintenance_manager: '#0A84FF',
+  maintenance_technician: '#0A84FF', accountant: '#FFD60A', office_admin: '#FFD60A',
+  dispatcher: '#0A84FF', driver: '#8E8E93',
 }
 
 // All roles in display order

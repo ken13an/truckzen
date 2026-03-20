@@ -124,19 +124,19 @@ function buildMessage(p: NotifyPayload): string {
     case 'job_done':
       return SMS.jobDone(p.customer_name || '', p.truck_unit || '', shop, p.payment_url)
     case 'kiosk_checkin':
-      return `🚛 New kiosk check-in — Truck #${p.truck_unit}. ${p.customer_name || 'Customer'} is waiting.`
+      return `New kiosk check-in — Truck #${p.truck_unit}. ${p.customer_name || 'Customer'} is waiting.`
     case 'invoice_sent':
-      return `📄 Invoice ${p.invoice_number} sent — $${p.amount?.toFixed(0)}. ${p.payment_url ? 'Pay: ' + p.payment_url : ''}`
+      return `Invoice ${p.invoice_number} sent — $${p.amount?.toFixed(0)}. ${p.payment_url ? 'Pay: ' + p.payment_url : ''}`
     case 'invoice_overdue':
       return SMS.invoiceReminder(p.customer_name || '', p.invoice_number || '', p.amount || 0, p.payment_url || '')
     case 'pm_due':
-      return `🔧 PM Due: Truck #${p.truck_unit} needs ${p.message || 'scheduled service'}. Call to schedule.`
+      return `PM Due: Truck #${p.truck_unit} needs ${p.message || 'scheduled service'}. Call to schedule.`
     case 'compliance_expiring':
-      return `⚠️ Compliance expiring: ${p.message || 'document expiring soon'}. Update in TruckZen.`
+      return `Compliance expiring: ${p.message || 'document expiring soon'}. Update in TruckZen.`
     case 'new_job_assigned':
-      return `🔧 New job assigned: ${p.so_number} — Truck #${p.truck_unit}. Check your TruckZen app.`
+      return `New job assigned: ${p.so_number} — Truck #${p.truck_unit}. Check your TruckZen app.`
     case 'status_changed':
-      return `📋 ${p.so_number} status updated: ${p.message || 'check TruckZen for details'}`
+      return `${p.so_number} status updated: ${p.message || 'check TruckZen for details'}`
     case 'cleaning_assignment':
       return SMS.cleaningAssignment('Tech', p.message || 'shop area', shop)
     default:

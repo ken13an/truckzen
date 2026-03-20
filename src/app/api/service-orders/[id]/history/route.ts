@@ -60,7 +60,7 @@ export async function GET(_req: Request, { params }: P) {
       user_name:  user?.full_name,
       user_role:  user?.role,
       timestamp:  log.created_at,
-      icon:       '📋',
+      icon:       'audit',
     })
   }
 
@@ -73,7 +73,7 @@ export async function GET(_req: Request, { params }: P) {
         detail:    `${Math.floor(te.duration_minutes / 60)}h ${te.duration_minutes % 60}m`,
         user_name: user?.full_name,
         timestamp: te.clocked_in_at,
-        icon:      '⏱',
+        icon:      'time',
       })
     }
   }
@@ -86,7 +86,7 @@ export async function GET(_req: Request, { params }: P) {
       detail:    pr.description,
       user_name: user?.full_name,
       timestamp: pr.requested_at,
-      icon:      '🔧',
+      icon:      'parts',
     })
   }
 

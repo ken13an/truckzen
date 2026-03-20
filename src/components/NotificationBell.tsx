@@ -59,12 +59,12 @@ export default function NotificationBell({ userId }: { userId: string }) {
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(!open)} style={{
-        background: 'none', border: 'none', cursor: 'pointer', padding: 6, position: 'relative', color: '#9D9DA1', fontSize: 18,
+        background: 'none', border: 'none', cursor: 'pointer', padding: 6, position: 'relative', color: '#8E8E93', fontSize: 18,
       }}>
         🔔
         {unreadCount > 0 && (
           <span style={{
-            position: 'absolute', top: 2, right: 0, background: '#FF5C5C', color: '#fff',
+            position: 'absolute', top: 2, right: 0, background: '#FF453A', color: '#fff',
             fontSize: 9, fontWeight: 700, borderRadius: 10, padding: '1px 5px', minWidth: 14, textAlign: 'center',
           }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
@@ -73,16 +73,16 @@ export default function NotificationBell({ userId }: { userId: string }) {
       {open && (
         <div style={{
           position: 'absolute', top: 36, right: 0, width: 340, maxHeight: 420, overflowY: 'auto',
-          background: '#08080C', border: '1px solid #1A1A24', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,.5)', zIndex: 999,
+          background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,.5)', zIndex: 999,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #1A1A24' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#EDEDF0' }}>Notifications</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #2A2A2A' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#F5F5F7' }}>Notifications</span>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} style={{ background: 'none', border: 'none', color: '#00E0B0', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
+              <button onClick={markAllRead} style={{ background: 'none', border: 'none', color: '#0A84FF', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
             )}
           </div>
           {notifications.length === 0 ? (
-            <div style={{ padding: 24, textAlign: 'center', color: '#9D9DA1', fontSize: 12 }}>No notifications</div>
+            <div style={{ padding: 24, textAlign: 'center', color: '#8E8E93', fontSize: 12 }}>No notifications</div>
           ) : (
             notifications.map(n => (
               <a key={n.id} href={n.link || '#'} onClick={() => markRead(n.id)} style={{
@@ -90,11 +90,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
                 background: n.read ? 'transparent' : 'rgba(0,224,176,.04)',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ fontSize: 12, fontWeight: n.read ? 400 : 600, color: n.read ? '#9D9DA1' : '#EDEDF0', lineHeight: 1.4 }}>{n.title}</div>
-                  <span style={{ fontSize: 10, color: '#9D9DA1', whiteSpace: 'nowrap', marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
+                  <div style={{ fontSize: 12, fontWeight: n.read ? 400 : 600, color: n.read ? '#8E8E93' : '#F5F5F7', lineHeight: 1.4 }}>{n.title}</div>
+                  <span style={{ fontSize: 10, color: '#8E8E93', whiteSpace: 'nowrap', marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
                 </div>
-                {n.body && <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
-                {!n.read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00E0B0', marginTop: 4 }} />}
+                {n.body && <div style={{ fontSize: 11, color: '#8E8E93', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
+                {!n.read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0A84FF', marginTop: 4 }} />}
               </a>
             ))
           )}

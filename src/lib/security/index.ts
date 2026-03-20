@@ -404,8 +404,8 @@ Line Items:
 ${linesSummary}
 
 Pre-validation found these issues:
-${check.errors.map(e => '❌ ' + e).join('\n')}
-${check.warnings.map(w => '⚠️ ' + w).join('\n')}
+${check.errors.map(e => '[ERROR] ' + e).join('\n')}
+${check.warnings.map(w => '[WARNING] ' + w).join('\n')}
 
 Check for: duplicate parts, incorrect labor hours, missing mechanic, mismatch between work done and parts charged.`
   

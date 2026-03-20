@@ -58,17 +58,17 @@ export default function SetupPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:    { minHeight:'100vh', background:'#08080C', color:'#EDEDF0', fontFamily:"'Instrument Sans',sans-serif", display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 },
-    card:    { width:'100%', maxWidth:560, background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'32px 28px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
+    page:    { minHeight:'100vh', background:'#0A0A0A', color:'#F5F5F7', fontFamily:"'Instrument Sans',sans-serif", display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 },
+    card:    { width:'100%', maxWidth:560, background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'32px 28px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
     steps:   { display:'flex', gap:6, marginBottom:28 },
     stepDot: { flex:1, height:4, borderRadius:100, background:'rgba(255,255,255,.08)', transition:'all .2s' },
-    stepOn:  { background:'#00E0B0' },
-    stepDone:{ background:'#00E0B0' },
-    title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:'#EDEDF0', marginBottom:6 },
-    sub:     { fontSize:12, color:'#9D9DA1', marginBottom:20, lineHeight:1.5 },
-    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#9D9DA1', marginBottom:4, display:'block' },
-    input:   { width:'100%', padding:'9px 12px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#EDEDF0', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
-    btn:     { padding:'12px 24px', background:'linear-gradient(135deg,#00E0B0,#00E0B0)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:8 },
+    stepOn:  { background:'#0A84FF' },
+    stepDone:{ background:'#0A84FF' },
+    title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:'#F5F5F7', marginBottom:6 },
+    sub:     { fontSize:12, color:'#8E8E93', marginBottom:20, lineHeight:1.5 },
+    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#8E8E93', marginBottom:4, display:'block' },
+    input:   { width:'100%', padding:'9px 12px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#F5F5F7', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
+    btn:     { padding:'12px 24px', background:'linear-gradient(135deg,#0A84FF,#0A84FF)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:8 },
     grid2:   { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   }
 
@@ -85,13 +85,13 @@ export default function SetupPage() {
       <div style={S.card}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24 }}>
-          <div style={{ width:28, height:28, background:'linear-gradient(135deg,#00E0B0,#00E0B0)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ width:28, height:28, background:'linear-gradient(135deg,#0A84FF,#0A84FF)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-          <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:'#EDEDF0' }}>
-            TRUCK<span style={{ color:'#00E0B0' }}>ZEN</span>
+          <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:'#F5F5F7' }}>
+            TRUCK<span style={{ color:'#0A84FF' }}>ZEN</span>
           </span>
-          <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#9D9DA1' }}>Step {step + 1} of {STEPS.length}</span>
+          <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#8E8E93' }}>Step {step + 1} of {STEPS.length}</span>
         </div>
 
         {/* Progress */}
@@ -127,16 +127,16 @@ export default function SetupPage() {
             <div style={S.title}>Teams & Bays</div>
             <div style={S.sub}>Your shop is already configured with 4 teams and 12 bays. You can adjust anytime in Settings.</div>
             {[
-              { team:'A', bays:'Bays 1–4', dept:'Engine & Diagnostics', color:'#00E0B0' },
-              { team:'B', bays:'Bays 5–8', dept:'Electrical', color:'#00E0B0' },
-              { team:'C', bays:'Bays 9–10', dept:'Body & Chassis', color:'#FFB84D' },
-              { team:'D', bays:'Bays 11–12', dept:'Inspection', color:'#00E0B0' },
+              { team:'A', bays:'Bays 1–4', dept:'Engine & Diagnostics', color:'#0A84FF' },
+              { team:'B', bays:'Bays 5–8', dept:'Electrical', color:'#0A84FF' },
+              { team:'C', bays:'Bays 9–10', dept:'Body & Chassis', color:'#FFD60A' },
+              { team:'D', bays:'Bays 11–12', dept:'Inspection', color:'#0A84FF' },
             ].map(t => (
-              <div key={t.team} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:9, marginBottom:8 }}>
+              <div key={t.team} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:9, marginBottom:8 }}>
                 <div style={{ width:28, height:28, borderRadius:7, background:`${t.color}20`, border:`1px solid ${t.color}33`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Bebas Neue',sans-serif", fontSize:14, color:t.color }}>{t.team}</div>
                 <div>
-                  <div style={{ fontSize:12, fontWeight:700, color:'#EDEDF0' }}>Team {t.team} — {t.dept}</div>
-                  <div style={{ fontSize:10, color:'#9D9DA1' }}>{t.bays}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:'#F5F5F7' }}>Team {t.team} — {t.dept}</div>
+                  <div style={{ fontSize:10, color:'#8E8E93' }}>{t.bays}</div>
                 </div>
               </div>
             ))}
@@ -169,19 +169,19 @@ export default function SetupPage() {
                   {['A','B','C','D'].map(t => <option key={t} value={t}>Team {t}</option>)}
                 </select>
                 {staffRows.length > 1 && (
-                  <div style={{ cursor:'pointer', color:'#FF5C5C', textAlign:'center' as const }}
+                  <div style={{ cursor:'pointer', color:'#FF453A', textAlign:'center' as const }}
                     onClick={() => setStaffRows(rows => rows.filter((_,j) => j!==i))}>×</div>
                 )}
               </div>
             ))}
-            <button style={{ ...S.btn, background:'transparent', border:'1px dashed rgba(0,224,176,.3)', color:'#00E0B0', marginBottom:8, display:'block', width:'100%', textAlign:'center' as const }}
+            <button style={{ ...S.btn, background:'transparent', border:'1px dashed rgba(0,224,176,.3)', color:'#0A84FF', marginBottom:8, display:'block', width:'100%', textAlign:'center' as const }}
               onClick={() => setStaffRows(r => [...r, { full_name:'', email:'', role:'technician', team:'A' }])}>
               + Add Another
             </button>
             <button style={S.btn} onClick={inviteStaff} disabled={saving}>
               {saving ? 'Inviting...' : 'Send Invites & Continue →'}
             </button>
-            <button style={{ ...S.btn, background:'transparent', color:'#9D9DA1', marginLeft:8 }} onClick={() => setStep(3)}>
+            <button style={{ ...S.btn, background:'transparent', color:'#8E8E93', marginLeft:8 }} onClick={() => setStep(3)}>
               Skip for now
             </button>
           </>
@@ -194,16 +194,16 @@ export default function SetupPage() {
             <div style={S.sub}>Your parts catalog is ready. Import your existing inventory using Smart Drop, or add parts manually in the Parts Department.</div>
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:16 }}>
               {[
-                { icon:'📂', label:'Smart Drop — import from Excel/CSV', sub:'Upload your existing parts list — AI maps the columns automatically' },
-                { icon:'➕', label:'Add parts manually', sub:'Add parts one by one in Parts → Inventory' },
-                { icon:'⏭️', label:'Skip — add parts later', sub:'Start using TruckZen now, import parts when ready' },
+                { icon:'', label:'Smart Drop — import from Excel/CSV', sub:'Upload your existing parts list — AI maps the columns automatically' },
+                { icon:'', label:'Add parts manually', sub:'Add parts one by one in Parts → Inventory' },
+                { icon:'', label:'Skip — add parts later', sub:'Start using TruckZen now, import parts when ready' },
               ].map(opt => (
-                <div key={opt.label} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'12px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:9, cursor:'pointer' }}
+                <div key={opt.label} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'12px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:9, cursor:'pointer' }}
                   onClick={() => setStep(4)}>
-                  <span style={{ fontSize:18 }}>{opt.icon}</span>
+                  {opt.icon && <span style={{ fontSize:18 }}>{opt.icon}</span>}
                   <div>
-                    <div style={{ fontSize:12, fontWeight:600, color:'#EDEDF0' }}>{opt.label}</div>
-                    <div style={{ fontSize:10, color:'#9D9DA1', marginTop:2 }}>{opt.sub}</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:'#F5F5F7' }}>{opt.label}</div>
+                    <div style={{ fontSize:10, color:'#8E8E93', marginTop:2 }}>{opt.sub}</div>
                   </div>
                 </div>
               ))}
@@ -215,10 +215,10 @@ export default function SetupPage() {
         {step === 4 && (
           <>
             <div style={{ textAlign:'center' as const, padding:'10px 0' }}>
-              <div style={{ fontSize:48, marginBottom:16 }}>🎉</div>
+              <div style={{ fontSize:24, fontWeight:700, color:'#0A84FF', marginBottom:16 }}>READY</div>
               <div style={S.title}>TruckZen is ready</div>
-              <div style={{ fontSize:13, color:'#9D9DA1', lineHeight:1.7, marginBottom:24 }}>
-                Your shop is set up. Kiosk is live at <strong style={{ color:'#00E0B0' }}>truckzen.com/kiosk</strong>.<br/>
+              <div style={{ fontSize:13, color:'#8E8E93', lineHeight:1.7, marginBottom:24 }}>
+                Your shop is set up. Kiosk is live at <strong style={{ color:'#0A84FF' }}>truckzen.com/kiosk</strong>.<br/>
                 Staff accounts have been created. Data migration is ready to run.<br/>
                 Everything is connected and waiting for your first job.
               </div>

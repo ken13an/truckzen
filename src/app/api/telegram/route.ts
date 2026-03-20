@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       .single()
 
     if (!user) {
-      await sendTG(chatId, '❌ Your Telegram account is not linked to TruckZen.\nAsk your admin to link it in Settings → Users.')
+      await sendTG(chatId, 'Your Telegram account is not linked to TruckZen.\nAsk your admin to link it in Settings → Users.')
       return NextResponse.json({ ok: true })
     }
 
@@ -115,7 +115,7 @@ Actions: update_status | add_note | flag_parts | assign_tech | move_bay | close_
 
   } catch (err: any) {
     console.error('Telegram bot error:', err)
-    await sendTG(chatId, '⚠️ Something went wrong. Try again.')
+    await sendTG(chatId, 'Something went wrong. Try again.')
   }
 
   return NextResponse.json({ ok: true })
@@ -144,41 +144,41 @@ async function executeAndReply(parsed: any, user: any, chatId: number) {
   switch (action) {
     case 'update_status': {
       const so = await findSO()
-      if (!so) { await sendTG(chatId, `❌ No open SO found for truck #${truck_number}`); return }
+      if (!so) { await sendTG(chatId, `No open SO found for truck #${truck_number}`); return }
       await getSupabase().from('service_orders').update({ status: data?.new_status || 'in_progress' }).eq('id', so.id)
-      await sendTG(chatId, `✅ ${(so as any).so_number} → ${data?.new_status?.replace(/_/g,' ').toUpperCase()}\nTruck #${(so.assets as any)?.unit_number} · ${(so.customers as any)?.company_name}`)
+      await sendTG(chatId, `${(so as any).so_number} → ${data?.new_status?.replace(/_/g,' ').toUpperCase()}\nTruck #${(so.assets as any)?.unit_number} · ${(so.customers as any)?.company_name}`)
       break
     }
     case 'add_note': {
       const so = await findSO()
-      if (!so) { await sendTG(chatId, `❌ No open SO found`); return }
+      if (!so) { await sendTG(chatId, `No open SO found`); return }
       const note = data?.note || reply || 'Note added'
       const ts   = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })
       const { data: cur } = await getSupabase().from('service_orders').select('internal_notes').eq('id', so.id).single()
       const updated = `${cur?.internal_notes || ''}\n[${ts} — ${user.full_name}]: ${note}`.trim()
       await getSupabase().from('service_orders').update({ internal_notes: updated }).eq('id', so.id)
-      await sendTG(chatId, `📝 Note added to ${(so as any).so_number} (Truck #${(so.assets as any)?.unit_number})\n"${note}"`)
+      await sendTG(chatId, `Note added to ${(so as any).so_number} (Truck #${(so.assets as any)?.unit_number})\n"${note}"`)
       break
     }
     case 'flag_parts': {
       const so = await findSO()
-      if (!so) { await sendTG(chatId, `❌ No open SO found`); return }
+      if (!so) { await sendTG(chatId, `No open SO found`); return }
       await getSupabase().from('service_orders').update({ status: 'waiting_parts', priority: 'high' }).eq('id', so.id)
-      await sendTG(chatId, `⚠️ ${(so as any).so_number} → WAITING PARTS\nTruck #${(so.assets as any)?.unit_number} · Parts Manager notified`)
+      await sendTG(chatId, `${(so as any).so_number} → WAITING PARTS\nTruck #${(so.assets as any)?.unit_number} · Parts Manager notified`)
       break
     }
     case 'close_job': {
       const so = await findSO()
-      if (!so) { await sendTG(chatId, `❌ No open SO found`); return }
+      if (!so) { await sendTG(chatId, `No open SO found`); return }
       await getSupabase().from('service_orders').update({ status: 'good_to_go', completed_at: new Date().toISOString() }).eq('id', so.id)
-      await sendTG(chatId, `✅ ${(so as any).so_number} CLOSED — Good to Go\nTruck #${(so.assets as any)?.unit_number}\nTotal: $${(so as any).grand_total?.toFixed(2) || '—'}\nInvoice auto-generated`)
+      await sendTG(chatId, `${(so as any).so_number} CLOSED — Good to Go\nTruck #${(so.assets as any)?.unit_number}\nTotal: $${(so as any).grand_total?.toFixed(2) || '—'}\nInvoice auto-generated`)
       break
     }
     case 'get_status': {
       const so = await findSO()
-      if (!so) { await sendTG(chatId, `❌ Truck #${truck_number} has no open SO`); return }
+      if (!so) { await sendTG(chatId, `Truck #${truck_number} has no open SO`); return }
       const s = so as any
-      await sendTG(chatId, `🚛 Truck #${s.assets?.unit_number}\nSO: ${s.so_number}\nStatus: ${s.status?.replace(/_/g,' ').toUpperCase()}\nPriority: ${s.priority?.toUpperCase()}\nCustomer: ${s.customers?.company_name}`)
+      await sendTG(chatId, `Truck #${s.assets?.unit_number}\nSO: ${s.so_number}\nStatus: ${s.status?.replace(/_/g,' ').toUpperCase()}\nPriority: ${s.priority?.toUpperCase()}\nCustomer: ${s.customers?.company_name}`)
       break
     }
     default:

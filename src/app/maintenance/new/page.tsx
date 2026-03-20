@@ -58,27 +58,27 @@ export default function NewPMPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#08080C', minHeight:'100vh', color:'#EDEDF0', fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:640, margin:'0 auto' },
-    card:  { background:'#1A1A24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:20, marginBottom:12 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#9D9DA1', marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'9px 12px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#EDEDF0', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
+    page:  { background:'#0A0A0A', minHeight:'100vh', color:'#F5F5F7', fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:640, margin:'0 auto' },
+    card:  { background:'#2A2A2A', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:20, marginBottom:12 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#8E8E93', marginBottom:5, display:'block' },
+    input: { width:'100%', padding:'9px 12px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#F5F5F7', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
-    btn:   { padding:'12px 24px', background:'linear-gradient(135deg,#00E0B0,#00E0B0)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit' },
-    error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#FF5C5C', marginBottom:12 },
-    chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:'#1A1A24', color:'#9D9DA1', fontFamily:'inherit', transition:'all .13s', minHeight:30 },
+    btn:   { padding:'12px 24px', background:'linear-gradient(135deg,#0A84FF,#0A84FF)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit' },
+    error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#FF453A', marginBottom:12 },
+    chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:'#2A2A2A', color:'#8E8E93', fontFamily:'inherit', transition:'all .13s', minHeight:30 },
   }
 
   return (
     <div style={S.page}>
-      <a href="/maintenance" style={{ fontSize:12, color:'#9D9DA1', textDecoration:'none', display:'block', marginBottom:20 }}>← Maintenance</a>
-      <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#EDEDF0', marginBottom:4 }}>New PM Schedule</div>
-      <div style={{ fontSize:12, color:'#9D9DA1', marginBottom:20 }}>Set up a recurring maintenance schedule for a vehicle.</div>
+      <a href="/maintenance" style={{ fontSize:12, color:'#8E8E93', textDecoration:'none', display:'block', marginBottom:20 }}>← Maintenance</a>
+      <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F5F5F7', marginBottom:4 }}>New PM Schedule</div>
+      <div style={{ fontSize:12, color:'#8E8E93', marginBottom:20 }}>Set up a recurring maintenance schedule for a vehicle.</div>
 
       {error && <div style={S.error}>{error}</div>}
 
       {/* Quick templates */}
       <div style={S.card}>
-        <div style={{ fontSize:12, fontWeight:700, color:'#EDEDF0', marginBottom:10 }}>Quick Templates</div>
+        <div style={{ fontSize:12, fontWeight:700, color:'#F5F5F7', marginBottom:10 }}>Quick Templates</div>
         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
           {PM_TEMPLATES.map(t => (
             <button key={t.name} type="button" style={S.chip}
@@ -91,7 +91,7 @@ export default function NewPMPage() {
 
       <form onSubmit={submit}>
         <div style={S.card}>
-          <div style={{ fontSize:12, fontWeight:700, color:'#EDEDF0', marginBottom:12 }}>Schedule Details</div>
+          <div style={{ fontSize:12, fontWeight:700, color:'#F5F5F7', marginBottom:12 }}>Schedule Details</div>
 
           <div style={{ marginBottom:10 }}>
             <label style={S.label}>Vehicle *</label>
@@ -106,13 +106,13 @@ export default function NewPMPage() {
             <input style={S.input} value={form.service_name} onChange={e=>setForm(f=>({...f,service_name:e.target.value}))} placeholder="e.g. Oil Change 15W-40"/>
           </div>
 
-          <div style={{ fontSize:11, color:'#9D9DA1', marginBottom:8 }}>Set one or both intervals — alert triggers when either is reached first.</div>
+          <div style={{ fontSize:11, color:'#8E8E93', marginBottom:8 }}>Set one or both intervals — alert triggers when either is reached first.</div>
           <div style={S.row2}>
             <div><label style={S.label}>Every X Miles</label><input style={S.input} type="number" placeholder="e.g. 15000" value={form.interval_miles} onChange={e=>setForm(f=>({...f,interval_miles:e.target.value}))}/></div>
             <div><label style={S.label}>Every X Days</label><input style={S.input} type="number" placeholder="e.g. 90" value={form.interval_days} onChange={e=>setForm(f=>({...f,interval_days:e.target.value}))}/></div>
           </div>
 
-          <div style={{ fontSize:12, fontWeight:600, color:'#EDEDF0', margin:'14px 0 10px' }}>Next Service Due</div>
+          <div style={{ fontSize:12, fontWeight:600, color:'#F5F5F7', margin:'14px 0 10px' }}>Next Service Due</div>
           <div style={S.row2}>
             <div><label style={S.label}>Due Date</label><input style={S.input} type="date" value={form.next_due_date} onChange={e=>setForm(f=>({...f,next_due_date:e.target.value}))}/></div>
             <div><label style={S.label}>Due Mileage</label><input style={S.input} type="number" placeholder="e.g. 487500" value={form.next_due_reading} onChange={e=>setForm(f=>({...f,next_due_reading:e.target.value}))}/></div>

@@ -32,13 +32,13 @@ export async function GET(req: Request) {
     const list = items.map(i => {
       const who      = (i.assets as any)?.unit_number ? `Unit #${(i.assets as any).unit_number}` : (i.drivers as any)?.full_name || '—'
       const daysLeft = Math.ceil((new Date(i.expiry_date).getTime() - today.getTime()) / 86400000)
-      const icon     = daysLeft < 0 ? '🔴' : daysLeft <= 7 ? '🟠' : '🟡'
+      const icon     = daysLeft < 0 ? '[EXPIRED]' : daysLeft <= 7 ? '[URGENT]' : '[WARNING]'
       return `${icon} ${who} — ${i.document_name} (${daysLeft < 0 ? Math.abs(daysLeft)+'d EXPIRED' : daysLeft+'d left'})`
     }).join('\n')
 
     await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: mgr.telegram_id, text: `📋 *COMPLIANCE — ${items.length} expiring*\n\n${list}\n\n${process.env.NEXT_PUBLIC_APP_URL}/compliance`, parse_mode: 'Markdown' }),
+      body: JSON.stringify({ chat_id: mgr.telegram_id, text: `COMPLIANCE — ${items.length} expiring\n\n${list}\n\n${process.env.NEXT_PUBLIC_APP_URL}/compliance`, parse_mode: 'Markdown' }),
     })
     sent++
   }

@@ -49,14 +49,14 @@ export default function NewUserPage() {
   if (done) return (
     <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
       <div style={{ ...S.card, textAlign: 'center', padding: 40 }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, color: '#EDEDF0', marginBottom: 8 }}>Invite Sent</div>
-        <div style={{ fontSize: 13, color: '#9D9DA1', lineHeight: 1.6, marginBottom: 20 }}>
-          {form.full_name} will receive a welcome email at <strong style={{ color: '#EDEDF0' }}>{form.email}</strong> with instructions to set their password and log in.
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#0A84FF', marginBottom: 16 }}>INVITE SENT</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, color: '#F5F5F7', marginBottom: 8 }}>Invite Sent</div>
+        <div style={{ fontSize: 13, color: '#8E8E93', lineHeight: 1.6, marginBottom: 20 }}>
+          {form.full_name} will receive a welcome email at <strong style={{ color: '#F5F5F7' }}>{form.email}</strong> with instructions to set their password and log in.
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12 }} onClick={() => { setDone(false); setForm({ full_name: '', email: '', role: 'technician', department: 'floor', team: 'A', language: 'en' }) }}>+ Invite Another</button>
-          <a href="/settings/users" style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12, background: 'transparent', border: '1px solid rgba(255,255,255,.08)', color: '#9D9DA1', textDecoration: 'none', textAlign: 'center' }}>Back to Staff List</a>
+          <a href="/settings/users" style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12, background: 'transparent', border: '1px solid rgba(255,255,255,.08)', color: '#8E8E93', textDecoration: 'none', textAlign: 'center' }}>Back to Staff List</a>
         </div>
       </div>
     </div>
@@ -64,15 +64,15 @@ export default function NewUserPage() {
 
   return (
     <div style={S.page}>
-      <a href="/settings/users" style={{ fontSize: 12, color: '#9D9DA1', textDecoration: 'none', display: 'block', marginBottom: 20 }}>← Staff</a>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#EDEDF0', marginBottom: 4 }}>Invite Staff Member</div>
-      <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 20 }}>They'll receive a welcome email with a link to set their password.</div>
+      <a href="/settings/users" style={{ fontSize: 12, color: '#8E8E93', textDecoration: 'none', display: 'block', marginBottom: 20 }}>← Staff</a>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F5F5F7', marginBottom: 4 }}>Invite Staff Member</div>
+      <div style={{ fontSize: 12, color: '#8E8E93', marginBottom: 20 }}>They'll receive a welcome email with a link to set their password.</div>
 
       {error && <div style={S.error}>{error}</div>}
 
       <form onSubmit={submit}>
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#EDEDF0', marginBottom: 12 }}>Account Details</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#F5F5F7', marginBottom: 12 }}>Account Details</div>
           <label style={S.label}>Full Name</label>
           <input style={S.input} value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} placeholder="Carlos Martinez" autoFocus />
           <label style={S.label}>Work Email</label>
@@ -103,18 +103,18 @@ export default function NewUserPage() {
           {/* Department indicator */}
           <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
             {[
-              { key: 'floor', label: 'Shop Floor', icon: '🔧' },
-              { key: 'office', label: 'Office', icon: '🏢' },
-              { key: 'parts', label: 'Parts Dept', icon: '📦' },
-              { key: 'fleet', label: 'Fleet / Field', icon: '🚛' },
+              { key: 'floor', label: 'Shop Floor', icon: '' },
+              { key: 'office', label: 'Office', icon: '' },
+              { key: 'parts', label: 'Parts Dept', icon: '' },
+              { key: 'fleet', label: 'Fleet / Field', icon: '' },
             ].map(d => (
               <div key={d.key} style={{
                 padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: form.department === d.key ? 'rgba(0,224,176,.1)' : '#1A1A24',
-                color: form.department === d.key ? '#00E0B0' : '#9D9DA1',
+                background: form.department === d.key ? 'rgba(0,224,176,.1)' : '#2A2A2A',
+                color: form.department === d.key ? '#0A84FF' : '#8E8E93',
                 border: form.department === d.key ? '1px solid rgba(0,224,176,.3)' : '1px solid rgba(255,255,255,.06)',
               }}>
-                {d.icon} {d.label}
+                {d.label}
               </div>
             ))}
           </div>
@@ -131,23 +131,23 @@ export default function NewUserPage() {
               </select>
             </>
           ) : (
-            <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,.03)', borderRadius: 8, fontSize: 11, color: '#9D9DA1', marginBottom: 10 }}>
-              {form.department === 'office' ? '🏢 Office staff — no team assignment required' :
-               form.department === 'parts' ? '📦 Parts department — independent of floor teams' :
-               '🚛 Fleet/field role — no team assignment required'}
+            <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,.03)', borderRadius: 8, fontSize: 11, color: '#8E8E93', marginBottom: 10 }}>
+              {form.department === 'office' ? 'Office staff — no team assignment required' :
+               form.department === 'parts' ? 'Parts department — independent of floor teams' :
+               'Fleet/field role — no team assignment required'}
             </div>
           )}
 
           <label style={S.label}>Language</label>
           <select style={{ ...S.input, appearance: 'none', cursor: 'pointer' }} value={form.language} onChange={e => setForm(f => ({ ...f, language: e.target.value }))}>
-            <option value="en">English 🇺🇸</option>
-            <option value="ru">Russian 🇷🇺</option>
-            <option value="uz">Uzbek 🇺🇿</option>
-            <option value="es">Spanish 🇲🇽</option>
+            <option value="en">English</option>
+            <option value="ru">Russian</option>
+            <option value="uz">Uzbek</option>
+            <option value="es">Spanish</option>
           </select>
         </div>
 
-        <div style={{ background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 9, padding: '12px 14px', fontSize: 11, color: '#9D9DA1', marginBottom: 12 }}>
+        <div style={{ background: 'rgba(0,224,176,.06)', border: '1px solid rgba(0,224,176,.15)', borderRadius: 9, padding: '12px 14px', fontSize: 11, color: '#8E8E93', marginBottom: 12 }}>
           A welcome email will be sent with a login link. They set their own password on first login.
         </div>
 
@@ -158,10 +158,10 @@ export default function NewUserPage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { background: '#08080C', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 560, margin: '0 auto' },
-  card: { background: '#1A1A24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
-  label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#9D9DA1', marginBottom: 5, display: 'block' },
-  input: { width: '100%', padding: '9px 12px', background: '#1A1A24', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#EDEDF0', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const, marginBottom: 10 },
-  btn: { width: '100%', padding: '12px 24px', background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 },
-  error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#FF5C5C', marginBottom: 12 },
+  page: { background: '#0A0A0A', minHeight: '100vh', color: '#F5F5F7', fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 560, margin: '0 auto' },
+  card: { background: '#2A2A2A', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
+  label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#8E8E93', marginBottom: 5, display: 'block' },
+  input: { width: '100%', padding: '9px 12px', background: '#2A2A2A', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#F5F5F7', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const, marginBottom: 10 },
+  btn: { width: '100%', padding: '12px 24px', background: 'linear-gradient(135deg,#0A84FF,#0A84FF)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 },
+  error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#FF453A', marginBottom: 12 },
 }

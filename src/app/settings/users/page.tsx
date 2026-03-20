@@ -4,12 +4,12 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
 const ROLE_COLOR: Record<string, string> = {
-  owner:'#FFB84D', gm:'#FFB84D', it_person:'#00E0B0',
-  shop_manager:'#00E0B0', service_writer:'#00E0B0',
-  technician:'#00E0B0', maintenance_technician:'#00E0B0',
-  parts_manager:'#FFB84D', fleet_manager:'#00E0B0',
-  accountant:'#EDEDF0', office_admin:'#EDEDF0', dispatcher:'#EDEDF0',
-  driver:'#9D9DA1', customer:'#9D9DA1',
+  owner:'#FFD60A', gm:'#FFD60A', it_person:'#0A84FF',
+  shop_manager:'#0A84FF', service_writer:'#0A84FF',
+  technician:'#0A84FF', maintenance_technician:'#0A84FF',
+  parts_manager:'#FFD60A', fleet_manager:'#0A84FF',
+  accountant:'#F5F5F7', office_admin:'#F5F5F7', dispatcher:'#F5F5F7',
+  driver:'#8E8E93', customer:'#8E8E93',
 }
 
 export default function UsersPage() {
@@ -46,60 +46,60 @@ export default function UsersPage() {
   const filtered = users.filter(u => !search || u.full_name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
 
   const S: Record<string, React.CSSProperties> = {
-    page:   { background:'#08080C', minHeight:'100vh', color:'#EDEDF0', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    title:  { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#EDEDF0', marginBottom:4 },
-    card:   { background:'#1A1A24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden', marginBottom:12 },
-    th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#9D9DA1', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'#08080C', whiteSpace:'nowrap' },
+    page:   { background:'#0A0A0A', minHeight:'100vh', color:'#F5F5F7', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
+    title:  { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F5F5F7', marginBottom:4 },
+    card:   { background:'#2A2A2A', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden', marginBottom:12 },
+    th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'#0A0A0A', whiteSpace:'nowrap' },
     td:     { padding:'10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
     btn:    { padding:'5px 10px', borderRadius:6, border:'none', fontSize:10, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
-    label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#9D9DA1', marginBottom:5, display:'block' },
-    input:  { width:'100%', padding:'8px 11px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:'#EDEDF0', outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
+    label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#8E8E93', marginBottom:5, display:'block' },
+    input:  { width:'100%', padding:'8px 11px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:'#F5F5F7', outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
     overlay:{ position:'fixed' as const, inset:0, background:'rgba(0,0,0,.7)', backdropFilter:'blur(4px)', zIndex:500, display:'flex', alignItems:'center', justifyContent:'center', padding:20 },
-    modal:  { background:'#1A1A24', border:'1px solid rgba(255,255,255,.1)', borderRadius:14, padding:24, width:'100%', maxWidth:440 },
+    modal:  { background:'#2A2A2A', border:'1px solid rgba(255,255,255,.1)', borderRadius:14, padding:24, width:'100%', maxWidth:440 },
   }
 
   return (
     <div style={S.page}>
-      <a href="/settings" style={{ fontSize:12, color:'#9D9DA1', textDecoration:'none', display:'block', marginBottom:20 }}>← Settings</a>
+      <a href="/settings" style={{ fontSize:12, color:'#8E8E93', textDecoration:'none', display:'block', marginBottom:20 }}>← Settings</a>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
         <div>
           <div style={S.title}>Staff</div>
-          <div style={{ fontSize:12, color:'#9D9DA1' }}>{users.filter(u=>u.active).length} active · {users.filter(u=>!u.active).length} inactive</div>
+          <div style={{ fontSize:12, color:'#8E8E93' }}>{users.filter(u=>u.active).length} active · {users.filter(u=>!u.active).length} inactive</div>
         </div>
         <div style={{ display:'flex', gap:8 }}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or email..." style={{ padding:'7px 12px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#EDEDF0', fontSize:11, fontFamily:'inherit', outline:'none' }}/>
-          <button onClick={()=>window.location.href='/settings/users/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#00E0B0,#00E0B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Invite Staff</button>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or email..." style={{ padding:'7px 12px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#F5F5F7', fontSize:11, fontFamily:'inherit', outline:'none' }}/>
+          <button onClick={()=>window.location.href='/settings/users/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#0A84FF,#0A84FF)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Invite Staff</button>
         </div>
       </div>
 
       <div style={S.card}>
         <div style={{ overflowX:'auto' }}>
-          {loading ? <div style={{ textAlign:'center', padding:40, color:'#9D9DA1' }}>Loading...</div> : (
+          {loading ? <div style={{ textAlign:'center', padding:40, color:'#8E8E93' }}>Loading...</div> : (
             <table style={{ width:'100%', borderCollapse:'collapse', minWidth:560 }}>
               <thead><tr>{['Name','Email','Role','Team','Telegram','Status','Actions'].map(h=><th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
               <tbody>
                 {filtered.map(u => (
                   <tr key={u.id} style={{ opacity: u.active?1:0.5 }}>
-                    <td style={{ ...S.td, fontWeight:700, color:'#EDEDF0' }}>{u.full_name}</td>
-                    <td style={{ ...S.td, color:'#9D9DA1', fontFamily:'monospace', fontSize:10 }}>{u.email}</td>
+                    <td style={{ ...S.td, fontWeight:700, color:'#F5F5F7' }}>{u.full_name}</td>
+                    <td style={{ ...S.td, color:'#8E8E93', fontFamily:'monospace', fontSize:10 }}>{u.email}</td>
                     <td style={S.td as any}>
-                      <span style={{ padding:'2px 8px', borderRadius:100, fontFamily:'monospace', fontSize:8, background:(ROLE_COLOR[u.role]||'#9D9DA1')+'18', color:ROLE_COLOR[u.role]||'#9D9DA1', border:`1px solid ${(ROLE_COLOR[u.role]||'#9D9DA1')}33` }}>
+                      <span style={{ padding:'2px 8px', borderRadius:100, fontFamily:'monospace', fontSize:8, background:(ROLE_COLOR[u.role]||'#8E8E93')+'18', color:ROLE_COLOR[u.role]||'#8E8E93', border:`1px solid ${(ROLE_COLOR[u.role]||'#8E8E93')}33` }}>
                         {u.role?.replace(/_/g,' ')}
                       </span>
                     </td>
-                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#9D9DA1' }}>{u.team ? `Team ${u.team}` : '—'}</td>
-                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: u.telegram_id?'#00E0B0':'#9D9DA1' }}>
+                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#8E8E93' }}>{u.team ? `Team ${u.team}` : '—'}</td>
+                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: u.telegram_id?'#0A84FF':'#8E8E93' }}>
                       {u.telegram_id ? `@${u.telegram_id}` : 'Not linked'}
                     </td>
                     <td style={S.td as any}>
-                      <span style={{ padding:'2px 8px', borderRadius:100, fontFamily:'monospace', fontSize:8, background:u.active?'rgba(29,184,112,.1)':'rgba(72,83,106,.1)', color:u.active?'#00E0B0':'#9D9DA1', border:`1px solid ${u.active?'rgba(29,184,112,.2)':'rgba(72,83,106,.2)'}` }}>
+                      <span style={{ padding:'2px 8px', borderRadius:100, fontFamily:'monospace', fontSize:8, background:u.active?'rgba(29,184,112,.1)':'rgba(72,83,106,.1)', color:u.active?'#0A84FF':'#8E8E93', border:`1px solid ${u.active?'rgba(29,184,112,.2)':'rgba(72,83,106,.2)'}` }}>
                         {u.active?'Active':'Inactive'}
                       </span>
                     </td>
                     <td style={S.td as any}>
                       <div style={{ display:'flex', gap:4 }}>
-                        <button style={{ ...S.btn, background:'rgba(0,224,176,.1)', color:'#00E0B0' }} onClick={()=>setEditing(u)}>Edit</button>
-                        {u.active && <button style={{ ...S.btn, background:'rgba(217,79,79,.08)', color:'#FF5C5C' }} onClick={()=>deactivate(u.id)}>Deactivate</button>}
+                        <button style={{ ...S.btn, background:'rgba(0,224,176,.1)', color:'#0A84FF' }} onClick={()=>setEditing(u)}>Edit</button>
+                        {u.active && <button style={{ ...S.btn, background:'rgba(217,79,79,.08)', color:'#FF453A' }} onClick={()=>deactivate(u.id)}>Deactivate</button>}
                       </div>
                     </td>
                   </tr>
@@ -114,7 +114,7 @@ export default function UsersPage() {
       {editing && (
         <div style={S.overlay} onClick={e=>{if(e.target===e.currentTarget)setEditing(null)}}>
           <div style={S.modal}>
-            <div style={{ fontSize:15, fontWeight:700, color:'#EDEDF0', marginBottom:16 }}>Edit — {editing.full_name}</div>
+            <div style={{ fontSize:15, fontWeight:700, color:'#F5F5F7', marginBottom:16 }}>Edit — {editing.full_name}</div>
             <div style={{ marginBottom:10 }}>
               <label style={S.label}>Role</label>
               <select style={{ ...S.input, appearance:'none' }} value={editing.role} onChange={e=>setEditing((u:any)=>({...u,role:e.target.value}))}>
@@ -131,11 +131,11 @@ export default function UsersPage() {
             <div style={{ marginBottom:14 }}>
               <label style={S.label}>Telegram ID (username without @)</label>
               <input style={S.input} placeholder="their_telegram_username" value={editing.telegram_id||''} onChange={e=>setEditing((u:any)=>({...u,telegram_id:e.target.value||null}))}/>
-              <div style={{ fontSize:10, color:'#9D9DA1', marginTop:4 }}>They must send /start to @servicewriter first to activate.</div>
+              <div style={{ fontSize:10, color:'#8E8E93', marginTop:4 }}>They must send /start to @servicewriter first to activate.</div>
             </div>
             <div style={{ display:'flex', gap:8, justifyContent:'flex-end', paddingTop:14, borderTop:'1px solid rgba(255,255,255,.06)' }}>
-              <button style={{ ...S.btn, background:'transparent', color:'#9D9DA1', border:'1px solid rgba(255,255,255,.08)', padding:'8px 16px' }} onClick={()=>setEditing(null)}>Cancel</button>
-              <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00E0B0)', color:'#fff', padding:'8px 16px' }} onClick={saveUser} disabled={saving}>{saving?'Saving...':'Save'}</button>
+              <button style={{ ...S.btn, background:'transparent', color:'#8E8E93', border:'1px solid rgba(255,255,255,.08)', padding:'8px 16px' }} onClick={()=>setEditing(null)}>Cancel</button>
+              <button style={{ ...S.btn, background:'linear-gradient(135deg,#0A84FF,#0A84FF)', color:'#fff', padding:'8px 16px' }} onClick={saveUser} disabled={saving}>{saving?'Saving...':'Save'}</button>
             </div>
           </div>
         </div>

@@ -173,7 +173,7 @@ export async function POST(req: Request) {
       const { part_type, display_name, category, default_life_mi, default_life_days, preferred_vendor, preferred_brand, preferred_pn, icon } = body
       const { error } = await s.from('part_type_configs').upsert({
         shop_id, part_type, display_name, category, default_life_mi, default_life_days,
-        preferred_vendor, preferred_brand, preferred_pn, icon: icon || '🔧', active: true,
+        preferred_vendor, preferred_brand, preferred_pn, icon: icon || '', active: true,
       }, { onConflict: 'shop_id,part_type' })
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
       return NextResponse.json({ ok: true })

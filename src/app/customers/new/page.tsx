@@ -21,22 +21,22 @@ export default function NewCustomerPage() {
   const upd = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#08080C', minHeight:'100vh', color:'#EDEDF0', fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:600, margin:'0 auto' },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#EDEDF0', marginBottom:4 },
-    card:  { background:'#1A1A24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:20, marginBottom:12 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#9D9DA1', marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'9px 12px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#EDEDF0', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
+    page:  { background:'#0A0A0A', minHeight:'100vh', color:'#F5F5F7', fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:600, margin:'0 auto' },
+    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F5F5F7', marginBottom:4 },
+    card:  { background:'#2A2A2A', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:20, marginBottom:12 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#8E8E93', marginBottom:5, display:'block' },
+    input: { width:'100%', padding:'9px 12px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#F5F5F7', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
     row3:  { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10 },
-    btn:   { padding:'12px 24px', background:'linear-gradient(135deg,#00E0B0,#00E0B0)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', width:'100%' },
-    error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#FF5C5C', marginBottom:12 },
+    btn:   { padding:'12px 24px', background:'linear-gradient(135deg,#0A84FF,#0A84FF)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', width:'100%' },
+    error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#FF453A', marginBottom:12 },
   }
 
   return (
     <div style={S.page}>
-      <a href="/customers" style={{ fontSize:12, color:'#9D9DA1', textDecoration:'none', display:'block', marginBottom:20 }}>← Customers</a>
+      <a href="/customers" style={{ fontSize:12, color:'#8E8E93', textDecoration:'none', display:'block', marginBottom:20 }}>← Customers</a>
       <div style={S.title}>Add Customer</div>
-      <div style={{ fontSize:12, color:'#9D9DA1', marginBottom:20 }}>Add a new fleet company or owner to your customer list.</div>
+      <div style={{ fontSize:12, color:'#8E8E93', marginBottom:20 }}>Add a new fleet company or owner to your customer list.</div>
       {error && <div style={S.error}>{error}</div>}
       <form onSubmit={submit}>
         <div style={S.card}>

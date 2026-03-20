@@ -18,7 +18,7 @@ export default function RolesGuidePage() {
     })
   }, [])
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#08080C', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: '#0A0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8E8E93' }}>Loading...</div>
 
   const roleGroups = [
     { title: 'Owner / Admin', roles: ['owner', 'gm', 'it_person'], desc: 'Full access to all modules, billing, permissions, integrations.' },
@@ -35,9 +35,9 @@ export default function RolesGuidePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <div style={S.title}>Role & Permissions Guide</div>
-          <div style={{ fontSize: 12, color: '#9D9DA1' }}>Complete reference for all {ALL_ROLES.length} roles and {MODULES.length} modules</div>
+          <div style={{ fontSize: 12, color: '#8E8E93' }}>Complete reference for all {ALL_ROLES.length} roles and {MODULES.length} modules</div>
         </div>
-        <button onClick={() => window.print()} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#00E0B0,#00E0B0)', color: '#fff' }}>
+        <button onClick={() => window.print()} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#0A84FF,#0A84FF)', color: '#fff' }}>
           Print / Save PDF
         </button>
       </div>
@@ -45,8 +45,8 @@ export default function RolesGuidePage() {
       {/* Role cards by group */}
       {roleGroups.map(group => (
         <div key={group.title} style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0', marginBottom: 4 }}>{group.title}</div>
-          <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 16 }}>{group.desc}</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F7', marginBottom: 4 }}>{group.title}</div>
+          <div style={{ fontSize: 12, color: '#8E8E93', marginBottom: 16 }}>{group.desc}</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 16 }}>
             {group.roles.map(role => {
@@ -61,17 +61,17 @@ export default function RolesGuidePage() {
                       {ROLE_LABEL[role]?.charAt(0)}
                     </div>
                     <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>{ROLE_LABEL[role]}</div>
-                      <div style={{ fontSize: 10, color: '#9D9DA1', fontFamily: 'monospace' }}>{role} · Landing: {ROLE_REDIRECT[role]}</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F7' }}>{ROLE_LABEL[role]}</div>
+                      <div style={{ fontSize: 10, color: '#8E8E93', fontFamily: 'monospace' }}>{role} · Landing: {ROLE_REDIRECT[role]}</div>
                     </div>
                   </div>
 
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#00E0B0', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#0A84FF', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>
                     Has Access ({allowed.length})
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
                     {allowed.map(m => (
-                      <span key={m.key} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: 'rgba(34,197,94,.08)', color: '#00E0B0', fontWeight: 500 }}>
+                      <span key={m.key} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: 'rgba(34,197,94,.08)', color: '#0A84FF', fontWeight: 500 }}>
                         {m.icon} {m.label}
                       </span>
                     ))}
@@ -79,12 +79,12 @@ export default function RolesGuidePage() {
 
                   {denied.length > 0 && denied.length < MODULES.length && (
                     <>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#9D9DA1', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>
                         No Access ({denied.length})
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                         {denied.map(m => (
-                          <span key={m.key} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: 'rgba(255,255,255,.03)', color: '#9D9DA1' }}>
+                          <span key={m.key} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: 'rgba(255,255,255,.03)', color: '#8E8E93' }}>
                             {m.label}
                           </span>
                         ))}
@@ -100,7 +100,7 @@ export default function RolesGuidePage() {
 
       {/* Full matrix */}
       <div style={{ marginTop: 40, pageBreakBefore: 'always' }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0', marginBottom: 16 }}>Complete Permission Matrix</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: '#F5F5F7', marginBottom: 16 }}>Complete Permission Matrix</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ ...S.table, fontSize: 10 }}>
             <thead>
@@ -137,10 +137,10 @@ export default function RolesGuidePage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { background: '#08080C', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#EDEDF0', letterSpacing: '.03em' },
-  card: { background: '#08080C', border: '1px solid #1A1A24', borderRadius: 12, padding: 20 },
+  page: { background: '#0A0A0A', minHeight: '100vh', color: '#F5F5F7', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F5F5F7', letterSpacing: '.03em' },
+  card: { background: '#0A0A0A', border: '1px solid #2A2A2A', borderRadius: 12, padding: 20 },
   table: { width: '100%', borderCollapse: 'collapse' as const },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.06em', padding: '8px 6px', textAlign: 'left' as const, background: '#08080C' },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#8E8E93', textTransform: 'uppercase' as const, letterSpacing: '.06em', padding: '8px 6px', textAlign: 'left' as const, background: '#0A0A0A' },
   td: { padding: '6px 6px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11 },
 }

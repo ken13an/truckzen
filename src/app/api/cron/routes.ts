@@ -81,12 +81,12 @@ export async function GET_PM(req: Request) {
         const asset   = p.assets as any
         const dueDate = new Date(p.next_due_date!)
         const isOver  = dueDate < today
-        return `${isOver ? '🔴' : '🟡'} Unit #${asset?.unit_number} — ${p.service_name} (${isOver ? 'OVERDUE' : 'due ' + p.next_due_date})`
+        return `${isOver ? '[OVERDUE]' : '[DUE]'} Unit #${asset?.unit_number} — ${p.service_name} (${isOver ? 'OVERDUE' : 'due ' + p.next_due_date})`
       })
       .join('\n')
 
     await sendTG(mgr.telegram_id,
-      `🔧 *PM ALERTS — ${pms.length} due*\n\n${overdueList}\n\nView all: ${process.env.NEXT_PUBLIC_APP_URL}/maintenance`
+      `*PM ALERTS — ${pms.length} due*\n\n${overdueList}\n\nView all: ${process.env.NEXT_PUBLIC_APP_URL}/maintenance`
     )
     sent++
   }
@@ -137,12 +137,12 @@ export async function GET_COMPLIANCE(req: Request) {
     const list = items.map(i => {
       const who   = (i.assets as any)?.unit_number ? `Unit #${(i.assets as any).unit_number}` : (i.drivers as any)?.full_name || '—'
       const daysLeft = Math.ceil((new Date(i.expiry_date).getTime() - today.getTime()) / 86400000)
-      const icon  = daysLeft < 0 ? '🔴' : daysLeft <= 7 ? '🟠' : '🟡'
+      const icon  = daysLeft < 0 ? '[EXPIRED]' : daysLeft <= 7 ? '[URGENT]' : '[WARNING]'
       return `${icon} ${who} — ${i.document_name} (${daysLeft < 0 ? `${Math.abs(daysLeft)}d EXPIRED` : `${daysLeft}d left`})`
     }).join('\n')
 
     await sendTG(mgr.telegram_id,
-      `📋 *COMPLIANCE ALERTS — ${items.length} items*\n\n${list}\n\nView all: ${process.env.NEXT_PUBLIC_APP_URL}/compliance`
+      `*COMPLIANCE ALERTS — ${items.length} items*\n\n${list}\n\nView all: ${process.env.NEXT_PUBLIC_APP_URL}/compliance`
     )
     sent++
   }
@@ -197,11 +197,11 @@ export async function GET_INVOICES(req: Request) {
     const list  = invs.slice(0, 8).map(i => {
       const daysOver = Math.ceil((new Date().getTime() - new Date(i.due_date!).getTime()) / 86400000)
       const cust     = (i.customers as any)?.company_name || '—'
-      return `💰 ${i.invoice_number} — ${cust} — $${i.balance_due?.toFixed(0)} (${daysOver}d overdue)`
+      return `${i.invoice_number} — ${cust} — $${i.balance_due?.toFixed(0)} (${daysOver}d overdue)`
     }).join('\n')
 
     await sendTG(acct.telegram_id,
-      `💵 *OVERDUE INVOICES — ${invs.length} total · $${total.toFixed(0)}*\n\n${list}\n\nView all: ${process.env.NEXT_PUBLIC_APP_URL}/invoices`
+      `*OVERDUE INVOICES — ${invs.length} total · $${total.toFixed(0)}*\n\n${list}\n\nView all: ${process.env.NEXT_PUBLIC_APP_URL}/invoices`
     )
 
     // Mark alert_sent on each (add this column if needed)

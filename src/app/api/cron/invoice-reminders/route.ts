@@ -33,12 +33,12 @@ export async function GET(req: Request) {
     const total = invs.reduce((s, i) => s + (i.balance_due || 0), 0)
     const list  = invs.slice(0, 8).map(i => {
       const daysOver = Math.ceil((new Date().getTime() - new Date(i.due_date).getTime()) / 86400000)
-      return `💰 ${i.invoice_number} — ${(i.customers as any)?.company_name} — $${i.balance_due?.toFixed(0)} (${daysOver}d over)`
+      return `${i.invoice_number} — ${(i.customers as any)?.company_name} — $${i.balance_due?.toFixed(0)} (${daysOver}d over)`
     }).join('\n')
 
     await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: acct.telegram_id, text: `💵 *OVERDUE INVOICES — ${invs.length} · $${total.toFixed(0)}*\n\n${list}\n\n${process.env.NEXT_PUBLIC_APP_URL}/invoices`, parse_mode: 'Markdown' }),
+      body: JSON.stringify({ chat_id: acct.telegram_id, text: `*OVERDUE INVOICES — ${invs.length} · $${total.toFixed(0)}*\n\n${list}\n\n${process.env.NEXT_PUBLIC_APP_URL}/invoices`, parse_mode: 'Markdown' }),
     })
     sent++
   }

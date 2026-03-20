@@ -43,9 +43,9 @@ export async function GET(req: Request) {
     if (!mgr?.telegram_id) continue
     const list = pms.map(p => {
       const isOver = p.next_due_date < today.toISOString().split('T')[0]
-      return `${isOver?'🔴':'🟡'} Unit #${(p.assets as any)?.unit_number} — ${p.service_name} (${isOver?'OVERDUE':'due '+p.next_due_date})`
+      return `${isOver?'[OVERDUE]':'[DUE]'} Unit #${(p.assets as any)?.unit_number} — ${p.service_name} (${isOver?'OVERDUE':'due '+p.next_due_date})`
     }).join('\n')
-    await sendTG(mgr.telegram_id, `🔧 *PM ALERTS — ${pms.length} due*\n\n${list}\n\n${process.env.NEXT_PUBLIC_APP_URL}/maintenance`)
+    await sendTG(mgr.telegram_id, `*PM ALERTS — ${pms.length} due*\n\n${list}\n\n${process.env.NEXT_PUBLIC_APP_URL}/maintenance`)
     sent++
   }
   return NextResponse.json({ sent, count: duePMs.length })

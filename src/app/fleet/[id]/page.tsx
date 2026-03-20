@@ -39,35 +39,35 @@ export default function FleetDetailPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#08080C', minHeight:'100vh', color:'#EDEDF0', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    card:  { background:'#1A1A24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#9D9DA1', marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'8px 11px', background:'#1A1A24', border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:'#EDEDF0', outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
+    page:  { background:'#0A0A0A', minHeight:'100vh', color:'#F5F5F7', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
+    card:  { background:'#2A2A2A', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#8E8E93', marginBottom:5, display:'block' },
+    input: { width:'100%', padding:'8px 11px', background:'#2A2A2A', border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:'#F5F5F7', outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#9D9DA1', textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background:'#08080C' },
+    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#8E8E93', textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background:'#0A0A0A' },
     td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
     btn:   { padding:'8px 16px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
   }
 
-  if (loading) return <div style={{ ...S.page, color:'#9D9DA1', padding:60 }}>Loading...</div>
+  if (loading) return <div style={{ ...S.page, color:'#8E8E93', padding:60 }}>Loading...</div>
 
-  const statusColor: Record<string, string> = { active:'#00E0B0', in_shop:'#00E0B0', inactive:'#9D9DA1', decommissioned:'#FF5C5C' }
+  const statusColor: Record<string, string> = { active:'#0A84FF', in_shop:'#0A84FF', inactive:'#8E8E93', decommissioned:'#FF453A' }
 
   return (
     <div style={S.page}>
-      <a href="/fleet" style={{ fontSize:12, color:'#9D9DA1', textDecoration:'none', display:'block', marginBottom:20 }}>← Fleet</a>
+      <a href="/fleet" style={{ fontSize:12, color:'#8E8E93', textDecoration:'none', display:'block', marginBottom:20 }}>← Fleet</a>
 
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:'#EDEDF0', letterSpacing:'.02em' }}>Unit #{asset.unit_number}</div>
-          <div style={{ fontSize:14, color:'#EDEDF0', marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
-          <div style={{ fontSize:12, color:'#9D9DA1', marginTop:2 }}>{(asset.customers as any)?.company_name}</div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:'#F5F5F7', letterSpacing:'.02em' }}>Unit #{asset.unit_number}</div>
+          <div style={{ fontSize:14, color:'#F5F5F7', marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
+          <div style={{ fontSize:12, color:'#8E8E93', marginTop:2 }}>{(asset.customers as any)?.company_name}</div>
         </div>
         <div style={{ display:'flex', gap:8, flexDirection:'column', alignItems:'flex-end' }}>
-          <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]||'#9D9DA1')+'18', color:statusColor[asset.status]||'#9D9DA1', border:`1px solid ${statusColor[asset.status]||'#9D9DA1'}33` }}>
+          <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]||'#8E8E93')+'18', color:statusColor[asset.status]||'#8E8E93', border:`1px solid ${statusColor[asset.status]||'#8E8E93'}33` }}>
             {(asset.status||'active').replace(/_/g,' ').toUpperCase()}
           </span>
-          <div style={{ fontFamily:'monospace', fontSize:12, color:'#9D9DA1' }}>{asset.odometer?.toLocaleString()} mi</div>
+          <div style={{ fontFamily:'monospace', fontSize:12, color:'#8E8E93' }}>{asset.odometer?.toLocaleString()} mi</div>
         </div>
       </div>
 
@@ -75,7 +75,7 @@ export default function FleetDetailPage() {
         <div>
           {/* Edit form */}
           <div style={S.card}>
-            <div style={{ fontSize:12, fontWeight:700, color:'#EDEDF0', marginBottom:12 }}>Vehicle Details</div>
+            <div style={{ fontSize:12, fontWeight:700, color:'#F5F5F7', marginBottom:12 }}>Vehicle Details</div>
             <div style={S.row2}>
               <div><label style={S.label}>Unit Number</label><input style={S.input} value={edit?.unit_number||''} onChange={e=>setEdit((a:any)=>({...a,unit_number:e.target.value}))}/></div>
               <div><label style={S.label}>VIN</label><input value={edit?.vin||''} readOnly style={{ ...S.input, opacity:.6 }}/></div>
@@ -96,28 +96,28 @@ export default function FleetDetailPage() {
                 </select>
               </div>
             </div>
-            <button style={{ ...S.btn, background:'linear-gradient(135deg,#00E0B0,#00E0B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
+            <button style={{ ...S.btn, background:'linear-gradient(135deg,#0A84FF,#0A84FF)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
           </div>
 
           {/* Service history */}
           <div style={S.card}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'#EDEDF0' }}>Service History ({history.length})</div>
-              <a href={`/orders/new`} style={{ fontSize:11, color:'#00E0B0', textDecoration:'none' }}>+ New SO</a>
+              <div style={{ fontSize:12, fontWeight:700, color:'#F5F5F7' }}>Service History ({history.length})</div>
+              <a href={`/orders/new`} style={{ fontSize:11, color:'#0A84FF', textDecoration:'none' }}>+ New SO</a>
             </div>
             {history.length === 0 ? (
-              <div style={{ textAlign:'center', padding:20, color:'#9D9DA1', fontSize:12 }}>No service history</div>
+              <div style={{ textAlign:'center', padding:20, color:'#8E8E93', fontSize:12 }}>No service history</div>
             ) : (
               <table style={{ width:'100%', borderCollapse:'collapse' }}>
                 <thead><tr>{['SO #','Date','Complaint','Total','Status'].map(h=><th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                 <tbody>
                   {history.map(so => (
                     <tr key={so.id} style={{ cursor:'pointer' }} onClick={() => window.location.href=`/orders/${so.id}`}>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#00E0B0' }}>{so.so_number}</td>
-                      <td style={{ ...S.td, color:'#9D9DA1' }}>{new Date(so.created_at).toLocaleDateString()}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#0A84FF' }}>{so.so_number}</td>
+                      <td style={{ ...S.td, color:'#8E8E93' }}>{new Date(so.created_at).toLocaleDateString()}</td>
                       <td style={{ ...S.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{so.complaint}</td>
                       <td style={{ ...S.td, fontFamily:'monospace' }}>{so.grand_total?`$${so.grand_total.toFixed(0)}`:'—'}</td>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:9, color:'#9D9DA1' }}>{so.status?.replace(/_/g,' ')}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:9, color:'#8E8E93' }}>{so.status?.replace(/_/g,' ')}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -129,20 +129,20 @@ export default function FleetDetailPage() {
         {/* Right: PM schedules */}
         <div style={S.card}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:'#EDEDF0' }}>PM Schedules</div>
-            <a href="/maintenance/new" style={{ fontSize:11, color:'#00E0B0', textDecoration:'none' }}>+ Add</a>
+            <div style={{ fontSize:12, fontWeight:700, color:'#F5F5F7' }}>PM Schedules</div>
+            <a href="/maintenance/new" style={{ fontSize:11, color:'#0A84FF', textDecoration:'none' }}>+ Add</a>
           </div>
           {pms.length === 0 ? (
-            <div style={{ textAlign:'center', padding:20, color:'#9D9DA1', fontSize:12 }}>No PM schedules</div>
+            <div style={{ textAlign:'center', padding:20, color:'#8E8E93', fontSize:12 }}>No PM schedules</div>
           ) : pms.map(pm => {
             const today   = new Date().toISOString().split('T')[0]
             const isOver  = pm.next_due_date < today
-            const color   = isOver ? '#FF5C5C' : '#00E0B0'
+            const color   = isOver ? '#FF453A' : '#0A84FF'
             return (
               <div key={pm.id} style={{ padding:'10px 0', borderBottom:'1px solid rgba(255,255,255,.04)' }}>
-                <div style={{ fontSize:12, fontWeight:600, color:'#EDEDF0' }}>{pm.service_name}</div>
+                <div style={{ fontSize:12, fontWeight:600, color:'#F5F5F7' }}>{pm.service_name}</div>
                 <div style={{ fontSize:10, color:color, marginTop:3, fontFamily:'monospace' }}>{isOver?'OVERDUE — ':''}{pm.next_due_date}</div>
-                {pm.interval_miles && <div style={{ fontSize:10, color:'#9D9DA1' }}>Every {pm.interval_miles.toLocaleString()} miles</div>}
+                {pm.interval_miles && <div style={{ fontSize:10, color:'#8E8E93' }}>Every {pm.interval_miles.toLocaleString()} miles</div>}
               </div>
             )
           })}

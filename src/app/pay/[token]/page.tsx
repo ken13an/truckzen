@@ -88,7 +88,7 @@ export default function PaymentPage() {
   if (loading) return (
     <Page>
       <div style={s.loadWrap}>
-        <Spinner color="#00E0B0" size={32}/>
+        <Spinner color="#0A84FF" size={32}/>
         <p style={s.loadText}>Loading invoice...</p>
       </div>
     </Page>
@@ -99,7 +99,7 @@ export default function PaymentPage() {
     <Page>
       <div style={s.card}>
         <Logo shopName={data?.shop?.dba || data?.shop?.name}/>
-        <div style={s.statusIcon('error')}>✗</div>
+        <div style={s.statusIcon('error')}>x</div>
         <h2 style={s.statusTitle}>{data?.error || 'Payment Link Invalid'}</h2>
         <p style={s.statusSub}>
           {data?.error?.includes('paid')
@@ -129,7 +129,7 @@ export default function PaymentPage() {
 
         {/* Truck */}
         <div style={s.truckPill}>
-          <span style={s.truckIcon}>🚛</span>
+          <span style={s.truckIcon}></span>
           <div>
             <div style={s.truckUnit}>Unit #{asset?.unit_number}</div>
             <div style={s.truckModel}>
@@ -164,8 +164,8 @@ export default function PaymentPage() {
           </div>
           {invoice.amount_paid > 0 && (
             <div style={s.totalRow}>
-              <span style={{ ...s.totalKey, color: '#00E0B0' }}>Paid</span>
-              <span style={{ ...s.totalVal, color: '#00E0B0' }}>
+              <span style={{ ...s.totalKey, color: '#0A84FF' }}>Paid</span>
+              <span style={{ ...s.totalVal, color: '#0A84FF' }}>
                 −{fmt(invoice.amount_paid)}
               </span>
             </div>
@@ -271,7 +271,7 @@ function Spinner({ color, size }: { color: string; size: number }) {
 const s: Record<string, any> = {
   page: {
     minHeight: '100vh',
-    background: '#08080C',
+    background: '#0A0A0A',
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'flex-start',
     padding: '16px 16px 40px',
@@ -285,7 +285,7 @@ const s: Record<string, any> = {
   },
   card: {
     width: '100%', maxWidth: '420px',
-    background: '#1A1A24',
+    background: '#2A2A2A',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '16px', padding: '24px',
     position: 'relative', zIndex: 1,
@@ -297,16 +297,16 @@ const s: Record<string, any> = {
   },
   logoMark: {
     width: '30px', height: '30px', borderRadius: '7px', flexShrink: 0,
-    background: 'linear-gradient(135deg,#00E0B0,#00E0B0)',
+    background: 'linear-gradient(135deg,#0A84FF,#0A84FF)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     boxShadow: '0 0 12px rgba(0,224,176,0.3)',
   },
   logoText: {
     fontFamily: "'Bebas Neue',sans-serif",
-    fontSize: '15px', letterSpacing: '0.1em', color: '#EDEDF0',
+    fontSize: '15px', letterSpacing: '0.1em', color: '#F5F5F7',
   },
-  logoAccent: { color: '#00E0B0' },
-  logoShop:  { fontSize: '11px', color: '#9D9DA1', marginTop: '1px' },
+  logoAccent: { color: '#0A84FF' },
+  logoShop:  { fontSize: '11px', color: '#8E8E93', marginTop: '1px' },
 
   truckPill: {
     display: 'flex', alignItems: 'center', gap: '10px',
@@ -316,8 +316,8 @@ const s: Record<string, any> = {
     borderRadius: '10px', marginBottom: '14px',
   },
   truckIcon: { fontSize: '20px' },
-  truckUnit: { fontSize: '15px', fontWeight: 700, color: '#EDEDF0' },
-  truckModel:{ fontSize: '11px', color: '#9D9DA1', marginTop: '2px' },
+  truckUnit: { fontSize: '15px', fontWeight: 700, color: '#F5F5F7' },
+  truckModel:{ fontSize: '11px', color: '#8E8E93', marginTop: '2px' },
 
   invoiceRef: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -326,37 +326,37 @@ const s: Record<string, any> = {
   },
   invoiceRefLabel: {
     fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase',
-    color: '#9D9DA1', fontFamily: 'monospace',
+    color: '#8E8E93', fontFamily: 'monospace',
   },
   invoiceRefNum: {
-    fontSize: '13px', fontWeight: 700, color: '#00E0B0', fontFamily: 'monospace',
+    fontSize: '13px', fontWeight: 700, color: '#0A84FF', fontFamily: 'monospace',
   },
 
   workBlock: {
-    padding: '12px', background: '#1A1A24',
+    padding: '12px', background: '#2A2A2A',
     border: '1px solid rgba(255,255,255,0.05)',
     borderRadius: '9px', marginBottom: '16px',
   },
   workLabel: {
     fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase',
-    color: '#9D9DA1', fontFamily: 'monospace', marginBottom: '6px',
+    color: '#8E8E93', fontFamily: 'monospace', marginBottom: '6px',
   },
-  workText: { fontSize: '12px', color: '#EDEDF0', lineHeight: 1.6 },
+  workText: { fontSize: '12px', color: '#F5F5F7', lineHeight: 1.6 },
 
   totalsBlock: {
-    background: '#1A1A24', border: '1px solid rgba(255,255,255,0.05)',
+    background: '#2A2A2A', border: '1px solid rgba(255,255,255,0.05)',
     borderRadius: '10px', padding: '14px', marginBottom: '16px',
   },
   totalRow: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '4px 0',
   },
-  totalKey: { fontSize: '13px', color: '#9D9DA1' },
-  totalVal: { fontSize: '13px', color: '#EDEDF0', fontFamily: 'monospace' },
+  totalKey: { fontSize: '13px', color: '#8E8E93' },
+  totalVal: { fontSize: '13px', color: '#F5F5F7', fontFamily: 'monospace' },
   divider:  { height: '1px', background: 'rgba(255,255,255,0.07)', margin: '10px 0' },
-  balanceKey: { fontSize: '16px', fontWeight: 700, color: '#EDEDF0' },
+  balanceKey: { fontSize: '16px', fontWeight: 700, color: '#F5F5F7' },
   balanceVal: {
-    fontSize: '22px', fontWeight: 700, color: '#00E0B0',
+    fontSize: '22px', fontWeight: 700, color: '#0A84FF',
     fontFamily: 'monospace',
   },
 
@@ -364,12 +364,12 @@ const s: Record<string, any> = {
     padding: '10px 12px', marginBottom: '12px',
     background: 'rgba(217,79,79,0.08)',
     border: '1px solid rgba(217,79,79,0.2)',
-    borderRadius: '8px', fontSize: '12px', color: '#FF5C5C',
+    borderRadius: '8px', fontSize: '12px', color: '#FF453A',
   },
 
   btn: {
     width: '100%', padding: '16px',
-    background: 'linear-gradient(135deg,#00E0B0,#00E0B0)',
+    background: 'linear-gradient(135deg,#0A84FF,#0A84FF)',
     border: 'none', borderRadius: '11px',
     fontSize: '16px', fontWeight: 700, color: '#fff',
     cursor: 'pointer', marginBottom: '12px',
@@ -379,10 +379,10 @@ const s: Record<string, any> = {
   },
   btnPaying: {
     width: '100%', padding: '16px',
-    background: '#1A1A24',
+    background: '#2A2A2A',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '11px', fontSize: '14px', fontWeight: 600,
-    color: '#9D9DA1', cursor: 'not-allowed', marginBottom: '12px',
+    color: '#8E8E93', cursor: 'not-allowed', marginBottom: '12px',
     fontFamily: 'inherit', minHeight: '56px',
   },
   btnInner: {
@@ -391,20 +391,20 @@ const s: Record<string, any> = {
 
   securityBadge: {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
-    fontSize: '11px', color: '#9D9DA1', marginBottom: '20px',
+    fontSize: '11px', color: '#8E8E93', marginBottom: '20px',
   },
 
   shopContact: {
     paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.05)',
     textAlign: 'center',
   },
-  shopContactName:   { fontSize: '12px', fontWeight: 600, color: '#EDEDF0' },
-  shopContactDetail: { fontSize: '11px', color: '#9D9DA1', marginTop: '3px' },
-  shopPhone:         { color: '#00E0B0', textDecoration: 'none' },
-  techName:          { fontSize: '10px', color: '#9D9DA1', marginTop: '3px' },
+  shopContactName:   { fontSize: '12px', fontWeight: 600, color: '#F5F5F7' },
+  shopContactDetail: { fontSize: '11px', color: '#8E8E93', marginTop: '3px' },
+  shopPhone:         { color: '#0A84FF', textDecoration: 'none' },
+  techName:          { fontSize: '10px', color: '#8E8E93', marginTop: '3px' },
 
   poweredBy: {
-    marginTop: '20px', fontSize: '10px', color: '#9D9DA1',
+    marginTop: '20px', fontSize: '10px', color: '#8E8E93',
     fontFamily: 'monospace', letterSpacing: '0.06em',
     position: 'relative', zIndex: 1,
   },
@@ -413,7 +413,7 @@ const s: Record<string, any> = {
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', gap: '16px', paddingTop: '40vh',
   },
-  loadText: { fontSize: '13px', color: '#9D9DA1' },
+  loadText: { fontSize: '13px', color: '#8E8E93' },
 
   statusIcon: (type: 'error' | 'success') => ({
     width: '60px', height: '60px', borderRadius: '50%',
@@ -421,15 +421,15 @@ const s: Record<string, any> = {
     border: `2px solid ${type === 'error' ? 'rgba(217,79,79,0.3)' : 'rgba(29,184,112,0.3)'}`,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: '24px',
-    color: type === 'error' ? '#FF5C5C' : '#00E0B0',
+    color: type === 'error' ? '#FF453A' : '#0A84FF',
     margin: '16px auto',
   }),
   statusTitle: {
-    fontSize: '18px', fontWeight: 700, color: '#EDEDF0',
+    fontSize: '18px', fontWeight: 700, color: '#F5F5F7',
     textAlign: 'center', margin: '0 0 10px',
   },
   statusSub: {
-    fontSize: '13px', color: '#9D9DA1', textAlign: 'center',
+    fontSize: '13px', color: '#8E8E93', textAlign: 'center',
     lineHeight: 1.6, margin: '0 0 20px',
   },
   callBtn: {
@@ -437,7 +437,7 @@ const s: Record<string, any> = {
     background: 'rgba(0,224,176,0.08)',
     border: '1px solid rgba(0,224,176,0.2)',
     borderRadius: '9px', textAlign: 'center',
-    color: '#00E0B0', textDecoration: 'none',
+    color: '#0A84FF', textDecoration: 'none',
     fontSize: '14px', fontWeight: 600,
   },
 }
