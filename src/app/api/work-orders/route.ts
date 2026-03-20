@@ -56,6 +56,21 @@ export async function POST(req: Request) {
   if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!complaint?.trim()) return NextResponse.json({ error: 'Concern description required' }, { status: 400 })
 
+  // Duplicate WO prevention: check if unit already has an active WO
+  if (asset_id) {
+    const { data: activeWO } = await s.from('service_orders')
+      .select('id, so_number')
+      .eq('asset_id', asset_id)
+      .eq('shop_id', shop_id)
+      .not('wo_status', 'in', '("closed","completed","invoiced")')
+      .not('status', 'in', '("closed","good_to_go","void")')
+      .limit(1)
+      .single()
+    if (activeWO) {
+      return NextResponse.json({ error: `Active WO exists: ${activeWO.so_number}`, wo_number: activeWO.so_number, wo_id: activeWO.id }, { status: 409 })
+    }
+  }
+
   // Generate WO number
   const { count } = await s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id)
   const year = new Date().getFullYear()

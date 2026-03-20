@@ -79,6 +79,18 @@ export async function POST(req: Request) {
   }
 
   // Generate WO number
+  // Duplicate WO prevention
+  if (finalUnitId) {
+    const { data: activeWO } = await s.from('service_orders')
+      .select('id, so_number').eq('asset_id', finalUnitId).eq('shop_id', shop_id)
+      .not('wo_status', 'in', '("closed","completed","invoiced")')
+      .not('status', 'in', '("closed","good_to_go","void")')
+      .limit(1).single()
+    if (activeWO) {
+      return NextResponse.json({ error: `This truck is already being serviced (${activeWO.so_number}). Please check with the front desk.`, wo_number: activeWO.so_number }, { status: 409 })
+    }
+  }
+
   const { count } = await s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id)
   const woYear = new Date().getFullYear()
   const woNum = `WO-${woYear}-${String((count ?? 0) + 1).padStart(4, '0')}`
