@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       model,
       odometer: new_unit.mileage ? parseInt(new_unit.mileage) : null,
       license_plate: new_unit.license_plate || null,
-      status: 'active',
+      status: 'on_road',
     }).select().single()
     if (uErr) return NextResponse.json({ error: 'Failed to create unit: ' + uErr.message }, { status: 500 })
     finalUnitId = u.id
