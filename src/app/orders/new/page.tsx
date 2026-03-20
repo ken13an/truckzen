@@ -20,6 +20,9 @@ export default function NewSOPage() {
   const [assetSearch, setAssetSearch] = useState('')
   const [filteredAssets, setFilteredAssets] = useState<any[]>([])
   const [selectedAsset, setSelectedAsset] = useState<any>(null)
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [filteredCustomers, setFilteredCustomers] = useState<any[]>([])
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
 
   // AI panel state
   const [recording, setRecording] = useState(false)
@@ -51,20 +54,47 @@ export default function NewSOPage() {
     load()
   }, [])
 
-  // Truck search
+  // Customer search
+  useEffect(() => {
+    if (!customerSearch) { setFilteredCustomers([]); return }
+    const q = customerSearch.toLowerCase()
+    setFilteredCustomers(customers.filter(c =>
+      c.company_name?.toLowerCase().includes(q)
+    ).slice(0, 8))
+  }, [customerSearch, customers])
+
+  function selectCustomer(cust: any) {
+    setSelectedCustomer(cust)
+    setCustomerSearch(cust.company_name)
+    setFilteredCustomers([])
+    setForm(f => ({ ...f, customer_id: cust.id }))
+    // Clear vehicle selection when customer changes
+    setSelectedAsset(null)
+    setAssetSearch('')
+    setFilteredAssets([])
+    setForm(f => ({ ...f, asset_id: '' }))
+  }
+
+  // Truck search — filtered by selected customer if one is chosen
   useEffect(() => {
     if (!assetSearch) { setFilteredAssets([]); return }
     const q = assetSearch.toLowerCase()
-    setFilteredAssets(assets.filter(a =>
+    let pool = assets
+    if (selectedCustomer) {
+      pool = assets.filter(a => a.customer_id === selectedCustomer.id)
+    }
+    setFilteredAssets(pool.filter(a =>
       a.unit_number?.toLowerCase().includes(q) || a.make?.toLowerCase().includes(q) || a.model?.toLowerCase().includes(q)
     ).slice(0, 8))
-  }, [assetSearch, assets])
+  }, [assetSearch, assets, selectedCustomer])
 
   function selectAsset(asset: any) {
     setSelectedAsset(asset)
-    setAssetSearch(`#${asset.unit_number} — ${asset.year} ${asset.make} ${asset.model}`)
+    const custName = customers.find((c: any) => c.id === asset.customer_id)?.company_name
+    setAssetSearch(`#${asset.unit_number}${custName ? ` — ${custName}` : ''} — ${asset.year} ${asset.make} ${asset.model}`)
     setFilteredAssets([])
-    setForm(f => ({ ...f, asset_id: asset.id, customer_id: asset.customer_id || '' }))
+    // Only set customer_id from asset if no customer is already selected
+    setForm(f => ({ ...f, asset_id: asset.id, customer_id: f.customer_id || asset.customer_id || '' }))
   }
 
   // ── VOICE INPUT ────────────────────────────────────────
@@ -247,24 +277,56 @@ export default function NewSOPage() {
       {error && <div style={S.error}>{error}</div>}
 
       <form onSubmit={handleSubmit}>
+        {/* ═══ CUSTOMER ═══ */}
+        <div style={S.card}>
+          <div style={S.cardTitle}>1. Customer</div>
+          <label style={S.label}>Search by company name</label>
+          <div style={{ position: 'relative' }}>
+            <input style={S.input} value={customerSearch} onChange={e => { setCustomerSearch(e.target.value); if (!e.target.value) { setSelectedCustomer(null); setForm(f => ({ ...f, customer_id: '' })) } }}
+              placeholder="e.g. Testhaulers or ABC Trucking" />
+            {filteredCustomers.length > 0 && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#1C2130', border: '1px solid rgba(255,255,255,.12)', borderRadius: 9, overflow: 'hidden', zIndex: 50, boxShadow: '0 8px 32px rgba(0,0,0,.5)' }}>
+                {filteredCustomers.map((c: any) => (
+                  <div key={c.id} style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 13 }}
+                    onClick={() => selectCustomer(c)}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <span style={{ fontWeight: 700, color: '#F0F4FF' }}>{c.company_name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {selectedCustomer && (
+            <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(29,111,232,.06)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 8 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>{selectedCustomer.company_name}</div>
+              <div style={{ fontSize: 11, color: '#7C8BA0', marginTop: 2 }}>Customer selected — vehicle search will filter to their units</div>
+            </div>
+          )}
+        </div>
+
         {/* ═══ VEHICLE ═══ */}
         <div style={S.card}>
-          <div style={S.cardTitle}>1. Vehicle</div>
+          <div style={S.cardTitle}>2. Vehicle</div>
           <label style={S.label}>Search by unit number, make, or model</label>
           <div style={{ position: 'relative' }}>
             <input style={S.input} value={assetSearch} onChange={e => { setAssetSearch(e.target.value); if (!e.target.value) { setSelectedAsset(null); setForm(f => ({ ...f, asset_id: '', customer_id: '' })) } }}
               placeholder="e.g. TH001 or Volvo or T680" />
             {filteredAssets.length > 0 && (
               <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#1C2130', border: '1px solid rgba(255,255,255,.12)', borderRadius: 9, overflow: 'hidden', zIndex: 50, boxShadow: '0 8px 32px rgba(0,0,0,.5)' }}>
-                {filteredAssets.map(a => (
-                  <div key={a.id} style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 13 }}
-                    onClick={() => selectAsset(a)}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#4D9EFF' }}>#{a.unit_number}</span>
-                    <span style={{ color: '#DDE3EE', marginLeft: 8 }}>{a.year} {a.make} {a.model}</span>
-                  </div>
-                ))}
+                {filteredAssets.map(a => {
+                  const custName = customers.find((c: any) => c.id === a.customer_id)?.company_name
+                  return (
+                    <div key={a.id} style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 13 }}
+                      onClick={() => selectAsset(a)}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#4D9EFF' }}>#{a.unit_number}</span>
+                      {custName && <span style={{ color: '#7C8BA0', marginLeft: 6 }}> — {custName}</span>}
+                      <span style={{ color: '#DDE3EE', marginLeft: 6 }}> — {a.year} {a.make} {a.model}</span>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -278,10 +340,7 @@ export default function NewSOPage() {
 
         {/* ═══ AI SERVICE WRITER ═══ */}
         <div style={{ ...S.card, borderColor: 'rgba(29,111,232,.15)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 18 }}>🤖</span>
-            <div style={S.cardTitle}>2. AI Service Writer</div>
-          </div>
+          <div style={S.cardTitle}>3. AI Service Writer</div>
 
           {/* Voice input */}
           <div style={{ marginBottom: 16 }}>
@@ -344,7 +403,7 @@ export default function NewSOPage() {
         {/* ═══ PARTS SUGGESTIONS ═══ */}
         {suggestedParts.length > 0 && (
           <div style={S.card}>
-            <div style={S.cardTitle}>3. Suggested Parts</div>
+            <div style={S.cardTitle}>4. Suggested Parts</div>
             <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 12 }}>AI-suggested parts based on the repair. Click to add to the service order.</div>
             {suggestedParts.map((p: any, i: number) => {
               const inv = p.inventory_match
@@ -379,7 +438,7 @@ export default function NewSOPage() {
         {/* ═══ LINE ITEMS ═══ */}
         {(addedParts.length > 0 || laborHours > 0) && (
           <div style={S.card}>
-            <div style={S.cardTitle}>4. Line Items & Totals</div>
+            <div style={S.cardTitle}>5. Line Items & Totals</div>
 
             {/* Parts */}
             {addedParts.map((p, i) => (
@@ -466,13 +525,6 @@ export default function NewSOPage() {
                 {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={`Bay ${i + 1}`}>Bay {i + 1}</option>)}
               </select>
             </div>
-          </div>
-          <div>
-            <label style={S.label}>Customer</label>
-            <select style={S.select} value={form.customer_id} onChange={e => setForm(f => ({ ...f, customer_id: e.target.value }))}>
-              <option value="">No customer linked</option>
-              {customers.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
-            </select>
           </div>
         </div>
 
