@@ -76,7 +76,7 @@ export default function Sidebar() {
         {visible.map(item => {
           const active = isActive(item.href)
           const badge = item.href === '/parts' && lowStock > 0 ? lowStock
-            : item.href === '/orders' && openJobs > 0 ? openJobs
+            : (item.href === '/work-orders' || item.href === ('/orders' as any)) && openJobs > 0 ? openJobs
             : null
 
           return (

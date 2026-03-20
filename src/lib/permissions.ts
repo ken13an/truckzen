@@ -7,7 +7,7 @@
 export const MODULES = [
   { key: 'dashboard',        label: 'Dashboard',           icon: '▦',  path: '/dashboard' },
   { key: 'floor',            label: 'Shop Floor',          icon: '⬡',  path: '/shop-floor' },
-  { key: 'orders',           label: 'Service Orders',      icon: '≡',  path: '/orders' },
+  { key: 'orders',           label: 'Work Orders',          icon: '≡',  path: '/work-orders' },
   { key: 'invoices',         label: 'Invoices',            icon: '$',  path: '/invoices' },
   { key: 'parts',            label: 'Parts Inventory',     icon: '⬡',  path: '/parts' },
   { key: 'fleet',            label: 'Fleet / Assets',      icon: '◈',  path: '/fleet' },

@@ -5,13 +5,14 @@ const PUBLIC_ROUTES = [
   '/login', '/setup', '/kiosk', '/portal', '/pay',
   '/api/telegram', '/api/stripe/webhook', '/api/kiosk',
   '/api/pay', '/offline', '/waiting', '/forgot-password', '/reset-password',
+  '/api/work-orders', '/api/wo-',
 ]
 
 // Module → route prefixes
 const MODULE_ROUTES: Record<string, string[]> = {
   dashboard:        ['/dashboard'],
   floor:            ['/floor', '/shop-floor'],
-  orders:           ['/orders', '/api/service-orders', '/api/so-lines'],
+  orders:           ['/orders', '/work-orders', '/api/service-orders', '/api/work-orders', '/api/so-lines'],
   invoices:         ['/invoices', '/api/invoices'],
   parts:            ['/parts', '/api/parts'],
   fleet:            ['/fleet', '/api/assets'],
@@ -99,6 +100,18 @@ export async function middleware(request: NextRequest) {
 
   // API routes handle their own auth — skip middleware permission checks
   if (pathname.startsWith('/api/')) return response
+
+  // Homepage is public
+  if (pathname === '/') {
+    if (user) return NextResponse.redirect(new URL('/dashboard', request.url))
+    return response
+  }
+
+  // Redirect old /orders routes to /work-orders
+  if (pathname.startsWith('/orders')) {
+    const newPath = pathname.replace('/orders', '/work-orders')
+    return NextResponse.redirect(new URL(newPath, request.url))
+  }
 
   // Not logged in → login
   if (!user) return NextResponse.redirect(new URL('/login', request.url))

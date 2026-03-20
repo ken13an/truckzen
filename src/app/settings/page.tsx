@@ -26,7 +26,7 @@ export default function SettingsPage() {
 
   async function saveShop() {
     setSaving(true)
-    await supabase.from('shops').update({ name:shop.name, dba:shop.dba, phone:shop.phone, email:shop.email, address:shop.address }).eq('id', shop.id)
+    await supabase.from('shops').update({ name:shop.name, dba:shop.dba, phone:shop.phone, email:shop.email, address:shop.address, state:shop.state, county:shop.county, tax_rate:parseFloat(shop.tax_rate)||0, tax_labor:shop.tax_labor||false }).eq('id', shop.id)
     setSaving(false)
     alert('Saved')
   }
@@ -62,7 +62,30 @@ export default function SettingsPage() {
           <input style={S.input} type="email" value={shop.email||''} onChange={e => setShop((s:any) => ({...s, email:e.target.value}))}/>
           <label style={S.label}>Address</label>
           <input style={S.input} value={shop.address||''} onChange={e => setShop((s:any) => ({...s, address:e.target.value}))}/>
-          <button style={S.btn} onClick={saveShop} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
+
+          <div style={{ marginTop:16, paddingTop:16, borderTop:'1px solid rgba(255,255,255,.06)' }}>
+            <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF', marginBottom:12 }}>Tax & Location</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10 }}>
+              <div>
+                <label style={S.label}>State</label>
+                <input style={S.input} value={shop.state||''} onChange={e => setShop((s:any) => ({...s, state:e.target.value}))} placeholder="Illinois"/>
+              </div>
+              <div>
+                <label style={S.label}>County / City</label>
+                <input style={S.input} value={shop.county||''} onChange={e => setShop((s:any) => ({...s, county:e.target.value}))} placeholder="Cook"/>
+              </div>
+              <div>
+                <label style={S.label}>Tax Rate %</label>
+                <input style={S.input} type="number" step="0.01" value={shop.tax_rate||''} onChange={e => setShop((s:any) => ({...s, tax_rate:e.target.value}))} placeholder="10.25"/>
+              </div>
+            </div>
+            <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:12, color:'#DDE3EE', cursor:'pointer' }}>
+              <input type="checkbox" checked={shop.tax_labor||false} onChange={e => setShop((s:any) => ({...s, tax_labor:e.target.checked}))} style={{ width:16, height:16 }}/>
+              Tax labor (default: off — most states only tax parts)
+            </label>
+          </div>
+
+          <button style={{ ...S.btn, marginTop:16 }} onClick={saveShop} disabled={saving}>{saving?'Saving...':'Save Changes'}</button>
 
           <div style={{ marginTop:24, paddingTop:20, borderTop:'1px solid rgba(255,255,255,.06)' }}>
             <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF', marginBottom:8 }}>Kiosk Mode</div>
