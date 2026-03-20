@@ -103,13 +103,7 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
-      {tab === 'Users' && (
-        <div style={S.card}>
-          <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF', marginBottom:8 }}>Staff Accounts</div>
-          <div style={{ fontSize:11, color:'#7C8BA0', marginBottom:14 }}>Manage user roles, teams, and Telegram IDs.</div>
-          <button style={S.btn} onClick={() => window.location.href='/settings/users/new'}>+ Invite Staff Member</button>
-        </div>
-      )}
+      {tab === 'Users' && (() => { window.location.href = '/settings/users'; return <div style={{ color:'#7C8BA0', padding:40, textAlign:'center' }}>Redirecting to Team Members...</div> })()}
       {tab === 'Integrations' && (
         <div style={S.card}>
           <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF', marginBottom:14 }}>Connected Services</div>
