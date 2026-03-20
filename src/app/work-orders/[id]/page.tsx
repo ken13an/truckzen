@@ -385,17 +385,19 @@ export default function WorkOrderDetailPage() {
         {/* ── QUICK ACTIONS BAR ── */}
         <div data-no-print style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, margin: '12px 24px 0', padding: '8px 24px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {[
-            { icon: <Users size={16} />, action: () => setShowTeamModal(true) },
-            { icon: <MessageSquare size={16} />, action: () => setTab(3) },
-            { icon: <Paperclip size={16} />, action: () => setTab(3) },
-            { icon: <Clock size={16} />, action: () => setTab(4) },
-            { icon: <DollarSign size={16} />, action: () => setTab(2) },
+            { icon: <Users size={20} />, label: 'Team', action: () => setShowTeamModal(true) },
+            { icon: <MessageSquare size={20} />, label: 'Notes', action: () => setTab(3) },
+            { icon: <Clock size={20} />, label: 'Activity', action: () => setTab(4) },
+            { icon: <DollarSign size={20} />, label: 'Billing', action: () => setTab(2) },
           ].map((b, i) => (
-            <button key={i} onClick={b.action} style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', color: '#374151' }}>{b.icon}</button>
+            <button key={i} onClick={b.action} style={{ width: 38, height: 50, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', color: '#4B5563', padding: 0 }}>
+              {b.icon}
+              <span style={{ fontSize: 10, color: GRAY }}>{b.label}</span>
+            </button>
           ))}
           <div style={{ width: 1, height: 20, background: '#E5E7EB' }} />
           <div style={{ position: 'relative' }}>
-            <button onClick={() => setShowMenu(!showMenu)} style={{ width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', color: '#374151' }}><MoreHorizontal size={16} /></button>
+            <button onClick={() => setShowMenu(!showMenu)} style={{ width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer', color: '#4B5563' }}><MoreHorizontal size={20} /></button>
             {showMenu && (
               <div style={{ position: 'absolute', right: 0, top: 38, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: 160, overflow: 'hidden' }}>
                 <button onClick={() => { setShowMenu(false); window.print() }} style={{ display: 'block', width: '100%', padding: '10px 16px', border: 'none', background: 'none', textAlign: 'left', fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: '#1A1A1A' }}>Print WO</button>
@@ -786,7 +788,7 @@ export default function WorkOrderDetailPage() {
                 </select>
               </div>
               <div style={{ marginBottom: 12 }}>
-                <div style={labelStyle}>Lead Technician</div>
+                <div style={labelStyle}>Lead Tech</div>
                 <select value={teamAssign.tech} onChange={e => setTeamAssign(p => ({ ...p, tech: e.target.value }))} style={inputStyle}>
                   <option value="">-- None --</option>
                   {mechanics.map((u: any) => <option key={u.id} value={u.id}>{u.full_name}</option>)}
@@ -818,13 +820,34 @@ export default function WorkOrderDetailPage() {
               <div style={{ marginBottom: 12 }}>
                 <select onChange={e => { addMechToList(e.target.value); e.target.value = '' }} style={inputStyle} defaultValue="">
                   <option value="" disabled>Add a mechanic...</option>
-                  {mechanics.filter(m => !assignList.find(a => a.user_id === m.id)).map((m: any) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
+                  {(() => {
+                    const available = mechanics.filter((m: any) => m.active && !assignList.find(a => a.user_id === m.id))
+                    const teams = [...new Set(available.map((m: any) => m.team || 'Unassigned'))]
+                    return teams.map(team => (
+                      <optgroup key={team} label={team}>
+                        {available.filter((m: any) => (m.team || 'Unassigned') === team).map((m: any) => (
+                          <option key={m.id} value={m.id}>{m.role === 'lead_tech' ? '* ' : ''}{m.full_name}{m.skills?.length ? ` — ${m.skills.slice(0,2).join(', ')}` : ''}</option>
+                        ))}
+                      </optgroup>
+                    ))
+                  })()}
                 </select>
               </div>
               {assignList.length === 0 && <div style={{ fontSize: 13, color: GRAY, padding: 12, textAlign: 'center' }}>No mechanics assigned</div>}
-              {assignList.map((a, i) => (
+              {assignList.map((a, i) => {
+                const mechData = mechanics.find((m: any) => m.id === a.user_id)
+                return (
                 <div key={a.user_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #F3F4F6' }}>
-                  <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{a.name}</span>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>{a.name}</span>
+                    {mechData?.skills?.length > 0 && (
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 3 }}>
+                        {mechData.skills.slice(0, 3).map((s: string) => (
+                          <span key={s} style={{ fontSize: 9, padding: '1px 6px', background: '#F3F4F6', borderRadius: 4, color: GRAY }}>{s}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <input type="number" min={0} max={100} value={a.percentage} onChange={e => {
                     const next = [...assignList]
                     next[i] = { ...next[i], percentage: parseInt(e.target.value) || 0 }
@@ -833,7 +856,7 @@ export default function WorkOrderDetailPage() {
                   <span style={{ fontSize: 12, color: GRAY }}>%</span>
                   <button onClick={() => removeMechFromList(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED }}><X size={16} /></button>
                 </div>
-              ))}
+              )})}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
                 <button onClick={() => setAssignModal(null)} style={btn('#F3F4F6', '#374151')}>Cancel</button>
                 <button onClick={saveAssignments} style={btn(BLUE, '#fff')}>Save Assignments</button>

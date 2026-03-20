@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
   const { data, error } = await s.from('users')
-    .select('id, full_name, email, role, team, language, telegram_id, active, can_create_so, can_impersonate, created_at, deleted_at')
+    .select('id, full_name, email, role, team, language, telegram_id, active, can_create_so, can_impersonate, created_at, deleted_at, skills, availability')
     .eq('shop_id', shopId)
     .order('full_name')
 
