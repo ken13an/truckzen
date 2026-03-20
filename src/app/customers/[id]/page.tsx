@@ -1,24 +1,39 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Plus, Pencil, Trash2, Download, Upload, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
-type Tab = 'overview' | 'fleet' | 'history' | 'open' | 'invoices'
+type Tab = 'fleet' | 'work-orders' | 'contacts' | 'billing' | 'documents'
 
-export default function CustomerPortalPage() {
+export default function CustomerProfilePage() {
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const id = params.id as string
+
   const [user, setUser] = useState<any>(null)
   const [customer, setCustomer] = useState<any>(null)
-  const [edit, setEdit] = useState<any>(null)
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [units, setUnits] = useState<any[]>([])
+  const [workOrders, setWorkOrders] = useState<any[]>([])
+  const [contacts, setContacts] = useState<any[]>([])
+  const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<Tab>('overview')
+  const [tab, setTab] = useState<Tab>('fleet')
   const [toast, setToast] = useState('')
+  const [fleetSearch, setFleetSearch] = useState('')
+
+  // Edit modal state
+  const [editModal, setEditModal] = useState(false)
+  const [editForm, setEditForm] = useState<any>({})
+  const [saving, setSaving] = useState(false)
+
+  // Contact modal state
+  const [contactModal, setContactModal] = useState(false)
+  const [contactForm, setContactForm] = useState<any>({ name: '', role: '', phone: '', email: '', is_primary: false })
+  const [editingContactId, setEditingContactId] = useState<string | null>(null)
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2500) }
 
@@ -28,175 +43,508 @@ export default function CustomerPortalPage() {
       if (!profile) { router.push('/login'); return }
       setUser(profile)
 
-      const res = await fetch(`/api/customers/${params.id}?shop_id=${profile.shop_id}`)
+      // Fetch customer data
+      const res = await fetch(`/api/customers/${id}?shop_id=${profile.shop_id}`)
       if (!res.ok) { router.push('/customers'); return }
       const data = await res.json()
       setCustomer(data)
-      setEdit({ company_name: data.company_name, contact_name: data.contact_name, phone: data.phone, email: data.email, address: data.address, notes: data.notes })
+      setUnits(data.assets || [])
+
+      // Fetch work orders - API doesn't support customer_id filter, so fetch all and filter
+      const woRes = await fetch(`/api/work-orders?shop_id=${profile.shop_id}&limit=500`)
+      if (woRes.ok) {
+        const allWOs = await woRes.json()
+        setWorkOrders(allWOs.filter((wo: any) => wo.customers?.id === id))
+      }
+
+      // Fetch contacts directly from Supabase
+      const { data: contactsData } = await supabase
+        .from('customer_contacts')
+        .select('*')
+        .eq('customer_id', id)
+        .order('is_primary', { ascending: false })
+      setContacts(contactsData || [])
+
+      // Fetch documents directly from Supabase
+      const { data: docsData } = await supabase
+        .from('customer_documents')
+        .select('*')
+        .eq('customer_id', id)
+        .order('created_at', { ascending: false })
+      setDocuments(docsData || [])
+
       setLoading(false)
     }
     load()
-  }, [params.id])
+  }, [id])
 
-  async function save() {
-    setSaving(true)
-    const res = await fetch(`/api/customers/${params.id}`, {
+  // -- Customer status change --
+  async function updateStatus(newStatus: string) {
+    const res = await fetch(`/api/customers/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(edit),
+      body: JSON.stringify({ customer_status: newStatus }),
     })
     if (res.ok) {
       const updated = await res.json()
       setCustomer((c: any) => ({ ...c, ...updated }))
-      setEditing(false)
-      flash('Saved')
+      flash('Status updated')
+    }
+  }
+
+  // -- Save company info edit --
+  async function saveEdit() {
+    setSaving(true)
+    const res = await fetch(`/api/customers/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setCustomer((c: any) => ({ ...c, ...updated }))
+      setEditModal(false)
+      flash('Customer updated')
     }
     setSaving(false)
   }
 
-  if (loading) return <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
+  // -- Payment terms / credit limit --
+  async function updateField(field: string, value: any) {
+    const res = await fetch(`/api/customers/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: value }),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setCustomer((c: any) => ({ ...c, ...updated }))
+      flash('Saved')
+    }
+  }
 
-  const vehicles = customer?.assets || []
-  const kioskCheckins = customer?.kiosk_checkins || []
-  const allSOs = customer?.service_orders || []
-  const openSOs = allSOs.filter((s: any) => !['good_to_go', 'void'].includes(s.status))
-  const closedSOs = allSOs.filter((s: any) => ['good_to_go', 'void', 'done'].includes(s.status))
-  const invoices = customer?.invoices || []
-  const totalSpent = invoices.filter((i: any) => i.status === 'paid').reduce((s: number, i: any) => s + (i.total || 0), 0)
-  const outstanding = invoices.filter((i: any) => i.status !== 'paid' && i.status !== 'void').reduce((s: number, i: any) => s + ((i.total || 0) - (i.amount_paid || 0)), 0)
-  const lastService = allSOs.length > 0 ? allSOs.sort((a: any, b: any) => b.created_at?.localeCompare(a.created_at))[0]?.created_at?.split('T')[0] : null
+  // -- Contacts CRUD --
+  async function saveContact() {
+    setSaving(true)
+    if (editingContactId) {
+      const { data, error } = await supabase
+        .from('customer_contacts')
+        .update(contactForm)
+        .eq('id', editingContactId)
+        .select()
+        .single()
+      if (!error && data) {
+        setContacts(prev => prev.map(c => c.id === editingContactId ? data : c))
+        flash('Contact updated')
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('customer_contacts')
+        .insert({ ...contactForm, customer_id: id })
+        .select()
+        .single()
+      if (!error && data) {
+        setContacts(prev => [data, ...prev])
+        flash('Contact added')
+      }
+    }
+    setContactModal(false)
+    setEditingContactId(null)
+    setContactForm({ name: '', role: '', phone: '', email: '', is_primary: false })
+    setSaving(false)
+  }
+
+  async function deleteContact(contactId: string) {
+    if (!confirm('Delete this contact?')) return
+    const { error } = await supabase.from('customer_contacts').delete().eq('id', contactId)
+    if (!error) {
+      setContacts(prev => prev.filter(c => c.id !== contactId))
+      flash('Contact deleted')
+    }
+  }
+
+  // -- Documents --
+  async function uploadDocument(file: File) {
+    const path = `${id}/${Date.now()}_${file.name}`
+    const { error: upErr } = await supabase.storage.from('customer-docs').upload(path, file)
+    if (upErr) { flash('Upload failed: ' + upErr.message); return }
+
+    const { data: doc, error: dbErr } = await supabase
+      .from('customer_documents')
+      .insert({
+        customer_id: id,
+        filename: file.name,
+        storage_path: path,
+        file_type: file.type || 'application/octet-stream',
+        file_size: file.size,
+      })
+      .select()
+      .single()
+    if (!dbErr && doc) {
+      setDocuments(prev => [doc, ...prev])
+      flash('Document uploaded')
+    }
+  }
+
+  async function deleteDocument(doc: any) {
+    if (!confirm('Delete this document?')) return
+    await supabase.storage.from('customer-docs').remove([doc.storage_path])
+    const { error } = await supabase.from('customer_documents').delete().eq('id', doc.id)
+    if (!error) {
+      setDocuments(prev => prev.filter(d => d.id !== doc.id))
+      flash('Document deleted')
+    }
+  }
+
+  async function downloadDocument(doc: any) {
+    const { data } = await supabase.storage.from('customer-docs').createSignedUrl(doc.storage_path, 60)
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+  }
+
+  // -- Loading state --
+  if (loading) {
+    return (
+      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: '#7C8BA0' }}>
+        Loading...
+      </div>
+    )
+  }
+
+  // -- Computed --
+  const filteredUnits = units.filter((u: any) =>
+    !fleetSearch || u.unit_number?.toLowerCase().includes(fleetSearch.toLowerCase())
+  )
+  const woCount = workOrders.length
+  const lifetimeSpend = customer?.total_spent || 0
+  const avgWO = woCount > 0 ? lifetimeSpend / woCount : 0
+
+  const statusColor = (s: string) => {
+    if (s === 'active') return '#22C55E'
+    if (s === 'inactive') return '#7C8BA0'
+    if (s === 'blacklisted') return '#EF4444'
+    return '#7C8BA0'
+  }
+
+  const paymentTermsColor = (t: string) => {
+    if (t === 'cod') return { bg: 'rgba(239,68,68,0.15)', color: '#EF4444' }
+    if (t === 'net15') return { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
+    if (t === 'net30') return { bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
+    if (t === 'net60') return { bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
+    return { bg: 'rgba(255,255,255,0.06)', color: '#7C8BA0' }
+  }
+
+  const unitTypeBadge = (type: string) => {
+    const t = (type || 'tractor').toLowerCase()
+    if (t === 'tractor') return { label: 'TRACTOR', bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
+    if (t.includes('reefer')) return { label: 'TRAILER-REEFER', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
+    if (t.includes('trailer')) return { label: 'TRAILER', bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
+    return { label: t.toUpperCase(), bg: 'rgba(255,255,255,0.08)', color: '#7C8BA0' }
+  }
+
+  const woStatusColor = (s: string) => {
+    if (s === 'draft') return '#7C8BA0'
+    if (s === 'in_progress') return '#F59E0B'
+    if (s === 'waiting_parts') return '#F59E0B'
+    if (s === 'good_to_go' || s === 'completed') return '#22C55E'
+    return '#7C8BA0'
+  }
+
+  const ptc = paymentTermsColor(customer?.payment_terms || '')
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'fleet', label: 'Fleet' },
+    { key: 'work-orders', label: 'Work Orders' },
+    { key: 'contacts', label: 'Contacts' },
+    { key: 'billing', label: 'Billing' },
+    { key: 'documents', label: 'Documents' },
+  ]
 
   return (
-    <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+    <div style={{ background: '#0C0C12', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Inter', sans-serif", padding: 24 }}>
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
+          {toast}
+        </div>
+      )}
 
+      {/* Back button */}
       <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
-  <ChevronLeft size={16} strokeWidth={2} /> Customers
-</a>
+        <ChevronLeft size={16} strokeWidth={2} /> Customers
+      </a>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={S.title}>{customer.company_name}</div>
-            <button onClick={() => setEditing(!editing)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#4D9EFF', padding: 4, fontFamily: 'inherit', fontWeight: 600 }} title="Edit">Edit</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#EDEDF0' }}>{customer.company_name}</div>
+            <select
+              value={customer.customer_status || 'active'}
+              onChange={e => updateStatus(e.target.value)}
+              style={{
+                padding: '4px 10px',
+                fontSize: 11,
+                fontWeight: 600,
+                fontFamily: "'Inter', sans-serif",
+                background: 'rgba(255,255,255,0.06)',
+                border: `1px solid ${statusColor(customer.customer_status || 'active')}40`,
+                borderRadius: 6,
+                color: statusColor(customer.customer_status || 'active'),
+                cursor: 'pointer',
+                outline: 'none',
+                textTransform: 'uppercase' as const,
+              }}
+            >
+              <option value="active" style={{ background: '#151520', color: '#EDEDF0' }}>Active</option>
+              <option value="inactive" style={{ background: '#151520', color: '#EDEDF0' }}>Inactive</option>
+              <option value="blacklisted" style={{ background: '#151520', color: '#EDEDF0' }}>Blacklisted</option>
+            </select>
           </div>
-          <div style={{ fontSize: 12, color: '#7C8BA0', marginTop: 4 }}>
-            {vehicles.length} unit{vehicles.length !== 1 ? 's' : ''} · {allSOs.length} service order{allSOs.length !== 1 ? 's' : ''} · {invoices.length} invoice{invoices.length !== 1 ? 's' : ''}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: '#7C8BA0', flexWrap: 'wrap' }}>
+            {customer.dot_number && <span>DOT #{customer.dot_number}</span>}
+            {customer.dot_number && customer.mc_number && <span style={{ color: '#3A3A4A' }}>|</span>}
+            {customer.mc_number && <span>MC #{customer.mc_number}</span>}
+            {(customer.dot_number || customer.mc_number) && customer.phone && <span style={{ color: '#3A3A4A' }}>|</span>}
+            {customer.phone && <span>{customer.phone}</span>}
+            {customer.payment_terms && (
+              <>
+                <span style={{ color: '#3A3A4A' }}>|</span>
+                <span style={{
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  background: ptc.bg,
+                  color: ptc.color,
+                  textTransform: 'uppercase' as const,
+                }}>
+                  {customer.payment_terms}
+                </span>
+              </>
+            )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <a href={`/orders/new?customer=${params.id}`} style={{ ...S.btn, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff', textDecoration: 'none' }}>+ New Service Order</a>
-        </div>
+
+        <button
+          onClick={() => {
+            setEditForm({
+              company_name: customer.company_name || '',
+              contact_name: customer.contact_name || '',
+              phone: customer.phone || '',
+              email: customer.email || '',
+              address: customer.address || '',
+              dot_number: customer.dot_number || '',
+              mc_number: customer.mc_number || '',
+              notes: customer.notes || '',
+            })
+            setEditModal(true)
+          }}
+          style={{
+            padding: '9px 20px',
+            borderRadius: 8,
+            border: '1px solid rgba(255,255,255,0.12)',
+            background: 'rgba(255,255,255,0.06)',
+            color: '#EDEDF0',
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: "'Inter', sans-serif",
+          }}
+        >
+          Edit
+        </button>
       </div>
 
-      {/* Stats bar */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+      {/* Stats Bar */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Total Spent', value: `$${totalSpent.toLocaleString()}`, color: '#22C55E' },
-          { label: 'Outstanding', value: `$${outstanding.toLocaleString()}`, color: outstanding > 0 ? '#F59E0B' : '#48536A' },
-          { label: 'Open Orders', value: String(openSOs.length), color: openSOs.length > 0 ? '#4D9EFF' : '#48536A' },
-          { label: 'Last Service', value: lastService || 'Never', color: '#7C8BA0' },
+          { label: 'Total WOs', value: String(woCount) },
+          { label: 'Spend This Year', value: '$0.00' },
+          { label: 'Lifetime Spend', value: `$${lifetimeSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+          { label: 'Avg WO Value', value: `$${avgWO.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
         ].map(s => (
-          <div key={s.label} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10, padding: '12px 18px', flex: '1 1 120px' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: s.color, fontFamily: "'IBM Plex Mono'" }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: 2 }}>{s.label}</div>
+          <div key={s.label} style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '16px 20px' }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#EDEDF0', fontFamily: "'Inter', sans-serif" }}>{s.value}</div>
+            <div style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,.06)', paddingBottom: 0 }}>
-        {([['overview', 'Overview'], ['fleet', `Fleet (${vehicles.length})`], ['history', 'Service History'], ['open', `Open Orders (${openSOs.length})`], ['invoices', `Invoices (${invoices.length})`]] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderBottom: tab === k ? '2px solid #4D9EFF' : '2px solid transparent', color: tab === k ? '#4D9EFF' : '#7C8BA0', background: 'none', border: 'none', borderBottomWidth: 2, borderBottomStyle: 'solid', borderBottomColor: tab === k ? '#4D9EFF' : 'transparent' }}>
-            {l}
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            style={{
+              padding: '10px 20px',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
+              borderBottom: tab === t.key ? '2px solid #3B82F6' : '2px solid transparent',
+              color: tab === t.key ? '#3B82F6' : '#7C8BA0',
+              fontFamily: "'Inter', sans-serif",
+              marginBottom: -1,
+            }}
+          >
+            {t.label}
           </button>
         ))}
       </div>
 
-      {/* OVERVIEW TAB */}
-      {tab === 'overview' && (<>
-        <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 }}>Contact Information</div>
-          {editing ? (
-            <>
-              <div style={S.row2}>
-                <div><label style={S.label}>Company Name</label><input style={S.input} value={edit?.company_name || ''} onChange={e => setEdit((c: any) => ({ ...c, company_name: e.target.value }))} /></div>
-                <div><label style={S.label}>Contact Person</label><input style={S.input} value={edit?.contact_name || ''} onChange={e => setEdit((c: any) => ({ ...c, contact_name: e.target.value }))} /></div>
-              </div>
-              <div style={S.row2}>
-                <div><label style={S.label}>Phone</label><input style={S.input} value={edit?.phone || ''} onChange={e => setEdit((c: any) => ({ ...c, phone: e.target.value }))} /></div>
-                <div><label style={S.label}>Email</label><input style={S.input} type="email" value={edit?.email || ''} onChange={e => setEdit((c: any) => ({ ...c, email: e.target.value }))} /></div>
-              </div>
-              <div><label style={S.label}>Address</label><input style={S.input} value={edit?.address || ''} onChange={e => setEdit((c: any) => ({ ...c, address: e.target.value }))} /></div>
-              <div style={{ marginTop: 10 }}><label style={S.label}>Notes</label><textarea style={{ ...S.input, minHeight: 60, resize: 'vertical' }} value={edit?.notes || ''} onChange={e => setEdit((c: any) => ({ ...c, notes: e.target.value }))} /></div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                <button onClick={save} disabled={saving} style={{ ...S.btn, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff' }}>{saving ? 'Saving...' : 'Save'}</button>
-                <button onClick={() => setEditing(false)} style={{ ...S.btn, background: '#1A1D23', color: '#7C8BA0' }}>Cancel</button>
-              </div>
-            </>
+      {/* ==================== FLEET TAB ==================== */}
+      {tab === 'fleet' && (
+        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <input
+              placeholder="Search unit number..."
+              value={fleetSearch}
+              onChange={e => setFleetSearch(e.target.value)}
+              style={{
+                padding: '9px 14px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 8,
+                fontSize: 12,
+                color: '#EDEDF0',
+                outline: 'none',
+                width: 260,
+                fontFamily: "'Inter', sans-serif",
+              }}
+            />
+            <a
+              href={`/fleet/new?customer=${id}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '9px 16px',
+                background: '#3B82F6',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#fff',
+                textDecoration: 'none',
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
+              <Plus size={14} /> Add Unit
+            </a>
+          </div>
+
+          {filteredUnits.length === 0 ? (
+            <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No units found</div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {[
-                ['Company', customer.company_name],
-                ['Contact', customer.contact_name],
-                ['Phone', customer.phone],
-                ['Email', customer.email],
-                ['Address', customer.address],
-                ['Notes', customer.notes],
-              ].map(([l, v]) => (
-                <div key={l as string}>
-                  <div style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 2 }}>{l}</div>
-                  <div style={{ fontSize: 13, color: v ? '#DDE3EE' : '#48536A' }}>{(v as string) || '—'}</div>
-                </div>
-              ))}
-            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+              <thead>
+                <tr>
+                  {['Unit #', 'Type', 'Year / Make / Model', 'Mileage', 'Status', ''].map(h => (
+                    <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUnits.map((u: any) => {
+                  const badge = unitTypeBadge(u.unit_type)
+                  return (
+                    <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <td style={{ padding: '10px 12px', fontSize: 13 }}>
+                        <a href={`/fleet/${u.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
+                          #{u.unit_number}
+                        </a>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: badge.bg, color: badge.color, textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
+                          {badge.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
+                        {[u.year, u.make, u.model].filter(Boolean).join(' ') || '\u2014'}
+                      </td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF', fontVariantNumeric: 'tabular-nums' }}>
+                        {u.odometer ? u.odometer.toLocaleString() : '\u2014'}
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, color: u.status === 'on_road' ? '#22C55E' : u.status === 'in_shop' ? '#F59E0B' : '#7C8BA0' }}>
+                          {u.status?.replace(/_/g, ' ') || 'unknown'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px', textAlign: 'right' as const }}>
+                        <a
+                          href={`/work-orders/new?customer=${id}&unit=${u.id}`}
+                          style={{ fontSize: 11, color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}
+                        >
+                          Create WO
+                        </a>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           )}
         </div>
+      )}
 
-        {/* Recent Check-ins in Overview */}
-        {kioskCheckins.length > 0 && (
-          <div style={S.card}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Recent Check-ins</div>
-            {kioskCheckins.slice(0, 5).map((ci: any) => (
-              <div key={ci.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
-                <div>
-                  <div style={{ fontSize: 12, color: '#F0F4FF' }}>#{ci.unit_number} — {ci.contact_name || 'Driver'}</div>
-                  <div style={{ fontSize: 10, color: '#7C8BA0', marginTop: 1 }}>{ci.complaint_en ? ci.complaint_en.slice(0, 60) : 'No description'}</div>
-                </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: 10, fontFamily: 'monospace', color: '#7C8BA0' }}>{new Date(ci.created_at).toLocaleDateString()}</div>
-                  <div style={{ fontSize: 9, color: '#48536A', fontFamily: 'monospace' }}>{ci.checkin_ref}</div>
-                </div>
-              </div>
-            ))}
+      {/* ==================== WORK ORDERS TAB ==================== */}
+      {tab === 'work-orders' && (
+        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Work Orders ({woCount})</div>
+            <a
+              href={`/work-orders/new?customer=${id}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '9px 16px',
+                background: '#3B82F6',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#fff',
+                textDecoration: 'none',
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
+              <Plus size={14} /> New WO
+            </a>
           </div>
-        )}
-      </>)}
 
-      {/* FLEET TAB */}
-      {tab === 'fleet' && (
-        <div style={S.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Fleet — {vehicles.length} units</div>
-          </div>
-          {vehicles.length === 0 ? <div style={{ color: '#48536A', textAlign: 'center', padding: 24 }}>No vehicles</div> : (
-            <table style={S.table}>
-              <thead><tr>
-                {['Unit #', 'Year', 'Make', 'Model', 'VIN', 'Odometer', 'Status', ''].map(h => <th key={h} style={S.th}>{h}</th>)}
-              </tr></thead>
+          {workOrders.length === 0 ? (
+            <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No work orders yet</div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+              <thead>
+                <tr>
+                  {['WO #', 'Unit', 'Status', 'Created', 'Total'].map(h => (
+                    <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>
-                {vehicles.map((v: any) => (
-                  <tr key={v.id}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: '#4D9EFF' }}>#{v.unit_number}</td>
-                    <td style={S.td}>{v.year}</td>
-                    <td style={S.td}>{v.make}</td>
-                    <td style={S.td}>{v.model}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontSize: 10 }}>{v.vin || '—'}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace' }}>{v.odometer?.toLocaleString() || '—'}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: v.status === 'on_road' ? '#22C55E' : '#7C8BA0' }}>{v.status?.replace(/_/g, ' ')}</span></td>
-                    <td style={S.td}>
-                      <a href={`/orders/new?customer=${params.id}&asset=${v.id}`} style={{ fontSize: 10, color: '#4D9EFF', textDecoration: 'none', fontWeight: 600 }}>+ SO</a>
+                {workOrders.map((wo: any) => (
+                  <tr key={wo.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }} onClick={() => router.push(`/work-orders/${wo.id}`)}>
+                    <td style={{ padding: '10px 12px', fontSize: 13 }}>
+                      <a href={`/work-orders/${wo.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>
+                        {wo.so_number}
+                      </a>
+                    </td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
+                      {(wo.assets as any)?.unit_number ? `#${(wo.assets as any).unit_number}` : '\u2014'}
+                    </td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, color: woStatusColor(wo.status) }}>
+                        {wo.status?.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#7C8BA0' }}>
+                      {wo.created_at ? new Date(wo.created_at).toLocaleDateString() : '\u2014'}
+                    </td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#EDEDF0', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                      ${(wo.grand_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
                 ))}
@@ -206,26 +554,221 @@ export default function CustomerPortalPage() {
         </div>
       )}
 
-      {/* SERVICE HISTORY TAB */}
-      {tab === 'history' && (
-        <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 }}>Service History — {closedSOs.length} completed</div>
-          {closedSOs.length === 0 ? <div style={{ color: '#48536A', textAlign: 'center', padding: 24 }}>No completed service orders</div> : (
-            <table style={S.table}>
-              <thead><tr>
-                {['SO #', 'Date', 'Truck', 'Complaint', 'Labor', 'Parts', 'Total', 'Status'].map(h => <th key={h} style={S.th}>{h}</th>)}
-              </tr></thead>
+      {/* ==================== CONTACTS TAB ==================== */}
+      {tab === 'contacts' && (
+        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Contacts ({contacts.length})</div>
+            <button
+              onClick={() => {
+                setContactForm({ name: '', role: '', phone: '', email: '', is_primary: false })
+                setEditingContactId(null)
+                setContactModal(true)
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '9px 16px',
+                background: '#3B82F6',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
+              <Plus size={14} /> Add Contact
+            </button>
+          </div>
+
+          {contacts.length === 0 ? (
+            <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No contacts yet</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {contacts.map((c: any) => (
+                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>{c.name}</span>
+                      {c.is_primary && (
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(59,130,246,0.15)', color: '#3B82F6', textTransform: 'uppercase' as const }}>
+                          Primary
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 16, marginTop: 4, fontSize: 12, color: '#7C8BA0' }}>
+                      {c.role && <span>{c.role}</span>}
+                      {c.phone && <span>{c.phone}</span>}
+                      {c.email && <span>{c.email}</span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => {
+                        setContactForm({ name: c.name || '', role: c.role || '', phone: c.phone || '', email: c.email || '', is_primary: c.is_primary || false })
+                        setEditingContactId(c.id)
+                        setContactModal(true)
+                      }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}
+                      title="Edit contact"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteContact(c.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}
+                      title="Delete contact"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ==================== BILLING TAB ==================== */}
+      {tab === 'billing' && (
+        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0', marginBottom: 20 }}>Billing Settings</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Payment Terms</label>
+              <select
+                value={customer.payment_terms || ''}
+                onChange={e => updateField('payment_terms', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  color: '#EDEDF0',
+                  outline: 'none',
+                  fontFamily: "'Inter', sans-serif",
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="" style={{ background: '#151520' }}>Select...</option>
+                <option value="cod" style={{ background: '#151520' }}>COD</option>
+                <option value="net15" style={{ background: '#151520' }}>Net 15</option>
+                <option value="net30" style={{ background: '#151520' }}>Net 30</option>
+                <option value="net60" style={{ background: '#151520' }}>Net 60</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Credit Limit</label>
+              <input
+                type="number"
+                defaultValue={customer.credit_limit || ''}
+                placeholder="0.00"
+                onBlur={e => {
+                  const val = parseFloat(e.target.value)
+                  if (!isNaN(val)) updateField('credit_limit', val)
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  color: '#EDEDF0',
+                  outline: 'none',
+                  fontFamily: "'Inter', sans-serif",
+                  boxSizing: 'border-box' as const,
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', color: '#7C8BA0', fontSize: 13 }}>
+            Full billing features coming with invoicing module.
+          </div>
+        </div>
+      )}
+
+      {/* ==================== DOCUMENTS TAB ==================== */}
+      {tab === 'documents' && (
+        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Documents ({documents.length})</div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '9px 16px',
+                background: '#3B82F6',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: "'Inter', sans-serif",
+              }}
+            >
+              <Upload size={14} /> Upload
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              style={{ display: 'none' }}
+              onChange={e => {
+                const file = e.target.files?.[0]
+                if (file) uploadDocument(file)
+                e.target.value = ''
+              }}
+            />
+          </div>
+
+          {documents.length === 0 ? (
+            <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No documents uploaded yet</div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+              <thead>
+                <tr>
+                  {['Filename', 'Type', 'Date', ''].map(h => (
+                    <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>
-                {closedSOs.map((so: any) => (
-                  <tr key={so.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/orders/${so.id}`)}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#4D9EFF', fontWeight: 600 }}>{so.so_number}</td>
-                    <td style={S.td}>{so.created_at?.split('T')[0]}</td>
-                    <td style={S.td}>#{(so.assets as any)?.unit_number || '—'}</td>
-                    <td style={{ ...S.td, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{so.complaint || '—'}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace' }}>${so.labor_total || 0}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace' }}>${so.parts_total || 0}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700 }}>${so.grand_total || 0}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.status === 'good_to_go' ? '#22C55E' : '#7C8BA0' }}>{so.status?.replace(/_/g, ' ')}</span></td>
+                {documents.map((doc: any) => (
+                  <tr key={doc.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <td style={{ padding: '10px 12px', fontSize: 13, color: '#EDEDF0', fontWeight: 600 }}>{doc.filename}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#7C8BA0' }}>{doc.file_type || '\u2014'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#7C8BA0' }}>
+                      {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '\u2014'}
+                    </td>
+                    <td style={{ padding: '10px 12px', textAlign: 'right' as const }}>
+                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => downloadDocument(doc)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3B82F6', padding: 4 }}
+                          title="Download"
+                        >
+                          <Download size={14} />
+                        </button>
+                        <button
+                          onClick={() => deleteDocument(doc)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -234,72 +777,192 @@ export default function CustomerPortalPage() {
         </div>
       )}
 
-      {/* OPEN ORDERS TAB */}
-      {tab === 'open' && (
-        <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 }}>Open Orders — {openSOs.length} active</div>
-          {openSOs.length === 0 ? <div style={{ color: '#48536A', textAlign: 'center', padding: 24 }}>No open orders</div> : (
-            <table style={S.table}>
-              <thead><tr>
-                {['SO #', 'Truck', 'Complaint', 'Mechanic', 'Status', 'Priority', 'Total'].map(h => <th key={h} style={S.th}>{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {openSOs.map((so: any) => (
-                  <tr key={so.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/orders/${so.id}`)}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#4D9EFF', fontWeight: 600 }}>{so.so_number}</td>
-                    <td style={S.td}>#{(so.assets as any)?.unit_number || '—'}</td>
-                    <td style={{ ...S.td, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{so.complaint || '—'}</td>
-                    <td style={S.td}>{(so.users as any)?.full_name || <span style={{ color: '#48536A' }}>Unassigned</span>}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.status === 'in_progress' ? '#F59E0B' : so.status === 'waiting_parts' ? '#F59E0B' : '#7C8BA0' }}>{so.status?.replace(/_/g, ' ')}</span></td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: so.priority === 'critical' ? '#EF4444' : so.priority === 'high' ? '#F59E0B' : '#7C8BA0' }}>{so.priority}</span></td>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700 }}>${so.grand_total || 0}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+      {/* ==================== EDIT COMPANY MODAL ==================== */}
+      {editModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditModal(false)}>
+          <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '85vh', overflowY: 'auto' as const }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>Edit Customer</div>
+              <button onClick={() => setEditModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}><X size={18} /></button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+              {[
+                { key: 'company_name', label: 'Company Name' },
+                { key: 'contact_name', label: 'Contact Person' },
+                { key: 'phone', label: 'Phone' },
+                { key: 'email', label: 'Email' },
+                { key: 'dot_number', label: 'DOT #' },
+                { key: 'mc_number', label: 'MC #' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
+                  <input
+                    value={editForm[f.key] || ''}
+                    onChange={e => setEditForm((p: any) => ({ ...p, [f.key]: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      color: '#EDEDF0',
+                      outline: 'none',
+                      fontFamily: "'Inter', sans-serif",
+                      boxSizing: 'border-box' as const,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Address</label>
+              <input
+                value={editForm.address || ''}
+                onChange={e => setEditForm((p: any) => ({ ...p, address: e.target.value }))}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  color: '#EDEDF0',
+                  outline: 'none',
+                  fontFamily: "'Inter', sans-serif",
+                  boxSizing: 'border-box' as const,
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Notes</label>
+              <textarea
+                value={editForm.notes || ''}
+                onChange={e => setEditForm((p: any) => ({ ...p, notes: e.target.value }))}
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '9px 12px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  color: '#EDEDF0',
+                  outline: 'none',
+                  fontFamily: "'Inter', sans-serif",
+                  boxSizing: 'border-box' as const,
+                  resize: 'vertical' as const,
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setEditModal(false)}
+                style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7C8BA0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEdit}
+                disabled={saving}
+                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: saving ? 0.6 : 1 }}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* INVOICES TAB */}
-      {tab === 'invoices' && (
-        <div style={S.card}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 }}>Invoices — {invoices.length} total</div>
-          {invoices.length === 0 ? <div style={{ color: '#48536A', textAlign: 'center', padding: 24 }}>No invoices</div> : (
-            <table style={S.table}>
-              <thead><tr>
-                {['Invoice #', 'Date', 'Due Date', 'Total', 'Paid', 'Balance', 'Status'].map(h => <th key={h} style={S.th}>{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {invoices.map((inv: any) => (
-                  <tr key={inv.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/invoices/${inv.id}`)}>
-                    <td style={{ ...S.td, fontFamily: 'monospace', color: '#4D9EFF', fontWeight: 600 }}>{inv.invoice_number}</td>
-                    <td style={S.td}>{inv.created_at?.split('T')[0]}</td>
-                    <td style={S.td}>{inv.due_date || '—'}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace' }}>${(inv.total || 0).toFixed(2)}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace' }}>${(inv.amount_paid || 0).toFixed(2)}</td>
-                    <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: (inv.balance_due || 0) > 0 ? '#F59E0B' : '#22C55E' }}>${(inv.balance_due || 0).toFixed(2)}</td>
-                    <td style={S.td}><span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', color: inv.status === 'paid' ? '#22C55E' : inv.status === 'sent' ? '#4D9EFF' : inv.status === 'overdue' ? '#EF4444' : '#7C8BA0' }}>{inv.status}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+      {/* ==================== CONTACT MODAL ==================== */}
+      {contactModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setContactModal(false)}>
+          <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, width: 440, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>{editingContactId ? 'Edit Contact' : 'Add Contact'}</div>
+              <button onClick={() => setContactModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}><X size={18} /></button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                { key: 'name', label: 'Name', type: 'text' },
+                { key: 'role', label: 'Role', type: 'text' },
+                { key: 'phone', label: 'Phone', type: 'text' },
+                { key: 'email', label: 'Email', type: 'email' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
+                  <input
+                    type={f.type}
+                    value={contactForm[f.key] || ''}
+                    onChange={e => setContactForm((p: any) => ({ ...p, [f.key]: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '9px 12px',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      color: '#EDEDF0',
+                      outline: 'none',
+                      fontFamily: "'Inter', sans-serif",
+                      boxSizing: 'border-box' as const,
+                    }}
+                  />
+                </div>
+              ))}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button
+                  onClick={() => setContactForm((p: any) => ({ ...p, is_primary: !p.is_primary }))}
+                  style={{
+                    width: 36,
+                    height: 20,
+                    borderRadius: 10,
+                    border: 'none',
+                    background: contactForm.is_primary ? '#3B82F6' : 'rgba(255,255,255,0.12)',
+                    cursor: 'pointer',
+                    position: 'relative' as const,
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  <div style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: 7,
+                    background: '#fff',
+                    position: 'absolute' as const,
+                    top: 3,
+                    left: contactForm.is_primary ? 19 : 3,
+                    transition: 'left 0.2s',
+                  }} />
+                </button>
+                <span style={{ fontSize: 12, color: '#EDEDF0' }}>Primary contact</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
+              <button
+                onClick={() => setContactModal(false)}
+                style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7C8BA0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveContact}
+                disabled={saving || !contactForm.name}
+                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3B82F6', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: (saving || !contactForm.name) ? 0.5 : 1 }}
+              >
+                {saving ? 'Saving...' : editingContactId ? 'Update' : 'Add Contact'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
   )
-}
-
-const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' },
-  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 16 },
-  label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A', marginBottom: 4, display: 'block' },
-  input: { width: '100%', padding: '9px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
-  row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
-  btn: { padding: '9px 18px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-block' },
-  table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 11 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '7px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' },
 }

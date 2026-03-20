@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   const to = from + perPage - 1
 
   let q = s.from('customers')
-    .select('id, company_name, contact_name, phone, email, address, notes, source, visit_count, total_spent, created_at')
+    .select('id, company_name, contact_name, phone, email, address, notes, source, visit_count, total_spent, created_at, dot_number, mc_number, payment_terms, customer_status, portal_token, internal_tags')
     .eq('shop_id', shopId)
     .order('company_name')
     .range(from, to)
