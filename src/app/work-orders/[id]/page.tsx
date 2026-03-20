@@ -47,6 +47,8 @@ export default function WorkOrderDetailPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showTeamModal, setShowTeamModal] = useState(false)
+  const [teamAssign, setTeamAssign] = useState({ writer: '', tech: '', parts: '' })
 
   useEffect(() => {
     loadData()
@@ -61,7 +63,11 @@ export default function WorkOrderDetailPage() {
       fetch(`/api/work-orders/${id}`),
       fetch(`/api/users?shop_id=${profile.shop_id}&role=technician`),
     ])
-    if (woRes.ok) setWo(await woRes.json())
+    if (woRes.ok) {
+      const woData = await woRes.json()
+      setWo(woData)
+      setTeamAssign({ writer: woData.service_writer_id || '', tech: woData.assigned_tech || '', parts: woData.parts_person_id || '' })
+    }
     if (mechRes.ok) setMechanics(await mechRes.json())
     setLoading(false)
   }
@@ -177,9 +183,6 @@ export default function WorkOrderDetailPage() {
     await fetch(`/api/work-orders/${wo.id}`, { method: 'DELETE' })
     window.location.href = '/work-orders'
   }
-
-  const [showTeamModal, setShowTeamModal] = useState(false)
-  const [teamAssign, setTeamAssign] = useState({ writer: wo?.service_writer_id || '', tech: wo?.assigned_tech || '', parts: wo?.parts_person_id || '' })
 
   async function saveTeamAssign() {
     await fetch(`/api/work-orders/${wo.id}`, {
