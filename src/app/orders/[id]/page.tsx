@@ -3,36 +3,44 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { Truck, Calendar, User, MessageSquare, Paperclip, Clock, DollarSign, Plus, Copy, Trash2, Wrench, CheckCircle2, Circle, ArrowRight } from 'lucide-react'
 
-const STATUS_ORDER = ['not_started','not_approved','waiting_approval','in_progress','waiting_parts','done','ready_final_inspection','good_to_go','failed_inspection']
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
-  not_started:           { label:'Not Started',          color:'#7C8BA0' },
-  not_approved:          { label:'Not Approved',          color:'#D4882A' },
-  waiting_approval:      { label:'Waiting Approval',      color:'#D4882A' },
-  in_progress:           { label:'In Progress',           color:'#4D9EFF' },
-  waiting_parts:         { label:'Waiting Parts',         color:'#E8692A' },
-  done:                  { label:'Done',                  color:'#1DB870' },
-  ready_final_inspection:{ label:'Ready for Inspection',  color:'#8B5CF6' },
-  good_to_go:            { label:'Good to Go',            color:'#1DB870' },
-  failed_inspection:     { label:'Failed — Needs Work',   color:'#D94F4F' },
+  draft:                  { label: 'Draft',              color: '#7C8BA0' },
+  not_started:            { label: 'Not Started',        color: '#7C8BA0' },
+  not_approved:           { label: 'Not Approved',       color: '#D4882A' },
+  waiting_approval:       { label: 'Under Review',       color: '#D4882A' },
+  in_progress:            { label: 'Repair In Progress', color: '#1D6FE8' },
+  waiting_parts:          { label: 'Waiting Parts',      color: '#E8692A' },
+  authorized:             { label: 'Pre-Authorized',     color: '#1DB870' },
+  done:                   { label: 'Done',               color: '#1DB870' },
+  ready_final_inspection: { label: 'Ready Inspection',   color: '#8B5CF6' },
+  good_to_go:             { label: 'Good to Go',         color: '#1DB870' },
+  completed:              { label: 'Completed',          color: '#1DB870' },
+  invoiced:               { label: 'Invoiced',           color: '#4D9EFF' },
+  closed:                 { label: 'Closed',             color: '#7C8BA0' },
+  void:                   { label: 'Void',               color: '#D94F4F' },
 }
 
+const WORKFLOW_STEPS = ['Assign', 'Diagnose', 'Authorize', 'Repair', 'Invoice']
+const PARTS_STEPS = ['Quote', 'Order', 'Receive']
+
 export default function SODetailPage() {
-  const params  = useParams()
-  const router  = useRouter()
+  const params = useParams()
+  const router = useRouter()
   const supabase = createClient()
 
-  const [user,    setUser]    = useState<any>(null)
-  const [so,      setSO]      = useState<any>(null)
+  const [user, setUser] = useState<any>(null)
+  const [so, setSO] = useState<any>(null)
+  const [lines, setLines] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving,  setSaving]  = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState('action_items')
+  const [mileage, setMileage] = useState('')
 
   // AI Writer state
-  const [aiLoading,    setAiLoading]    = useState(false)
-  const [aiCause,      setAiCause]      = useState('')
-  const [aiCorrection, setAiCorrection] = useState('')
-  const [editCause,    setEditCause]    = useState('')
-  const [editCorr,     setEditCorr]     = useState('')
+  const [editCause, setEditCause] = useState('')
+  const [editCorr, setEditCorr] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -40,12 +48,31 @@ export default function SODetailPage() {
       if (!profile) { router.push('/login'); return }
       setUser(profile)
 
-      const res  = await fetch(`/api/service-orders/${params.id}`)
+      // Fetch SO with related data using service role via API
+      const res = await fetch(`/api/service-orders/${params.id}`)
+      if (!res.ok) {
+        // Fallback: try direct supabase query
+        const { data: soData } = await supabase
+          .from('service_orders')
+          .select(`*, assets(id, unit_number, year, make, model, vin, odometer, engine), customers(id, company_name, contact_name, phone, email), so_lines(id, line_type, description, part_number, quantity, unit_price, total_price, created_at)`)
+          .eq('id', params.id)
+          .single()
+        if (!soData) { router.push('/orders'); return }
+        setSO(soData)
+        setLines(soData.so_lines || [])
+        setEditCause(soData.cause || '')
+        setEditCorr(soData.correction || '')
+        if (soData.assets?.odometer) setMileage(String(soData.assets.odometer))
+        setLoading(false)
+        return
+      }
+
       const data = await res.json()
-      if (!res.ok) { router.push('/orders'); return }
       setSO(data)
+      setLines(data.so_lines || [])
       setEditCause(data.cause || '')
       setEditCorr(data.correction || '')
+      if (data.assets?.odometer) setMileage(String(data.assets.odometer))
       setLoading(false)
     }
     load()
@@ -73,254 +100,334 @@ export default function SODetailPage() {
     setSaving(false)
   }
 
-  async function generateAI() {
-    setAiLoading(true)
-    const res = await fetch('/api/ai/service-writer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        transcript: so.complaint,
-        language: user?.language || 'en',
-        truck_info: {
-          year:  so.assets?.year,
-          make:  so.assets?.make,
-          model: so.assets?.model,
-        },
-        complaint: so.complaint,
-        so_id: so.id,
-      }),
-    })
-    const data = await res.json()
-    if (data.cause)      { setAiCause(data.cause);      setEditCause(data.cause) }
-    if (data.correction) { setAiCorrection(data.correction); setEditCorr(data.correction) }
-    setAiLoading(false)
-  }
-
-  const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    back:  { display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#7C8BA0', cursor:'pointer', marginBottom:20, textDecoration:'none' },
-    grid:  { display:'grid', gridTemplateColumns:'1fr 340px', gap:16, alignItems:'start' },
-    card:  { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#48536A', marginBottom:6, display:'block' },
-    val:   { fontSize:13, color:'#F0F4FF', lineHeight:1.5 },
-    ta:    { width:'100%', padding:'10px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#DDE3EE', outline:'none', fontFamily:'inherit', resize:'vertical' as const, minHeight:80, boxSizing:'border-box' as const },
-    btn:   { padding:'8px 16px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit', transition:'all .14s' },
-  }
-
-  if (loading) return <div style={{ ...S.page, display:'flex', alignItems:'center', justifyContent:'center', color:'#7C8BA0' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F4F5F7', fontFamily: "'Instrument Sans',sans-serif", color: '#7C8BA0' }}>Loading...</div>
   if (!so) return null
 
-  const asset  = so.assets
-  const cust   = so.customers
-  const tech   = so.users
-  const lines  = so.so_lines || []
-  const inv    = Array.isArray(so.invoices) ? so.invoices[0] : so.invoices
-  const stCfg  = STATUS_CFG[so.status] || { label: so.status, color: '#7C8BA0' }
+  const asset = so.assets
+  const cust = so.customers
+  const stCfg = STATUS_CFG[so.status] || { label: so.status, color: '#7C8BA0' }
 
-  const curIdx    = STATUS_ORDER.indexOf(so.status)
-  const nextStatus = STATUS_ORDER[curIdx + 1]
-  const nextCfg   = nextStatus ? STATUS_CFG[nextStatus] : null
+  const laborLines = lines.filter((l: any) => l.line_type === 'labor')
+  const partLines = lines.filter((l: any) => l.line_type === 'part')
+  const laborTotal = laborLines.reduce((s: number, l: any) => s + (l.total_price || 0), 0)
+  const partsTotal = partLines.reduce((s: number, l: any) => s + (l.total_price || 0), 0)
 
-  const laborTotal = lines.filter((l: any) => l.line_type === 'labor').reduce((s: number, l: any) => s + (l.total_price || 0), 0)
-  const partsTotal = lines.filter((l: any) => l.line_type === 'part').reduce((s: number, l: any) => s + (l.total_price || 0), 0)
+  // VIN with bold last 6
+  const vinDisplay = asset?.vin ? (
+    <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#666' }}>
+      {asset.vin.slice(0, -6)}<strong style={{ color: '#1A1A1A' }}>{asset.vin.slice(-6)}</strong>
+    </span>
+  ) : null
+
+  // Determine workflow step based on status
+  const workflowStep = so.status === 'draft' || so.status === 'not_started' ? 0
+    : so.status === 'not_approved' || so.status === 'waiting_approval' ? 2
+    : so.status === 'authorized' ? 3
+    : so.status === 'in_progress' || so.status === 'waiting_parts' ? 3
+    : so.status === 'done' || so.status === 'good_to_go' || so.status === 'completed' ? 4
+    : so.status === 'invoiced' || so.status === 'closed' ? 5 : 1
+
+  const tabs = [
+    { key: 'action_items', label: 'Action Items' },
+    { key: 'parts', label: 'Parts List' },
+    { key: 'estimate', label: 'Estimate' },
+    { key: 'edit', label: 'Edit' },
+  ]
 
   return (
-    <div style={S.page}>
-      <a href="/orders" style={S.back}>
-        ← Service Orders
-      </a>
-
-      {/* Header */}
-      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
-        <div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:'#4D9EFF', fontWeight:700, marginBottom:4 }}>{so.so_number}</div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', letterSpacing:'.02em' }}>
-            {asset?.year} {asset?.make} {asset?.model} — Unit #{asset?.unit_number}
+    <div style={{ minHeight: '100vh', background: '#F4F5F7', fontFamily: "'Instrument Sans', -apple-system, sans-serif" }}>
+      {/* HEADER */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', padding: '16px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          {/* Left: SO number + customer */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <a href="/orders" style={{ fontSize: 12, color: '#7C8BA0', textDecoration: 'none' }}>Orders</a>
+              <span style={{ color: '#D1D5DB' }}>/</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: '#1A1A1A' }}>{so.so_number}</span>
+              <span style={{ padding: '2px 10px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: stCfg.color + '18', color: stCfg.color, border: `1px solid ${stCfg.color}33` }}>
+                {stCfg.label}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {cust && <a href={`/customers/${cust.id}`} style={{ fontSize: 13, color: '#1D6FE8', textDecoration: 'none', fontWeight: 600 }}>{cust.company_name}</a>}
+              <span style={{ padding: '1px 8px', borderRadius: 100, fontSize: 9, fontWeight: 700, background: '#FEE2E2', color: '#DC2626' }}>COD</span>
+            </div>
           </div>
-          <div style={{ fontSize:13, color:'#7C8BA0', marginTop:4 }}>{cust?.company_name}</div>
-        </div>
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
-          <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'4px 12px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, background:stCfg.color+'18', color:stCfg.color, border:`1px solid ${stCfg.color}33` }}>
-            <span style={{ width:5, height:5, borderRadius:'50%', background:'currentColor' }}/>
-            {stCfg.label}
-          </span>
-          {nextCfg && nextStatus && (
-            <button style={{ ...S.btn, background:`${nextCfg.color}18`, color:nextCfg.color, border:`1px solid ${nextCfg.color}33` }}
-              onClick={() => updateStatus(nextStatus)} disabled={saving}>
-              Move to {nextCfg.label} →
-            </button>
-          )}
+
+          {/* Right: Unit info */}
+          <div style={{ textAlign: 'right' }}>
+            {asset && (
+              <>
+                <a href={`/fleet/${asset.id}`} style={{ fontSize: 14, fontWeight: 700, color: '#1D6FE8', textDecoration: 'none' }}>Unit {asset.unit_number}</a>
+                <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{asset.year} {asset.make} {asset.model}</div>
+                {vinDisplay && <div style={{ marginTop: 2 }}>{vinDisplay}</div>}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:12 }}>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:12, alignItems:'start' }}>
+      {/* TAB BAR */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', padding: '0 24px', display: 'flex', gap: 0 }}>
+        {tabs.map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)}
+            style={{ padding: '10px 20px', fontSize: 13, fontWeight: activeTab === t.key ? 700 : 500, color: activeTab === t.key ? '#1A1A1A' : '#6B7280', background: activeTab === t.key ? '#F3F4F6' : 'transparent', border: 'none', borderBottom: activeTab === t.key ? '2px solid #1D6FE8' : '2px solid transparent', cursor: 'pointer', fontFamily: 'inherit' }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-          {/* LEFT COLUMN */}
+      {/* TOOLBAR */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', padding: '8px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {[Truck, Calendar, User, MessageSquare, Paperclip, Clock, DollarSign].map((Icon, i) => (
+            <button key={i} style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 6, cursor: 'pointer' }}>
+              <Icon size={14} strokeWidth={1.5} color="#6B7280" />
+            </button>
+          ))}
+          <span style={{ width: 1, height: 20, background: '#E5E7EB', margin: '0 6px' }} />
+          <button style={{ padding: '5px 12px', background: '#FEE2E2', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit' }}>Delete SO</button>
+          <button style={{ padding: '5px 12px', background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 11, fontWeight: 600, color: '#374151', cursor: 'pointer', fontFamily: 'inherit' }}>Duplicate SO</button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: '#6B7280' }}>Chassis (Miles)</span>
+          <input value={mileage} onChange={e => setMileage(e.target.value)} style={{ width: 100, padding: '4px 8px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 12, fontFamily: 'monospace', color: '#1A1A1A' }} />
+          {asset?.odometer && <span style={{ fontSize: 10, color: '#9CA3AF' }}>Last: {asset.odometer.toLocaleString()}</span>}
+        </div>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div style={{ padding: 24 }}>
+
+        {/* ACTION ITEMS TAB */}
+        {activeTab === 'action_items' && (
           <div>
-            {/* Complaint */}
-            <div style={S.card}>
-              <label style={S.label}>Customer Complaint</label>
-              <div style={S.val}>{so.complaint || '—'}</div>
-            </div>
-
-            {/* AI Service Writer */}
-            <div style={{ ...S.card, border:'1px solid rgba(139,92,246,.2)', background:'rgba(139,92,246,.03)' }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', display:'flex', alignItems:'center', gap:7 }}>
-                  <div style={{ width:20, height:20, background:'linear-gradient(135deg,#8B5CF6,#1D6FE8)', borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="white" strokeWidth="2"><path d="M12 2a3 3 0 013 3v7a3 3 0 01-6 0V5a3 3 0 013-3z"/></svg>
-                  </div>
-                  AI Service Writer
-                </div>
-                <button style={{ ...S.btn, background:'linear-gradient(135deg,#8B5CF6,#1D6FE8)', color:'#fff', padding:'6px 14px' }}
-                  onClick={generateAI} disabled={aiLoading}>
-                  {aiLoading ? 'Generating...' : so.cause ? 'Regenerate' : 'Generate from Complaint'}
-                </button>
-              </div>
-
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-                <div>
-                  <label style={S.label}>Cause</label>
-                  <textarea style={S.ta} value={editCause} onChange={e => setEditCause(e.target.value)} placeholder="What caused the problem..."/>
-                </div>
-                <div>
-                  <label style={S.label}>Correction</label>
-                  <textarea style={S.ta} value={editCorr} onChange={e => setEditCorr(e.target.value)} placeholder="What was done to fix it..."/>
-                </div>
-              </div>
-
-              <div style={{ marginTop:10, display:'flex', gap:8 }}>
-                <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }}
-                  onClick={saveCauseCorrection} disabled={saving}>
-                  {saving ? 'Saving...' : 'Save to Service Order'}
-                </button>
-              </div>
-            </div>
-
-            {/* Line Items */}
-            <div style={S.card}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Labor & Parts</div>
-                <div style={{ display:'flex', gap:6 }}>
-                  <button style={{ ...S.btn, background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.2)' }}>+ Labor</button>
-                  <button style={{ ...S.btn, background:'rgba(29,184,112,.1)', color:'#1DB870', border:'1px solid rgba(29,184,112,.2)' }}>+ Part</button>
-                </div>
-              </div>
-              {lines.length === 0 ? (
-                <div style={{ textAlign:'center', padding:20, color:'#48536A', fontSize:12 }}>No line items yet</div>
-              ) : (
-                <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                  <thead>
-                    <tr>{['Type','Description','Qty','Unit Price','Total'].map(h =>
-                      <th key={h} style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 8px', textAlign:'left', borderBottom:'1px solid rgba(255,255,255,.06)' }}>{h}</th>
-                    )}</tr>
-                  </thead>
-                  <tbody>
-                    {lines.map((l: any) => (
-                      <tr key={l.id} style={{ borderBottom:'1px solid rgba(255,255,255,.03)' }}>
-                        <td style={{ padding:'7px 8px' }}>
-                          <span style={{ fontSize:8, fontWeight:700, fontFamily:'monospace', padding:'2px 6px', borderRadius:4, background: l.line_type==='labor'?'rgba(29,111,232,.15)':'rgba(29,184,112,.15)', color: l.line_type==='labor'?'#4D9EFF':'#1DB870' }}>
-                            {l.line_type.toUpperCase()}
-                          </span>
-                        </td>
-                        <td style={{ padding:'7px 8px', fontSize:12, color:'#DDE3EE' }}>{l.description}</td>
-                        <td style={{ padding:'7px 8px', fontFamily:'monospace', fontSize:11, textAlign:'center', color:'#7C8BA0' }}>{l.quantity}</td>
-                        <td style={{ padding:'7px 8px', fontFamily:'monospace', fontSize:11, color:'#7C8BA0' }}>${(l.unit_price||0).toFixed(2)}</td>
-                        <td style={{ padding:'7px 8px', fontFamily:'monospace', fontSize:11, fontWeight:700, color:'#DDE3EE' }}>${(l.total_price||0).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-              {lines.length > 0 && (
-                <div style={{ display:'flex', justifyContent:'flex-end', gap:24, paddingTop:10, marginTop:10, borderTop:'1px solid rgba(255,255,255,.06)' }}>
-                  <div style={{ textAlign:'right' }}>
-                    <div style={{ fontSize:10, color:'#48536A', fontFamily:'monospace' }}>LABOR</div>
-                    <div style={{ fontFamily:'monospace', fontWeight:700, color:'#4D9EFF' }}>${laborTotal.toFixed(2)}</div>
-                  </div>
-                  <div style={{ textAlign:'right' }}>
-                    <div style={{ fontSize:10, color:'#48536A', fontFamily:'monospace' }}>PARTS</div>
-                    <div style={{ fontFamily:'monospace', fontWeight:700, color:'#1DB870' }}>${partsTotal.toFixed(2)}</div>
-                  </div>
-                  <div style={{ textAlign:'right' }}>
-                    <div style={{ fontSize:10, color:'#48536A', fontFamily:'monospace' }}>TOTAL</div>
-                    <div style={{ fontFamily:'monospace', fontWeight:700, color:'#F0F4FF', fontSize:16 }}>${(so.grand_total||0).toFixed(2)}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div>
-            {/* Vehicle */}
-            <div style={S.card}>
-              <label style={S.label}>Vehicle</label>
-              <div style={{ fontSize:15, fontWeight:700, color:'#F0F4FF', marginBottom:4 }}>Unit #{asset?.unit_number}</div>
-              <div style={{ fontSize:12, color:'#DDE3EE' }}>{asset?.year} {asset?.make} {asset?.model}</div>
-              {asset?.vin && <div style={{ fontSize:10, color:'#48536A', fontFamily:'monospace', marginTop:4 }}>VIN: {asset.vin}</div>}
-              {asset?.odometer && <div style={{ fontSize:11, color:'#7C8BA0', marginTop:4 }}>{asset.odometer.toLocaleString()} mi</div>}
-              <a href={`/fleet/${asset?.id}`} style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none', display:'block', marginTop:8 }}>View vehicle history →</a>
-            </div>
-
-            {/* Customer */}
-            <div style={S.card}>
-              <label style={S.label}>Customer</label>
-              <div style={{ fontSize:14, fontWeight:700, color:'#F0F4FF' }}>{cust?.company_name}</div>
-              {cust?.contact_name && <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{cust.contact_name}</div>}
-              {cust?.phone && <div style={{ fontSize:11, color:'#DDE3EE', marginTop:4 }}>{cust.phone}</div>}
-              {cust?.email && <div style={{ fontSize:11, color:'#7C8BA0' }}>{cust.email}</div>}
-            </div>
-
-            {/* Assignment */}
-            <div style={S.card}>
-              <label style={S.label}>Assignment</label>
-              <div style={{ fontSize:13, fontWeight:600, color:'#F0F4FF' }}>{tech?.full_name || 'Unassigned'}</div>
-              {so.team && <div style={{ fontSize:11, color:'#7C8BA0', marginTop:2 }}>Team {so.team} · {so.bay || 'No bay'}</div>}
-            </div>
-
-            {/* Invoice */}
-            {inv && (
-              <div style={S.card}>
-                <label style={S.label}>Invoice</label>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            {/* Action item cards from complaint / so_lines */}
+            {so.complaint && (
+              <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderLeft: `3px solid ${stCfg.color}`, borderRadius: 8, padding: 16, marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div>
-                    <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF', fontFamily:'monospace' }}>{inv.invoice_number}</div>
-                    <div style={{ fontSize:11, color: inv.status==='paid'?'#1DB870':'#4D9EFF', marginTop:2 }}>{inv.status?.toUpperCase()} · ${(inv.total||0).toFixed(0)}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A' }}>Action Item 1</span>
+                      <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: stCfg.color + '18', color: stCfg.color }}>{stCfg.label}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: partLines.length > 0 ? '#1DB870' : '#9CA3AF' }}>
+                        <Circle size={8} strokeWidth={2} /> {partLines.length > 0 ? 'Parts Received' : 'No Parts'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12, color: so.assigned_tech ? '#1A1A1A' : '#DC2626', marginTop: 4 }}>
+                      {so.assigned_tech ? <><strong>Assigned:</strong> {(so.users as any)?.full_name || 'Tech'}</> : 'No tech assigned'}
+                    </div>
                   </div>
-                  {inv.balance_due > 0 && (
-                    <a href={`/invoices/${inv.id}`} style={{ padding:'6px 12px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:7, color:'#fff', fontSize:11, fontWeight:700, textDecoration:'none' }}>
-                      View Invoice
-                    </a>
-                  )}
+                  <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: '#1A1A1A', color: '#FFFFFF' }}>Complaint</span>
                 </div>
+
+                {/* Hours table */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+                  <table style={{ borderCollapse: 'collapse', fontSize: 11 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ padding: '2px 12px', color: '#9CA3AF', fontWeight: 500, textAlign: 'left' }}></th>
+                        <th style={{ padding: '2px 12px', color: '#9CA3AF', fontWeight: 500 }}>Hours</th>
+                        <th style={{ padding: '2px 12px', color: '#9CA3AF', fontWeight: 500 }}>Diff w/ Actual</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: 'Invoiced', val: laborLines.reduce((s: number, l: any) => s + (l.quantity || 0), 0) },
+                        { label: 'Actual', val: 0 },
+                        { label: 'Expected', val: laborLines.reduce((s: number, l: any) => s + (l.quantity || 0), 0) },
+                      ].map(r => (
+                        <tr key={r.label}>
+                          <td style={{ padding: '2px 12px', color: '#6B7280' }}>{r.label}</td>
+                          <td style={{ padding: '2px 12px', fontFamily: 'monospace', fontWeight: 600, textAlign: 'center', color: '#1A1A1A' }}>{r.val.toFixed(1)}</td>
+                          <td style={{ padding: '2px 12px', fontFamily: 'monospace', textAlign: 'center', color: r.val >= 0 ? '#1DB870' : '#DC2626' }}>{r.val.toFixed(1)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Complaint text */}
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', textTransform: 'uppercase', lineHeight: 1.6, padding: '8px 0', borderTop: '1px solid #F3F4F6' }}>
+                  {so.complaint}
+                </div>
+
+                {/* Cause/Correction if exists */}
+                {(so.cause || so.correction) && (
+                  <div style={{ marginTop: 8, padding: '8px 12px', background: '#F9FAFB', borderRadius: 6, fontSize: 12, color: '#374151', lineHeight: 1.5 }}>
+                    {so.cause && <div><strong>Cause:</strong> {so.cause}</div>}
+                    {so.correction && <div style={{ marginTop: 4 }}><strong>Correction:</strong> {so.correction}</div>}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* All status transitions */}
-            <div style={S.card}>
-              <label style={S.label}>Status</label>
-              <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
-                {STATUS_ORDER.map(s => {
-                  const cfg = STATUS_CFG[s]
-                  const isCurrent = so.status === s
+            {/* Additional action items from lines */}
+            {laborLines.map((line: any, i: number) => (
+              <div key={line.id} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderLeft: '3px solid #1D6FE8', borderRadius: 8, padding: 16, marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A' }}>Action Item {i + 2}</span>
+                  <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: 'rgba(29,111,232,.12)', color: '#1D6FE8' }}>Labor</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A', textTransform: 'uppercase' }}>{line.description}</div>
+                <div style={{ fontSize: 11, color: '#6B7280', marginTop: 4, fontFamily: 'monospace' }}>{line.quantity} hrs x ${(line.unit_price || 0).toFixed(2)} = ${(line.total_price || 0).toFixed(2)}</div>
+              </div>
+            ))}
+
+            {/* SERVICE WORKFLOW DIAGRAM */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 8, padding: 20, marginTop: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 12 }}>Service</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 16, flexWrap: 'wrap' }}>
+                {WORKFLOW_STEPS.map((step, i) => (
+                  <div key={step} style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      {i < workflowStep ? (
+                        <CheckCircle2 size={24} strokeWidth={2} color="#1DB870" fill="#1DB870" style={{ color: '#fff' }} />
+                      ) : i === workflowStep ? (
+                        <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#1D6FE8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Wrench size={12} color="#fff" strokeWidth={2} />
+                        </div>
+                      ) : (
+                        <Circle size={24} strokeWidth={1.5} color="#D1D5DB" />
+                      )}
+                      <span style={{ fontSize: 10, fontWeight: 600, color: i <= workflowStep ? '#1A1A1A' : '#9CA3AF' }}>{step}</span>
+                    </div>
+                    {i < WORKFLOW_STEPS.length - 1 && (
+                      <div style={{ width: 40, height: 2, background: i < workflowStep ? '#1DB870' : '#E5E7EB', margin: '0 4px', marginBottom: 18 }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 12 }}>Parts</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                {PARTS_STEPS.map((step, i) => {
+                  const partsStep = partLines.length > 0 ? (so.status === 'waiting_parts' ? 1 : 2) : 0
                   return (
-                    <button key={s} disabled={isCurrent || saving}
-                      onClick={() => updateStatus(s)}
-                      style={{ padding:'7px 10px', borderRadius:7, border:'none', textAlign:'left', cursor: isCurrent?'default':'pointer', fontFamily:'inherit', fontSize:11, fontWeight: isCurrent?700:500,
-                        background: isCurrent?`${cfg.color}20`:'transparent',
-                        color: isCurrent?cfg.color:'#48536A',
-                        transition:'all .13s',
-                      }}>
-                      {isCurrent ? '● ' : '○ '}{cfg.label}
-                    </button>
+                    <div key={step} style={{ display: 'flex', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                        {i < partsStep ? (
+                          <CheckCircle2 size={24} strokeWidth={2} color="#1DB870" fill="#1DB870" />
+                        ) : (
+                          <Circle size={24} strokeWidth={1.5} color="#D1D5DB" />
+                        )}
+                        <span style={{ fontSize: 10, fontWeight: 600, color: i < partsStep ? '#1A1A1A' : '#9CA3AF' }}>{step}</span>
+                      </div>
+                      {i < PARTS_STEPS.length - 1 && (
+                        <div style={{ width: 40, height: 2, background: i < partsStep ? '#1DB870' : '#E5E7EB', margin: '0 4px', marginBottom: 18 }} />
+                      )}
+                    </div>
                   )
                 })}
               </div>
             </div>
+
+            {/* BOTTOM BUTTONS */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button style={{ padding: '10px 20px', background: '#1DB870', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Plus size={14} strokeWidth={2} /> Add Action Item
+              </button>
+              <button style={{ padding: '10px 20px', background: '#1D6FE8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <DollarSign size={14} strokeWidth={2} /> Add Misc Charge
+              </button>
+              <button style={{ padding: '10px 20px', background: '#059669', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                Capture Signature
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* PARTS LIST TAB */}
+        {activeTab === 'parts' && (
+          <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 8, padding: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 12 }}>Parts List</div>
+            {partLines.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 32, color: '#9CA3AF', fontSize: 13 }}>No parts added yet</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    {['Part #', 'Description', 'Qty', 'Unit Price', 'Total'].map(h => (
+                      <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {partLines.map((l: any) => (
+                    <tr key={l.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12, color: '#1D6FE8' }}>{l.part_number || '—'}</td>
+                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#1A1A1A' }}>{l.description}</td>
+                      <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12, textAlign: 'center' }}>{l.quantity}</td>
+                      <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12 }}>${(l.unit_price || 0).toFixed(2)}</td>
+                      <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontSize: 12, fontWeight: 700 }}>${(l.total_price || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <div style={{ textAlign: 'right', marginTop: 12, fontSize: 14, fontWeight: 700, color: '#1A1A1A' }}>Parts Total: ${partsTotal.toFixed(2)}</div>
+          </div>
+        )}
+
+        {/* ESTIMATE TAB */}
+        {activeTab === 'estimate' && (
+          <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 8, padding: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 12 }}>Estimate Summary</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              <div style={{ padding: 16, background: '#F9FAFB', borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>Labor</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#1D6FE8', fontFamily: 'monospace' }}>${laborTotal.toFixed(2)}</div>
+              </div>
+              <div style={{ padding: 16, background: '#F9FAFB', borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>Parts</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#1DB870', fontFamily: 'monospace' }}>${partsTotal.toFixed(2)}</div>
+              </div>
+              <div style={{ padding: 16, background: '#F9FAFB', borderRadius: 8, textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', marginBottom: 4 }}>Total</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#1A1A1A', fontFamily: 'monospace' }}>${(so.grand_total || laborTotal + partsTotal).toFixed(2)}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* EDIT TAB */}
+        {activeTab === 'edit' && (
+          <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 8, padding: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 16 }}>Edit Service Order</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Status</label>
+                <select value={so.status} onChange={e => updateStatus(e.target.value)} disabled={saving}
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13, color: '#1A1A1A', fontFamily: 'inherit' }}>
+                  {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Priority</label>
+                <select value={so.priority || 'normal'} style={{ width: '100%', padding: '8px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13, color: '#1A1A1A', fontFamily: 'inherit' }}>
+                  {['low', 'normal', 'high', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Cause</label>
+              <textarea value={editCause} onChange={e => setEditCause(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13, minHeight: 80, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} placeholder="Technical diagnosis..." />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Correction</label>
+              <textarea value={editCorr} onChange={e => setEditCorr(e.target.value)} style={{ width: '100%', padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 13, minHeight: 80, resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }} placeholder="Repair procedure..." />
+            </div>
+            <button onClick={saveCauseCorrection} disabled={saving}
+              style={{ padding: '10px 24px', background: '#1D6FE8', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* FOOTER */}
+      <div style={{ textAlign: 'center', padding: '16px 24px', fontSize: 10, color: '#9CA3AF' }}>
+        Powered by TruckZen
       </div>
     </div>
   )
