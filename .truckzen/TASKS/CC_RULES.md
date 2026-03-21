@@ -160,15 +160,36 @@ When a prompt in `.truckzen/TASKS/PROMPTS/` is too large to complete in one sess
 
 ---
 
-## Deploy Rule (MANDATORY after every push)
+## Deploy Rules (Save Vercel Credits)
 
-Vercel deploys from the `main` branch. After every `git push origin dev`, you MUST also merge dev into main and push main so the changes go live on truckzen.pro. Run this exact sequence after every dev push:
+1. DO NOT deploy after every small fix. Batch work into chunks.
 
+2. Deploy schedule:
+   - Push to dev + commit after each file change (git is free)
+   - Merge to main + deploy ONLY at these points:
+     a) After completing a full chunk (not a single file fix)
+     b) After Ken asks to test something
+     c) After all chunks of a prompt are done
+   - NEVER run "vercel --prod" more than 3 times per prompt
+
+3. Use "npm run build" locally to verify — this is FREE and catches errors without deploying.
+
+4. DO NOT use "vercel --prod --force" unless specifically asked. The --force flag rebuilds everything and uses more compute.
+
+5. Git pushes to main auto-deploy via GitHub integration. Do NOT also run "vercel --prod" manually — that's a DOUBLE deploy for the same code. Pick ONE:
+   - Either: git push to main (auto-deploys)
+   - Or: vercel --prod (manual deploy)
+   - NEVER both
+
+6. When fixing multiple small bugs in one prompt, fix ALL of them, THEN deploy once. Not: fix bug 1 → deploy → fix bug 2 → deploy → fix bug 3 → deploy.
+
+7. Current deploy count rule: MAX 3 deploys per session. If you need more, something is wrong — stop and debug locally first.
+
+To deploy:
 ```bash
 git checkout main && git merge dev --no-edit && git push origin main && git checkout dev
 ```
-
-Never skip this step. If you push to dev without merging to main, the changes will NOT appear on truckzen.pro.
+This triggers auto-deploy via GitHub integration. Only run `vercel --prod --yes` if auto-deploy fails or Ken asks for immediate deploy.
 
 ---
 
