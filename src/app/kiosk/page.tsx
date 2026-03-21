@@ -373,7 +373,7 @@ export default function KioskPage() {
     setShopId(sid)
 
     if (!sid) {
-      // If logged in, auto-redirect to their shop's kiosk
+      // If logged in, redirect directly to kiosk with shop param (skip /kiosk/[code] hop)
       const sb = createClient()
       ;(async () => {
         try {
@@ -381,11 +381,9 @@ export default function KioskPage() {
           if (user) {
             const { data: profile } = await sb.from('users').select('shop_id').eq('id', user.id).single()
             if (profile?.shop_id) {
-              const { data: shop } = await sb.from('shops').select('kiosk_code').eq('id', profile.shop_id).single()
-              if (shop?.kiosk_code) {
-                window.location.replace(`/kiosk/${shop.kiosk_code}`)
-                return
-              }
+              // Redirect directly with shop_id — no intermediate /kiosk/[code] redirect
+              window.location.href = window.location.origin + '/kiosk?shop=' + profile.shop_id
+              return
             }
           }
         } catch {}
