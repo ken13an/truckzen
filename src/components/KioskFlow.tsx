@@ -394,6 +394,8 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   const [privacyConsent, setPrivacyConsent] = useState(false)
   const recognitionRef = useRef<any>(null)
   const idleRef = useRef<any>(null)
+  const customerSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const unitSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const t = (key: string) => T[lang]?.[key] || T.en[key] || key
 
@@ -510,30 +512,41 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
     return () => clearTimeout(t)
   }, [step, resetAll])
 
-  // ---- Customer search ----
+  // ---- Customer search (debounced) ----
   async function handleCustomerSearch(q: string) {
     setCustomerSearch(q)
     if (q.length < 2 || !shopId) { setCustomerResults([]); return }
-    try {
-      const res = await fetch(`/api/customers?shop_id=${shopId}&q=${encodeURIComponent(q)}&per_page=8`)
-      if (res.ok) {
-        const data = await res.json()
-        setCustomerResults(Array.isArray(data) ? data : data.data || [])
+    // Debounce 300ms to avoid race conditions on rapid typing
+    if (customerSearchTimer.current) clearTimeout(customerSearchTimer.current)
+    customerSearchTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/customers?shop_id=${shopId}&q=${encodeURIComponent(q)}&per_page=8`)
+        if (res.ok) {
+          const data = await res.json()
+          setCustomerResults(Array.isArray(data) ? data : data.data || [])
+        }
+      } catch (err) {
+        console.error('[Kiosk] Customer search error:', err)
       }
-    } catch {}
+    }, 300)
   }
 
-  // ---- Unit search ----
+  // ---- Unit search (debounced) ----
   async function handleUnitSearch(q: string) {
     setUnitSearch(q)
     if (q.length < 1 || !shopId || !selectedCustomer) { setUnitResults([]); return }
-    try {
-      const res = await fetch(`/api/assets?shop_id=${shopId}&customer_id=${selectedCustomer.id}&q=${encodeURIComponent(q)}`)
-      if (res.ok) {
-        const data = await res.json()
-        setUnitResults(Array.isArray(data) ? data : data.data || [])
+    if (unitSearchTimer.current) clearTimeout(unitSearchTimer.current)
+    unitSearchTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/assets?shop_id=${shopId}&customer_id=${selectedCustomer.id}&q=${encodeURIComponent(q)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setUnitResults(Array.isArray(data) ? data : data.data || [])
+        }
+      } catch (err) {
+        console.error('[Kiosk] Unit search error:', err)
       }
-    } catch {}
+    }, 300)
   }
 
   // ---- Voice recording ----
@@ -632,11 +645,15 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
       if (data.wo_number) {
         setResult({ wo_number: data.wo_number, portal_token: data.portal_token })
         setStep(8)
+      } else if (res.status === 409 && data.wo_number) {
+        // Duplicate WO — truck already being serviced, still show success with existing WO
+        setResult({ wo_number: data.wo_number, portal_token: data.portal_token || '' })
+        setStep(8)
       } else {
-        alert(data.error || 'Something went wrong. Please try again.')
+        alert(data.error || 'Something went wrong. Please try again or see the front desk.')
       }
     } catch {
-      alert('Network error. Please try again.')
+      alert('Connection error. Please try again or see the front desk.')
     }
     setSubmitting(false)
   }
