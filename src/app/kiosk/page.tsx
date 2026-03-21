@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import Logo from '@/components/Logo'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
@@ -521,7 +521,7 @@ export default function KioskPage() {
     switch (step) {
       case 1: return !!(selectedCustomer || (showNewCustomer && newCustomer.company_name.trim()))
       case 2: return !!(selectedUnit || (showNewUnit && newUnit.unit_number.trim()))
-      case 3: return !!concernText.trim()
+      case 3: return concernText.trim().length >= 10 && concernText.trim().split(/\s+/).length >= 3
       case 4: return staying !== null && !!parkedLocation.trim() && !!keysLeft && !!priority
       case 5: return !!needByDate && !!needByTime
       case 6: return !!(authType) && !!contactEmail.trim() && !!contactPhone.trim() && (authType === 'estimate_first' || authLimit !== null)
@@ -679,6 +679,8 @@ export default function KioskPage() {
 
   // ---- Main render ----
   return (
+    <>
+    <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
     <div style={{ minHeight: '100vh', background: '#151520', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 24px', fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
       {renderHeader()}
 
@@ -970,6 +972,14 @@ export default function KioskPage() {
               onChange={e => setConcernText(e.target.value)}
               autoFocus
             />
+            {concernText.trim().length > 0 && (concernText.trim().length < 10 || concernText.trim().split(/\s+/).length < 3) && (
+              <div style={{ color: '#DC2626', fontSize: 13, marginTop: 8 }}>
+                {lang === 'es' ? 'Por favor describa con m\u00e1s detalle qu\u00e9 trabajo necesita su cami\u00f3n.' :
+                 lang === 'ru' ? '\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u043e\u043f\u0438\u0448\u0438\u0442\u0435 \u043f\u043e\u0434\u0440\u043e\u0431\u043d\u0435\u0435 \u043a\u0430\u043a\u0438\u0435 \u0440\u0430\u0431\u043e\u0442\u044b \u043d\u0443\u0436\u043d\u044b.' :
+                 lang === 'uz' ? "Iltimos, qanday ishlar kerakligini batafsilroq tasvirlab bering." :
+                 'Please describe what work your truck needs in more detail.'}
+              </div>
+            )}
 
             {/* Voice button */}
             {('webkitSpeechRecognition' in (typeof window !== 'undefined' ? window : {}) || 'SpeechRecognition' in (typeof window !== 'undefined' ? window : {})) && (
@@ -1232,7 +1242,7 @@ export default function KioskPage() {
                   opacity: submitting ? 0.7 : 1,
                 }}
               >
-                {submitting ? t('submitting') : t('submit')}
+                {submitting ? <><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> {t('submitting')}</> : t('submit')}
               </button>
             </div>
           </div>
@@ -1261,6 +1271,7 @@ export default function KioskPage() {
         )}
       </div>
     </div>
+    </>
   )
 }
 
