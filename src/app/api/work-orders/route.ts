@@ -58,16 +58,14 @@ export async function POST(req: Request) {
 
   // Duplicate WO prevention: check if unit already has an active WO
   if (asset_id) {
-    const { data: activeWO } = await s.from('service_orders')
+    const { data: activeWOs } = await s.from('service_orders')
       .select('id, so_number')
       .eq('asset_id', asset_id)
       .eq('shop_id', shop_id)
-      .not('wo_status', 'in', '("closed","completed","invoiced")')
       .not('status', 'in', '("closed","good_to_go","void")')
       .limit(1)
-      .single()
-    if (activeWO) {
-      return NextResponse.json({ error: `Active WO exists: ${activeWO.so_number}`, wo_number: activeWO.so_number, wo_id: activeWO.id }, { status: 409 })
+    if (activeWOs && activeWOs.length > 0) {
+      return NextResponse.json({ error: `Active WO exists: ${activeWOs[0].so_number}`, wo_number: activeWOs[0].so_number, wo_id: activeWOs[0].id }, { status: 409 })
     }
   }
 
