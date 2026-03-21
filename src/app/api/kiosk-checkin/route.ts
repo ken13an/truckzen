@@ -83,7 +83,7 @@ export async function POST(req: Request) {
   if (finalUnitId) {
     const { data: activeWOs } = await s.from('service_orders')
       .select('id, so_number').eq('asset_id', finalUnitId).eq('shop_id', shop_id)
-      .not('status', 'in', '("closed","good_to_go","void")')
+      .not('status', 'in', '("good_to_go","done","void")')
       .limit(1)
     if (activeWOs && activeWOs.length > 0) {
       return NextResponse.json({ error: `This truck is already being serviced (${activeWOs[0].so_number}). Please check with the front desk.`, wo_number: activeWOs[0].so_number }, { status: 409 })

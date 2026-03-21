@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       .select('id, so_number')
       .eq('asset_id', asset_id)
       .eq('shop_id', shop_id)
-      .not('status', 'in', '("closed","good_to_go","void")')
+      .not('status', 'in', '("good_to_go","done","void")')
       .limit(1)
     if (activeWOs && activeWOs.length > 0) {
       return NextResponse.json({ error: `Active WO exists: ${activeWOs[0].so_number}`, wo_number: activeWOs[0].so_number, wo_id: activeWOs[0].id }, { status: 409 })
