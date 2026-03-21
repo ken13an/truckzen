@@ -340,6 +340,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   const [pinError, setPinError] = useState('')
   const [pinLocked, setPinLocked] = useState(0)
   const [pinShake, setPinShake] = useState(false)
+  const pinRef = useRef('')
 
   useEffect(() => {
     // Check sessionStorage for existing PIN auth
@@ -361,7 +362,8 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
   const handlePinDigit = (digit: string) => {
     if (pinLocked > 0) return
-    const next = pinInput + digit
+    const next = pinRef.current + digit
+    pinRef.current = next
     setPinInput(next)
     setPinError('')
 
@@ -376,21 +378,21 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
           } else if (data.locked) {
             setPinError(`Too many attempts. Try again in ${data.retry_after}s`)
             setPinLocked(data.retry_after)
-            setPinInput('')
+            setPinInput(''); pinRef.current = ''
             const interval = setInterval(() => {
               setPinLocked(prev => { if (prev <= 1) { clearInterval(interval); return 0 }; return prev - 1 })
             }, 1000)
           } else {
             setPinError('Incorrect PIN')
             setPinShake(true)
-            setTimeout(() => { setPinShake(false); setPinInput('') }, 500)
+            setTimeout(() => { setPinShake(false); setPinInput(''); pinRef.current = '' }, 500)
           }
         })
-        .catch(() => { setPinError('Verification failed'); setPinInput('') })
+        .catch(() => { setPinError('Verification failed'); setPinInput(''); pinRef.current = '' })
     }
   }
 
-  const handlePinBackspace = () => { setPinInput(prev => prev.slice(0, -1)); setPinError('') }
+  const handlePinBackspace = () => { pinRef.current = pinRef.current.slice(0, -1); setPinInput(pinRef.current); setPinError('') }
 
   if (pinLoading) {
     return (
