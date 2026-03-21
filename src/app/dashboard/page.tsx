@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [recentSOs, setRecentSOs] = useState<any[]>([])
   const [checkins, setCheckins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [kioskCode, setKioskCode] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -29,6 +30,10 @@ export default function DashboardPage() {
       setUser(profile)
 
       const shopId = profile.shop_id
+
+      // Fetch kiosk code
+      supabase.from('shops').select('kiosk_code').eq('id', shopId).single()
+        .then(({ data }: { data: { kiosk_code: string | null } | null }) => { if (data?.kiosk_code) setKioskCode(data.kiosk_code) })
 
       // Fetch all stats in parallel
       const [
@@ -212,7 +217,7 @@ export default function DashboardPage() {
         <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden', marginTop:16 }}>
           <div style={{ padding:'11px 14px', borderBottom:'1px solid rgba(255,255,255,.055)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Recent Check-ins</div>
-            <a href="/kiosk" target="_blank" style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>Open Kiosk →</a>
+            <a href={kioskCode ? `/kiosk/${kioskCode}` : '/kiosk'} target="_blank" style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>Open Kiosk →</a>
           </div>
           {checkins.map((ci: any) => (
             <div key={ci.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderBottom:'1px solid rgba(255,255,255,.025)' }}>
