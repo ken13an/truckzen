@@ -49,5 +49,5 @@ export default function KioskCodePage() {
     </div>
   }
 
-  return <KioskFlow shopId={shopId} shopName={shopName} />
+  return <KioskFlow shopId={shopId} shopName={shopName} kioskCode={code} />
 }

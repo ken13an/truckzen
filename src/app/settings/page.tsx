@@ -29,6 +29,7 @@ export default function SettingsPage() {
   const [kioskEnabled, setKioskEnabled] = useState(true)
   const [kioskSaving, setKioskSaving] = useState(false)
   const [kioskCopied, setKioskCopied] = useState(false)
+  const [kioskPin, setKioskPin] = useState('0000')
   const [brandingShop, setBrandingShop] = useState<any>({})
   const [brandingSaving, setBrandingSaving] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
@@ -44,6 +45,7 @@ export default function SettingsPage() {
         setShop(data); setEditShop(data); setBrandingShop(data)
         if (data.kiosk_code) setKioskCode(data.kiosk_code)
         if (data.kiosk_enabled != null) setKioskEnabled(data.kiosk_enabled)
+        if (data.kiosk_pin) setKioskPin(data.kiosk_pin)
       }
       // Load retention policy
       try {
@@ -216,7 +218,7 @@ export default function SettingsPage() {
     const saveKiosk = async () => {
       if (!user?.shop_id) return
       setKioskSaving(true)
-      await supabase.from('shops').update({ kiosk_code: kioskCode.toLowerCase().trim() || null, kiosk_enabled: kioskEnabled }).eq('id', user.shop_id)
+      await supabase.from('shops').update({ kiosk_code: kioskCode.toLowerCase().trim() || null, kiosk_enabled: kioskEnabled, kiosk_pin: kioskPin || '0000' }).eq('id', user.shop_id)
       setKioskSaving(false)
     }
     return (
@@ -247,11 +249,19 @@ export default function SettingsPage() {
             <div style={{ fontSize: 11, color: '#48536A', marginTop: 4 }}>Lowercase letters, numbers, and dashes only. This becomes your kiosk URL.</div>
           </div>
 
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 16 }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <input type="checkbox" checked={kioskEnabled} onChange={e => setKioskEnabled(e.target.checked)} />
               <span style={{ fontSize: 13, fontWeight: 600 }}>Kiosk Enabled</span>
             </label>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk PIN</label>
+            <input value={kioskPin} onChange={e => setKioskPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="0000" maxLength={6}
+              style={{ width: 120, padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: '#060708', color: '#EDEDF0', fontSize: 18, fontFamily: 'monospace', outline: 'none', letterSpacing: 4, textAlign: 'center' }} />
+            <div style={{ fontSize: 11, color: '#48536A', marginTop: 4 }}>4-6 digits. Staff enters PIN once to activate the kiosk tablet. Customers never see it.</div>
           </div>
 
           <button onClick={saveKiosk} disabled={kioskSaving || !kioskCode.trim()}

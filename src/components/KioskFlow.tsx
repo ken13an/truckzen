@@ -332,7 +332,128 @@ const labelStyle: React.CSSProperties = {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function KioskFlow({ shopId, shopName }: { shopId: string; shopName: string }) {
+export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: string; shopName: string; kioskCode?: string }) {
+  // ---- PIN Gate ----
+  const [pinAuthed, setPinAuthed] = useState(false)
+  const [pinLoading, setPinLoading] = useState(true)
+  const [pinInput, setPinInput] = useState('')
+  const [pinError, setPinError] = useState('')
+  const [pinLocked, setPinLocked] = useState(0)
+  const [pinShake, setPinShake] = useState(false)
+
+  useEffect(() => {
+    // Check sessionStorage for existing PIN auth
+    if (kioskCode && typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem(`kiosk_pin_${kioskCode}`)
+      if (stored === 'true') { setPinAuthed(true); setPinLoading(false); return }
+    }
+    // Check if kiosk has a PIN set (0000 means no PIN)
+    if (kioskCode) {
+      fetch(`/api/kiosk/lookup?code=${kioskCode}`)
+        .then(r => r.json())
+        .then(() => setPinLoading(false))
+        .catch(() => setPinLoading(false))
+    } else {
+      setPinAuthed(true)
+      setPinLoading(false)
+    }
+  }, [kioskCode])
+
+  const handlePinDigit = (digit: string) => {
+    if (pinLocked > 0) return
+    const next = pinInput + digit
+    setPinInput(next)
+    setPinError('')
+
+    if (next.length >= 4) {
+      // Verify PIN
+      fetch(`/api/kiosk/verify-pin?code=${kioskCode}&pin=${next}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.valid) {
+            if (kioskCode) sessionStorage.setItem(`kiosk_pin_${kioskCode}`, 'true')
+            setPinAuthed(true)
+          } else if (data.locked) {
+            setPinError(`Too many attempts. Try again in ${data.retry_after}s`)
+            setPinLocked(data.retry_after)
+            setPinInput('')
+            const interval = setInterval(() => {
+              setPinLocked(prev => { if (prev <= 1) { clearInterval(interval); return 0 }; return prev - 1 })
+            }, 1000)
+          } else {
+            setPinError('Incorrect PIN')
+            setPinShake(true)
+            setTimeout(() => { setPinShake(false); setPinInput('') }, 500)
+          }
+        })
+        .catch(() => { setPinError('Verification failed'); setPinInput('') })
+    }
+  }
+
+  const handlePinBackspace = () => { setPinInput(prev => prev.slice(0, -1)); setPinError('') }
+
+  if (pinLoading) {
+    return (
+      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif" }}>
+        <p style={{ color: '#71717A' }}>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!pinAuthed && kioskCode) {
+    return (
+      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", padding: 24 }}>
+        <div style={{ textAlign: 'center', maxWidth: 340 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: 2, marginBottom: 8 }}>TRUCKZEN</div>
+          <div style={{ fontSize: 15, color: '#71717A', marginBottom: 32 }}>Enter PIN to activate kiosk</div>
+
+          {/* PIN dots */}
+          <div style={{
+            display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 24,
+            animation: pinShake ? 'pinShake 0.4s' : 'none',
+          }}>
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} style={{
+                width: 18, height: 18, borderRadius: '50%',
+                background: pinInput.length > i ? '#1D6FE8' : 'rgba(255,255,255,0.1)',
+                border: '2px solid rgba(255,255,255,0.15)',
+                transition: 'background 0.15s',
+              }} />
+            ))}
+          </div>
+
+          {pinError && <div style={{ color: '#EF4444', fontSize: 14, marginBottom: 16, fontWeight: 600 }}>{pinError}</div>}
+          {pinLocked > 0 && <div style={{ color: '#F59E0B', fontSize: 13, marginBottom: 16 }}>Locked: {pinLocked}s</div>}
+
+          {/* Numeric keypad */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 280, margin: '0 auto' }}>
+            {['1','2','3','4','5','6','7','8','9','','0','←'].map((key, i) => (
+              key === '' ? <div key={i} /> :
+              <button
+                key={i}
+                onClick={() => key === '←' ? handlePinBackspace() : handlePinDigit(key)}
+                disabled={pinLocked > 0}
+                style={{
+                  width: 80, height: 64, borderRadius: 14, border: 'none',
+                  background: key === '←' ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)',
+                  color: '#EDEDF0', fontSize: key === '←' ? 22 : 28, fontWeight: 600,
+                  cursor: pinLocked > 0 ? 'not-allowed' : 'pointer',
+                  fontFamily: "'Instrument Sans', sans-serif",
+                  opacity: pinLocked > 0 ? 0.4 : 1,
+                  transition: 'background 0.1s',
+                }}
+              >
+                {key}
+              </button>
+            ))}
+          </div>
+        </div>
+        <style>{`@keyframes pinShake { 0%,100% { transform: translateX(0) } 20%,60% { transform: translateX(-10px) } 40%,80% { transform: translateX(10px) } }`}</style>
+      </div>
+    )
+  }
+
+  // ---- Main Kiosk Flow (PIN verified) ----
   // ---- State ----
   const [lang, setLang] = useState('en')
   const [step, setStep] = useState(0)
