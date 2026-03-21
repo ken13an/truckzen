@@ -131,6 +131,11 @@ export default function SmartDropPage() {
   // Import history
   const [history, setHistory] = useState<any[]>([])
 
+  // Fullbay WO sync
+  const [fbStats, setFbStats] = useState<{ fullbay_wos: number; total_wos: number; last_synced: string | null } | null>(null)
+  const [fbSyncing, setFbSyncing] = useState<string | null>(null)
+  const [fbResult, setFbResult] = useState<any>(null)
+
   // Customer match overrides
   const [customerOverrides, setCustomerOverrides] = useState<Record<number, string>>({})
 
@@ -140,8 +145,6 @@ export default function SmartDropPage() {
   const [fbName, setFbName] = useState('')
   const [fbPreview, setFbPreview] = useState<any[]>([])
   const [fbPreviewType, setFbPreviewType] = useState('')
-  const [fbSyncing, setFbSyncing] = useState<string | null>(null)
-  const [fbResult, setFbResult] = useState<any>(null)
 
   const [toast, setToast] = useState('')
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000) }
@@ -151,6 +154,7 @@ export default function SmartDropPage() {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
       fetchHistory(p.shop_id)
+      fetchFbStats(p.shop_id)
     })
   }, [])
 
@@ -165,6 +169,32 @@ export default function SmartDropPage() {
   async function fetchHistory(shopId: string) {
     const res = await fetch(`/api/smart-import/trucks/history?shop_id=${shopId}`)
     if (res.ok) setHistory(await res.json())
+  }
+
+  async function fetchFbStats(shopId: string) {
+    const res = await fetch(`/api/fullbay/sync/work-orders?shop_id=${shopId}`)
+    if (res.ok) setFbStats(await res.json())
+  }
+
+  async function syncFullbayWOs() {
+    if (!user || fbSyncing) return
+    setFbSyncing('work_orders')
+    setFbResult(null)
+    const res = await fetch('/api/fullbay/sync/work-orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shop_id: user.shop_id, user_id: user.id, user_role: user.role }),
+    })
+    setFbSyncing(null)
+    if (res.ok) {
+      const data = await res.json()
+      setFbResult(data)
+      fetchFbStats(user.shop_id)
+      flash(`Synced ${data.imported} new, ${data.updated} updated WOs`)
+    } else {
+      const err = await res.json()
+      flash(err.error || 'Sync failed')
+    }
   }
 
   // ── Download Template ────────────────────────────────────
@@ -669,6 +699,28 @@ export default function SmartDropPage() {
             <input id="fileInput" type="file" accept=".csv,.xlsx,.xls" style={{ display: 'none' }}
               onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
           </div>
+
+          {/* Fullbay WO Sync */}
+          {importType === 'trucks' && fbStats && (
+            <div style={{ ...card, marginTop: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>Fullbay Work Orders</div>
+                <button onClick={syncFullbayWOs} disabled={!!fbSyncing} style={{ ...btnSecondary, fontSize: 11, padding: '6px 14px', color: fbSyncing ? DIM : '#4D9EFF', borderColor: fbSyncing ? BORDER : BLUE }}>
+                  {fbSyncing ? 'Syncing...' : 'Sync Active WOs'}
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
+                <div><span style={{ color: DIM }}>Synced to TruckZen:</span> <span style={{ color: TEXT, fontWeight: 700 }}>{fbStats.fullbay_wos}</span></div>
+                <div><span style={{ color: DIM }}>Total WOs:</span> <span style={{ color: TEXT, fontWeight: 700 }}>{fbStats.total_wos}</span></div>
+                <div><span style={{ color: DIM }}>Last synced:</span> <span style={{ color: TEXT }}>{fbStats.last_synced ? new Date(fbStats.last_synced).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Never'}</span></div>
+              </div>
+              {fbResult && (
+                <div style={{ marginTop: 10, fontSize: 11, color: GREEN }}>
+                  {fbResult.imported} imported, {fbResult.updated} updated, {fbResult.skipped} skipped from {fbResult.total_pulled} Fullbay records
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Import History */}
           {importType === 'trucks' && history.length > 0 && (
