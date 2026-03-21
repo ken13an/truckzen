@@ -248,6 +248,11 @@ export default function AITextInput({
         </div>
       )}
 
+      {/* AI Disclosure */}
+      <div style={{ fontSize: 11, color: isDark ? '#7C8BA0' : '#9CA3AF', marginTop: 4, lineHeight: 1.4 }}>
+        AI-assisted writing powered by TruckZen AI. Your input is processed to generate professional service notes. No data is shared with third parties.
+      </div>
+
       {/* Spin keyframe */}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>

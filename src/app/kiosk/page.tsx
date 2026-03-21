@@ -358,6 +358,7 @@ export default function KioskPage() {
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ wo_number: string; portal_token: string } | null>(null)
   const [recording, setRecording] = useState(false)
+  const [privacyConsent, setPrivacyConsent] = useState(false)
 
   const recognitionRef = useRef<any>(null)
   const idleRef = useRef<any>(null)
@@ -547,6 +548,7 @@ export default function KioskPage() {
         auth_limit: authType === 'go_ahead' ? authLimit : null,
         contact_email: contactEmail,
         contact_phone: contactPhone,
+        privacy_consent: privacyConsent,
       }
 
       if (selectedCustomer && !showNewCustomer) {
@@ -1212,7 +1214,23 @@ export default function KioskPage() {
 
             <div style={{ flex: 1 }} />
 
-            <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 24, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={privacyConsent}
+                onChange={e => setPrivacyConsent(e.target.checked)}
+                style={{ width: 22, height: 22, marginTop: 2, accentColor: '#1D6FE8', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 14, color: '#9D9DA1', lineHeight: 1.5 }}>
+                I agree to the{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#4D9EFF', textDecoration: 'underline' }}>Privacy Policy</a>
+                {' '}and{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#4D9EFF', textDecoration: 'underline' }}>Terms of Service</a>
+                {' '}and consent to TruckZen processing my information for vehicle service purposes.
+              </span>
+            </label>
+
+            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
               <button
                 onClick={goBack}
                 style={{
@@ -1231,19 +1249,19 @@ export default function KioskPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={submitting}
+                disabled={submitting || !privacyConsent}
                 style={{
                   borderRadius: 12,
                   padding: '16px 32px',
                   fontSize: 18,
                   fontWeight: 700,
-                  background: submitting ? '#166534' : '#16A34A',
+                  background: (submitting || !privacyConsent) ? '#166534' : '#16A34A',
                   color: '#fff',
                   border: 'none',
-                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  cursor: (submitting || !privacyConsent) ? 'not-allowed' : 'pointer',
                   fontFamily: "'Instrument Sans', sans-serif",
                   flex: 1,
-                  opacity: submitting ? 0.7 : 1,
+                  opacity: (submitting || !privacyConsent) ? 0.5 : 1,
                 }}
               >
                 {submitting ? <><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> {t('submitting')}</> : t('submit')}

@@ -10,6 +10,7 @@ const SECTIONS = [
   { key: 'integrations', label: 'Integrations' },
   { key: 'billing', label: 'Billing' },
   { key: 'shop', label: 'Shop Information' },
+  { key: 'data_retention', label: 'Data Retention' },
 ]
 
 export default function SettingsPage() {
@@ -20,6 +21,8 @@ export default function SettingsPage() {
   const [editing, setEditing] = useState(false)
   const [editShop, setEditShop] = useState<any>({})
   const [activeSection, setActiveSection] = useState<string | null>(null)
+  const [retentionPolicy, setRetentionPolicy] = useState<{ inactive_customers: string; completed_work_orders: string; closed_invoices: string }>({ inactive_customers: 'never', completed_work_orders: 'never', closed_invoices: 'never' })
+  const [retentionSaving, setRetentionSaving] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -29,6 +32,14 @@ export default function SettingsPage() {
       setUser(profile)
       const { data } = await supabase.from('shops').select('*').eq('id', profile.shop_id).single()
       if (data) { setShop(data); setEditShop(data) }
+      // Load retention policy
+      try {
+        const retRes = await fetch(`/api/settings?shop_id=${profile.shop_id}`)
+        if (retRes.ok) {
+          const retData = await retRes.json()
+          if (retData.retention_policy) setRetentionPolicy(retData.retention_policy)
+        }
+      } catch {}
     }
     load()
   }, [])
@@ -44,6 +55,21 @@ export default function SettingsPage() {
     await supabase.from('shops').update({ state: editShop.state, county: editShop.county, tax_rate: parseFloat(editShop.tax_rate) || 0, tax_labor: editShop.tax_labor || false }).eq('id', shop.id)
     setShop({ ...shop, state: editShop.state, county: editShop.county, tax_rate: editShop.tax_rate, tax_labor: editShop.tax_labor })
     setSaving(false); alert('Tax settings saved')
+  }
+
+  async function saveRetentionPolicy() {
+    setRetentionSaving(true)
+    try {
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shop_id: shop.id, retention_policy: retentionPolicy }),
+      })
+      alert('Retention policy saved')
+    } catch {
+      alert('Failed to save retention policy')
+    }
+    setRetentionSaving(false)
   }
 
   const S = {
@@ -166,6 +192,49 @@ export default function SettingsPage() {
               <button style={{ padding: '5px 14px', borderRadius: 7, background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.25)', color: '#4D9EFF', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Connect</button>
             </div>
           ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Data Retention
+  if (activeSection === 'data_retention') {
+    const retentionOptions = [
+      { value: 'never', label: 'Never' },
+      { value: '3_years', label: '3 years' },
+      { value: '5_years', label: '5 years' },
+      { value: '7_years', label: '7 years' },
+      { value: '10_years', label: '10 years' },
+    ]
+    return (
+      <div style={S.page}>
+        {backBar}
+        <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Data Retention Policy</div>
+        <div style={S.card}>
+          <div>
+            <label style={S.label}>Auto-flag inactive customers after</label>
+            <select style={S.input} value={retentionPolicy.inactive_customers} onChange={e => setRetentionPolicy({ ...retentionPolicy, inactive_customers: e.target.value })}>
+              {retentionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={S.label}>Archive completed work orders after</label>
+            <select style={S.input} value={retentionPolicy.completed_work_orders} onChange={e => setRetentionPolicy({ ...retentionPolicy, completed_work_orders: e.target.value })}>
+              {retentionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={S.label}>Archive closed invoices after</label>
+            <select style={S.input} value={retentionPolicy.closed_invoices} onChange={e => setRetentionPolicy({ ...retentionPolicy, closed_invoices: e.target.value })}>
+              {retentionOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <button style={{ ...S.btn, marginTop: 16 }} onClick={saveRetentionPolicy} disabled={retentionSaving}>
+            {retentionSaving ? 'Saving...' : 'Save Retention Policy'}
+          </button>
+          <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 12, lineHeight: 1.5 }}>
+            These settings define your shop&#39;s data retention policy. Actual archival runs automatically based on these rules.
+          </div>
         </div>
       </div>
     )
