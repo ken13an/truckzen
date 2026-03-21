@@ -277,6 +277,21 @@ export default function CustomerProfilePage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
             <div style={{ fontSize: 24, fontWeight: 700, color: '#EDEDF0' }}>{customer.company_name}</div>
+            {customer.is_owner_operator && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(217,119,6,0.15)', color: '#D97706', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
+                Owner Operator
+              </span>
+            )}
+            {!customer.is_owner_operator && customer.customer_type === 'outside_customer' && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(107,114,128,0.15)', color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
+                Outside
+              </span>
+            )}
+            {!customer.is_owner_operator && (!customer.customer_type || customer.customer_type === 'company') && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(59,130,246,0.15)', color: '#3B82F6', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
+                Company
+              </span>
+            )}
             <select
               value={customer.customer_status || 'active'}
               onChange={e => updateStatus(e.target.value)}
@@ -336,6 +351,8 @@ export default function CustomerProfilePage() {
               dot_number: customer.dot_number || '',
               mc_number: customer.mc_number || '',
               notes: customer.notes || '',
+              is_owner_operator: customer.is_owner_operator || false,
+              customer_type: customer.customer_type || 'company',
             })
             setEditModal(true)
           }}
@@ -857,6 +874,34 @@ export default function CustomerProfilePage() {
                   resize: 'vertical' as const,
                 }}
               />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+              <button
+                onClick={() => setEditForm((p: any) => ({ ...p, is_owner_operator: !p.is_owner_operator, customer_type: !p.is_owner_operator ? 'owner_operator' : 'company' }))}
+                style={{
+                  width: 36,
+                  height: 20,
+                  borderRadius: 10,
+                  border: 'none',
+                  background: editForm.is_owner_operator ? '#D97706' : 'rgba(255,255,255,0.12)',
+                  cursor: 'pointer',
+                  position: 'relative' as const,
+                  transition: 'background 0.2s',
+                }}
+              >
+                <div style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  background: '#fff',
+                  position: 'absolute' as const,
+                  top: 3,
+                  left: editForm.is_owner_operator ? 19 : 3,
+                  transition: 'left 0.2s',
+                }} />
+              </button>
+              <span style={{ fontSize: 12, color: '#EDEDF0' }}>Owner Operator</span>
             </div>
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>

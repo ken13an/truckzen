@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { CheckCircle2, Loader2, ClipboardCheck, Sparkles } from 'lucide-react'
 import Logo from '@/components/Logo'
-import AITextInput from '@/components/ai-text-input'
+
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { VinInput } from '@/components/shared/VinInput'
@@ -400,9 +400,13 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   const [newUnit, setNewUnit] = useState<NewUnit>({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' })
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<{ wo_number: string; portal_token: string } | null>(null)
-  const [recording, setRecording] = useState(false)
   const [privacyConsent, setPrivacyConsent] = useState(false)
-  const recognitionRef = useRef<any>(null)
+  const [customerType, setCustomerType] = useState<'company' | 'owner_operator' | 'outside_customer'>('company')
+  const [showForgetScreen, setShowForgetScreen] = useState(false)
+  const [aiRewrittenText, setAiRewrittenText] = useState('')
+  const [aiRewriting, setAiRewriting] = useState(false)
+  const [showAiApproval, setShowAiApproval] = useState(false)
+  const [originalConcernText, setOriginalConcernText] = useState('')
   const idleRef = useRef<any>(null)
   const customerSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const unitSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -506,7 +510,12 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
     setNewUnit({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' })
     setSubmitting(false)
     setResult(null)
-    setRecording(false)
+    setCustomerType('company')
+    setShowForgetScreen(false)
+    setAiRewrittenText('')
+    setAiRewriting(false)
+    setShowAiApproval(false)
+    setOriginalConcernText('')
   }, [])
 
   useEffect(() => {
@@ -568,30 +577,6 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
     }, 300)
   }
 
-  // ---- Voice recording ----
-  function startRecording() {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    const r = new SR()
-    r.continuous = true
-    r.interimResults = true
-    r.lang = 'en-US'
-    r.onresult = (e: any) => {
-      let text = ''
-      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript
-      setConcernText(text)
-    }
-    r.onerror = () => { setRecording(false) }
-    r.start()
-    recognitionRef.current = r
-    setRecording(true)
-  }
-
-  function stopRecording() {
-    if (recognitionRef.current) { recognitionRef.current.stop(); recognitionRef.current = null }
-    setRecording(false)
-  }
-
   // ---- Navigation helpers ----
   function goNext() {
     if (step === 4 && staying !== false) {
@@ -631,6 +616,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
       const body: any = {
         shop_id: shopId,
         concern_text: concernText.trim(),
+        concern_text_original: originalConcernText || concernText.trim(),
         parked_location: parkedLocation || null,
         keys_left: keysLeft,
         staying,
@@ -641,6 +627,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         contact_email: contactEmail,
         contact_phone: contactPhone,
         privacy_consent: privacyConsent,
+        customer_type: customerType,
       }
 
       if (selectedCustomer && !showNewCustomer) {
@@ -851,6 +838,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                           setCustomerResults([])
                           if (c.email) setContactEmail(c.email)
                           if (c.phone) setContactPhone(c.phone)
+                          setCustomerType(c.is_owner_operator ? 'owner_operator' : (c.customer_type || 'company'))
                         }}
                         style={{
                           padding: '16px 20px',
@@ -868,6 +856,22 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {customerSearch.length >= 3 && customerResults.length === 0 && !selectedCustomer && !showNewCustomer && (
+                  <div style={{ marginTop: 20, textAlign: 'center' }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Not finding your company?</div>
+                    <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                      <button onClick={() => { setCustomerSearch('') }}
+                        style={{ padding: '14px 24px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#EDEDF0', fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                        Try Different Name
+                      </button>
+                      <button onClick={() => { setShowNewCustomer(true); setCustomerType('outside_customer') }}
+                        style={{ padding: '14px 24px', borderRadius: 12, border: 'none', background: '#1D6FE8', color: '#fff', fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                        First Time Here
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -965,6 +969,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                           setSelectedUnit(u)
                           setUnitSearch(u.unit_number || '')
                           setUnitResults([])
+                          if (u.is_owner_operator) setCustomerType('owner_operator')
                         }}
                         style={{
                           padding: '16px 20px',
@@ -1053,17 +1058,16 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {step === 3 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('concern_title')}</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 3 {t('of')} 7</div>
+            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>
+              {t('step')} 3 {t('of')} 7 — Type in any language — English, Russian, Ukrainian, Spanish
+            </div>
 
-            <AITextInput
+            <textarea
               value={concernText}
-              onChange={setConcernText}
-              context="kiosk"
-              language={lang}
-              shopId={shopId}
+              onChange={e => setConcernText(e.target.value)}
               placeholder={t('concern_placeholder')}
               rows={5}
-              style={{ ...inputStyle, minHeight: 150, resize: 'vertical', paddingRight: 48 }}
+              style={{ ...inputStyle, minHeight: 150, resize: 'vertical' } as React.CSSProperties}
             />
             {concernText.trim().length > 0 && (concernText.trim().length < 10 || concernText.trim().split(/\s+/).length < 3) && (
               <div style={{ color: '#DC2626', fontSize: 13, marginTop: 8 }}>
@@ -1073,36 +1077,9 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                  'Please describe what work your truck needs in more detail.'}
               </div>
             )}
-
-            {/* Voice button */}
-            {('webkitSpeechRecognition' in (typeof window !== 'undefined' ? window : {}) || 'SpeechRecognition' in (typeof window !== 'undefined' ? window : {})) && (
-              <button
-                onClick={recording ? stopRecording : startRecording}
-                style={{
-                  marginTop: 16,
-                  borderRadius: 12,
-                  padding: '16px 32px',
-                  fontSize: 18,
-                  fontWeight: 700,
-                  background: recording ? '#EF4444' : 'rgba(255,255,255,0.06)',
-                  border: recording ? '2px solid #EF4444' : '2px solid rgba(255,255,255,0.1)',
-                  color: recording ? '#fff' : '#EDEDF0',
-                  cursor: 'pointer',
-                  fontFamily: "'Instrument Sans', sans-serif",
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="22" />
-                </svg>
-                {recording ? t('stop_speaking') : t('speak')}
-              </button>
-            )}
+            <div style={{ fontSize: 13, color: '#71717A', marginTop: 8 }}>
+              Don't worry about perfect wording — we'll clean it up before it reaches the shop.
+            </div>
 
             <div style={{ flex: 1 }} />
             {renderBottomNav()}
@@ -1265,6 +1242,10 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
               onChange={e => setContactPhone(e.target.value)}
             />
 
+            {(customerType === 'owner_operator' || customerType === 'outside_customer') && (!contactEmail.trim() || !contactPhone.trim()) && (
+              <div style={{ color: '#EF4444', fontSize: 13, marginTop: 8 }}>Email and phone are required for billing and updates.</div>
+            )}
+
             <div style={{ flex: 1 }} />
             {renderBottomNav()}
           </div>
@@ -1335,7 +1316,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 {t('back')}
               </button>
               <button
-                onClick={handleSubmit}
+                onClick={() => setShowForgetScreen(true)}
                 disabled={submitting || !privacyConsent}
                 style={{
                   borderRadius: 12,
@@ -1370,6 +1351,90 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
           />
         )}
       </div>
+
+      {/* "Did you forget?" overlay */}
+      {showForgetScreen && !showAiApproval && !aiRewriting && (
+        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
+          <div style={{ textAlign: 'center', maxWidth: 500 }}>
+            <ClipboardCheck size={48} color="#71717A" style={{ marginBottom: 16 }} />
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Before we submit...</div>
+            <div style={{ fontSize: 16, color: '#9D9DA1', marginBottom: 32 }}>Did you forget to mention anything about your truck?</div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button onClick={() => { setShowForgetScreen(false); setStep(3) }}
+                style={{ padding: '16px 32px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#EDEDF0', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                Yes, let me add more
+              </button>
+              <button onClick={async () => {
+                setAiRewriting(true)
+                setOriginalConcernText(concernText)
+                try {
+                  const res = await fetch('/api/ai/service-writer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: concernText, context: 'kiosk', language: lang }),
+                  })
+                  if (res.ok) {
+                    const data = await res.json()
+                    setAiRewrittenText(data.concern || concernText)
+                  } else {
+                    setAiRewrittenText(concernText)
+                  }
+                } catch {
+                  setAiRewrittenText(concernText)
+                }
+                setAiRewriting(false)
+                setShowAiApproval(true)
+              }}
+                style={{ padding: '16px 32px', borderRadius: 12, border: 'none', background: '#1D6FE8', color: '#fff', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                No, that's everything
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Rewriting spinner */}
+      {aiRewriting && (
+        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
+          <Loader2 size={32} color="#1D6FE8" style={{ animation: 'spin 1s linear infinite', marginBottom: 16 }} />
+          <div style={{ fontSize: 16, color: '#9D9DA1' }}>Cleaning up your description...</div>
+        </div>
+      )}
+
+      {/* AI Approval screen */}
+      {showAiApproval && (
+        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
+          <div style={{ maxWidth: 600, width: '100%', textAlign: 'center' }}>
+            <Sparkles size={32} color="#1D6FE8" style={{ marginBottom: 12 }} />
+            <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Here's how we recorded your request</div>
+            <div style={{ fontSize: 14, color: '#9D9DA1', marginBottom: 24 }}>Our system cleaned up your description for the service team.</div>
+            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '20px 24px', textAlign: 'left', fontSize: 16, lineHeight: 1.6, marginBottom: 24, minHeight: 80 }}>
+              {aiRewrittenText}
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button onClick={() => {
+                setShowAiApproval(false)
+                setShowForgetScreen(false)
+                setConcernText(originalConcernText)
+                setStep(3)
+              }}
+                style={{ padding: '16px 32px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#EDEDF0', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                Edit
+              </button>
+              <button onClick={() => {
+                setConcernText(aiRewrittenText)
+                setShowAiApproval(false)
+                setShowForgetScreen(false)
+                handleSubmit()
+              }}
+                style={{ padding: '16px 32px', borderRadius: 12, border: 'none', background: '#16A34A', color: '#fff', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                Looks Good — Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
     </>
   )

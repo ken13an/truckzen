@@ -156,6 +156,7 @@ export default function UnitProfilePage() {
       warranty_start: editForm.warranty_start || null,
       warranty_end: editForm.warranty_end || null,
       warranty_notes: editForm.warranty_notes || null,
+      is_owner_operator: editForm.is_owner_operator || false,
     }).eq('id', unitId)
     if (!error) {
       setUnit({ ...unit, ...editForm })
@@ -448,6 +449,34 @@ export default function UnitProfilePage() {
               <label style={labelStyle}>State</label>
               <input style={inputStyle} value={editForm.state || ''} onChange={(e) => setEditForm({ ...editForm, state: e.target.value })} />
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+              <button
+                onClick={() => setEditForm({ ...editForm, is_owner_operator: !editForm.is_owner_operator })}
+                style={{
+                  width: 36,
+                  height: 20,
+                  borderRadius: 10,
+                  border: 'none',
+                  background: editForm.is_owner_operator ? AMBER : 'rgba(255,255,255,0.12)',
+                  cursor: 'pointer',
+                  position: 'relative' as const,
+                  transition: 'background 0.2s',
+                  flexShrink: 0,
+                }}
+              >
+                <div style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  background: '#fff',
+                  position: 'absolute' as const,
+                  top: 3,
+                  left: editForm.is_owner_operator ? 19 : 3,
+                  transition: 'left 0.2s',
+                }} />
+              </button>
+              <span style={{ fontSize: 12, color: '#EDEDF0' }}>Owner Operator Truck</span>
+            </div>
             <div>
               <label style={labelStyle}>Odometer</label>
               <input style={inputStyle} type="number" value={editForm.odometer || ''} onChange={(e) => setEditForm({ ...editForm, odometer: e.target.value })} />
@@ -517,6 +546,9 @@ export default function UnitProfilePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <span style={{ fontSize: 24, fontWeight: 700, color: '#EDEDF0' }}>{unit.unit_number || '—'}</span>
             <span style={pillStyle(isTrailer ? 'rgba(217,119,6,0.15)' : 'rgba(29,111,232,0.15)', typeBadgeColor)}>{typeLabel}</span>
+            {unit.is_owner_operator && (
+              <span style={pillStyle('rgba(217,119,6,0.15)', AMBER)}>OWNER OPERATOR</span>
+            )}
           </div>
           <div style={{ fontSize: 16, color: '#EDEDF0', marginBottom: 4 }}>
             {[unit.year, unit.make, unit.model].filter(Boolean).join(' ') || '—'}

@@ -14,9 +14,9 @@ export async function POST(req: Request) {
   const s = db()
   const body = await req.json()
   const {
-    shop_id, customer_id, unit_id, concern_text, parked_location,
+    shop_id, customer_id, unit_id, concern_text, concern_text_original, parked_location,
     keys_left, staying, need_by_date, priority, auth_type, auth_limit,
-    contact_email, contact_phone,
+    contact_email, contact_phone, customer_type,
     // Optional new customer/unit data
     new_customer, new_unit,
   } = body
@@ -139,6 +139,8 @@ export async function POST(req: Request) {
     company_name: companyName,
     status: 'converted',
     converted_so_id: wo.id,
+    customer_type: customer_type || 'company',
+    concern_text_original: concern_text_original || concern_text.trim(),
   })
 
   // Generate AI job lines
