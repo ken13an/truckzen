@@ -1,6 +1,10 @@
-export function emailWrapper(shop: { name: string; phone: string }, content: string): string {
+export function emailWrapper(shop: { name: string; phone: string; logoUrl?: string | null }, content: string): string {
+  const header = shop.logoUrl
+    ? `<img src="${shop.logoUrl}" alt="${shop.name}" style="max-height: 50px; max-width: 200px;" />`
+    : `<span style="font-size: 20px; font-weight: bold; color: #F0F4FF; letter-spacing: 2px;">${shop.name.toUpperCase()}</span>`
+
   return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0B0D11; color: #DDE3EE; padding: 32px; border-radius: 8px;">
-    <div style="text-align: center; margin-bottom: 24px;"><span style="font-size: 20px; font-weight: bold; color: #F0F4FF; letter-spacing: 2px;">TRUCKZEN</span></div>
+    <div style="text-align: center; margin-bottom: 24px;">${header}</div>
     ${content}
     <hr style="border: 1px solid rgba(255,255,255,0.06); margin: 24px 0;">
     <p style="color: #48536A; font-size: 11px; text-align: center;">${shop.name}${shop.phone ? ' | ' + shop.phone : ''}</p>

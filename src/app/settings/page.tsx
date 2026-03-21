@@ -11,6 +11,7 @@ const SECTIONS = [
   { key: 'integrations', label: 'Integrations' },
   { key: 'billing', label: 'Billing' },
   { key: 'shop', label: 'Shop Information' },
+  { key: 'branding', label: 'Shop Branding' },
   { key: 'data_retention', label: 'Data Retention' },
 ]
 
@@ -28,6 +29,9 @@ export default function SettingsPage() {
   const [kioskEnabled, setKioskEnabled] = useState(true)
   const [kioskSaving, setKioskSaving] = useState(false)
   const [kioskCopied, setKioskCopied] = useState(false)
+  const [brandingShop, setBrandingShop] = useState<any>({})
+  const [brandingSaving, setBrandingSaving] = useState(false)
+  const [logoUploading, setLogoUploading] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -37,7 +41,7 @@ export default function SettingsPage() {
       setUser(profile)
       const { data } = await supabase.from('shops').select('*').eq('id', profile.shop_id).single()
       if (data) {
-        setShop(data); setEditShop(data)
+        setShop(data); setEditShop(data); setBrandingShop(data)
         if (data.kiosk_code) setKioskCode(data.kiosk_code)
         if (data.kiosk_enabled != null) setKioskEnabled(data.kiosk_enabled)
       }
@@ -264,6 +268,83 @@ export default function SettingsPage() {
             <li>Tap Share then "Add to Home Screen"</li>
             <li>Enable Guided Access (iPad: Settings &gt; Accessibility &gt; Guided Access) to lock the tablet to the kiosk</li>
           </ol>
+        </div>
+      </div>
+    )
+  }
+
+  // Shop Branding
+  if (activeSection === 'branding') {
+    const saveBranding = async () => {
+      setBrandingSaving(true)
+      await supabase.from('shops').update({
+        name: brandingShop.name, dba: brandingShop.dba, phone: brandingShop.phone, email: brandingShop.email,
+        website: brandingShop.website, address: brandingShop.address, city: brandingShop.city,
+        state: brandingShop.state, zip: brandingShop.zip, invoice_footer: brandingShop.invoice_footer,
+        email_footer: brandingShop.email_footer,
+      }).eq('id', shop.id)
+      setShop({ ...shop, ...brandingShop })
+      setBrandingSaving(false)
+      alert('Branding saved')
+    }
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+      setLogoUploading(true)
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('shop_id', shop.id)
+      try {
+        const res = await fetch('/api/shop/logo', { method: 'POST', body: fd })
+        const data = await res.json()
+        if (data.logo_url) {
+          setBrandingShop({ ...brandingShop, logo_url: data.logo_url })
+          setShop({ ...shop, logo_url: data.logo_url })
+        } else {
+          alert(data.error || 'Upload failed')
+        }
+      } catch { alert('Upload failed') }
+      setLogoUploading(false)
+    }
+    return (
+      <div style={S.page}>
+        {backBar}
+        <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Shop Branding</div>
+        <div style={S.card}>
+          <label style={S.label}>Shop Logo</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+            {brandingShop.logo_url ? (
+              <img src={brandingShop.logo_url} alt="Logo" style={{ maxHeight: 50, maxWidth: 200, borderRadius: 6, background: 'rgba(255,255,255,.06)', padding: 4 }} />
+            ) : (
+              <div style={{ width: 80, height: 50, background: 'rgba(255,255,255,.06)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9D9DA1' }}>No logo</div>
+            )}
+            <label style={{ ...S.btn, fontSize: 11, opacity: logoUploading ? 0.5 : 1, cursor: logoUploading ? 'wait' : 'pointer' }}>
+              {logoUploading ? 'Uploading...' : 'Upload Logo'}
+              <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: 'none' }} />
+            </label>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div><label style={S.label}>Legal Name</label><input style={S.input} value={brandingShop.name || ''} onChange={e => setBrandingShop({ ...brandingShop, name: e.target.value })} /></div>
+            <div><label style={S.label}>DBA / Display Name</label><input style={S.input} value={brandingShop.dba || ''} onChange={e => setBrandingShop({ ...brandingShop, dba: e.target.value })} /></div>
+            <div><label style={S.label}>Phone</label><input style={S.input} value={brandingShop.phone || ''} onChange={e => setBrandingShop({ ...brandingShop, phone: e.target.value })} /></div>
+            <div><label style={S.label}>Email</label><input style={S.input} type="email" value={brandingShop.email || ''} onChange={e => setBrandingShop({ ...brandingShop, email: e.target.value })} /></div>
+            <div style={{ gridColumn: '1 / -1' }}><label style={S.label}>Website</label><input style={S.input} value={brandingShop.website || ''} onChange={e => setBrandingShop({ ...brandingShop, website: e.target.value })} placeholder="https://" /></div>
+            <div style={{ gridColumn: '1 / -1' }}><label style={S.label}>Address</label><input style={S.input} value={brandingShop.address || ''} onChange={e => setBrandingShop({ ...brandingShop, address: e.target.value })} /></div>
+            <div><label style={S.label}>City</label><input style={S.input} value={brandingShop.city || ''} onChange={e => setBrandingShop({ ...brandingShop, city: e.target.value })} /></div>
+            <div><label style={S.label}>State</label><input style={S.input} value={brandingShop.state || ''} onChange={e => setBrandingShop({ ...brandingShop, state: e.target.value })} /></div>
+            <div><label style={S.label}>ZIP</label><input style={S.input} value={brandingShop.zip || ''} onChange={e => setBrandingShop({ ...brandingShop, zip: e.target.value })} /></div>
+          </div>
+
+          <label style={S.label}>Invoice Footer</label>
+          <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical' }} value={brandingShop.invoice_footer || ''} onChange={e => setBrandingShop({ ...brandingShop, invoice_footer: e.target.value })} placeholder="Appears at the bottom of invoices" />
+
+          <label style={S.label}>Email Footer</label>
+          <textarea style={{ ...S.input, minHeight: 60, resize: 'vertical' }} value={brandingShop.email_footer || ''} onChange={e => setBrandingShop({ ...brandingShop, email_footer: e.target.value })} placeholder="Appears at the bottom of emails" />
+
+          <button style={{ ...S.btn, marginTop: 16 }} onClick={saveBranding} disabled={brandingSaving}>
+            {brandingSaving ? 'Saving...' : 'Save Branding'}
+          </button>
         </div>
       </div>
     )

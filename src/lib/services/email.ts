@@ -30,15 +30,16 @@ export async function getStaffEmails(shopId: string, role: string): Promise<stri
   return (data || []).map((u: any) => u.email).filter(Boolean)
 }
 
-export async function getShopInfo(shopId: string): Promise<{ name: string; phone: string; email: string; address: string }> {
+export async function getShopInfo(shopId: string): Promise<{ name: string; phone: string; email: string; address: string; logoUrl: string | null }> {
   const { createClient } = await import('@supabase/supabase-js')
   const s = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-  const { data } = await s.from('shops').select('name, dba, phone, email, address, city, state, zip').eq('id', shopId).single()
-  if (!data) return { name: 'TruckZen', phone: '', email: '', address: '' }
+  const { data } = await s.from('shops').select('name, dba, phone, email, address, city, state, zip, logo_url').eq('id', shopId).single()
+  if (!data) return { name: 'TruckZen', phone: '', email: '', address: '', logoUrl: null }
   return {
     name: data.dba || data.name || 'TruckZen',
     phone: data.phone || '',
     email: data.email || '',
     address: [data.address, data.city, data.state, data.zip].filter(Boolean).join(', '),
+    logoUrl: data.logo_url || null,
   }
 }

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
-import { LayoutDashboard, Monitor, Wrench, Users2, Truck, FileText, Package, UserCircle, Factory, Settings, Timer, ShieldCheck, BarChart3, Calculator, LogOut, Clipboard, BookOpen, Cog, Upload } from 'lucide-react'
+import { LayoutDashboard, Monitor, Wrench, Users2, Truck, FileText, Package, UserCircle, Factory, Settings, Timer, ShieldCheck, BarChart3, Calculator, LogOut, Clipboard, BookOpen, Cog, Upload, Crown } from 'lucide-react'
 
 const ICON_MAP: Record<string, any> = {
   '/dashboard': LayoutDashboard,
@@ -40,14 +40,16 @@ export default function Sidebar() {
   const [openJobs, setOpenJobs] = useState(0)
   const [rolePerms, setRolePerms] = useState<Record<string, boolean>>({})
   const [userOverrides, setUserOverrides] = useState<Record<string, boolean>>({})
+  const [isPlatformOwner, setIsPlatformOwner] = useState(false)
 
   useEffect(() => {
     async function load() {
       const { data: { user: au } } = await supabase.auth.getUser()
       if (!au) return
-      const { data } = await supabase.from('users').select('id, shop_id, full_name, role, team').eq('id', au.id).single()
+      const { data } = await supabase.from('users').select('id, shop_id, full_name, role, team, is_platform_owner').eq('id', au.id).single()
       if (!data) return
       setUser(data)
+      if (data.is_platform_owner) setIsPlatformOwner(true)
 
       const { data: rp } = await supabase.from('role_permissions').select('module, allowed').eq('shop_id', data.shop_id).eq('role', data.role)
       if (rp) setRolePerms(Object.fromEntries(rp.map((r: any) => [r.module, r.allowed])))
@@ -143,6 +145,31 @@ export default function Sidebar() {
       {/* Bottom: Settings + Sign Out */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
         {settingsItem && renderItem(settingsItem)}
+
+        {/* Platform Admin */}
+        {isPlatformOwner && (
+          <>
+            <div style={{ height: 1, background: 'rgba(255,255,255,.06)', margin: '4px 12px' }} />
+            <a href="/admin/shops" style={{ textDecoration: 'none' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: collapsed ? '9px 0' : '9px 16px',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                margin: '1px 6px', borderRadius: 8,
+                background: pathname?.startsWith('/admin/shops') ? 'rgba(217,79,79,.12)' : 'transparent',
+                borderLeft: pathname?.startsWith('/admin/shops') ? '2px solid #D94F4F' : '2px solid transparent',
+                cursor: 'pointer', transition: 'all .12s',
+              }}
+              onMouseEnter={e => { if (!pathname?.startsWith('/admin/shops')) (e.currentTarget as HTMLElement).style.background = 'rgba(217,79,79,.06)' }}
+              onMouseLeave={e => { if (!pathname?.startsWith('/admin/shops')) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Crown size={15} strokeWidth={1.5} color={pathname?.startsWith('/admin/shops') ? '#D94F4F' : '#7C8BA0'} />
+                </span>
+                {!collapsed && <span style={{ fontSize: 12, fontWeight: pathname?.startsWith('/admin/shops') ? 700 : 400, color: pathname?.startsWith('/admin/shops') ? '#F0F4FF' : '#7C8BA0' }}>Platform Admin</span>}
+              </div>
+            </a>
+          </>
+        )}
 
         {/* Sign Out */}
         <a href="#" onClick={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
