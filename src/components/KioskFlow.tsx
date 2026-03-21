@@ -343,12 +343,18 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   })
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
+  const [pinVerifying, setPinVerifying] = useState(false)
 
-  // Auto-verify when 4 digits entered
-  useEffect(() => {
-    if (pin.length !== 4 || !kioskCode) return
-    fetch(`/api/kiosk/verify-pin?code=${kioskCode}&pin=${pin}`)
-      .then(r => r.json())
+  // Verify PIN — called directly when 4th digit is entered, not via useEffect
+  function verifyPin(fullPin: string) {
+    if (!kioskCode || pinVerifying) return
+    setPinVerifying(true)
+    setPinError('')
+    fetch(`/api/kiosk/verify-pin?code=${kioskCode}&pin=${fullPin}`)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
       .then(data => {
         if (data.valid) {
           sessionStorage.setItem(`kiosk_pin_${kioskCode}`, 'true')
@@ -358,8 +364,12 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
           setPinError(data.locked ? `Too many attempts. Wait ${data.retry_after}s` : 'Incorrect PIN')
         }
       })
-      .catch(() => { setPin(''); setPinError('Verification failed') })
-  }, [pin, kioskCode])
+      .catch(() => {
+        setPin('')
+        setPinError('Connection error. Try again.')
+      })
+      .finally(() => setPinVerifying(false))
+  }
 
   // ---- ALL remaining hooks ----
   const [lang, setLang] = useState('en')
@@ -418,7 +428,8 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
             ))}
           </div>
 
-          {pinError && <div style={{ color: '#EF4444', fontSize: 14, marginBottom: 16, fontWeight: 600 }}>{pinError}</div>}
+          {pinVerifying && <div style={{ color: '#71717A', fontSize: 14, marginBottom: 16 }}>Verifying...</div>}
+          {pinError && !pinVerifying && <div style={{ color: '#EF4444', fontSize: 14, marginBottom: 16, fontWeight: 600 }}>{pinError}</div>}
 
           {/* Numeric keypad */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 280, margin: '0 auto' }}>
@@ -428,7 +439,15 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 key={i}
                 onClick={() => {
                   if (digit === 'del') { setPin(prev => prev.slice(0, -1)); setPinError('') }
-                  else { setPin(prev => prev.length < 4 ? prev + String(digit) : prev); setPinError('') }
+                  else {
+                    setPin(prev => {
+                      if (prev.length >= 4) return prev
+                      const next = prev + String(digit)
+                      if (next.length === 4) setTimeout(() => verifyPin(next), 0)
+                      return next
+                    })
+                    setPinError('')
+                  }
                 }}
                 style={{
                   width: 80, height: 64, borderRadius: 14, border: 'none',
