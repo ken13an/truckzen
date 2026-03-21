@@ -343,21 +343,19 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   const pinRef = useRef('')
 
   useEffect(() => {
+    if (!kioskCode) {
+      // No kiosk code = direct access via ?shop=, skip PIN
+      setPinAuthed(true)
+      setPinLoading(false)
+      return
+    }
     // Check sessionStorage for existing PIN auth
-    if (kioskCode && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
       const stored = sessionStorage.getItem(`kiosk_pin_${kioskCode}`)
       if (stored === 'true') { setPinAuthed(true); setPinLoading(false); return }
     }
-    // Check if kiosk has a PIN set (0000 means no PIN)
-    if (kioskCode) {
-      fetch(`/api/kiosk/lookup?code=${kioskCode}`)
-        .then(r => r.json())
-        .then(() => setPinLoading(false))
-        .catch(() => setPinLoading(false))
-    } else {
-      setPinAuthed(true)
-      setPinLoading(false)
-    }
+    // Show PIN screen
+    setPinLoading(false)
   }, [kioskCode])
 
   const handlePinDigit = (digit: string) => {
