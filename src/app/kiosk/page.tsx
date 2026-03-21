@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import Logo from '@/components/Logo'
+import AITextInput from '@/components/ai-text-input'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -965,12 +966,15 @@ export default function KioskPage() {
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('concern_title')}</div>
             <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 3 {t('of')} 7</div>
 
-            <textarea
-              style={{ ...inputStyle, minHeight: 150, resize: 'vertical' }}
-              placeholder={t('concern_placeholder')}
+            <AITextInput
               value={concernText}
-              onChange={e => setConcernText(e.target.value)}
-              autoFocus
+              onChange={setConcernText}
+              context="kiosk"
+              language={lang}
+              shopId={shopId}
+              placeholder={t('concern_placeholder')}
+              rows={5}
+              style={{ ...inputStyle, minHeight: 150, resize: 'vertical', paddingRight: 48 }}
             />
             {concernText.trim().length > 0 && (concernText.trim().length < 10 || concernText.trim().split(/\s+/).length < 3) && (
               <div style={{ color: '#DC2626', fontSize: 13, marginTop: 8 }}>

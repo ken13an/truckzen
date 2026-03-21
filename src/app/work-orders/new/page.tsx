@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { ChevronLeft } from 'lucide-react'
+import AITextInput from '@/components/ai-text-input'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 
@@ -405,16 +406,17 @@ export default function NewWorkOrderPage() {
           <div style={{ ...cardStyle, marginBottom: 16 }}>
             <div style={{ marginBottom: 16 }}>
               <div style={labelStyle}>Describe the concern</div>
-              <textarea
+              <AITextInput
                 value={complaint}
-                onChange={e => setComplaint(e.target.value)}
+                onChange={setComplaint}
+                context="service_writer"
+                theme="light"
+                shopId={profile?.shop_id}
+                userId={profile?.id}
+                truckInfo={selectedAsset ? { year: selectedAsset.year?.toString(), make: selectedAsset.make || '', model: selectedAsset.model || '' } : undefined}
                 placeholder="e.g. Oil change, brake noise, check engine light..."
                 rows={5}
-                style={{
-                  ...inputStyle,
-                  resize: 'vertical',
-                  minHeight: 100,
-                }}
+                style={{ ...inputStyle, resize: 'vertical', minHeight: 100, paddingRight: 48 }}
               />
             </div>
             <div style={{ marginBottom: 20 }}>

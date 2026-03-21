@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { ChevronLeft, Users, MessageSquare, Clock, DollarSign, MoreHorizontal, Plus, Mic, Upload, X, Paperclip } from 'lucide-react'
+import AITextInput from '@/components/ai-text-input'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -859,11 +860,16 @@ export default function WorkOrderDetail() {
           {/* Note input */}
           <div style={cardStyle}>
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Add Note</span>
-            <textarea
+            <AITextInput
               value={noteText}
-              onChange={e => setNoteText(e.target.value)}
+              onChange={setNoteText}
+              context={user?.role === 'technician' || user?.role === 'maintenance_technician' ? 'mechanic' : user?.role === 'shop_manager' ? 'supervisor' : 'service_writer'}
+              theme="light"
+              shopId={wo?.shop_id}
+              userId={user?.id}
               placeholder="Write a note..."
-              style={{ ...inputStyle, minHeight: 70, resize: 'vertical', marginBottom: 8 }}
+              rows={3}
+              style={{ ...inputStyle, minHeight: 70, resize: 'vertical', marginBottom: 8, paddingRight: 48, background: '#fff', color: '#111', border: '1px solid #E5E7EB' }}
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
