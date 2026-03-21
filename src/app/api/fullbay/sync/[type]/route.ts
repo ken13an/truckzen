@@ -6,8 +6,12 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 
 export async function POST(req: Request, { params }: { params: Promise<{ type: string }> }) {
   const { type } = await params
-  const { shop_id } = await req.json()
+  const { shop_id, user_id, user_role } = await req.json()
 
+  // Security: only owner/it_person/gm can trigger Fullbay sync
+  if (!user_role || !['owner', 'gm', 'it_person'].includes(user_role)) {
+    return NextResponse.json({ error: 'Only shop owners can trigger data sync' }, { status: 403 })
+  }
   if (!process.env.FULLBAY_API_KEY) return NextResponse.json({ error: 'FULLBAY_API_KEY not configured' }, { status: 500 })
   if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!['customers', 'trucks', 'parts'].includes(type)) return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
@@ -15,7 +19,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ type: s
   const s = db()
 
   // Create sync log
-  const { data: log } = await s.from('fullbay_sync_log').insert({ shop_id, sync_type: type, status: 'running' }).select('id').single()
+  const { data: log } = await s.from('fullbay_sync_log').insert({ shop_id, sync_type: type, status: 'running', triggered_by: user_id || null }).select('id').single()
   const logId = log?.id
 
   try {

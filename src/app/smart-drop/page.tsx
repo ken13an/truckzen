@@ -463,7 +463,7 @@ export default function SmartDropPage() {
       const res = await fetch(`/api/fullbay/sync/${type}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shop_id: user.shop_id }),
+        body: JSON.stringify({ shop_id: user.shop_id, user_id: user.id, user_role: user.role }),
       })
       const data = await res.json()
       if (!res.ok) { flash(data.error || 'Sync failed'); setFbSyncing(null); return }
