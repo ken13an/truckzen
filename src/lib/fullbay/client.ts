@@ -9,13 +9,15 @@ async function getAuth(): Promise<{ key: string; token: string }> {
 
   const today = new Date().toISOString().split('T')[0]
 
-  // Get server's public IP
-  let ip = '0.0.0.0'
-  try {
-    const res = await fetch('https://api.ipify.org')
-    ip = (await res.text()).trim()
-  } catch {
-    try { const res = await fetch('https://checkip.amazonaws.com'); ip = (await res.text()).trim() } catch {}
+  // Get server's public IP — use override for Vercel (static IP registered with Fullbay)
+  let ip = process.env.FULLBAY_SERVER_IP || ''
+  if (!ip) {
+    try {
+      const res = await fetch('https://api.ipify.org')
+      ip = (await res.text()).trim()
+    } catch {
+      try { const res = await fetch('https://checkip.amazonaws.com'); ip = (await res.text()).trim() } catch {}
+    }
   }
 
   const token = crypto.createHash('sha1').update(key + today + ip).digest('hex')
