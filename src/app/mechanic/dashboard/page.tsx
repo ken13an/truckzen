@@ -65,6 +65,8 @@ export default function MechanicDashboardPage() {
   const [language, setLanguage] = useState('en')
   const [savingLang, setSavingLang] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [declineModal, setDeclineModal] = useState<string | null>(null) // assignment ID
+  const [declineReason, setDeclineReason] = useState('')
 
   const fetchData = useCallback(async (userId: string) => {
     try {
@@ -99,16 +101,19 @@ export default function MechanicDashboardPage() {
     return () => clearInterval(interval)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleJobAction = async (assignmentId: string, action: 'accept' | 'decline' | 'complete') => {
+  const handleJobAction = async (assignmentId: string, action: 'accept' | 'decline' | 'complete' | 'start', reason?: string) => {
     if (!user) return
     setActionLoading(assignmentId + action)
     try {
       const res = await fetch('/api/mechanic/accept-job', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignment_id: assignmentId, action, user_id: user.id }),
+        body: JSON.stringify({ assignment_id: assignmentId, action, user_id: user.id, reason }),
       })
-      if (res.ok) await fetchData(user.id)
+      if (res.ok) {
+        await fetchData(user.id)
+        if (action === 'decline') { setDeclineModal(null); setDeclineReason('') }
+      }
     } catch { /* silent */ }
     setActionLoading(null)
   }
@@ -312,7 +317,7 @@ export default function MechanicDashboardPage() {
                             </button>
                             <button
                               disabled={actionLoading === job.id + 'decline'}
-                              onClick={() => handleJobAction(job.id, 'decline')}
+                              onClick={() => { setDeclineModal(job.id); setDeclineReason('') }}
                               style={{
                                 flex: 1, minWidth: 100, padding: '9px 16px', borderRadius: 10, border: 'none',
                                 background: RED, color: '#fff', fontWeight: 700, fontSize: 13,
@@ -323,6 +328,20 @@ export default function MechanicDashboardPage() {
                               <XCircle size={15} /> Decline
                             </button>
                           </>
+                        )}
+                        {job.status === 'accepted' && (
+                          <button
+                            disabled={actionLoading === job.id + 'start'}
+                            onClick={() => handleJobAction(job.id, 'start')}
+                            style={{
+                              flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
+                              background: BLUE, color: '#fff', fontWeight: 700, fontSize: 13,
+                              cursor: 'pointer', fontFamily: FONT, opacity: actionLoading === job.id + 'start' ? 0.6 : 1,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            }}
+                          >
+                            <Wrench size={15} /> Start Work
+                          </button>
                         )}
                         {(job.status === 'accepted' || job.status === 'in_progress') && (
                           <>
@@ -640,6 +659,29 @@ export default function MechanicDashboardPage() {
                 }}
               >
                 {actionLoading === 'parts-submit' ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Decline Modal */}
+      {declineModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) { setDeclineModal(null); setDeclineReason('') } }}>
+          <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Decline Job</div>
+            <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>Why are you declining this job? (optional)</div>
+            <textarea
+              value={declineReason}
+              onChange={e => setDeclineReason(e.target.value)}
+              placeholder="Reason for declining..."
+              style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: TEXT, fontFamily: FONT, minHeight: 80, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+            />
+            <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+              <button onClick={() => { setDeclineModal(null); setDeclineReason('') }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => handleJobAction(declineModal, 'decline', declineReason)} disabled={!!actionLoading}
+                style={{ padding: '8px 16px', background: RED, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                Confirm Decline
               </button>
             </div>
           </div>
