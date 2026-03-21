@@ -28,10 +28,12 @@ export default function CustomersPage() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
+  const [shopId, setShopId] = useState('')
 
   useEffect(() => {
     getCurrentUser(supabase).then((p: any) => {
       if (!p) { window.location.href = '/login'; return }
+      setShopId(p.shop_id)
       fetch(`/api/customers?shop_id=${p.shop_id}&per_page=500`)
         .then(res => {
           if (!res.ok) throw new Error('Failed to load customers')
@@ -75,7 +77,7 @@ export default function CustomersPage() {
   const inactiveCount = useMemo(() => customers.filter(c => (c.customer_status || 'active').toLowerCase() === 'inactive').length, [customers])
 
   function handleDownloadForm() {
-    alert('New Customer Form PDF will be available soon.')
+    window.open(`/api/documents/registration-form?shop_id=${shopId}`, '_blank')
   }
 
   function exportCSV() {
