@@ -3,8 +3,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Download } from 'lucide-react'
-import * as XLSX from 'xlsx'
+import { ChevronLeft } from 'lucide-react'
 import ExcelJS from 'exceljs'
 
 type Customer = {
@@ -78,30 +77,8 @@ export default function CustomersPage() {
   const activeCount = useMemo(() => customers.filter(c => (c.customer_status || 'active').toLowerCase() === 'active').length, [customers])
   const inactiveCount = useMemo(() => customers.filter(c => (c.customer_status || 'active').toLowerCase() === 'inactive').length, [customers])
 
-  function handleDownloadForm() {
-    window.open(`/api/documents/registration-form?shop_id=${shopId}`, '_blank')
-  }
 
-  function exportExcel() {
-    if (filtered.length === 0) return
-    const headers = ['Company Name', 'DOT #', 'Phone', 'Contact', 'Email', 'Payment Terms', 'Status', 'Created']
-    const rows = filtered.map(c => [
-      c.company_name || '',
-      c.dot_number || '',
-      c.phone || '',
-      c.contact_name || '',
-      c.email || '',
-      c.payment_terms || '',
-      c.customer_status || '',
-      c.created_at ? new Date(c.created_at).toLocaleDateString() : '',
-    ])
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
-    // Set column widths
-    ws['!cols'] = [{ wch: 28 }, { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 28 }, { wch: 14 }, { wch: 10 }, { wch: 12 }]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Customers')
-    XLSX.writeFile(wb, `customers-${new Date().toISOString().slice(0, 10)}.xlsx`)
-  }
+
 
   async function bulkFleetUpload() {
     const wb = new ExcelJS.Workbook()
@@ -279,56 +256,20 @@ export default function CustomersPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
-            onClick={exportExcel}
-            style={{
-              padding: '8px 12px',
-              background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 8,
-              color: '#9CA3AF',
-              fontSize: 12,
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            Export Excel
-          </button>
-          <button
             onClick={bulkFleetUpload}
             style={{
-              padding: '8px 12px',
+              padding: '8px 14px',
               background: 'transparent',
               border: '1px solid rgba(29,111,232,0.3)',
               borderRadius: 8,
               color: '#1D6FE8',
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            Bulk Fleet Upload
-          </button>
-          <button
-            onClick={handleDownloadForm}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 14px',
-              background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 8,
-              color: '#EDEDF0',
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            <Download size={14} />
-            Download Form
+            Fleet Onboarding Form
           </button>
           <button
             onClick={() => router.push('/customers/new')}
