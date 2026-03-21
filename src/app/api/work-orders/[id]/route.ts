@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail, getShopInfo } from '@/lib/services/email'
+import { workStartedEmail } from '@/lib/emails/workStarted'
+import { truckReadyEmail } from '@/lib/emails/truckReady'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -94,6 +97,63 @@ export async function PATCH(req: Request, { params }: Params) {
   if (body.user_id) {
     const changes = Object.keys(update).filter(k => k !== 'updated_at').join(', ')
     await s.from('wo_activity_log').insert({ wo_id: id, user_id: body.user_id, action: `Updated: ${changes}` })
+  }
+
+  // Fire-and-forget email notifications on status change
+  if (update.status === 'in_progress' || update.status === 'good_to_go') {
+    ;(async () => {
+      try {
+        const { data: wo } = await s.from('service_orders')
+          .select('id, so_number, shop_id, customer_id, asset_id, portal_token')
+          .eq('id', id).single()
+        if (!wo) return
+
+        const { data: customer } = await s.from('customers')
+          .select('email, contact_name, company_name')
+          .eq('id', wo.customer_id).single()
+        if (!customer?.email) return
+
+        const { data: asset } = await s.from('assets')
+          .select('unit_number, year, make, model')
+          .eq('id', wo.asset_id).single()
+
+        const shop = await getShopInfo(wo.shop_id)
+        const customerName = customer.contact_name || customer.company_name || 'Customer'
+        const unitNumber = asset?.unit_number || ''
+        const portalLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${wo.portal_token}`
+
+        if (update.status === 'in_progress') {
+          const { subject, html } = workStartedEmail({
+            customerName,
+            unitNumber,
+            year: String(asset?.year || ''),
+            make: asset?.make || '',
+            model: asset?.model || '',
+            portalLink,
+            shop,
+          })
+          await sendEmail(customer.email, subject, html)
+        }
+
+        if (update.status === 'good_to_go') {
+          const { data: invoice } = await s.from('invoices')
+            .select('id, invoice_number, total')
+            .eq('wo_id', wo.id).order('created_at', { ascending: false }).limit(1).single()
+          const payLink = invoice
+            ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${wo.portal_token}?pay=1`
+            : portalLink
+          const { subject, html } = truckReadyEmail({
+            customerName,
+            unitNumber,
+            invoiceNumber: invoice?.invoice_number || '',
+            amount: invoice ? String(invoice.total) : '0',
+            payLink,
+            shop,
+          })
+          await sendEmail(customer.email, subject, html)
+        }
+      } catch {}
+    })()
   }
 
   return NextResponse.json(data)

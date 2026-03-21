@@ -449,7 +449,13 @@ export default function CustomerPortalPage() {
         )}
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', padding: '32px 0 16px', fontSize: 11, color: MUTED }}>Powered by TruckZen</div>
+        <div style={{ textAlign: 'center', padding: '32px 0 16px', fontSize: 11, color: MUTED }}>
+          Powered by TruckZen
+          <div style={{ marginTop: 8, display: 'flex', gap: 16, justifyContent: 'center' }}>
+            <a href="/privacy" style={{ color: MUTED, textDecoration: 'none' }}>Privacy</a>
+            <a href="/terms" style={{ color: MUTED, textDecoration: 'none' }}>Terms</a>
+          </div>
+        </div>
       </div>
 
       {/* Decline Modal */}

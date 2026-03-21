@@ -239,6 +239,10 @@ export default function LoginPage() {
       {/* Bottom branding */}
       <div style={styles.bottomBrand}>
         Powered by TruckZen &bull; Your Shop. Powered.
+        <div style={{ marginTop: 8, display: 'flex', gap: 16, justifyContent: 'center' }}>
+          <a href="/privacy" style={{ color: '#7C8BA0', fontSize: 11, textDecoration: 'none' }}>Privacy Policy</a>
+          <a href="/terms" style={{ color: '#7C8BA0', fontSize: 11, textDecoration: 'none' }}>Terms of Service</a>
+        </div>
       </div>
     </div>
   )

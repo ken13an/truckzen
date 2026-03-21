@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail, getStaffEmails, getShopInfo } from '@/lib/services/email'
+import { checkinConfirmedEmail } from '@/lib/emails/checkinConfirmed'
+import { staffCheckinAlertEmail } from '@/lib/emails/staffCheckinAlert'
+import { sendPushToRole } from '@/lib/services/notifications'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -177,32 +181,52 @@ export async function POST(req: Request) {
   // Log activity
   await s.from('wo_activity_log').insert({ wo_id: wo.id, action: `Kiosk check-in: ${checkinRef}` })
 
-  // Send portal email (fire and forget — do NOT await)
+  // Fire-and-forget email notifications
+  const unitLabel = new_unit?.unit_number || ''
+  const customerName = new_customer?.contact_name || new_customer?.company_name || companyName || 'Customer'
+  const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${portalToken}`
+
+  // 1. Checkin confirmation to customer
   if (contact_email) {
-    (async () => {
+    ;(async () => {
       try {
-        const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${portalToken}`
-        const { data: shopData } = await s.from('shops').select('name, dba').eq('id', shop_id).single()
-        const shopName = shopData?.dba || shopData?.name || 'TruckZen'
-        const { Resend } = await import('resend')
-        const resend = new Resend(process.env.RESEND_API_KEY!)
-        await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'TruckZen <noreply@truckzen.pro>',
-          to: contact_email,
-          subject: `${woNum} — Your truck is checked in at ${shopName}`,
-          html: `<div style="font-family:sans-serif;background:#151520;color:#EDEDF0;padding:40px;max-width:480px;margin:0 auto">
-            <div style="font-size:22px;font-weight:700;margin-bottom:16px">Your Truck Is Checked In</div>
-            <p style="color:#9D9DA1;line-height:1.7">Work Order <strong>${woNum}</strong> has been created at ${shopName}.</p>
-            <p style="color:#9D9DA1;line-height:1.7">Track your repair status, approve estimates, and pay online:</p>
-            <a href="${portalUrl}" style="display:inline-block;margin:20px 0;padding:14px 28px;background:#1D6FE8;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;font-size:16px">View Your Repair Status</a>
-            <p style="color:#9D9DA1;font-size:12px;margin-top:20px">Or copy this link: ${portalUrl}</p>
-          </div>`,
+        const shop = await getShopInfo(shop_id)
+        const { subject, html } = checkinConfirmedEmail({
+          customerName,
+          unitNumber: unitLabel,
+          reference: checkinRef,
+          portalLink: portalUrl,
+          shop,
         })
-      } catch (emailErr) {
-        console.error('[Kiosk] Email send failed:', emailErr)
-      }
+        await sendEmail(contact_email, subject, html)
+      } catch {}
     })()
   }
+
+  // 2. Staff checkin alert to service writers
+  ;(async () => {
+    try {
+      const shop = await getShopInfo(shop_id)
+      const emails = await getStaffEmails(shop_id, 'service_writer')
+      if (emails.length > 0) {
+        const { subject, html } = staffCheckinAlertEmail({
+          unitNumber: unitLabel,
+          company: companyName || 'Walk-in',
+          concern: concern_text.trim(),
+          customerName,
+          shop,
+        })
+        await sendEmail(emails, subject, html)
+      }
+    } catch {}
+  })()
+
+  // 3. Push notification to service writers
+  ;(async () => {
+    try {
+      await sendPushToRole(shop_id, 'service_writer', 'New Check-In', `Unit ${unitLabel}, ${concern_text.trim()}`)
+    } catch {}
+  })()
 
   return NextResponse.json({
     ok: true,

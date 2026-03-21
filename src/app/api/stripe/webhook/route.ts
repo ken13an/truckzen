@@ -2,6 +2,10 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail, getStaffEmails, getShopInfo } from '@/lib/services/email'
+import { paymentReceivedEmail } from '@/lib/emails/paymentReceived'
+import { staffPaymentReceivedEmail } from '@/lib/emails/staffPaymentReceived'
+import { sendPushToRole } from '@/lib/services/notifications'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!)
@@ -62,8 +66,58 @@ export async function POST(req: Request) {
         new_data:   { amount_paid: amountPaid, method: 'stripe_qr', session_id: session.id },
       })
 
+      // Fire-and-forget email notifications
+      ;(async () => {
+        try {
+          const sup = getSupabase()
+          const { data: invoice } = await sup.from('invoices')
+            .select('id, invoice_number, wo_id, total')
+            .eq('id', invoiceId).single()
+          if (!invoice) return
+
+          const { data: wo } = await sup.from('service_orders')
+            .select('id, customer_id, so_number')
+            .eq('id', invoice.wo_id).single()
+          if (!wo) return
+
+          const { data: customer } = await sup.from('customers')
+            .select('email, contact_name, company_name')
+            .eq('id', wo.customer_id).single()
+
+          const shop = await getShopInfo(shopId)
+          const customerName = customer?.contact_name || customer?.company_name || 'Customer'
+          const amount = String(amountPaid)
+
+          // 1. Payment receipt to customer
+          if (customer?.email) {
+            const { subject, html } = paymentReceivedEmail({
+              customerName,
+              invoiceNumber: invoice.invoice_number,
+              amount,
+              shop,
+            })
+            await sendEmail(customer.email, subject, html)
+          }
+
+          // 2. Staff notification to accounting
+          const accountingEmails = await getStaffEmails(shopId, 'accountant')
+          if (accountingEmails.length > 0) {
+            const { subject, html } = staffPaymentReceivedEmail({
+              customerName,
+              invoiceNumber: invoice.invoice_number,
+              amount,
+              method: 'Stripe',
+              shop,
+            })
+            await sendEmail(accountingEmails, subject, html)
+          }
+
+          // 3. Push to accountant role
+          await sendPushToRole(shopId, 'accountant', 'Payment Received', `$${amount} for ${invoice.invoice_number}`)
+        } catch {}
+      })()
+
       // TODO: trigger QuickBooks sync
-      // TODO: trigger Twilio SMS receipt to customer
       break
     }
 
