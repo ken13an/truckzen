@@ -379,6 +379,7 @@ export default function WorkOrderDetail() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <span style={{ fontSize: 26, fontWeight: 800 }}>WO-{wo.wo_number || wo.id?.slice(0, 6)}</span>
             <span style={pillStyle(woStatus.bg, woStatus.color)}>{woStatus.label}</span>
+            {wo.source === 'fullbay' && <span style={pillStyle('#F3F4F6', '#6B7280')}>Imported from Fullbay</span>}
             {wo.payment_terms === 'cod' && <span style={pillStyle('#FEF2F2', RED)}>COD</span>}
             {wo.invoice_status && wo.invoice_status !== 'draft' && (() => {
               const IS: Record<string, { label: string; bg: string; color: string }> = {

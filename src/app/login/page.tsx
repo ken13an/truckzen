@@ -33,7 +33,7 @@ export default function LoginPage() {
   async function redirectByRole(userId: string) {
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('role, shop_id')
+      .select('role, shop_id, is_platform_owner')
       .eq('id', userId)
       .single()
 
@@ -41,6 +41,12 @@ export default function LoginPage() {
       setError('Account not set up yet. Ask your admin.')
       setLoading(false)
       setCheckingSession(false)
+      return
+    }
+
+    // Platform owner → platform admin
+    if (profile.is_platform_owner) {
+      router.replace('/platform-admin')
       return
     }
 

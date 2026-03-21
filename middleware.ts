@@ -103,9 +103,13 @@ export async function middleware(request: NextRequest) {
   // API routes handle their own auth — skip middleware permission checks
   if (pathname.startsWith('/api/')) return response
 
-  // Homepage is public
+  // Homepage — platform owners go to /platform-admin, others to /dashboard
   if (pathname === '/') {
-    if (user) return NextResponse.redirect(new URL('/dashboard', request.url))
+    if (user) {
+      const { data: po } = await supabase.from('users').select('is_platform_owner').eq('id', user.id).single()
+      if (po?.is_platform_owner) return NextResponse.redirect(new URL('/platform-admin', request.url))
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
     return response
   }
 

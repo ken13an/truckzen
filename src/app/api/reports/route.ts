@@ -109,6 +109,88 @@ export async function GET(req: Request) {
       return NextResponse.json(Object.values(byPart).sort((a,b) => b.revenue - a.revenue).slice(0, 20))
     }
 
+    case 'top_customers': {
+      const { data: sos } = await supabase
+        .from('service_orders')
+        .select('grand_total, customers!inner(id, company_name)')
+        .eq('shop_id', shopId)
+        .gte('created_at', from)
+        .lte('created_at', to + 'T23:59:59')
+
+      const byCust: Record<string, { name: string; revenue: number; wos: number }> = {}
+      for (const so of sos || []) {
+        const c = so.customers as any
+        const key = c?.id || 'unknown'
+        if (!byCust[key]) byCust[key] = { name: c?.company_name || 'Unknown', revenue: 0, wos: 0 }
+        byCust[key].revenue += so.grand_total || 0
+        byCust[key].wos += 1
+      }
+      return NextResponse.json(Object.values(byCust).sort((a, b) => b.revenue - a.revenue).slice(0, 10))
+    }
+
+    case 'labor': {
+      const { data: timeEntries } = await supabase
+        .from('time_entries')
+        .select('user_id, duration_minutes, users!inner(full_name)')
+        .eq('shop_id', shopId)
+        .gte('clock_in', from)
+        .lte('clock_in', to + 'T23:59:59')
+
+      const { data: sosByTech } = await supabase
+        .from('service_orders')
+        .select('assigned_tech, status')
+        .eq('shop_id', shopId)
+        .gte('created_at', from)
+        .lte('created_at', to + 'T23:59:59')
+        .not('assigned_tech', 'is', null)
+
+      const byMech: Record<string, { name: string; hours: number; wos_completed: number; wos_total: number }> = {}
+      for (const te of timeEntries || []) {
+        const u = te.users as any
+        const key = te.user_id
+        if (!byMech[key]) byMech[key] = { name: u?.full_name || 'Unknown', hours: 0, wos_completed: 0, wos_total: 0 }
+        byMech[key].hours += (te.duration_minutes || 0) / 60
+      }
+      for (const so of sosByTech || []) {
+        const key = so.assigned_tech
+        if (!byMech[key]) byMech[key] = { name: key, hours: 0, wos_completed: 0, wos_total: 0 }
+        byMech[key].wos_total += 1
+        if (['done', 'good_to_go'].includes(so.status)) byMech[key].wos_completed += 1
+      }
+      return NextResponse.json(Object.values(byMech).sort((a, b) => b.hours - a.hours))
+    }
+
+    case 'trucks': {
+      const { data: sos } = await supabase
+        .from('service_orders')
+        .select('grand_total, created_at, assets!inner(id, unit_number, customers(company_name))')
+        .eq('shop_id', shopId)
+        .gte('created_at', from)
+        .lte('created_at', to + 'T23:59:59')
+
+      const byUnit: Record<string, { unit_number: string; company: string; visits: number; spend: number; last_service: string }> = {}
+      for (const so of sos || []) {
+        const a = so.assets as any
+        const key = a?.id || 'unknown'
+        if (!byUnit[key]) byUnit[key] = { unit_number: a?.unit_number || '—', company: a?.customers?.company_name || '—', visits: 0, spend: 0, last_service: '' }
+        byUnit[key].visits += 1
+        byUnit[key].spend += so.grand_total || 0
+        if (!byUnit[key].last_service || so.created_at > byUnit[key].last_service) byUnit[key].last_service = so.created_at
+      }
+      return NextResponse.json(Object.values(byUnit).sort((a, b) => b.visits - a.visits))
+    }
+
+    case 'low_stock': {
+      const { data: parts } = await supabase
+        .from('parts')
+        .select('part_number, description, on_hand, reorder_point, cost_price')
+        .eq('shop_id', shopId)
+        .order('on_hand', { ascending: true })
+        .limit(20)
+
+      return NextResponse.json((parts || []).filter((p: any) => p.on_hand <= (p.reorder_point || 2)))
+    }
+
     default:
       return NextResponse.json({ error: 'Unknown report type' }, { status: 400 })
   }
