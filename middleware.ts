@@ -114,8 +114,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(newPath, request.url))
   }
 
-  // Mechanic dashboard — accessible to all logged-in users (page handles role check)
-  if (pathname.startsWith('/mechanic')) {
+  // Mechanic + Floor Manager dashboards — accessible to logged-in users (pages handle role checks)
+  if (pathname.startsWith('/mechanic') || pathname.startsWith('/floor-manager')) {
     if (!user) return NextResponse.redirect(new URL('/login', request.url))
     return response
   }

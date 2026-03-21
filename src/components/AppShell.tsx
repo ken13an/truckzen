@@ -8,7 +8,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
-const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password', '/tech', '/offline', '/403', '/mechanic']
+const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password', '/tech', '/offline', '/403', '/mechanic', '/floor-manager']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
