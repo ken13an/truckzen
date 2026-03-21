@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logAction } from '@/lib/services/auditLog'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -118,6 +119,9 @@ export async function POST(req: Request) {
     user_id: user_id || null,
     action: `Created work order ${woNum}`,
   })
+
+  // Fire and forget
+  logAction({ shop_id, user_id, action: 'wo.created', entity_type: 'service_order', entity_id: wo.id, details: { so_number: wo.so_number } }).catch(() => {})
 
   return NextResponse.json(wo, { status: 201 })
 }

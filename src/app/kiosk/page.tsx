@@ -6,6 +6,7 @@ import Logo from '@/components/Logo'
 import AITextInput from '@/components/ai-text-input'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { VinInput } from '@/components/shared/VinInput'
 
 // ---------------------------------------------------------------------------
 // Translations
@@ -372,7 +373,24 @@ export default function KioskPage() {
     setShopId(sid)
 
     if (!sid) {
-      setShopError(true)
+      // If logged in, auto-redirect to their shop's kiosk
+      const sb = createClient()
+      ;(async () => {
+        try {
+          const { data: { user } } = await sb.auth.getUser()
+          if (user) {
+            const { data: profile } = await sb.from('users').select('shop_id').eq('id', user.id).single()
+            if (profile?.shop_id) {
+              const { data: shop } = await sb.from('shops').select('kiosk_code').eq('id', profile.shop_id).single()
+              if (shop?.kiosk_code) {
+                window.location.replace(`/kiosk/${shop.kiosk_code}`)
+                return
+              }
+            }
+          }
+        } catch {}
+        setShopError(true)
+      })()
       return
     }
 
@@ -936,7 +954,11 @@ export default function KioskPage() {
                   </div>
                   <div>
                     <label style={labelStyle}>{t('vin')} (17)</label>
-                    <input style={{ ...inputStyle, letterSpacing: '0.05em' }} placeholder="1HGBH41JXMN109186" maxLength={17} value={newUnit.vin} onChange={e => setNewUnit({ ...newUnit, vin: e.target.value.toUpperCase() })} />
+                    <VinInput
+                      value={newUnit.vin}
+                      onChange={(v) => setNewUnit({ ...newUnit, vin: v })}
+                      theme="dark"
+                    />
                   </div>
                   <div>
                     <label style={labelStyle}>{t('mileage')}</label>

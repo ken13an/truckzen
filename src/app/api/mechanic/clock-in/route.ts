@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logAction } from '@/lib/services/auditLog'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -57,6 +58,9 @@ export async function POST(req: Request) {
     console.error('[Clock In] Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  // Fire and forget
+  logAction({ shop_id: sId, user_id, action: 'time.clock_in', entity_type: 'time_entry', entity_id: entry.id }).catch(() => {})
 
   return NextResponse.json(entry)
 }

@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { ChevronLeft } from 'lucide-react'
+import { VinInput } from '@/components/shared/VinInput'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -386,7 +387,19 @@ export default function UnitProfilePage() {
             </div>
             <div>
               <label style={labelStyle}>VIN</label>
-              <input style={inputStyle} value={editForm.vin || ''} onChange={(e) => setEditForm({ ...editForm, vin: e.target.value })} />
+              <VinInput
+                value={editForm.vin || ''}
+                onChange={(v) => setEditForm({ ...editForm, vin: v })}
+                onDecode={(result) => {
+                  setEditForm((prev: any) => ({
+                    ...prev,
+                    ...(result.year ? { year: String(result.year) } : {}),
+                    ...(result.make ? { make: result.make } : {}),
+                    ...(result.model ? { model: result.model } : {}),
+                  }))
+                }}
+                theme="dark"
+              />
             </div>
             <div>
               <label style={labelStyle}>Year</label>

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { sendInvoiceEmail } from '@/lib/integrations/resend'
 import { generatePaymentQR } from '@/lib/payments/qr'
+import { logAction } from '@/lib/services/auditLog'
 
 type P = { params: Promise<{ id: string }> }
 
@@ -45,5 +46,9 @@ export async function POST(_req: Request, { params }: P) {
 
   // Mark as sent
   await supabase.from('invoices').update({ status: 'sent' }).eq('id', id)
+
+  // Fire and forget
+  logAction({ shop_id: user.shop_id, user_id: user.id, action: 'invoice.sent', entity_type: 'invoice', entity_id: id }).catch(() => {})
+
   return NextResponse.json({ success: true, messageId: result.id })
 }

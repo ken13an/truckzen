@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { log } from '@/lib/security'
+import { logAction } from '@/lib/services/auditLog'
 
 // ── GET list + POST create ────────────────────────────────────
 export async function GET(req: Request) {
@@ -78,5 +79,9 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   await log('invoice.created', user.shop_id, user.id, { table:'invoices', recordId: inv.id, newData:{ invoice_number: invNum, total } })
+
+  // Fire and forget
+  logAction({ shop_id: user.shop_id, user_id: user.id, action: 'invoice.created', entity_type: 'invoice', entity_id: inv.id, details: { invoice_number: invNum } }).catch(() => {})
+
   return NextResponse.json(inv, { status: 201 })
 }

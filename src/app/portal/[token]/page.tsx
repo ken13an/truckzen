@@ -70,6 +70,12 @@ export default function CustomerPortalPage() {
   const [actionLoading, setActionLoading] = useState('')
   const [declineModal, setDeclineModal] = useState(false)
   const [declineReason, setDeclineReason] = useState('')
+  const [showMyData, setShowMyData] = useState(false)
+  const [myData, setMyData] = useState<any>(null)
+  const [myDataLoading, setMyDataLoading] = useState(false)
+  const [myDataMsg, setMyDataMsg] = useState('')
+  const [deletionConfirm, setDeletionConfirm] = useState(false)
+  const [deletionReason, setDeletionReason] = useState('')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -448,6 +454,13 @@ export default function CustomerPortalPage() {
           </div>
         )}
 
+        {/* My Data & Privacy */}
+        <div style={{ textAlign: 'center', padding: '16px 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <button onClick={() => { setShowMyData(true); if (!myData) { setMyDataLoading(true); fetch(`/api/portal/${token}/my-data`).then(r => r.json()).then(d => { setMyData(d); setMyDataLoading(false) }).catch(() => setMyDataLoading(false)) } }} style={{ background: 'none', border: 'none', color: MUTED, fontSize: 12, cursor: 'pointer', textDecoration: 'underline', fontFamily: FONT }}>
+            My Data & Privacy
+          </button>
+        </div>
+
         {/* Footer */}
         <div style={{ textAlign: 'center', padding: '32px 0 16px', fontSize: 11, color: MUTED }}>
           Powered by TruckZen
@@ -457,6 +470,127 @@ export default function CustomerPortalPage() {
           </div>
         </div>
       </div>
+
+      {/* My Data Modal */}
+      {showMyData && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 16, overflowY: 'auto' }}>
+          <div style={{ background: '#1C1C2A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: isMobile ? 20 : 28, maxWidth: 520, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>My Data & Privacy</div>
+              <button onClick={() => { setShowMyData(false); setMyDataMsg(''); setDeletionConfirm(false); setDeletionReason('') }} style={{ background: 'none', border: 'none', color: MUTED, fontSize: 20, cursor: 'pointer', fontFamily: FONT }}>X</button>
+            </div>
+
+            {myDataLoading && <div style={{ textAlign: 'center', color: MUTED, padding: 24 }}>Loading your data...</div>}
+
+            {myDataMsg && (
+              <div style={{ background: `${GREEN}15`, border: `1px solid ${GREEN}30`, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: GREEN }}>
+                {myDataMsg}
+              </div>
+            )}
+
+            {myData && !myDataLoading && (
+              <>
+                {/* Company info */}
+                {myData.customer && (
+                  <div style={{ ...card(isMobile), marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: MUTED }}>Company Info</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{myData.customer.company_name}</div>
+                    {myData.customer.contact_name && <div style={{ fontSize: 12, color: MUTED }}>{myData.customer.contact_name}</div>}
+                    {myData.customer.email && <div style={{ fontSize: 12, color: MUTED }}>{myData.customer.email}</div>}
+                    {myData.customer.phone && <div style={{ fontSize: 12, color: MUTED }}>{myData.customer.phone}</div>}
+                  </div>
+                )}
+
+                {/* Vehicles */}
+                {myData.vehicles && myData.vehicles.length > 0 && (
+                  <div style={{ ...card(isMobile), marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: MUTED }}>Vehicles</div>
+                    {myData.vehicles.map((v: any, i: number) => (
+                      <div key={i} style={{ padding: '6px 0', borderBottom: i < myData.vehicles.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>Unit #{v.unit_number} - {v.year} {v.make} {v.model}</div>
+                        {v.vin && <div style={{ fontSize: 11, color: MUTED }}>VIN: {v.vin}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Recent service orders */}
+                {myData.service_orders && myData.service_orders.length > 0 && (
+                  <div style={{ ...card(isMobile), marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: MUTED }}>Recent Service Orders</div>
+                    {myData.service_orders.map((so: any, i: number) => (
+                      <div key={i} style={{ padding: '6px 0', borderBottom: i < myData.service_orders.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{so.so_number}</div>
+                        <div style={{ fontSize: 12, color: MUTED }}>{so.complaint?.slice(0, 80) || '-'}</div>
+                        <div style={{ fontSize: 11, color: MUTED }}>{so.created_at ? new Date(so.created_at).toLocaleDateString() : '-'} - {(STATUS_MAP[so.status] || STATUS_MAP.draft).label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Actions */}
+                {!deletionConfirm && (
+                  <div style={{ display: 'flex', gap: 10, marginTop: 16, flexDirection: isMobile ? 'column' : 'row' }}>
+                    <button
+                      onClick={async () => {
+                        setMyDataMsg('')
+                        try {
+                          const res = await fetch(`/api/portal/${token}/my-data`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ request_type: 'export' }) })
+                          if (res.ok) setMyDataMsg('Data export request submitted. The shop will process it shortly.')
+                          else setMyDataMsg('Failed to submit request. Please try again.')
+                        } catch { setMyDataMsg('Failed to submit request. Please try again.') }
+                      }}
+                      style={{ ...btn(BLUE, '#fff', isMobile) }}
+                    >
+                      Request Data Export
+                    </button>
+                    <button
+                      onClick={() => setDeletionConfirm(true)}
+                      style={{ ...btn('transparent', RED, isMobile), border: `1px solid ${RED}40` }}
+                    >
+                      Request Data Deletion
+                    </button>
+                  </div>
+                )}
+
+                {/* Deletion confirmation */}
+                {deletionConfirm && (
+                  <div style={{ ...card(isMobile), border: `1px solid ${RED}40`, background: `${RED}10`, marginTop: 16 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: RED, marginBottom: 8 }}>Are you sure?</div>
+                    <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>The shop will process your data deletion request within 45 days.</div>
+                    <textarea
+                      value={deletionReason}
+                      onChange={e => setDeletionReason(e.target.value)}
+                      placeholder="Reason (optional)"
+                      rows={3}
+                      style={{
+                        width: '100%', padding: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 8, color: TEXT, fontSize: 13, fontFamily: FONT, resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: 12,
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 10, flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'flex-end' }}>
+                      <button onClick={() => { setDeletionConfirm(false); setDeletionReason('') }} style={{ ...btn('transparent', MUTED), border: '1px solid rgba(255,255,255,0.1)', width: isMobile ? '100%' : undefined }}>Cancel</button>
+                      <button
+                        onClick={async () => {
+                          setMyDataMsg('')
+                          try {
+                            const res = await fetch(`/api/portal/${token}/my-data`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ request_type: 'deletion', reason: deletionReason }) })
+                            if (res.ok) { setMyDataMsg('Data deletion request submitted. The shop will process it within 45 days.'); setDeletionConfirm(false); setDeletionReason('') }
+                            else setMyDataMsg('Failed to submit request. Please try again.')
+                          } catch { setMyDataMsg('Failed to submit request. Please try again.') }
+                        }}
+                        style={btn(RED, '#fff', isMobile)}
+                      >
+                        Confirm Deletion Request
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Decline Modal */}
       {declineModal && (

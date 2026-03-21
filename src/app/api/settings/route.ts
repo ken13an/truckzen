@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logAction } from '@/lib/services/auditLog'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -32,6 +33,9 @@ export async function PATCH(req: Request) {
 
   const { error } = await s.from('shops').update(updates).eq('id', shop_id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Fire and forget
+  logAction({ shop_id, user_id: '', action: 'settings.updated', entity_type: 'shop', entity_id: shop_id }).catch(() => {})
 
   return NextResponse.json({ ok: true })
 }

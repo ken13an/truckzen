@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { workStartedEmail } from '@/lib/emails/workStarted'
 import { truckReadyEmail } from '@/lib/emails/truckReady'
+import { logAction } from '@/lib/services/auditLog'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -97,6 +98,11 @@ export async function PATCH(req: Request, { params }: Params) {
   if (body.user_id) {
     const changes = Object.keys(update).filter(k => k !== 'updated_at').join(', ')
     await s.from('wo_activity_log').insert({ wo_id: id, user_id: body.user_id, action: `Updated: ${changes}` })
+  }
+
+  // Fire and forget audit log
+  if (update.status) {
+    logAction({ shop_id: data.shop_id, user_id: body.user_id || '', action: 'wo.status_changed', entity_type: 'service_order', entity_id: id, details: { status: update.status } }).catch(() => {})
   }
 
   // Fire-and-forget email notifications on status change

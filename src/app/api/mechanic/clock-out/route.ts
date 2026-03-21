@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logAction } from '@/lib/services/auditLog'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -48,6 +49,9 @@ export async function POST(req: Request) {
     .not('duration_minutes', 'is', null)
 
   const totalMinutes = (totals || []).reduce((sum: number, t: any) => sum + (t.duration_minutes || 0), 0)
+
+  // Fire and forget
+  logAction({ shop_id: '', user_id: user_id || '', action: 'time.clock_out', entity_type: 'time_entry', entity_id: time_entry_id, details: { duration_minutes: durationMinutes } }).catch(() => {})
 
   return NextResponse.json({
     duration_minutes: durationMinutes,

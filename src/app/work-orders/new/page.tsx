@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import AITextInput from '@/components/ai-text-input'
+import { VinInput } from '@/components/shared/VinInput'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 
@@ -101,6 +102,14 @@ export default function NewWorkOrderPage() {
   const [step, setStep] = useState<'edit' | 'review'>('edit')
   const [aiLoading, setAiLoading] = useState(false)
   const [jobLines, setJobLines] = useState<any[]>([])
+
+  // New unit inline form
+  const [showNewUnit, setShowNewUnit] = useState(false)
+  const [newUnitNumber, setNewUnitNumber] = useState('')
+  const [newUnitVin, setNewUnitVin] = useState('')
+  const [newUnitYear, setNewUnitYear] = useState('')
+  const [newUnitMake, setNewUnitMake] = useState('')
+  const [newUnitModel, setNewUnitModel] = useState('')
 
   // Step 5: Submit
   const [submitting, setSubmitting] = useState(false)
@@ -213,6 +222,15 @@ export default function NewWorkOrderPage() {
           complaint: complaint.trim(),
           priority,
           job_lines: jobLines.filter((l: any) => (typeof l === 'string' ? l.trim() : l.description?.trim())),
+          ...(showNewUnit && newUnitNumber.trim() ? {
+            new_unit: {
+              unit_number: newUnitNumber.trim(),
+              vin: newUnitVin || null,
+              year: newUnitYear ? Number(newUnitYear) : null,
+              make: newUnitMake || null,
+              model: newUnitModel || null,
+            }
+          } : {}),
         }),
       })
       if (!res.ok) {
@@ -396,6 +414,57 @@ export default function NewWorkOrderPage() {
                     </div>
                   )
                 })}
+              </div>
+            )}
+
+            {/* Add new unit inline */}
+            {!showNewUnit ? (
+              <button
+                onClick={() => { setShowNewUnit(true); setSelectedAsset(null) }}
+                style={{ ...btnSecondary, marginTop: 12, fontSize: 12 }}
+              >
+                + Add New Unit
+              </button>
+            ) : (
+              <div style={{ marginTop: 12, padding: 16, border: '1px solid #E5E7EB', borderRadius: 10, background: '#F9FAFB' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A', marginBottom: 12, fontFamily: FONT }}>New Unit</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <div style={labelStyle}>Unit Number</div>
+                    <input style={inputStyle} placeholder="e.g. 2717" value={newUnitNumber} onChange={e => setNewUnitNumber(e.target.value)} />
+                  </div>
+                  <div>
+                    <div style={labelStyle}>Year</div>
+                    <input style={inputStyle} type="number" placeholder="e.g. 2022" value={newUnitYear} onChange={e => setNewUnitYear(e.target.value)} />
+                  </div>
+                  <div>
+                    <div style={labelStyle}>Make</div>
+                    <input style={inputStyle} placeholder="e.g. Freightliner" value={newUnitMake} onChange={e => setNewUnitMake(e.target.value)} />
+                  </div>
+                  <div>
+                    <div style={labelStyle}>Model</div>
+                    <input style={inputStyle} placeholder="e.g. Cascadia" value={newUnitModel} onChange={e => setNewUnitModel(e.target.value)} />
+                  </div>
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <div style={labelStyle}>VIN</div>
+                  <VinInput
+                    value={newUnitVin}
+                    onChange={setNewUnitVin}
+                    onDecode={(result) => {
+                      if (result.year) setNewUnitYear(String(result.year))
+                      if (result.make) setNewUnitMake(result.make)
+                      if (result.model) setNewUnitModel(result.model)
+                    }}
+                    theme="light"
+                  />
+                </div>
+                <button
+                  onClick={() => { setShowNewUnit(false); setNewUnitNumber(''); setNewUnitVin(''); setNewUnitYear(''); setNewUnitMake(''); setNewUnitModel('') }}
+                  style={{ ...btnSecondary, marginTop: 10, fontSize: 12 }}
+                >
+                  Cancel
+                </button>
               </div>
             )}
           </div>
