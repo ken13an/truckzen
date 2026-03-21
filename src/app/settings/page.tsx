@@ -61,7 +61,7 @@ export default function SettingsPage() {
 
   async function saveShop() {
     setSaving(true)
-    await supabase.from('shops').update({ name: editShop.name, dba: editShop.dba, phone: editShop.phone, email: editShop.email, address: editShop.address }).eq('id', shop.id)
+    await supabase.from('shops').update({ name: editShop.name, dba: editShop.dba, phone: editShop.phone, email: editShop.email, address: editShop.address, maintenance_coordinator_phone: editShop.maintenance_coordinator_phone || null }).eq('id', shop.id)
     setShop(editShop); setSaving(false); setEditing(false)
   }
 
@@ -166,6 +166,7 @@ export default function SettingsPage() {
               <label style={S.label}>Phone</label><input style={S.input} value={editShop.phone || ''} onChange={e => setEditShop({ ...editShop, phone: e.target.value })} />
               <label style={S.label}>Email</label><input style={S.input} type="email" value={editShop.email || ''} onChange={e => setEditShop({ ...editShop, email: e.target.value })} />
               <label style={S.label}>Address</label><input style={S.input} value={editShop.address || ''} onChange={e => setEditShop({ ...editShop, address: e.target.value })} />
+              <label style={S.label}>Maintenance Coordinator Phone</label><input style={S.input} value={editShop.maintenance_coordinator_phone || ''} onChange={e => setEditShop({ ...editShop, maintenance_coordinator_phone: e.target.value })} placeholder="+1 (555) 123-4567" />
               <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
                 <button style={S.btn} onClick={saveShop} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
                 <button style={{ ...S.btn, background: 'transparent', border: '1px solid rgba(255,255,255,.1)', color: '#9D9DA1' }} onClick={() => setEditing(false)}>Cancel</button>
@@ -179,6 +180,7 @@ export default function SettingsPage() {
                 { label: 'Phone', value: shop.phone },
                 { label: 'Email', value: shop.email },
                 { label: 'Address', value: shop.address },
+                { label: 'Maintenance Coordinator Phone', value: shop.maintenance_coordinator_phone },
               ].map(f => (
                 <div key={f.label}><label style={S.label}>{f.label}</label><div style={S.val}>{f.value || '—'}</div></div>
               ))}
