@@ -107,7 +107,6 @@ export async function POST(req: Request) {
       description: lineText.trim(),
       quantity: 0,
       unit_price: 0,
-      total_price: 0,
       line_status: 'unassigned',
       required_skills: lineSkills,
     })
