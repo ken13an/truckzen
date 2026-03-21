@@ -359,7 +359,6 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   }, [kioskCode])
 
   const handlePinDigit = (digit: string) => {
-    console.log('[KioskPIN] Digit pressed:', digit, 'Current:', pinRef.current)
     if (pinLocked > 0) return
     const next = pinRef.current + digit
     pinRef.current = next
@@ -368,12 +367,9 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
     if (next.length === 4) {
       // Verify PIN
-      const url = `/api/kiosk/verify-pin?code=${kioskCode}&pin=${next}`
-      console.log('[KioskPIN] Verifying:', url)
-      fetch(url)
-        .then(r => { console.log('[KioskPIN] Response status:', r.status); return r.json() })
+      fetch(`/api/kiosk/verify-pin?code=${kioskCode}&pin=${next}`)
+        .then(r => r.json())
         .then(data => {
-          console.log('[KioskPIN] Response data:', JSON.stringify(data))
           if (data.valid) {
             if (kioskCode) sessionStorage.setItem(`kiosk_pin_${kioskCode}`, 'true')
             setPinAuthed(true)
@@ -395,6 +391,42 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   }
 
   const handlePinBackspace = () => { pinRef.current = pinRef.current.slice(0, -1); setPinInput(pinRef.current); setPinError('') }
+
+  // ---- ALL remaining hooks must be BEFORE conditional returns (React Rules of Hooks) ----
+  const [lang, setLang] = useState('en')
+  const [step, setStep] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null)
+  const [selectedUnit, setSelectedUnit] = useState<any | null>(null)
+  const [concernText, setConcernText] = useState('')
+  const [parkedLocation, setParkedLocation] = useState('')
+  const [keysLeft, setKeysLeft] = useState<'in_truck' | 'front_desk' | 'no'>('in_truck')
+  const [staying, setStaying] = useState<boolean | null>(null)
+  const [needByDate, setNeedByDate] = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]
+  })
+  const [needByTime, setNeedByTime] = useState('17:00')
+  const [priority, setPriority] = useState<'routine' | 'urgent' | 'breakdown'>('routine')
+  const [authType, setAuthType] = useState<'estimate_first' | 'go_ahead'>('estimate_first')
+  const [authLimit, setAuthLimit] = useState<number | null>(null)
+  const [contactEmail, setContactEmail] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [customerResults, setCustomerResults] = useState<any[]>([])
+  const [unitSearch, setUnitSearch] = useState('')
+  const [unitResults, setUnitResults] = useState<any[]>([])
+  const [showNewCustomer, setShowNewCustomer] = useState(false)
+  const [showNewUnit, setShowNewUnit] = useState(false)
+  const [newCustomer, setNewCustomer] = useState<NewCustomer>({ company_name: '', dot_number: '', mc_number: '', contact_name: '', phone: '', email: '' })
+  const [newUnit, setNewUnit] = useState<NewUnit>({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' })
+  const [submitting, setSubmitting] = useState(false)
+  const [result, setResult] = useState<{ wo_number: string; portal_token: string } | null>(null)
+  const [recording, setRecording] = useState(false)
+  const [privacyConsent, setPrivacyConsent] = useState(false)
+  const recognitionRef = useRef<any>(null)
+  const idleRef = useRef<any>(null)
+
+  const t = (key: string) => T[lang]?.[key] || T.en[key] || key
 
   if (pinLoading) {
     return (
@@ -458,47 +490,6 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   }
 
   // ---- Main Kiosk Flow (PIN verified) ----
-  // ---- State ----
-  const [lang, setLang] = useState('en')
-  const [step, setStep] = useState(0)
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null)
-  const [selectedUnit, setSelectedUnit] = useState<any | null>(null)
-
-  const [concernText, setConcernText] = useState('')
-  const [parkedLocation, setParkedLocation] = useState('')
-  const [keysLeft, setKeysLeft] = useState<'in_truck' | 'front_desk' | 'no'>('in_truck')
-  const [staying, setStaying] = useState<boolean | null>(null)
-  const [needByDate, setNeedByDate] = useState(() => {
-    const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]
-  })
-  const [needByTime, setNeedByTime] = useState('17:00')
-  const [priority, setPriority] = useState<'routine' | 'urgent' | 'breakdown'>('routine')
-  const [authType, setAuthType] = useState<'estimate_first' | 'go_ahead'>('estimate_first')
-  const [authLimit, setAuthLimit] = useState<number | null>(null)
-  const [contactEmail, setContactEmail] = useState('')
-  const [contactPhone, setContactPhone] = useState('')
-
-  const [customerSearch, setCustomerSearch] = useState('')
-  const [customerResults, setCustomerResults] = useState<any[]>([])
-  const [unitSearch, setUnitSearch] = useState('')
-  const [unitResults, setUnitResults] = useState<any[]>([])
-
-  const [showNewCustomer, setShowNewCustomer] = useState(false)
-  const [showNewUnit, setShowNewUnit] = useState(false)
-  const [newCustomer, setNewCustomer] = useState<NewCustomer>({ company_name: '', dot_number: '', mc_number: '', contact_name: '', phone: '', email: '' })
-  const [newUnit, setNewUnit] = useState<NewUnit>({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' })
-
-  const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<{ wo_number: string; portal_token: string } | null>(null)
-  const [recording, setRecording] = useState(false)
-  const [privacyConsent, setPrivacyConsent] = useState(false)
-
-  const recognitionRef = useRef<any>(null)
-  const idleRef = useRef<any>(null)
-
-  const t = (key: string) => T[lang]?.[key] || T.en[key] || key
 
   // ---- Admin check ----
   useEffect(() => {
