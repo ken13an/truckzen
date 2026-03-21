@@ -361,17 +361,21 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   }, [kioskCode])
 
   const handlePinDigit = (digit: string) => {
+    console.log('[KioskPIN] Digit pressed:', digit, 'Current:', pinRef.current)
     if (pinLocked > 0) return
     const next = pinRef.current + digit
     pinRef.current = next
     setPinInput(next)
     setPinError('')
 
-    if (next.length >= 4) {
+    if (next.length === 4) {
       // Verify PIN
-      fetch(`/api/kiosk/verify-pin?code=${kioskCode}&pin=${next}`)
-        .then(r => r.json())
+      const url = `/api/kiosk/verify-pin?code=${kioskCode}&pin=${next}`
+      console.log('[KioskPIN] Verifying:', url)
+      fetch(url)
+        .then(r => { console.log('[KioskPIN] Response status:', r.status); return r.json() })
         .then(data => {
+          console.log('[KioskPIN] Response data:', JSON.stringify(data))
           if (data.valid) {
             if (kioskCode) sessionStorage.setItem(`kiosk_pin_${kioskCode}`, 'true')
             setPinAuthed(true)
