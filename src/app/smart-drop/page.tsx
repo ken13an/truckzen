@@ -134,6 +134,15 @@ export default function SmartDropPage() {
   // Customer match overrides
   const [customerOverrides, setCustomerOverrides] = useState<Record<number, string>>({})
 
+  // Fullbay integration
+  const [mode, setMode] = useState<'upload' | 'fullbay'>('upload')
+  const [fbConnected, setFbConnected] = useState<boolean | null>(null)
+  const [fbName, setFbName] = useState('')
+  const [fbPreview, setFbPreview] = useState<any[]>([])
+  const [fbPreviewType, setFbPreviewType] = useState('')
+  const [fbSyncing, setFbSyncing] = useState<string | null>(null)
+  const [fbResult, setFbResult] = useState<any>(null)
+
   const [toast, setToast] = useState('')
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
@@ -143,6 +152,14 @@ export default function SmartDropPage() {
       setUser(p)
       fetchHistory(p.shop_id)
     })
+  }, [])
+
+  // Check Fullbay connection on mount
+  useEffect(() => {
+    fetch('/api/fullbay/test-connection').then(r => r.json()).then(d => {
+      setFbConnected(d.ok)
+      if (d.name) setFbName(d.name)
+    }).catch(() => setFbConnected(false))
   }, [])
 
   async function fetchHistory(shopId: string) {
@@ -425,6 +442,38 @@ export default function SmartDropPage() {
     }
   }
 
+  async function fbLoadPreview(type: string) {
+    setFbPreviewType(type)
+    setFbPreview([])
+    try {
+      const res = await fetch(`/api/fullbay/preview/${type}`)
+      if (!res.ok) { const d = await res.json(); flash(d.error || 'Preview failed'); return }
+      const data = await res.json()
+      setFbPreview(data.mapped || [])
+    } catch (err: any) {
+      flash(err.message || 'Preview failed')
+    }
+  }
+
+  async function fbSync(type: string) {
+    if (!user) return
+    setFbSyncing(type)
+    setFbResult(null)
+    try {
+      const res = await fetch(`/api/fullbay/sync/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shop_id: user.shop_id }),
+      })
+      const data = await res.json()
+      if (!res.ok) { flash(data.error || 'Sync failed'); setFbSyncing(null); return }
+      setFbResult({ type, ...data })
+    } catch (err: any) {
+      flash(err.message || 'Sync failed')
+    }
+    setFbSyncing(null)
+  }
+
   function reset() {
     setStep(1); setAllRows([]); setHeaders([]); setColMappings([]); setPreviewRows([]); setResult(null); setFileName(''); setCustomerOverrides({})
   }
@@ -442,7 +491,128 @@ export default function SmartDropPage() {
       {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: BLUE, color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: TEXT, marginBottom: 4 }}>Smart Drop</div>
-      <div style={{ fontSize: 12, color: DIM, marginBottom: 24 }}>Upload Excel or CSV files. Columns are auto-mapped using AI + smart matching.</div>
+      <div style={{ fontSize: 12, color: DIM, marginBottom: 16 }}>Upload Excel or CSV files. Columns are auto-mapped using AI + smart matching.</div>
+
+      {/* Mode toggle */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button onClick={() => setMode('upload')} style={{
+          flex: 1, padding: '14px 20px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+          border: mode === 'upload' ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
+          background: mode === 'upload' ? 'rgba(29,111,232,.1)' : CARD_BG,
+          color: mode === 'upload' ? '#4D9EFF' : DIM,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload
+        </button>
+        <button onClick={() => setMode('fullbay')} style={{
+          flex: 1, padding: '14px 20px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+          border: mode === 'fullbay' ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
+          background: mode === 'fullbay' ? 'rgba(29,111,232,.1)' : CARD_BG,
+          color: mode === 'fullbay' ? '#4D9EFF' : DIM,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+          Fullbay
+        </button>
+      </div>
+
+      {/* ═══ FULLBAY MODE ═══ */}
+      {mode === 'fullbay' && (
+        <>
+          {/* Connection status */}
+          <div style={{
+            ...card, padding: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10,
+            borderColor: fbConnected === true ? GREEN : fbConnected === false ? RED : BORDER,
+          }}>
+            <div style={{
+              width: 10, height: 10, borderRadius: '50%',
+              background: fbConnected === true ? GREEN : fbConnected === false ? RED : DIM,
+            }} />
+            <div style={{ fontSize: 13, fontWeight: 600 }}>
+              {fbConnected === null && <span style={{ color: DIM }}>Checking Fullbay connection...</span>}
+              {fbConnected === true && <span style={{ color: GREEN }}>Connected to Fullbay{fbName ? ` \u2014 ${fbName}` : ''}</span>}
+              {fbConnected === false && <span style={{ color: RED }}>Fullbay not connected. Add FULLBAY_API_KEY in environment variables.</span>}
+            </div>
+          </div>
+
+          {/* Sync result banner */}
+          {fbResult && (
+            <div style={{ ...card, padding: 14, marginBottom: 16, borderColor: GREEN }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: GREEN, marginBottom: 8 }}>
+                Sync Complete — {fbResult.type}
+              </div>
+              <div style={{ display: 'flex', gap: 20, fontSize: 12 }}>
+                <span><span style={{ fontWeight: 700, color: GREEN }}>{fbResult.imported}</span> <span style={{ color: DIM }}>imported</span></span>
+                <span><span style={{ fontWeight: 700, color: AMBER }}>{fbResult.updated}</span> <span style={{ color: DIM }}>updated</span></span>
+                <span><span style={{ fontWeight: 700, color: RED }}>{fbResult.skipped}</span> <span style={{ color: DIM }}>skipped</span></span>
+                <span><span style={{ fontWeight: 700, color: TEXT }}>{fbResult.total_pulled}</span> <span style={{ color: DIM }}>total pulled</span></span>
+              </div>
+            </div>
+          )}
+
+          {/* Sync sections */}
+          {(['customers', 'trucks', 'parts'] as const).map(type => (
+            <div key={type} style={{ ...card, padding: 16, marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'capitalize' }}>{type}</div>
+                  <div style={{ fontSize: 11, color: DIM, marginTop: 2 }}>
+                    Pull {type} from Fullbay into TruckZen
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => fbLoadPreview(type)}
+                    disabled={!fbConnected || fbSyncing !== null}
+                    style={{
+                      ...btnSecondary, fontSize: 11, padding: '7px 14px',
+                      opacity: !fbConnected || fbSyncing !== null ? 0.4 : 1,
+                    }}
+                  >
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => fbSync(type)}
+                    disabled={!fbConnected || fbSyncing !== null}
+                    style={{
+                      ...btnPrimary, fontSize: 11, padding: '7px 14px',
+                      opacity: !fbConnected || fbSyncing !== null ? 0.4 : 1,
+                    }}
+                  >
+                    {fbSyncing === type ? 'Syncing...' : 'Sync All'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Preview table */}
+              {fbPreviewType === type && fbPreview.length > 0 && (
+                <div style={{ marginTop: 12, overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                    <thead>
+                      <tr>
+                        {Object.keys(fbPreview[0]).filter(k => k !== 'source' && k !== 'external_id' && k !== 'status').map(k => (
+                          <th key={k} style={th}>{k.replace(/_/g, ' ')}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fbPreview.map((row, i) => (
+                        <tr key={i}>
+                          {Object.entries(row).filter(([k]) => k !== 'source' && k !== 'external_id' && k !== 'status').map(([k, v]) => (
+                            <td key={k} style={td}>{v != null ? String(v) : '\u2014'}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* ═══ UPLOAD MODE ═══ */}
+      {mode === 'upload' && <>
 
       {/* Step indicator */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
@@ -766,6 +936,8 @@ export default function SmartDropPage() {
           </div>
         </div>
       )}
+
+      </>}
     </div>
   )
 }
