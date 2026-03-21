@@ -75,6 +75,9 @@ export default function WorkOrderDetail() {
   const [newChargeAmt, setNewChargeAmt] = useState('')
   const [newPartForms, setNewPartForms] = useState<Record<string, { desc: string; pn: string; qty: string; cost: string }>>({})
   const [approvalModal, setApprovalModal] = useState(false)
+  const [qcLoading, setQcLoading] = useState(false)
+  const [qcErrors, setQcErrors] = useState<string[]>([])
+  const [showQcErrors, setShowQcErrors] = useState(false)
 
   // DATA LOADING
   const loadData = useCallback(async () => {
@@ -377,6 +380,15 @@ export default function WorkOrderDetail() {
             <span style={{ fontSize: 26, fontWeight: 800 }}>WO-{wo.wo_number || wo.id?.slice(0, 6)}</span>
             <span style={pillStyle(woStatus.bg, woStatus.color)}>{woStatus.label}</span>
             {wo.payment_terms === 'cod' && <span style={pillStyle('#FEF2F2', RED)}>COD</span>}
+            {wo.invoice_status && wo.invoice_status !== 'draft' && (() => {
+              const IS: Record<string, { label: string; bg: string; color: string }> = {
+                quality_check_failed: { label: 'QC Failed', bg: '#FEF2F2', color: RED },
+                pending_accounting:   { label: 'Pending Accounting', bg: '#FFFBEB', color: AMBER },
+                accounting_approved:  { label: 'Acct. Approved', bg: '#F0FDF4', color: GREEN },
+                sent_to_customer:     { label: 'Sent to Customer', bg: '#EFF6FF', color: BLUE },
+              }
+              const s = IS[wo.invoice_status]; return s ? <span style={pillStyle(s.bg, s.color)}>{s.label}</span> : null
+            })()}
           </div>
           {customer.company_name && (
             <a href={`/customers/${customer.id}`} style={{ color: BLUE, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
@@ -450,6 +462,36 @@ export default function WorkOrderDetail() {
           )}
         </div>
         <div style={{ flex: 1 }} />
+        {(!wo.invoice_status || wo.invoice_status === 'draft' || wo.invoice_status === 'quality_check_failed') && (
+          <button
+            onClick={async () => {
+              setQcLoading(true); setQcErrors([]); setShowQcErrors(false)
+              try {
+                const res = await fetch(`/api/work-orders/${id}/quality-check`, {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'check', user_id: user?.id }),
+                })
+                const data = await res.json()
+                if (data.passed) {
+                  if (confirm('Quality check passed! Send to accounting for review?')) {
+                    const res2 = await fetch(`/api/work-orders/${id}/quality-check`, {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ action: 'send_to_accounting', user_id: user?.id }),
+                    })
+                    if (res2.ok) await loadData()
+                  }
+                } else {
+                  setQcErrors(data.errors || ['Unknown error']); setShowQcErrors(true)
+                }
+              } catch { setQcErrors(['Failed to run quality check']); setShowQcErrors(true) }
+              setQcLoading(false)
+            }}
+            disabled={qcLoading}
+            style={{ ...btnStyle(BLUE, '#fff'), opacity: qcLoading ? 0.5 : 1, whiteSpace: 'nowrap' }}
+          >
+            {qcLoading ? 'Checking...' : 'Send to Accounting'}
+          </button>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <label style={{ ...labelStyle, marginBottom: 0 }}>Mileage</label>
           <input
@@ -465,6 +507,19 @@ export default function WorkOrderDetail() {
           />
         </div>
       </div>
+
+      {/* QC ERRORS */}
+      {showQcErrors && qcErrors.length > 0 && (
+        <div style={{ ...cardStyle, background: '#FEF2F2', border: '1px solid #FECACA', marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: RED }}>Quality Check Failed</span>
+            <button onClick={() => setShowQcErrors(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, fontSize: 16, fontFamily: FONT }}>&times;</button>
+          </div>
+          <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 12, color: '#991B1B', lineHeight: 1.8 }}>
+            {qcErrors.map((e, i) => <li key={i}>{e}</li>)}
+          </ul>
+        </div>
+      )}
 
       {/* ========== TAB 0: OVERVIEW ========== */}
       {tab === 0 && (
