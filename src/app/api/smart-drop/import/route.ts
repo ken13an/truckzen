@@ -3,9 +3,17 @@ import { createClient } from '@supabase/supabase-js'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
+export async function DELETE(req: Request) {
+  const s = db()
+  const { batch_id, shop_id } = await req.json()
+  if (!batch_id || !shop_id) return NextResponse.json({ error: 'batch_id and shop_id required' }, { status: 400 })
+  const { count } = await s.from('parts').delete({ count: 'exact' }).eq('import_batch_id', batch_id).eq('shop_id', shop_id)
+  return NextResponse.json({ deleted: count || 0 })
+}
+
 export async function POST(req: Request) {
   const s = db()
-  const { type, rows, shop_id } = await req.json()
+  const { type, rows, shop_id, batch_id } = await req.json()
 
   if (!type || !rows || !shop_id) {
     return NextResponse.json({ error: 'type, rows, and shop_id required' }, { status: 400 })
@@ -145,6 +153,67 @@ export async function POST(req: Request) {
         } catch (err: any) {
           skipped++
           errors.push(`${err.message}`)
+        }
+      }
+    }
+  }
+
+  if (type === 'parts') {
+    const BATCH = 50
+    for (let i = 0; i < rows.length; i += BATCH) {
+      const batch = rows.slice(i, i + BATCH)
+      for (const row of batch) {
+        try {
+          if (!row.description?.trim()) { skipped++; errors.push(`Row ${i + batch.indexOf(row) + 1}: Missing description`); continue }
+
+          // Clean numeric fields
+          const costPrice = parseFloat(String(row.cost_price || '0').replace(/[$,]/g, '')) || 0
+          const sellPrice = parseFloat(String(row.sell_price || '0').replace(/[$,]/g, '')) || 0
+          const onHand = Math.round(parseFloat(String(row.on_hand || '0').replace(/[^0-9.-]/g, '')) || 0)
+          const reorderPoint = Math.round(parseFloat(String(row.reorder_point || '0').replace(/[^0-9.-]/g, '')) || 0)
+
+          // Dedup by part_number + description
+          if (row.part_number?.trim()) {
+            const { data: existing } = await s.from('parts')
+              .select('id')
+              .eq('shop_id', shop_id)
+              .eq('part_number', row.part_number.trim())
+              .limit(1)
+            if (existing && existing.length > 0) {
+              // Update existing
+              await s.from('parts').update({
+                description: row.description.trim(),
+                category: row.category || null,
+                cost_price: costPrice,
+                sell_price: sellPrice,
+                on_hand: onHand,
+                reorder_point: reorderPoint,
+                vendor: row.vendor || null,
+                bin_location: row.bin_location || null,
+                import_batch_id: batch_id || null,
+              }).eq('id', existing[0].id)
+              updated++
+              continue
+            }
+          }
+
+          await s.from('parts').insert({
+            shop_id,
+            part_number: row.part_number?.trim() || null,
+            description: row.description.trim(),
+            category: row.category || null,
+            cost_price: costPrice,
+            sell_price: sellPrice,
+            on_hand: onHand,
+            reorder_point: reorderPoint,
+            vendor: row.vendor || null,
+            bin_location: row.bin_location || null,
+            import_batch_id: batch_id || null,
+          })
+          imported++
+        } catch (err: any) {
+          skipped++
+          errors.push(`Row ${i + batch.indexOf(row) + 1}: ${err.message || 'Unknown error'}`)
         }
       }
     }

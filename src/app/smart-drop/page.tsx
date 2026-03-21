@@ -26,12 +26,12 @@ type MappedField = keyof typeof COLUMN_ALIASES | '__unmapped'
 
 interface ColMapping { header: string; field: MappedField; confidence: number }
 
-function fuzzyMatch(header: string): { field: MappedField; confidence: number } {
+function fuzzyMatch(header: string, aliasMap?: Record<string, string[]>): { field: string; confidence: number } {
   const h = header.toLowerCase().trim()
-  let bestField: MappedField = '__unmapped'
+  let bestField = '__unmapped'
   let bestScore = 0
 
-  for (const [field, aliases] of Object.entries(COLUMN_ALIASES)) {
+  for (const [field, aliases] of Object.entries(aliasMap || COLUMN_ALIASES)) {
     for (const alias of aliases) {
       const a = alias.toLowerCase()
       let score = 0
@@ -53,7 +53,20 @@ function fuzzyMatch(header: string): { field: MappedField; confidence: number } 
   return { field: bestScore >= 70 ? bestField : '__unmapped', confidence: bestScore }
 }
 
-type ImportType = 'trucks' | 'companies' | 'contacts'
+type ImportType = 'trucks' | 'companies' | 'contacts' | 'parts'
+
+// Parts-specific column aliases
+const PARTS_ALIASES: Record<string, string[]> = {
+  part_number:      ['part #', 'part number', 'sku', 'item code', 'item #', 'pn', 'number'],
+  description:      ['description', 'name', 'item name', 'part name', 'desc', 'item description'],
+  category:         ['category', 'type', 'group', 'class'],
+  cost_price:       ['cost', 'buy price', 'unit cost', 'cost price', 'purchase price'],
+  sell_price:       ['price', 'sell price', 'retail', 'retail price', 'list price', 'sell'],
+  on_hand:          ['qty', 'stock', 'on hand', 'quantity', 'qty on hand', 'in stock', 'count'],
+  reorder_point:    ['reorder', 'reorder point', 'min stock', 'min qty', 'minimum'],
+  vendor:           ['vendor', 'supplier', 'mfg', 'manufacturer', 'brand'],
+  bin_location:     ['location', 'bin', 'shelf', 'bin location', 'rack', 'aisle'],
+}
 
 function detectSheetType(name: string, headers: string[]): ImportType {
   const n = name.toLowerCase()
@@ -96,7 +109,7 @@ export default function SmartDropPage() {
   const [previewRows, setPreviewRows] = useState<{ row: Record<string, string>; status: 'new' | 'existing' | 'error'; reason?: string }[]>([])
   const [importing, setImporting] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [result, setResult] = useState<{ imported: number; updated: number; skipped: number; errors: string[] } | null>(null)
+  const [result, setResult] = useState<{ imported: number; updated: number; skipped: number; errors: string[]; batchId?: string } | null>(null)
 
   const [toast, setToast] = useState('')
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000) }
@@ -132,13 +145,16 @@ export default function SmartDropPage() {
       setHeaders(hdrs)
       setAllRows(rows)
 
-      // Auto-detect type from sheet name
-      const detected = detectSheetType(sheetName, hdrs)
+      // Auto-detect type from sheet name — also check for parts
+      let detected = detectSheetType(sheetName, hdrs)
+      const lowerHdrs = hdrs.map(h => h.toLowerCase())
+      if (lowerHdrs.some(h => h.includes('part') || h.includes('sku') || h.includes('bin') || h.includes('reorder'))) detected = 'parts' as ImportType
       setImportType(detected)
 
-      // Auto-map columns
+      // Auto-map columns — use parts aliases if detected as parts
+      const aliases = detected === 'parts' ? PARTS_ALIASES : COLUMN_ALIASES
       const mappings = hdrs.map(h => {
-        const { field, confidence } = fuzzyMatch(h)
+        const { field, confidence } = fuzzyMatch(h, aliases)
         return { header: h, field, confidence }
       })
       setColMappings(mappings)
@@ -192,6 +208,18 @@ export default function SmartDropPage() {
             if (data && data.length > 0) status = 'existing'
           } catch {}
         }
+      } else if (importType === 'parts') {
+        if (!row.description) { status = 'error'; reason = 'Missing description' }
+        else if (row.part_number) {
+          try {
+            const { data } = await supabase.from('parts')
+              .select('id')
+              .eq('shop_id', user.shop_id)
+              .eq('part_number', row.part_number)
+              .limit(1)
+            if (data && data.length > 0) status = 'existing'
+          } catch {}
+        }
       } else if (importType === 'companies') {
         if (!row.company_name) { status = 'error'; reason = 'Missing company name' }
         else {
@@ -234,7 +262,8 @@ export default function SmartDropPage() {
 
     const mapped = mapRows(allRows)
     const BATCH = 50
-    let totalResult = { imported: 0, updated: 0, skipped: 0, errors: [] as string[] }
+    const batchId = crypto.randomUUID()
+    let totalResult = { imported: 0, updated: 0, skipped: 0, errors: [] as string[], batchId }
 
     for (let i = 0; i < mapped.length; i += BATCH) {
       const batch = mapped.slice(i, i + BATCH)
@@ -242,7 +271,7 @@ export default function SmartDropPage() {
         const res = await fetch('/api/smart-drop/import', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: importType, rows: batch, shop_id: user.shop_id }),
+          body: JSON.stringify({ type: importType, rows: batch, shop_id: user.shop_id, batch_id: batchId }),
         })
         const data = await res.json()
         if (res.ok) {
@@ -266,7 +295,7 @@ export default function SmartDropPage() {
 
   if (!user) return null
 
-  const allFields = Object.keys(COLUMN_ALIASES) as MappedField[]
+  const allFields = importType === 'parts' ? Object.keys(PARTS_ALIASES) : Object.keys(COLUMN_ALIASES)
 
   return (
     <div style={{ background: BG, minHeight: '100vh', color: TEXT, fontFamily: FONT, padding: 24, maxWidth: 1000, margin: '0 auto' }}>
@@ -295,7 +324,7 @@ export default function SmartDropPage() {
           <div style={{ ...card, padding: 12, marginBottom: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Import Type</div>
             <div style={{ display: 'flex', gap: 8 }}>
-              {([['trucks', 'Trucks / Fleet'], ['companies', 'Companies'], ['contacts', 'Contacts']] as const).map(([k, l]) => (
+              {([['trucks', 'Trucks / Fleet'], ['companies', 'Companies'], ['contacts', 'Contacts'], ['parts', 'Parts Inventory']] as const).map(([k, l]) => (
                 <button key={k} onClick={() => setImportType(k)}
                   style={{
                     flex: 1, padding: '10px', borderRadius: 8, border: importType === k ? `1px solid ${BLUE}` : `1px solid ${BORDER}`,
@@ -486,9 +515,21 @@ export default function SmartDropPage() {
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {result.batchId && importType === 'parts' && (
+              <button onClick={async () => {
+                if (!confirm('Undo this import? All imported parts will be removed.')) return
+                const res = await fetch('/api/smart-drop/import', {
+                  method: 'DELETE',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ batch_id: result.batchId, shop_id: user?.shop_id }),
+                })
+                if (res.ok) { flash('Import undone'); reset() }
+                else flash('Undo failed')
+              }} style={{ ...btnSecondary, color: RED, borderColor: RED }}>Undo Import</button>
+            )}
             <button onClick={reset} style={btnSecondary}>Import More</button>
-            <a href={importType === 'trucks' ? '/fleet' : '/customers'}
+            <a href={importType === 'parts' ? '/parts' : importType === 'trucks' ? '/fleet' : '/customers'}
               style={{ ...btnPrimary, textDecoration: 'none', display: 'inline-block' }}>
               View Data
             </a>
