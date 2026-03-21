@@ -145,8 +145,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
 export const ROLE_REDIRECT: Record<string, string> = {
   owner: '/dashboard', gm: '/dashboard', it_person: '/dashboard',
   shop_manager: '/dashboard', service_writer: '/orders',
-  technician: '/tech', parts_manager: '/parts', fleet_manager: '/fleet',
-  maintenance_manager: '/maintenance', maintenance_technician: '/tech',
+  technician: '/mechanic/dashboard', lead_tech: '/mechanic/dashboard', parts_manager: '/parts', fleet_manager: '/fleet',
+  maintenance_manager: '/maintenance', maintenance_technician: '/mechanic/dashboard',
   accountant: '/accounting', office_admin: '/dashboard', dispatcher: '/fleet',
   driver: '/dvir', customer: '/portal',
 }
@@ -154,7 +154,7 @@ export const ROLE_REDIRECT: Record<string, string> = {
 // Role labels and colors
 export const ROLE_LABEL: Record<string, string> = {
   owner: 'Owner', gm: 'GM', it_person: 'IT Admin', shop_manager: 'Shop Manager',
-  service_writer: 'Service Writer', technician: 'Technician',
+  service_writer: 'Service Writer', technician: 'Technician', lead_tech: 'Lead Tech',
   parts_manager: 'Parts Dept', fleet_manager: 'Fleet Manager', maintenance_manager: 'Maint. Manager',
   maintenance_technician: 'Maint. Tech', accountant: 'Accounting', office_admin: 'Office Admin',
   dispatcher: 'Dispatcher', driver: 'Driver', customer: 'Customer',

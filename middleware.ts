@@ -5,7 +5,7 @@ const PUBLIC_ROUTES = [
   '/login', '/setup', '/kiosk', '/portal', '/pay',
   '/api/telegram', '/api/stripe/webhook', '/api/kiosk',
   '/api/pay', '/offline', '/waiting', '/forgot-password', '/reset-password',
-  '/api/work-orders', '/api/wo-', '/api/portal', '/api/kiosk-checkin',
+  '/api/work-orders', '/api/wo-', '/api/portal', '/api/kiosk-checkin', '/api/mechanic',
 ]
 
 // Module → route prefixes
@@ -112,6 +112,12 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/orders')) {
     const newPath = pathname.replace('/orders', '/work-orders')
     return NextResponse.redirect(new URL(newPath, request.url))
+  }
+
+  // Mechanic dashboard — accessible to all logged-in users (page handles role check)
+  if (pathname.startsWith('/mechanic')) {
+    if (!user) return NextResponse.redirect(new URL('/login', request.url))
+    return response
   }
 
   // Not logged in → login
