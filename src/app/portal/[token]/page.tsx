@@ -113,14 +113,14 @@ export default function CustomerPortalPage() {
 
   async function approveEstimate() {
     setActionLoading('approve')
-    await fetch(`/api/portal/${token}/estimate/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    await fetch(`/api/portal/${token}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
     await fetchData()
     setActionLoading('')
   }
 
   async function declineEstimate() {
     setActionLoading('decline')
-    await fetch(`/api/portal/${token}/estimate/decline`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: declineReason }) })
+    await fetch(`/api/portal/${token}/decline`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: declineReason }) })
     setDeclineModal(false)
     setDeclineReason('')
     await fetchData()
@@ -143,7 +143,7 @@ export default function CustomerPortalPage() {
 
   async function approveNewItems() {
     setActionLoading('new-items')
-    await fetch(`/api/portal/${token}/estimate/new-items/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    await fetch(`/api/portal/${token}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
     await fetchData()
     setActionLoading('')
   }
