@@ -22,7 +22,7 @@ export default function KioskAdminPage() {
 
   if (!user || !shop) return <div style={{ minHeight: '100vh', background: '#0C0C12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1', fontFamily: font }}>Loading...</div>
 
-  const kioskUrl = `${window.location.origin}/kiosk?shop=${shop.id}`
+  const kioskUrl = `${window.location.origin}/kiosk/${shop.kiosk_code || 'ugl'}`
 
   return (
     <div style={{ minHeight: '100vh', background: '#0C0C12', color: '#EDEDF0', fontFamily: font, padding: 24 }}>
