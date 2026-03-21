@@ -1,0 +1,137 @@
+import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { sendEmail, getShopInfo } from '@/lib/services/email'
+
+function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const supabase = db()
+
+  // Get estimate
+  const { data: estimate, error } = await supabase
+    .from('estimates')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error || !estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
+
+  // Get lines
+  const { data: lines } = await supabase
+    .from('estimate_lines')
+    .select('*')
+    .eq('estimate_id', id)
+    .order('line_number')
+
+  // Update estimate status
+  const now = new Date().toISOString()
+  const validUntil = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+  const sentVia: string[] = []
+
+  await supabase.from('estimates').update({
+    status: 'sent',
+    sent_at: now,
+    valid_until: validUntil,
+    updated_at: now,
+  }).eq('id', id)
+
+  const shop = await getShopInfo(estimate.shop_id)
+  const portalLink = `${process.env.NEXT_PUBLIC_APP_URL}/portal/estimate/${estimate.approval_token}`
+
+  // Get service order info
+  let truckInfo = ''
+  if (estimate.repair_order_id) {
+    const { data: so } = await supabase
+      .from('service_orders')
+      .select('so_number, assets(unit_number, year, make, model)')
+      .eq('id', estimate.repair_order_id)
+      .single()
+    if (so) {
+      const asset = so.assets as any
+      truckInfo = asset ? `Unit #${asset.unit_number} - ${asset.year} ${asset.make} ${asset.model}` : ''
+    }
+  }
+
+  // Build line items HTML
+  const linesHtml = (lines || []).map((l: any) => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#e0e0e0;font-size:13px">${l.description}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:right">${l.labor_hours || 0}h</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:right">$${(l.labor_total || 0).toFixed(2)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:right">$${(l.parts_total || 0).toFixed(2)}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#e0e0e0;font-size:13px;font-weight:700;text-align:right">$${(l.line_total || 0).toFixed(2)}</td>
+    </tr>
+  `).join('')
+
+  // Send email
+  if (estimate.customer_email) {
+    const emailHtml = `
+      <div style="background:#0f0f1a;padding:32px;font-family:-apple-system,sans-serif">
+        <div style="max-width:600px;margin:0 auto;background:#1a1a2e;border-radius:12px;overflow:hidden">
+          <div style="padding:24px;background:#1d1d35;border-bottom:1px solid #2a2a3a">
+            <h1 style="margin:0;color:#ffffff;font-size:20px">${shop.name}</h1>
+            <p style="margin:4px 0 0;color:#8a8a9a;font-size:13px">Estimate ${estimate.estimate_number}</p>
+          </div>
+          <div style="padding:24px">
+            <p style="color:#e0e0e0;font-size:14px;margin:0 0 8px">Hi ${estimate.customer_name || 'Customer'},</p>
+            <p style="color:#b0b0c0;font-size:13px;margin:0 0 16px">Here is your repair estimate${truckInfo ? ` for <strong style="color:#e0e0e0">${truckInfo}</strong>` : ''}.</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0">
+              <thead>
+                <tr style="background:#15152a">
+                  <th style="padding:8px 12px;text-align:left;color:#8a8a9a;font-size:11px;text-transform:uppercase">Description</th>
+                  <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Hours</th>
+                  <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Labor</th>
+                  <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Parts</th>
+                  <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Total</th>
+                </tr>
+              </thead>
+              <tbody>${linesHtml}</tbody>
+            </table>
+            <div style="text-align:right;padding:12px 0;border-top:1px solid #2a2a3a">
+              <div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Subtotal: $${(estimate.subtotal || 0).toFixed(2)}</div>
+              <div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Tax: $${(estimate.tax_amount || 0).toFixed(2)}</div>
+              <div style="color:#ffffff;font-size:18px;font-weight:800">Total: $${(estimate.total || 0).toFixed(2)}</div>
+            </div>
+            ${estimate.valid_until ? `<p style="color:#8a8a9a;font-size:11px;margin:8px 0">Valid until ${new Date(validUntil).toLocaleDateString()}</p>` : ''}
+            <div style="text-align:center;margin:24px 0 8px">
+              <a href="${portalLink}" style="display:inline-block;padding:14px 32px;background:#16A34A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:700">Review & Approve Estimate</a>
+            </div>
+            <p style="color:#8a8a9a;font-size:11px;text-align:center;margin:12px 0 0">Or copy this link: ${portalLink}</p>
+          </div>
+        </div>
+      </div>
+    `
+    const sent = await sendEmail(estimate.customer_email, `Estimate ${estimate.estimate_number} from ${shop.name}`, emailHtml)
+    if (sent) sentVia.push('email')
+  }
+
+  // Send SMS via Twilio
+  if (estimate.customer_phone) {
+    try {
+      const accountSid = process.env.TWILIO_ACCOUNT_SID
+      const authToken = process.env.TWILIO_AUTH_TOKEN
+      const fromPhone = process.env.TWILIO_PHONE_NUMBER
+      if (accountSid && authToken && fromPhone) {
+        const twilio = (await import('twilio')).default
+        const client = twilio(accountSid, authToken)
+        const smsBody = `${shop.name} - Estimate ${estimate.estimate_number}\n${truckInfo ? truckInfo + '\n' : ''}Total: $${(estimate.total || 0).toFixed(2)}\n\nReview & approve: ${portalLink}`
+        await client.messages.create({
+          body: smsBody,
+          from: fromPhone,
+          to: estimate.customer_phone,
+        })
+        sentVia.push('sms')
+      }
+    } catch (err) {
+      console.error('[Estimates] SMS send error:', err)
+    }
+  }
+
+  // Update sent_via
+  if (sentVia.length > 0) {
+    await supabase.from('estimates').update({ sent_via: sentVia.join(',') }).eq('id', id)
+  }
+
+  return NextResponse.json({ success: true, sent_via: sentVia, portal_link: portalLink })
+}

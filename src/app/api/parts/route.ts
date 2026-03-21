@@ -19,11 +19,15 @@ export async function GET(req: Request) {
     .order('description')
 
   if (category)  q = q.eq('category', category)
-  if (lowStock)  q = q.lte('on_hand', supabase.rpc as any)
+  // Note: low_stock filtering done post-query since Supabase can't compare columns directly
   if (search)    q = q.or(`description.ilike.%${search}%,part_number.ilike.%${search}%`)
 
   const { data, error } = await q.limit(500)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (lowStock) {
+    const filtered = (data || []).filter((p: any) => (p.on_hand ?? 0) <= (p.reorder_point ?? 0))
+    return NextResponse.json(filtered)
+  }
   return NextResponse.json(data)
 }
 
