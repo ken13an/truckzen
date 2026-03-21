@@ -99,7 +99,7 @@ export default function NewWorkOrderPage() {
   // Step 4: AI Review
   const [step, setStep] = useState<'edit' | 'review'>('edit')
   const [aiLoading, setAiLoading] = useState(false)
-  const [jobLines, setJobLines] = useState<string[]>([])
+  const [jobLines, setJobLines] = useState<any[]>([])
 
   // Step 5: Submit
   const [submitting, setSubmitting] = useState(false)
@@ -178,9 +178,12 @@ export default function NewWorkOrderPage() {
       })
       const data = await res.json()
       if (data.action_items && Array.isArray(data.action_items)) {
-        setJobLines(data.action_items)
+        // Normalize: AI now returns {description, skills} objects
+        setJobLines(data.action_items.map((item: any) =>
+          typeof item === 'string' ? { description: item, skills: [] } : { description: item.description || item, skills: item.skills || [] }
+        ))
       } else {
-        setJobLines([complaint.trim().toUpperCase()])
+        setJobLines([{ description: complaint.trim().toUpperCase(), skills: [] }])
       }
       setStep('review')
     } catch {
@@ -193,6 +196,8 @@ export default function NewWorkOrderPage() {
   // Submit
   async function handleSubmit() {
     if (!profile || !complaint.trim() || jobLines.length === 0) return
+    const validLines = jobLines.filter((l: any) => typeof l === 'string' ? l.trim() : l.description?.trim())
+    if (validLines.length === 0) return
     setSubmitting(true)
     setError('')
     try {
@@ -206,7 +211,7 @@ export default function NewWorkOrderPage() {
           customer_id: selectedCustomer?.id || null,
           complaint: complaint.trim(),
           priority,
-          job_lines: jobLines.filter(l => l.trim()),
+          job_lines: jobLines.filter((l: any) => (typeof l === 'string' ? l.trim() : l.description?.trim())),
         }),
       })
       if (!res.ok) {
@@ -447,12 +452,16 @@ export default function NewWorkOrderPage() {
           <div style={{ ...cardStyle, marginBottom: 16 }}>
             <div style={{ ...labelStyle, marginBottom: 14 }}>Job Lines</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-              {jobLines.map((line, i) => (
-                <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {jobLines.map((line: any, i: number) => {
+                const desc = typeof line === 'string' ? line : line.description || ''
+                const skills = typeof line === 'string' ? [] : (line.skills || [])
+                return (
+                <div key={i}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
                     type="text"
-                    value={line}
-                    onChange={e => updateJobLine(i, e.target.value)}
+                    value={desc}
+                    onChange={e => updateJobLine(i, typeof line === 'string' ? e.target.value : { ...line, description: e.target.value })}
                     style={{ ...inputStyle, flex: 1 }}
                   />
                   <button
@@ -472,8 +481,17 @@ export default function NewWorkOrderPage() {
                   >
                     Remove
                   </button>
+                  </div>
+                  {skills.length > 0 && (
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4, marginLeft: 4 }}>
+                      {skills.map((s: string) => (
+                        <span key={s} style={{ fontSize: 10, padding: '2px 6px', background: '#EFF6FF', color: '#1D6FE8', borderRadius: 4 }}>{s}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))}
+              )})}
+
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button onClick={addJobLine} style={btnSecondary}>

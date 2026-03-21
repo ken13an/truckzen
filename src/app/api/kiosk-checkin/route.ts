@@ -146,16 +146,19 @@ export async function POST(req: Request) {
     })
     if (aiRes.ok) {
       const aiData = await aiRes.json()
-      const items = aiData.action_items || [concern_text.trim().toUpperCase()]
+      const items = aiData.action_items || [{ description: concern_text.trim().toUpperCase(), skills: [] }]
       for (const item of items) {
-        if (!item?.trim()) continue
+        const desc = typeof item === 'string' ? item : item.description
+        const skills = typeof item === 'string' ? [] : (item.skills || [])
+        if (!desc?.trim()) continue
         await s.from('so_lines').insert({
           so_id: wo.id,
           line_type: 'labor',
-          description: item.trim(),
+          description: desc.trim(),
           quantity: 0,
           unit_price: 0,
           line_status: 'unassigned',
+          required_skills: skills,
         })
       }
     }

@@ -97,7 +97,9 @@ export async function POST(req: Request) {
   // Create job lines
   const lines = job_lines || [complaint.trim()]
   for (let i = 0; i < lines.length; i++) {
-    const lineText = typeof lines[i] === 'string' ? lines[i] : lines[i].description
+    const line = lines[i]
+    const lineText = typeof line === 'string' ? line : line.description
+    const lineSkills = typeof line === 'string' ? [] : (line.skills || [])
     if (!lineText?.trim()) continue
     await s.from('so_lines').insert({
       so_id: wo.id,
@@ -107,6 +109,7 @@ export async function POST(req: Request) {
       unit_price: 0,
       total_price: 0,
       line_status: 'unassigned',
+      required_skills: lineSkills,
     })
   }
 

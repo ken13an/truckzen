@@ -166,7 +166,17 @@ export default function UsersPage() {
                 const st = getStatus(u)
                 return (
                   <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,.04)', opacity: u.active ? 1 : 0.5 }}>
-                    <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 700 }}>{u.full_name}</td>
+                    <td style={{ padding: '12px 14px' }}>
+                      <div style={{ fontSize: 13, fontWeight: 700 }}>{u.full_name}</div>
+                      {u.skills && u.skills.length > 0 && (
+                        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginTop: 3 }}>
+                          {u.skills.slice(0, 4).map((s: string) => (
+                            <span key={s} style={{ fontSize: 9, padding: '1px 5px', background: 'rgba(255,255,255,0.06)', borderRadius: 3, color: '#9D9DA1' }}>{s}</span>
+                          ))}
+                          {u.skills.length > 4 && <span style={{ fontSize: 9, color: '#9D9DA1' }}>+{u.skills.length - 4}</span>}
+                        </div>
+                      )}
+                    </td>
                     <td style={{ padding: '12px 14px', fontSize: 11, color: '#9D9DA1', fontFamily: 'monospace' }}>{u.email}</td>
                     <td style={{ padding: '12px 14px', fontSize: 12 }}>{ROLE_LABEL[u.role] || u.role?.replace(/_/g, ' ')}</td>
                     <td style={{ padding: '12px 14px', fontSize: 12, color: '#9D9DA1' }}>{u.team ? `Team ${u.team}` : '—'}</td>

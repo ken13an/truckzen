@@ -1,52 +1,54 @@
 import { NextResponse } from 'next/server'
 
+const SKILLS = 'Engine Repair, Brake Service, Electrical/Diagnostics, Transmission, Suspension, HVAC/AC, Tire Service, Body/Frame, Trailer Repair, Welding, DOT Inspection, Preventive Maintenance, Diesel Fuel Systems, Exhaust/Aftertreatment, Hydraulics'
+
+const SYSTEM_PROMPT = `You are a professional semi truck repair service writer. Take the rough customer complaint and break it into separate professional action items. For each action item, identify which mechanic skills are needed from: ${SKILLS}. Each description should be clear, concise, and in uppercase. Return JSON only: {"action_items": [{"description": "BRAKE SYSTEM INSPECTION - NOISE COMPLAINT", "skills": ["Brake Service", "Suspension"]}, {"description": "OIL AND FILTER SERVICE", "skills": ["Engine Repair", "Preventive Maintenance"]}]}`
+
 export async function POST(req: Request) {
   const { complaint } = await req.json()
   if (!complaint?.trim()) return NextResponse.json({ error: 'complaint required' }, { status: 400 })
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    // Fallback: return raw text as single action item
-    return NextResponse.json({ action_items: [complaint.trim().toUpperCase()] })
+    return NextResponse.json({ action_items: [{ description: complaint.trim().toUpperCase(), skills: [] }] })
   }
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
-        system: 'You are a professional semi truck repair service writer. Take the rough customer complaint or service request and break it into separate professional action items. Each action item should be a clear, concise repair task in uppercase. Return JSON only: {"action_items": ["OIL AND FILTER SERVICE", "REPLACE WINDSHIELD", "INSPECT BRAKE SYSTEM - NOISE COMPLAINT"]}',
+        system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: complaint.trim() }],
       }),
     })
 
     if (!res.ok) {
-      console.error('[AI Action Items] API error:', res.status)
-      return NextResponse.json({ action_items: [complaint.trim().toUpperCase()] })
+      console.error('[AI] API error:', res.status)
+      return NextResponse.json({ action_items: [{ description: complaint.trim().toUpperCase(), skills: [] }] })
     }
 
     const data = await res.json()
     const text = data.content?.[0]?.text || ''
 
-    // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0])
       if (Array.isArray(parsed.action_items) && parsed.action_items.length > 0) {
-        return NextResponse.json({ action_items: parsed.action_items })
+        // Normalize: support both old format (string[]) and new format ({description, skills}[])
+        const items = parsed.action_items.map((item: any) => {
+          if (typeof item === 'string') return { description: item, skills: [] }
+          return { description: item.description || item, skills: Array.isArray(item.skills) ? item.skills : [] }
+        })
+        return NextResponse.json({ action_items: items })
       }
     }
 
-    // Fallback if parsing fails
-    return NextResponse.json({ action_items: [complaint.trim().toUpperCase()] })
+    return NextResponse.json({ action_items: [{ description: complaint.trim().toUpperCase(), skills: [] }] })
   } catch (err) {
-    console.error('[AI Action Items] Error:', err)
-    return NextResponse.json({ action_items: [complaint.trim().toUpperCase()] })
+    console.error('[AI] Error:', err)
+    return NextResponse.json({ action_items: [{ description: complaint.trim().toUpperCase(), skills: [] }] })
   }
 }

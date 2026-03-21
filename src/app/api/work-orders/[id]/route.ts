@@ -18,7 +18,7 @@ export async function GET(req: Request, { params }: Params) {
       assets(id, unit_number, year, make, model, vin, odometer, engine, ownership_type),
       customers(id, company_name, contact_name, phone, email, address),
       users!assigned_tech(id, full_name, role, team),
-      so_lines(id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status),
+      so_lines(id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate),
       invoices(id, invoice_number, status, total, balance_due),
       wo_notes(id, user_id, note_text, visible_to_customer, created_at),
       wo_files(id, user_id, file_url, filename, caption, visible_to_customer, created_at),
