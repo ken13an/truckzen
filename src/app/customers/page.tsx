@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Download } from 'lucide-react'
+import * as XLSX from 'xlsx'
 
 type Customer = {
   id: string
@@ -80,7 +81,7 @@ export default function CustomersPage() {
     window.open(`/api/documents/registration-form?shop_id=${shopId}`, '_blank')
   }
 
-  function exportCSV() {
+  function exportExcel() {
     if (filtered.length === 0) return
     const headers = ['Company Name', 'DOT #', 'Phone', 'Contact', 'Email', 'Payment Terms', 'Status', 'Created']
     const rows = filtered.map(c => [
@@ -93,14 +94,12 @@ export default function CustomersPage() {
       c.customer_status || '',
       c.created_at ? new Date(c.created_at).toLocaleDateString() : '',
     ])
-    const csv = '\ufeff' + [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\r\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `customers-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+    // Set column widths
+    ws['!cols'] = [{ wch: 28 }, { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 28 }, { wch: 14 }, { wch: 10 }, { wch: 12 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Customers')
+    XLSX.writeFile(wb, `customers-${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
   function paymentBadge(terms: string | null) {
@@ -197,7 +196,7 @@ export default function CustomersPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
-            onClick={exportCSV}
+            onClick={exportExcel}
             style={{
               padding: '8px 12px',
               background: 'transparent',
@@ -210,7 +209,7 @@ export default function CustomersPage() {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            Export CSV
+            Export Excel
           </button>
           <button
             onClick={handleDownloadForm}
