@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 type Customer = {
   id: string
@@ -102,32 +103,86 @@ export default function CustomersPage() {
     XLSX.writeFile(wb, `customers-${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
-  function exportOnboardingTemplate() {
-    const wb = XLSX.utils.book_new()
-    const today = new Date().toISOString().split('T')[0]
+  async function bulkFleetUpload() {
+    const wb = new ExcelJS.Workbook()
+    const BLUE = '1B6EE6'
+    const GRAY_TEXT: Partial<ExcelJS.Font> = { color: { argb: '999999' }, italic: true }
+    const HEADER_FILL: ExcelJS.Fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BLUE } }
+    const HEADER_FONT: Partial<ExcelJS.Font> = { bold: true, color: { argb: 'FFFFFF' }, size: 11 }
+    const THIN_BORDER: Partial<ExcelJS.Borders> = { top: { style: 'thin', color: { argb: 'E5E7EB' } }, bottom: { style: 'thin', color: { argb: 'E5E7EB' } }, left: { style: 'thin', color: { argb: 'E5E7EB' } }, right: { style: 'thin', color: { argb: 'E5E7EB' } } }
 
-    // Sheet 1: Company Details
-    const companyHeaders = ['Company Name', 'DOT #', 'MC #', 'Phone', 'Contact Name', 'Contact Email', 'Address', 'City', 'State', 'ZIP', 'Payment Terms', 'Tax ID / FEIN']
-    const companyData = filtered.map(c => [
-      c.company_name || '', c.dot_number || '', '', c.phone || '', c.contact_name || '',
-      c.email || '', '', '', '', '', c.payment_terms || '', '',
-    ])
-    const ws1 = XLSX.utils.aoa_to_sheet([companyHeaders, ...companyData])
-    ws1['!cols'] = [{ wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 28 }, { wch: 30 }, { wch: 16 }, { wch: 8 }, { wch: 10 }, { wch: 14 }, { wch: 16 }]
-    XLSX.utils.book_append_sheet(wb, ws1, 'Companies')
+    function styleHeaders(ws: ExcelJS.Worksheet, count: number) {
+      const row = ws.getRow(1)
+      row.eachCell((cell) => { cell.fill = HEADER_FILL; cell.font = HEADER_FONT; cell.alignment = { vertical: 'middle' } })
+      row.height = 24
+      ws.views = [{ state: 'frozen', ySplit: 1 }]
+      ws.autoFilter = { from: 'A1', to: String.fromCharCode(64 + count) + '1' }
+    }
 
-    // Sheet 2: Trucks & Trailers Template
-    const unitHeaders = ['Unit #', 'Type', 'Year', 'Make', 'Model', 'VIN', 'License Plate', 'State', 'Ownership', 'Current Mileage', 'Engine Make', 'Notes']
-    const exampleRow = ['T-001', 'TRACTOR', '2022', 'Peterbilt', '579', '1XPWD49X82D123456', 'IL-2022-TZ', 'IL', 'Owned', '187000', 'Cummins X15', 'Example row — delete this']
-    const emptyRows: string[][] = Array.from({ length: 100 }, () => Array(12).fill(''))
-    const ws2 = XLSX.utils.aoa_to_sheet([unitHeaders, exampleRow, ...emptyRows])
-    ws2['!cols'] = [{ wch: 10 }, { wch: 10 }, { wch: 6 }, { wch: 16 }, { wch: 16 }, { wch: 20 }, { wch: 14 }, { wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 28 }]
-    // Freeze header row
-    ws2['!freeze'] = { xSplit: 0, ySplit: 1 }
+    function addBorders(ws: ExcelJS.Worksheet, startRow: number, endRow: number, cols: number) {
+      for (let r = startRow; r <= endRow; r++) {
+        const row = ws.getRow(r)
+        for (let c = 1; c <= cols; c++) { row.getCell(c).border = THIN_BORDER }
+      }
+    }
 
-    XLSX.utils.book_append_sheet(wb, ws2, 'Trucks & Trailers')
+    // ── SHEET 1: Companies ──
+    const s1 = wb.addWorksheet('Companies')
+    const s1Headers = ['Company Name', 'Parent / Holding Company', 'DOT Number', 'MC Number', 'Address', 'City', 'State', 'ZIP', 'Contact Name', 'Contact Phone', 'Contact Email', 'Contact Role', 'Total Units', 'Payment Terms', 'Notes']
+    s1.addRow(s1Headers)
+    s1.addRow(['ABC Trucking LLC', 'National Transport Holdings', '1234567', 'MC-987654', '123 Industrial Blvd', 'Chicago', 'IL', '60601', 'John Smith', '(312) 555-0100', 'john@abctrucking.com', 'Fleet Manager', '85', 'Net 30', 'Part of National Transport Holdings group'])
+    s1.getRow(2).eachCell(c => { c.font = GRAY_TEXT })
+    for (let i = 0; i < 50; i++) s1.addRow([])
+    s1.columns = [{ width: 30 }, { width: 30 }, { width: 18 }, { width: 18 }, { width: 35 }, { width: 20 }, { width: 10 }, { width: 12 }, { width: 25 }, { width: 18 }, { width: 30 }, { width: 18 }, { width: 12 }, { width: 18 }, { width: 30 }]
+    styleHeaders(s1, 15)
+    addBorders(s1, 2, 52, 15)
 
-    XLSX.writeFile(wb, `TruckZen_Onboarding_Template_${today}.xlsx`)
+    // ── SHEET 2: Trucks & Trailers ──
+    const s2 = wb.addWorksheet('Trucks & Trailers')
+    const s2Headers = ['Company Name', 'Unit Number', 'VIN', 'Unit Type', 'Year', 'Make', 'Model', 'Engine Make', 'Engine Model', 'Transmission', 'Current Mileage', 'License Plate', 'License State', 'Color', 'Status', 'Notes']
+    s2.addRow(s2Headers)
+    const examples = [
+      ['ABC Trucking LLC', 'T-001', '1XKAD49X04J012345', 'TRACTOR', '2022', 'Peterbilt', '579', 'Cummins', 'X15', 'Eaton Fuller 18spd', '485000', 'IL-T001', 'IL', 'White', 'Active', ''],
+      ['ABC Trucking LLC', 'T-002', '4V4NC9EJ5GN567890', 'TRACTOR', '2023', 'Volvo', 'VNL860', 'Volvo', 'D13', 'Volvo I-Shift 12spd', '312000', 'IL-T002', 'IL', 'Blue', 'Active', ''],
+      ['XYZ Freight Inc', 'XYZ-100', '1FDJU6H61LHA11111', 'TRACTOR', '2021', 'Freightliner', 'Cascadia', 'Detroit', 'DD15', 'Detroit DT12', '621000', 'TX-100', 'TX', 'Red', 'Active', 'Part of National Transport Holdings'],
+      ['Midwest Haulers Co', 'MH-500', '1XKWDP9X8NJ22222', 'TRACTOR', '2024', 'Kenworth', 'T680', 'PACCAR', 'MX-13', 'Eaton Fuller 10spd', '98000', 'OH-500', 'OH', 'Silver', 'Active', ''],
+      ['ABC Trucking LLC', 'TR-050', '1JJV532D4KL333333', 'TRAILER', '2020', 'Great Dane', 'Everest SS', '', '', '', '0', 'IL-TR50', 'IL', 'White', 'Active', '53ft Dry Van'],
+    ]
+    for (const ex of examples) { const r = s2.addRow(ex); r.eachCell(c => { c.font = GRAY_TEXT }) }
+    for (let i = 0; i < 1500; i++) s2.addRow([])
+    s2.columns = [{ width: 30 }, { width: 15 }, { width: 22 }, { width: 15 }, { width: 10 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 16 }, { width: 15 }, { width: 14 }, { width: 12 }, { width: 14 }, { width: 30 }]
+    styleHeaders(s2, 16)
+    addBorders(s2, 2, 1506, 16)
+    // Data validations
+    for (let r = 7; r <= 1506; r++) {
+      s2.getCell(`D${r}`).dataValidation = { type: 'list', formulae: ['"TRACTOR,TRAILER,STRAIGHT TRUCK,BOX TRUCK,REEFER,FLATBED,TANKER,OTHER"'], showErrorMessage: true }
+      s2.getCell(`F${r}`).dataValidation = { type: 'list', formulae: ['"Freightliner,Kenworth,Peterbilt,Volvo,Mack,International,Western Star,Navistar,Hino,Isuzu,Great Dane,Wabash,Utility Trailer,Hyundai Translead,Stoughton,Vanguard,OTHER"'], showErrorMessage: true }
+      s2.getCell(`O${r}`).dataValidation = { type: 'list', formulae: ['"Active,In Shop,Out of Service,Parked,Sold"'], showErrorMessage: true }
+    }
+
+    // ── SHEET 3: Owners & Contacts ──
+    const s3 = wb.addWorksheet('Owners & Contacts')
+    s3.addRow(['Company Name', 'Full Name', 'Phone', 'Email', 'Role', 'CDL Number', 'CDL Expiry', 'Notes'])
+    const contactExamples = [
+      ['ABC Trucking LLC', 'John Smith', '(312) 555-0100', 'john@abctrucking.com', 'Fleet Manager', '', '', 'Primary contact'],
+      ['ABC Trucking LLC', 'Maria Garcia', '(312) 555-0101', 'maria@abctrucking.com', 'Dispatcher', '', '', ''],
+      ['XYZ Freight Inc', 'Bob Johnson', '(214) 555-0200', 'bob@xyzfreight.com', 'Owner', 'TX12345678', '2027-06-15', ''],
+    ]
+    for (const ex of contactExamples) { const r = s3.addRow(ex); r.eachCell(c => { c.font = GRAY_TEXT }) }
+    for (let i = 0; i < 200; i++) s3.addRow([])
+    s3.columns = [{ width: 30 }, { width: 25 }, { width: 18 }, { width: 30 }, { width: 18 }, { width: 20 }, { width: 15 }, { width: 30 }]
+    styleHeaders(s3, 8)
+    addBorders(s3, 2, 204, 8)
+
+    // ── DOWNLOAD ──
+    const buf = await wb.xlsx.writeBuffer()
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'TruckZen_Bulk_Fleet_Upload.xlsx'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function paymentBadge(terms: string | null) {
@@ -240,7 +295,7 @@ export default function CustomersPage() {
             Export Excel
           </button>
           <button
-            onClick={exportOnboardingTemplate}
+            onClick={bulkFleetUpload}
             style={{
               padding: '8px 12px',
               background: 'transparent',
@@ -253,7 +308,7 @@ export default function CustomersPage() {
               fontFamily: "'Inter', sans-serif",
             }}
           >
-            Onboarding Template
+            Bulk Fleet Upload
           </button>
           <button
             onClick={handleDownloadForm}
