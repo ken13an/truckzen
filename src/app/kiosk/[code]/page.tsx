@@ -1,18 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 const FONT = "'Instrument Sans', sans-serif"
 
 export default function KioskCodePage() {
   const params = useParams()
   const code = (params.code as string)?.toLowerCase()
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [shopId, setShopId] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!code) { setStatus('error'); setErrorMsg('No kiosk code provided'); return }
+    if (!code) { setError('No kiosk code provided'); return }
 
     fetch(`/api/kiosk/lookup?code=${encodeURIComponent(code)}`)
       .then(res => {
@@ -20,34 +20,34 @@ export default function KioskCodePage() {
         return res.json()
       })
       .then(data => {
-        // Redirect to the existing kiosk page with shop param
-        window.location.href = `/kiosk?shop=${data.shop_id}&code=${code}`
+        // Instead of redirecting, set shop_id in sessionStorage and redirect
+        // This avoids the ?shop= param being visible and handles the flow cleanly
+        if (typeof window !== 'undefined') {
+          window.location.replace(`/kiosk?shop=${data.shop_id}`)
+        }
       })
       .catch(err => {
-        setStatus('error')
-        setErrorMsg(err.message || 'Kiosk not available')
+        setError(err.message || 'Kiosk not available')
       })
   }, [code])
 
-  if (status === 'error') {
+  if (error) {
     return (
       <div style={{
         background: '#0C0C12', color: '#EDEDF0', fontFamily: FONT, minHeight: '100vh',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{ textAlign: 'center', maxWidth: 400, padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>X</div>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 8px' }}>Kiosk Not Available</h1>
-          <p style={{ fontSize: 14, color: '#71717A', margin: '0 0 24px' }}>{errorMsg}</p>
+          <p style={{ fontSize: 14, color: '#71717A', margin: '0 0 24px' }}>{error}</p>
           <p style={{ fontSize: 12, color: '#48536A' }}>
-            If you believe this is an error, contact your shop administrator.
+            Contact your shop administrator for the correct kiosk URL.
           </p>
         </div>
       </div>
     )
   }
 
-  // Loading state
   return (
     <div style={{
       background: '#0C0C12', color: '#EDEDF0', fontFamily: FONT, minHeight: '100vh',
