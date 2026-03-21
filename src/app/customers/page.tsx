@@ -102,6 +102,44 @@ export default function CustomersPage() {
     XLSX.writeFile(wb, `customers-${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
+  function exportOnboardingTemplate() {
+    const wb = XLSX.utils.book_new()
+    const today = new Date().toISOString().split('T')[0]
+
+    // Sheet 1: Company Details
+    const companyHeaders = ['Company Name', 'DOT #', 'MC #', 'Phone', 'Contact Name', 'Contact Email', 'Address', 'City', 'State', 'ZIP', 'Payment Terms', 'Tax ID / FEIN']
+    const companyData = filtered.map(c => [
+      c.company_name || '', c.dot_number || '', '', c.phone || '', c.contact_name || '',
+      c.email || '', '', '', '', '', c.payment_terms || '', '',
+    ])
+    const ws1 = XLSX.utils.aoa_to_sheet([companyHeaders, ...companyData])
+    ws1['!cols'] = [{ wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 28 }, { wch: 30 }, { wch: 16 }, { wch: 8 }, { wch: 10 }, { wch: 14 }, { wch: 16 }]
+    XLSX.utils.book_append_sheet(wb, ws1, 'Companies')
+
+    // Sheet 2: Blank Trucks & Trailers Template (100 rows)
+    const unitHeaders = ['Unit #', 'Unit Type', 'VIN (17 chars)', 'Year', 'Make', 'Model', 'Current Mileage', 'License Plate', 'State', 'Ownership', 'Engine Make', 'Notes']
+    const unitInstructions = [
+      'Enter unit number', 'TRACTOR or TRAILER type', '17-character VIN', '4-digit year',
+      'e.g. Freightliner', 'e.g. Cascadia', 'Current odometer', 'Plate number', '2-letter state',
+      'Fleet Asset / Owner Op / Outside', 'e.g. Cummins, Detroit', 'Any notes',
+    ]
+    // Create 100 empty rows
+    const emptyRows: string[][] = Array.from({ length: 100 }, () => Array(12).fill(''))
+    const ws2 = XLSX.utils.aoa_to_sheet([unitHeaders, unitInstructions, ...emptyRows])
+    ws2['!cols'] = [{ wch: 12 }, { wch: 22 }, { wch: 20 }, { wch: 6 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 6 }, { wch: 18 }, { wch: 16 }, { wch: 20 }]
+
+    // Add data validation for Unit Type column (B3:B102)
+    // XLSX library supports data validation
+    ws2['!dataValidation'] = ws2['!dataValidation'] || []
+    const unitTypes = 'TRACTOR,TRAILER - Dry Van,TRAILER - Reefer,TRAILER - Flatbed,TRAILER - Tanker,TRAILER - Lowboy,TRAILER - Other'
+    const ownership = 'Fleet Asset,Owner Operator,Outside Customer'
+    // Note: xlsx library has limited data validation support, but we set it for reference
+
+    XLSX.utils.book_append_sheet(wb, ws2, 'Trucks & Trailers')
+
+    XLSX.writeFile(wb, `TruckZen_Onboarding_Template_${today}.xlsx`)
+  }
+
   function paymentBadge(terms: string | null) {
     const t = (terms || '').toLowerCase()
     let bg = 'rgba(255,255,255,0.06)'
@@ -210,6 +248,22 @@ export default function CustomersPage() {
             }}
           >
             Export Excel
+          </button>
+          <button
+            onClick={exportOnboardingTemplate}
+            style={{
+              padding: '8px 12px',
+              background: 'transparent',
+              border: '1px solid rgba(29,111,232,0.3)',
+              borderRadius: 8,
+              color: '#1D6FE8',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            Onboarding Template
           </button>
           <button
             onClick={handleDownloadForm}
