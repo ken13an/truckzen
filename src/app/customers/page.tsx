@@ -116,24 +116,14 @@ export default function CustomersPage() {
     ws1['!cols'] = [{ wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 16 }, { wch: 20 }, { wch: 28 }, { wch: 30 }, { wch: 16 }, { wch: 8 }, { wch: 10 }, { wch: 14 }, { wch: 16 }]
     XLSX.utils.book_append_sheet(wb, ws1, 'Companies')
 
-    // Sheet 2: Blank Trucks & Trailers Template (100 rows)
-    const unitHeaders = ['Unit #', 'Unit Type', 'VIN (17 chars)', 'Year', 'Make', 'Model', 'Current Mileage', 'License Plate', 'State', 'Ownership', 'Engine Make', 'Notes']
-    const unitInstructions = [
-      'Enter unit number', 'TRACTOR or TRAILER type', '17-character VIN', '4-digit year',
-      'e.g. Freightliner', 'e.g. Cascadia', 'Current odometer', 'Plate number', '2-letter state',
-      'Fleet Asset / Owner Op / Outside', 'e.g. Cummins, Detroit', 'Any notes',
-    ]
-    // Create 100 empty rows
+    // Sheet 2: Trucks & Trailers Template
+    const unitHeaders = ['Unit #', 'Type', 'Year', 'Make', 'Model', 'VIN', 'License Plate', 'State', 'Ownership', 'Current Mileage', 'Engine Make', 'Notes']
+    const exampleRow = ['T-001', 'TRACTOR', '2022', 'Peterbilt', '579', '1XPWD49X82D123456', 'IL-2022-TZ', 'IL', 'Owned', '187000', 'Cummins X15', 'Example row — delete this']
     const emptyRows: string[][] = Array.from({ length: 100 }, () => Array(12).fill(''))
-    const ws2 = XLSX.utils.aoa_to_sheet([unitHeaders, unitInstructions, ...emptyRows])
-    ws2['!cols'] = [{ wch: 12 }, { wch: 22 }, { wch: 20 }, { wch: 6 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 6 }, { wch: 18 }, { wch: 16 }, { wch: 20 }]
-
-    // Add data validation for Unit Type column (B3:B102)
-    // XLSX library supports data validation
-    ws2['!dataValidation'] = ws2['!dataValidation'] || []
-    const unitTypes = 'TRACTOR,TRAILER - Dry Van,TRAILER - Reefer,TRAILER - Flatbed,TRAILER - Tanker,TRAILER - Lowboy,TRAILER - Other'
-    const ownership = 'Fleet Asset,Owner Operator,Outside Customer'
-    // Note: xlsx library has limited data validation support, but we set it for reference
+    const ws2 = XLSX.utils.aoa_to_sheet([unitHeaders, exampleRow, ...emptyRows])
+    ws2['!cols'] = [{ wch: 10 }, { wch: 10 }, { wch: 6 }, { wch: 16 }, { wch: 16 }, { wch: 20 }, { wch: 14 }, { wch: 6 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 28 }]
+    // Freeze header row
+    ws2['!freeze'] = { xSplit: 0, ySplit: 1 }
 
     XLSX.utils.book_append_sheet(wb, ws2, 'Trucks & Trailers')
 
