@@ -29,6 +29,7 @@ export const MODULES = [
   { key: 'billing',          label: 'Billing',             icon: 'B',  path: '/settings/billing' },
   { key: 'integrations',     label: 'Integrations',        icon: 'i',  path: '/settings/integrations' },
   { key: 'audit_log',        label: 'Audit Log',           icon: 'a',  path: '/settings/audit' },
+  { key: 'smart_drop',       label: 'Smart Drop',          icon: 'U',  path: '/smart-drop' },
 ] as const
 
 export type ModuleKey = typeof MODULES[number]['key']
@@ -39,7 +40,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
   gm:    Object.fromEntries(MODULES.map(m => [m.key, true])),
   it_person: Object.fromEntries(MODULES.map(m => [m.key, true])),
 
-  shop_manager: Object.fromEntries(MODULES.map(m => [m.key, !['billing', 'admin_permissions', 'integrations', 'audit_log'].includes(m.key)])),
+  shop_manager: Object.fromEntries(MODULES.map(m => [m.key, !['billing', 'admin_permissions', 'integrations', 'audit_log'].includes(m.key)])), // includes smart_drop via MODULES
 
   technician: {
     dashboard: false, floor: true, orders: false, invoices: false, customers: false,
@@ -92,7 +93,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     parts_lifecycle: false, compliance: false, accounting: true, reports: true,
     time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,
-    billing: false, integrations: false, audit_log: false,
+    billing: false, integrations: false, audit_log: false, smart_drop: true,
   },
 
   office_admin: {
@@ -101,7 +102,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     parts_lifecycle: false, compliance: false, accounting: true, reports: true,
     time_tracking: true, settings: true,
     import: true, admin_permissions: false, tech_mobile: false, dvir: false,
-    billing: false, integrations: false, audit_log: false,
+    billing: false, integrations: false, audit_log: false, smart_drop: true,
   },
 
   service_writer: {
@@ -110,7 +111,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     parts_lifecycle: false, compliance: false, accounting: false, reports: false,
     time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,
-    billing: false, integrations: false, audit_log: false,
+    billing: false, integrations: false, audit_log: false, smart_drop: true,
   },
 
   dispatcher: {
@@ -227,6 +228,7 @@ export function getSidebarItems(role: string, rolePerms?: Record<string, boolean
     'accounting',
     'reports',
     'time_tracking',
+    'smart_drop',
     'settings',
   ]
 

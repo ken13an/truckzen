@@ -1,9 +1,20 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+
+interface LineItem {
+  id?: string
+  _tempId?: string
+  line_type: string
+  description: string
+  part_number: string
+  quantity: number
+  unit_price: number
+  total_price: number
+}
 
 export default function InvoiceDetailPage() {
   const params   = useParams()
@@ -13,8 +24,30 @@ export default function InvoiceDetailPage() {
   const [checks,  setChecks]  = useState<any>(null)
   const [qrUrl,   setQrUrl]   = useState('')
   const [loading, setLoading] = useState(true)
-  const [closing, setClosing] = useState(false)
   const [sending, setSending] = useState(false)
+  const [saving,  setSaving]  = useState(false)
+
+  // Editing state
+  const [editingLines, setEditingLines] = useState<LineItem[]>([])
+  const [isEditing,    setIsEditing]    = useState(false)
+  const [editingCell,  setEditingCell]  = useState<string | null>(null)
+
+  // Mark as Paid modal
+  const [showPaidModal, setShowPaidModal]       = useState(false)
+  const [paymentMethod, setPaymentMethod]       = useState('cash')
+  const [markingPaid,   setMarkingPaid]         = useState(false)
+
+  const isDraft = invoice?.status === 'draft'
+
+  const recalcTotals = useCallback((lines: LineItem[]) => {
+    const subtotal = lines.reduce((s, l) => s + (l.total_price || 0), 0)
+    const taxRate = invoice?.tax_rate || 0
+    const taxAmount = subtotal * taxRate / 100
+    const total = subtotal + taxAmount
+    const amountPaid = invoice?.amount_paid || 0
+    const balanceDue = total - amountPaid
+    return { subtotal, tax_amount: taxAmount, total, balance_due: balanceDue }
+  }, [invoice?.tax_rate, invoice?.amount_paid])
 
   useEffect(() => {
     async function load() {
@@ -25,7 +58,7 @@ export default function InvoiceDetailPage() {
       const { data: inv } = await supabase
         .from('invoices')
         .select(`
-          *, 
+          *,
           service_orders(
             id, so_number, status, complaint, cause, correction,
             assets(unit_number, year, make, model, odometer),
@@ -40,6 +73,7 @@ export default function InvoiceDetailPage() {
 
       if (!inv) { window.location.href = '/invoices'; return }
       setInvoice(inv)
+      setEditingLines((inv.so_lines || []).map((l: any) => ({ ...l })))
       setLoading(false)
     }
     load()
@@ -60,19 +94,131 @@ export default function InvoiceDetailPage() {
   async function sendInvoice() {
     setSending(true)
     await runInvoiceChecks()
-    // Send via Resend
     await fetch(`/api/invoices/${params.id}/send`, { method: 'POST' })
     setInvoice((i: any) => ({ ...i, status: 'sent' }))
     setSending(false)
   }
 
+  function handleLineChange(index: number, field: keyof LineItem, value: string | number) {
+    setEditingLines(prev => {
+      const updated = [...prev]
+      const line = { ...updated[index] }
+      if (field === 'quantity' || field === 'unit_price') {
+        (line as any)[field] = Number(value) || 0
+        line.total_price = line.quantity * line.unit_price
+      } else {
+        (line as any)[field] = value
+      }
+      updated[index] = line
+      return updated
+    })
+    if (!isEditing) setIsEditing(true)
+  }
+
+  function addLine() {
+    setEditingLines(prev => [...prev, {
+      _tempId: 'new_' + Date.now(),
+      line_type: 'labor',
+      description: '',
+      part_number: '',
+      quantity: 1,
+      unit_price: 0,
+      total_price: 0,
+    }])
+    setIsEditing(true)
+  }
+
+  function removeLine(index: number) {
+    setEditingLines(prev => prev.filter((_, i) => i !== index))
+    setIsEditing(true)
+  }
+
+  async function saveLines() {
+    setSaving(true)
+    try {
+      const soId = invoice.service_orders?.id
+      if (!soId) { alert('No service order linked'); setSaving(false); return }
+
+      // Delete existing lines and re-insert
+      await supabase.from('so_lines').delete().eq('service_order_id', soId)
+
+      const toInsert = editingLines.map(l => ({
+        service_order_id: soId,
+        line_type: l.line_type,
+        description: l.description,
+        part_number: l.part_number || null,
+        quantity: l.quantity,
+        unit_price: l.unit_price,
+        total_price: l.total_price,
+      }))
+      if (toInsert.length > 0) {
+        await supabase.from('so_lines').insert(toInsert)
+      }
+
+      // Recalculate totals
+      const totals = recalcTotals(editingLines)
+      await fetch(`/api/invoices/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(totals),
+      })
+
+      // Refresh
+      const { data: refreshed } = await supabase
+        .from('invoices')
+        .select(`*, service_orders(id, so_number, status, complaint, cause, correction, assets(unit_number, year, make, model, odometer), users!assigned_tech(full_name)), customers(company_name, contact_name, phone, email), so_lines(id, line_type, description, part_number, quantity, unit_price, total_price)`)
+        .eq('id', params.id)
+        .single()
+
+      if (refreshed) {
+        setInvoice(refreshed)
+        setEditingLines((refreshed.so_lines || []).map((l: any) => ({ ...l })))
+      }
+      setIsEditing(false)
+    } catch (err) {
+      console.error('Save error', err)
+      alert('Failed to save changes')
+    }
+    setSaving(false)
+  }
+
+  async function markAsPaid() {
+    setMarkingPaid(true)
+    try {
+      await fetch(`/api/invoices/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'paid',
+          payment_method: paymentMethod,
+          paid_at: new Date().toISOString(),
+          amount_paid: invoice.total || 0,
+          balance_due: 0,
+        }),
+      })
+      setInvoice((i: any) => ({
+        ...i,
+        status: 'paid',
+        payment_method: paymentMethod,
+        paid_at: new Date().toISOString(),
+        amount_paid: i.total || 0,
+        balance_due: 0,
+      }))
+      setShowPaidModal(false)
+    } catch {
+      alert('Failed to mark as paid')
+    }
+    setMarkingPaid(false)
+  }
+
   const S: Record<string, React.CSSProperties> = {
-    page:   { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
+    page:   { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Inter', -apple-system, sans-serif", padding:24 },
     card:   { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
     label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#48536A', marginBottom:5, display:'block' },
-    th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.08em', padding:'7px 10px', textAlign:'left', background:'#0B0D11' },
+    th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase' as const, letterSpacing:'.08em', padding:'7px 10px', textAlign:'left' as const, background:'#0B0D11' },
     td:     { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:12 },
     btn:    { padding:'9px 18px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
+    input:  { background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:4, color:'#DDE3EE', padding:'4px 8px', fontSize:11, fontFamily:'inherit', outline:'none', width:'100%' },
   }
 
   if (loading) return <div style={{ ...S.page, color:'#7C8BA0', padding:60 }}>Loading...</div>
@@ -81,36 +227,121 @@ export default function InvoiceDetailPage() {
   const asset  = so?.assets
   const cust   = invoice.customers
   const tech   = so?.users
-  const lines  = invoice.so_lines || []
+  const lines  = isDraft && isEditing ? editingLines : (invoice.so_lines || [])
   const isPaid = invoice.status === 'paid'
 
   const laborLines  = lines.filter((l: any) => l.line_type === 'labor')
   const partLines   = lines.filter((l: any) => l.line_type === 'part')
   const otherLines  = lines.filter((l: any) => !['labor','part'].includes(l.line_type))
 
+  // Live recalc for editing mode
+  const liveTotals = isDraft && isEditing ? recalcTotals(editingLines) : null
+  const displaySubtotal  = liveTotals ? liveTotals.subtotal  : (invoice.subtotal || 0)
+  const displayTax       = liveTotals ? liveTotals.tax_amount : (invoice.tax_amount || 0)
+  const displayTotal     = liveTotals ? liveTotals.total      : (invoice.total || 0)
+  const displayBalance   = liveTotals ? liveTotals.balance_due : (invoice.balance_due || 0)
+  const displayPaid      = invoice.amount_paid || 0
+
   const statusColor: Record<string, string> = { draft:'#7C8BA0', sent:'#4D9EFF', paid:'#1DB870', voided:'#48536A' }
   const stColor = statusColor[invoice.status] || '#7C8BA0'
 
-  function lineSection(title: string, color: string, items: any[]) {
+  function editableCell(lineIndex: number, field: keyof LineItem, value: any, type: 'text' | 'number' = 'text') {
+    if (!isDraft) return <span>{type === 'number' ? (typeof value === 'number' ? value.toFixed(field === 'quantity' ? 0 : 2) : value) : value}</span>
+    const cellKey = `${lineIndex}-${field}`
+    const isActive = editingCell === cellKey
+    return (
+      <div
+        onClick={(e) => { e.stopPropagation(); setEditingCell(cellKey) }}
+        style={{ cursor: 'text', minWidth: type === 'number' ? 60 : 100, padding: '2px 0' }}
+      >
+        {isActive ? (
+          <input
+            autoFocus
+            type={type}
+            value={value}
+            onChange={(e) => handleLineChange(lineIndex, field, type === 'number' ? e.target.value : e.target.value)}
+            onBlur={() => setEditingCell(null)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setEditingCell(null) }}
+            style={{ ...S.input, width: type === 'number' ? 70 : '100%' }}
+            step={field === 'quantity' ? '1' : '0.01'}
+          />
+        ) : (
+          <span style={{ borderBottom: '1px dashed rgba(255,255,255,.15)', paddingBottom: 1 }}>
+            {type === 'number' ? (typeof value === 'number' ? (field === 'quantity' ? value : value.toFixed(2)) : value) : (value || '(click to edit)')}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  function lineSection(title: string, color: string, items: any[], globalOffset: number) {
     if (!items.length) return null
     return (
       <>
-        <tr><td colSpan={5} style={{ padding:'6px 10px', fontFamily:'monospace', fontSize:8, color, textTransform:'uppercase', letterSpacing:'.1em', background:'rgba(255,255,255,.02)', borderBottom:'1px solid rgba(255,255,255,.04)' }}>{title}</td></tr>
-        {items.map((l: any) => (
-          <tr key={l.id}>
-            <td style={S.td}>{l.description}</td>
-            <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#48536A' }}>{l.part_number || '—'}</td>
-            <td style={{ ...S.td, fontFamily:'monospace', textAlign:'center' }}>{l.quantity}</td>
-            <td style={{ ...S.td, fontFamily:'monospace', color:'#7C8BA0' }}>${(l.unit_price||0).toFixed(2)}</td>
-            <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color: color }}>${(l.total_price||0).toFixed(2)}</td>
-          </tr>
-        ))}
+        <tr><td colSpan={isDraft ? 6 : 5} style={{ padding:'6px 10px', fontFamily:'monospace', fontSize:8, color, textTransform:'uppercase', letterSpacing:'.1em', background:'rgba(255,255,255,.02)', borderBottom:'1px solid rgba(255,255,255,.04)' }}>{title}</td></tr>
+        {items.map((l: any, localIdx: number) => {
+          const globalIdx = lines.indexOf(l)
+          return (
+            <tr key={l.id || l._tempId || localIdx}>
+              <td style={S.td}>{editableCell(globalIdx, 'description', l.description)}</td>
+              <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#48536A' }}>{l.part_number || '—'}</td>
+              <td style={{ ...S.td, fontFamily:'monospace', textAlign:'center' }}>{editableCell(globalIdx, 'quantity', l.quantity, 'number')}</td>
+              <td style={{ ...S.td, fontFamily:'monospace', color:'#7C8BA0' }}>
+                {isDraft ? editableCell(globalIdx, 'unit_price', l.unit_price, 'number') : '$' + (l.unit_price||0).toFixed(2)}
+              </td>
+              <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color: color }}>${(l.total_price||0).toFixed(2)}</td>
+              {isDraft && (
+                <td style={{ ...S.td, textAlign:'center' }}>
+                  <button
+                    onClick={() => removeLine(globalIdx)}
+                    style={{ background:'none', border:'none', color:'#D94F4F', cursor:'pointer', fontSize:14, fontFamily:'inherit', padding:'2px 6px' }}
+                    title="Remove line"
+                  >x</button>
+                </td>
+              )}
+            </tr>
+          )
+        })}
       </>
     )
   }
 
   return (
     <div style={S.page}>
+      {/* Mark as Paid Modal */}
+      {showPaidModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
+          <div style={{ background:'#1C2130', border:'1px solid rgba(255,255,255,.1)', borderRadius:14, padding:28, minWidth:340, maxWidth:400 }}>
+            <div style={{ fontSize:16, fontWeight:700, color:'#F0F4FF', marginBottom:4 }}>Mark as Paid</div>
+            <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:20 }}>
+              Total: ${(invoice.total || 0).toFixed(2)}
+            </div>
+            <label style={{ ...S.label, marginBottom:8 }}>Payment Method</label>
+            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:24 }}>
+              {['cash', 'check', 'ach', 'other'].map(m => (
+                <label key={m} style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', fontSize:13, color:'#DDE3EE' }}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value={m}
+                    checked={paymentMethod === m}
+                    onChange={() => setPaymentMethod(m)}
+                    style={{ accentColor:'#1D6FE8' }}
+                  />
+                  {m.charAt(0).toUpperCase() + m.slice(1)}
+                </label>
+              ))}
+            </div>
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+              <button onClick={() => setShowPaidModal(false)} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.1)' }}>Cancel</button>
+              <button onClick={markAsPaid} disabled={markingPaid} style={{ ...S.btn, background:'linear-gradient(135deg,#1DB870,#15955a)', color:'#fff' }}>
+                {markingPaid ? 'Saving...' : 'Confirm Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <a href="/invoices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Invoices
 </a>
@@ -127,9 +358,9 @@ export default function InvoiceDetailPage() {
             {invoice.status.toUpperCase()}
           </span>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color: isPaid?'#1DB870':'#4D9EFF' }}>
-            ${(invoice.total||0).toFixed(2)}
+            ${displayTotal.toFixed(2)}
           </div>
-          {invoice.balance_due > 0 && <div style={{ fontSize:12, color:'#7C8BA0' }}>Balance due: ${invoice.balance_due.toFixed(2)}</div>}
+          {displayBalance > 0 && <div style={{ fontSize:12, color:'#7C8BA0' }}>Balance due: ${displayBalance.toFixed(2)}</div>}
         </div>
       </div>
 
@@ -138,12 +369,12 @@ export default function InvoiceDetailPage() {
         <div style={{ background:'rgba(212,136,42,.06)', border:'1px solid rgba(212,136,42,.2)', borderRadius:10, padding:14, marginBottom:14 }}>
           {checks.errors?.map((e: string, i: number) => (
             <div key={i} style={{ display:'flex', gap:8, marginBottom:6, fontSize:12, color:'#D94F4F' }}>
-              <span>✗</span> {e}
+              <span>x</span> {e}
             </div>
           ))}
           {checks.warnings?.map((w: string, i: number) => (
             <div key={i} style={{ display:'flex', gap:8, marginBottom:6, fontSize:12, color:'#D4882A' }}>
-              <span>⚠</span> {w}
+              <span>!</span> {w}
             </div>
           ))}
         </div>
@@ -153,23 +384,41 @@ export default function InvoiceDetailPage() {
         <div>
           {/* Line items */}
           <div style={S.card}>
-            <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF', marginBottom:12 }}>Line Items</div>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Line Items</div>
+              {isDraft && (
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={addLine} style={{ ...S.btn, padding:'5px 12px', background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.2)', fontSize:10 }}>
+                    + Add Line
+                  </button>
+                  {isEditing && (
+                    <button onClick={saveLines} disabled={saving} style={{ ...S.btn, padding:'5px 12px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff', fontSize:10 }}>
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             <div style={{ overflowX:'auto' }}>
               <table style={{ width:'100%', borderCollapse:'collapse', minWidth:440 }}>
-                <thead><tr>{['Description','Part #','Qty','Rate','Amount'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
+                <thead><tr>
+                  {['Description','Part #','Qty','Rate','Amount', ...(isDraft ? [''] : [])].map(h =>
+                    <th key={h} style={S.th as any}>{h}</th>
+                  )}
+                </tr></thead>
                 <tbody>
-                  {lineSection('Labor', '#4D9EFF', laborLines)}
-                  {lineSection('Parts', '#1DB870', partLines)}
-                  {lineSection('Other', '#D4882A', otherLines)}
+                  {lineSection('Labor', '#4D9EFF', laborLines, 0)}
+                  {lineSection('Parts', '#1DB870', partLines, laborLines.length)}
+                  {lineSection('Other', '#D4882A', otherLines, laborLines.length + partLines.length)}
                 </tbody>
               </table>
             </div>
             {/* Totals */}
             <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, paddingTop:12, marginTop:8, borderTop:'1px solid rgba(255,255,255,.06)' }}>
               {[
-                { label:'Subtotal', val: invoice.subtotal||0, color:'#DDE3EE' },
-                { label:'Tax',      val: invoice.tax_amount||0, color:'#DDE3EE' },
-                ...(invoice.amount_paid>0 ? [{ label:'Amount Paid', val: -(invoice.amount_paid||0), color:'#1DB870' }] : []),
+                { label:'Subtotal', val: displaySubtotal, color:'#DDE3EE' },
+                { label:'Tax',      val: displayTax, color:'#DDE3EE' },
+                ...(displayPaid > 0 ? [{ label:'Amount Paid', val: -displayPaid, color:'#1DB870' }] : []),
               ].map(r => (
                 <div key={r.label} style={{ display:'flex', gap:40 }}>
                   <span style={{ fontSize:12, color:'#7C8BA0' }}>{r.label}</span>
@@ -178,7 +427,7 @@ export default function InvoiceDetailPage() {
               ))}
               <div style={{ display:'flex', gap:40, paddingTop:8, marginTop:4, borderTop:'1px solid rgba(255,255,255,.08)' }}>
                 <span style={{ fontSize:15, fontWeight:700, color:'#F0F4FF' }}>Total</span>
-                <span style={{ fontFamily:'monospace', fontSize:18, fontWeight:700, color: isPaid?'#1DB870':'#4D9EFF', minWidth:80, textAlign:'right' }}>${(invoice.total||0).toFixed(2)}</span>
+                <span style={{ fontFamily:'monospace', fontSize:18, fontWeight:700, color: isPaid?'#1DB870':'#4D9EFF', minWidth:80, textAlign:'right' }}>${displayTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -215,6 +464,10 @@ export default function InvoiceDetailPage() {
                       <div style={{ fontSize:10, color:'#48536A', marginTop:6 }}>Customer scans to pay</div>
                     </div>
                   )}
+                  <button style={{ ...S.btn, background:'rgba(29,184,112,.15)', color:'#1DB870', border:'1px solid rgba(29,184,112,.25)', width:'100%' }}
+                    onClick={() => setShowPaidModal(true)}>
+                    Mark as Paid
+                  </button>
                   <button style={{ ...S.btn, background:'rgba(212,136,42,.08)', color:'#D4882A', border:'1px solid rgba(212,136,42,.2)', width:'100%' }}
                     onClick={runInvoiceChecks}>
                     Run Accounting Checks
@@ -224,12 +477,15 @@ export default function InvoiceDetailPage() {
               {isPaid && (
                 <div style={{ textAlign:'center', padding:'12px 0' }}>
                   <div style={{ fontSize:13, fontWeight:700, color:'#1DB870' }}>Paid</div>
-                  <div style={{ fontSize:13, fontWeight:700, color:'#1DB870', marginTop:6 }}>Paid</div>
+                  {invoice.payment_method && <div style={{ fontSize:11, color:'#7C8BA0', marginTop:4 }}>via {invoice.payment_method}</div>}
                   {invoice.paid_at && <div style={{ fontSize:10, color:'#48536A', marginTop:4 }}>{new Date(invoice.paid_at).toLocaleDateString()}</div>}
                 </div>
               )}
+              <a href={`/api/invoices/${params.id}/pdf`} target="_blank" style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
+                Download PDF
+              </a>
               <a href={`/orders/${so?.id}`} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
-                View Service Order →
+                View Service Order
               </a>
             </div>
           </div>

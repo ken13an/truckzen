@@ -55,11 +55,11 @@ export default function InvoicesPage() {
       <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
         <div style={{ overflowX:'auto' }}>
           <table style={{ width:'100%', borderCollapse:'collapse', minWidth:560 }}>
-            <thead><tr>{['Invoice #','Customer','SO / Truck','Total','Balance Due','Due Date','Status','Actions'].map(h =>
+            <thead><tr>{['Invoice #','Customer','SO / Truck','Total','Balance Due','Due Date','Status'].map(h =>
               <th key={h} style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' }}>{h}</th>
             )}</tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={8} style={{ textAlign:'center', padding:40, color:'#7C8BA0' }}>Loading...</td></tr>
+              {loading ? <tr><td colSpan={7} style={{ textAlign:'center', padding:40, color:'#7C8BA0' }}>Loading...</td></tr>
               : invoices.map(inv => {
                 const cust = inv.customers as any
                 const so   = inv.service_orders as any
@@ -77,11 +77,6 @@ export default function InvoicesPage() {
                       <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:cfg.color+'18', color:cfg.color, border:'1px solid '+cfg.color+'33' }}>
                         <span style={{ width:4, height:4, borderRadius:'50%', background:'currentColor' }}/>{isOverdue?'Overdue':cfg.label}
                       </span>
-                    </td>
-                    <td style={{ padding:'9px 10px' }}>
-                      <div style={{ display:'flex', gap:4 }}>
-                        <button onClick={e => { e.stopPropagation(); window.open('/pay/'+inv.id+'/qr') }} style={{ padding:'3px 8px', borderRadius:5, background:'rgba(29,111,232,.1)', border:'1px solid rgba(29,111,232,.2)', color:'#4D9EFF', fontSize:9, cursor:'pointer', fontFamily:'inherit' }}>QR Pay</button>
-                      </div>
                     </td>
                   </tr>
                 )

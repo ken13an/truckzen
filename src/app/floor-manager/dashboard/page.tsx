@@ -74,14 +74,16 @@ export default function FloorManagerDashboardPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
   const [secondsAgo, setSecondsAgo] = useState(0)
+  const [activeTechs, setActiveTechs] = useState<any[]>([])
 
   // -- Data fetching --
   const fetchData = useCallback(async (shopId: string) => {
     try {
-      const [jobsRes, partsRes, usersRes] = await Promise.all([
+      const [jobsRes, partsRes, usersRes, activeRes] = await Promise.all([
         fetch(`/api/floor-manager/jobs?shop_id=${shopId}`),
         fetch(`/api/floor-manager/parts-requests?shop_id=${shopId}`),
         fetch(`/api/users?shop_id=${shopId}`),
+        fetch(`/api/time-tracking/active?shop_id=${shopId}`),
       ])
       if (jobsRes.ok) {
         const d = await jobsRes.json()
@@ -97,6 +99,10 @@ export default function FloorManagerDashboardPage() {
         setMechanics(all.filter((u: any) =>
           ['mechanic', 'technician', 'lead_tech', 'maintenance_technician', 'floor_manager'].includes(u.role)
         ))
+      }
+      if (activeRes.ok) {
+        const d = await activeRes.json()
+        setActiveTechs(Array.isArray(d) ? d : [])
       }
       setLastRefresh(new Date())
     } catch { /* silent */ }
@@ -272,7 +278,7 @@ export default function FloorManagerDashboardPage() {
 
   if (!user) return null
 
-  const tabLabels = ['Kanban', 'Parts Requests']
+  const tabLabels = ['Kanban', 'Active Techs', 'Parts Requests']
   const tabIcons = [<Users key="u" size={16} />, <Package key="p" size={16} />]
 
   return (
@@ -482,8 +488,57 @@ export default function FloorManagerDashboardPage() {
         </div>
       )}
 
-      {/* ===== TAB 1: PARTS REQUESTS ===== */}
+      {/* ===== TAB 1: ACTIVE TECHS ===== */}
       {tab === 1 && (
+        <div style={{ flex: 1, padding: 20, overflow: 'auto' }}>
+          <div style={{ maxWidth: 800, margin: '0 auto' }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700 }}>
+              Active Technicians ({activeTechs.length})
+            </h3>
+            {activeTechs.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: DIM }}>
+                <Clock size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
+                <p style={{ fontSize: 15, fontWeight: 600 }}>No technicians currently clocked in</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {activeTechs.map((tech: any) => {
+                  const elapsed = Math.floor((Date.now() - new Date(tech.clocked_in_at).getTime()) / 1000)
+                  const h = Math.floor(elapsed / 3600)
+                  const m = Math.floor((elapsed % 3600) / 60)
+                  const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`
+                  return (
+                    <div key={tech.id} style={{
+                      background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: 12,
+                      padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{
+                          width: 8, height: 8, borderRadius: '50%', background: GREEN,
+                          boxShadow: `0 0 6px ${GREEN}`,
+                        }} />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 14 }}>{tech.mechanic_name}</div>
+                          <div style={{ fontSize: 12, color: DIM, marginTop: 2 }}>
+                            {tech.wo_number} — {tech.job_description}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: GREEN, fontFamily: 'monospace' }}>{timeStr}</div>
+                        <div style={{ fontSize: 11, color: DIM }}>elapsed</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== TAB 2: PARTS REQUESTS ===== */}
+      {tab === 2 && (
         <div style={{ flex: 1, padding: 20, overflow: 'auto' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>

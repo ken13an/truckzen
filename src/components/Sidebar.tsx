@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
-import { LayoutDashboard, Monitor, Wrench, Users2, Truck, FileText, Package, UserCircle, Factory, Settings, Timer, ShieldCheck, BarChart3, Calculator, LogOut, Clipboard, BookOpen, Cog } from 'lucide-react'
+import { LayoutDashboard, Monitor, Wrench, Users2, Truck, FileText, Package, UserCircle, Factory, Settings, Timer, ShieldCheck, BarChart3, Calculator, LogOut, Clipboard, BookOpen, Cog, Upload } from 'lucide-react'
 
 const ICON_MAP: Record<string, any> = {
   '/dashboard': LayoutDashboard,
@@ -28,6 +28,7 @@ const ICON_MAP: Record<string, any> = {
   '/admin/permissions': ShieldCheck,
   '/tech': Wrench,
   '/dvir': BookOpen,
+  '/smart-drop': Upload,
 }
 
 export default function Sidebar() {

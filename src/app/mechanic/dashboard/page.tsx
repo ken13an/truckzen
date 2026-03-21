@@ -1,9 +1,9 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import Logo from '@/components/Logo'
-import { ChevronRight, Wrench, Clock, CheckCircle2, XCircle, Package } from 'lucide-react'
+import { ChevronRight, Wrench, Clock, CheckCircle2, XCircle, Package, Play, Square } from 'lucide-react'
 
 const MECHANIC_ROLES = ['mechanic', 'technician', 'lead_tech', 'maintenance_technician']
 
@@ -67,6 +67,90 @@ export default function MechanicDashboardPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [declineModal, setDeclineModal] = useState<string | null>(null) // assignment ID
   const [declineReason, setDeclineReason] = useState('')
+  const [activeClock, setActiveClock] = useState<any>(null) // { id, clocked_in_at, so_line_id, job_description, wo_number }
+  const [elapsedSec, setElapsedSec] = useState(0)
+  const [clockLoading, setClockLoading] = useState<string | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Timer logic
+  useEffect(() => {
+    if (activeClock?.clocked_in_at) {
+      const start = new Date(activeClock.clocked_in_at).getTime()
+      const tick = () => setElapsedSec(Math.floor((Date.now() - start) / 1000))
+      tick()
+      timerRef.current = setInterval(tick, 1000)
+      return () => { if (timerRef.current) clearInterval(timerRef.current) }
+    } else {
+      setElapsedSec(0)
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [activeClock?.clocked_in_at])
+
+  const formatTimer = (sec: number) => {
+    const h = Math.floor(sec / 3600)
+    const m = Math.floor((sec % 3600) / 60)
+    const s = sec % 60
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
+
+  const fetchActiveClock = useCallback(async (userId: string) => {
+    try {
+      const res = await fetch(`/api/mechanic/active-clock?user_id=${userId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setActiveClock(data)
+      }
+    } catch { /* silent */ }
+  }, [])
+
+  const handleClockIn = async (job: any) => {
+    if (!user) return
+    setClockLoading(job.so_line_id || job.id)
+    try {
+      const res = await fetch('/api/mechanic/clock-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          so_line_id: job.so_line_id || job.id,
+          user_id: user.id,
+          service_order_id: job.work_order_id || job.wo_id,
+          shop_id: user.shop_id,
+        }),
+      })
+      if (res.ok) {
+        const entry = await res.json()
+        setActiveClock({
+          id: entry.id,
+          clocked_in_at: entry.clocked_in_at,
+          so_line_id: job.so_line_id || job.id,
+          job_description: job.description || '',
+          wo_number: job.wo_number || job.so_number || '',
+        })
+      } else {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || 'Clock in failed')
+      }
+    } catch { alert('Clock in failed') }
+    setClockLoading(null)
+  }
+
+  const handleClockOut = async () => {
+    if (!activeClock?.id) return
+    setClockLoading('clock-out')
+    try {
+      const res = await fetch('/api/mechanic/clock-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ time_entry_id: activeClock.id, user_id: user?.id }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setActiveClock(null)
+        alert(`Clocked out. Session: ${data.duration_minutes} min. Total on job: ${data.total_hours_on_job} hrs`)
+      }
+    } catch { alert('Clock out failed') }
+    setClockLoading(null)
+  }
 
   const fetchData = useCallback(async (userId: string) => {
     try {
@@ -93,7 +177,7 @@ export default function MechanicDashboardPage() {
       if (!MECHANIC_ROLES.includes(profile.role)) { window.location.href = '/dashboard'; return }
       setUser(profile)
       setLanguage(profile.language || 'en')
-      await fetchData(profile.id)
+      await Promise.all([fetchData(profile.id), fetchActiveClock(profile.id)])
       setLoading(false)
       interval = setInterval(() => fetchData(profile.id), 15000)
     }
@@ -227,6 +311,38 @@ export default function MechanicDashboardPage() {
       </nav>
 
       <div style={{ padding: '16px 20px', maxWidth: 720, margin: '0 auto' }}>
+        {/* ========== ACTIVE CLOCK BANNER ========== */}
+        {activeClock && (
+          <div style={{
+            background: 'rgba(34,197,94,0.1)', border: `1px solid ${GREEN}`, borderRadius: 14,
+            padding: '16px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: GREEN, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                Clocked In — Active
+              </div>
+              <div style={{ fontSize: 36, fontWeight: 700, fontFamily: "'Bebas Neue', monospace, sans-serif", color: GREEN, letterSpacing: 2 }}>
+                {formatTimer(elapsedSec)}
+              </div>
+              <div style={{ fontSize: 12, color: DIM, marginTop: 2 }}>
+                {activeClock.wo_number} — {activeClock.job_description}
+              </div>
+            </div>
+            <button
+              onClick={handleClockOut}
+              disabled={clockLoading === 'clock-out'}
+              style={{
+                padding: '10px 20px', borderRadius: 10, border: 'none',
+                background: RED, color: '#fff', fontWeight: 700, fontSize: 14,
+                cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
+                opacity: clockLoading === 'clock-out' ? 0.6 : 1,
+              }}
+            >
+              <Square size={14} fill="#fff" /> Clock Out
+            </button>
+          </div>
+        )}
+
         {/* ========== TAB 0: MY JOBS ========== */}
         {tab === 0 && (
           <>
@@ -341,6 +457,21 @@ export default function MechanicDashboardPage() {
                             }}
                           >
                             <Wrench size={15} /> Start Work
+                          </button>
+                        )}
+                        {/* Clock In button for active jobs */}
+                        {(job.status === 'accepted' || job.status === 'in_progress') && !activeClock && (
+                          <button
+                            disabled={clockLoading === (job.so_line_id || job.id)}
+                            onClick={() => handleClockIn(job)}
+                            style={{
+                              flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
+                              background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
+                              cursor: 'pointer', fontFamily: FONT, opacity: clockLoading === (job.so_line_id || job.id) ? 0.6 : 1,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            }}
+                          >
+                            <Play size={14} fill="#fff" /> Clock In
                           </button>
                         )}
                         {(job.status === 'accepted' || job.status === 'in_progress') && (
