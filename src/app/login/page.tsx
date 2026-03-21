@@ -233,6 +233,9 @@ export default function LoginPage() {
         {/* Footer note */}
         <div style={styles.footerNote}>
           No account? Contact your shop admin.
+          <div style={{ marginTop: 10 }}>
+            <a href="/register" style={{ color: '#1D6FE8', textDecoration: 'none', fontWeight: 600, fontSize: 12 }}>Apply for Early Access</a>
+          </div>
         </div>
       </div>
 

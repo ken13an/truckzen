@@ -6,7 +6,7 @@ const PUBLIC_ROUTES = [
   '/api/telegram', '/api/stripe/webhook', '/api/kiosk',
   '/api/pay', '/offline', '/waiting', '/forgot-password', '/reset-password',
   '/api/work-orders', '/api/wo-', '/api/portal', '/api/kiosk-checkin', '/api/mechanic',
-  '/privacy', '/terms',
+  '/privacy', '/terms', '/register',
 ]
 
 // Module → route prefixes
@@ -123,6 +123,13 @@ export async function middleware(request: NextRequest) {
 
   // Not logged in → login
   if (!user) return NextResponse.redirect(new URL('/login', request.url))
+
+  // Platform admin — only platform owners
+  if (pathname.startsWith('/platform-admin')) {
+    const { data: po } = await supabase.from('users').select('is_platform_owner').eq('id', user.id).single()
+    if (!po?.is_platform_owner) return NextResponse.redirect(new URL('/dashboard', request.url))
+    return response
+  }
 
   // Get user profile
   const { data: profile } = await supabase.from('users').select('role, shop_id').eq('id', user.id).single()
