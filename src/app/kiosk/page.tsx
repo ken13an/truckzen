@@ -667,14 +667,21 @@ export default function KioskPage() {
     )
   }
 
-  // ---- Error state ----
+  // ---- Error / no-shop state: show "Enter kiosk code" ----
   if (shopError) {
     return (
       <div style={{ minHeight: '100vh', background: '#151520', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans', sans-serif" }}>
-        <div style={{ textAlign: 'center', color: '#EDEDF0' }}>
+        <div style={{ textAlign: 'center', color: '#EDEDF0', maxWidth: 400, padding: '0 24px' }}>
           <Logo size="lg" style={{ justifyContent: 'center', marginBottom: 24 }} />
-          <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>Kiosk Not Configured</div>
-          <div style={{ fontSize: 16, color: '#9D9DA1' }}>Please add <code style={{ background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 6 }}>?shop=YOUR_SHOP_ID</code> to the URL.</div>
+          <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Check-In Kiosk</div>
+          <div style={{ fontSize: 14, color: '#9D9DA1', marginBottom: 24 }}>Enter your shop's kiosk code or scan the QR code at the front desk.</div>
+          <form onSubmit={e => { e.preventDefault(); const code = (e.currentTarget.elements.namedItem('code') as HTMLInputElement)?.value?.trim(); if (code) window.location.href = `/kiosk/${code}` }}
+            style={{ display: 'flex', gap: 8 }}>
+            <input name="code" placeholder="e.g. ugl" autoFocus
+              style={{ flex: 1, padding: '14px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.06)', color: '#EDEDF0', fontSize: 18, fontFamily: "'Instrument Sans', sans-serif", outline: 'none', textAlign: 'center', letterSpacing: 2 }} />
+            <button type="submit"
+              style={{ padding: '14px 24px', borderRadius: 12, background: '#1D6FE8', color: '#fff', border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>Go</button>
+          </form>
         </div>
       </div>
     )
@@ -1274,26 +1281,56 @@ export default function KioskPage() {
         {/* STEP 8 — CONFIRMED                                              */}
         {/* ================================================================ */}
         {step === 8 && result && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 16 }}>
-            <CheckCircle2 size={64} color="#16A34A" />
-            <div style={{ fontSize: 36, fontWeight: 700, marginTop: 8 }}>{t('confirmed_title')}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: '#1D6FE8', letterSpacing: '0.04em', marginTop: 8 }}>
-              {result.wo_number}
-            </div>
-            <div style={{ fontSize: 18, color: '#9D9DA1', maxWidth: 400, lineHeight: 1.6, marginTop: 8 }}>
-              {t('confirmed_sub')} <strong style={{ color: '#EDEDF0' }}>{contactEmail}</strong>
-            </div>
-            <button
-              onClick={resetAll}
-              style={{ ...primaryBtnStyle, marginTop: 32, padding: '20px 48px', fontSize: 20 }}
-            >
-              {t('new_checkin')}
-            </button>
-          </div>
+          <KioskConfirmation
+            woNumber={result.wo_number}
+            email={contactEmail}
+            t={t}
+            onReset={resetAll}
+            btnStyle={primaryBtnStyle}
+          />
         )}
       </div>
     </div>
     </>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Auto-reset confirmation screen
+// ---------------------------------------------------------------------------
+
+function KioskConfirmation({ woNumber, email, t, onReset, btnStyle }: {
+  woNumber: string; email: string; t: (k: string) => string; onReset: () => void; btnStyle: React.CSSProperties
+}) {
+  const [countdown, setCountdown] = useState(30)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) { onReset(); return 30 }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [onReset])
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 16 }}>
+      <CheckCircle2 size={64} color="#16A34A" />
+      <div style={{ fontSize: 36, fontWeight: 700, marginTop: 8 }}>{t('confirmed_title')}</div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: '#1D6FE8', letterSpacing: '0.04em', marginTop: 8 }}>
+        {woNumber}
+      </div>
+      <div style={{ fontSize: 18, color: '#9D9DA1', maxWidth: 400, lineHeight: 1.6, marginTop: 8 }}>
+        {t('confirmed_sub')} <strong style={{ color: '#EDEDF0' }}>{email}</strong>
+      </div>
+      <button onClick={onReset} style={{ ...btnStyle, marginTop: 32, padding: '20px 48px', fontSize: 20 }}>
+        {t('new_checkin')}
+      </button>
+      <div style={{ fontSize: 13, color: '#71717A', marginTop: 8 }}>
+        Auto-reset in {countdown}s
+      </div>
+    </div>
   )
 }
 

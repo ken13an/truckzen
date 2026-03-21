@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 
 const SECTIONS = [
   { key: 'team', label: 'Team Members', href: '/settings/users' },
+  { key: 'kiosk', label: 'Kiosk Mode' },
   { key: 'tax', label: 'Tax & Location' },
   { key: 'notifications', label: 'Notifications' },
   { key: 'integrations', label: 'Integrations' },
@@ -23,6 +24,10 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [retentionPolicy, setRetentionPolicy] = useState<{ inactive_customers: string; completed_work_orders: string; closed_invoices: string }>({ inactive_customers: 'never', completed_work_orders: 'never', closed_invoices: 'never' })
   const [retentionSaving, setRetentionSaving] = useState(false)
+  const [kioskCode, setKioskCode] = useState('')
+  const [kioskEnabled, setKioskEnabled] = useState(true)
+  const [kioskSaving, setKioskSaving] = useState(false)
+  const [kioskCopied, setKioskCopied] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -31,7 +36,11 @@ export default function SettingsPage() {
       if (!['owner', 'gm', 'it_person', 'office_admin'].includes(profile.role)) { window.location.href = '/dashboard'; return }
       setUser(profile)
       const { data } = await supabase.from('shops').select('*').eq('id', profile.shop_id).single()
-      if (data) { setShop(data); setEditShop(data) }
+      if (data) {
+        setShop(data); setEditShop(data)
+        if (data.kiosk_code) setKioskCode(data.kiosk_code)
+        if (data.kiosk_enabled != null) setKioskEnabled(data.kiosk_enabled)
+      }
       // Load retention policy
       try {
         const retRes = await fetch(`/api/settings?shop_id=${profile.shop_id}`)
@@ -192,6 +201,69 @@ export default function SettingsPage() {
               <button style={{ padding: '5px 14px', borderRadius: 7, background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.25)', color: '#4D9EFF', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Connect</button>
             </div>
           ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Kiosk Mode
+  if (activeSection === 'kiosk') {
+    const kioskUrl = kioskCode ? `truckzen.pro/kiosk/${kioskCode}` : ''
+    const saveKiosk = async () => {
+      if (!user?.shop_id) return
+      setKioskSaving(true)
+      await supabase.from('shops').update({ kiosk_code: kioskCode.toLowerCase().trim() || null, kiosk_enabled: kioskEnabled }).eq('id', user.shop_id)
+      setKioskSaving(false)
+    }
+    return (
+      <div style={{ padding: 24, maxWidth: 700, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", color: '#EDEDF0' }}>
+        <button onClick={() => setActiveSection(null)} style={{ background: 'none', border: 'none', color: '#7C8BA0', fontSize: 13, cursor: 'pointer', marginBottom: 16, fontFamily: 'inherit' }}>&larr; Back to Settings</button>
+        <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700 }}>Kiosk Mode</h2>
+
+        <div style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+          {kioskCode && (
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk URL</label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <code style={{ flex: 1, padding: '10px 14px', background: '#060708', border: '1px solid #1A1D23', borderRadius: 8, fontSize: 14, color: '#4D9EFF' }}>{kioskUrl}</code>
+                <button onClick={() => { navigator.clipboard.writeText(`https://${kioskUrl}`); setKioskCopied(true); setTimeout(() => setKioskCopied(false), 2000) }}
+                  style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #1A1D23', background: kioskCopied ? 'rgba(34,197,94,.1)' : '#0D0F12', color: kioskCopied ? '#22C55E' : '#7C8BA0', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {kioskCopied ? 'Copied' : 'Copy'}
+                </button>
+                <a href={`https://${kioskUrl}`} target="_blank" rel="noopener"
+                  style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #1A1D23', background: '#0D0F12', color: '#7C8BA0', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Open</a>
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk Code</label>
+            <input value={kioskCode} onChange={e => setKioskCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+              placeholder="e.g. ugl" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: '#060708', color: '#EDEDF0', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+            <div style={{ fontSize: 11, color: '#48536A', marginTop: 4 }}>Lowercase letters, numbers, and dashes only. This becomes your kiosk URL.</div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input type="checkbox" checked={kioskEnabled} onChange={e => setKioskEnabled(e.target.checked)} />
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Kiosk Enabled</span>
+            </label>
+          </div>
+
+          <button onClick={saveKiosk} disabled={kioskSaving || !kioskCode.trim()}
+            style={{ padding: '10px 24px', borderRadius: 8, background: '#1D6FE8', color: '#fff', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: kioskSaving || !kioskCode.trim() ? 0.5 : 1 }}>
+            {kioskSaving ? 'Saving...' : 'Save Kiosk Settings'}
+          </button>
+        </div>
+
+        <div style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20 }}>
+          <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Tablet Setup Instructions</h3>
+          <ol style={{ margin: 0, padding: '0 0 0 20px', fontSize: 13, color: '#9D9DA1', lineHeight: 2 }}>
+            <li>Open Safari or Chrome on the tablet</li>
+            <li>Go to: <strong style={{ color: '#4D9EFF' }}>{kioskUrl || 'truckzen.pro/kiosk/your-code'}</strong></li>
+            <li>Tap Share then "Add to Home Screen"</li>
+            <li>Enable Guided Access (iPad: Settings &gt; Accessibility &gt; Guided Access) to lock the tablet to the kiosk</li>
+          </ol>
         </div>
       </div>
     )
