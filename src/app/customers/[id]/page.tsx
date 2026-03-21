@@ -451,7 +451,7 @@ export default function CustomerProfilePage() {
                   return (
                     <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                       <td style={{ padding: '10px 12px', fontSize: 13 }}>
-                        <a href={`/fleet/${u.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
+                        <a href={`/customers/${id}/units/${u.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
                           #{u.unit_number}
                         </a>
                       </td>
