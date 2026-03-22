@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import ExcelJS from 'exceljs'
 import PageControls, { PageFooter } from '@/components/ui/PageControls'
+import SourceBadge from '@/components/ui/SourceBadge'
 
 type Customer = {
   id: string
@@ -401,7 +402,7 @@ export default function CustomersPage() {
                     fontWeight: 600,
                     color: '#1D6FE8',
                   }}>
-                    {c.company_name || 'Unnamed'}
+                    {c.company_name || 'Unnamed'} <SourceBadge source={c.source} />
                   </td>
                   <td style={{
                     padding: '11px 14px',

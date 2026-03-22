@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import ExcelJS from 'exceljs'
 import * as XLSX from 'xlsx'
 import PageControls, { PageFooter } from '@/components/ui/PageControls'
+import SourceBadge from '@/components/ui/SourceBadge'
 
 const BG = '#060708', CARD = '#161B24', BORDER = 'rgba(255,255,255,.055)'
 const TEXT = '#DDE3EE', MUTED = '#7C8BA0', WHITE = '#F0F4FF', BLUE = '#4D9EFF'
@@ -62,7 +63,7 @@ export default function PartsPage() {
 
   const loadParts = useCallback(async (shopId: string) => {
     const { data } = await supabase.from('parts')
-      .select('id, part_number, description, category, on_hand, reorder_point, cost_price, sell_price, vendor, bin_location, core_charge, warranty_months')
+      .select('id, part_number, description, category, on_hand, reorder_point, cost_price, sell_price, vendor, bin_location, core_charge, warranty_months, source')
       .eq('shop_id', shopId).order('description')
     setParts(data || [])
     setLoading(false)
@@ -316,7 +317,7 @@ export default function PartsPage() {
                     return (
                       <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,.025)' }}>
                         <td style={{ ...cellPad, fontFamily: MONO, fontSize: 10, color: BLUE }}>{p.part_number || '—'}</td>
-                        <td style={{ ...cellPad, color: WHITE, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description}</td>
+                        <td style={{ ...cellPad, color: WHITE, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description} <SourceBadge source={p.source} /></td>
                         <td style={{ ...cellPad, fontSize: 10, color: MUTED }}>{p.category || '—'}</td>
                         <td style={{ ...cellPad, fontFamily: MONO, fontSize: 11, fontWeight: 700, color: isOut ? RED : isLow ? AMBER : TEXT, textAlign: 'center' }}>{p.on_hand}</td>
                         <td style={{ ...cellPad, fontFamily: MONO, fontSize: 10, color: MUTED, textAlign: 'center' }}>{p.reorder_point}</td>

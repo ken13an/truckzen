@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 
   let q = s
     .from('assets')
-    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, unit_type, customers(company_name)')
+    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, unit_type, source, customers(company_name)')
     .eq('shop_id', shopId)
     .order('unit_number')
 

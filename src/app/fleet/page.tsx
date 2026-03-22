@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import SourceBadge from '@/components/ui/SourceBadge'
 
 export default function FleetPage() {
   const supabase = createClient()
@@ -85,7 +86,7 @@ export default function FleetPage() {
               {loading ? <tr><td colSpan={9} style={{ ...S.td, textAlign:'center', color:'#7C8BA0' }}>Loading...</td></tr>
               : filtered.map(a => (
                 <tr key={a.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = '/fleet/' + a.id}>
-                  <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#4D9EFF', fontWeight:700 }}>{a.unit_number}</td>
+                  <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#4D9EFF', fontWeight:700 }}>{a.unit_number} <SourceBadge source={a.source} /></td>
                   <td style={{ ...S.td, color:'#7C8BA0' }}>{a.year}</td>
                   <td style={{ ...S.td, color:'#F0F4FF', fontWeight:600 }}>{a.make} {a.model}</td>
                   <td style={{ ...S.td, fontSize:10, color:'#7C8BA0' }}>{UNIT_TYPE_LABEL[a.unit_type] || '—'}</td>

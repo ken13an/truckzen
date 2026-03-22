@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   let q = s
     .from('service_orders')
     .select(`
-      id, so_number, status, priority, complaint, bay, team,
+      id, so_number, status, priority, complaint, bay, team, source,
       grand_total, created_at, updated_at, assigned_tech,
       assets(id, unit_number, year, make, model),
       customers(id, company_name),
