@@ -1032,87 +1032,122 @@ export default function WorkOrderDetail() {
       {/* ========== TAB 1: PARTS & MATERIALS ========== */}
       {tab === 1 && (
         <div>
-          {jobLines.map((line: any, idx: number) => {
-            const lineParts = woParts.filter((p: any) => p.line_id === line.id)
-            return (
-              <div key={line.id} style={cardStyle}>
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  Job {idx + 1}: {line.description?.slice(0, 60)}
-                  <span style={{ fontSize: 12, color: GRAY }}>({lineParts.length} parts)</span>
-                </div>
+          {/* Rough → Real Parts Flow (from so_lines) */}
+          {partLines.length > 0 && (
+            <div style={cardStyle}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Parts ({partLines.length})</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {partLines.map((p: any) => {
+                  const isRough = !p.real_name
+                  const statusColors: Record<string, { label: string; bg: string; color: string }> = {
+                    rough: { label: 'Rough', bg: '#F3F4F6', color: GRAY },
+                    sourced: { label: 'Sourced', bg: '#EFF6FF', color: BLUE },
+                    ordered: { label: 'Ordered', bg: '#FFFBEB', color: AMBER },
+                    received: { label: 'Received', bg: '#F0FDF4', color: GREEN },
+                    installed: { label: 'Installed', bg: '#ECFDF5', color: '#059669' },
+                  }
+                  const st = statusColors[p.parts_status || 'rough'] || statusColors.rough
+                  return (
+                    <div key={p.id} style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 12, background: isRough ? '#FAFBFC' : '#fff' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <div>
+                          {isRough ? (
+                            <span style={{ fontSize: 12, color: GRAY }}>Suggested: <strong style={{ color: '#374151' }}>{p.rough_name || p.description}</strong></span>
+                          ) : (
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A' }}>{p.real_name}{p.part_number ? ` (${p.part_number})` : ''}</span>
+                          )}
+                        </div>
+                        {!wo.is_historical && (
+                          <select value={p.parts_status || 'rough'} onChange={async e => { await patchLine(p.id, { parts_status: e.target.value }); await loadData() }}
+                            style={{ ...pillStyle(st.bg, st.color), border: 'none', fontFamily: FONT, cursor: 'pointer', padding: '3px 10px', fontSize: 10 }}>
+                            {Object.entries(statusColors).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                          </select>
+                        )}
+                        {wo.is_historical && <span style={pillStyle(st.bg, st.color)}>{st.label}</span>}
+                      </div>
 
-                {lineParts.length > 0 && (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 10 }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                        <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part #</th>
-                        <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Description</th>
-                        <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Qty</th>
-                        <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Unit Cost</th>
-                        <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
-                        <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Status</th>
-                        <th style={{ padding: '6px 8px' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lineParts.map((p: any) => {
-                        const pst = PART_STATUS[p.status] || PART_STATUS.needed
-                        return (
-                          <tr key={p.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                            <td style={{ padding: '6px 8px', fontFamily: 'monospace' }}>{p.part_number || '—'}</td>
-                            <td style={{ padding: '6px 8px' }}>{p.description}</td>
-                            <td style={{ padding: '6px 8px', textAlign: 'center' }}>{p.quantity}</td>
-                            <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(p.unit_cost || 0)}</td>
-                            <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt((p.quantity || 1) * (p.unit_cost || 0))}</td>
-                            <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                              <select
-                                value={p.status || 'needed'}
-                                onChange={e => updatePartStatus(p.id, e.target.value)}
-                                style={{ ...pillStyle(pst.bg, pst.color), border: 'none', fontFamily: FONT, cursor: 'pointer', padding: '3px 8px' }}
-                              >
-                                {Object.entries(PART_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                              </select>
-                            </td>
-                            <td style={{ padding: '6px 8px' }}>
-                              <button onClick={() => removePart(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED }}><X size={13} /></button>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                )}
+                      {/* Editable fields for parts dept (rough state) */}
+                      {isRough && !wo.is_historical && !isMechanic && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
+                          <div>
+                            <span style={labelStyle}>Real Name</span>
+                            <input defaultValue={p.real_name || ''} onBlur={e => { if (e.target.value) patchLine(p.id, { real_name: e.target.value }) }} placeholder="Actual part name" style={inputStyle} />
+                          </div>
+                          <div>
+                            <span style={labelStyle}>Part #</span>
+                            <input defaultValue={p.part_number || ''} onBlur={e => patchLine(p.id, { part_number: e.target.value })} placeholder="PN" style={inputStyle} />
+                          </div>
+                          <div>
+                            <span style={labelStyle}>Qty</span>
+                            <input type="number" defaultValue={p.quantity || 1} onBlur={e => patchLine(p.id, { quantity: parseInt(e.target.value) || 1 })} style={inputStyle} />
+                          </div>
+                          <div>
+                            <span style={labelStyle}>Cost</span>
+                            <input type="number" step="0.01" defaultValue={p.parts_cost_price || ''} onBlur={e => patchLine(p.id, { parts_cost_price: parseFloat(e.target.value) || 0 })} placeholder="0.00" style={inputStyle} />
+                          </div>
+                          <div>
+                            <span style={labelStyle}>Sell</span>
+                            <input type="number" step="0.01" defaultValue={p.parts_sell_price || ''} onBlur={e => patchLine(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: parseFloat(e.target.value) * (p.quantity || 1) })} placeholder="0.00" style={inputStyle} />
+                          </div>
+                        </div>
+                      )}
 
-                {/* Inline add part */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                  <div style={{ flex: 2, minWidth: 120 }}>
-                    <span style={labelStyle}>Description</span>
-                    <input value={newPartForms[line.id]?.desc || ''} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id] || { desc: '', pn: '', qty: '', cost: '' }, desc: e.target.value } }))} style={inputStyle} placeholder="Part description" />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 80 }}>
-                    <span style={labelStyle}>Part #</span>
-                    <input value={newPartForms[line.id]?.pn || ''} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id] || { desc: '', pn: '', qty: '', cost: '' }, pn: e.target.value } }))} style={inputStyle} placeholder="PN" />
-                  </div>
-                  <div style={{ width: 60 }}>
-                    <span style={labelStyle}>Qty</span>
-                    <input value={newPartForms[line.id]?.qty || ''} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id] || { desc: '', pn: '', qty: '', cost: '' }, qty: e.target.value } }))} style={inputStyle} type="number" placeholder="1" />
-                  </div>
-                  <div style={{ width: 80 }}>
-                    <span style={labelStyle}>Cost</span>
-                    <input value={newPartForms[line.id]?.cost || ''} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id] || { desc: '', pn: '', qty: '', cost: '' }, cost: e.target.value } }))} style={inputStyle} type="number" step="0.01" placeholder="0.00" />
-                  </div>
-                  <button onClick={() => addPart(line.id)} style={btnStyle(BLUE, '#fff')}>
-                    <Plus size={12} /> Add
-                  </button>
-                </div>
+                      {/* Read-only display for sourced parts */}
+                      {!isRough && !wo.is_historical && (
+                        <div style={{ display: 'flex', gap: 16, fontSize: 12, color: GRAY, marginTop: 4 }}>
+                          {p.part_number && <span>Part #: {p.part_number}</span>}
+                          <span>Qty: {p.quantity || 1}</span>
+                          {canSeePrices && p.parts_sell_price && <span>Sell: {fmt(p.parts_sell_price)}</span>}
+                          {p.tire_position && <span>Position: {p.tire_position}</span>}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-            )
-          })}
+            </div>
+          )}
 
-          {/* Parts total */}
-          <div style={{ ...cardStyle, display: 'flex', justifyContent: 'flex-end', gap: 16 }}>
-            <span style={{ fontSize: 14, fontWeight: 700 }}>Total Parts: {fmt(woPartsTotal)}</span>
-          </div>
+          {/* Request Part (mechanic) */}
+          {!wo.is_historical && (
+            <div style={{ ...cardStyle, marginTop: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Request a Part</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <span style={labelStyle}>What part do you need?</span>
+                  <input id="mechPartRequest" placeholder="e.g. Water pump, Radiator hose 2 inch" style={inputStyle} />
+                </div>
+                <button onClick={async () => {
+                  const input = document.getElementById('mechPartRequest') as HTMLInputElement
+                  if (!input?.value.trim()) return
+                  await fetch('/api/so-lines', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ so_id: id, line_type: 'part', description: input.value.trim(), rough_name: input.value.trim(), parts_status: 'rough', quantity: 1 }),
+                  })
+                  input.value = ''
+                  await loadData()
+                }} style={btnStyle(BLUE, '#fff')}>
+                  Request
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Legacy wo_parts if any */}
+          {woParts.length > 0 && (
+            <div style={{ ...cardStyle, marginTop: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: GRAY }}>Additional Parts (wo_parts)</div>
+              <div style={{ fontSize: 12, color: GRAY }}>
+                {woParts.map((p: any) => (
+                  <div key={p.id} style={{ display: 'flex', gap: 8, padding: '4px 0', borderBottom: '1px solid #F3F4F6' }}>
+                    <span style={{ flex: 1 }}>{p.description}{p.part_number ? ` (${p.part_number})` : ''}</span>
+                    <span>Qty: {p.quantity}</span>
+                    {canSeePrices && <span>{fmt(p.unit_cost || 0)}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

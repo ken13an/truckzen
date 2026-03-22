@@ -25,7 +25,7 @@ export default function PartsQueuePage() {
       // Fetch active WOs with their so_lines
       const { data } = await supabase
         .from('service_orders')
-        .select('id, so_number, status, priority, created_at, assets(unit_number, year, make, model), customers(company_name), so_lines(id, description, parts_status, real_name, rough_name)')
+        .select('id, so_number, status, priority, created_at, assets(unit_number, year, make, model), customers(company_name), so_lines(id, line_type, description, parts_status, real_name, rough_name)')
         .eq('shop_id', p.shop_id)
         .or('is_historical.is.null,is_historical.eq.false')
         .not('status', 'in', '("good_to_go","void","done")')
@@ -38,15 +38,15 @@ export default function PartsQueuePage() {
 
   // Categorize WOs
   const needsParts = wos.filter(wo => {
-    const lines = wo.so_lines || []
-    return lines.some((l: any) => l.parts_status === 'rough' || (!l.real_name && l.rough_name))
+    const parts = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
+    return parts.some((l: any) => l.parts_status === 'rough' || (!l.real_name && l.rough_name))
   })
   const onOrder = wos.filter(wo => {
-    const lines = wo.so_lines || []
-    return lines.some((l: any) => l.parts_status === 'ordered') && !lines.some((l: any) => l.parts_status === 'rough')
+    const parts = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
+    return parts.some((l: any) => l.parts_status === 'ordered') && !parts.some((l: any) => l.parts_status === 'rough')
   })
   const ready = wos.filter(wo => {
-    const lines = wo.so_lines || []
+    const lines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
     return lines.length > 0 && lines.every((l: any) => ['received', 'installed'].includes(l.parts_status) || !l.rough_name)
   })
 
@@ -57,10 +57,10 @@ export default function PartsQueuePage() {
   ]
 
   function getPartsProgress(wo: any) {
-    const lines = (wo.so_lines || []).filter((l: any) => l.rough_name || l.real_name)
-    if (lines.length === 0) return null
-    const sourced = lines.filter((l: any) => l.real_name).length
-    return { total: lines.length, sourced }
+    const parts = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
+    if (parts.length === 0) return null
+    const sourced = parts.filter((l: any) => l.real_name).length
+    return { total: parts.length, sourced }
   }
 
   if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>

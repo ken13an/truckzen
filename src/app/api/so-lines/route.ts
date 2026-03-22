@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const s = db()
   const body = await req.json()
-  const { so_id, line_type, description, part_number, quantity, unit_price, line_status } = body
+  const { so_id, line_type, description, part_number, quantity, unit_price, line_status, rough_name, parts_status } = body
 
   if (!so_id || !line_type || !description)
     return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
@@ -27,7 +27,6 @@ export async function POST(req: Request) {
   const qty = parseFloat(quantity) || 1
   const price = parseFloat(unit_price) || 0
 
-  // total_price is a GENERATED column — do NOT insert it
   const { data, error } = await s.from('so_lines').insert({
     so_id,
     line_type,
@@ -36,6 +35,8 @@ export async function POST(req: Request) {
     quantity: qty,
     unit_price: price,
     line_status: line_status || null,
+    rough_name: rough_name?.trim() || null,
+    parts_status: parts_status || null,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
