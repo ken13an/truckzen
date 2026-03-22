@@ -491,6 +491,78 @@ async function main() {
     return
   }
 
+  // link-wos: match unlinked WOs to trucks using Fullbay invoice data
+  if (command === 'link-wos') {
+    console.log('Linking unlinked WOs to trucks via Fullbay invoices...')
+
+    // Build asset lookup maps
+    const { data: allAssets } = await db.from('assets').select('id, unit_number, vin').eq('shop_id', SHOP_ID)
+    const vinMap = new Map()
+    const unitMap = new Map()
+    for (const a of allAssets || []) {
+      if (a.vin) vinMap.set(a.vin.toUpperCase().trim(), a.id)
+      if (a.unit_number) unitMap.set(a.unit_number.toUpperCase().trim(), a.id)
+    }
+    console.log(`Asset lookup: ${vinMap.size} VINs, ${unitMap.size} unit numbers`)
+
+    // Pull 5 years of invoices
+    const endDate = new Date().toISOString().split('T')[0]
+    const startDate = new Date(); startDate.setFullYear(startDate.getFullYear() - 5)
+    const invoices = await fetchAllInvoices(startDate.toISOString().split('T')[0], endDate)
+    console.log(`Total invoices: ${invoices.length}`)
+
+    let linkedByVin = 0, linkedByUnit = 0, alreadyLinked = 0, noMatch = 0, noWo = 0
+
+    for (let i = 0; i < invoices.length; i++) {
+      const inv = invoices[i]
+      const so = inv.ServiceOrder || {}
+      const fbId = String(so.primaryKey || '')
+      if (!fbId) continue
+
+      const unit = so.Unit || {}
+      const vin = (unit.vin || '').toUpperCase().trim()
+      const unitNum = (unit.number || '').toUpperCase().trim()
+      const unitData = { vin: unit.vin || null, unit_number: unit.number || null, year: unit.year || null, make: unit.make || null, model: unit.model || null }
+
+      // Find matching WO
+      const { data: wo } = await db.from('service_orders').select('id, asset_id').eq('fullbay_id', fbId).limit(1).single()
+      if (!wo) { noWo++; continue }
+
+      // Already linked
+      if (wo.asset_id) { alreadyLinked++; continue }
+
+      // Try VIN match first
+      let assetId = null
+      if (vin && vin.length >= 10 && vinMap.has(vin)) {
+        assetId = vinMap.get(vin)
+        linkedByVin++
+      } else if (unitNum && unitMap.has(unitNum)) {
+        assetId = unitMap.get(unitNum)
+        linkedByUnit++
+      } else {
+        noMatch++
+      }
+
+      // Update WO with asset_id + external_data
+      const update = { external_data: unitData }
+      if (assetId) update.asset_id = assetId
+      await db.from('service_orders').update(update).eq('id', wo.id)
+
+      if ((linkedByVin + linkedByUnit) % 100 === 0 && (linkedByVin + linkedByUnit) > 0) {
+        process.stdout.write(`  [${i}/${invoices.length}] Linked: ${linkedByVin} VIN + ${linkedByUnit} unit# = ${linkedByVin + linkedByUnit}\n`)
+      }
+    }
+
+    console.log(`\nResults:`)
+    console.log(`  Already linked:  ${alreadyLinked}`)
+    console.log(`  Linked by VIN:   ${linkedByVin}`)
+    console.log(`  Linked by unit#: ${linkedByUnit}`)
+    console.log(`  No match found:  ${noMatch}`)
+    console.log(`  No WO in DB:     ${noWo}`)
+    console.log(`  Total new links: ${linkedByVin + linkedByUnit}`)
+    return
+  }
+
   // Pull invoices (5 years for 'all' and 'work-orders', 180 days otherwise)
   const years = (command === 'all' || command === 'work-orders') ? 5 : 0.5
   const endDate = new Date().toISOString().split('T')[0]
