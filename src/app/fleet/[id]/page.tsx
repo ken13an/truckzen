@@ -14,20 +14,24 @@ export default function FleetDetailPage() {
   const [loading, setLoading] = useState(true)
   const [edit,    setEdit]    = useState<any>(null)
   const [saving,  setSaving]  = useState(false)
+  const [activeWos, setActiveWos] = useState<any[]>([])
+  const [warrantyMode, setWarrantyMode] = useState<'none' | 'has'>('none')
 
   useEffect(() => {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
 
-      const [{ data: a }, { data: h }, { data: p }] = await Promise.all([
-        supabase.from('assets').select('*, customers(company_name)').eq('id', params.id).eq('shop_id', profile.shop_id).single(),
-        supabase.from('service_orders').select('id, so_number, status, complaint, grand_total, completed_at, created_at').eq('asset_id', params.id).order('created_at', { ascending:false }).limit(20),
+      const [{ data: a }, { data: h }, { data: p }, { data: activeWos }] = await Promise.all([
+        supabase.from('assets').select('*, customers(company_name, is_fleet)').eq('id', params.id).eq('shop_id', profile.shop_id).single(),
+        supabase.from('service_orders').select('id, so_number, status, complaint, grand_total, completed_at, created_at').eq('asset_id', params.id).or('status.in.(done,good_to_go,closed),is_historical.eq.true').order('created_at', { ascending:false }).limit(20),
         supabase.from('pm_schedules').select('*').eq('asset_id', params.id).eq('active', true),
+        supabase.from('service_orders').select('id, so_number, status, complaint, created_at').eq('asset_id', params.id).not('status', 'in', '("done","good_to_go","closed","void")').or('is_historical.is.null,is_historical.eq.false').order('created_at', { ascending:false }).limit(10),
       ])
 
       if (!a) { router.push('/fleet'); return }
-      setAsset(a); setEdit(a); setHistory(h || []); setPMs(p || [])
+      setAsset(a); setEdit(a); setHistory(h || []); setPMs(p || []); setActiveWos(activeWos || [])
+      setWarrantyMode(a.warranty_provider || a.warranty_expiry ? 'has' : 'none')
       setLoading(false)
     }
     load()
@@ -124,32 +128,95 @@ export default function FleetDetailPage() {
             <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
           </div>
 
-          {/* Warranty section */}
+          {/* Warranty section — toggle */}
           <div style={S.card}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
               <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Warranty</div>
-              {edit?.warranty_expiry && new Date(edit.warranty_expiry) > new Date()
-                ? <span style={{ padding:'2px 8px', borderRadius:100, fontSize:9, fontWeight:700, background:'rgba(29,184,112,.1)', color:'#1DB870', border:'1px solid rgba(29,184,112,.2)' }}>ACTIVE</span>
-                : <span style={{ padding:'2px 8px', borderRadius:100, fontSize:9, fontWeight:700, background:'rgba(124,139,160,.08)', color:'#7C8BA0', border:'1px solid rgba(124,139,160,.15)' }}>EXPIRED / NONE</span>}
+              <div style={{ display:'flex', gap:4 }}>
+                <button onClick={() => { setWarrantyMode('none'); setEdit((a:any) => ({...a, warranty_provider:null, warranty_start:null, warranty_expiry:null, warranty_mileage_limit:null, warranty_notes:null, warranty_coverage_type:null})) }} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='none' ? 'rgba(124,139,160,.12)' : 'transparent', color: warrantyMode==='none' ? '#7C8BA0' : '#48536A', border: warrantyMode==='none' ? '1px solid rgba(124,139,160,.2)' : '1px solid rgba(255,255,255,.06)' }}>No Warranty</button>
+                <button onClick={() => setWarrantyMode('has')} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='has' ? 'rgba(29,184,112,.1)' : 'transparent', color: warrantyMode==='has' ? '#1DB870' : '#48536A', border: warrantyMode==='has' ? '1px solid rgba(29,184,112,.2)' : '1px solid rgba(255,255,255,.06)' }}>Has Warranty</button>
+              </div>
             </div>
-            <div style={S.row2}>
-              <div><label style={S.label}>Warranty Provider</label><input style={S.input} value={edit?.warranty_provider||''} onChange={e=>setEdit((a:any)=>({...a,warranty_provider:e.target.value}))} placeholder="e.g. Freightliner"/></div>
-              <div><label style={S.label}>Mileage Limit</label><input style={S.input} type="number" value={edit?.warranty_mileage_limit||''} onChange={e=>setEdit((a:any)=>({...a,warranty_mileage_limit:parseInt(e.target.value)||null}))} placeholder="e.g. 500000"/></div>
-            </div>
-            <div style={S.row2}>
-              <div><label style={S.label}>Start Date</label><input style={S.input} type="date" value={edit?.warranty_start||''} onChange={e=>setEdit((a:any)=>({...a,warranty_start:e.target.value}))}/></div>
-              <div><label style={S.label}>Expiry Date</label><input style={S.input} type="date" value={edit?.warranty_expiry||''} onChange={e=>setEdit((a:any)=>({...a,warranty_expiry:e.target.value}))}/></div>
-            </div>
-            <div style={{ marginBottom:10 }}>
-              <label style={S.label}>Warranty Notes</label>
-              <textarea style={{ ...S.input, minHeight:60, resize:'vertical' }} value={edit?.warranty_notes||''} onChange={e=>setEdit((a:any)=>({...a,warranty_notes:e.target.value}))} placeholder="Coverage details, exclusions, etc."/>
-            </div>
-            <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={async () => {
-              setSaving(true)
-              await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ warranty_provider:edit.warranty_provider||null, warranty_start:edit.warranty_start||null, warranty_expiry:edit.warranty_expiry||null, warranty_mileage_limit:edit.warranty_mileage_limit||null, warranty_notes:edit.warranty_notes||null }) })
-              setAsset(edit); setSaving(false)
-            }} disabled={saving}>{saving?'Saving...':'Save Warranty Info'}</button>
+            {warrantyMode === 'none' ? (
+              <div style={{ textAlign:'center', padding:12, color:'#48536A', fontSize:12 }}>No warranty on file</div>
+            ) : (
+              <>
+                {/* Auto status badge */}
+                {edit?.warranty_expiry && (() => {
+                  const exp = new Date(edit.warranty_expiry)
+                  const isActive = exp > new Date() && (!edit.warranty_mileage_limit || !edit.odometer || edit.odometer < edit.warranty_mileage_limit)
+                  const isExpired = exp <= new Date()
+                  const isMileageExceeded = edit.warranty_mileage_limit && edit.odometer && edit.odometer >= edit.warranty_mileage_limit
+                  const monthsLeft = Math.max(0, Math.round((exp.getTime() - Date.now()) / (30*86400000)))
+                  return (
+                    <div style={{ marginBottom:10, padding:'6px 10px', borderRadius:6, fontSize:11, fontWeight:600,
+                      background: isActive ? 'rgba(29,184,112,.08)' : isMileageExceeded ? 'rgba(212,136,42,.08)' : 'rgba(124,139,160,.06)',
+                      color: isActive ? '#1DB870' : isMileageExceeded ? '#D4882A' : '#7C8BA0',
+                      border: `1px solid ${isActive ? 'rgba(29,184,112,.15)' : isMileageExceeded ? 'rgba(212,136,42,.15)' : 'rgba(124,139,160,.1)'}` }}>
+                      {isActive ? `Active — expires in ${monthsLeft} month${monthsLeft!==1?'s':''}` : isMileageExceeded ? 'Mileage Exceeded' : isExpired ? 'Expired' : 'Unknown'}
+                    </div>
+                  )
+                })()}
+                <div style={S.row2}>
+                  <div><label style={S.label}>Provider</label>
+                    <select style={{...S.input, appearance:'auto'}} value={edit?.warranty_provider||''} onChange={e=>setEdit((a:any)=>({...a,warranty_provider:e.target.value}))}>
+                      <option value="">Select...</option>
+                      <option value="Freightliner / Daimler">Freightliner / Daimler</option>
+                      <option value="PACCAR (Kenworth / Peterbilt)">PACCAR (Kenworth / Peterbilt)</option>
+                      <option value="Volvo">Volvo</option>
+                      <option value="Navistar (International)">Navistar (International)</option>
+                      <option value="Mack">Mack</option>
+                      <option value="Hino">Hino</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div><label style={S.label}>Coverage Type</label>
+                    <select style={{...S.input, appearance:'auto'}} value={edit?.warranty_coverage_type||''} onChange={e=>setEdit((a:any)=>({...a,warranty_coverage_type:e.target.value}))}>
+                      <option value="">Select...</option>
+                      <option value="Powertrain">Powertrain</option>
+                      <option value="Full Vehicle">Full Vehicle</option>
+                      <option value="Extended">Extended</option>
+                      <option value="Emissions">Emissions</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={S.row2}>
+                  <div><label style={S.label}>Start Date</label><input style={S.input} type="date" value={edit?.warranty_start||''} onChange={e=>setEdit((a:any)=>({...a,warranty_start:e.target.value}))}/></div>
+                  <div><label style={S.label}>Expiry Date</label><input style={S.input} type="date" value={edit?.warranty_expiry||''} onChange={e=>setEdit((a:any)=>({...a,warranty_expiry:e.target.value}))}/></div>
+                </div>
+                <div style={S.row2}>
+                  <div><label style={S.label}>Mileage Limit</label><input style={S.input} type="number" value={edit?.warranty_mileage_limit||''} onChange={e=>setEdit((a:any)=>({...a,warranty_mileage_limit:parseInt(e.target.value)||null}))} placeholder="e.g. 500000"/></div>
+                  <div />
+                </div>
+                <div style={{ marginBottom:10 }}>
+                  <label style={S.label}>Notes</label>
+                  <textarea style={{ ...S.input, minHeight:50, resize:'vertical' }} value={edit?.warranty_notes||''} onChange={e=>setEdit((a:any)=>({...a,warranty_notes:e.target.value}))} placeholder="Dealer contact, coverage details..."/>
+                </div>
+                <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={async () => {
+                  setSaving(true)
+                  await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ warranty_provider:edit.warranty_provider||null, warranty_start:edit.warranty_start||null, warranty_expiry:edit.warranty_expiry||null, warranty_mileage_limit:edit.warranty_mileage_limit||null, warranty_notes:edit.warranty_notes||null, warranty_coverage_type:edit.warranty_coverage_type||null }) })
+                  setAsset(edit); setSaving(false)
+                }} disabled={saving}>{saving?'Saving...':'Save Warranty Info'}</button>
+              </>
+            )}
           </div>
+
+          {/* Active Work Orders */}
+          {activeWos.length > 0 && (
+            <div style={{ ...S.card, borderColor:'rgba(29,111,232,.2)' }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'#4D9EFF', marginBottom:10 }}>Active Work Orders ({activeWos.length})</div>
+              {activeWos.map((wo:any) => (
+                <a key={wo.id} href={`/work-orders/${wo.id}`} style={{ display:'block', textDecoration:'none', padding:'8px 10px', borderLeft:'3px solid #1D6FE8', background:'rgba(29,111,232,.04)', borderRadius:6, marginBottom:6 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color:'#4D9EFF' }}>{wo.so_number}</span>
+                    <span style={{ fontSize:9, fontWeight:600, color:'#D4882A', background:'rgba(212,136,42,.1)', padding:'2px 6px', borderRadius:4, textTransform:'uppercase' }}>{wo.status?.replace(/_/g,' ')}</span>
+                  </div>
+                  <div style={{ fontSize:11, color:'#DDE3EE', marginTop:2 }}>{wo.complaint?.slice(0,60) || '—'}</div>
+                </a>
+              ))}
+            </div>
+          )}
 
           {/* Service history */}
           <div style={S.card}>
