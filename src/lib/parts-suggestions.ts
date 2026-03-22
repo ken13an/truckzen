@@ -52,46 +52,80 @@ export interface PartSuggestion {
   id?: string
 }
 
+// Keywords that indicate NO parts needed (service/diagnostic jobs)
+const NO_PARTS_KEYWORDS = ['alignment', 'going to left', 'going to right', 'pulling', 'check engine', 'diagnostic', 'inspection', 'scan', 'noise', 'vibration', 'test drive']
+
+// Specific search terms to use for inventory lookup per concern keyword
+const INVENTORY_SEARCH_TERMS: Record<string, string[]> = {
+  'oil change': ['oil filter', 'oil', 'engine oil', 'drain plug'],
+  'oil': ['oil filter', 'engine oil'],
+  'pm': ['oil filter', 'engine oil', 'air filter', 'fuel filter', 'def'],
+  'pm service': ['oil filter', 'engine oil', 'air filter', 'fuel filter', 'def', 'coolant'],
+  'brake': ['brake pad', 'brake drum', 'brake shoe', 'brake rotor', 'brake fluid'],
+  'tire': ['tire', 'valve stem', 'lug nut'],
+  'bumper': ['bumper', 'bumper bracket', 'bumper bolt'],
+  'alternator': ['alternator', 'belt', 'serpentine'],
+  'starter': ['starter', 'starter motor', 'solenoid'],
+  'battery': ['battery', 'battery cable', 'terminal'],
+  'coolant': ['coolant', 'thermostat', 'radiator hose', 'water pump'],
+  'turbo': ['turbocharger', 'turbo gasket', 'intercooler'],
+  'ac': ['ac compressor', 'condenser', 'refrigerant', 'ac dryer'],
+  'a/c': ['ac compressor', 'condenser', 'refrigerant'],
+  'exhaust': ['exhaust gasket', 'dpf', 'egr', 'clamp'],
+  'dpf': ['dpf filter', 'dpf gasket', 'dpf sensor'],
+  'fuel': ['fuel filter', 'fuel pump', 'injector'],
+  'clutch': ['clutch disc', 'pressure plate', 'throw-out bearing'],
+  'windshield': ['windshield', 'windshield seal'],
+  'door': ['door handle', 'door hinge', 'door seal'],
+  'mirror': ['mirror', 'mirror glass', 'mirror bracket'],
+  'hub': ['hub seal', 'hub oil', 'wheel bearing'],
+  'suspension': ['shock', 'leaf spring', 'u-bolt', 'bushing'],
+  'wiper': ['wiper blade', 'wiper motor'],
+  'headlight': ['headlight bulb', 'headlight assembly'],
+  'transmission': ['transmission filter', 'transmission fluid'],
+}
+
 export function getPartSuggestions(jobDescription: string, inventoryParts?: any[]): PartSuggestion[] {
   if (!jobDescription || jobDescription.length < 3) return []
 
   const lower = jobDescription.toLowerCase()
+
+  // Check if this is a no-parts job (diagnostic, alignment, etc.)
+  if (NO_PARTS_KEYWORDS.some(k => lower.includes(k))) return []
+
   const suggestions: PartSuggestion[] = []
   const seen = new Set<string>()
 
-  // First: check inventory for matching parts
-  if (inventoryParts) {
-    for (const part of inventoryParts) {
-      const desc = (part.description || '').toLowerCase()
-      const pn = (part.part_number || '').toLowerCase()
-      // Check if any word in the job description matches the part
-      const words = lower.split(/\s+/).filter(w => w.length >= 3)
-      const matches = words.some(w => desc.includes(w) || pn.includes(w))
-      if (matches && !seen.has(desc)) {
-        seen.add(desc)
-        suggestions.push({
-          description: part.description,
-          source: 'inventory',
-          on_hand: part.on_hand,
-          part_number: part.part_number,
-          id: part.id,
-        })
-      }
-    }
+  // Find which concern keywords match
+  const matchedSearchTerms: string[] = []
+  for (const [keyword, terms] of Object.entries(INVENTORY_SEARCH_TERMS)) {
+    if (lower.includes(keyword)) matchedSearchTerms.push(...terms)
   }
 
-  // Second: check keyword map for common suggestions
-  for (const [keyword, parts] of Object.entries(KEYWORD_MAP)) {
-    if (lower.includes(keyword)) {
-      for (const partName of parts) {
-        const key = partName.toLowerCase()
-        if (!seen.has(key)) {
-          seen.add(key)
-          suggestions.push({ description: partName, source: 'common' })
+  // First: search inventory using ONLY relevant search terms (not every word)
+  if (inventoryParts && matchedSearchTerms.length > 0) {
+    const uniqueTerms = [...new Set(matchedSearchTerms)]
+    for (const term of uniqueTerms) {
+      for (const part of inventoryParts) {
+        const desc = (part.description || '').toLowerCase()
+        if (desc.includes(term) && !seen.has(desc)) {
+          seen.add(desc)
+          suggestions.push({ description: part.description, source: 'inventory', on_hand: part.on_hand, part_number: part.part_number, id: part.id })
+          if (suggestions.filter(s => s.source === 'inventory').length >= 10) break
         }
       }
     }
   }
 
-  return suggestions.slice(0, 12)
+  // Second: keyword map for common suggestions NOT already in inventory results
+  for (const [keyword, parts] of Object.entries(KEYWORD_MAP)) {
+    if (lower.includes(keyword)) {
+      for (const partName of parts) {
+        const key = partName.toLowerCase()
+        if (!seen.has(key)) { seen.add(key); suggestions.push({ description: partName, source: 'common' }) }
+      }
+    }
+  }
+
+  return suggestions.slice(0, 20)
 }
