@@ -70,6 +70,9 @@ export default function WorkOrderDetail() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [newJobText, setNewJobText] = useState('')
+  const [aiSuggestions, setAiSuggestions] = useState<Record<string, any[]>>({}) // lineId → suggestions
+  const [aiLoadingLine, setAiLoadingLine] = useState<string | null>(null)
+  const [showAiPanel, setShowAiPanel] = useState<string | null>(null)
   const [useAI, setUseAI] = useState(false)
   const [addingJob, setAddingJob] = useState(false)
   const [newChargeDesc, setNewChargeDesc] = useState('')
@@ -221,6 +224,36 @@ export default function WorkOrderDetail() {
     if (deleteText !== 'DELETE') return
     await fetch(`/api/work-orders/${id}`, { method: 'DELETE' })
     window.location.href = '/work-orders'
+  }
+
+  async function fetchAiSuggestions(lineId: string, description: string) {
+    if (!description?.trim() || description.length < 10) return
+    setAiLoadingLine(lineId)
+    try {
+      const res = await fetch('/api/parts/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ so_id: id, complaint: description, truck_info: { year: asset?.year, make: asset?.make, model: asset?.model } }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.suggestions?.length) setAiSuggestions(prev => ({ ...prev, [lineId]: data.suggestions }))
+      }
+    } catch {}
+    setAiLoadingLine(null)
+  }
+
+  async function addAiParts(lineId: string, selected: any[]) {
+    for (const part of selected) {
+      await fetch('/api/wo-parts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wo_id: id, line_id: lineId, description: part.description, part_number: part.part_number || null, quantity: part.quantity || 1, unit_cost: part.estimated_sell_price || 0, status: 'needed' }),
+      })
+    }
+    setShowAiPanel(null)
+    setAiSuggestions(prev => { const n = { ...prev }; delete n[lineId]; return n })
+    await loadData()
   }
 
   const addJobLine = async () => {
@@ -430,6 +463,45 @@ export default function WorkOrderDetail() {
         </div>
       </div>
 
+      {/* PROGRESS PIPELINE */}
+      {!wo.is_historical && (() => {
+        const hasAssign = jobLines.some((l: any) => jobAssignments.some((ja: any) => ja.line_id === l.id))
+        const hasDiagnose = jobLines.every((l: any) => l.description?.trim())
+        const hasAuthorize = ['authorized', 'in_progress', 'done', 'good_to_go', 'invoiced', 'closed'].includes(wo.status)
+        const hasRepair = jobLines.length > 0 && jobLines.every((l: any) => l.line_status === 'completed' || l.status === 'completed')
+        const hasInvoice = ['invoiced', 'closed'].includes(wo.status) || wo.invoice_status === 'sent_to_customer'
+        const steps = [
+          { label: 'Assign', done: hasAssign },
+          { label: 'Diagnose', done: hasDiagnose },
+          { label: 'Authorize', done: hasAuthorize },
+          { label: 'Repair', done: hasRepair },
+          { label: 'Invoice', done: hasInvoice },
+        ]
+        const activeIdx = steps.findIndex(s => !s.done)
+        return (
+          <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, padding: '12px 20px' }}>
+            {steps.map((s, i) => (
+              <div key={s.label} style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace",
+                    background: s.done ? '#16A34A' : i === activeIdx ? BLUE : '#E5E7EB',
+                    color: s.done || i === activeIdx ? '#fff' : '#9CA3AF',
+                  }}>
+                    {s.done ? '\u2713' : i + 1}
+                  </div>
+                  <span style={{ fontSize: 9, fontWeight: 600, color: s.done ? '#16A34A' : i === activeIdx ? BLUE : '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.04em' }}>{s.label}</span>
+                </div>
+                {i < steps.length - 1 && (
+                  <div style={{ width: 40, height: 2, background: s.done ? '#16A34A' : '#E5E7EB', margin: '0 4px', marginBottom: 16 }} />
+                )}
+              </div>
+            ))}
+          </div>
+        )
+      })()}
+
       {/* TAB BAR */}
       <div data-no-print style={{ display: 'flex', gap: 0, borderBottom: '1px solid #E5E7EB', marginBottom: 16, overflowX: 'auto' }}>
         {TABS.map((t, i) => (
@@ -618,10 +690,61 @@ export default function WorkOrderDetail() {
 
                 {/* Concern */}
                 {line.description && (
-                  <div style={{ background: '#F9FAFB', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: 13, color: '#374151' }}>
+                  <div style={{ background: '#F9FAFB', borderRadius: 8, padding: '10px 12px', marginBottom: 6, fontSize: 13, color: '#374151' }}>
                     <span style={{ ...labelStyle, marginBottom: 6 }}>Concern</span>
                     {line.description}
                   </div>
+                )}
+
+                {/* AI Parts Suggestion Bar */}
+                {!wo.is_historical && line.description && line.description.length >= 10 && (
+                  <>
+                    {!aiSuggestions[line.id] && aiLoadingLine !== line.id && (
+                      <button onClick={() => fetchAiSuggestions(line.id, line.description)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: 'rgba(139,92,246,.06)', border: '1px solid rgba(139,92,246,.15)', borderRadius: 8, color: '#8B5CF6', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+                        AI: Suggest parts for this job
+                      </button>
+                    )}
+                    {aiLoadingLine === line.id && (
+                      <div style={{ padding: '8px 12px', marginBottom: 10, background: 'rgba(139,92,246,.06)', border: '1px solid rgba(139,92,246,.15)', borderRadius: 8, color: '#8B5CF6', fontSize: 11, fontWeight: 600 }}>
+                        Analyzing job description...
+                      </div>
+                    )}
+                    {aiSuggestions[line.id] && !showAiPanel && (
+                      <button onClick={() => setShowAiPanel(line.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: 'rgba(139,92,246,.08)', border: '1px solid rgba(139,92,246,.2)', borderRadius: 8, color: '#8B5CF6', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+                        AI suggested {aiSuggestions[line.id].length} parts — tap to review
+                      </button>
+                    )}
+                    {showAiPanel === line.id && aiSuggestions[line.id] && (() => {
+                      const suggestions = aiSuggestions[line.id]
+                      return (
+                        <div style={{ background: '#FAFBFE', border: '1px solid rgba(139,92,246,.2)', borderRadius: 10, padding: 14, marginBottom: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#8B5CF6' }}>AI Suggested Parts</span>
+                            <button onClick={() => setShowAiPanel(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: GRAY, fontSize: 11 }}>Close</button>
+                          </div>
+                          {suggestions.map((s: any, si: number) => (
+                            <label key={si} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: si < suggestions.length - 1 ? '1px solid #F3F4F6' : 'none', cursor: 'pointer' }}>
+                              <input type="checkbox" defaultChecked style={{ accentColor: '#8B5CF6' }} data-idx={si} />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{s.description}</div>
+                                <div style={{ fontSize: 10, color: GRAY }}>Qty: {s.quantity || 1}{s.part_number ? ` · ${s.part_number}` : ''}{s.reason ? ` · ${s.reason}` : ''}</div>
+                              </div>
+                              <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: s.confidence === 'very_high' ? '#F0FDF4' : s.confidence === 'high' ? '#EFF6FF' : '#FFFBEB', color: s.confidence === 'very_high' ? GREEN : s.confidence === 'high' ? BLUE : AMBER }}>{s.confidence || 'medium'}</span>
+                            </label>
+                          ))}
+                          <button onClick={() => {
+                            const checks = document.querySelectorAll(`input[data-idx]`) as NodeListOf<HTMLInputElement>
+                            const selected = suggestions.filter((_: any, i: number) => checks[i]?.checked)
+                            if (selected.length) addAiParts(line.id, selected)
+                          }} style={{ marginTop: 10, padding: '8px 16px', background: '#8B5CF6', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, width: '100%' }}>
+                            Add Selected Parts
+                          </button>
+                        </div>
+                      )
+                    })()}
+                  </>
                 )}
 
                 {/* Finding */}
@@ -953,10 +1076,18 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
+          {/* Historical parts summary (when no part lines exist but parts_total is set) */}
+          {wo.is_historical && partLines.length === 0 && wo.parts_total > 0 && (
+            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13, background: '#FAFBFC' }}>
+              <span style={{ color: GRAY }}>Parts (imported summary)</span>
+              <span style={{ fontWeight: 700 }}>{fmt(wo.parts_total)}</span>
+            </div>
+          )}
+
           {/* Grand Total */}
           <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', background: '#F0FDF4', border: `1px solid ${GREEN}` }}>
             <span style={{ fontSize: 16, fontWeight: 800 }}>Grand Total</span>
-            <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>{fmt(grandTotal)}</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>{fmt(wo.is_historical && wo.grand_total ? wo.grand_total : grandTotal)}</span>
           </div>
 
           {/* Signature area */}
