@@ -26,7 +26,6 @@ const DEPARTMENTS: DeptSection[] = [
     items: [
       { href: '/shop-floor', label: 'Shop Floor', icon: Factory },
       { href: '/work-orders', label: 'Work Orders', icon: Wrench },
-      { href: '/service-requests', label: 'Service Requests', icon: FileText },
       { href: '/kiosk-admin', label: 'Kiosk', icon: Monitor },
       { href: '/time-tracking', label: 'Time Tracking', icon: Clock },
     ],
@@ -43,6 +42,7 @@ const DEPARTMENTS: DeptSection[] = [
   {
     label: 'Fleet', icon: Truck, color: '#22C55E',
     items: [
+      { href: '/service-requests', label: 'Service Requests', icon: FileText },
       { href: '/fleet', label: 'All Units', icon: Truck },
       { href: '/customers', label: 'Customers', icon: Users2 },
       { href: '/drivers', label: 'Drivers', icon: UserCircle },
@@ -53,6 +53,7 @@ const DEPARTMENTS: DeptSection[] = [
   {
     label: 'Maintenance', icon: Cog, color: '#F59E0B',
     items: [
+      { href: '/service-requests', label: 'Service Requests', icon: FileText },
       { href: '/maintenance', label: 'PM Scheduling', icon: Cog },
       { href: '/dvir', label: 'DVIR', icon: BookOpen },
       { href: '/maintenance/warranty-review', label: 'Warranty Review', icon: ShieldCheck },

@@ -114,10 +114,7 @@ export default function WorkOrdersPage() {
           <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A' }}>Work Orders</div>
           <div style={{ fontSize: 13, color: '#6B7280' }}>{total.toLocaleString()} work order{total !== 1 ? 's' : ''} {viewFilter !== 'all' ? `(${viewFilter})` : ''}</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <a href="/service-requests" style={{ padding: '10px 16px', background: '#fff', border: '1px solid #D1D5DB', borderRadius: 8, color: '#374151', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'inherit' }}>Service Requests</a>
-          <a href="/work-orders/new" style={{ padding: '10px 20px', background: '#1D6FE8', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Work Order</a>
-        </div>
+        <a href="/work-orders/new" style={{ padding: '10px 20px', background: '#1D6FE8', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Work Order</a>
       </div>
 
       {/* View filter: All / Active / Historical */}
