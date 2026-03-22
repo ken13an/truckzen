@@ -33,7 +33,7 @@ const PART_STATUS: Record<string, { label: string; bg: string; color: string }> 
   installed: { label: 'Installed', bg: '#F0FDF4', color: GREEN },
 }
 
-const TABS = ['Overview', 'Parts & Materials', 'Estimate & Billing', 'Files & Notes', 'Activity']
+const TABS = ['Jobs', 'Parts', 'Estimate', 'Files & Notes', 'Activity']
 
 const pillStyle = (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: bg, color })
 const inputStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', width: '100%' }
@@ -83,6 +83,8 @@ export default function WorkOrderDetail() {
   const [qcErrors, setQcErrors] = useState<string[]>([])
   const [showQcErrors, setShowQcErrors] = useState(false)
   const [showExternalData, setShowExternalData] = useState(false)
+  const [warrantyNotes, setWarrantyNotes] = useState('')
+  const [approvalNotes, setApprovalNotes] = useState('')
 
   // DATA LOADING
   const loadData = useCallback(async () => {
@@ -253,6 +255,41 @@ export default function WorkOrderDetail() {
     }
     setShowAiPanel(null)
     setAiSuggestions(prev => { const n = { ...prev }; delete n[lineId]; return n })
+    await loadData()
+  }
+
+  async function toggleApproval(lineId: string, needsApproval: boolean) {
+    await fetch(`/api/work-orders/${id}/approval`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggle_approval', user_id: user?.id, line_id: lineId, needs_approval: needsApproval }),
+    })
+    await loadData()
+  }
+
+  async function approveJob(lineId: string) {
+    await fetch(`/api/work-orders/${id}/approval`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve_job', user_id: user?.id, line_id: lineId, notes: approvalNotes }),
+    })
+    setApprovalNotes('')
+    await loadData()
+  }
+
+  async function declineJob(lineId: string) {
+    await fetch(`/api/work-orders/${id}/approval`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'decline_job', user_id: user?.id, line_id: lineId, notes: approvalNotes }),
+    })
+    setApprovalNotes('')
+    await loadData()
+  }
+
+  async function warrantyDecision(decision: string) {
+    await fetch(`/api/work-orders/${id}/approval`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'warranty_decision', user_id: user?.id, decision, notes: warrantyNotes }),
+    })
+    setWarrantyNotes('')
     await loadData()
   }
 
@@ -463,6 +500,38 @@ export default function WorkOrderDetail() {
         </div>
       </div>
 
+      {/* WARRANTY BANNER */}
+      {!wo.is_historical && wo.warranty_status === 'not_checked' && asset?.year && (new Date().getFullYear() - parseInt(asset.year)) <= 5 && (
+        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '10px 16px', marginBottom: 12, fontSize: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{ color: AMBER, fontWeight: 700, fontSize: 13 }}>Warranty may apply on this truck or related parts.</span>
+          </div>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input value={warrantyNotes} onChange={e => setWarrantyNotes(e.target.value)} placeholder="Notes..." style={{ ...inputStyle, flex: 1, padding: '5px 10px', fontSize: 11, minWidth: 150 }} />
+            <button onClick={() => warrantyDecision('no_warranty')} style={btnStyle('#F3F4F6', GRAY)}>No Warranty</button>
+            <button onClick={() => warrantyDecision('local_repair')} style={btnStyle('#F0FDF4', GREEN)}>Local Repair</button>
+            <button onClick={() => warrantyDecision('send_to_dealer')} style={btnStyle('#FEF2F2', RED)}>Send to Dealer</button>
+          </div>
+        </div>
+      )}
+      {wo.warranty_status === 'local_repair' && (
+        <div style={{ background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.15)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: GREEN }}>
+          Warranty — Local Repair{wo.warranty_notes ? `: ${wo.warranty_notes}` : ''}
+        </div>
+      )}
+      {wo.warranty_status === 'send_to_dealer' && (
+        <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: RED }}>
+          Sent to Dealer — WO locked{wo.warranty_notes ? `. ${wo.warranty_notes}` : ''}
+        </div>
+      )}
+
+      {/* OWNER OPERATOR BANNER */}
+      {!wo.is_historical && customer?.customer_type === 'owner_operator' && jobLines.some((l: any) => l.approval_status === 'needs_approval') && (
+        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: AMBER, fontWeight: 600 }}>
+          Owner Operator truck — customer approval required before work begins
+        </div>
+      )}
+
       {/* PROGRESS PIPELINE */}
       {!wo.is_historical && (() => {
         const hasAssign = jobLines.some((l: any) => jobAssignments.some((ja: any) => ja.line_id === l.id))
@@ -638,9 +707,41 @@ export default function WorkOrderDetail() {
                       ))}
                     </select>
                   )}
-                  <span style={pillStyle('#F3F4F6', GRAY)}>Concern</span>
                   {isAdditional && <span style={pillStyle('#FFFBEB', AMBER)}>ADDITIONAL</span>}
+                  {/* Approval badge */}
+                  {!wo.is_historical && (() => {
+                    const as = line.approval_status || 'pre_approved'
+                    const AB: Record<string, { bg: string; color: string; label: string }> = {
+                      pre_approved: { bg: '#F0FDF4', color: GREEN, label: 'Pre-Approved' },
+                      needs_approval: { bg: '#FFFBEB', color: AMBER, label: 'Needs Approval' },
+                      pending: { bg: '#FFFBEB', color: AMBER, label: 'Pending' },
+                      approved: { bg: '#F0FDF4', color: GREEN, label: 'Approved' },
+                      declined: { bg: '#FEF2F2', color: RED, label: 'Declined' },
+                    }
+                    const b = AB[as] || AB.pre_approved
+                    return <span style={pillStyle(b.bg, b.color)}>{b.label}</span>
+                  })()}
                 </div>
+
+                {/* Pre-Approval Toggle */}
+                {!wo.is_historical && (line.approval_status === 'pre_approved' || line.approval_status === 'needs_approval' || !line.approval_status) && (
+                  <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+                    <button onClick={() => toggleApproval(line.id, false)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, background: !line.approval_required ? 'rgba(22,163,74,0.1)' : 'transparent', color: !line.approval_required ? GREEN : GRAY, border: !line.approval_required ? `1px solid ${GREEN}40` : '1px solid #E5E7EB' }}>Pre-Approved</button>
+                    <button onClick={() => toggleApproval(line.id, true)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, background: line.approval_required ? 'rgba(217,150,11,0.1)' : 'transparent', color: line.approval_required ? AMBER : GRAY, border: line.approval_required ? `1px solid ${AMBER}40` : '1px solid #E5E7EB' }}>Needs Approval</button>
+                  </div>
+                )}
+
+                {/* Approval actions (when needs approval) */}
+                {!wo.is_historical && line.approval_status === 'needs_approval' && (
+                  <div style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 11 }}>
+                    <div style={{ color: AMBER, fontWeight: 600, marginBottom: 6 }}>Waiting for customer approval</div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <input value={approvalNotes} onChange={e => setApprovalNotes(e.target.value)} placeholder="Notes..." style={{ ...inputStyle, flex: 1, padding: '4px 8px', fontSize: 11 }} />
+                      <button onClick={() => approveJob(line.id)} style={btnStyle('#F0FDF4', GREEN)}>Approve</button>
+                      <button onClick={() => declineJob(line.id)} style={btnStyle('#FEF2F2', RED)}>Decline</button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Assignment row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
