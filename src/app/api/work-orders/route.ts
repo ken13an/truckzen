@@ -15,8 +15,11 @@ export async function GET(req: Request) {
   const status = searchParams.get('status')
   const search = searchParams.get('q')
   const historical = searchParams.get('historical')
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '100'), 500)
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '25'), 100)
+  const page = Math.max(parseInt(searchParams.get('page') ?? '1'), 1)
+  const offset = (page - 1) * limit
 
+  // Build query with count
   let q = s
     .from('service_orders')
     .select(`
@@ -25,30 +28,34 @@ export async function GET(req: Request) {
       assets(id, unit_number, year, make, model),
       customers(id, company_name),
       users!assigned_tech(id, full_name)
-    `)
+    `, { count: 'exact' })
     .eq('shop_id', shopId)
     .not('status', 'eq', 'void')
     .order('created_at', { ascending: false })
-    .limit(limit)
 
   if (status && status !== 'all') q = q.eq('status', status)
   if (historical === 'false') q = q.or('is_historical.is.null,is_historical.eq.false')
+  if (historical === 'true') q = q.eq('is_historical', true)
 
-  const { data, error } = await q
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  let results = data || []
+  // Apply search server-side if possible, or filter after
   if (search) {
-    const sq = search.toLowerCase()
-    results = results.filter((r: any) =>
-      r.so_number?.toLowerCase().includes(sq) ||
-      r.complaint?.toLowerCase().includes(sq) ||
-      (r.customers as any)?.company_name?.toLowerCase().includes(sq) ||
-      (r.assets as any)?.unit_number?.toLowerCase().includes(sq)
-    )
+    q = q.or(`so_number.ilike.%${search}%,complaint.ilike.%${search}%`)
   }
 
-  return NextResponse.json(results)
+  // Apply pagination
+  q = q.range(offset, offset + limit - 1)
+
+  const { data, error, count } = await q
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const total = count ?? 0
+  return NextResponse.json({
+    data: data || [],
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  })
 }
 
 export async function POST(req: Request) {

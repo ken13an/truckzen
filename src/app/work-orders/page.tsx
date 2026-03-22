@@ -41,57 +41,70 @@ function getDateRangeStart(range: DateRange): Date | null {
 export default function WorkOrdersPage() {
   const supabase = createClient()
   const [orders, setOrders] = useState<any[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [viewFilter, setViewFilter] = useState<ViewFilter>('active')
   const [dateRange, setDateRange] = useState<DateRange>('all')
   const [page, setPage] = useState(1)
-  const [perPage, setPerPage] = useState(25)
+  const [perPage] = useState(25)
+  const [shopId, setShopId] = useState('')
+  const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
+
+  // Fetch WOs from API with server-side pagination
+  const fetchOrders = async (sid: string, p: number) => {
+    if (!sid) return
+    setLoading(true)
+    let url = `/api/work-orders?shop_id=${sid}&page=${p}&limit=${perPage}`
+    if (viewFilter === 'active') url += '&historical=false'
+    if (viewFilter === 'historical') url += '&historical=true'
+    if (statusFilter !== 'all') url += `&status=${statusFilter}`
+    if (search) url += `&q=${encodeURIComponent(search)}`
+    const res = await fetch(url)
+    if (res.ok) {
+      const json = await res.json()
+      // Handle both old array response and new paginated response
+      if (Array.isArray(json)) {
+        setOrders(json); setTotal(json.length); setTotalPages(1)
+      } else {
+        setOrders(json.data || []); setTotal(json.total || 0); setTotalPages(json.totalPages || 1)
+      }
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
-      // Always fetch all WOs — show everything by default
-      const res = await fetch(`/api/work-orders?shop_id=${p.shop_id}&limit=500`)
-      if (res.ok) setOrders(await res.json())
-      setLoading(false)
+      setShopId(p.shop_id)
+      await fetchOrders(p.shop_id, 1)
     })
   }, [])
 
-  const filtered = useMemo(() => orders.filter(o => {
-    // View filter (All / Active / Historical)
-    if (viewFilter === 'active' && o.is_historical) return false
-    if (viewFilter === 'historical' && !o.is_historical) return false
+  // Re-fetch when filters or page change
+  useEffect(() => {
+    if (!shopId) return
+    fetchOrders(shopId, page)
+  }, [page, viewFilter, statusFilter, shopId])
 
-    // Status filter
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'open') { if (['good_to_go', 'completed', 'done', 'closed', 'invoiced', 'void'].includes(o.status)) return false }
-      else if (statusFilter === 'completed') { if (!['good_to_go', 'completed', 'done'].includes(o.status)) return false }
-      else if (statusFilter === 'closed') { if (!['closed', 'invoiced'].includes(o.status)) return false }
-      else if (o.status !== statusFilter) return false
-    }
+  // Debounced search
+  useEffect(() => {
+    if (!shopId) return
+    if (searchTimer) clearTimeout(searchTimer)
+    const t = setTimeout(() => { setPage(1); fetchOrders(shopId, 1) }, 400)
+    setSearchTimer(t)
+    return () => clearTimeout(t)
+  }, [search])
 
-    // Date range
-    if (dateRange !== 'all') {
-      const rangeStart = getDateRangeStart(dateRange)
-      if (rangeStart && o.created_at && new Date(o.created_at) < rangeStart) return false
-    }
-
-    // Search
-    if (!search) return true
-    const q = search.toLowerCase()
-    return o.so_number?.toLowerCase().includes(q) || o.complaint?.toLowerCase().includes(q) || (o.customers as any)?.company_name?.toLowerCase().includes(q) || (o.assets as any)?.unit_number?.toLowerCase().includes(q)
-  }), [orders, viewFilter, statusFilter, dateRange, search])
-
-  const paginated = useMemo(() => {
-    if (perPage === 0) return filtered
-    const start = (page - 1) * perPage
-    return filtered.slice(start, start + perPage)
-  }, [filtered, page, perPage])
-
-  const activeCount = orders.filter(o => !o.is_historical).length
-  const histCount = orders.filter(o => o.is_historical).length
+  // Date range filter (client-side on current page results)
+  const filtered = useMemo(() => {
+    if (dateRange === 'all') return orders
+    const rangeStart = getDateRangeStart(dateRange)
+    if (!rangeStart) return orders
+    return orders.filter(o => o.created_at && new Date(o.created_at) >= rangeStart)
+  }, [orders, dateRange])
   const fmt = (n: number) => n ? `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—'
 
   return (
@@ -99,7 +112,7 @@ export default function WorkOrdersPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A' }}>Work Orders</div>
-          <div style={{ fontSize: 13, color: '#6B7280' }}>{filtered.length} of {orders.length} work order{orders.length !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 13, color: '#6B7280' }}>{total.toLocaleString()} work order{total !== 1 ? 's' : ''} {viewFilter !== 'all' ? `(${viewFilter})` : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <a href="/service-requests" style={{ padding: '10px 16px', background: '#fff', border: '1px solid #D1D5DB', borderRadius: 8, color: '#374151', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'inherit' }}>Service Requests</a>
@@ -109,7 +122,7 @@ export default function WorkOrdersPage() {
 
       {/* View filter: All / Active / Historical */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 12 }}>
-        {([['active', `Active (${activeCount})`], ['all', `All (${orders.length})`], ['historical', `Historical (${histCount})`]] as [ViewFilter, string][]).map(([v, l]) => (
+        {([['active', 'Active'], ['all', 'All'], ['historical', 'Historical']] as [ViewFilter, string][]).map(([v, l]) => (
           <button key={v} onClick={() => { setViewFilter(v); setPage(1) }} style={{
             padding: '10px 18px', background: 'none', border: 'none', borderBottom: viewFilter === v ? '2px solid #1D6FE8' : '2px solid transparent',
             color: viewFilter === v ? '#1D6FE8' : '#9CA3AF', fontWeight: viewFilter === v ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginBottom: -2,
@@ -148,7 +161,7 @@ export default function WorkOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {paginated.map(o => {
+              {filtered.map(o => {
                 const st = STATUS_MAP[o.status] || STATUS_MAP.draft
                 const isHist = o.is_historical
                 return (
@@ -172,7 +185,17 @@ export default function WorkOrdersPage() {
           </table>
         )}
       </div>
-      <PageFooter total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
+      {/* Pagination */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', fontSize: 13, color: '#6B7280' }}>
+        <span>{total.toLocaleString()} total</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+            style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #D1D5DB', background: page <= 1 ? '#F3F4F6' : '#fff', color: page <= 1 ? '#9CA3AF' : '#374151', fontSize: 12, fontWeight: 600, cursor: page <= 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>Previous</button>
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Page {page} of {totalPages.toLocaleString()}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
+            style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #D1D5DB', background: page >= totalPages ? '#F3F4F6' : '#fff', color: page >= totalPages ? '#9CA3AF' : '#374151', fontSize: 12, fontWeight: 600, cursor: page >= totalPages ? 'default' : 'pointer', fontFamily: 'inherit' }}>Next</button>
+        </div>
+      </div>
     </div>
   )
 }
