@@ -88,6 +88,9 @@ export default function WorkOrderDetail() {
   const [invoiceChecks, setInvoiceChecks] = useState<any[]>([])
   const [invoiceLoading, setInvoiceLoading] = useState(false)
   const [returnReason, setReturnReason] = useState('')
+  const [partSearchResults, setPartSearchResults] = useState<Record<string, any[]>>({})
+  const [partsSubmitted, setPartsSubmitted] = useState(false)
+  const [partsSubmitting, setPartsSubmitting] = useState(false)
 
   // DATA LOADING
   const loadData = useCallback(async () => {
@@ -294,6 +297,41 @@ export default function WorkOrderDetail() {
     })
     setWarrantyNotes('')
     await loadData()
+  }
+
+  async function searchInventory(lineId: string, query: string) {
+    if (!query || query.length < 2 || !wo?.shop_id) { setPartSearchResults(prev => { const n = {...prev}; delete n[lineId]; return n }); return }
+    const res = await fetch(`/api/parts/search?shop_id=${wo.shop_id}&q=${encodeURIComponent(query)}`)
+    if (res.ok) {
+      const results = await res.json()
+      setPartSearchResults(prev => ({ ...prev, [lineId]: results }))
+    }
+  }
+
+  async function autoFillFromInventory(lineId: string, invPart: any) {
+    await patchLine(lineId, { real_name: invPart.description, part_number: invPart.part_number, parts_cost_price: invPart.cost_price, parts_sell_price: invPart.sell_price, parts_status: 'sourced' })
+    setPartSearchResults(prev => { const n = {...prev}; delete n[lineId]; return n })
+    await loadData()
+  }
+
+  async function submitParts() {
+    if (!user) return
+    setPartsSubmitting(true)
+    const res = await fetch(`/api/work-orders/${id}/parts-submit`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: user.id, action: 'submit_all' }),
+    })
+    setPartsSubmitting(false)
+    if (res.ok) { setPartsSubmitted(true); await loadData() }
+    else { const err = await res.json(); alert(err.error || 'Failed to submit') }
+  }
+
+  async function savePartsProgress() {
+    if (!user) return
+    await fetch(`/api/work-orders/${id}/parts-submit`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: user.id, action: 'save_progress' }),
+    })
   }
 
   async function checkInvoiceReadiness() {
@@ -1096,26 +1134,40 @@ export default function WorkOrderDetail() {
 
                       {/* Editable fields for parts dept (rough state) */}
                       {isRough && !wo.is_historical && !isMechanic && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
-                          <div>
-                            <span style={labelStyle}>Real Name</span>
-                            <input defaultValue={p.real_name || ''} onBlur={e => { if (e.target.value) patchLine(p.id, { real_name: e.target.value }) }} placeholder="Actual part name" style={inputStyle} />
-                          </div>
-                          <div>
-                            <span style={labelStyle}>Part #</span>
-                            <input defaultValue={p.part_number || ''} onBlur={e => patchLine(p.id, { part_number: e.target.value })} placeholder="PN" style={inputStyle} />
-                          </div>
-                          <div>
-                            <span style={labelStyle}>Qty</span>
-                            <input type="number" defaultValue={p.quantity || 1} onBlur={e => patchLine(p.id, { quantity: parseInt(e.target.value) || 1 })} style={inputStyle} />
-                          </div>
-                          <div>
-                            <span style={labelStyle}>Cost</span>
-                            <input type="number" step="0.01" defaultValue={p.parts_cost_price || ''} onBlur={e => patchLine(p.id, { parts_cost_price: parseFloat(e.target.value) || 0 })} placeholder="0.00" style={inputStyle} />
-                          </div>
-                          <div>
-                            <span style={labelStyle}>Sell</span>
-                            <input type="number" step="0.01" defaultValue={p.parts_sell_price || ''} onBlur={e => patchLine(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: parseFloat(e.target.value) * (p.quantity || 1) })} placeholder="0.00" style={inputStyle} />
+                        <div style={{ position: 'relative' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
+                            <div style={{ position: 'relative' }}>
+                              <span style={labelStyle}>Real Name</span>
+                              <input defaultValue={p.real_name || ''} onChange={e => searchInventory(p.id, e.target.value)} onBlur={e => { if (e.target.value) { patchLine(p.id, { real_name: e.target.value }); setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) } }} placeholder="Type to search inventory..." style={inputStyle} />
+                              {/* Inventory search dropdown */}
+                              {partSearchResults[p.id]?.length > 0 && (
+                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 160, overflowY: 'auto' }}>
+                                  {partSearchResults[p.id].map((inv: any) => (
+                                    <div key={inv.id} onMouseDown={() => autoFillFromInventory(p.id, inv)} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #F3F4F6', fontSize: 12 }}
+                                      onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                      <div style={{ fontWeight: 600, color: '#1A1A1A' }}>{inv.description}</div>
+                                      <div style={{ fontSize: 10, color: GRAY }}>{inv.part_number || '—'} · Cost: {fmt(inv.cost_price || 0)} · Sell: {fmt(inv.sell_price || 0)} · {inv.on_hand || 0} in stock</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <span style={labelStyle}>Part #</span>
+                              <input defaultValue={p.part_number || ''} onChange={e => searchInventory(p.id, e.target.value)} onBlur={e => { patchLine(p.id, { part_number: e.target.value }); setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="PN" style={inputStyle} />
+                            </div>
+                            <div>
+                              <span style={labelStyle}>Qty</span>
+                              <input type="number" defaultValue={p.quantity || 1} onBlur={e => patchLine(p.id, { quantity: parseInt(e.target.value) || 1 })} style={inputStyle} />
+                            </div>
+                            <div>
+                              <span style={labelStyle}>Cost</span>
+                              <input type="number" step="0.01" defaultValue={p.parts_cost_price || ''} onBlur={e => patchLine(p.id, { parts_cost_price: parseFloat(e.target.value) || 0 })} placeholder="0.00" style={inputStyle} />
+                            </div>
+                            <div>
+                              <span style={labelStyle}>Sell</span>
+                              <input type="number" step="0.01" defaultValue={p.parts_sell_price || ''} onBlur={e => patchLine(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: parseFloat(e.target.value) * (p.quantity || 1) })} placeholder="0.00" style={inputStyle} />
+                            </div>
                           </div>
                         </div>
                       )}
@@ -1160,6 +1212,31 @@ export default function WorkOrderDetail() {
               </div>
             </div>
           )}
+
+          {/* Parts Submit / Save buttons */}
+          {!wo.is_historical && partLines.length > 0 && !isMechanic && (() => {
+            const allFilled = partLines.every((p: any) => p.real_name || !p.rough_name)
+            const someFilled = partLines.some((p: any) => p.real_name)
+            const filledCount = partLines.filter((p: any) => p.real_name).length
+            const roughCount = partLines.filter((p: any) => p.rough_name && !p.real_name).length
+            const allReceived = partLines.every((p: any) => p.parts_status === 'received' || p.parts_status === 'installed')
+
+            if (partsSubmitted || allReceived) {
+              return <div style={{ ...cardStyle, marginTop: 12, textAlign: 'center', color: GREEN, fontSize: 13, fontWeight: 700, padding: 14, background: 'rgba(22,163,74,0.04)', border: '1px solid rgba(22,163,74,0.15)' }}>Parts Submitted — Mechanic Notified</div>
+            }
+
+            return (
+              <div style={{ ...cardStyle, marginTop: 12 }}>
+                {roughCount > 0 && <div style={{ fontSize: 12, color: AMBER, marginBottom: 8 }}>{filledCount} of {partLines.length} parts complete — fill remaining to submit</div>}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {someFilled && <button onClick={savePartsProgress} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}`, flex: 1, justifyContent: 'center' }}>Save Progress</button>}
+                  <button onClick={submitParts} disabled={!allFilled || partsSubmitting} style={{ ...btnStyle(allFilled ? '#1D6FE8' : '#E5E7EB', allFilled ? '#fff' : GRAY), flex: 2, justifyContent: 'center', opacity: allFilled ? 1 : 0.5 }}>
+                    {partsSubmitting ? 'Submitting...' : 'Submit All Parts'}
+                  </button>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Legacy wo_parts if any */}
           {woParts.length > 0 && (
