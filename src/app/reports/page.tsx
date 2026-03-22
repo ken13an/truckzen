@@ -8,50 +8,15 @@ const BLUE = '#1D6FE8', GREEN = '#22C55E', RED = '#EF4444', AMBER = '#F59E0B', G
 
 const TABS = ['Overview', 'Revenue', 'Labor', 'Parts', 'Trucks']
 
-const RANGES = [
-  { label: 'This Week', key: 'week' },
-  { label: 'This Month', key: 'month' },
-  { label: 'Last Month', key: 'last_month' },
-  { label: 'Last 3 Months', key: '3months' },
-  { label: 'This Year', key: 'year' },
-  { label: 'Custom', key: 'custom' },
-]
-
-function getDateRange(key: string): { from: string; to: string } {
-  const now = new Date()
-  const to = now.toISOString().split('T')[0]
-  switch (key) {
-    case 'week': {
-      const d = new Date(); d.setDate(d.getDate() - d.getDay())
-      return { from: d.toISOString().split('T')[0], to }
-    }
-    case 'month': {
-      const d = new Date(now.getFullYear(), now.getMonth(), 1)
-      return { from: d.toISOString().split('T')[0], to }
-    }
-    case 'last_month': {
-      const d = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const e = new Date(now.getFullYear(), now.getMonth(), 0)
-      return { from: d.toISOString().split('T')[0], to: e.toISOString().split('T')[0] }
-    }
-    case '3months': {
-      const d = new Date(); d.setMonth(d.getMonth() - 3)
-      return { from: d.toISOString().split('T')[0], to }
-    }
-    case 'year': {
-      return { from: `${now.getFullYear()}-01-01`, to }
-    }
-    default: return { from: new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0], to }
-  }
-}
+import DateRangePicker from '@/components/DateRangePicker'
 
 export default function ReportsPage() {
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [tab, setTab] = useState(0)
-  const [range, setRange] = useState('month')
-  const [customFrom, setCustomFrom] = useState('')
-  const [customTo, setCustomTo] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [dateLabel, setDateLabel] = useState('')
   const [loading, setLoading] = useState(true)
 
   // Data
@@ -72,22 +37,27 @@ export default function ReportsPage() {
   }, [])
 
   useEffect(() => {
-    if (user) loadData()
-  }, [user, range, tab, customFrom, customTo])
+    if (user && dateFrom && dateTo) loadData()
+  }, [user, dateFrom, dateTo, tab])
+
+  function handleDateChange(from: string, to: string, label: string) {
+    setDateFrom(from)
+    setDateTo(to)
+    setDateLabel(label)
+  }
 
   async function loadData() {
     setLoading(true)
-    const { from, to } = range === 'custom' && customFrom && customTo ? { from: customFrom, to: customTo } : getDateRange(range)
-    const base = `/api/reports?shop_id=${user.shop_id}&from=${from}&to=${to}`
+    const base = `/api/reports?shop_id=${user.shop_id}&from=${dateFrom}&to=${dateTo}`
 
     // Always load overview
     const ovRes = await fetch(`${base}&type=overview`)
     if (ovRes.ok) setOverview(await ovRes.json())
 
     // Load previous period for comparison
-    const days = (new Date(to).getTime() - new Date(from).getTime()) / 86400000
-    const prevTo = new Date(new Date(from).getTime() - 86400000).toISOString().split('T')[0]
-    const prevFrom = new Date(new Date(from).getTime() - days * 86400000).toISOString().split('T')[0]
+    const days = (new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / 86400000
+    const prevTo = new Date(new Date(dateFrom).getTime() - 86400000).toISOString().split('T')[0]
+    const prevFrom = new Date(new Date(dateFrom).getTime() - days * 86400000).toISOString().split('T')[0]
     const prevRes = await fetch(`/api/reports?shop_id=${user.shop_id}&from=${prevFrom}&to=${prevTo}&type=overview`)
     if (prevRes.ok) setPrevOverview(await prevRes.json())
 
@@ -131,23 +101,9 @@ export default function ReportsPage() {
 
   return (
     <div style={{ fontFamily: FONT, color: '#1A1A1A', background: '#fff', minHeight: '100vh', maxWidth: 1100, margin: '0 auto', padding: '20px 24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Reports</h1>
-        {/* Date range picker */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          {RANGES.map(r => (
-            <button key={r.key} onClick={() => setRange(r.key)} style={{
-              padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-              background: range === r.key ? BLUE : '#F3F4F6', color: range === r.key ? '#fff' : GRAY, border: 'none',
-            }}>{r.label}</button>
-          ))}
-          {range === 'custom' && (
-            <>
-              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 11, fontFamily: FONT }} />
-              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 11, fontFamily: FONT }} />
-            </>
-          )}
-        </div>
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 12px' }}>Reports</h1>
+        <DateRangePicker onChange={handleDateChange} defaultPreset="this_month" />
       </div>
 
       {/* Tabs */}
