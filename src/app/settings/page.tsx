@@ -13,6 +13,7 @@ const SECTIONS = [
   { key: 'shop', label: 'Shop Information' },
   { key: 'branding', label: 'Shop Branding' },
   { key: 'data_retention', label: 'Data Retention' },
+  { key: 'export', label: 'Data Export', href: '/settings/export' },
 ]
 
 export default function SettingsPage() {
