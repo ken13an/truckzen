@@ -129,6 +129,20 @@ export async function POST(req: Request) {
       tire_position: line.tire_position || null,
       customer_provides_parts: line.customer_provides_parts || false,
     })
+
+    // Auto-insert rough parts for this job line
+    const roughParts = line.rough_parts || []
+    for (const rp of roughParts) {
+      await s.from('so_lines').insert({
+        so_id: wo.id,
+        line_type: 'part',
+        description: rp.rough_name || rp.description || '',
+        rough_name: rp.rough_name || rp.description || '',
+        quantity: rp.quantity || 1,
+        unit_price: 0,
+        parts_status: 'rough',
+      })
+    }
   }
 
   // Log activity

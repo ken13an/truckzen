@@ -1347,8 +1347,8 @@ export default function WorkOrderDetail() {
 
           {/* Invoice status stepper */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 16, padding: '8px 0' }}>
-            {['draft', 'quality_check', 'accounting_review', 'sent', 'paid', 'closed'].map((stage, i, arr) => {
-              const labels: Record<string, string> = { draft: 'Draft', quality_check: 'Quality Check', accounting_review: 'Accounting', sent: 'Sent', paid: 'Paid', closed: 'Closed' }
+            {['draft', 'accounting_review', 'sent', 'paid', 'closed'].map((stage, i, arr) => {
+              const labels: Record<string, string> = { draft: 'Draft', accounting_review: 'Accounting', sent: 'Sent', paid: 'Paid', closed: 'Closed' }
               const currentIdx = arr.indexOf(wo.invoice_status || 'draft')
               const isDone = i < currentIdx
               const isCurrent = i === currentIdx
@@ -1387,20 +1387,12 @@ export default function WorkOrderDetail() {
                     </div>
                   ))}
                   {invoiceChecks.every((c: any) => c.passed) && (
-                    <button onClick={() => invoiceAction('submit_quality_check')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), marginTop: 8 }}>
-                      Submit for Quality Check
+                    <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), marginTop: 8 }}>
+                      Submit to Accounting
                     </button>
                   )}
                 </div>
               )}
-            </div>
-          )}
-
-          {wo.invoice_status === 'quality_check' && (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button onClick={() => invoiceAction('approve_quality')} disabled={invoiceLoading} style={btnStyle(GREEN, '#fff')}>Approve Quality</button>
-              <input value={returnReason} onChange={e => setReturnReason(e.target.value)} placeholder="Reason for return..." style={{ ...inputStyle, flex: 1, padding: '6px 10px', fontSize: 12 }} />
-              <button onClick={() => { invoiceAction('return_to_mechanic', { reason: returnReason }); setReturnReason('') }} disabled={invoiceLoading || !returnReason.trim()} style={btnStyle('#F3F4F6', RED)}>Return to Mechanic</button>
             </div>
           )}
 

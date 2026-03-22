@@ -8,7 +8,7 @@ import { ChevronLeft } from 'lucide-react'
 import { VinInput } from '@/components/shared/VinInput'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
-import { getPartSuggestions, type PartSuggestion } from '@/lib/parts-suggestions'
+import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
 interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string }
@@ -55,7 +55,7 @@ export default function NewWorkOrderPage() {
   const [duplicateWarning, setDuplicateWarning] = useState('')
 
   const [step, setStep] = useState<'edit' | 'processing' | 'review'>('edit')
-  const [jobLines, setJobLines] = useState<{ description: string; skills: string[]; tirePositions: string[]; isTire: boolean }[]>([])
+  const [jobLines, setJobLines] = useState<{ description: string; skills: string[]; tirePositions: string[]; isTire: boolean; isDiagnostic: boolean; roughParts: { rough_name: string; quantity: number; is_labor: boolean }[] }[]>([])
   const [aiFailed, setAiFailed] = useState(false)
 
   const [inventoryParts, setInventoryParts] = useState<any[]>([])
@@ -172,18 +172,17 @@ export default function NewWorkOrderPage() {
       if (data.action_items && Array.isArray(data.action_items) && data.action_items.length > 0) {
         lines = data.action_items.map((item: any) => {
           const desc = typeof item === 'string' ? item : item.description || ''
-          return { description: desc, skills: typeof item === 'string' ? [] : item.skills || [], tirePositions: [], isTire: isTireJob(desc) }
+          return { description: desc, skills: typeof item === 'string' ? [] : item.skills || [], tirePositions: [], isTire: isTireJob(desc), isDiagnostic: isDiagnosticJob(desc), roughParts: getAutoRoughParts(desc) }
         })
       } else {
-        lines = [{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint) }]
+        lines = [{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint), isDiagnostic: isDiagnosticJob(complaint), roughParts: getAutoRoughParts(complaint) }]
         setAiFailed(true)
       }
       setJobLines(lines)
-      // Frontend duplicate check
       const dup = checkDuplicates(lines)
       if (dup) setDuplicateWarning(dup)
     } catch {
-      setJobLines([{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint) }])
+      setJobLines([{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint), isDiagnostic: isDiagnosticJob(complaint), roughParts: getAutoRoughParts(complaint) }])
       setAiFailed(true)
     }
     setStep('review')
@@ -203,6 +202,8 @@ export default function NewWorkOrderPage() {
             description: l.description, skills: l.skills,
             customer_provides_parts: customerProvidesParts,
             tire_position: l.tirePositions.length > 0 ? l.tirePositions.join(', ') : null,
+            rough_parts: l.roughParts.filter(p => !p.is_labor),
+            is_diagnostic: l.isDiagnostic,
           })),
           ...(showNewUnit && newUnit.number.trim() ? { new_unit: { unit_number: newUnit.number.trim(), vin: newUnit.vin || null, year: newUnit.year ? Number(newUnit.year) : null, make: newUnit.make || null, model: newUnit.model || null } } : {}),
         }),
@@ -217,7 +218,7 @@ export default function NewWorkOrderPage() {
     setJobLines(prev => prev.map((l, i) => {
       if (i !== lineIdx) return l
       const positions = l.tirePositions.includes(pos) ? l.tirePositions.filter(p => p !== pos) : [...l.tirePositions, pos]
-      return { ...l, tirePositions: positions }
+      return { ...l, tirePositions: positions, roughParts: getAutoRoughParts(l.description, positions) }
     }))
   }
 
@@ -387,7 +388,7 @@ export default function NewWorkOrderPage() {
                 <div key={i} style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 12 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: line.isTire ? 10 : 0 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', minWidth: 40 }}>Job {i + 1}</span>
-                    <input type="text" value={line.description} onChange={e => setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: e.target.value, isTire: isTireJob(e.target.value) } : l))} style={{ ...inp, flex: 1 }} />
+                    <input type="text" value={line.description} onChange={e => setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: e.target.value, isTire: isTireJob(e.target.value), isDiagnostic: isDiagnosticJob(e.target.value), roughParts: getAutoRoughParts(e.target.value, l.tirePositions) } : l))} style={{ ...inp, flex: 1 }} />
                     <button onClick={() => setJobLines(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: '1px solid #D1D5DB', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: '#EF4444', fontWeight: 600, flexShrink: 0, fontSize: 13 }}>×</button>
                   </div>
 
@@ -416,12 +417,39 @@ export default function NewWorkOrderPage() {
                       ))}
                     </div>
                   )}
+
+                  {/* Diagnostic note */}
+                  {line.isDiagnostic && (
+                    <div style={{ marginTop: 8, padding: '8px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 11, color: '#1D6FE8' }}>
+                      Diagnostic — parts will be added after inspection
+                    </div>
+                  )}
+
+                  {/* Auto rough parts */}
+                  {line.roughParts.length > 0 && !line.isDiagnostic && (
+                    <div style={{ marginTop: 8, padding: '8px 12px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', marginBottom: 6 }}>Auto-Generated Parts (rough)</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {line.roughParts.filter(p => !p.is_labor).map((p, pi) => (
+                          <span key={pi} style={{ padding: '3px 8px', borderRadius: 5, fontSize: 10, background: '#FFF7ED', color: '#EA580C', border: '1px solid #FED7AA' }}>
+                            {p.quantity > 1 ? `${p.quantity}x ` : ''}{p.rough_name}
+                          </span>
+                        ))}
+                        {line.roughParts.filter(p => p.is_labor).map((p, pi) => (
+                          <span key={`l${pi}`} style={{ padding: '3px 8px', borderRadius: 5, fontSize: 10, background: '#F3F4F6', color: '#6B7280', border: '1px solid #E5E7EB' }}>
+                            {p.rough_name} (inspection)
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 9, color: '#9CA3AF', marginTop: 4 }}>Parts dept will replace with real names + part numbers</div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setJobLines(prev => [...prev, { description: '', skills: [], tirePositions: [], isTire: false }])} style={btnS}>+ Add Job Line</button>
+              <button onClick={() => setJobLines(prev => [...prev, { description: '', skills: [], tirePositions: [], isTire: false, isDiagnostic: false, roughParts: [] }])} style={btnS}>+ Add Job Line</button>
               <button onClick={() => setStep('edit')} style={btnS}>Back to Edit</button>
             </div>
           </div>

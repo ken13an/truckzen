@@ -19,12 +19,11 @@ export async function POST(req: Request, { params }: Params) {
   const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id').eq('id', id).single()
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
-  // Submit for quality check
-  if (action === 'submit_quality_check') {
-    // Validate: all jobs completed, all parts have real names
+  // Submit to accounting (direct — no quality check step)
+  if (action === 'submit_to_accounting') {
     const { data: lines } = await s.from('so_lines').select('id, line_status, parts_status, real_name, rough_name, customer_provides_parts, line_type').eq('so_id', id)
     const jobs = (lines || []).filter(l => l.line_type === 'labor')
-    const parts = (lines || []).filter(l => l.line_type === 'part' || l.rough_name || l.real_name)
+    const parts = (lines || []).filter(l => l.rough_name || l.real_name)
 
     const issues: string[] = []
     const incompleteJobs = jobs.filter(j => j.line_status !== 'completed')
@@ -33,31 +32,10 @@ export async function POST(req: Request, { params }: Params) {
     const roughParts = parts.filter(p => !p.customer_provides_parts && (!p.real_name && p.rough_name))
     if (roughParts.length > 0) issues.push(`${roughParts.length} part(s) still have rough names`)
 
-    const pendingParts = parts.filter(p => !p.customer_provides_parts && p.parts_status && !['received', 'installed'].includes(p.parts_status))
-    if (pendingParts.length > 0) issues.push(`${pendingParts.length} part(s) not yet received`)
-
     if (issues.length > 0) return NextResponse.json({ error: 'Cannot submit', issues }, { status: 400 })
 
-    await s.from('service_orders').update({ invoice_status: 'quality_check' }).eq('id', id)
-    await s.from('wo_activity_log').insert({ wo_id: id, user_id, action: 'Submitted for quality check' })
-    return NextResponse.json({ ok: true })
-  }
-
-  // Approve quality
-  if (action === 'approve_quality') {
-    await s.from('service_orders').update({
-      invoice_status: 'accounting_review',
-      quality_checked_by: user_id,
-      quality_checked_at: new Date().toISOString(),
-    }).eq('id', id)
-    await s.from('wo_activity_log').insert({ wo_id: id, user_id, action: 'Quality approved — sent to accounting' })
-    return NextResponse.json({ ok: true })
-  }
-
-  // Return to mechanic (quality failed)
-  if (action === 'return_to_mechanic') {
-    await s.from('service_orders').update({ invoice_status: 'draft' }).eq('id', id)
-    await s.from('wo_activity_log').insert({ wo_id: id, user_id, action: `Returned to mechanic: ${data.reason || 'needs rework'}` })
+    await s.from('service_orders').update({ invoice_status: 'accounting_review' }).eq('id', id)
+    await s.from('wo_activity_log').insert({ wo_id: id, user_id, action: 'Submitted to accounting' })
     return NextResponse.json({ ok: true })
   }
 

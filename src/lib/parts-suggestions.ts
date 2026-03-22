@@ -129,3 +129,99 @@ export function getPartSuggestions(jobDescription: string, inventoryParts?: any[
 
   return suggestions.slice(0, 20)
 }
+
+// ── Auto rough parts generation ──
+
+export interface RoughPart {
+  rough_name: string
+  quantity: number
+  is_labor: boolean
+}
+
+const DIAGNOSTIC_KEYWORDS = [
+  'coolant leak', 'check engine', 'oil leak', 'noise', 'rattle', 'vibration',
+  'overheating', 'won\'t start', 'wont start', 'no start', 'going to left',
+  'going to right', 'pulling', 'electrical issue', 'air leak', 'diagnostic',
+  'inspect', 'test drive', 'scan', 'hard to start',
+]
+
+const PM_PARTS: RoughPart[] = [
+  { rough_name: 'Engine Oil (15W-40)', quantity: 10, is_labor: false },
+  { rough_name: 'Oil Filter', quantity: 1, is_labor: false },
+  { rough_name: 'Fuel Filter', quantity: 1, is_labor: false },
+  { rough_name: 'Air Filter', quantity: 1, is_labor: false },
+  { rough_name: 'DEF Fluid', quantity: 1, is_labor: false },
+  { rough_name: 'Drain Plug Gasket', quantity: 1, is_labor: false },
+  { rough_name: 'Coolant Check', quantity: 1, is_labor: true },
+  { rough_name: 'Belt Inspection', quantity: 1, is_labor: true },
+  { rough_name: 'Brake Inspection', quantity: 1, is_labor: true },
+  { rough_name: 'Tire Inspection', quantity: 1, is_labor: true },
+  { rough_name: 'Grease/Lubrication', quantity: 1, is_labor: true },
+]
+
+const OIL_CHANGE_PARTS: RoughPart[] = [
+  { rough_name: 'Engine Oil (15W-40)', quantity: 10, is_labor: false },
+  { rough_name: 'Oil Filter', quantity: 1, is_labor: false },
+  { rough_name: 'Drain Plug Gasket', quantity: 1, is_labor: false },
+]
+
+const JOB_AUTO_PARTS: Record<string, RoughPart[]> = {
+  'alternator': [{ rough_name: 'Alternator', quantity: 1, is_labor: false }, { rough_name: 'Serpentine Belt', quantity: 1, is_labor: false }],
+  'starter': [{ rough_name: 'Starter Motor', quantity: 1, is_labor: false }],
+  'ac repair': [{ rough_name: 'AC Compressor', quantity: 1, is_labor: false }, { rough_name: 'Refrigerant', quantity: 1, is_labor: false }],
+  'a/c': [{ rough_name: 'AC Compressor', quantity: 1, is_labor: false }, { rough_name: 'Refrigerant', quantity: 1, is_labor: false }],
+  'turbo': [{ rough_name: 'Turbocharger', quantity: 1, is_labor: false }, { rough_name: 'Turbo Gasket Kit', quantity: 1, is_labor: false }],
+  'exhaust': [{ rough_name: 'Exhaust Gasket', quantity: 1, is_labor: false }, { rough_name: 'Exhaust Clamp', quantity: 1, is_labor: false }],
+  'clutch': [{ rough_name: 'Clutch Disc', quantity: 1, is_labor: false }, { rough_name: 'Pressure Plate', quantity: 1, is_labor: false }, { rough_name: 'Throw-Out Bearing', quantity: 1, is_labor: false }],
+  'battery': [{ rough_name: 'Battery', quantity: 1, is_labor: false }],
+  'water pump': [{ rough_name: 'Water Pump', quantity: 1, is_labor: false }, { rough_name: 'Water Pump Gasket', quantity: 1, is_labor: false }],
+  'radiator': [{ rough_name: 'Radiator', quantity: 1, is_labor: false }],
+  'windshield': [{ rough_name: 'Windshield', quantity: 1, is_labor: false }, { rough_name: 'Windshield Seal', quantity: 1, is_labor: false }],
+}
+
+export function isDiagnosticJob(desc: string): boolean {
+  const lower = desc.toLowerCase()
+  return DIAGNOSTIC_KEYWORDS.some(k => lower.includes(k))
+}
+
+export function getAutoRoughParts(jobDescription: string, tirePositions?: string[]): RoughPart[] {
+  if (!jobDescription) return []
+  const lower = jobDescription.toLowerCase()
+
+  // Diagnostic jobs — no auto parts
+  if (isDiagnosticJob(lower)) return []
+
+  // Tire jobs — generate from positions
+  if (['tire', 'tyre', 'flat', 'blowout'].some(k => lower.includes(k)) && tirePositions && tirePositions.length > 0) {
+    const steerCount = tirePositions.filter(p => p.includes('Steer')).length
+    const driveCount = tirePositions.filter(p => p.includes('2nd')).length
+    const rearCount = tirePositions.filter(p => p.includes('3rd')).length
+    const parts: RoughPart[] = []
+    if (steerCount > 0) parts.push({ rough_name: `${steerCount}x Steer Tire${steerCount > 1 ? 's' : ''}`, quantity: steerCount, is_labor: false })
+    if (driveCount > 0) parts.push({ rough_name: `${driveCount}x Drive Axle Tire${driveCount > 1 ? 's' : ''}`, quantity: driveCount, is_labor: false })
+    if (rearCount > 0) parts.push({ rough_name: `${rearCount}x Rear Axle Tire${rearCount > 1 ? 's' : ''}`, quantity: rearCount, is_labor: false })
+    if (parts.length === 0) parts.push({ rough_name: `${tirePositions.length}x Tire${tirePositions.length > 1 ? 's' : ''}`, quantity: tirePositions.length, is_labor: false })
+    return parts
+  }
+
+  // PM Service
+  if (['pm service', 'pm ', 'preventive maintenance', 'preventative maintenance'].some(k => lower.includes(k))) return PM_PARTS
+
+  // Oil change only
+  if (lower.includes('oil change') && !lower.includes('pm')) return OIL_CHANGE_PARTS
+
+  // Brake adjustment — labor only, no parts
+  if (lower.includes('brake adjustment') || lower.includes('brake adjust')) return []
+
+  // Brake repair/job
+  if (lower.includes('brake') && (lower.includes('repair') || lower.includes('job') || lower.includes('replace'))) {
+    return [{ rough_name: 'Brake Pads', quantity: 1, is_labor: false }, { rough_name: 'Brake Drums/Rotors', quantity: 1, is_labor: false }]
+  }
+
+  // Other common jobs
+  for (const [keyword, parts] of Object.entries(JOB_AUTO_PARTS)) {
+    if (lower.includes(keyword)) return parts
+  }
+
+  return []
+}
