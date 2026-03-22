@@ -334,13 +334,17 @@ const labelStyle: React.CSSProperties = {
 
 export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: string; shopName: string; kioskCode?: string }) {
   // ---- PIN Gate (all hooks before any return) ----
-  const [pinAuthed, setPinAuthed] = useState(() => {
-    if (!kioskCode) return true // no code = skip PIN
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem(`kiosk_pin_${kioskCode}`) === 'true'
+  const [pinAuthed, setPinAuthed] = useState(!kioskCode) // no code = skip PIN
+  const [pinChecked, setPinChecked] = useState(!kioskCode)
+
+  // Check sessionStorage for existing PIN auth — in useEffect to avoid hydration mismatch
+  useEffect(() => {
+    if (!kioskCode) return
+    if (typeof window !== 'undefined' && sessionStorage.getItem(`kiosk_pin_${kioskCode}`) === 'true') {
+      setPinAuthed(true)
     }
-    return false
-  })
+    setPinChecked(true)
+  }, [kioskCode])
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
   const [pinVerifying, setPinVerifying] = useState(false)
@@ -412,6 +416,15 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   const unitSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const t = (key: string) => T[lang]?.[key] || T.en[key] || key
+
+  // Show loading while checking sessionStorage for PIN
+  if (!pinChecked && kioskCode) {
+    return (
+      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif" }}>
+        <p style={{ color: '#71717A' }}>Loading...</p>
+      </div>
+    )
+  }
 
   if (!pinAuthed && kioskCode) {
     return (
