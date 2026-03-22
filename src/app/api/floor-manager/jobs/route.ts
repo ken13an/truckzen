@@ -19,6 +19,7 @@ export async function GET(req: Request) {
     .eq('service_orders.shop_id', shopId)
     .in('line_type', ['labor', 'job'])
     .not('service_orders.status', 'in', '("good_to_go","done","void")')
+    .or('service_orders.is_historical.is.null,service_orders.is_historical.eq.false')
     .order('created_at', { ascending: false })
     .limit(200)
 

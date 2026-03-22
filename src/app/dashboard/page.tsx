@@ -42,7 +42,7 @@ export default function DashboardPage() {
         { data: invoiceData },
         { data: pmData },
       ] = await Promise.all([
-        supabase.from('service_orders').select('status').eq('shop_id', shopId).not('status', 'in', '("void")'),
+        supabase.from('service_orders').select('status').eq('shop_id', shopId).not('status', 'in', '("void")').or('is_historical.is.null,is_historical.eq.false'),
         supabase.from('parts').select('on_hand, reorder_point').eq('shop_id', shopId),
         supabase.from('invoices').select('status, due_date').eq('shop_id', shopId).eq('status', 'sent'),
         supabase.from('pm_schedules').select('next_due_date').eq('shop_id', shopId).eq('active', true),

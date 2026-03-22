@@ -45,6 +45,7 @@ export default function ShopFloorPage() {
       .from('service_orders')
       .select('id, so_number, status, priority, complaint, bay, team, internal_notes, grand_total, created_at, updated_at, promised_date, completed_at, assets(unit_number, year, make, model), customers(company_name), users!assigned_tech(full_name)')
       .eq('shop_id', profile.shop_id)
+      .or('is_historical.is.null,is_historical.eq.false')
       .not('status', 'in', '("good_to_go","void")')
       .order('priority', { ascending: false })
       .order('created_at', { ascending: false })
@@ -170,7 +171,7 @@ export default function ShopFloorPage() {
                   </tr></thead>
                   <tbody>
                     {groupJobs.map(j => (
-                      <tr key={j.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/orders/${j.id}`}>
+                      <tr key={j.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/work-orders/${j.id}`}>
                         <td style={{ ...S.td, fontWeight: 700, color: '#4D9EFF' }}>#{(j.assets as any)?.unit_number || '—'}</td>
                         <td style={S.td}>{j.team ? `Team ${j.team}` : '—'}{j.bay ? ` · ${j.bay}` : ''}</td>
                         <td style={S.td}>{(j.customers as any)?.company_name || '—'}</td>
@@ -254,7 +255,7 @@ export default function ShopFloorPage() {
 
 function KanbanCard({ job: j }: { job: any }) {
   return (
-    <div onClick={() => window.location.href = `/orders/${j.id}`}
+    <div onClick={() => window.location.href = `/work-orders/${j.id}`}
       style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || '#7C8BA0'}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: '#4D9EFF' }}>#{(j.assets as any)?.unit_number || '—'}</span>
