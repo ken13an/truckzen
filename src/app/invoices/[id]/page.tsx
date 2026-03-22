@@ -60,20 +60,32 @@ export default function InvoiceDetailPage() {
         .select(`
           *,
           service_orders(
-            id, so_number, status, complaint, cause, correction,
+            id, so_number, status, complaint, cause, correction, is_historical, source,
+            labor_total, parts_total, grand_total,
             assets(unit_number, year, make, model, odometer),
             users!assigned_tech(full_name)
           ),
-          customers(company_name, contact_name, phone, email),
-          so_lines(id, line_type, description, part_number, quantity, unit_price, total_price)
+          customers(company_name, contact_name, phone, email)
         `)
         .eq('id', params.id)
         .eq('shop_id', profile.shop_id)
         .single()
 
       if (!inv) { window.location.href = '/invoices'; return }
+
+      // Fetch so_lines separately via service order
+      let soLines: any[] = []
+      if (inv.service_orders?.id) {
+        const { data: lines } = await supabase
+          .from('so_lines')
+          .select('id, line_type, description, part_number, quantity, unit_price, total_price')
+          .eq('so_id', inv.service_orders.id)
+        soLines = lines || []
+      }
+      inv.so_lines = soLines
+
       setInvoice(inv)
-      setEditingLines((inv.so_lines || []).map((l: any) => ({ ...l })))
+      setEditingLines(soLines.map((l: any) => ({ ...l })))
       setLoading(false)
     }
     load()
@@ -166,11 +178,16 @@ export default function InvoiceDetailPage() {
       // Refresh
       const { data: refreshed } = await supabase
         .from('invoices')
-        .select(`*, service_orders(id, so_number, status, complaint, cause, correction, assets(unit_number, year, make, model, odometer), users!assigned_tech(full_name)), customers(company_name, contact_name, phone, email), so_lines(id, line_type, description, part_number, quantity, unit_price, total_price)`)
+        .select(`*, service_orders(id, so_number, status, complaint, cause, correction, is_historical, source, labor_total, parts_total, grand_total, assets(unit_number, year, make, model, odometer), users!assigned_tech(full_name)), customers(company_name, contact_name, phone, email)`)
         .eq('id', params.id)
         .single()
 
       if (refreshed) {
+        // Fetch lines separately
+        const { data: refreshedLines } = await supabase.from('so_lines')
+          .select('id, line_type, description, part_number, quantity, unit_price, total_price')
+          .eq('so_id', refreshed.service_orders?.id)
+        refreshed.so_lines = refreshedLines || []
         setInvoice(refreshed)
         setEditingLines((refreshed.so_lines || []).map((l: any) => ({ ...l })))
       }
@@ -350,12 +367,17 @@ export default function InvoiceDetailPage() {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
           <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:'#4D9EFF', fontWeight:700, marginBottom:4 }}>{invoice.invoice_number}</div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'#F0F4FF' }}>{cust?.company_name}</div>
-          <div style={{ fontSize:12, color:'#7C8BA0', marginTop:4 }}>Unit #{asset?.unit_number} · {so?.so_number}</div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'#F0F4FF' }}>{cust?.company_name || '—'}</div>
+          <div style={{ fontSize:12, color:'#7C8BA0', marginTop:4 }}>
+            {asset?.unit_number ? `Unit #${asset.unit_number}` : ''}{asset?.unit_number && so?.so_number ? ' · ' : ''}{so?.so_number || ''}
+          </div>
+          {so?.is_historical && (
+            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: '#7C8BA0', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical — {so.source === 'fullbay' ? 'Fullbay' : 'Imported'}</span>
+          )}
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
           <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:stColor+'18', color:stColor, border:`1px solid ${stColor}33` }}>
-            {invoice.status.toUpperCase()}
+            {(invoice.status || 'unknown').toUpperCase()}
           </span>
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color: isPaid?'#1DB870':'#4D9EFF' }}>
             ${displayTotal.toFixed(2)}
@@ -407,9 +429,42 @@ export default function InvoiceDetailPage() {
                   )}
                 </tr></thead>
                 <tbody>
-                  {lineSection('Labor', '#4D9EFF', laborLines, 0)}
-                  {lineSection('Parts', '#1DB870', partLines, laborLines.length)}
-                  {lineSection('Other', '#D4882A', otherLines, laborLines.length + partLines.length)}
+                  {lines.length > 0 ? (
+                    <>
+                      {lineSection('Labor', '#4D9EFF', laborLines, 0)}
+                      {lineSection('Parts', '#1DB870', partLines, laborLines.length)}
+                      {lineSection('Other', '#D4882A', otherLines, laborLines.length + partLines.length)}
+                    </>
+                  ) : (
+                    <>
+                      {/* No line items — show WO summary for Fullbay invoices */}
+                      {so?.labor_total > 0 && (
+                        <tr>
+                          <td style={S.td}>Labor (from Work Order)</td>
+                          <td style={{ ...S.td, color: '#48536A' }}>—</td>
+                          <td style={{ ...S.td, textAlign: 'center' }}>—</td>
+                          <td style={{ ...S.td, color: '#7C8BA0' }}>—</td>
+                          <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: '#4D9EFF' }}>${(so.labor_total || 0).toFixed(2)}</td>
+                        </tr>
+                      )}
+                      {so?.parts_total > 0 && (
+                        <tr>
+                          <td style={S.td}>Parts (from Work Order)</td>
+                          <td style={{ ...S.td, color: '#48536A' }}>—</td>
+                          <td style={{ ...S.td, textAlign: 'center' }}>—</td>
+                          <td style={{ ...S.td, color: '#7C8BA0' }}>—</td>
+                          <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: '#1DB870' }}>${(so.parts_total || 0).toFixed(2)}</td>
+                        </tr>
+                      )}
+                      {lines.length === 0 && !so?.labor_total && !so?.parts_total && (
+                        <tr>
+                          <td colSpan={5} style={{ ...S.td, textAlign: 'center', color: '#7C8BA0', padding: 24, fontSize: 12 }}>
+                            Invoice generated from Fullbay WO — <a href={`/work-orders/${so?.id}`} style={{ color: '#4D9EFF', textDecoration: 'none' }}>see Work Order for details</a>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -484,9 +539,11 @@ export default function InvoiceDetailPage() {
               <a href={`/api/invoices/${params.id}/pdf`} target="_blank" style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
                 Download PDF
               </a>
-              <a href={`/orders/${so?.id}`} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
-                View Service Order
-              </a>
+              {so?.id && (
+                <a href={`/work-orders/${so.id}`} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
+                  View Work Order
+                </a>
+              )}
             </div>
           </div>
 
