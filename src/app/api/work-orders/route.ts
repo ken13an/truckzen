@@ -14,12 +14,13 @@ export async function GET(req: Request) {
 
   const status = searchParams.get('status')
   const search = searchParams.get('q')
+  const historical = searchParams.get('historical')
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '100'), 500)
 
   let q = s
     .from('service_orders')
     .select(`
-      id, so_number, status, priority, complaint, bay, team, source,
+      id, so_number, status, priority, complaint, bay, team, source, is_historical,
       grand_total, created_at, updated_at, assigned_tech,
       assets(id, unit_number, year, make, model),
       customers(id, company_name),
@@ -31,6 +32,7 @@ export async function GET(req: Request) {
     .limit(limit)
 
   if (status && status !== 'all') q = q.eq('status', status)
+  if (historical === 'false') q = q.or('is_historical.is.null,is_historical.eq.false')
 
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

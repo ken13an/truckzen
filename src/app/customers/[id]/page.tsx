@@ -26,6 +26,8 @@ export default function CustomerProfilePage() {
   const [toast, setToast] = useState('')
   const [fleetSearch, setFleetSearch] = useState('')
   const [showExternalData, setShowExternalData] = useState(false)
+  const [woPage, setWoPage] = useState(1)
+  const woPerPage = 25
 
   // Edit modal state
   const [editModal, setEditModal] = useState(false)
@@ -512,7 +514,7 @@ export default function CustomerProfilePage() {
       {tab === 'work-orders' && (
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Work Orders ({woCount})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Service History ({woCount})</div>
             <a
               href={`/work-orders/new?customer=${id}`}
               style={{
@@ -535,42 +537,71 @@ export default function CustomerProfilePage() {
 
           {workOrders.length === 0 ? (
             <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No work orders yet</div>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
-              <thead>
-                <tr>
-                  {['WO #', 'Unit', 'Status', 'Created', 'Total'].map(h => (
-                    <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {workOrders.map((wo: any) => (
-                  <tr key={wo.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }} onClick={() => router.push(`/work-orders/${wo.id}`)}>
-                    <td style={{ padding: '10px 12px', fontSize: 13 }}>
-                      <a href={`/work-orders/${wo.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>
-                        {wo.so_number}
-                      </a>
-                    </td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
-                      {(wo.assets as any)?.unit_number ? `#${(wo.assets as any).unit_number}` : '\u2014'}
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, color: woStatusColor(wo.status) }}>
-                        {wo.status?.replace(/_/g, ' ')}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#7C8BA0' }}>
-                      {wo.created_at ? new Date(wo.created_at).toLocaleDateString() : '\u2014'}
-                    </td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#EDEDF0', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                      ${(wo.grand_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          ) : (() => {
+            const sorted = [...workOrders].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            const totalPages = Math.ceil(sorted.length / woPerPage)
+            const paginated = sorted.slice((woPage - 1) * woPerPage, woPage * woPerPage)
+            return (
+              <>
+                <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+                  <thead>
+                    <tr>
+                      {['WO #', 'Unit', 'Status', 'Created', 'Total'].map(h => (
+                        <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginated.map((wo: any) => (
+                      <tr key={wo.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }} onClick={() => router.push(`/work-orders/${wo.id}`)}>
+                        <td style={{ padding: '10px 12px', fontSize: 13 }}>
+                          <a href={`/work-orders/${wo.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>
+                            {wo.so_number}
+                          </a>
+                          {wo.is_historical && (
+                            <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: '#7C8BA0', fontSize: 9, fontWeight: 600, textTransform: 'uppercase' as const }}>Historical</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
+                          {(wo.assets as any)?.unit_number ? `#${(wo.assets as any).unit_number}` : '\u2014'}
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, color: woStatusColor(wo.status) }}>
+                            {wo.status?.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#7C8BA0' }}>
+                          {wo.created_at ? new Date(wo.created_at).toLocaleDateString() : '\u2014'}
+                        </td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#EDEDF0', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                          ${(wo.grand_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 12, color: '#7C8BA0' }}>
+                    <button
+                      disabled={woPage <= 1}
+                      onClick={() => setWoPage(p => Math.max(1, p - 1))}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.06)', color: '#EDEDF0', cursor: woPage <= 1 ? 'default' : 'pointer', opacity: woPage <= 1 ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
+                    >
+                      Prev
+                    </button>
+                    <span>Page {woPage} of {totalPages}</span>
+                    <button
+                      disabled={woPage >= totalPages}
+                      onClick={() => setWoPage(p => Math.min(totalPages, p + 1))}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.06)', color: '#EDEDF0', cursor: woPage >= totalPages ? 'default' : 'pointer', opacity: woPage >= totalPages ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </div>
       )}
 

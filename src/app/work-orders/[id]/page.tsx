@@ -375,6 +375,13 @@ export default function WorkOrderDetail() {
         <ChevronLeft size={16} /> Work Orders
       </a>
 
+      {/* HISTORICAL BANNER */}
+      {wo.is_historical && (
+        <div style={{ background: 'rgba(124,139,160,0.08)', border: '1px solid rgba(124,139,160,0.15)', borderRadius: 8, padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#7C8BA0' }}>
+          Historical Record — Imported from {wo.source === 'fullbay' ? 'Fullbay' : wo.source || 'external system'} | WO #{wo.so_number} | {new Date(wo.created_at).toLocaleDateString()}
+        </div>
+      )}
+
       {/* HEADER */}
       <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderBottom: '2px solid #E5E7EB' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
@@ -401,19 +408,25 @@ export default function WorkOrderDetail() {
           <div style={{ fontSize: 11, color: GRAY, marginTop: 4 }}>Opened by: {createdByName}</div>
         </div>
         <div style={{ textAlign: 'right', minWidth: 200 }}>
-          {asset.unit_number && (
-            <a href={`/assets/${asset.id}`} style={{ fontSize: 16, fontWeight: 700, color: BLUE, textDecoration: 'none' }}>
-              Unit #{asset.unit_number}
-            </a>
+          {wo.assets ? (
+            <>
+              {asset.unit_number && (
+                <a href={`/assets/${asset.id}`} style={{ fontSize: 16, fontWeight: 700, color: BLUE, textDecoration: 'none' }}>
+                  Unit #{asset.unit_number}
+                </a>
+              )}
+              <div style={{ fontSize: 13, color: '#1A1A1A', marginTop: 2 }}>
+                {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}
+              </div>
+              <div style={{ fontSize: 13, marginTop: 2 }}>
+                VIN: <span style={{ fontWeight: 700 }}>...{vinDisplay}</span>
+              </div>
+              {mileage && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{parseInt(mileage).toLocaleString()} mi</div>}
+              {asset.ownership_type && <span style={{ ...pillStyle('#F3F4F6', GRAY), marginTop: 4 }}>{asset.ownership_type}</span>}
+            </>
+          ) : (
+            <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>Walk-in / Unit not on file</span>
           )}
-          <div style={{ fontSize: 13, color: '#1A1A1A', marginTop: 2 }}>
-            {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}
-          </div>
-          <div style={{ fontSize: 13, marginTop: 2 }}>
-            VIN: <span style={{ fontWeight: 700 }}>...{vinDisplay}</span>
-          </div>
-          {mileage && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{parseInt(mileage).toLocaleString()} mi</div>}
-          {asset.ownership_type && <span style={{ ...pillStyle('#F3F4F6', GRAY), marginTop: 4 }}>{asset.ownership_type}</span>}
         </div>
       </div>
 
@@ -430,86 +443,88 @@ export default function WorkOrderDetail() {
       </div>
 
       {/* QUICK ACTIONS */}
-      <div data-no-print style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        {[
-          { icon: <Users size={16} />, label: 'Team', onClick: () => setShowTeamModal(true) },
-          { icon: <MessageSquare size={16} />, label: 'Notes', onClick: () => setTab(3) },
-          { icon: <Clock size={16} />, label: 'Activity', onClick: () => setTab(4) },
-          { icon: <DollarSign size={16} />, label: 'Billing', onClick: () => setTab(2) },
-        ].map(a => (
-          <button key={a.label} onClick={a.onClick} style={{
-            width: 38, height: 38, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer', padding: 0, gap: 2,
-          }}>
-            {a.icon}
-            <span style={{ fontSize: 10, color: GRAY }}>{a.label}</span>
-          </button>
-        ))}
-        <div style={{ width: 1, height: 30, background: '#E5E7EB' }} />
-        <div style={{ position: 'relative' }}>
-          <button onClick={() => setShowMenu(!showMenu)} style={{ width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer' }}>
-            <MoreHorizontal size={16} />
-          </button>
-          {showMenu && (
-            <div style={{ position: 'absolute', top: 42, left: 0, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: 180, padding: 4 }}>
-              {Object.entries(WO_STATUS).map(([k, v]) => (
-                <button key={k} onClick={() => updateWoStatus(k)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: wo.status === k ? '#EFF6FF' : 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: v.color }}>
-                  {v.label}
+      {!wo.is_historical && (
+        <div data-no-print style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          {[
+            { icon: <Users size={16} />, label: 'Team', onClick: () => setShowTeamModal(true) },
+            { icon: <MessageSquare size={16} />, label: 'Notes', onClick: () => setTab(3) },
+            { icon: <Clock size={16} />, label: 'Activity', onClick: () => setTab(4) },
+            { icon: <DollarSign size={16} />, label: 'Billing', onClick: () => setTab(2) },
+          ].map(a => (
+            <button key={a.label} onClick={a.onClick} style={{
+              width: 38, height: 38, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer', padding: 0, gap: 2,
+            }}>
+              {a.icon}
+              <span style={{ fontSize: 10, color: GRAY }}>{a.label}</span>
+            </button>
+          ))}
+          <div style={{ width: 1, height: 30, background: '#E5E7EB' }} />
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowMenu(!showMenu)} style={{ width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8, cursor: 'pointer' }}>
+              <MoreHorizontal size={16} />
+            </button>
+            {showMenu && (
+              <div style={{ position: 'absolute', top: 42, left: 0, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: 180, padding: 4 }}>
+                {Object.entries(WO_STATUS).map(([k, v]) => (
+                  <button key={k} onClick={() => updateWoStatus(k)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: wo.status === k ? '#EFF6FF' : 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: v.color }}>
+                    {v.label}
+                  </button>
+                ))}
+                <div style={{ borderTop: '1px solid #E5E7EB', margin: '4px 0' }} />
+                <button onClick={() => { setShowMenu(false); setDeleteConfirm(true) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: RED }}>
+                  Void Work Order
                 </button>
-              ))}
-              <div style={{ borderTop: '1px solid #E5E7EB', margin: '4px 0' }} />
-              <button onClick={() => { setShowMenu(false); setDeleteConfirm(true) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: RED }}>
-                Void Work Order
-              </button>
-            </div>
-          )}
-        </div>
-        <div style={{ flex: 1 }} />
-        {(!wo.invoice_status || wo.invoice_status === 'draft' || wo.invoice_status === 'quality_check_failed') && (
-          <button
-            onClick={async () => {
-              setQcLoading(true); setQcErrors([]); setShowQcErrors(false)
-              try {
-                const res = await fetch(`/api/work-orders/${id}/quality-check`, {
-                  method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ action: 'check', user_id: user?.id }),
-                })
-                const data = await res.json()
-                if (data.passed) {
-                  if (confirm('Quality check passed! Send to accounting for review?')) {
-                    const res2 = await fetch(`/api/work-orders/${id}/quality-check`, {
-                      method: 'POST', headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ action: 'send_to_accounting', user_id: user?.id }),
-                    })
-                    if (res2.ok) await loadData()
+              </div>
+            )}
+          </div>
+          <div style={{ flex: 1 }} />
+          {(!wo.invoice_status || wo.invoice_status === 'draft' || wo.invoice_status === 'quality_check_failed') && (
+            <button
+              onClick={async () => {
+                setQcLoading(true); setQcErrors([]); setShowQcErrors(false)
+                try {
+                  const res = await fetch(`/api/work-orders/${id}/quality-check`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'check', user_id: user?.id }),
+                  })
+                  const data = await res.json()
+                  if (data.passed) {
+                    if (confirm('Quality check passed! Send to accounting for review?')) {
+                      const res2 = await fetch(`/api/work-orders/${id}/quality-check`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'send_to_accounting', user_id: user?.id }),
+                      })
+                      if (res2.ok) await loadData()
+                    }
+                  } else {
+                    setQcErrors(data.errors || ['Unknown error']); setShowQcErrors(true)
                   }
-                } else {
-                  setQcErrors(data.errors || ['Unknown error']); setShowQcErrors(true)
+                } catch { setQcErrors(['Failed to run quality check']); setShowQcErrors(true) }
+                setQcLoading(false)
+              }}
+              disabled={qcLoading}
+              style={{ ...btnStyle(BLUE, '#fff'), opacity: qcLoading ? 0.5 : 1, whiteSpace: 'nowrap' }}
+            >
+              {qcLoading ? 'Checking...' : 'Send to Accounting'}
+            </button>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <label style={{ ...labelStyle, marginBottom: 0 }}>Mileage</label>
+            <input
+              value={mileage}
+              onChange={e => setMileage(e.target.value)}
+              onBlur={() => {
+                if (asset.id && mileage !== (asset.odometer?.toString() || '')) {
+                  fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: user?.id }) }).catch(() => {})
                 }
-              } catch { setQcErrors(['Failed to run quality check']); setShowQcErrors(true) }
-              setQcLoading(false)
-            }}
-            disabled={qcLoading}
-            style={{ ...btnStyle(BLUE, '#fff'), opacity: qcLoading ? 0.5 : 1, whiteSpace: 'nowrap' }}
-          >
-            {qcLoading ? 'Checking...' : 'Send to Accounting'}
-          </button>
-        )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <label style={{ ...labelStyle, marginBottom: 0 }}>Mileage</label>
-          <input
-            value={mileage}
-            onChange={e => setMileage(e.target.value)}
-            onBlur={() => {
-              if (asset.id && mileage !== (asset.odometer?.toString() || '')) {
-                fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: user?.id }) }).catch(() => {})
-              }
-            }}
-            style={{ ...inputStyle, width: 100 }}
-            placeholder="0"
-          />
+              }}
+              style={{ ...inputStyle, width: 100 }}
+              placeholder="0"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* QC ERRORS */}
       {showQcErrors && qcErrors.length > 0 && (
@@ -538,15 +553,19 @@ export default function WorkOrderDetail() {
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 14, fontWeight: 700 }}>Job {idx + 1}</span>
-                  <select
-                    value={line.line_status || 'unassigned'}
-                    onChange={e => patchLine(line.id, { line_status: e.target.value })}
-                    style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: 11, fontWeight: 700, background: st.bg, color: st.color, border: 'none', borderRadius: 100 }}
-                  >
-                    {Object.entries(LINE_STATUS).map(([k, v]) => (
-                      <option key={k} value={k}>{v.label}</option>
-                    ))}
-                  </select>
+                  {wo.is_historical ? (
+                    <span style={pillStyle(st.bg, st.color)}>{st.label}</span>
+                  ) : (
+                    <select
+                      value={line.line_status || 'unassigned'}
+                      onChange={e => patchLine(line.id, { line_status: e.target.value })}
+                      style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: 11, fontWeight: 700, background: st.bg, color: st.color, border: 'none', borderRadius: 100 }}
+                    >
+                      {Object.entries(LINE_STATUS).map(([k, v]) => (
+                        <option key={k} value={k}>{v.label}</option>
+                      ))}
+                    </select>
+                  )}
                   <span style={pillStyle('#F3F4F6', GRAY)}>Concern</span>
                   {isAdditional && <span style={pillStyle('#FFFBEB', AMBER)}>ADDITIONAL</span>}
                 </div>
@@ -563,24 +582,39 @@ export default function WorkOrderDetail() {
                   ) : (
                     <span style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>Unassigned</span>
                   )}
-                  <button onClick={() => openAssignModal(line.id, idx)} style={{ ...btnStyle('#fff', BLUE), padding: '4px 10px', fontSize: 11 }}>
-                    <Users size={12} /> Assign
-                  </button>
+                  {!wo.is_historical && (
+                    <button onClick={() => openAssignModal(line.id, idx)} style={{ ...btnStyle('#fff', BLUE), padding: '4px 10px', fontSize: 11 }}>
+                      <Users size={12} /> Assign
+                    </button>
+                  )}
                 </div>
 
                 {/* Hours grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
-                  {[
-                    { label: 'Est. Hours', value: line.estimated_hours },
-                    { label: 'Actual', value: line.actual_hours },
-                    { label: 'Billed', value: line.billed_hours },
-                  ].map(h => (
-                    <div key={h.label} style={{ background: '#F9FAFB', borderRadius: 8, padding: '8px 12px' }}>
-                      <div style={labelStyle}>{h.label}</div>
-                      <div style={{ fontSize: 16, fontWeight: 700 }}>{h.value || 0}</div>
+                {(() => {
+                  const actualHours = line.actual_hours || (line.labor_minutes ? line.labor_minutes / 60 : 0)
+                  const estimatedHours = line.estimated_hours || 0
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
+                      {[
+                        { label: 'Est. Hours', value: estimatedHours },
+                        { label: 'Actual', value: Math.round(actualHours * 100) / 100 },
+                        { label: 'Billed', value: line.billed_hours || 0 },
+                      ].map(h => (
+                        <div key={h.label} style={{ background: '#F9FAFB', borderRadius: 8, padding: '8px 12px' }}>
+                          <div style={labelStyle}>{h.label}</div>
+                          <div style={{ fontSize: 16, fontWeight: 700 }}>{h.value || 0}</div>
+                        </div>
+                      ))}
+                      {(estimatedHours > 0 || actualHours > 0) && (
+                        <div style={{ gridColumn: '1 / -1', fontSize: 12, color: GRAY }}>
+                          {estimatedHours > 0 && <span>Est: {estimatedHours}h</span>}
+                          {estimatedHours > 0 && actualHours > 0 && <span> | </span>}
+                          {actualHours > 0 && <span>Actual: {Math.round(actualHours * 100) / 100}h</span>}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  )
+                })()}
 
                 {/* Concern */}
                 {line.description && (
@@ -604,12 +638,22 @@ export default function WorkOrderDetail() {
                 {/* Resolution */}
                 <div style={{ marginBottom: 10 }}>
                   <span style={labelStyle}>Resolution</span>
-                  <textarea
-                    defaultValue={line.resolution || ''}
-                    onBlur={e => { if (e.target.value !== (line.resolution || '')) patchLine(line.id, { resolution: e.target.value }) }}
-                    placeholder="What was done..."
-                    style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
-                  />
+                  {wo.is_historical && line.resolution ? (
+                    <div style={{ marginTop: 6 }}>
+                      <ul style={{ margin: '4px 0 0 16px', padding: 0, listStyle: 'disc' }}>
+                        {line.resolution.split('\n').filter(Boolean).map((l: string, i: number) => (
+                          <li key={i} style={{ fontSize: 13, color: '#374151', marginBottom: 2 }}>{l}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <textarea
+                      defaultValue={line.resolution || ''}
+                      onBlur={e => { if (e.target.value !== (line.resolution || '')) patchLine(line.id, { resolution: e.target.value }) }}
+                      placeholder="What was done..."
+                      style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+                    />
+                  )}
                 </div>
 
                 {/* Parts for this job */}
@@ -637,19 +681,21 @@ export default function WorkOrderDetail() {
                 )}
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button onClick={() => {
-                    setNewPartForms(prev => ({ ...prev, [line.id]: prev[line.id] || { desc: '', pn: '', qty: '', cost: '' } }))
-                  }} style={{ ...btnStyle('#fff', BLUE), padding: '6px 12px', fontSize: 11 }}>
-                    <Plus size={12} /> Add Parts
-                  </button>
-                  <button onClick={() => setHoursModal({ id: line.id, estimated_hours: line.estimated_hours || '', actual_hours: line.actual_hours || '', billed_hours: line.billed_hours || '' })} style={{ ...btnStyle('#fff', GRAY), padding: '6px 12px', fontSize: 11 }}>
-                    <Clock size={12} /> Log Hours
-                  </button>
-                  <button onClick={() => removeJobLine(line.id)} style={{ ...btnStyle('transparent', RED), padding: '6px 12px', fontSize: 11, border: 'none' }}>
-                    <X size={12} /> Remove Job
-                  </button>
-                </div>
+                {!wo.is_historical && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button onClick={() => {
+                      setNewPartForms(prev => ({ ...prev, [line.id]: prev[line.id] || { desc: '', pn: '', qty: '', cost: '' } }))
+                    }} style={{ ...btnStyle('#fff', BLUE), padding: '6px 12px', fontSize: 11 }}>
+                      <Plus size={12} /> Add Parts
+                    </button>
+                    <button onClick={() => setHoursModal({ id: line.id, estimated_hours: line.estimated_hours || '', actual_hours: line.actual_hours || '', billed_hours: line.billed_hours || '' })} style={{ ...btnStyle('#fff', GRAY), padding: '6px 12px', fontSize: 11 }}>
+                      <Clock size={12} /> Log Hours
+                    </button>
+                    <button onClick={() => removeJobLine(line.id)} style={{ ...btnStyle('transparent', RED), padding: '6px 12px', fontSize: 11, border: 'none' }}>
+                      <X size={12} /> Remove Job
+                    </button>
+                  </div>
+                )}
 
                 {/* Inline add part form */}
                 {newPartForms[line.id] && (
@@ -679,31 +725,35 @@ export default function WorkOrderDetail() {
           })}
 
           {/* Add Job Line */}
-          <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => setUseAI(!useAI)} style={{ ...pillStyle(useAI ? '#EFF6FF' : '#F3F4F6', useAI ? BLUE : GRAY), cursor: 'pointer', border: 'none', fontFamily: FONT }}>
-              <Mic size={11} /> AI {useAI ? 'ON' : 'OFF'}
-            </button>
-            <input
-              value={newJobText}
-              onChange={e => setNewJobText(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addJobLine()}
-              placeholder="Describe the job concern..."
-              style={{ ...inputStyle, flex: 1, minWidth: 200 }}
-            />
-            <button onClick={addJobLine} disabled={addingJob || !newJobText.trim()} style={{ ...btnStyle(BLUE, '#fff'), opacity: addingJob || !newJobText.trim() ? 0.5 : 1 }}>
-              <Plus size={14} /> {addingJob ? 'Adding...' : 'Add Job Line'}
-            </button>
-          </div>
+          {!wo.is_historical && (
+            <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button onClick={() => setUseAI(!useAI)} style={{ ...pillStyle(useAI ? '#EFF6FF' : '#F3F4F6', useAI ? BLUE : GRAY), cursor: 'pointer', border: 'none', fontFamily: FONT }}>
+                <Mic size={11} /> AI {useAI ? 'ON' : 'OFF'}
+              </button>
+              <input
+                value={newJobText}
+                onChange={e => setNewJobText(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addJobLine()}
+                placeholder="Describe the job concern..."
+                style={{ ...inputStyle, flex: 1, minWidth: 200 }}
+              />
+              <button onClick={addJobLine} disabled={addingJob || !newJobText.trim()} style={{ ...btnStyle(BLUE, '#fff'), opacity: addingJob || !newJobText.trim() ? 0.5 : 1 }}>
+                <Plus size={14} /> {addingJob ? 'Adding...' : 'Add Job Line'}
+              </button>
+            </div>
+          )}
 
           {/* Add Shop Charge */}
-          <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: GRAY }}>Shop Charge:</span>
-            <input value={newChargeDesc} onChange={e => setNewChargeDesc(e.target.value)} placeholder="Description" style={{ ...inputStyle, flex: 1, minWidth: 150 }} />
-            <input value={newChargeAmt} onChange={e => setNewChargeAmt(e.target.value)} placeholder="Amount" type="number" step="0.01" style={{ ...inputStyle, width: 100 }} />
-            <button onClick={addShopCharge} disabled={!newChargeDesc.trim() || !newChargeAmt} style={{ ...btnStyle(GREEN, '#fff'), opacity: !newChargeDesc.trim() || !newChargeAmt ? 0.5 : 1 }}>
-              <Plus size={14} /> Add Charge
-            </button>
-          </div>
+          {!wo.is_historical && (
+            <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: GRAY }}>Shop Charge:</span>
+              <input value={newChargeDesc} onChange={e => setNewChargeDesc(e.target.value)} placeholder="Description" style={{ ...inputStyle, flex: 1, minWidth: 150 }} />
+              <input value={newChargeAmt} onChange={e => setNewChargeAmt(e.target.value)} placeholder="Amount" type="number" step="0.01" style={{ ...inputStyle, width: 100 }} />
+              <button onClick={addShopCharge} disabled={!newChargeDesc.trim() || !newChargeAmt} style={{ ...btnStyle(GREEN, '#fff'), opacity: !newChargeDesc.trim() || !newChargeAmt ? 0.5 : 1 }}>
+                <Plus size={14} /> Add Charge
+              </button>
+            </div>
+          )}
 
           {/* Shop Charges list */}
           {shopCharges.length > 0 && (
@@ -720,11 +770,13 @@ export default function WorkOrderDetail() {
           )}
 
           {/* Get Approval */}
-          <div style={{ textAlign: 'right', marginTop: 8 }}>
-            <button onClick={() => setApprovalModal(true)} style={btnStyle(GREEN, '#fff')}>
-              <DollarSign size={14} /> Get Approval
-            </button>
-          </div>
+          {!wo.is_historical && (
+            <div style={{ textAlign: 'right', marginTop: 8 }}>
+              <button onClick={() => setApprovalModal(true)} style={btnStyle(GREEN, '#fff')}>
+                <DollarSign size={14} /> Get Approval
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -819,20 +871,28 @@ export default function WorkOrderDetail() {
       {tab === 2 && (
         <div>
           {/* Summary cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
-            {[
-              { label: 'Labor', value: fmt(laborTotal), color: BLUE },
-              { label: 'Parts', value: fmt(woPartsTotal + partsLineTotal), color: AMBER },
-              { label: 'Charges', value: fmt(chargesTotal), color: GRAY },
-              { label: 'Tax', value: fmt(taxAmt), color: GRAY },
-              { label: 'Grand Total', value: fmt(grandTotal), color: GREEN },
-            ].map(s => (
-              <div key={s.label} style={{ background: '#F9FAFB', borderRadius: 10, padding: 14, textAlign: 'center' }}>
-                <div style={labelStyle}>{s.label}</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
+          {(() => {
+            const billSubtotal = laborTotal + woPartsTotal + partsLineTotal
+            const otherCharges = wo.tax_total || taxAmt || 0
+            const isRealTax = billSubtotal > 0 && otherCharges > 0 && (otherCharges / billSubtotal) < 0.2
+            const taxLabel = isRealTax ? 'Tax' : 'Other Charges'
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
+                {[
+                  { label: 'Labor', value: fmt(laborTotal), color: BLUE },
+                  { label: 'Parts', value: fmt(woPartsTotal + partsLineTotal), color: AMBER },
+                  { label: 'Charges', value: fmt(chargesTotal), color: GRAY },
+                  { label: taxLabel, value: fmt(otherCharges), color: GRAY },
+                  { label: 'Grand Total', value: fmt(grandTotal), color: GREEN },
+                ].map(s => (
+                  <div key={s.label} style={{ background: '#F9FAFB', borderRadius: 10, padding: 14, textAlign: 'center' }}>
+                    <div style={labelStyle}>{s.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )
+          })()}
 
           {/* Labor detail per job */}
           <div style={cardStyle}>
