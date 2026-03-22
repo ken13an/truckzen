@@ -718,7 +718,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
   function renderBottomNav(nextLabel?: string, onNext?: () => void) {
     return (
-      <div style={{ display: 'flex', gap: 12, marginTop: 32, width: '100%' }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '16px 24px', background: 'rgba(6,7,8,0.95)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,0.06)', zIndex: 50, display: 'flex', gap: 12 }}>
         <button
           onClick={goBack}
           style={{
@@ -754,7 +754,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   return (
     <>
     <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
-    <div style={{ minHeight: '100vh', background: '#151520', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 24px', fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
+    <div style={{ minHeight: '100vh', background: '#151520', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 24px 100px', fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
       {renderHeader()}
 
       <div style={{ width: '100%', maxWidth: 640, flex: 1, display: 'flex', flexDirection: 'column' }}>
