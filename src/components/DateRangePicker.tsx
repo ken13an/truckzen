@@ -58,7 +58,7 @@ function calcRange(key: string): { from: string; to: string } {
     case 'last_year':
       return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` }
     case 'all':
-      return { from: '2000-01-01', to: today }
+      return { from: '2015-01-01', to: today } // Far enough back to capture all data
     default:
       return { from: fmt(new Date(y, m, 1)), to: today }
   }

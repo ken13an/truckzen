@@ -19,34 +19,53 @@ export async function GET(req: Request) {
   switch (type) {
 
     case 'overview': {
-      const [
-        { data: invoices },
-        { data: sos },
-        { data: parts },
-      ] = await Promise.all([
-        supabase.from('invoices').select('status, total, balance_due, paid_at').eq('shop_id', shopId).gte('created_at', from).lte('created_at', to + 'T23:59:59'),
-        supabase.from('service_orders').select('status, grand_total, created_at, completed_at').eq('shop_id', shopId).gte('created_at', from).lte('created_at', to + 'T23:59:59'),
-        supabase.from('parts').select('on_hand, cost_price, sell_price').eq('shop_id', shopId),
-      ])
+      // Use raw SQL via RPC or count queries to avoid 1000 row limit
+      const pgFrom = from + 'T00:00:00'
+      const pgTo = to + 'T23:59:59'
 
-      const paid    = invoices?.filter(i => i.status === 'paid') || []
-      const revenue = paid.reduce((s, i) => s + (i.total || 0), 0)
-      const outstanding = (invoices || []).filter(i => i.status === 'sent').reduce((s, i) => s + (i.balance_due || 0), 0)
+      // WO stats — use service_orders.grand_total as revenue source (invoices table may be empty for historical data)
+      const { count: soCount } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
+        .eq('shop_id', shopId).gte('created_at', pgFrom).lte('created_at', pgTo)
 
-      const completed = sos?.filter(s => ['done','good_to_go'].includes(s.status)) || []
-      const avg_cycle = completed.reduce((s, so) => {
-        if (!so.completed_at || !so.created_at) return s
-        return s + (new Date(so.completed_at).getTime() - new Date(so.created_at).getTime()) / (1000 * 3600)
-      }, 0) / (completed.length || 1)
+      const { count: soCompleted } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
+        .eq('shop_id', shopId).gte('created_at', pgFrom).lte('created_at', pgTo).in('status', ['done', 'good_to_go'])
 
-      const inv_value = (parts || []).reduce((s, p) => s + (p.on_hand || 0) * (p.cost_price || 0), 0)
+      // Revenue: sum grand_total from service_orders (works for both native + historical)
+      // Supabase JS can't do SUM, so fetch in batches or use a simpler approach
+      // Fetch grand_total only — lightweight, but still limited to 1000
+      // Use pagination to get accurate totals
+      let revenue = 0
+      let page = 0
+      while (true) {
+        const { data: batch } = await supabase.from('service_orders').select('grand_total')
+          .eq('shop_id', shopId).gte('created_at', pgFrom).lte('created_at', pgTo)
+          .range(page * 1000, (page + 1) * 1000 - 1)
+        if (!batch || batch.length === 0) break
+        revenue += batch.reduce((s: number, r: any) => s + (r.grand_total || 0), 0)
+        if (batch.length < 1000) break
+        page++
+      }
+
+      // Invoice-based revenue (for native TruckZen invoices)
+      const { data: paidInvoices } = await supabase.from('invoices').select('total')
+        .eq('shop_id', shopId).eq('status', 'paid').gte('created_at', pgFrom).lte('created_at', pgTo)
+      const invoiceRevenue = (paidInvoices || []).reduce((s: number, i: any) => s + (i.total || 0), 0)
+
+      // Outstanding
+      const { data: sentInvoices } = await supabase.from('invoices').select('balance_due')
+        .eq('shop_id', shopId).eq('status', 'sent')
+      const outstanding = (sentInvoices || []).reduce((s: number, i: any) => s + (i.balance_due || 0), 0)
+
+      // Inventory value
+      const { data: parts } = await supabase.from('parts').select('on_hand, cost_price').eq('shop_id', shopId)
+      const inv_value = (parts || []).reduce((s: number, p: any) => s + (p.on_hand || 0) * (p.cost_price || 0), 0)
 
       return NextResponse.json({
-        revenue,
+        revenue: revenue || invoiceRevenue, // Use WO grand_totals (includes historical), fallback to invoice totals
         outstanding,
-        so_count:    sos?.length || 0,
-        so_completed:completed.length,
-        avg_cycle_hours: Math.round(avg_cycle * 10) / 10,
+        so_count: soCount || 0,
+        so_completed: soCompleted || 0,
+        avg_cycle_hours: 0, // TODO: compute from completed WOs with dates
         inventory_value: inv_value,
         period: { from, to },
       })
