@@ -166,7 +166,7 @@ export default function NewWorkOrderPage() {
     setStep('processing'); setError(''); setAiFailed(false); setDuplicateWarning('')
 
     try {
-      const res = await fetch('/api/ai/action-items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ complaint: complaint.trim() }) })
+      const res = await fetch('/api/ai/action-items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ complaint: complaint.trim(), shop_id: profile?.shop_id, user_id: profile?.id }) })
       const data = await res.json()
       let lines: typeof jobLines = []
       if (data.action_items && Array.isArray(data.action_items) && data.action_items.length > 0) {

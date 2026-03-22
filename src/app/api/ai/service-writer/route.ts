@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logAIUsage, checkAILimit } from '@/lib/ai-usage'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -55,6 +56,13 @@ export async function POST(req: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
 
+  // Check AI limit
+  if (shop_id) {
+    const s = db()
+    const limitCheck = await checkAILimit(s, shop_id)
+    if (!limitCheck.allowed) return NextResponse.json({ error: 'AI monthly limit reached' }, { status: 429 })
+  }
+
   const systemPrompt = PROMPTS[context] || PROMPTS.service_writer
   let userMessage = text.trim()
   if (truck_info) {
@@ -94,20 +102,10 @@ export async function POST(req: Request) {
     const result = JSON.parse(jsonMatch[0])
     const tokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
 
-    // Log usage (fire and forget)
-    if (shop_id || user_id) {
+    // Log usage
+    if (shop_id) {
       const s = db()
-      s.from('ai_usage_log').insert({
-        shop_id: shop_id || null,
-        user_id: user_id || null,
-        feature: `service_writer_${context}`,
-        model: 'claude-sonnet-4-20250514',
-        input_tokens: data.usage?.input_tokens || 0,
-        output_tokens: data.usage?.output_tokens || 0,
-        estimated_cost: tokens * 0.000003,
-        input_language: language,
-        success: true,
-      }).then(() => {})
+      logAIUsage(s, { shopId: shop_id, userId: user_id, feature: 'service_writer', tokensIn: data.usage?.input_tokens || 0, tokensOut: data.usage?.output_tokens || 0, model: 'claude-sonnet-4' })
     }
 
     return NextResponse.json(result)
