@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft, Plus, Pencil, Trash2, Download, Upload, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import SourceBadge from '@/components/ui/SourceBadge'
 
 type Tab = 'fleet' | 'work-orders' | 'contacts' | 'billing' | 'documents'
 
@@ -24,6 +25,7 @@ export default function CustomerProfilePage() {
   const [tab, setTab] = useState<Tab>('fleet')
   const [toast, setToast] = useState('')
   const [fleetSearch, setFleetSearch] = useState('')
+  const [showExternalData, setShowExternalData] = useState(false)
 
   // Edit modal state
   const [editModal, setEditModal] = useState(false)
@@ -276,7 +278,8 @@ export default function CustomerProfilePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#EDEDF0' }}>{customer.company_name}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#EDEDF0' }}>{customer.company_name || 'Unknown'}</div>
+            <SourceBadge source={customer.source} />
             {customer.is_owner_operator && (
               <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(217,119,6,0.15)', color: '#D97706', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
                 Owner Operator
@@ -920,6 +923,29 @@ export default function CustomerProfilePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ADDITIONAL INFO (external_data) */}
+      {customer.external_data && typeof customer.external_data === 'object' && Object.keys(customer.external_data).length > 0 && (
+        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, marginTop: 12 }}>
+          <button
+            onClick={() => setShowExternalData(!showExternalData)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: '#EDEDF0', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
+          >
+            <span style={{ transform: showExternalData ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', display: 'inline-block' }}>&#9654;</span>
+            Additional Info
+          </button>
+          {showExternalData && (
+            <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {Object.entries(customer.external_data).map(([key, val]) => (
+                <div key={key} style={{ fontSize: 12 }}>
+                  <span style={{ color: '#7C8BA0', fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
+                  <span style={{ color: '#EDEDF0' }}>{val != null ? String(val) : '\u2014'}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

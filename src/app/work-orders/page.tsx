@@ -92,7 +92,7 @@ export default function WorkOrdersPage() {
                 return (
                   <tr key={o.id} style={{ borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => window.location.href = `/work-orders/${o.id}`}
                     onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                    <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: '#1D6FE8' }}>{o.so_number} <SourceBadge source={o.source} /></td>
+                    <td style={{ padding: '12px 14px', fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: '#1D6FE8' }}>{o.so_number || '—'} <SourceBadge source={o.source} /></td>
                     <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{(o.customers as any)?.company_name || '—'}</td>
                     <td style={{ padding: '12px 14px', fontSize: 12, color: '#6B7280' }}>#{(o.assets as any)?.unit_number || '—'}</td>
                     <td style={{ padding: '12px 14px', fontSize: 12, color: '#6B7280', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.complaint || '—'}</td>

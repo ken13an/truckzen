@@ -317,7 +317,7 @@ export default function PartsPage() {
                     return (
                       <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,.025)' }}>
                         <td style={{ ...cellPad, fontFamily: MONO, fontSize: 10, color: BLUE }}>{p.part_number || '—'}</td>
-                        <td style={{ ...cellPad, color: WHITE, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description} <SourceBadge source={p.source} /></td>
+                        <td style={{ ...cellPad, color: WHITE, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description || '—'} <SourceBadge source={p.source} /></td>
                         <td style={{ ...cellPad, fontSize: 10, color: MUTED }}>{p.category || '—'}</td>
                         <td style={{ ...cellPad, fontFamily: MONO, fontSize: 11, fontWeight: 700, color: isOut ? RED : isLow ? AMBER : TEXT, textAlign: 'center' }}>{p.on_hand}</td>
                         <td style={{ ...cellPad, fontFamily: MONO, fontSize: 10, color: MUTED, textAlign: 'center' }}>{p.reorder_point}</td>

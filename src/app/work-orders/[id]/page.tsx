@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { ChevronLeft, Users, MessageSquare, Clock, DollarSign, MoreHorizontal, Plus, Mic, Upload, X, Paperclip } from 'lucide-react'
 import AITextInput from '@/components/ai-text-input'
+import SourceBadge from '@/components/ui/SourceBadge'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -78,6 +79,7 @@ export default function WorkOrderDetail() {
   const [qcLoading, setQcLoading] = useState(false)
   const [qcErrors, setQcErrors] = useState<string[]>([])
   const [showQcErrors, setShowQcErrors] = useState(false)
+  const [showExternalData, setShowExternalData] = useState(false)
 
   // DATA LOADING
   const loadData = useCallback(async () => {
@@ -379,7 +381,7 @@ export default function WorkOrderDetail() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <span style={{ fontSize: 26, fontWeight: 800 }}>WO-{wo.wo_number || wo.id?.slice(0, 6)}</span>
             <span style={pillStyle(woStatus.bg, woStatus.color)}>{woStatus.label}</span>
-            {wo.source === 'fullbay' && <span style={pillStyle('#F3F4F6', '#6B7280')}>Imported from Fullbay</span>}
+            <SourceBadge source={wo.source} />
             {wo.payment_terms === 'cod' && <span style={pillStyle('#FEF2F2', RED)}>COD</span>}
             {wo.invoice_status && wo.invoice_status !== 'draft' && (() => {
               const IS: Record<string, { label: string; bg: string; color: string }> = {
@@ -1199,6 +1201,29 @@ export default function WorkOrderDetail() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ADDITIONAL INFO (external_data) */}
+      {wo.external_data && typeof wo.external_data === 'object' && Object.keys(wo.external_data).length > 0 && (
+        <div style={{ ...cardStyle, marginTop: 12 }}>
+          <button
+            onClick={() => setShowExternalData(!showExternalData)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: '#374151', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
+          >
+            <span style={{ transform: showExternalData ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', display: 'inline-block' }}>&#9654;</span>
+            Additional Info
+          </button>
+          {showExternalData && (
+            <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {Object.entries(wo.external_data).map(([key, val]) => (
+                <div key={key} style={{ fontSize: 12 }}>
+                  <span style={{ color: GRAY, fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
+                  <span style={{ color: '#374151' }}>{val != null ? String(val) : '\u2014'}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
