@@ -61,7 +61,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const s = db()
   const body = await req.json()
-  const { shop_id, user_id, asset_id, customer_id, complaint, priority, job_lines } = body
+  const { shop_id, user_id, asset_id, customer_id, complaint, priority, job_lines, mileage } = body
 
   if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!complaint?.trim()) return NextResponse.json({ error: 'Concern description required' }, { status: 400 })
@@ -98,11 +98,18 @@ export async function POST(req: Request) {
       advisor_id: user_id || null,
       service_writer_id: user_id || null,
       created_by_user_id: user_id || null,
+      mileage_at_service: mileage ? parseInt(mileage) : null,
+      odometer_in: mileage ? parseInt(mileage) : null,
     })
     .select()
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Update truck odometer if mileage provided
+  if (mileage && asset_id) {
+    await s.from('assets').update({ odometer: parseInt(mileage) }).eq('id', asset_id)
+  }
 
   // Create job lines
   const lines = job_lines || [complaint.trim()]
@@ -119,6 +126,8 @@ export async function POST(req: Request) {
       unit_price: 0,
       line_status: 'unassigned',
       required_skills: lineSkills,
+      tire_position: line.tire_position || null,
+      customer_provides_parts: line.customer_provides_parts || false,
     })
   }
 

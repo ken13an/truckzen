@@ -49,8 +49,11 @@ export default function NewWorkOrderPage() {
   const [complaint, setComplaint] = useState('')
   const [priority, setPriority] = useState('normal')
   const [customerProvidesParts, setCustomerProvidesParts] = useState(false)
+  const [mileage, setMileage] = useState('')
+  const [lastMileage, setLastMileage] = useState<{ value: number; date: string } | null>(null)
+  const [mileageWarning, setMileageWarning] = useState('')
+  const [duplicateWarning, setDuplicateWarning] = useState('')
 
-  // FIX 2: step flow — edit → processing → review → submitting
   const [step, setStep] = useState<'edit' | 'processing' | 'review'>('edit')
   const [jobLines, setJobLines] = useState<{ description: string; skills: string[]; tirePositions: string[]; isTire: boolean }[]>([])
   const [aiFailed, setAiFailed] = useState(false)
@@ -84,6 +87,43 @@ export default function NewWorkOrderPage() {
       .finally(() => setAssetsLoading(false))
   }, [selectedCustomer, profile])
 
+  // Load last mileage when asset selected
+  useEffect(() => {
+    if (!selectedAsset || !profile) { setLastMileage(null); return }
+    // Check asset's current odometer
+    if (selectedAsset.vin) {
+      supabase.from('assets').select('odometer').eq('id', selectedAsset.id).single().then(({ data }: any) => {
+        if (data?.odometer) {
+          setLastMileage({ value: data.odometer, date: '' })
+          setMileage(String(data.odometer))
+        }
+      })
+    }
+    // Check last WO mileage for better date info
+    supabase.from('service_orders').select('mileage_at_service, odometer_in, created_at')
+      .eq('asset_id', selectedAsset.id).not('mileage_at_service', 'is', null)
+      .order('created_at', { ascending: false }).limit(1).single()
+      .then(({ data }: any) => {
+        if (data) {
+          const val = data.mileage_at_service || data.odometer_in || 0
+          if (val > 0) {
+            setLastMileage({ value: val, date: data.created_at })
+            if (!mileage) setMileage(String(val))
+          }
+        }
+      })
+  }, [selectedAsset])
+
+  // Mileage validation
+  useEffect(() => {
+    if (!mileage) { setMileageWarning(''); return }
+    const val = parseInt(mileage)
+    if (isNaN(val) || val <= 0) { setMileageWarning('Must be a positive number'); return }
+    if (lastMileage && val < lastMileage.value) { setMileageWarning(`Mileage is lower than last recorded (${lastMileage.value.toLocaleString()} mi). Please check.`); return }
+    if (lastMileage && val > lastMileage.value + 100000) { setMileageWarning(`Large mileage jump (+${(val - lastMileage.value).toLocaleString()} mi) — please verify`); return }
+    setMileageWarning('')
+  }, [mileage, lastMileage])
+
   useEffect(() => {
     function handleClick(e: MouseEvent) { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false) }
     document.addEventListener('mousedown', handleClick)
@@ -99,23 +139,49 @@ export default function NewWorkOrderPage() {
     ? customers.filter(c => { const q = customerSearch.toLowerCase(); return c.company_name?.toLowerCase().includes(q) || c.contact_name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q) }).slice(0, 10)
     : []
 
-  // FIX 2: Single "Create Work Order" button triggers AI automatically
+  // Duplicate detection: >80% similarity check
+  function checkDuplicates(lines: typeof jobLines) {
+    const descs = lines.map(l => l.description.toLowerCase().replace(/[^a-z0-9]/g, ''))
+    for (let i = 0; i < descs.length; i++) {
+      for (let j = i + 1; j < descs.length; j++) {
+        if (!descs[i] || !descs[j]) continue
+        const longer = Math.max(descs[i].length, descs[j].length)
+        if (longer === 0) continue
+        // Simple overlap check
+        const common = descs[i].split('').filter((c, idx) => descs[j][idx] === c).length
+        if (common / longer > 0.8) {
+          return `Possible duplicate: "${lines[i].description}" and "${lines[j].description}"`
+        }
+      }
+    }
+    return ''
+  }
+
   async function handleCreateClick() {
     if (!complaint.trim()) return
-    setStep('processing'); setError(''); setAiFailed(false)
+    // Validate mileage required
+    if (!mileage || parseInt(mileage) <= 0) { setError('Current mileage is required'); return }
+    if (mileageWarning.includes('lower than last')) { /* allow but warning is shown */ }
+
+    setStep('processing'); setError(''); setAiFailed(false); setDuplicateWarning('')
 
     try {
       const res = await fetch('/api/ai/action-items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ complaint: complaint.trim() }) })
       const data = await res.json()
+      let lines: typeof jobLines = []
       if (data.action_items && Array.isArray(data.action_items) && data.action_items.length > 0) {
-        setJobLines(data.action_items.map((item: any) => {
+        lines = data.action_items.map((item: any) => {
           const desc = typeof item === 'string' ? item : item.description || ''
           return { description: desc, skills: typeof item === 'string' ? [] : item.skills || [], tirePositions: [], isTire: isTireJob(desc) }
-        }))
+        })
       } else {
-        setJobLines([{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint) }])
+        lines = [{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint) }]
         setAiFailed(true)
       }
+      setJobLines(lines)
+      // Frontend duplicate check
+      const dup = checkDuplicates(lines)
+      if (dup) setDuplicateWarning(dup)
     } catch {
       setJobLines([{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint) }])
       setAiFailed(true)
@@ -132,7 +198,7 @@ export default function NewWorkOrderPage() {
         body: JSON.stringify({
           shop_id: profile.shop_id, user_id: profile.id,
           asset_id: selectedAsset?.id || null, customer_id: selectedCustomer?.id || null,
-          complaint: complaint.trim(), priority,
+          complaint: complaint.trim(), priority, mileage: parseInt(mileage) || null,
           job_lines: jobLines.filter(l => l.description.trim()).map(l => ({
             description: l.description, skills: l.skills,
             customer_provides_parts: customerProvidesParts,
@@ -156,7 +222,7 @@ export default function NewWorkOrderPage() {
   }
 
   const isFleet = selectedCustomer?.is_fleet
-  const canCreate = complaint.trim() && (selectedAsset || (showNewUnit && newUnit.number.trim()))
+  const canCreate = complaint.trim() && (selectedAsset || (showNewUnit && newUnit.number.trim())) && mileage && parseInt(mileage) > 0
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F5F7', fontFamily: FONT, padding: 24 }}>
@@ -243,6 +309,24 @@ export default function NewWorkOrderPage() {
           </div>
         )}
 
+        {/* Mileage — required */}
+        {selectedCustomer && (selectedAsset || showNewUnit) && step === 'edit' && (
+          <div style={{ ...card, marginBottom: 16 }}>
+            <span style={lbl}>Current Mileage *</span>
+            <input type="number" value={mileage} onChange={e => setMileage(e.target.value)} placeholder="Enter current odometer reading" style={inp} min={0} />
+            {lastMileage && lastMileage.value > 0 && (
+              <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
+                Last recorded: {lastMileage.value.toLocaleString()} mi{lastMileage.date ? ` on ${new Date(lastMileage.date).toLocaleDateString()}` : ''}
+              </div>
+            )}
+            {mileageWarning && (
+              <div style={{ fontSize: 12, color: mileageWarning.includes('lower') ? '#DC2626' : '#D97706', marginTop: 6, padding: '6px 10px', background: mileageWarning.includes('lower') ? '#FEF2F2' : '#FFFBEB', borderRadius: 6, border: `1px solid ${mileageWarning.includes('lower') ? '#FECACA' : '#FDE68A'}` }}>
+                {mileageWarning}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Concern + Priority (edit step only) */}
         {selectedCustomer && step === 'edit' && (
           <div style={{ ...card, marginBottom: 16 }}>
@@ -290,6 +374,13 @@ export default function NewWorkOrderPage() {
               <span style={{ ...lbl, marginBottom: 0 }}>Job Lines ({jobLines.length})</span>
               {aiFailed && <span style={{ fontSize: 10, color: '#D97706', background: '#FFFBEB', padding: '2px 8px', borderRadius: 4 }}>AI could not split — created as single job</span>}
             </div>
+            {/* Duplicate warning */}
+            {duplicateWarning && (
+              <div style={{ padding: '8px 12px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, marginBottom: 12, fontSize: 12, color: '#D97706', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{duplicateWarning}. Merge into one?</span>
+                <button onClick={() => setDuplicateWarning('')} style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 11, cursor: 'pointer' }}>Dismiss</button>
+              </div>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
               {jobLines.map((line, i) => (
