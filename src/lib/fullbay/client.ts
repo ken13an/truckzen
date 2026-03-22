@@ -161,7 +161,7 @@ export function mapTruck(inv: any): Record<string, any> {
     model: u.model || null,
     unit_type: (u.type || '').toLowerCase() === 'trailer' ? 'trailer' : 'tractor',
     license_plate: u.licensePlate || null,
-    status: 'active',
+    status: 'on_road',
     source: 'fullbay',
     external_id: String(u.customerUnitId || ''),
   }
