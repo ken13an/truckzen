@@ -37,6 +37,9 @@ export async function GET(req: Request) {
   if (historical === 'false') q = q.or('is_historical.is.null,is_historical.eq.false')
   if (historical === 'true') q = q.eq('is_historical', true)
 
+  const warrantyFilter = searchParams.get('warranty_status')
+  if (warrantyFilter) q = q.eq('warranty_status', warrantyFilter)
+
   // Apply search server-side if possible, or filter after
   if (search) {
     q = q.or(`so_number.ilike.%${search}%,complaint.ilike.%${search}%`)
@@ -106,10 +109,7 @@ export async function POST(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Update truck odometer if mileage provided
-  if (mileage && asset_id) {
-    await s.from('assets').update({ odometer: parseInt(mileage) }).eq('id', asset_id)
-  }
+  // Mileage saved on WO only — truck odometer updates when WO closes
 
   // Create job lines
   const lines = job_lines || [complaint.trim()]

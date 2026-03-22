@@ -124,6 +124,33 @@ export default function FleetDetailPage() {
             <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
           </div>
 
+          {/* Warranty section */}
+          <div style={S.card}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Warranty</div>
+              {edit?.warranty_expiry && new Date(edit.warranty_expiry) > new Date()
+                ? <span style={{ padding:'2px 8px', borderRadius:100, fontSize:9, fontWeight:700, background:'rgba(29,184,112,.1)', color:'#1DB870', border:'1px solid rgba(29,184,112,.2)' }}>ACTIVE</span>
+                : <span style={{ padding:'2px 8px', borderRadius:100, fontSize:9, fontWeight:700, background:'rgba(124,139,160,.08)', color:'#7C8BA0', border:'1px solid rgba(124,139,160,.15)' }}>EXPIRED / NONE</span>}
+            </div>
+            <div style={S.row2}>
+              <div><label style={S.label}>Warranty Provider</label><input style={S.input} value={edit?.warranty_provider||''} onChange={e=>setEdit((a:any)=>({...a,warranty_provider:e.target.value}))} placeholder="e.g. Freightliner"/></div>
+              <div><label style={S.label}>Mileage Limit</label><input style={S.input} type="number" value={edit?.warranty_mileage_limit||''} onChange={e=>setEdit((a:any)=>({...a,warranty_mileage_limit:parseInt(e.target.value)||null}))} placeholder="e.g. 500000"/></div>
+            </div>
+            <div style={S.row2}>
+              <div><label style={S.label}>Start Date</label><input style={S.input} type="date" value={edit?.warranty_start||''} onChange={e=>setEdit((a:any)=>({...a,warranty_start:e.target.value}))}/></div>
+              <div><label style={S.label}>Expiry Date</label><input style={S.input} type="date" value={edit?.warranty_expiry||''} onChange={e=>setEdit((a:any)=>({...a,warranty_expiry:e.target.value}))}/></div>
+            </div>
+            <div style={{ marginBottom:10 }}>
+              <label style={S.label}>Warranty Notes</label>
+              <textarea style={{ ...S.input, minHeight:60, resize:'vertical' }} value={edit?.warranty_notes||''} onChange={e=>setEdit((a:any)=>({...a,warranty_notes:e.target.value}))} placeholder="Coverage details, exclusions, etc."/>
+            </div>
+            <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={async () => {
+              setSaving(true)
+              await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ warranty_provider:edit.warranty_provider||null, warranty_start:edit.warranty_start||null, warranty_expiry:edit.warranty_expiry||null, warranty_mileage_limit:edit.warranty_mileage_limit||null, warranty_notes:edit.warranty_notes||null }) })
+              setAsset(edit); setSaving(false)
+            }} disabled={saving}>{saving?'Saving...':'Save Warranty Info'}</button>
+          </div>
+
           {/* Service history */}
           <div style={S.card}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>

@@ -530,28 +530,56 @@ export default function WorkOrderDetail() {
         </div>
       </div>
 
-      {/* WARRANTY BANNER */}
-      {!wo.is_historical && wo.warranty_status === 'not_checked' && asset?.year && (new Date().getFullYear() - parseInt(asset.year)) <= 5 && (
-        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '10px 16px', marginBottom: 12, fontSize: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span style={{ color: AMBER, fontWeight: 700, fontSize: 13 }}>Warranty may apply on this truck or related parts.</span>
+      {/* WARRANTY BANNER — 3 scenarios */}
+      {!wo.is_historical && (wo.warranty_status === 'not_checked' || wo.warranty_status === 'none' || !wo.warranty_status) && (() => {
+        const isFleet = customer?.is_fleet
+        const hasWarranty = isFleet && asset?.warranty_expiry && new Date(asset.warranty_expiry) > new Date() && asset?.warranty_provider
+        return (
+          <div style={{ background: hasWarranty ? 'rgba(245,158,11,0.08)' : 'rgba(124,139,160,0.06)', border: `1px solid ${hasWarranty ? 'rgba(245,158,11,0.2)' : 'rgba(124,139,160,0.12)'}`, borderRadius: 8, padding: '10px 16px', marginBottom: 12, fontSize: 12 }}>
+            {hasWarranty ? (
+              /* Scenario 3: Company truck with active warranty */
+              <>
+                <div style={{ color: AMBER, fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
+                  Under Warranty — {asset.warranty_provider} — Expires: {new Date(asset.warranty_expiry).toLocaleDateString()}
+                  {asset.warranty_mileage_limit ? ` — Mileage limit: ${asset.warranty_mileage_limit.toLocaleString()} mi` : ''}
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button onClick={() => warrantyDecision('no_warranty')} style={btnStyle('#F0FDF4', GREEN)}>No Warranty — Proceed</button>
+                  <button onClick={() => warrantyDecision('checking')} style={btnStyle('#FFFBEB', AMBER)}>Send for Warranty Check</button>
+                  <button onClick={() => warrantyDecision('send_to_dealer')} style={btnStyle('#FEF2F2', RED)}>Send to Dealer</button>
+                </div>
+              </>
+            ) : (
+              /* Scenario 1 & 2: No warranty info */
+              <>
+                <div style={{ color: GRAY, fontSize: 12, marginBottom: 6 }}>
+                  {isFleet ? 'No warranty information on file for this unit' : 'Outside customer / Owner operator truck'}
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <button onClick={() => warrantyDecision('no_warranty')} style={btnStyle('#F0FDF4', GREEN)}>No Warranty — Proceed</button>
+                  <button onClick={() => warrantyDecision('checking')} style={btnStyle('#FFFBEB', AMBER)}>Send for Warranty Check</button>
+                  {isFleet && asset?.id && <a href={`/fleet/${asset.id}`} style={{ fontSize: 11, color: BLUE, textDecoration: 'none', marginLeft: 8 }}>Add warranty info →</a>}
+                </div>
+              </>
+            )}
           </div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input value={warrantyNotes} onChange={e => setWarrantyNotes(e.target.value)} placeholder="Notes..." style={{ ...inputStyle, flex: 1, padding: '5px 10px', fontSize: 11, minWidth: 150 }} />
-            <button onClick={() => warrantyDecision('no_warranty')} style={btnStyle('#F3F4F6', GRAY)}>No Warranty</button>
-            <button onClick={() => warrantyDecision('local_repair')} style={btnStyle('#F0FDF4', GREEN)}>Local Repair</button>
-            <button onClick={() => warrantyDecision('send_to_dealer')} style={btnStyle('#FEF2F2', RED)}>Send to Dealer</button>
-          </div>
+        )
+      })()}
+      {wo.warranty_status === 'checking' && (
+        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: AMBER, fontWeight: 600 }}>
+          Warranty check in progress — maintenance team is verifying coverage
         </div>
       )}
       {wo.warranty_status === 'local_repair' && (
-        <div style={{ background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.15)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: GREEN }}>
-          Warranty — Local Repair{wo.warranty_notes ? `: ${wo.warranty_notes}` : ''}
+        <div style={{ background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.15)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: GREEN, display: 'flex', alignItems: 'center', gap: 6 }}>
+          WARRANTY CLAIM — Local Repair{wo.warranty_notes ? ` — ${wo.warranty_notes}` : ''}
         </div>
       )}
       {wo.warranty_status === 'send_to_dealer' && (
-        <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: RED }}>
-          Sent to Dealer — WO locked{wo.warranty_notes ? `. ${wo.warranty_notes}` : ''}
+        <div style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.15)', borderRadius: 8, padding: '10px 16px', marginBottom: 12, fontSize: 12, color: RED }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>SENT TO DEALER — WO Frozen</div>
+          {wo.warranty_dealer_name && <div>Dealer: {wo.warranty_dealer_name}{wo.warranty_dealer_location ? ` — ${wo.warranty_dealer_location}` : ''}</div>}
+          {wo.warranty_notes && <div style={{ marginTop: 2, color: GRAY }}>{wo.warranty_notes}</div>}
         </div>
       )}
 

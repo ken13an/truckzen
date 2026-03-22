@@ -64,6 +64,13 @@ export async function POST(req: Request, { params }: Params) {
       closed_at: new Date().toISOString(),
       closed_by: user_id,
     }).eq('id', id)
+
+    // Update truck odometer on WO close (only if new reading is higher)
+    const { data: fullWo } = await s.from('service_orders').select('mileage_at_service, asset_id').eq('id', id).single()
+    if (fullWo?.mileage_at_service && fullWo.asset_id) {
+      await s.from('assets').update({ odometer: fullWo.mileage_at_service }).eq('id', fullWo.asset_id).lt('odometer', fullWo.mileage_at_service)
+    }
+
     await s.from('wo_activity_log').insert({ wo_id: id, user_id, action: 'Work order closed' })
     return NextResponse.json({ ok: true })
   }

@@ -29,7 +29,7 @@ export async function PATCH(req: Request, { params }: P) {
   const { data: current } = await s.from('assets').select('*').eq('id', id).single()
   if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const updateable = ['unit_number', 'vin', 'year', 'make', 'model', 'engine', 'odometer', 'status', 'customer_id', 'notes', 'ownership_type', 'unit_type']
+  const updateable = ['unit_number', 'vin', 'year', 'make', 'model', 'engine', 'odometer', 'status', 'customer_id', 'notes', 'ownership_type', 'unit_type', 'warranty_provider', 'warranty_start', 'warranty_expiry', 'warranty_mileage_limit', 'warranty_notes']
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }
 
