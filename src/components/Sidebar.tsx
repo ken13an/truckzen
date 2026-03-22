@@ -196,13 +196,13 @@ export default function Sidebar() {
           return (
             <div key={dept.label} style={{ marginBottom: 2 }}>
               {/* Department header */}
-              <button onClick={() => toggleDept(dept.label)} style={{
-                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              <div onClick={() => toggleDept(dept.label)} role="button" tabIndex={0} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
                 padding: collapsed ? '8px 0' : '8px 16px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
-                margin: '1px 6px', borderRadius: 8, border: 'none',
+                margin: '1px 6px', borderRadius: 8,
                 background: hasDeptActive && !isExpanded ? 'rgba(255,255,255,.04)' : 'transparent',
-                cursor: 'pointer', transition: 'all .12s',
+                cursor: 'pointer', transition: 'all .12s', userSelect: 'none',
               }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.04)')}
               onMouseLeave={e => (e.currentTarget.style.background = hasDeptActive && !isExpanded ? 'rgba(255,255,255,.04)' : 'transparent')}>
@@ -217,11 +217,11 @@ export default function Sidebar() {
                     <ChevronDown size={12} color="#48536A" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }} />
                   </>
                 )}
-              </button>
+              </div>
 
-              {/* Sub-items */}
-              {isExpanded && !collapsed && (
-                <div style={{ paddingLeft: 10 }}>
+              {/* Sub-items — hidden when collapsed */}
+              {isExpanded === true && collapsed === false && (
+                <div style={{ paddingLeft: 10, overflow: 'hidden' }}>
                   {deptItems.map(item => {
                     const active = isActive(item.href)
                     const ItemIcon = item.icon
