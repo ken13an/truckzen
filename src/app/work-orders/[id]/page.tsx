@@ -688,10 +688,10 @@ export default function WorkOrderDetail() {
                   )
                 })()}
 
-                {/* Concern */}
+                {/* Concern / Work Description */}
                 {line.description && (
                   <div style={{ background: '#F9FAFB', borderRadius: 8, padding: '10px 12px', marginBottom: 6, fontSize: 13, color: '#374151' }}>
-                    <span style={{ ...labelStyle, marginBottom: 6 }}>Concern</span>
+                    <span style={{ ...labelStyle, marginBottom: 6 }}>{wo.is_historical ? 'Work Description' : 'Concern'}</span>
                     {line.description}
                   </div>
                 )}
@@ -747,37 +747,32 @@ export default function WorkOrderDetail() {
                   </>
                 )}
 
-                {/* Finding */}
-                <div style={{ marginBottom: 8 }}>
-                  <span style={labelStyle}>Finding</span>
-                  <textarea
-                    defaultValue={line.finding || ''}
-                    onBlur={e => { if (e.target.value !== (line.finding || '')) patchLine(line.id, { finding: e.target.value }) }}
-                    placeholder="What was found..."
-                    style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
-                  />
-                </div>
-
-                {/* Resolution */}
-                <div style={{ marginBottom: 10 }}>
-                  <span style={labelStyle}>Resolution</span>
-                  {wo.is_historical && line.resolution ? (
-                    <div style={{ marginTop: 6 }}>
-                      <ul style={{ margin: '4px 0 0 16px', padding: 0, listStyle: 'disc' }}>
-                        {line.resolution.split('\n').filter(Boolean).map((l: string, i: number) => (
-                          <li key={i} style={{ fontSize: 13, color: '#374151', marginBottom: 2 }}>{l}</li>
-                        ))}
-                      </ul>
+                {/* Work Performed */}
+                {(() => {
+                  const showWorkPerformed = line.resolution && line.resolution.trim().toLowerCase() !== (line.description || '').trim().toLowerCase()
+                  if (!showWorkPerformed && wo.is_historical) return null
+                  return (
+                    <div style={{ marginBottom: 10 }}>
+                      <span style={labelStyle}>Work Performed</span>
+                      {wo.is_historical && line.resolution ? (
+                        <div style={{ marginTop: 6 }}>
+                          <ul style={{ margin: '4px 0 0 16px', padding: 0, listStyle: 'disc' }}>
+                            {line.resolution.split('\n').filter(Boolean).map((l: string, i: number) => (
+                              <li key={i} style={{ fontSize: 13, color: '#374151', marginBottom: 2 }}>{l}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        <textarea
+                          defaultValue={line.resolution || ''}
+                          onBlur={e => { if (e.target.value !== (line.resolution || '')) patchLine(line.id, { resolution: e.target.value }) }}
+                          placeholder="What was done..."
+                          style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+                        />
+                      )}
                     </div>
-                  ) : (
-                    <textarea
-                      defaultValue={line.resolution || ''}
-                      onBlur={e => { if (e.target.value !== (line.resolution || '')) patchLine(line.id, { resolution: e.target.value }) }}
-                      placeholder="What was done..."
-                      style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
-                    />
-                  )}
-                </div>
+                  )
+                })()}
 
                 {/* Parts for this job */}
                 {lineParts.length > 0 && (
@@ -995,19 +990,20 @@ export default function WorkOrderDetail() {
         <div>
           {/* Summary cards */}
           {(() => {
-            const billSubtotal = laborTotal + woPartsTotal + partsLineTotal
-            const otherCharges = wo.tax_total || taxAmt || 0
-            const isRealTax = billSubtotal > 0 && otherCharges > 0 && (otherCharges / billSubtotal) < 0.2
-            const taxLabel = isRealTax ? 'Tax' : 'Other Charges'
+            const partsAmt = woPartsTotal + partsLineTotal + (wo.is_historical && partLines.length === 0 ? (wo.parts_total || 0) : 0)
+            const otherCharges = wo.tax_total || 0
+            const taxLabel = otherCharges > laborTotal ? 'Sublet / Other' : 'Tax'
+            const displayTotal = wo.is_historical && wo.grand_total ? wo.grand_total : grandTotal
+            const items = [
+              laborTotal > 0 ? { label: 'Labor', value: fmt(laborTotal), color: BLUE } : null,
+              partsAmt > 0 ? { label: 'Parts', value: fmt(partsAmt), color: AMBER } : null,
+              chargesTotal > 0 ? { label: 'Charges', value: fmt(chargesTotal), color: GRAY } : null,
+              otherCharges > 0 ? { label: taxLabel, value: fmt(otherCharges), color: GRAY } : null,
+              { label: 'Total', value: fmt(displayTotal), color: GREEN },
+            ].filter(Boolean) as { label: string; value: string; color: string }[]
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
-                {[
-                  { label: 'Labor', value: fmt(laborTotal), color: BLUE },
-                  { label: 'Parts', value: fmt(woPartsTotal + partsLineTotal), color: AMBER },
-                  { label: 'Charges', value: fmt(chargesTotal), color: GRAY },
-                  { label: taxLabel, value: fmt(otherCharges), color: GRAY },
-                  { label: 'Grand Total', value: fmt(grandTotal), color: GREEN },
-                ].map(s => (
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 12, marginBottom: 16 }}>
+                {items.map(s => (
                   <div key={s.label} style={{ background: '#F9FAFB', borderRadius: 10, padding: 14, textAlign: 'center' }}>
                     <div style={labelStyle}>{s.label}</div>
                     <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
@@ -1068,15 +1064,7 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* Tax line */}
-          {taxRate > 0 && (
-            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-              <span>Tax ({taxRate}%{shop.tax_labor ? ' incl. labor' : ' parts only'})</span>
-              <span style={{ fontWeight: 700 }}>{fmt(taxAmt)}</span>
-            </div>
-          )}
-
-          {/* Historical parts summary (when no part lines exist but parts_total is set) */}
+          {/* Historical parts summary */}
           {wo.is_historical && partLines.length === 0 && wo.parts_total > 0 && (
             <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13, background: '#FAFBFC' }}>
               <span style={{ color: GRAY }}>Parts (imported summary)</span>
@@ -1084,9 +1072,33 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
+          {/* Sublet / Other or Tax */}
+          {(() => {
+            const otherAmt = wo.tax_total || 0
+            if (otherAmt <= 0 && taxAmt <= 0) return null
+            if (wo.is_historical && otherAmt > 0) {
+              const label = otherAmt > laborTotal ? 'Sublet / Other' : 'Tax'
+              return (
+                <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span>{label}</span>
+                  <span style={{ fontWeight: 700 }}>{fmt(otherAmt)}</span>
+                </div>
+              )
+            }
+            if (taxRate > 0 && taxAmt > 0) {
+              return (
+                <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span>Tax ({taxRate}%{shop.tax_labor ? ' incl. labor' : ' parts only'})</span>
+                  <span style={{ fontWeight: 700 }}>{fmt(taxAmt)}</span>
+                </div>
+              )
+            }
+            return null
+          })()}
+
           {/* Grand Total */}
           <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', background: '#F0FDF4', border: `1px solid ${GREEN}` }}>
-            <span style={{ fontSize: 16, fontWeight: 800 }}>Grand Total</span>
+            <span style={{ fontSize: 16, fontWeight: 800 }}>Total</span>
             <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>{fmt(wo.is_historical && wo.grand_total ? wo.grand_total : grandTotal)}</span>
           </div>
 

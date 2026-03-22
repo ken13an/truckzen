@@ -44,7 +44,7 @@ export default function WorkOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [viewFilter, setViewFilter] = useState<ViewFilter>('all')
+  const [viewFilter, setViewFilter] = useState<ViewFilter>('active')
   const [dateRange, setDateRange] = useState<DateRange>('all')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(25)
@@ -109,7 +109,7 @@ export default function WorkOrdersPage() {
 
       {/* View filter: All / Active / Historical */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 12 }}>
-        {([['all', `All (${orders.length})`], ['active', `Active (${activeCount})`], ['historical', `Historical (${histCount})`]] as [ViewFilter, string][]).map(([v, l]) => (
+        {([['active', `Active (${activeCount})`], ['all', `All (${orders.length})`], ['historical', `Historical (${histCount})`]] as [ViewFilter, string][]).map(([v, l]) => (
           <button key={v} onClick={() => { setViewFilter(v); setPage(1) }} style={{
             padding: '10px 18px', background: 'none', border: 'none', borderBottom: viewFilter === v ? '2px solid #1D6FE8' : '2px solid transparent',
             color: viewFilter === v ? '#1D6FE8' : '#9CA3AF', fontWeight: viewFilter === v ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginBottom: -2,
@@ -135,7 +135,9 @@ export default function WorkOrdersPage() {
         {loading ? (
           <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>No work orders found</div>
+          <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>
+            {viewFilter === 'active' ? 'No active work orders. Create your first work order or view historical records.' : 'No work orders found'}
+          </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
