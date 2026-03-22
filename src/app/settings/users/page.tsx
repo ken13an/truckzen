@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
+import Pagination from '@/components/Pagination'
 
 const ROLES = [
   { value: 'owner', label: 'Owner' },
@@ -36,6 +37,7 @@ export default function UsersPage() {
   const [toast, setToast] = useState('')
   const [removing, setRemoving] = useState<any>(null)
   const [confirmText, setConfirmText] = useState('')
+  const [page, setPage] = useState(1)
 
   async function load() {
     const profile = await getCurrentUser(supabase)
@@ -109,6 +111,10 @@ export default function UsersPage() {
     return u.full_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || (ROLE_LABEL[u.role] || u.role)?.toLowerCase().includes(q)
   })
 
+  const PER_PAGE = 25
+  const totalPages = Math.ceil(filtered.length / PER_PAGE)
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+
   const getStatus = (u: any) => {
     if (u.deleted_at) return { label: `Deleted ${new Date(u.deleted_at).toLocaleDateString()}`, bg: 'rgba(150,150,150,.12)', color: '#9CA3AF' }
     if (!u.active) return { label: 'Disabled', bg: 'rgba(220,38,38,.12)', color: '#FF453A' }
@@ -140,7 +146,7 @@ export default function UsersPage() {
           <div style={{ fontSize: 13, color: '#9D9DA1' }}>{users.filter(u => u.active).length} active, {users.filter(u => !u.active).length} disabled</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email, role..."
+          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Search name, email, role..."
             style={{ padding: '8px 14px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, outline: 'none', width: 220, fontFamily: font, color: '#EDEDF0' }} />
           <button onClick={() => setInviting(true)}
             style={{ padding: '8px 18px', background: '#1D6FE8', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>
@@ -162,7 +168,7 @@ export default function UsersPage() {
             </thead>
             <tbody>
               {filtered.length === 0 && <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#9D9DA1' }}>No users found</td></tr>}
-              {filtered.map(u => {
+              {paginated.map(u => {
                 const st = getStatus(u)
                 return (
                   <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,.04)', opacity: u.active ? 1 : 0.5 }}>
@@ -209,6 +215,8 @@ export default function UsersPage() {
           </table>
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={filtered.length} label="team members" onPageChange={setPage} />
 
       {/* Edit Modal */}
       {editing && (

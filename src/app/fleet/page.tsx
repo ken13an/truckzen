@@ -1,102 +1,104 @@
+/**
+ * TruckZen — Original Design
+ * Fleet page with server-side pagination
+ */
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import SourceBadge from '@/components/ui/SourceBadge'
+import Pagination from '@/components/Pagination'
 
 export default function FleetPage() {
   const supabase = createClient()
-  const [assets,  setAssets]  = useState<any[]>([])
+  const [assets, setAssets] = useState<any[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [search,  setSearch]  = useState('')
+  const [search, setSearch] = useState('')
   const [ownerFilter, setOwnerFilter] = useState('all')
   const [unitTypeFilter, setUnitTypeFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const [shopId, setShopId] = useState('')
+  const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    async function load() {
-      const profile = await getCurrentUser(supabase)
-      if (!profile) { window.location.href = '/login'; return }
-      const res = await fetch(`/api/assets?shop_id=${profile.shop_id}`)
-      if (res.ok) {
-        const data = await res.json()
-        setAssets(Array.isArray(data) ? data : [])
-      }
-      setLoading(false)
+  async function fetchAssets(sid: string, p: number) {
+    if (!sid) return
+    setLoading(true)
+    let url = `/api/assets?shop_id=${sid}&page=${p}&limit=25`
+    if (ownerFilter !== 'all') url += `&ownership_type=${ownerFilter}`
+    if (unitTypeFilter !== 'all') url += `&unit_type=${unitTypeFilter}`
+    if (search) url += `&q=${encodeURIComponent(search)}`
+    const res = await fetch(url)
+    if (res.ok) {
+      const json = await res.json()
+      if (Array.isArray(json)) { setAssets(json); setTotal(json.length); setTotalPages(1) }
+      else { setAssets(json.data || []); setTotal(json.total || 0); setTotalPages(json.totalPages || 1) }
     }
-    load()
-  }, [])
-
-  const OWNER_LABELS: Record<string, string> = { fleet_asset: 'Fleet Asset', owner_operator: 'Owner Operator', outside_customer: 'Outside Customer' }
-  const UNIT_TYPE_LABEL: Record<string, string> = { tractor: 'Tractor', trailer_dry_van: 'Dry Van', trailer_reefer: 'Reefer', trailer_flatbed: 'Flatbed', trailer_tanker: 'Tanker', trailer_lowboy: 'Lowboy', trailer_other: 'Trailer' }
-
-  const filtered = assets.filter(a => {
-    if (ownerFilter !== 'all' && (a.ownership_type || 'fleet_asset') !== ownerFilter) return false
-    if (unitTypeFilter !== 'all' && (a.unit_type || '') !== unitTypeFilter) return false
-    if (!search) return true
-    const q = search.toLowerCase()
-    return a.unit_number?.toLowerCase().includes(q) || a.make?.toLowerCase().includes(q) || (a.customers as any)?.company_name?.toLowerCase().includes(q)
-  })
-
-  const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:4 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
-    td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
+    setLoading(false)
   }
 
-  const statusColor: Record<string, string> = { active:'#1DB870', inactive:'#7C8BA0', in_shop:'#4D9EFF', decommissioned:'#D94F4F' }
+  useEffect(() => {
+    getCurrentUser(supabase).then(async (p: any) => {
+      if (!p) { window.location.href = '/login'; return }
+      setShopId(p.shop_id)
+      await fetchAssets(p.shop_id, 1)
+    })
+  }, [])
+
+  useEffect(() => { if (shopId) fetchAssets(shopId, page) }, [page, ownerFilter, unitTypeFilter, shopId])
+
+  useEffect(() => {
+    if (!shopId) return
+    if (searchTimer) clearTimeout(searchTimer)
+    const t = setTimeout(() => { setPage(1); fetchAssets(shopId, 1) }, 400)
+    setSearchTimer(t)
+    return () => clearTimeout(t)
+  }, [search])
+
+  const OWNER_LABELS: Record<string, string> = { fleet_asset: 'Fleet Asset', owner_operator: 'Owner Operator', outside_customer: 'Outside Customer' }
+  const statusColor: Record<string, string> = { active: '#1DB870', inactive: '#7C8BA0', in_shop: '#4D9EFF', decommissioned: '#D94F4F' }
 
   return (
-    <div style={S.page}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
+    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={S.title}>Fleet</div>
-          <div style={{ fontSize:12, color:'#7C8BA0' }}>{filtered.length} vehicles</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Fleet</div>
+          <div style={{ fontSize: 12, color: '#7C8BA0' }}>{total.toLocaleString()} vehicles</div>
         </div>
-        <div style={{ display:'flex', gap:8 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search unit, make, customer..." style={{ padding:'7px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, color:'#DDE3EE', fontSize:11, fontFamily:'inherit', outline:'none', width:220 }}/>
-          <button onClick={() => window.location.href='/fleet/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add Vehicle</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search unit, make, customer..." style={{ padding: '7px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#DDE3EE', fontSize: 11, fontFamily: 'inherit', outline: 'none', width: 220 }} />
+          <button onClick={() => window.location.href = '/fleet/new'} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Vehicle</button>
         </div>
       </div>
-      <div style={{ display:'flex', gap:6, marginBottom:12 }}>
-        {[['all','All'],['fleet_asset','Fleet Asset'],['owner_operator','Owner Operator'],['outside_customer','Outside Customer']].map(([v,l]) => (
-          <button key={v} onClick={() => setOwnerFilter(v)}
-            style={{ padding:'5px 12px', borderRadius:100, border: ownerFilter===v ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)', background: ownerFilter===v ? 'rgba(29,111,232,.1)' : 'transparent', color: ownerFilter===v ? '#4D9EFF' : '#7C8BA0', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>
-            {l}
-          </button>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        {[['all', 'All'], ['fleet_asset', 'Fleet Asset'], ['owner_operator', 'Owner Operator'], ['outside_customer', 'Outside Customer']].map(([v, l]) => (
+          <button key={v} onClick={() => { setOwnerFilter(v); setPage(1) }} style={{ padding: '5px 12px', borderRadius: 100, border: ownerFilter === v ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)', background: ownerFilter === v ? 'rgba(29,111,232,.1)' : 'transparent', color: ownerFilter === v ? '#4D9EFF' : '#7C8BA0', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{l}</button>
         ))}
-        <select value={unitTypeFilter} onChange={e => setUnitTypeFilter(e.target.value)} style={{ padding:'5px 12px', borderRadius:100, border:'1px solid rgba(255,255,255,.08)', background:'#1C2130', color: unitTypeFilter === 'all' ? '#7C8BA0' : '#4D9EFF', fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'inherit', outline:'none', appearance:'auto' as any }}>
-          <option value="all">All Types</option>
-          <option value="tractor">Tractor</option>
-          <option value="trailer_dry_van">Trailer - Dry Van</option>
-          <option value="trailer_reefer">Trailer - Reefer</option>
-          <option value="trailer_flatbed">Trailer - Flatbed</option>
-          <option value="trailer_tanker">Trailer - Tanker</option>
-          <option value="trailer_lowboy">Trailer - Lowboy</option>
-          <option value="trailer_other">Trailer - Other</option>
-        </select>
       </div>
 
-      <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', minWidth:700 }}>
-            <thead><tr>{['Unit #','Year','Make / Model','Type','VIN','Odometer','Ownership','Owner','Status'].map(h =>
-              <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
+      <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+            <thead><tr>{['Unit #', 'Year', 'Make / Model', 'VIN', 'Odometer', 'Ownership', 'Owner', 'Status'].map(h =>
+              <th key={h} style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left', background: '#0B0D11', whiteSpace: 'nowrap' }}>{h}</th>
+            )}</tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={9} style={{ ...S.td, textAlign:'center', color:'#7C8BA0' }}>Loading...</td></tr>
-              : filtered.map(a => (
-                <tr key={a.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = '/fleet/' + a.id}>
-                  <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#4D9EFF', fontWeight:700 }}>{a.unit_number} <SourceBadge source={a.source} /></td>
-                  <td style={{ ...S.td, color:'#7C8BA0' }}>{a.year}</td>
-                  <td style={{ ...S.td, color:'#F0F4FF', fontWeight:600 }}>{a.make} {a.model}</td>
-                  <td style={{ ...S.td, fontSize:10, color:'#7C8BA0' }}>{UNIT_TYPE_LABEL[a.unit_type] || '—'}</td>
-                  <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#48536A' }}>{a.vin || '—'}</td>
-                  <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", color:'#DDE3EE' }}>{a.odometer?.toLocaleString() || '—'}</td>
-                  <td style={{ ...S.td, fontSize:10, color:'#7C8BA0' }}>{OWNER_LABELS[a.ownership_type || 'fleet_asset'] || '—'}</td>
-                  <td style={{ ...S.td, color:'#DDE3EE' }}>{(a.customers as any)?.company_name || '—'}</td>
-                  <td style={S.td as any}>
-                    <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:(statusColor[a.status]||'#7C8BA0')+'18', color:statusColor[a.status]||'#7C8BA0', border:'1px solid '+(statusColor[a.status]||'#7C8BA0')+'33' }}>
-                      <span style={{ width:4, height:4, borderRadius:'50%', background:'currentColor' }}/>{(a.status||'active').replace(/_/g,' ').toUpperCase()}
+              {loading ? <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7C8BA0' }}>Loading...</td></tr>
+              : assets.length === 0 ? <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#7C8BA0' }}>No vehicles found</td></tr>
+              : assets.map(a => (
+                <tr key={a.id} style={{ cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.025)' }} onClick={() => window.location.href = '/fleet/' + a.id}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.03)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                  <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: '#4D9EFF', fontWeight: 700 }}>{a.unit_number} <SourceBadge source={a.source} /></td>
+                  <td style={{ padding: '9px 10px', fontSize: 11, color: '#7C8BA0' }}>{a.year || '—'}</td>
+                  <td style={{ padding: '9px 10px', fontSize: 12, color: '#F0F4FF', fontWeight: 600 }}>{a.make || '—'} {a.model || ''}</td>
+                  <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A' }}>{a.vin || '—'}</td>
+                  <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: '#DDE3EE' }}>{a.odometer?.toLocaleString() || '—'}</td>
+                  <td style={{ padding: '9px 10px', fontSize: 10, color: '#7C8BA0' }}>{OWNER_LABELS[a.ownership_type || 'fleet_asset'] || '—'}</td>
+                  <td style={{ padding: '9px 10px', fontSize: 11, color: '#DDE3EE' }}>{(a.customers as any)?.company_name || '—'}</td>
+                  <td style={{ padding: '9px 10px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 100, fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, background: (statusColor[a.status] || '#7C8BA0') + '18', color: statusColor[a.status] || '#7C8BA0', border: '1px solid ' + (statusColor[a.status] || '#7C8BA0') + '33' }}>
+                      <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'currentColor' }} />{(a.status || 'active').replace(/_/g, ' ').toUpperCase()}
                     </span>
                   </td>
                 </tr>
@@ -105,6 +107,7 @@ export default function FleetPage() {
           </table>
         </div>
       </div>
+      <Pagination page={page} totalPages={totalPages} total={total} label="vehicles" onPageChange={setPage} />
     </div>
   )
 }

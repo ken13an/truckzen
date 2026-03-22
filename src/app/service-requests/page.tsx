@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import Pagination from '@/components/Pagination'
 
 const URGENCY: Record<string, { label: string; color: string; bg: string }> = {
   low:      { label: 'LOW',      color: '#48536A', bg: 'rgba(72,83,106,.1)' },
@@ -31,6 +32,7 @@ export default function ServiceRequestsPage() {
   const [rejectId, setRejectId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [toast, setToast] = useState('')
+  const [page, setPage] = useState(1)
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
@@ -55,6 +57,10 @@ export default function ServiceRequestsPage() {
     if (tab === 'rejected') return r.status === 'rejected'
     return true
   })
+
+  const PER_PAGE = 25
+  const totalPages = Math.ceil(filtered.length / PER_PAGE)
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   async function convertToWO(r: any) {
     if (!user) return
@@ -114,7 +120,7 @@ export default function ServiceRequestsPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: 20 }}>
         {tabs.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
+          <button key={t.key} onClick={() => { setTab(t.key); setPage(1) }} style={{
             padding: '10px 18px', fontSize: 12, fontWeight: tab === t.key ? 700 : 400,
             color: tab === t.key ? '#4D9EFF' : '#7C8BA0', background: 'none', border: 'none',
             borderBottom: tab === t.key ? '2px solid #4D9EFF' : '2px solid transparent',
@@ -132,7 +138,7 @@ export default function ServiceRequestsPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {filtered.map(r => {
+          {paginated.map(r => {
             const urg = URGENCY[r.urgency || r.priority || 'normal'] || URGENCY.normal
             const src = SOURCE[r.source || r.check_in_type || 'manual'] || SOURCE.manual
             return (
@@ -182,6 +188,8 @@ export default function ServiceRequestsPage() {
           })}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} total={filtered.length} label="requests" onPageChange={setPage} />
 
       {/* Reject modal */}
       {rejectId && (

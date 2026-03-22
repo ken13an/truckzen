@@ -15,9 +15,10 @@ export async function GET(req: Request) {
   const search = searchParams.get('search') || searchParams.get('q')
   const status = searchParams.get('status')
 
+  const paginated = !!searchParams.get('page')
   let q = s
     .from('assets')
-    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, unit_type, source, customers(company_name)')
+    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, unit_type, source, customers(company_name)', paginated ? { count: 'exact' } : {})
     .eq('shop_id', shopId)
     .order('unit_number')
 
@@ -26,7 +27,26 @@ export async function GET(req: Request) {
   if (status) q = q.eq('status', status)
   if (search) q = q.or(`unit_number.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%,vin.ilike.%${search}%`)
 
-  const { data, error } = await q.limit(300)
+  const ownerType = searchParams.get('ownership_type')
+  const unitType = searchParams.get('unit_type')
+  if (ownerType && ownerType !== 'all') q = q.eq('ownership_type', ownerType)
+  if (unitType && unitType !== 'all') q = q.eq('unit_type', unitType)
+
+  // Pagination support
+  const pageParam = searchParams.get('page')
+  if (pageParam) {
+    const page = Math.max(parseInt(pageParam), 1)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 100)
+    const offset = (page - 1) * limit
+    q = q.range(offset, offset + limit - 1)
+    const { data, error, count } = await (q as any)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const total = count ?? 0
+    return NextResponse.json({ data: data || [], total, page, limit, totalPages: Math.ceil(total / limit) })
+  }
+
+  // Legacy: no pagination (for customer unit dropdowns etc.)
+  const { data, error } = await q.limit(500)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
