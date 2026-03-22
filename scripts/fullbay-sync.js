@@ -152,9 +152,16 @@ async function syncTrucks(invoices) {
       const q = record.vin ? db.from('assets').select('id').eq('shop_id', SHOP_ID).eq('vin', record.vin) :
         db.from('assets').select('id').eq('shop_id', SHOP_ID).eq('unit_number', record.unit_number)
       const { data: existing } = await q.limit(1)
-      if (existing?.length) { updated++; await db.from('assets').update({ ...record, customer_id: custId }).eq('id', existing[0].id) }
-      else { imported++; await db.from('assets').insert({ ...record, shop_id: SHOP_ID, customer_id: custId }) }
-    } catch { skipped++ }
+      if (existing?.length) {
+        const { error } = await db.from('assets').update({ ...record, customer_id: custId }).eq('id', existing[0].id)
+        if (error) { skipped++; if (skipped <= 5) console.log(`  Update error ${record.unit_number}: ${error.message}`) }
+        else updated++
+      } else {
+        const { error } = await db.from('assets').insert({ ...record, shop_id: SHOP_ID, customer_id: custId })
+        if (error) { skipped++; if (skipped <= 5) console.log(`  Insert error ${record.unit_number}: ${error.message}`) }
+        else imported++
+      }
+    } catch (e) { skipped++; if (skipped <= 5) console.log(`  Exception ${record.unit_number}: ${e.message}`) }
   }
   console.log(`  Imported: ${imported}, Updated: ${updated}, Skipped: ${skipped}`)
 }
@@ -188,7 +195,48 @@ async function syncParts(invoices) {
 
 async function main() {
   const [,, command, subtype] = process.argv
-  if (!command) { console.log('Usage: node scripts/fullbay-sync.js [customers|trucks|parts|all|preview] [type]'); process.exit(1) }
+  if (!command) { console.log('Usage: node scripts/fullbay-sync.js [customers|trucks|parts|all|preview|link-trucks]'); process.exit(1) }
+
+  // Link unlinked trucks to customers using Fullbay invoice data
+  if (command === 'link-trucks') {
+    const { data: unlinked } = await db.from('assets').select('id, unit_number, vin, external_id').eq('shop_id', SHOP_ID).is('customer_id', null)
+    console.log(`Unlinked trucks: ${unlinked?.length || 0}`)
+    if (!unlinked?.length) { console.log('All trucks are linked.'); return }
+
+    // Pull recent invoices to find customer-truck relationships
+    const endDate = new Date().toISOString().split('T')[0]
+    const startDate = new Date(); startDate.setDate(startDate.getDate() - 180)
+    console.log('Pulling Fullbay invoices to find relationships...')
+    const invoices = await fetchAllInvoices(startDate.toISOString().split('T')[0], endDate)
+
+    // Build unit→customer map from invoices
+    const unitCustMap = new Map()
+    for (const inv of invoices) {
+      const u = inv.ServiceOrder?.Unit || {}
+      const c = inv.ServiceOrder?.Customer || {}
+      const unitKey = u.vin || u.number
+      if (unitKey && c.customerId) unitCustMap.set(unitKey, { custExtId: String(c.customerId), custName: c.title })
+    }
+
+    // Get customer lookup
+    const { data: custs } = await db.from('customers').select('id, company_name, external_id').eq('shop_id', SHOP_ID)
+    const custMap = new Map()
+    for (const c of custs || []) { if (c.external_id) custMap.set(c.external_id, c.id); custMap.set(c.company_name?.toLowerCase(), c.id) }
+
+    let linked = 0
+    for (const asset of unlinked) {
+      const match = unitCustMap.get(asset.vin || asset.unit_number)
+      if (match) {
+        const custId = custMap.get(match.custExtId) || custMap.get(match.custName?.toLowerCase())
+        if (custId) {
+          await db.from('assets').update({ customer_id: custId }).eq('id', asset.id)
+          linked++
+        }
+      }
+    }
+    console.log(`Linked: ${linked} trucks`)
+    return
+  }
 
   if (command === 'preview') {
     const today = new Date().toISOString().split('T')[0]
