@@ -1,34 +1,83 @@
+/**
+ * TruckZen — Original Design
+ * Built independently by TruckZen development team
+ */
 'use client'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
-import { LayoutDashboard, Monitor, Wrench, Users2, Truck, FileText, Package, UserCircle, Factory, Settings, Timer, ShieldCheck, BarChart3, Calculator, LogOut, Clipboard, BookOpen, Cog, Upload, Shield } from 'lucide-react'
+import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, MapPin, ShieldCheck, BarChart3, Cog, Calculator, CreditCard, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen } from 'lucide-react'
 
-const ICON_MAP: Record<string, any> = {
-  '/dashboard': LayoutDashboard,
-  '/kiosk-admin': Monitor,
-  '/work-orders': Wrench,
-  '/customers': Users2,
-  '/fleet': Truck,
-  '/invoices': FileText,
-  '/parts': Package,
-  '/drivers': UserCircle,
-  '/shop-floor': Factory,
-  '/maintenance': Cog,
-  '/maintenance/tires': Cog,
-  '/maintenance/parts-lifecycle': Cog,
-  '/compliance': ShieldCheck,
-  '/accounting': Calculator,
-  '/reports': BarChart3,
-  '/time-tracking': Timer,
-  '/settings': Settings,
-  '/settings/import': Clipboard,
-  '/admin/permissions': ShieldCheck,
-  '/tech': Wrench,
-  '/dvir': BookOpen,
-  '/smart-drop': Upload,
+const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
+
+interface DeptSection {
+  label: string
+  icon: any
+  color: string
+  items: { href: string; label: string; icon: any }[]
+  roles?: string[] // if set, only these roles see it
+}
+
+const DEPARTMENTS: DeptSection[] = [
+  {
+    label: 'Service', icon: Wrench, color: '#4D9EFF',
+    items: [
+      { href: '/shop-floor', label: 'Shop Floor', icon: Factory },
+      { href: '/work-orders', label: 'Work Orders', icon: Wrench },
+      { href: '/service-requests', label: 'Service Requests', icon: FileText },
+      { href: '/parts', label: 'Parts & Inventory', icon: Package },
+      { href: '/kiosk-admin', label: 'Kiosk Settings', icon: Monitor },
+      { href: '/smart-drop', label: 'Smart Drop', icon: Upload },
+      { href: '/time-tracking', label: 'Time Tracking', icon: Clock },
+    ],
+  },
+  {
+    label: 'Fleet', icon: Truck, color: '#1DB870',
+    items: [
+      { href: '/fleet', label: 'All Units', icon: Truck },
+      { href: '/customers', label: 'Customers & Companies', icon: Users2 },
+      { href: '/drivers', label: 'Drivers', icon: UserCircle },
+      { href: '/compliance', label: 'Compliance', icon: ShieldCheck },
+      { href: '/reports', label: 'Reports', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Maintenance', icon: Cog, color: '#D4882A',
+    items: [
+      { href: '/maintenance', label: 'PM Scheduling', icon: Cog },
+      { href: '/dvir', label: 'Inspections & DVIR', icon: BookOpen },
+      { href: '/maintenance/tires', label: 'Tire Management', icon: Cog },
+      { href: '/maintenance/parts-lifecycle', label: 'Parts Lifecycle', icon: Package },
+    ],
+  },
+  {
+    label: 'Accounting', icon: Calculator, color: '#8B5CF6',
+    items: [
+      { href: '/invoices', label: 'Invoices', icon: FileText },
+      { href: '/accounting', label: 'Pending Approval', icon: Calculator },
+      { href: '/reports', label: 'Reports', icon: BarChart3 },
+    ],
+    roles: [...UNLIMITED_ROLES, 'accountant', 'office_admin'],
+  },
+]
+
+// Role → which departments they can see
+function getDeptAccess(role: string): string[] {
+  if (UNLIMITED_ROLES.includes(role)) return ['Service', 'Fleet', 'Maintenance', 'Accounting']
+  switch (role) {
+    case 'shop_manager': return ['Service', 'Fleet']
+    case 'service_writer': return ['Service']
+    case 'technician': case 'lead_tech': case 'maintenance_technician': return ['Service']
+    case 'parts_manager': return ['Service']
+    case 'accountant': return ['Service', 'Accounting']
+    case 'office_admin': return ['Service', 'Fleet', 'Accounting']
+    case 'fleet_manager': return ['Fleet']
+    case 'maintenance_manager': return ['Maintenance']
+    case 'dispatcher': return ['Fleet']
+    default: return ['Service']
+  }
 }
 
 export default function Sidebar() {
@@ -38,9 +87,10 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [lowStock, setLowStock] = useState(0)
   const [openJobs, setOpenJobs] = useState(0)
+  const [isPlatformOwner, setIsPlatformOwner] = useState(false)
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({ Service: true })
   const [rolePerms, setRolePerms] = useState<Record<string, boolean>>({})
   const [userOverrides, setUserOverrides] = useState<Record<string, boolean>>({})
-  const [isPlatformOwner, setIsPlatformOwner] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -63,6 +113,13 @@ export default function Sidebar() {
       ])
       setLowStock(ls || 0)
       setOpenJobs(oj || 0)
+
+      // Auto-expand section containing active page
+      for (const dept of DEPARTMENTS) {
+        if (dept.items.some(item => pathname?.startsWith(item.href))) {
+          setExpanded(prev => ({ ...prev, [dept.label]: true }))
+        }
+      }
     }
     load()
   }, [])
@@ -70,9 +127,8 @@ export default function Sidebar() {
   if (!user) return null
 
   const visible = getSidebarItems(user.role, rolePerms, userOverrides)
-  // Separate settings from main items
-  const mainItems = visible.filter(i => i.href !== '/settings' && !i.href.startsWith('/settings/'))
-  const settingsItem = visible.find(i => i.href === '/settings')
+  const visibleHrefs = new Set<string>(visible.map(i => i.href))
+  const deptAccess = getDeptAccess(user.role)
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -81,44 +137,8 @@ export default function Sidebar() {
 
   const W = collapsed ? 56 : 220
 
-  function renderItem(item: any) {
-    const active = isActive(item.href)
-    const Icon = ICON_MAP[item.href]
-    const badge = item.href === '/parts' && lowStock > 0 ? lowStock
-      : item.href === '/work-orders' && openJobs > 0 ? openJobs
-      : null
-
-    return (
-      <a key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: collapsed ? '9px 0' : '9px 16px',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-          margin: '1px 6px', borderRadius: 8,
-          background: active ? 'rgba(29,111,232,.12)' : 'transparent',
-          borderLeft: active ? '2px solid #1D6FE8' : '2px solid transparent',
-          cursor: 'pointer', transition: 'all .12s',
-        }}
-        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)' }}
-        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
-          <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {Icon ? <Icon size={15} strokeWidth={1.5} color={active ? '#4D9EFF' : '#7C8BA0'} /> : <span style={{ fontSize: 13, color: active ? '#4D9EFF' : '#7C8BA0' }}>{item.icon}</span>}
-          </span>
-          {!collapsed && (
-            <>
-              <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : '#7C8BA0', flex: 1, whiteSpace: 'nowrap' }}>
-                {item.label}
-              </span>
-              {badge != null && badge > 0 && (
-                <span style={{ background: item.href === '/parts' ? '#D94F4F' : '#1D6FE8', color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>
-                  {badge > 99 ? '99+' : badge}
-                </span>
-              )}
-            </>
-          )}
-        </div>
-      </a>
-    )
+  function toggleDept(label: string) {
+    setExpanded(prev => ({ ...prev, [label]: !prev[label] }))
   }
 
   return (
@@ -137,7 +157,7 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Platform Admin — top of sidebar, only for platform owner */}
+      {/* Platform Admin */}
       {isPlatformOwner && (
         <div style={{ borderBottom: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
           <a href="/platform-admin" style={{ textDecoration: 'none' }}>
@@ -161,16 +181,119 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Main nav */}
-      <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto', overflowX: 'hidden' }}>
-        {mainItems.map(renderItem)}
+      {/* Department sections */}
+      <nav style={{ flex: 1, padding: '6px 0', overflowY: 'auto', overflowX: 'hidden' }}>
+        {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '8px 18px 4px', fontFamily: "'IBM Plex Mono', monospace" }}>Departments</div>}
+
+        {DEPARTMENTS.filter(dept => deptAccess.includes(dept.label)).map(dept => {
+          const DeptIcon = dept.icon
+          const isExpanded = expanded[dept.label]
+          const deptItems = dept.items.filter(item => visibleHrefs.has(item.href) || UNLIMITED_ROLES.includes(user.role))
+          if (deptItems.length === 0) return null
+
+          const hasDeptActive = deptItems.some(item => isActive(item.href))
+
+          return (
+            <div key={dept.label} style={{ marginBottom: 2 }}>
+              {/* Department header */}
+              <button onClick={() => toggleDept(dept.label)} style={{
+                display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                padding: collapsed ? '8px 0' : '8px 16px',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                margin: '1px 6px', borderRadius: 8, border: 'none',
+                background: hasDeptActive && !isExpanded ? 'rgba(255,255,255,.04)' : 'transparent',
+                cursor: 'pointer', transition: 'all .12s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.04)')}
+              onMouseLeave={e => (e.currentTarget.style.background = hasDeptActive && !isExpanded ? 'rgba(255,255,255,.04)' : 'transparent')}>
+                <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <DeptIcon size={14} strokeWidth={1.5} color={hasDeptActive ? dept.color : '#7C8BA0'} />
+                </span>
+                {!collapsed && (
+                  <>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: hasDeptActive ? '#F0F4FF' : '#7C8BA0', flex: 1, textAlign: 'left' }}>
+                      {dept.label}
+                    </span>
+                    <ChevronDown size={12} color="#48536A" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }} />
+                  </>
+                )}
+              </button>
+
+              {/* Sub-items */}
+              {isExpanded && !collapsed && (
+                <div style={{ paddingLeft: 10 }}>
+                  {deptItems.map(item => {
+                    const active = isActive(item.href)
+                    const ItemIcon = item.icon
+                    const badge = item.href === '/parts' && lowStock > 0 ? lowStock
+                      : item.href === '/work-orders' && openJobs > 0 ? openJobs
+                      : null
+
+                    return (
+                      <a key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '7px 14px', margin: '1px 6px', borderRadius: 8,
+                          background: active ? 'rgba(29,111,232,.12)' : 'transparent',
+                          borderLeft: active ? '2px solid #1D6FE8' : '2px solid transparent',
+                          cursor: 'pointer', transition: 'all .12s',
+                        }}
+                        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)' }}
+                        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                          <span style={{ flexShrink: 0, width: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ItemIcon size={13} strokeWidth={1.5} color={active ? '#4D9EFF' : '#48536A'} />
+                          </span>
+                          <span style={{ fontSize: 11, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : '#7C8BA0', flex: 1, whiteSpace: 'nowrap' }}>
+                            {item.label}
+                          </span>
+                          {badge != null && badge > 0 && (
+                            <span style={{ background: item.href === '/parts' ? '#D94F4F' : '#1D6FE8', color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>
+                              {badge > 99 ? '99+' : badge}
+                            </span>
+                          )}
+                        </div>
+                      </a>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        {/* Dashboard link at top when collapsed */}
+        {collapsed && (
+          <a href="/dashboard" style={{ textDecoration: 'none' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '9px 0', margin: '1px 6px', borderRadius: 8, background: pathname === '/dashboard' ? 'rgba(29,111,232,.12)' : 'transparent', cursor: 'pointer' }}>
+              <Wrench size={15} color={pathname === '/dashboard' ? '#4D9EFF' : '#7C8BA0'} />
+            </div>
+          </a>
+        )}
       </nav>
 
       {/* Bottom: Settings + Sign Out */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
-        {settingsItem && renderItem(settingsItem)}
+        {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
 
-        {/* Sign Out */}
+        <a href="/settings" style={{ textDecoration: 'none' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: collapsed ? '9px 0' : '9px 16px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            margin: '1px 6px', borderRadius: 8,
+            background: pathname?.startsWith('/settings') ? 'rgba(29,111,232,.12)' : 'transparent',
+            borderLeft: pathname?.startsWith('/settings') ? '2px solid #1D6FE8' : '2px solid transparent',
+            cursor: 'pointer', transition: 'all .12s',
+          }}
+          onMouseEnter={e => { if (!pathname?.startsWith('/settings')) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)' }}
+          onMouseLeave={e => { if (!pathname?.startsWith('/settings')) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+            <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Settings size={15} strokeWidth={1.5} color={pathname?.startsWith('/settings') ? '#4D9EFF' : '#7C8BA0'} />
+            </span>
+            {!collapsed && <span style={{ fontSize: 12, fontWeight: pathname?.startsWith('/settings') ? 700 : 400, color: pathname?.startsWith('/settings') ? '#F0F4FF' : '#7C8BA0' }}>Settings</span>}
+          </div>
+        </a>
+
         <a href="#" onClick={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 10,
@@ -188,10 +311,7 @@ export default function Sidebar() {
           </div>
         </a>
       </div>
-
-      {/* Bottom spacing */}
-      <div style={{ height: 4 }}>
-      </div>
+      <div style={{ height: 4 }} />
     </aside>
   )
 }
