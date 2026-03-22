@@ -1,7 +1,8 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { PageFooter } from '@/components/ui/PageControls'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -22,6 +23,8 @@ export default function AccountingPage() {
   const [tab, setTab] = useState(0)
   const [wos, setWos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [acctPage, setAcctPage] = useState(1)
+  const [acctPerPage, setAcctPerPage] = useState(25)
   const [reviewWo, setReviewWo] = useState<any>(null)
   const [reviewLines, setReviewLines] = useState<any[]>([])
   const [reviewAssignments, setReviewAssignments] = useState<any[]>([])
@@ -112,6 +115,12 @@ export default function AccountingPage() {
     if (tab === 1) return wo.invoice_status === 'accounting_approved' || wo.invoice_status === 'sent_to_customer'
     return true
   })
+
+  const paginatedWos = useMemo(() => {
+    if (acctPerPage === 0) return filteredWos
+    const start = (acctPage - 1) * acctPerPage
+    return filteredWos.slice(start, start + acctPerPage)
+  }, [filteredWos, acctPage, acctPerPage])
 
   const fmt = (n: number) => '$' + (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   const fmtDate = (d: string) => {
@@ -295,7 +304,7 @@ export default function AccountingPage() {
           {tab === 0 ? 'No work orders pending review' : tab === 1 ? 'No approved invoices' : 'No work orders found'}
         </div>
       )}
-      {filteredWos.map(wo => {
+      {paginatedWos.map(wo => {
         const st = INVOICE_STATUS_MAP[wo.invoice_status] || INVOICE_STATUS_MAP.draft
         const customer = wo.customers as any
         const asset = wo.assets as any
@@ -326,6 +335,7 @@ export default function AccountingPage() {
           </div>
         )
       })}
+      <PageFooter total={filteredWos.length} page={acctPage} perPage={acctPerPage} onPageChange={setAcctPage} onPerPageChange={setAcctPerPage} />
     </div>
   )
 }

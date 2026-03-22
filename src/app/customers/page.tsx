@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import ExcelJS from 'exceljs'
+import PageControls, { PageFooter } from '@/components/ui/PageControls'
 
 type Customer = {
   id: string
@@ -30,6 +31,8 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
   const [shopId, setShopId] = useState('')
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(25)
 
   useEffect(() => {
     getCurrentUser(supabase).then((p: any) => {
@@ -73,6 +76,12 @@ export default function CustomersPage() {
 
     return list
   }, [customers, search, statusFilter])
+
+  const paginated = useMemo(() => {
+    if (perPage === 0) return filtered
+    const start = (page - 1) * perPage
+    return filtered.slice(start, start + perPage)
+  }, [filtered, page, perPage])
 
   const activeCount = useMemo(() => customers.filter(c => (c.customer_status || 'active').toLowerCase() === 'active').length, [customers])
   const inactiveCount = useMemo(() => customers.filter(c => (c.customer_status || 'active').toLowerCase() === 'inactive').length, [customers])
@@ -291,25 +300,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Search */}
-      <div style={{ marginBottom: 16 }}>
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by company name, DOT#, phone, or contact..."
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 8,
-            color: '#EDEDF0',
-            fontSize: 13,
-            fontFamily: "'Inter', sans-serif",
-            outline: 'none',
-            boxSizing: 'border-box',
-          }}
-        />
-      </div>
+      <PageControls total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search by company name, DOT#, phone, or contact..." />
 
       {/* Filter pills */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
@@ -395,7 +386,7 @@ export default function CustomersPage() {
                     {search || statusFilter !== 'all' ? 'No customers match your filters' : 'No customers found'}
                   </td>
                 </tr>
-              ) : filtered.map(c => (
+              ) : paginated.map(c => (
                 <tr
                   key={c.id}
                   onClick={() => router.push(`/customers/${c.id}`)}
@@ -457,6 +448,7 @@ export default function CustomersPage() {
           </table>
         </div>
       </div>
+      <PageFooter total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
     </div>
   )
 }

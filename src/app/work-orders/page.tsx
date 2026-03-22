@@ -1,7 +1,8 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { PageFooter } from '@/components/ui/PageControls'
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   draft:                  { label: 'Draft',          bg: '#F3F4F6', color: '#6B7280' },
@@ -23,6 +24,8 @@ export default function WorkOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(25)
 
   useEffect(() => {
     getCurrentUser(supabase).then(async (p) => {
@@ -44,6 +47,12 @@ export default function WorkOrdersPage() {
     const q = search.toLowerCase()
     return o.so_number?.toLowerCase().includes(q) || o.complaint?.toLowerCase().includes(q) || (o.customers as any)?.company_name?.toLowerCase().includes(q) || (o.assets as any)?.unit_number?.toLowerCase().includes(q)
   })
+
+  const paginated = useMemo(() => {
+    if (perPage === 0) return filtered
+    const start = (page - 1) * perPage
+    return filtered.slice(start, start + perPage)
+  }, [filtered, page, perPage])
 
   return (
     <div style={{ minHeight: '100vh', background: '#F4F5F7', fontFamily: "'Instrument Sans', sans-serif", padding: 24 }}>
@@ -77,7 +86,7 @@ export default function WorkOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(o => {
+              {paginated.map(o => {
                 const st = STATUS_MAP[o.status] || STATUS_MAP.draft
                 return (
                   <tr key={o.id} style={{ borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => window.location.href = `/work-orders/${o.id}`}
@@ -97,6 +106,7 @@ export default function WorkOrdersPage() {
           </table>
         )}
       </div>
+      <PageFooter total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
     </div>
   )
 }
