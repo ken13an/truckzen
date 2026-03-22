@@ -75,13 +75,14 @@ export async function POST(req: Request, { params }: Params) {
       warranty_checked: true,
       warranty_status: decision,
       warranty_notes: notes || null,
-      warranty_checked_by: user_id,
-      warranty_checked_at: new Date().toISOString(),
+      warranty_resolved_by: user_id,
+      warranty_resolved_at: new Date().toISOString(),
     }
 
-    // If send to dealer, lock the WO
     if (decision === 'send_to_dealer') {
       updates.status = 'waiting_approval'
+      if (data.dealer_name) updates.warranty_dealer_name = data.dealer_name
+      if (data.dealer_location) updates.warranty_dealer_location = data.dealer_location
     }
 
     await s.from('service_orders').update(updates).eq('id', id)
