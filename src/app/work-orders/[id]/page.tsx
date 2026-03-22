@@ -85,6 +85,9 @@ export default function WorkOrderDetail() {
   const [showExternalData, setShowExternalData] = useState(false)
   const [warrantyNotes, setWarrantyNotes] = useState('')
   const [approvalNotes, setApprovalNotes] = useState('')
+  const [invoiceChecks, setInvoiceChecks] = useState<any[]>([])
+  const [invoiceLoading, setInvoiceLoading] = useState(false)
+  const [returnReason, setReturnReason] = useState('')
 
   // DATA LOADING
   const loadData = useCallback(async () => {
@@ -292,6 +295,33 @@ export default function WorkOrderDetail() {
     setWarrantyNotes('')
     await loadData()
   }
+
+  async function checkInvoiceReadiness() {
+    setInvoiceLoading(true)
+    const res = await fetch(`/api/work-orders/${id}/invoice`)
+    if (res.ok) { const data = await res.json(); setInvoiceChecks(data.checks || []) }
+    setInvoiceLoading(false)
+  }
+
+  async function invoiceAction(action: string, extra?: any) {
+    setInvoiceLoading(true)
+    const res = await fetch(`/api/work-orders/${id}/invoice`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, user_id: user?.id, ...extra }),
+    })
+    setInvoiceLoading(false)
+    if (res.ok) { await loadData() }
+    else { const err = await res.json(); alert(err.issues ? err.issues.join('\n') : err.error || 'Failed') }
+  }
+
+  // Role detection for department views
+  const userRole = user?.role || ''
+  const isMechanic = ['technician', 'lead_tech', 'maintenance_technician'].includes(userRole)
+  const isPartsRole = ['parts_manager'].includes(userRole)
+  const isAccounting = ['accountant'].includes(userRole)
+  const isWriter = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'].includes(userRole)
+  const canSeePrices = !isMechanic
+  const canEditPrices = isAccounting || isWriter
 
   const addJobLine = async () => {
     if (!newJobText.trim()) return
@@ -1307,6 +1337,95 @@ export default function WorkOrderDetail() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ========== INVOICE WORKFLOW ========== */}
+      {!wo.is_historical && (
+        <div style={{ ...cardStyle, marginTop: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Invoice Workflow</div>
+
+          {/* Invoice status stepper */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 16, padding: '8px 0' }}>
+            {['draft', 'quality_check', 'accounting_review', 'sent', 'paid', 'closed'].map((stage, i, arr) => {
+              const labels: Record<string, string> = { draft: 'Draft', quality_check: 'Quality Check', accounting_review: 'Accounting', sent: 'Sent', paid: 'Paid', closed: 'Closed' }
+              const currentIdx = arr.indexOf(wo.invoice_status || 'draft')
+              const isDone = i < currentIdx
+              const isCurrent = i === currentIdx
+              return (
+                <div key={stage} style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                    <div style={{
+                      width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace",
+                      background: isDone ? GREEN : isCurrent ? BLUE : '#E5E7EB',
+                      color: isDone || isCurrent ? '#fff' : '#9CA3AF',
+                    }}>
+                      {isDone ? '\u2713' : i + 1}
+                    </div>
+                    <span style={{ fontSize: 8, fontWeight: 600, color: isDone ? GREEN : isCurrent ? BLUE : '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.03em', whiteSpace: 'nowrap' }}>{labels[stage]}</span>
+                  </div>
+                  {i < arr.length - 1 && <div style={{ width: 24, height: 2, background: isDone ? GREEN : '#E5E7EB', margin: '0 2px', marginBottom: 14 }} />}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Stage-specific actions */}
+          {wo.invoice_status === 'draft' && (
+            <div>
+              <button onClick={checkInvoiceReadiness} disabled={invoiceLoading} style={btnStyle(BLUE, '#fff')}>
+                {invoiceLoading ? 'Checking...' : 'Check Readiness'}
+              </button>
+              {invoiceChecks.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  {invoiceChecks.map((c: any, i: number) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12 }}>
+                      <span style={{ color: c.passed ? GREEN : RED, fontWeight: 700 }}>{c.passed ? '\u2713' : '\u2717'}</span>
+                      <span style={{ color: c.passed ? '#374151' : RED }}>{c.label}</span>
+                      <span style={{ color: GRAY, fontSize: 11 }}>({c.detail})</span>
+                    </div>
+                  ))}
+                  {invoiceChecks.every((c: any) => c.passed) && (
+                    <button onClick={() => invoiceAction('submit_quality_check')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), marginTop: 8 }}>
+                      Submit for Quality Check
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {wo.invoice_status === 'quality_check' && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button onClick={() => invoiceAction('approve_quality')} disabled={invoiceLoading} style={btnStyle(GREEN, '#fff')}>Approve Quality</button>
+              <input value={returnReason} onChange={e => setReturnReason(e.target.value)} placeholder="Reason for return..." style={{ ...inputStyle, flex: 1, padding: '6px 10px', fontSize: 12 }} />
+              <button onClick={() => { invoiceAction('return_to_mechanic', { reason: returnReason }); setReturnReason('') }} disabled={invoiceLoading || !returnReason.trim()} style={btnStyle('#F3F4F6', RED)}>Return to Mechanic</button>
+            </div>
+          )}
+
+          {wo.invoice_status === 'accounting_review' && canEditPrices && (
+            <button onClick={() => invoiceAction('approve_invoicing')} disabled={invoiceLoading} style={btnStyle(BLUE, '#fff')}>Approve & Send Invoice</button>
+          )}
+
+          {wo.invoice_status === 'sent' && canEditPrices && (
+            <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={btnStyle(GREEN, '#fff')}>Mark as Paid</button>
+          )}
+
+          {wo.invoice_status === 'paid' && (
+            <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={btnStyle(GRAY, '#fff')}>Close Work Order</button>
+          )}
+
+          {wo.invoice_status === 'closed' && (
+            <div style={{ textAlign: 'center', color: GRAY, fontSize: 13, padding: 8 }}>Work order closed{wo.closed_at ? ` on ${new Date(wo.closed_at).toLocaleDateString()}` : ''}</div>
+          )}
+        </div>
+      )}
+
+      {/* Mechanic role — hide prices indicator */}
+      {isMechanic && !wo.is_historical && (
+        <div style={{ ...cardStyle, marginTop: 12, background: '#F9FAFB', textAlign: 'center', color: GRAY, fontSize: 12, padding: 12 }}>
+          Pricing information is managed by the service department
         </div>
       )}
 

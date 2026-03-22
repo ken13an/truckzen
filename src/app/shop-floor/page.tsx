@@ -39,6 +39,9 @@ export default function ShopFloorPage() {
   const [filterTeam, setFilterTeam] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
   const [kanbanGroup, setKanbanGroup] = useState<'status' | 'team'>('status')
+  const [mechanics, setMechanics] = useState<any[]>([])
+  const [activeClocks, setActiveClocks] = useState<any[]>([])
+  const [showMechPanel, setShowMechPanel] = useState(true)
 
   const loadJobs = useCallback(async (profile: any) => {
     const { data } = await supabase
@@ -58,6 +61,13 @@ export default function ShopFloorPage() {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
       await loadJobs(p)
+      // Load mechanics + clocks
+      const [{ data: mechs }, { data: clocks }] = await Promise.all([
+        supabase.from('users').select('id, full_name, role, team').eq('shop_id', p.shop_id).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).order('full_name'),
+        supabase.from('time_entries').select('user_id, clock_in, so_id, service_orders(so_number, assets(unit_number))').eq('shop_id', p.shop_id).is('clock_out', null),
+      ])
+      setMechanics(mechs || [])
+      setActiveClocks(clocks || [])
       setLoading(false)
     })
   }, [])
@@ -123,6 +133,53 @@ export default function ShopFloorPage() {
           </div>
         ))}
       </div>
+
+      {/* Mechanic Status Panel */}
+      {showMechPanel && mechanics.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono',monospace" }}>Mechanic Status</span>
+            <button onClick={() => setShowMechPanel(false)} style={{ background: 'none', border: 'none', color: '#48536A', fontSize: 10, cursor: 'pointer' }}>Hide</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+            {mechanics.map(m => {
+              const clock = activeClocks.find(c => c.user_id === m.id)
+              const isWorking = !!clock
+              const so = clock?.service_orders as any
+              const elapsed = clock ? Math.floor((Date.now() - new Date(clock.clock_in).getTime()) / 60000) : 0
+              const statusColor = isWorking ? (elapsed > 360 ? '#F59E0B' : '#22C55E') : '#48536A'
+              const statusLabel = isWorking ? (elapsed > 360 ? 'Finishing Soon' : 'Working') : 'Off'
+              const assignedCount = jobs.filter(j => j.assigned_tech === m.id).length
+
+              return (
+                <div key={m.id} style={{ background: '#0D0F12', border: `1px solid ${isWorking ? statusColor + '40' : '#1A1D23'}`, borderRadius: 10, padding: '10px 14px', minWidth: 140, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: statusColor + '20', color: statusColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>
+                      {m.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#F0F4FF', whiteSpace: 'nowrap' }}>{m.full_name?.split(' ')[0]}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor }} />
+                    <span style={{ fontSize: 9, fontWeight: 600, color: statusColor, textTransform: 'uppercase' }}>{statusLabel}</span>
+                  </div>
+                  {isWorking && so?.so_number && (
+                    <div style={{ fontSize: 9, color: '#7C8BA0', marginTop: 2 }}>
+                      {so.so_number} · #{so.assets?.unit_number || '—'} · {elapsed}m
+                    </div>
+                  )}
+                  {assignedCount > 0 && (
+                    <div style={{ fontSize: 9, color: '#48536A', marginTop: 2 }}>{assignedCount} job{assignedCount !== 1 ? 's' : ''} in queue</div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      {!showMechPanel && mechanics.length > 0 && (
+        <button onClick={() => setShowMechPanel(true)} style={{ fontSize: 10, color: '#48536A', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 8 }}>Show Mechanic Status</button>
+      )}
 
       {/* Filters (not in monitor view) */}
       {view !== 'monitor' && (
