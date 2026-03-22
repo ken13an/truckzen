@@ -6,7 +6,7 @@ const PUBLIC_ROUTES = [
   '/api/telegram', '/api/stripe/webhook', '/api/kiosk',
   '/api/pay', '/offline', '/waiting', '/forgot-password', '/reset-password',
   '/api/work-orders', '/api/wo-', '/api/portal', '/api/kiosk-checkin', '/api/mechanic',
-  '/privacy', '/terms', '/register',
+  '/privacy', '/terms', '/register', '/api-docs', '/api/v1',
 ]
 
 // Module → route prefixes
