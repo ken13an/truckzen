@@ -100,7 +100,6 @@ export default function HomePage() {
             {[
               { label: 'Sign In', href: '/login' },
               { label: 'Get Started', href: '/register' },
-              { label: 'API Docs', href: '/api-docs' },
               { label: 'Privacy', href: '/privacy' },
               { label: 'Terms', href: '/terms' },
             ].map(l => (
