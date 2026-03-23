@@ -705,24 +705,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {step >= 1 && step <= 7 && renderStepDots()}
-          {isAdmin && (
-            <a
-              href="/kiosk-admin"
-              style={{
-                padding: '8px 16px',
-                borderRadius: 100,
-                background: 'rgba(239,68,68,0.15)',
-                color: '#EF4444',
-                fontSize: 13,
-                fontWeight: 700,
-                textDecoration: 'none',
-                fontFamily: "'Instrument Sans', sans-serif",
-                border: '1px solid rgba(239,68,68,0.3)',
-              }}
-            >
-              Exit Kiosk
-            </a>
-          )}
+          {/* Exit Kiosk removed — kiosk logout handled from /settings */}
         </div>
       </div>
     )
@@ -1071,15 +1054,18 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('concern_title')}</div>
             <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>
-              {t('step')} 3 {t('of')} 7 — Type in any language — English, Russian, Ukrainian, Spanish
+              {t('step')} 3 {t('of')} 7
+            </div>
+            <div style={{ fontSize: 13, color: '#71717A', marginBottom: 16 }}>
+              {lang === 'es' ? 'Escriba en cualquier idioma' : lang === 'ru' ? 'Пишите на любом языке' : lang === 'uz' ? "Istalgan tilda yozing" : 'Type in any language'}
             </div>
 
             <textarea
               value={concernText}
               onChange={e => setConcernText(e.target.value)}
               placeholder={t('concern_placeholder')}
-              rows={5}
-              style={{ ...inputStyle, minHeight: 150, resize: 'vertical' } as React.CSSProperties}
+              rows={4}
+              style={{ ...inputStyle, minHeight: 120, maxHeight: 200, resize: 'vertical', overflow: 'auto' } as React.CSSProperties}
             />
             {concernText.trim().length > 0 && (concernText.trim().length < 10 || concernText.trim().split(/\s+/).length < 3) && (
               <div style={{ color: '#DC2626', fontSize: 13, marginTop: 8 }}>
@@ -1090,7 +1076,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
               </div>
             )}
             <div style={{ fontSize: 13, color: '#71717A', marginTop: 8 }}>
-              Don't worry about perfect wording — we'll clean it up before it reaches the shop.
+              {lang === 'es' ? 'No se preocupe por la redaccion — la mejoraremos antes de enviarla.' : lang === 'ru' ? 'Не беспокойтесь о формулировках — мы все оформим.' : lang === 'uz' ? "Yozuv haqida tashvishlanmang — biz uni tartibga solamiz." : "Don't worry about perfect wording — we'll clean it up before it reaches the shop."}
             </div>
 
             <div style={{ flex: 1 }} />
@@ -1369,12 +1355,12 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
           <div style={{ textAlign: 'center', maxWidth: 500 }}>
             <ClipboardCheck size={48} color="#71717A" style={{ marginBottom: 16 }} />
-            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Before we submit...</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>{lang === 'es' ? 'Antes de enviar...' : lang === 'ru' ? 'Перед отправкой...' : lang === 'uz' ? 'Yuborishdan oldin...' : 'Before we submit...'}</div>
             <div style={{ fontSize: 16, color: '#9D9DA1', marginBottom: 32 }}>Did you forget to mention anything about your truck?</div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button onClick={() => { setShowForgetScreen(false); setStep(3) }}
                 style={{ padding: '16px 32px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#EDEDF0', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
-                Yes, let me add more
+                {lang === 'es' ? 'Si, quiero agregar mas' : lang === 'ru' ? 'Да, хочу добавить' : lang === 'uz' ? "Ha, qo'shmoqchiman" : 'Yes, let me add more'}
               </button>
               <button onClick={async () => {
                 setAiRewriting(true)
@@ -1398,7 +1384,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 setShowAiApproval(true)
               }}
                 style={{ padding: '16px 32px', borderRadius: 12, border: 'none', background: '#1D6FE8', color: '#fff', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
-                No, that's everything
+                {lang === 'es' ? 'No, eso es todo' : lang === 'ru' ? 'Нет, это всё' : lang === 'uz' ? "Yoq, hammasi shu" : "No, that's everything"}
               </button>
             </div>
           </div>
@@ -1418,7 +1404,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
           <div style={{ maxWidth: 600, width: '100%', textAlign: 'center' }}>
             <Sparkles size={32} color="#1D6FE8" style={{ marginBottom: 12 }} />
-            <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Here's how we recorded your request</div>
+            <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{lang === 'es' ? 'Asi registramos su solicitud' : lang === 'ru' ? 'Вот как мы записали вашу заявку' : lang === 'uz' ? "So'rovingiz shunday qayd qilindi" : "Here's how we recorded your request"}</div>
             <div style={{ fontSize: 14, color: '#9D9DA1', marginBottom: 24 }}>Our system cleaned up your description for the service team.</div>
             <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '20px 24px', textAlign: 'left', fontSize: 16, lineHeight: 1.6, marginBottom: 24, minHeight: 80 }}>
               {aiRewrittenText}
@@ -1440,7 +1426,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 handleSubmit()
               }}
                 style={{ padding: '16px 32px', borderRadius: 12, border: 'none', background: '#16A34A', color: '#fff', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
-                Looks Good — Submit
+                {lang === 'es' ? 'Listo — Enviar' : lang === 'ru' ? 'Всё верно — Отправить' : lang === 'uz' ? "Togri — Yuborish" : 'Looks Good — Submit'}
               </button>
             </div>
           </div>

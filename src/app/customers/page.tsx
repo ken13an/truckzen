@@ -35,25 +35,26 @@ export default function CustomersPage() {
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(25)
 
+  const loadCustomers = async (sid: string) => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/customers?shop_id=${sid}&per_page=2000`)
+      if (!res.ok) throw new Error('Failed to load customers')
+      const data = await res.json()
+      const list = Array.isArray(data) ? data : (data.data || [])
+      setCustomers(list)
+    } catch (err: any) {
+      setError(err.message || 'Failed to load customers')
+    }
+    setLoading(false)
+  }
+
   useEffect(() => {
     getCurrentUser(supabase).then((p: any) => {
       if (!p) { window.location.href = '/login'; return }
       setShopId(p.shop_id)
-      fetch(`/api/customers?shop_id=${p.shop_id}&per_page=500`)
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to load customers')
-          return res.json()
-        })
-        .then(data => {
-          // Handle both paginated {data:[]} and plain array responses
-          const list = Array.isArray(data) ? data : (data.data || [])
-          setCustomers(list)
-          setLoading(false)
-        })
-        .catch(err => {
-          setError(err.message || 'Failed to load customers')
-          setLoading(false)
-        })
+      loadCustomers(p.shop_id)
     })
   }, [])
 
