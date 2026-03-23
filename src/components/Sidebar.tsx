@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
-import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge } from 'lucide-react'
+import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare } from 'lucide-react'
 
 const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
@@ -62,6 +62,19 @@ const DEPARTMENTS: DeptSection[] = [
       { href: '/maintenance/reports', label: 'Reports', icon: BarChart3 },
       { href: '/service-requests', label: 'Service Requests', icon: FileText },
       { href: '/maintenance/warranty-review', label: 'Warranty Review', icon: ShieldCheck },
+      { href: '/maintenance/issues', label: 'Issues', icon: AlertTriangle },
+      { href: '/maintenance/faults', label: 'Faults', icon: Zap },
+      { href: '/maintenance/recalls', label: 'Recalls', icon: Bell },
+      { href: '/maintenance/service-reminders', label: 'Service Reminders', icon: AlarmClock },
+      { href: '/maintenance/vehicle-renewals', label: 'Vehicle Renewals', icon: FileCheck },
+      { href: '/maintenance/contact-renewals', label: 'Contact Renewals', icon: UserCheck },
+      { href: '/maintenance/service-programs', label: 'Service Programs', icon: Repeat },
+      { href: '/maintenance/shop-network', label: 'Shop Network', icon: Globe },
+      { href: '/maintenance/places', label: 'Places', icon: MapPin },
+      { href: '/maintenance/documents', label: 'Documents', icon: FileText },
+      { href: '/maintenance/warranties', label: 'Warranties', icon: Shield },
+      { href: '/maintenance/map', label: 'Fleet Map', icon: Map },
+      { href: '/maintenance/activity', label: 'Activity Feed', icon: MessageSquare },
     ],
   },
   {
@@ -137,7 +150,24 @@ export default function Sidebar() {
   const visible = getSidebarItems(user.role, rolePerms, userOverrides)
   const visibleHrefs = new Set<string>(visible.map(i => i.href))
   const deptAccess = getDeptAccess(user.role)
-  const isActive = (href: string) => pathname === href || (href !== '/' && pathname?.startsWith(href))
+  // Collect all nav hrefs for longest-match comparison
+  const allHrefs: string[] = []
+  for (const dept of DEPARTMENTS) {
+    allHrefs.push(dept.dashboardHref)
+    for (const item of dept.items) allHrefs.push(item.href)
+  }
+
+  // Active = exact match, OR startsWith(href/) but ONLY if no longer href also matches
+  const isActive = (href: string) => {
+    if (!pathname) return false
+    if (pathname === href) return true
+    if (href === '/') return false
+    // Check if pathname is under this href
+    if (!pathname.startsWith(href + '/') && !pathname.startsWith(href + '?')) return false
+    // Only highlight if no other nav href is a longer/better match
+    const longerMatch = allHrefs.some(h => h !== href && h.length > href.length && pathname.startsWith(h))
+    return !longerMatch
+  }
   const W = collapsed ? 56 : 220
 
   function toggleDept(label: string) {
