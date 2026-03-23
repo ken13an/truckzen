@@ -2,76 +2,102 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { Truck, CalendarClock, ShieldAlert, Fuel, AlertTriangle, Users2, Plus } from 'lucide-react'
 
-export default function MaintenancePage() {
+const FONT = "'Instrument Sans',sans-serif"
+const MONO = "'IBM Plex Mono',monospace"
+const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
+
+interface DashStats {
+  activeRepairs: number
+  overduePMs: number
+  expiringCDLs: number
+  fuelSpendMonth: number
+  openDefects: number
+  totalDrivers: number
+}
+
+export default function MaintenanceDashboard() {
   const supabase = createClient()
-  const [pms, setPMs] = useState<any[]>([])
+  const [stats, setStats] = useState<DashStats>({ activeRepairs: 0, overduePMs: 0, expiringCDLs: 0, fuelSpendMonth: 0, openDefects: 0, totalDrivers: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
-      const { data } = await supabase
-        .from('pm_schedules')
-        .select('id, service_name, interval_miles, interval_days, next_due_date, next_due_reading, active, assets(unit_number, make, model, odometer)')
-        .eq('shop_id', profile.shop_id)
-        .eq('active', true)
-        .order('next_due_date')
-      setPMs(data || [])
+      try {
+        const res = await fetch(`/api/maintenance/dashboard?shop_id=${profile.shop_id}`)
+        if (res.ok) {
+          const data = await res.json()
+          setStats(data)
+        }
+      } catch {}
       setLoading(false)
     }
     load()
   }, [])
 
-  const today = new Date().toISOString().split('T')[0]
+  const cards = [
+    { label: 'Active Road Repairs', value: stats.activeRepairs, color: BLUE, icon: Truck, href: '/maintenance/repairs' },
+    { label: 'Overdue PMs', value: stats.overduePMs, color: RED, icon: CalendarClock, href: '/maintenance/pm' },
+    { label: 'Expiring CDLs (30d)', value: stats.expiringCDLs, color: AMBER, icon: ShieldAlert, href: '/maintenance/drivers' },
+    { label: 'Fuel Spend This Month', value: `$${stats.fuelSpendMonth.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`, color: GREEN, icon: Fuel, href: '/maintenance/fuel' },
+    { label: 'Open Defects', value: stats.openDefects, color: RED, icon: AlertTriangle, href: '/maintenance/inspections' },
+    { label: 'Total Drivers', value: stats.totalDrivers, color: BLUE, icon: Users2, href: '/maintenance/drivers' },
+  ]
 
-  const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:4 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
-    td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
-  }
+  const quickActions = [
+    { label: 'New Road Repair', href: '/maintenance/repairs/new' },
+    { label: 'Schedule PM', href: '/maintenance/pm/new' },
+    { label: 'Add Fuel Entry', href: '/maintenance/fuel/new' },
+    { label: 'New Inspection', href: '/maintenance/inspections/new' },
+  ]
 
   return (
-    <div style={S.page}>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
-        <div>
-          <div style={S.title}>Maintenance & PM</div>
-          <div style={{ fontSize:12, color:'#7C8BA0' }}>{pms.filter(p => p.next_due_date < today).length} overdue · {pms.length} total schedules</div>
-        </div>
-        <button onClick={() => window.location.href='/maintenance/new'} style={{ padding:'7px 14px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>+ Add PM Schedule</button>
+    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 20 }}>Maintenance</div>
+
+      {/* Stats Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
+        {cards.map(c => {
+          const Icon = c.icon
+          return (
+            <a key={c.label} href={c.href} style={{ textDecoration: 'none' }}>
+              <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '16px 18px', cursor: 'pointer', transition: 'border-color .15s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = c.color + '44')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)')}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <Icon size={14} color={c.color} />
+                  <span style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>{c.label}</span>
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: loading ? MUTED : c.color }}>{loading ? '...' : c.value}</div>
+              </div>
+            </a>
+          )
+        })}
       </div>
-      <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', minWidth:520 }}>
-            <thead><tr>{['Truck','Service','Interval','Next Due Date','Next Due Miles','Status'].map(h =>
-              <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
-            <tbody>
-              {loading ? <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#7C8BA0' }}>Loading...</td></tr>
-              : pms.map(pm => {
-                const asset   = pm.assets as any
-                const isOver  = pm.next_due_date && pm.next_due_date < today
-                const isSoon  = pm.next_due_date && pm.next_due_date <= new Date(Date.now() + 7*86400000).toISOString().split('T')[0]
-                const color   = isOver ? '#D94F4F' : isSoon ? '#D4882A' : '#1DB870'
-                return (
-                  <tr key={pm.id} style={{ cursor:'pointer' }} onClick={() => window.location.href = '/maintenance/' + pm.id}>
-                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#4D9EFF', fontWeight:700 }}>#{asset?.unit_number}</td>
-                    <td style={{ ...S.td, color:'#F0F4FF', fontWeight:600 }}>{pm.service_name}</td>
-                    <td style={{ ...S.td, color:'#7C8BA0' }}>{pm.interval_miles ? `${pm.interval_miles.toLocaleString()} mi` : `${pm.interval_days}d`}</td>
-                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color }}>{pm.next_due_date || '—'}</td>
-                    <td style={{ ...S.td, fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#7C8BA0' }}>{pm.next_due_reading ? pm.next_due_reading.toLocaleString() : '—'}</td>
-                    <td style={S.td as any}>
-                      <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:color+'18', color, border:'1px solid '+color+'33' }}>
-                        <span style={{ width:4, height:4, borderRadius:'50%', background:'currentColor' }}/>{isOver?'OVERDUE':isSoon?'DUE SOON':'OK'}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+
+      {/* Quick Actions */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO, marginBottom: 10 }}>Quick Actions</div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {quickActions.map(a => (
+            <a key={a.label} href={a.href} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '10px 18px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)',
+              border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700,
+              textDecoration: 'none', fontFamily: FONT,
+            }}>
+              <Plus size={14} /> {a.label}
+            </a>
+          ))}
         </div>
+      </div>
+
+      {/* Empty state */}
+      <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 40, textAlign: 'center', color: '#48536A', fontSize: 13 }}>
+        Data will appear here once maintenance records are imported or created.
       </div>
     </div>
   )
