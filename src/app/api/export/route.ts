@@ -33,12 +33,12 @@ export async function GET(req: Request) {
 
   switch (type) {
     case 'customers': {
-      const { data: rows } = await s.from('customers').select('company_name, contact_name, phone, email, address, notes, source, visit_count, total_spent, created_at').eq('shop_id', shopId).order('company_name')
+      const { data: rows } = await s.from('customers').select('company_name, contact_name, phone, email, address, notes, source, visit_count, total_spent, created_at').eq('shop_id', shopId).is('deleted_at', null).order('company_name')
       data = rows || []
       // Enrich with unit count and invoice data
-      const { data: assets } = await s.from('assets').select('customer_id').eq('shop_id', shopId)
-      const { data: invoices } = await s.from('invoices').select('customer_id, total, balance_due, status').eq('shop_id', shopId)
-      const { data: custIds } = await s.from('customers').select('id, company_name').eq('shop_id', shopId)
+      const { data: assets } = await s.from('assets').select('customer_id').eq('shop_id', shopId).is('deleted_at', null)
+      const { data: invoices } = await s.from('invoices').select('customer_id, total, balance_due, status').eq('shop_id', shopId).is('deleted_at', null)
+      const { data: custIds } = await s.from('customers').select('id, company_name').eq('shop_id', shopId).is('deleted_at', null)
       const idMap = new Map((custIds || []).map((c: any) => [c.company_name, c.id]))
 
       data = data.map(c => {
@@ -53,25 +53,25 @@ export async function GET(req: Request) {
       break
     }
     case 'vehicles': {
-      const { data: rows } = await s.from('assets').select('unit_number, asset_type, status, year, make, model, vin, license_plate, odometer, engine_hours, customers(company_name), created_at').eq('shop_id', shopId).order('unit_number')
+      const { data: rows } = await s.from('assets').select('unit_number, asset_type, status, year, make, model, vin, license_plate, odometer, engine_hours, customers(company_name), created_at').eq('shop_id', shopId).is('deleted_at', null).order('unit_number')
       data = (rows || []).map((r: any) => ({ ...r, customer: (r.customers as any)?.company_name || '' }))
       allCols = ['unit_number', 'asset_type', 'status', 'year', 'make', 'model', 'vin', 'license_plate', 'odometer', 'engine_hours', 'customer', 'created_at']
       break
     }
     case 'parts': {
-      const { data: rows } = await s.from('parts').select('part_number, description, category, on_hand, reserved, reorder_point, cost_price, sell_price, vendor, bin_location, created_at').eq('shop_id', shopId).order('description')
+      const { data: rows } = await s.from('parts').select('part_number, description, category, on_hand, reserved, reorder_point, cost_price, sell_price, vendor, bin_location, created_at').eq('shop_id', shopId).is('deleted_at', null).order('description')
       data = rows || []
       allCols = ['part_number', 'description', 'category', 'on_hand', 'reserved', 'reorder_point', 'cost_price', 'sell_price', 'vendor', 'bin_location', 'created_at']
       break
     }
     case 'invoices': {
-      const { data: rows } = await s.from('invoices').select('invoice_number, status, subtotal, tax_amount, total, amount_paid, balance_due, payment_method, due_date, paid_at, created_at, customers(company_name)').eq('shop_id', shopId).order('created_at', { ascending: false })
+      const { data: rows } = await s.from('invoices').select('invoice_number, status, subtotal, tax_amount, total, amount_paid, balance_due, payment_method, due_date, paid_at, created_at, customers(company_name)').eq('shop_id', shopId).is('deleted_at', null).order('created_at', { ascending: false })
       data = (rows || []).map((r: any) => ({ ...r, customer: (r.customers as any)?.company_name || '' }))
       allCols = ['invoice_number', 'customer', 'status', 'subtotal', 'tax_amount', 'total', 'amount_paid', 'balance_due', 'payment_method', 'due_date', 'paid_at', 'created_at']
       break
     }
     case 'service_orders': {
-      const { data: rows } = await s.from('service_orders').select('so_number, status, source, priority, complaint, cause, correction, labor_total, parts_total, tax_total, grand_total, created_at, completed_at, assets(unit_number), customers(company_name), users!assigned_tech(full_name)').eq('shop_id', shopId).order('created_at', { ascending: false })
+      const { data: rows } = await s.from('service_orders').select('so_number, status, source, priority, complaint, cause, correction, labor_total, parts_total, tax_total, grand_total, created_at, completed_at, assets(unit_number), customers(company_name), users!assigned_tech(full_name)').eq('shop_id', shopId).is('deleted_at', null).order('created_at', { ascending: false })
       data = (rows || []).map((r: any) => ({
         ...r,
         unit_number: (r.assets as any)?.unit_number || '',

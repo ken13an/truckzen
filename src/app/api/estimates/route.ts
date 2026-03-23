@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const woId = searchParams.get('wo_id')
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
-  let q = s.from('estimates').select('*, estimate_lines(*)').eq('shop_id', shopId).order('created_at', { ascending: false })
+  let q = s.from('estimates').select('*, estimate_lines(*)').eq('shop_id', shopId).is('deleted_at', null).order('created_at', { ascending: false })
   if (status && status !== 'all') q = q.eq('status', status)
   if (woId) q = q.eq('wo_id', woId)
   const { data, error } = await q.limit(100)
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 
     const { data: lines } = await s.from('so_lines').select('*').eq('so_id', wo_id)
 
-    const { count } = await s.from('estimates').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id)
+    const { count } = await s.from('estimates').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id).is('deleted_at', null)
     const estNum = `EST-${String((count || 0) + 1).padStart(5, '0')}`
     const cust = wo.customers as any
     const asset = wo.assets as any

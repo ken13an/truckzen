@@ -24,9 +24,9 @@ export default function AccountingDashboard() {
     const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
 
     const [{ data: ready }, { data: outst }, { data: paidThisMonth }] = await Promise.all([
-      supabase.from('service_orders').select('id, so_number, status, grand_total, completed_at, created_at, assets(unit_number, make, model), customers(company_name)').eq('shop_id', shopId).in('status', ['done', 'good_to_go']).or('is_historical.is.null,is_historical.eq.false').order('completed_at', { ascending: true }).limit(30),
-      supabase.from('invoices').select('id, invoice_number, total, balance_due, created_at, status, customers(company_name)').eq('shop_id', shopId).eq('status', 'sent').order('created_at', { ascending: true }).limit(30),
-      supabase.from('invoices').select('total').eq('shop_id', shopId).eq('status', 'paid').gte('paid_at', monthStart.toISOString()),
+      supabase.from('service_orders').select('id, so_number, status, grand_total, completed_at, created_at, assets(unit_number, make, model), customers(company_name)').eq('shop_id', shopId).is('deleted_at', null).in('status', ['done', 'good_to_go']).or('is_historical.is.null,is_historical.eq.false').order('completed_at', { ascending: true }).limit(30),
+      supabase.from('invoices').select('id, invoice_number, total, balance_due, created_at, status, customers(company_name)').eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent').order('created_at', { ascending: true }).limit(30),
+      supabase.from('invoices').select('total').eq('shop_id', shopId).is('deleted_at', null).eq('status', 'paid').gte('paid_at', monthStart.toISOString()),
     ])
 
     setReadyToInvoice(ready || [])

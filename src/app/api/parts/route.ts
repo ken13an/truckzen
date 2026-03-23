@@ -16,6 +16,7 @@ export async function GET(req: Request) {
     .from('parts')
     .select('id, part_number, description, category, on_hand, reserved_qty, reorder_point, cost_price, sell_price, vendor, bin_location, core_charge, warranty_months, created_at')
     .eq('shop_id', user.shop_id)
+    .is('deleted_at', null)
     .order('description')
 
   if (category)  q = q.eq('category', category)

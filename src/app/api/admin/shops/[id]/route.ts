@@ -30,11 +30,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   // Get counts
   const [users, customers, assets, serviceOrders, invoices] = await Promise.all([
-    s.from('users').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
-    s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
-    s.from('assets').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
-    s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
-    s.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', shopId),
+    s.from('users').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null),
+    s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null),
+    s.from('assets').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null),
+    s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null),
+    s.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null),
   ])
 
   return NextResponse.json({

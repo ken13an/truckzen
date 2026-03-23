@@ -49,6 +49,7 @@ export async function GET(req: Request) {
       users!assigned_tech(full_name)
     `)
     .eq('shop_id', user.shop_id)
+    .is('deleted_at', null)
     .not('status', 'in', '("void")')
     .order('created_at', { ascending: false })
 

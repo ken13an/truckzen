@@ -35,7 +35,7 @@ export default function BulkSkillsPage() {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
       const [{ data: mechs }, { data: sk }] = await Promise.all([
-        supabase.from('users').select('id, full_name, role, team').eq('shop_id', p.shop_id).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).order('full_name'),
+        supabase.from('users').select('id, full_name, role, team').eq('shop_id', p.shop_id).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).is('deleted_at', null).order('full_name'),
         fetch(`/api/mechanic-skills?shop_id=${p.shop_id}&type=list`).then(r => r.json()),
       ])
       setMechanics(mechs || [])

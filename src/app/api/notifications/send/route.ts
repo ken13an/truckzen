@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     const { data: users } = await s.from('users')
       .select('push_token')
       .in('id', user_ids)
+      .is('deleted_at', null)
       .not('push_token', 'is', null)
     tokens = (users || []).map((u: any) => u.push_token).filter(Boolean)
   } else if (role && shop_id) {
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
       .select('push_token')
       .eq('shop_id', shop_id)
       .eq('role', role)
+      .is('deleted_at', null)
       .not('push_token', 'is', null)
     tokens = (users || []).map((u: any) => u.push_token).filter(Boolean)
   }

@@ -26,7 +26,7 @@ export async function sendEmail(to: string | string[], subject: string, html: st
 export async function getStaffEmails(shopId: string, role: string): Promise<string[]> {
   const { createClient } = await import('@supabase/supabase-js')
   const s = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-  const { data } = await s.from('users').select('email').eq('shop_id', shopId).eq('role', role).not('email', 'is', null)
+  const { data } = await s.from('users').select('email').eq('shop_id', shopId).eq('role', role).is('deleted_at', null).not('email', 'is', null)
   return (data || []).map((u: any) => u.email).filter(Boolean)
 }
 

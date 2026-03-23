@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   const enriched = await Promise.all((shops || []).map(async (shop: any) => {
     const [{ data: owner }, { count: woCount }] = await Promise.all([
       s.from('users').select('full_name, email').eq('shop_id', shop.id).eq('role', 'owner').limit(1).single(),
-      s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop.id),
+      s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop.id).is('deleted_at', null),
     ])
     return {
       ...shop,

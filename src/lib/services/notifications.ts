@@ -28,6 +28,7 @@ export async function sendPushToRole(shopId: string, role: string, title: string
       .select('push_token')
       .eq('shop_id', shopId)
       .eq('role', role)
+      .is('deleted_at', null)
       .not('push_token', 'is', null)
 
     const tokens = (users || []).map((u: any) => u.push_token).filter(Boolean)
@@ -51,6 +52,7 @@ export async function sendPushToShopAdmins(shopId: string, title: string, body: 
       .select('push_token')
       .eq('shop_id', shopId)
       .in('role', ['owner', 'gm', 'it_person', 'shop_manager'])
+      .is('deleted_at', null)
       .not('push_token', 'is', null)
 
     const tokens = (users || []).map((u: any) => u.push_token).filter(Boolean)

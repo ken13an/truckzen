@@ -22,6 +22,7 @@ export default function PortalPage() {
         .from('service_orders')
         .select('id, so_number, status, complaint, grand_total, created_at, assets(unit_number, year, make, model), invoices(id, invoice_number, status, balance_due)')
         .eq('customer_id', (profile as any).customers?.id)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(20)
       setOrders(data || [])

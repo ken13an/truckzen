@@ -19,7 +19,7 @@ export default function NewFleetPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
-      const { data } = await supabase.from('customers').select('id, company_name').eq('shop_id', profile.shop_id).order('company_name')
+      const { data } = await supabase.from('customers').select('id, company_name').eq('shop_id', profile.shop_id).is('deleted_at', null).order('company_name')
       setCustomers(data || [])
     }
     load()

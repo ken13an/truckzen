@@ -41,7 +41,7 @@ export default function DriverDetailPage() {
         supabase.from('maint_drivers').select('*').eq('id', params.id).single(),
         supabase.from('maint_driver_assignments').select('*, assets(unit_number, year, make, model)').eq('driver_id', params.id).order('assigned_date', { ascending: false }),
         supabase.from('maint_driver_documents').select('*').eq('driver_id', params.id).order('created_at', { ascending: false }),
-        supabase.from('assets').select('id, unit_number, year, make, model').eq('shop_id', profile.shop_id).eq('status', 'active').order('unit_number'),
+        supabase.from('assets').select('id, unit_number, year, make, model').eq('shop_id', profile.shop_id).eq('status', 'active').is('deleted_at', null).order('unit_number'),
       ])
       if (!d) { router.push('/maintenance/drivers'); return }
       setDriver(d)

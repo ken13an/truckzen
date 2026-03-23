@@ -25,7 +25,7 @@ export default function PartsDashboard() {
 
     const [{ data: parts }, { data: low }, { count: fulfilled }] = await Promise.all([
       supabase.from('so_lines').select('id, description, rough_name, real_name, parts_status, quantity, created_at, service_orders!inner(id, so_number, shop_id, assets(unit_number), users!assigned_tech(full_name))').eq('service_orders.shop_id', shopId).eq('line_type', 'part').in('parts_status', ['rough', 'sourced', 'ordered']).order('created_at', { ascending: true }).limit(30),
-      supabase.from('parts').select('id, description, part_number, on_hand, reorder_point').eq('shop_id', shopId).order('on_hand', { ascending: true }).limit(20),
+      supabase.from('parts').select('id, description, part_number, on_hand, reorder_point').eq('shop_id', shopId).is('deleted_at', null).order('on_hand', { ascending: true }).limit(20),
       supabase.from('so_lines').select('*', { count: 'exact', head: true }).eq('line_type', 'part').eq('parts_status', 'received').gte('updated_at', today),
     ])
 

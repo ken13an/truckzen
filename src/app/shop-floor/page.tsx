@@ -48,6 +48,7 @@ export default function ShopFloorPage() {
       .from('service_orders')
       .select('id, so_number, status, priority, complaint, bay, team, internal_notes, grand_total, created_at, updated_at, promised_date, completed_at, assets(unit_number, year, make, model), customers(company_name), users!assigned_tech(full_name)')
       .eq('shop_id', profile.shop_id)
+      .is('deleted_at', null)
       .or('is_historical.is.null,is_historical.eq.false')
       .not('status', 'in', '("good_to_go","void")')
       .order('priority', { ascending: false })
@@ -63,7 +64,7 @@ export default function ShopFloorPage() {
       await loadJobs(p)
       // Load mechanics + clocks
       const [{ data: mechs }, { data: clocks }] = await Promise.all([
-        supabase.from('users').select('id, full_name, role, team').eq('shop_id', p.shop_id).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).order('full_name'),
+        supabase.from('users').select('id, full_name, role, team').eq('shop_id', p.shop_id).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).is('deleted_at', null).order('full_name'),
         supabase.from('time_entries').select('user_id, clock_in, so_id, service_orders(so_number, assets(unit_number))').eq('shop_id', p.shop_id).is('clock_out', null),
       ])
       setMechanics(mechs || [])

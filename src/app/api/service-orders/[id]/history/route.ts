@@ -26,12 +26,14 @@ export async function GET(_req: Request, { params }: P) {
     .from('so_time_entries')
     .select('id, clocked_in_at, clocked_out_at, duration_minutes, users(full_name)')
     .eq('so_id', id)
+    .is('deleted_at', null)
     .order('clocked_in_at', { ascending: false })
 
   const { data: partsRequests } = await s
     .from('parts_requests')
     .select('id, description, status, priority, requested_at, users!requested_by(full_name)')
     .eq('so_id', id)
+    .is('deleted_at', null)
     .order('requested_at', { ascending: false })
 
   const timeline: any[] = []

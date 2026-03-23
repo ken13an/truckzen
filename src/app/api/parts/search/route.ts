@@ -18,6 +18,7 @@ export async function GET(req: Request) {
   const { data } = await s.from('parts')
     .select('id, description, part_number, cost_price, sell_price, on_hand')
     .eq('shop_id', shopId)
+    .is('deleted_at', null)
     .or(`part_number.ilike.%${q}%,description.ilike.%${q}%`)
     .limit(5)
 

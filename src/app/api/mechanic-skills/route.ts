@@ -33,14 +33,14 @@ export async function GET(req: Request) {
 
     // Get all mechanics
     const { data: mechanics } = await s.from('users').select('id, full_name')
-      .eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true)
+      .eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).is('deleted_at', null)
     // Get all skills
     const { data: skills } = await s.from('mechanic_skills').select('user_id, skill_name, skill_category, experience_level, certified').eq('shop_id', shopId)
     // Get active clocks
     const { data: clocks } = await s.from('time_entries').select('user_id').eq('shop_id', shopId).is('clock_out', null)
     // Get job queues (assigned WOs not done)
     const { data: assigned } = await s.from('service_orders').select('assigned_tech')
-      .eq('shop_id', shopId).not('status', 'in', '("done","good_to_go","void")').not('assigned_tech', 'is', null)
+      .eq('shop_id', shopId).is('deleted_at', null).not('status', 'in', '("done","good_to_go","void")').not('assigned_tech', 'is', null)
 
     const jobQueues: Record<string, number> = {}
     for (const wo of assigned || []) {

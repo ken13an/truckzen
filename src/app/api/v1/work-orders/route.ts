@@ -26,6 +26,7 @@ export async function GET(req: Request) {
       so_lines(id, line_type, description, rough_name, real_name, part_number, quantity, unit_price, total_price, parts_status, tire_position, estimated_hours, actual_hours, billed_hours)
     `, { count: 'exact' })
     .eq('shop_id', auth.shopId)
+    .is('deleted_at', null)
     .neq('status', 'void')
     .order('created_at', { ascending: false })
 

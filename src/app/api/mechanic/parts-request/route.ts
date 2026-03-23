@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const userId = searchParams.get('user_id')
   const shopId = searchParams.get('shop_id')
 
-  let q = s.from('parts_requests').select('*').order('created_at', { ascending: false })
+  let q = s.from('parts_requests').select('*').is('deleted_at', null).order('created_at', { ascending: false })
   if (userId) q = q.eq('requested_by', userId)
   if (shopId) q = q.eq('shop_id', shopId)
 

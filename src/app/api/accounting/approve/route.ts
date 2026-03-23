@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       const total = subtotal + taxAmount
 
       // Generate invoice number
-      const { count } = await s.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', wo.shop_id)
+      const { count } = await s.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', wo.shop_id).is('deleted_at', null)
       const year = new Date().getFullYear()
       const invNum = `INV-${year}-${String((count || 0) + 1).padStart(4, '0')}`
 

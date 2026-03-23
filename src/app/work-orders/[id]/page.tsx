@@ -230,7 +230,7 @@ export default function WorkOrderDetail() {
 
   const deleteWO = async () => {
     if (deleteText !== 'DELETE') return
-    await fetch(`/api/work-orders/${id}`, { method: 'DELETE' })
+    await fetch(`/api/work-orders/${id}?user_id=${user?.id}`, { method: 'DELETE' })
     window.location.href = '/work-orders'
   }
 

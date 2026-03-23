@@ -20,6 +20,7 @@ export async function GET(req: Request) {
     .from('assets')
     .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, unit_type, source, customers(company_name)', paginated ? { count: 'exact' } : {})
     .eq('shop_id', shopId)
+    .is('deleted_at', null)
     .order('unit_number')
 
   const customerId = searchParams.get('customer_id')

@@ -28,6 +28,7 @@ export async function GET(req: Request) {
       users!assigned_tech(id, full_name)
     `)
     .eq('shop_id', shopId)
+    .is('deleted_at', null)
     .not('status', 'eq', 'void')
     .order('created_at', { ascending: false })
     .limit(limit)
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
   }
 
   // Generate SO number
-  const { count } = await supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id)
+  const { count } = await supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id).is('deleted_at', null)
   const year = new Date().getFullYear()
   const soNum = `SO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
 

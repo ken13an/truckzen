@@ -17,6 +17,7 @@ export async function GET(req: Request) {
       service_orders(so_number)`)
     .eq('shop_id', shopId)
     .is('clocked_out_at', null)
+    .is('deleted_at', null)
     .order('clocked_in_at', { ascending: true })
 
   const active = (data || []).map((e: any) => ({

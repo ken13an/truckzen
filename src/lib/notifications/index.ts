@@ -106,6 +106,7 @@ async function resolveTargets(payload: NotifyPayload) {
       .eq('shop_id', payload.shop_id)
       .eq('role', payload.role)
       .eq('active', true)
+      .is('deleted_at', null)
       .limit(3)
     return data || []
   }

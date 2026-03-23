@@ -17,6 +17,7 @@ export async function GET(req: Request) {
   let q = s.from('service_requests')
     .select('id, shop_id, customer_id, asset_id, unit_number, company_name, contact_name, phone, description, source, status, reject_reason, scheduled_date, converted_so_id, created_by, created_at')
     .eq('shop_id', shopId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
   if (status) q = q.eq('status', status)

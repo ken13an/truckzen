@@ -19,6 +19,7 @@ export async function GET(req: Request) {
       service_orders(so_number, status, assets(unit_number, make, model), customers(company_name))
     `)
     .eq('shop_id', user.shop_id)
+    .is('deleted_at', null)
     .gte('clocked_in_at', from)
     .lte('clocked_in_at', to + 'T23:59:59')
     .not('clocked_out_at', 'is', null)

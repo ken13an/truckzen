@@ -27,6 +27,7 @@ export default function PartsQueuePage() {
         .from('service_orders')
         .select('id, so_number, status, priority, created_at, assets(unit_number, year, make, model), customers(company_name), so_lines(id, line_type, description, parts_status, real_name, rough_name)')
         .eq('shop_id', p.shop_id)
+        .is('deleted_at', null)
         .or('is_historical.is.null,is_historical.eq.false')
         .not('status', 'in', '("good_to_go","void","done")')
         .order('created_at', { ascending: false })

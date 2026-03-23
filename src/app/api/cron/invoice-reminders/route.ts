@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     .from('invoices')
     .select('id, invoice_number, balance_due, due_date, customers(company_name), shops(id, name)')
     .eq('status', 'sent')
+    .is('deleted_at', null)
     .lt('due_date', today)
     .gt('balance_due', 0)
     .order('due_date')

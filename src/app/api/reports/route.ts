@@ -25,10 +25,10 @@ export async function GET(req: Request) {
 
       // WO stats — use service_orders.grand_total as revenue source (invoices table may be empty for historical data)
       const { count: soCount } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
-        .eq('shop_id', shopId).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo)
+        .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo)
 
       const { count: soCompleted } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
-        .eq('shop_id', shopId).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo).in('status', ['done', 'good_to_go'])
+        .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo).in('status', ['done', 'good_to_go'])
 
       // Revenue: sum grand_total from service_orders (works for both native + historical)
       // Supabase JS can't do SUM, so fetch in batches or use a simpler approach
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
       let page = 0
       while (true) {
         const { data: batch } = await supabase.from('service_orders').select('grand_total')
-          .eq('shop_id', shopId).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo)
+          .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo)
           .range(page * 1000, (page + 1) * 1000 - 1)
         if (!batch || batch.length === 0) break
         revenue += batch.reduce((s: number, r: any) => s + (r.grand_total || 0), 0)
@@ -48,16 +48,16 @@ export async function GET(req: Request) {
 
       // Invoice-based revenue (for native TruckZen invoices)
       const { data: paidInvoices } = await supabase.from('invoices').select('total')
-        .eq('shop_id', shopId).eq('status', 'paid').gte('created_at', pgFrom).lte('created_at', pgTo)
+        .eq('shop_id', shopId).is('deleted_at', null).eq('status', 'paid').gte('created_at', pgFrom).lte('created_at', pgTo)
       const invoiceRevenue = (paidInvoices || []).reduce((s: number, i: any) => s + (i.total || 0), 0)
 
       // Outstanding
       const { data: sentInvoices } = await supabase.from('invoices').select('balance_due')
-        .eq('shop_id', shopId).eq('status', 'sent')
+        .eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent')
       const outstanding = (sentInvoices || []).reduce((s: number, i: any) => s + (i.balance_due || 0), 0)
 
       // Inventory value
-      const { data: parts } = await supabase.from('parts').select('on_hand, cost_price').eq('shop_id', shopId)
+      const { data: parts } = await supabase.from('parts').select('on_hand, cost_price').eq('shop_id', shopId).is('deleted_at', null)
       const inv_value = (parts || []).reduce((s: number, p: any) => s + (p.on_hand || 0) * (p.cost_price || 0), 0)
 
       return NextResponse.json({
@@ -76,6 +76,7 @@ export async function GET(req: Request) {
         .from('invoices')
         .select('total, paid_at')
         .eq('shop_id', shopId)
+        .is('deleted_at', null)
         .eq('status', 'paid')
         .gte('paid_at', from)
         .lte('paid_at', to + 'T23:59:59')
@@ -132,7 +133,7 @@ export async function GET(req: Request) {
       const { data: sos } = await supabase
         .from('service_orders')
         .select('grand_total, customers!inner(id, company_name)')
-        .eq('shop_id', shopId).neq('status', 'void')
+        .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
 
@@ -158,7 +159,7 @@ export async function GET(req: Request) {
       const { data: sosByTech } = await supabase
         .from('service_orders')
         .select('assigned_tech, status')
-        .eq('shop_id', shopId).neq('status', 'void')
+        .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
         .not('assigned_tech', 'is', null)
@@ -183,7 +184,7 @@ export async function GET(req: Request) {
       const { data: sos } = await supabase
         .from('service_orders')
         .select('grand_total, created_at, assets!inner(id, unit_number, customers(company_name))')
-        .eq('shop_id', shopId).neq('status', 'void')
+        .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
 
@@ -204,6 +205,7 @@ export async function GET(req: Request) {
         .from('parts')
         .select('part_number, description, on_hand, reorder_point, cost_price')
         .eq('shop_id', shopId)
+        .is('deleted_at', null)
         .order('on_hand', { ascending: true })
         .limit(20)
 

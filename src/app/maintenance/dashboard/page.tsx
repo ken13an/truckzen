@@ -25,10 +25,10 @@ export default function MaintenanceDashboard() {
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString()
 
     const [{ data: fleet }, { data: reqs }, { data: warranty }, { count: completed }] = await Promise.all([
-      supabase.from('service_orders').select('id, so_number, status, complaint, created_at, assets(unit_number, make, model), customers(company_name, is_fleet), users!assigned_tech(full_name)').eq('shop_id', shopId).or('is_historical.is.null,is_historical.eq.false').not('status', 'in', '("good_to_go","void","done")').order('created_at', { ascending: false }).limit(30),
-      supabase.from('service_requests').select('id, company_name, unit_number, description, urgency, created_at, source').eq('shop_id', shopId).in('status', ['new', 'scheduled']).order('created_at', { ascending: false }).limit(20),
-      supabase.from('service_orders').select('id, so_number, complaint, warranty_status, assets(unit_number, make, model, warranty_provider)').eq('shop_id', shopId).eq('warranty_status', 'checking').order('created_at', { ascending: false }),
-      supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).in('status', ['done', 'good_to_go']).gte('completed_at', weekAgo),
+      supabase.from('service_orders').select('id, so_number, status, complaint, created_at, assets(unit_number, make, model), customers(company_name, is_fleet), users!assigned_tech(full_name)').eq('shop_id', shopId).is('deleted_at', null).or('is_historical.is.null,is_historical.eq.false').not('status', 'in', '("good_to_go","void","done")').order('created_at', { ascending: false }).limit(30),
+      supabase.from('service_requests').select('id, company_name, unit_number, description, urgency, created_at, source').eq('shop_id', shopId).is('deleted_at', null).in('status', ['new', 'scheduled']).order('created_at', { ascending: false }).limit(20),
+      supabase.from('service_orders').select('id, so_number, complaint, warranty_status, assets(unit_number, make, model, warranty_provider)').eq('shop_id', shopId).is('deleted_at', null).eq('warranty_status', 'checking').order('created_at', { ascending: false }),
+      supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).in('status', ['done', 'good_to_go']).gte('completed_at', weekAgo),
     ])
 
     const fleetWos = (fleet || []).filter((w: any) => (w.customers as any)?.is_fleet)

@@ -12,6 +12,7 @@ export async function GET(req: Request) {
   const { data } = await s.from('parts_requests')
     .select('*, users:requested_by(full_name)')
     .eq('shop_id', shopId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(100)
 

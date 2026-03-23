@@ -30,6 +30,7 @@ export async function GET(req: Request) {
       users!assigned_tech(id, full_name)
     `, { count: 'exact' })
     .eq('shop_id', shopId)
+    .is('deleted_at', null)
     .not('status', 'eq', 'void')
     .order('created_at', { ascending: false })
 
@@ -75,6 +76,7 @@ export async function POST(req: Request) {
       .select('id, so_number')
       .eq('asset_id', asset_id)
       .eq('shop_id', shop_id)
+      .is('deleted_at', null)
       .not('status', 'in', '("good_to_go","done","void")')
       .limit(1)
     if (activeWOs && activeWOs.length > 0) {
@@ -83,7 +85,7 @@ export async function POST(req: Request) {
   }
 
   // Generate WO number
-  const { count } = await s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id)
+  const { count } = await s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id).is('deleted_at', null)
   const year = new Date().getFullYear()
   const woNum = `WO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
 

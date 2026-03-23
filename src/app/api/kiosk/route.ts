@@ -16,6 +16,7 @@ export async function GET(req: Request) {
   const { data, error } = await s.from('kiosk_checkins')
     .select('id, shop_id, unit_number, company_name, contact_name, complaint_en, checkin_ref, status, created_at, assets(unit_number, year, make, model), customers(company_name)')
     .eq('shop_id', shopId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(limit)
 

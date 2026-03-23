@@ -8,10 +8,11 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
-import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare } from 'lucide-react'
+import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2 } from 'lucide-react'
 
 const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
+const TRASH_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'floor_supervisor', 'service_writer', 'office_admin']
 
 interface DeptSection {
   label: string
@@ -129,8 +130,8 @@ export default function Sidebar() {
       if (uo) setUserOverrides(Object.fromEntries(uo.map((r: any) => [r.module, r.allowed])))
 
       const [{ count: ls }, { count: oj }] = await Promise.all([
-        supabase.from('parts').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).lte('on_hand', 2),
-        supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).not('status', 'in', '("good_to_go","void")'),
+        supabase.from('parts').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).is('deleted_at', null).lte('on_hand', 2),
+        supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).is('deleted_at', null).not('status', 'in', '("good_to_go","void")'),
       ])
       setLowStock(ls || 0)
       setOpenJobs(oj || 0)
@@ -278,6 +279,7 @@ export default function Sidebar() {
       {/* Bottom: Settings + Sign Out */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
         {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
+        {TRASH_ROLES.includes(user.role) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
         {renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
         <a href="#" onClick={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}

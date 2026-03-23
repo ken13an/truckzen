@@ -25,10 +25,10 @@ export default function ServiceWriterDashboard() {
     const today = new Date().toISOString().split('T')[0]
 
     const [{ data: reqs }, { data: wos }, { data: ests }, { count: completed }] = await Promise.all([
-      supabase.from('service_requests').select('id, company_name, unit_number, description, source, created_at, status').eq('shop_id', shopId).in('status', ['new', 'scheduled']).order('created_at', { ascending: false }).limit(20),
-      supabase.from('service_orders').select('id, so_number, status, complaint, created_at, updated_at, assets(unit_number, make, model), customers(company_name), users!assigned_tech(full_name)').eq('shop_id', shopId).or('is_historical.is.null,is_historical.eq.false').not('status', 'in', '("good_to_go","void","done")').order('created_at', { ascending: false }).limit(30),
-      supabase.from('estimates').select('id, estimate_number, grand_total, sent_at, wo_id, customer_name, service_orders(so_number)').eq('shop_id', shopId).eq('status', 'sent').order('sent_at', { ascending: true }),
-      supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).in('status', ['done', 'good_to_go']).gte('completed_at', today),
+      supabase.from('service_requests').select('id, company_name, unit_number, description, source, created_at, status').eq('shop_id', shopId).is('deleted_at', null).in('status', ['new', 'scheduled']).order('created_at', { ascending: false }).limit(20),
+      supabase.from('service_orders').select('id, so_number, status, complaint, created_at, updated_at, assets(unit_number, make, model), customers(company_name), users!assigned_tech(full_name)').eq('shop_id', shopId).is('deleted_at', null).or('is_historical.is.null,is_historical.eq.false').not('status', 'in', '("good_to_go","void","done")').order('created_at', { ascending: false }).limit(30),
+      supabase.from('estimates').select('id, estimate_number, grand_total, sent_at, wo_id, customer_name, service_orders(so_number)').eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent').order('sent_at', { ascending: true }),
+      supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).in('status', ['done', 'good_to_go']).gte('completed_at', today),
     ])
 
     setRequests(reqs || [])

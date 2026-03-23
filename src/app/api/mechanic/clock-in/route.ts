@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     .select('id, so_line_id')
     .eq('user_id', user_id)
     .is('clocked_out_at', null)
+    .is('deleted_at', null)
     .limit(1)
 
   if (active && active.length > 0) {

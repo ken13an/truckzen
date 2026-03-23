@@ -36,6 +36,7 @@ export default function FloorPage() {
         users!assigned_tech(full_name)
       `)
       .eq('shop_id', shopId)
+      .is('deleted_at', null)
       .not('status', 'in', '("void","good_to_go")')
       .order('priority', { ascending: false })
     setJobs(data || [])

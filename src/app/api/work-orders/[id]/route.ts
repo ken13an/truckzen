@@ -165,9 +165,18 @@ export async function PATCH(req: Request, { params }: Params) {
   return NextResponse.json(data)
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+export async function DELETE(req: Request, { params }: Params) {
   const { id } = await params
   const s = db()
-  await s.from('service_orders').update({ status: 'void', updated_at: new Date().toISOString() }).eq('id', id)
+  const { searchParams } = new URL(req.url)
+  const userId = searchParams.get('user_id')
+
+  const { data: wo } = await s.from('service_orders').select('shop_id').eq('id', id).single()
+  await s.from('service_orders').update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id)
+
+  if (wo && userId) {
+    logAction({ shop_id: wo.shop_id, user_id: userId, action: 'soft_delete', entity_type: 'service_order', entity_id: id }).catch(() => {})
+  }
+
   return NextResponse.json({ success: true })
 }

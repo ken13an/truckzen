@@ -64,13 +64,13 @@ export default function PartsPage() {
   const loadParts = useCallback(async (shopId: string) => {
     const { data } = await supabase.from('parts')
       .select('id, part_number, description, category, on_hand, reorder_point, cost_price, sell_price, vendor, bin_location, core_charge, warranty_months, source')
-      .eq('shop_id', shopId).order('description')
+      .eq('shop_id', shopId).is('deleted_at', null).order('description')
     setParts(data || [])
     setLoading(false)
   }, [supabase])
 
   const loadRequests = useCallback(async (shopId: string) => {
-    const { data } = await supabase.from('parts_requests').select('*').eq('shop_id', shopId).order('created_at', { ascending: false }).limit(200)
+    const { data } = await supabase.from('parts_requests').select('*').eq('shop_id', shopId).is('deleted_at', null).order('created_at', { ascending: false }).limit(200)
     setRequests(data || [])
     setReqLoading(false)
   }, [supabase])

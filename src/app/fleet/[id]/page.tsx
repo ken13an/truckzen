@@ -24,9 +24,9 @@ export default function FleetDetailPage() {
 
       const [{ data: a }, { data: h }, { data: p }, { data: activeWos }] = await Promise.all([
         supabase.from('assets').select('*, customers(company_name, is_fleet)').eq('id', params.id).eq('shop_id', profile.shop_id).single(),
-        supabase.from('service_orders').select('id, so_number, status, complaint, grand_total, completed_at, created_at').eq('asset_id', params.id).or('status.in.(done,good_to_go,closed),is_historical.eq.true').order('created_at', { ascending:false }).limit(20),
+        supabase.from('service_orders').select('id, so_number, status, complaint, grand_total, completed_at, created_at').eq('asset_id', params.id).is('deleted_at', null).or('status.in.(done,good_to_go,closed),is_historical.eq.true').order('created_at', { ascending:false }).limit(20),
         supabase.from('pm_schedules').select('*').eq('asset_id', params.id).eq('active', true),
-        supabase.from('service_orders').select('id, so_number, status, complaint, created_at').eq('asset_id', params.id).not('status', 'in', '("done","good_to_go","closed","void")').or('is_historical.is.null,is_historical.eq.false').order('created_at', { ascending:false }).limit(10),
+        supabase.from('service_orders').select('id, so_number, status, complaint, created_at').eq('asset_id', params.id).is('deleted_at', null).not('status', 'in', '("done","good_to_go","closed","void")').or('is_historical.is.null,is_historical.eq.false').order('created_at', { ascending:false }).limit(10),
       ])
 
       if (!a) { router.push('/fleet'); return }

@@ -51,9 +51,9 @@ export async function GET(req: Request) {
   // Get stats for each shop
   const enriched = await Promise.all((shops || []).map(async (shop: any) => {
     const [userCount, woCount, customerCount] = await Promise.all([
-      s.from('users').select('*', { count: 'exact', head: true }).eq('shop_id', shop.id),
-      s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop.id),
-      s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shop.id),
+      s.from('users').select('*', { count: 'exact', head: true }).eq('shop_id', shop.id).is('deleted_at', null),
+      s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop.id).is('deleted_at', null),
+      s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shop.id).is('deleted_at', null),
     ])
 
     return {

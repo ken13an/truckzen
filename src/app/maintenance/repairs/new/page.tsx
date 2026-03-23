@@ -28,7 +28,7 @@ export default function NewRepairPage() {
       if (!profile) { router.push('/login'); return }
       setShopId(profile.shop_id)
       const [a, d, v] = await Promise.all([
-        supabase.from('assets').select('id, unit_number, year, make, model').eq('shop_id', profile.shop_id).eq('status', 'active').order('unit_number'),
+        supabase.from('assets').select('id, unit_number, year, make, model').eq('shop_id', profile.shop_id).eq('status', 'active').is('deleted_at', null).order('unit_number'),
         supabase.from('maint_drivers').select('id, full_name').eq('shop_id', profile.shop_id).eq('active', true).order('full_name'),
         supabase.from('maint_vendors').select('id, name').eq('shop_id', profile.shop_id).eq('active', true).order('name'),
       ])

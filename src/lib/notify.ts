@@ -50,6 +50,7 @@ export async function notifyRole(opts: {
     .eq('shop_id', opts.shopId)
     .in('role', roles)
     .eq('active', true)
+    .is('deleted_at', null)
 
   for (const u of users || []) {
     await notifyUser({ ...opts, userId: u.id })

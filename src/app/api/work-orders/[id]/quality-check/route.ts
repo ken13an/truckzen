@@ -42,7 +42,7 @@ export async function POST(req: Request, { params }: Params) {
   // Fetch time entries for all lines
   let timeEntries: any[] = []
   if (lineIds.length > 0) {
-    const { data: te } = await s.from('so_time_entries').select('id, so_line_id, duration_minutes').eq('service_order_id', id)
+    const { data: te } = await s.from('so_time_entries').select('id, so_line_id, duration_minutes').eq('service_order_id', id).is('deleted_at', null)
     timeEntries = te || []
   }
 

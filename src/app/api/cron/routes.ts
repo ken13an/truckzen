@@ -165,6 +165,7 @@ export async function GET_INVOICES(req: Request) {
       shops(id, name)
     `)
     .in('status', ['sent'])
+    .is('deleted_at', null)
     .lt('due_date', today)
     .gt('balance_due', 0)
     .order('due_date')

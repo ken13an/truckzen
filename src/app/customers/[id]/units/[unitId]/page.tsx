@@ -51,7 +51,7 @@ export default function UnitProfilePage() {
       const [unitRes, custRes, woRes] = await Promise.all([
         supabase.from('assets').select('*').eq('id', unitId).single(),
         supabase.from('customers').select('id, company_name').eq('id', id).single(),
-        supabase.from('service_orders').select('id, so_number, status, wo_status, complaint, grand_total, created_at, mileage_at_checkin, assigned_tech').eq('asset_id', unitId).neq('status', 'void').order('created_at', { ascending: false }),
+        supabase.from('service_orders').select('id, so_number, status, wo_status, complaint, grand_total, created_at, mileage_at_checkin, assigned_tech').eq('asset_id', unitId).is('deleted_at', null).neq('status', 'void').order('created_at', { ascending: false }),
       ])
 
       if (unitRes.data) {

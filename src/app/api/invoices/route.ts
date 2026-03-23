@@ -19,6 +19,7 @@ export async function GET(req: Request) {
     .from('invoices')
     .select('id, invoice_number, status, subtotal, tax_amount, total, balance_due, amount_paid, due_date, paid_at, created_at, customers(company_name), service_orders(so_number, assets(unit_number))')
     .eq('shop_id', user.shop_id)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
   const total = subtotal + taxAmount
 
   // Generate invoice number
-  const { count } = await supabase.from('invoices').select('*', { count:'exact', head:true }).eq('shop_id', user.shop_id)
+  const { count } = await supabase.from('invoices').select('*', { count:'exact', head:true }).eq('shop_id', user.shop_id).is('deleted_at', null)
   const year   = new Date().getFullYear()
   const invNum = `INV-${year}-${String((count || 0) + 1).padStart(4, '0')}`
 

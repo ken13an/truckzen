@@ -22,6 +22,7 @@ export async function GET(req: Request) {
       .from('assets')
       .select('id, unit_number, year, make, model, odometer, status, customers(company_name)')
       .eq('shop_id', shopId)
+      .is('deleted_at', null)
       .not('status', 'eq', 'retired')
       .order('unit_number')
 

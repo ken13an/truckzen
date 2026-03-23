@@ -23,7 +23,7 @@ export default function NewExpensePage() {
       if (!p) { router.push('/login'); return }
       setShopId(p.shop_id)
       const [a, d] = await Promise.all([
-        supabase.from('assets').select('id, unit_number').eq('shop_id', p.shop_id).eq('status', 'active').order('unit_number'),
+        supabase.from('assets').select('id, unit_number').eq('shop_id', p.shop_id).eq('status', 'active').is('deleted_at', null).order('unit_number'),
         supabase.from('maint_drivers').select('id, full_name').eq('shop_id', p.shop_id).eq('active', true).order('full_name'),
       ])
       setAssets(a.data || [])

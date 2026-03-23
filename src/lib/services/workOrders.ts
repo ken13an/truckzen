@@ -5,7 +5,7 @@ const WO_SELECT = `*, customers(company_name, contact_name, phone, email), asset
 
 export async function getWorkOrders(shopId: string, filters?: { status?: WOStatus; search?: string }): Promise<WorkOrder[]> {
   const supabase = createClient()
-  let q = supabase.from('service_orders').select(WO_SELECT).eq('shop_id', shopId).order('created_at', { ascending: false })
+  let q = supabase.from('service_orders').select(WO_SELECT).eq('shop_id', shopId).is('deleted_at', null).order('created_at', { ascending: false })
   if (filters?.status) q = q.eq('status', filters.status)
   if (filters?.search) q = q.or(`so_number.ilike.%${filters.search}%,concern.ilike.%${filters.search}%`)
   const { data, error } = await q

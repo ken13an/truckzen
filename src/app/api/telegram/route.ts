@@ -72,6 +72,7 @@ export async function POST(req: Request) {
       .from('service_orders')
       .select(`so_number, status, priority, assets(unit_number), customers(company_name), users!assigned_tech(full_name)`)
       .eq('shop_id', user.shop_id)
+      .is('deleted_at', null)
       .not('status', 'in', '("good_to_go","void")')
       .order('created_at', { ascending: false })
       .limit(20)
@@ -131,6 +132,7 @@ async function executeAndReply(parsed: any, user: any, chatId: number) {
       .from('service_orders')
       .select(`id, so_number, status, priority, team, bay, grand_total, customer_id, assets(unit_number), customers(company_name)`)
       .eq('shop_id', user.shop_id)
+      .is('deleted_at', null)
       .not('status', 'in', '("good_to_go","void")')
     if (so_number)    q = q.ilike('so_number', `%${so_number}%`)
     else if (truck_number) {

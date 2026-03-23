@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/auth'
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#22C55E', RED = '#EF4444', AMBER = '#F59E0B', GRAY = '#6B7280'
 
-const TABS = ['Overview', 'Revenue', 'Labor', 'Parts', 'Trucks']
+const TABS = ['Overview', 'Revenue', 'Labor', 'Parts', 'Trucks', 'Mechanics']
 
 import DateRangePicker from '@/components/DateRangePicker'
 
@@ -28,6 +28,8 @@ export default function ReportsPage() {
   const [partsData, setPartsData] = useState<any[]>([])
   const [lowStock, setLowStock] = useState<any[]>([])
   const [trucksData, setTrucksData] = useState<any[]>([])
+  const [mechanicsData, setMechanicsData] = useState<any[]>([])
+  const [expandedMechanic, setExpandedMechanic] = useState<string | null>(null)
 
   useEffect(() => {
     getCurrentUser(supabase).then((p: any) => {
@@ -85,6 +87,10 @@ export default function ReportsPage() {
     if (tab === 4) {
       const tRes = await fetch(`${base}&type=trucks`)
       if (tRes.ok) setTrucksData(await tRes.json())
+    }
+    if (tab === 5) {
+      const mRes = await fetch(`/api/mechanics/weekly-report?shop_id=${user.shop_id}&from=${dateFrom}&to=${dateTo}`)
+      if (mRes.ok) setMechanicsData(await mRes.json())
     }
 
     setLoading(false)

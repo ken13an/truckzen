@@ -46,7 +46,7 @@ export default function ServiceRequestsPage() {
 
   async function loadRequests(shopId: string) {
     setLoading(true)
-    const { data } = await supabase.from('service_requests').select('*').eq('shop_id', shopId).order('created_at', { ascending: false }).limit(100)
+    const { data } = await supabase.from('service_requests').select('*').eq('shop_id', shopId).is('deleted_at', null).order('created_at', { ascending: false }).limit(100)
     setRequests(data || [])
     setLoading(false)
   }

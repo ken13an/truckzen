@@ -56,7 +56,7 @@ export async function DELETE(_req: Request, { params }: P) {
   if (!['owner','gm','it_person'].includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
   const { data: part } = await supabase.from('parts').select('description').eq('id', id).single()
-  await supabase.from('parts').update({ active: false }).eq('id', id).eq('shop_id', user.shop_id)
+  await supabase.from('parts').update({ active: false, deleted_at: new Date().toISOString() }).eq('id', id).eq('shop_id', user.shop_id)
   await log('parts.removed', user.shop_id, user.id, { table:'parts', recordId:id, oldData: part })
   return NextResponse.json({ success: true })
 }

@@ -42,6 +42,7 @@ export default function TechMobilePage() {
       .select('id, so_number, status, priority, complaint, cause, correction, internal_notes, bay, team, labor_total, parts_total, grand_total, created_at, completed_at, assets(id, unit_number, year, make, model), customers(company_name)')
       .eq('shop_id', profile.shop_id)
       .eq('assigned_tech', profile.id)
+      .is('deleted_at', null)
       .not('status', 'in', '("good_to_go","void")')
       .order('priority', { ascending: false })
       .order('created_at', { ascending: false })
@@ -66,6 +67,7 @@ export default function TechMobilePage() {
       .from('service_orders')
       .select('id, so_number, status, priority, bay, team, complaint, assets(unit_number), customers(company_name), users!assigned_tech(full_name)')
       .eq('shop_id', profile.shop_id)
+      .is('deleted_at', null)
       .not('status', 'in', '("good_to_go","void")')
       .order('priority', { ascending: false })
       .limit(30)
@@ -497,7 +499,7 @@ export default function TechMobilePage() {
     useEffect(() => {
       if (!user) return
       supabase.from('parts').select('part_number, description, category, on_hand, bin_location')
-        .eq('shop_id', user.shop_id).order('description').limit(100)
+        .eq('shop_id', user.shop_id).is('deleted_at', null).order('description').limit(100)
         .then(({ data }: any) => setParts(data || []))
     }, [user])
 
@@ -533,7 +535,7 @@ export default function TechMobilePage() {
     useEffect(() => {
       if (!user) return
       supabase.from('assets').select('id, unit_number, year, make, model')
-        .eq('shop_id', user.shop_id).eq('status', 'on_road').order('unit_number').limit(50)
+        .eq('shop_id', user.shop_id).eq('status', 'on_road').is('deleted_at', null).order('unit_number').limit(50)
         .then(({ data }: any) => setMyAssets(data || []))
     }, [user])
 

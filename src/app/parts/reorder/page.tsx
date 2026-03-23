@@ -20,7 +20,7 @@ export default function PartsReorderPage() {
       if (!profile) { window.location.href = '/login'; return }
       setUser(profile)
       const [{ data: p }, { data: v }] = await Promise.all([
-        supabase.from('parts').select('id, part_number, description, category, on_hand, reorder_point, cost_price, vendor, bin_location').eq('shop_id', profile.shop_id).order('description'),
+        supabase.from('parts').select('id, part_number, description, category, on_hand, reorder_point, cost_price, vendor, bin_location').eq('shop_id', profile.shop_id).is('deleted_at', null).order('description'),
         supabase.from('vendors').select('id, name').eq('shop_id', profile.shop_id).eq('active', true).order('name'),
       ])
       // Only low stock parts

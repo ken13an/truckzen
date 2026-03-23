@@ -25,6 +25,7 @@ export async function POST(req: Request) {
     .from('parts')
     .select('id, part_number, description, category, on_hand, reorder_point, sell_price')
     .eq('shop_id', user.shop_id)
+    .is('deleted_at', null)
     .order('description')
     .limit(60)
 

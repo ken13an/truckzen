@@ -20,7 +20,7 @@ export default function NewFaultPage() {
     getCurrentUser(supabase).then(async p => {
       if (!p) { router.push('/login'); return }
       setShopId(p.shop_id)
-      const { data } = await supabase.from('assets').select('id, unit_number, year, make').eq('shop_id', p.shop_id).eq('status', 'active').order('unit_number')
+      const { data } = await supabase.from('assets').select('id, unit_number, year, make').eq('shop_id', p.shop_id).eq('status', 'active').is('deleted_at', null).order('unit_number')
       setAssets(data || [])
     })
   }, [])

@@ -14,6 +14,7 @@ export async function GET(_req: Request, { params }: P) {
   const { data } = await s.from('service_orders')
     .select('id, so_number, status, complaint, grand_total, created_at, portal_token, assets(unit_number, year, make, model)')
     .eq('customer_id', wo.customer_id)
+    .is('deleted_at', null)
     .not('status', 'eq', 'void')
     .order('created_at', { ascending: false })
     .limit(20)

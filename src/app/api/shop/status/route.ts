@@ -34,12 +34,13 @@ export async function GET(req: Request) {
     getSupabase().from('service_orders')
       .select('id, so_number, status, priority, bay, team, complaint, assets(unit_number, make, model), users!assigned_tech(full_name)')
       .eq('shop_id', shopId)
+      .is('deleted_at', null)
       .not('status', 'in', '("good_to_go","void")')
       .order('priority', { ascending: false })
       .limit(50),
-    getSupabase().from('service_orders').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'waiting_parts'),
-    getSupabase().from('service_orders').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'good_to_go'),
-    getSupabase().from('invoices').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'sent').lt('due_date', today),
+    getSupabase().from('service_orders').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('status', 'waiting_parts'),
+    getSupabase().from('service_orders').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('status', 'good_to_go'),
+    getSupabase().from('invoices').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent').lt('due_date', today),
     getSupabase().from('pm_schedules').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('active', true).lt('next_due_date', today),
   ])
 

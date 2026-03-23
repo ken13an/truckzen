@@ -46,6 +46,7 @@ export async function POST(req: Request) {
   const { data: totals } = await s.from('so_time_entries')
     .select('duration_minutes')
     .eq('so_line_id', entry.so_line_id)
+    .is('deleted_at', null)
     .not('duration_minutes', 'is', null)
 
   const totalMinutes = (totals || []).reduce((sum: number, t: any) => sum + (t.duration_minutes || 0), 0)

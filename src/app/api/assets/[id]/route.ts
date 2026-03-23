@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { logAction } from '@/lib/services/auditLog'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -39,10 +40,18 @@ export async function PATCH(req: Request, { params }: P) {
   return NextResponse.json(data)
 }
 
-export async function DELETE(_req: Request, { params }: P) {
+export async function DELETE(req: Request, { params }: P) {
   const { id } = await params
   const s = db()
+  const { searchParams } = new URL(req.url)
+  const userId = searchParams.get('user_id')
 
-  await s.from('assets').update({ status: 'decommissioned' }).eq('id', id)
+  const { data: asset } = await s.from('assets').select('shop_id').eq('id', id).single()
+  await s.from('assets').update({ deleted_at: new Date().toISOString() }).eq('id', id)
+
+  if (asset && userId) {
+    logAction({ shop_id: asset.shop_id, user_id: userId, action: 'soft_delete', entity_type: 'asset', entity_id: id }).catch(() => {})
+  }
+
   return NextResponse.json({ success: true })
 }

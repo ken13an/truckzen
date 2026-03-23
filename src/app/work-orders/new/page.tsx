@@ -71,8 +71,8 @@ export default function NewWorkOrderPage() {
       if (!p) { window.location.href = '/login'; return }
       setProfile(p)
       const [{ data: custs }, { data: parts }] = await Promise.all([
-        supabase.from('customers').select('id, company_name, contact_name, phone, is_fleet').eq('shop_id', p.shop_id),
-        supabase.from('parts').select('id, part_number, description, on_hand').eq('shop_id', p.shop_id).order('description'),
+        supabase.from('customers').select('id, company_name, contact_name, phone, is_fleet').eq('shop_id', p.shop_id).is('deleted_at', null),
+        supabase.from('parts').select('id, part_number, description, on_hand').eq('shop_id', p.shop_id).is('deleted_at', null).order('description'),
       ])
       if (custs) setCustomers(custs)
       if (parts) setInventoryParts(parts)
@@ -101,7 +101,7 @@ export default function NewWorkOrderPage() {
     }
     // Check last WO mileage for better date info
     supabase.from('service_orders').select('mileage_at_service, odometer_in, created_at')
-      .eq('asset_id', selectedAsset.id).not('mileage_at_service', 'is', null)
+      .eq('asset_id', selectedAsset.id).is('deleted_at', null).not('mileage_at_service', 'is', null)
       .order('created_at', { ascending: false }).limit(1).single()
       .then(({ data }: any) => {
         if (data) {

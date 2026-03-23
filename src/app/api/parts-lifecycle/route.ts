@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   // Fleet dashboard
   if (view === 'fleet') {
     const { data: assets } = await s.from('assets').select('id, unit_number, year, make, model, odometer, status, customers(company_name)')
-      .eq('shop_id', shopId).not('status', 'eq', 'retired').order('unit_number')
+      .eq('shop_id', shopId).is('deleted_at', null).not('status', 'eq', 'retired').order('unit_number')
     const { data: installs } = await s.from('part_installs').select('id, asset_id, part_type, install_mileage, install_date, expected_life_mi, expected_life_days, cost, brand, status')
       .eq('shop_id', shopId).eq('status', 'active')
     const { data: configs } = await s.from('part_type_configs').select('part_type, display_name, icon, default_life_mi, default_life_days')

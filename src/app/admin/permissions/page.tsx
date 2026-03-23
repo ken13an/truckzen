@@ -38,7 +38,7 @@ export default function PermissionsPage() {
     }
     setUserOverrides(umap)
 
-    const { data: u } = await supabase.from('users').select('id, full_name, email, role, team, active').eq('shop_id', shopId).eq('active', true).order('full_name')
+    const { data: u } = await supabase.from('users').select('id, full_name, email, role, team, active').eq('shop_id', shopId).eq('active', true).is('deleted_at', null).order('full_name')
     setUsers(u || [])
   }, [supabase])
 

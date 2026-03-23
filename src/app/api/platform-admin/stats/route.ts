@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     { data: shops },
   ] = await Promise.all([
     s.from('shops').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    s.from('service_orders').select('*', { count: 'exact', head: true }),
+    s.from('service_orders').select('*', { count: 'exact', head: true }).is('deleted_at', null),
     s.from('shop_registrations').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     s.from('shops').select('monthly_revenue').eq('status', 'active'),
   ])
@@ -47,6 +47,7 @@ export async function GET(req: Request) {
       s.from('users').select('full_name, email').eq('shop_id', shop.id).eq('role', 'owner').limit(1).single(),
       s.from('service_orders').select('*', { count: 'exact', head: true })
         .eq('shop_id', shop.id)
+        .is('deleted_at', null)
         .gte('created_at', firstOfMonth.toISOString()),
     ])
     return { ...shop, owner_name: owner?.full_name || '—', owner_email: owner?.email || '', wo_this_month: woCount || 0 }

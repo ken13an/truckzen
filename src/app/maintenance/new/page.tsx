@@ -28,7 +28,7 @@ export default function NewPMPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
-      const { data } = await supabase.from('assets').select('id, unit_number, year, make, model').eq('shop_id', profile.shop_id).eq('status','active').order('unit_number')
+      const { data } = await supabase.from('assets').select('id, unit_number, year, make, model').eq('shop_id', profile.shop_id).eq('status','active').is('deleted_at', null).order('unit_number')
       setAssets(data || [])
     }
     load()

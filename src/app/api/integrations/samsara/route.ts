@@ -43,6 +43,7 @@ export async function POST(req: Request) {
           .from('service_orders')
           .select('id')
           .eq('asset_id', asset.id)
+          .is('deleted_at', null)
           .not('status', 'in', '("good_to_go","void")')
           .limit(1)
           .single()

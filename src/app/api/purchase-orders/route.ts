@@ -10,6 +10,7 @@ export async function GET(req: Request) {
     .from('purchase_orders')
     .select('*, vendors(name), so_lines:po_lines(id, description, quantity, quantity_received, unit_cost, total_cost)')
     .eq('shop_id', user.shop_id)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(50)
 
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   if (!lines?.length) return NextResponse.json({ error: 'At least one line item required' }, { status: 400 })
 
   // Generate PO number
-  const { count } = await supabase.from('purchase_orders').select('*', { count:'exact', head:true }).eq('shop_id', user.shop_id)
+  const { count } = await supabase.from('purchase_orders').select('*', { count:'exact', head:true }).eq('shop_id', user.shop_id).is('deleted_at', null)
   const poNum  = `PO-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(4,'0')}`
   const total  = lines.reduce((s: number, l: any) => s + ((l.quantity || 1) * (l.unit_cost || 0)), 0)
 
