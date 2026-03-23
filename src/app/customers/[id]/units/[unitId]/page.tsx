@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { ChevronLeft } from 'lucide-react'
 import { VinInput } from '@/components/shared/VinInput'
+import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -555,9 +556,7 @@ export default function UnitProfilePage() {
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, fontSize: 12, color: GRAY, marginTop: 6 }}>
             <span>VIN: {vinDisplay(unit.vin)}</span>
-            {unit.ownership_type && (
-              <span style={pillStyle('rgba(107,114,128,0.15)', GRAY)}>{(unit.ownership_type || '').toUpperCase()}</span>
-            )}
+            {unit.ownership_type && <OwnershipTypeBadge type={unit.ownership_type} />}
             {unit.odometer != null && (
               <span>{Number(unit.odometer).toLocaleString()} mi</span>
             )}

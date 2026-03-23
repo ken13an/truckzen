@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import Logo from '@/components/Logo'
+import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import { RefreshCw, Clock, Users, Package } from 'lucide-react'
 
 const FONT = "'Inter', -apple-system, sans-serif"
@@ -488,6 +489,11 @@ export default function FloorManagerDashboardPage() {
                               </span>
                             )}
                           </div>
+
+                          {/* Ownership Type Badge */}
+                          {job.ownership_type && job.ownership_type !== 'fleet_asset' && (
+                            <div style={{ marginBottom: 6 }}><OwnershipTypeBadge type={job.ownership_type} size="sm" dark /></div>
+                          )}
 
                           {/* Description */}
                           {job.description && (

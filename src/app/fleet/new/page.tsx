@@ -135,12 +135,13 @@ export default function NewFleetPage() {
           </div><div/></div>
           <div style={S.row2}>
             <div>
-              <label style={S.label}>Ownership Type *</label>
+              <label style={S.label}>Truck Type *</label>
               <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.ownership_type} onChange={e=>setForm(f=>({...f,ownership_type:e.target.value}))}>
-                <option value="fleet_asset">Fleet Asset</option>
+                <option value="fleet_asset">Company Truck</option>
                 <option value="owner_operator">Owner Operator</option>
                 <option value="outside_customer">Outside Customer</option>
               </select>
+              <div style={{ fontSize: 10, color: '#48536A', marginTop: 3 }}>Determines estimate requirements and labor rates</div>
             </div>
             <div>
               <label style={S.label}>Owner / Customer</label>

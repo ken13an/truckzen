@@ -89,6 +89,13 @@ export async function POST(req: Request) {
   const year = new Date().getFullYear()
   const woNum = `WO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
 
+  // Snapshot ownership_type from asset
+  let assetOwnership = 'fleet_asset'
+  if (asset_id) {
+    const { data: assetData } = await s.from('assets').select('ownership_type').eq('id', asset_id).single()
+    if (assetData?.ownership_type) assetOwnership = assetData.ownership_type
+  }
+
   const { data: wo, error } = await s
     .from('service_orders')
     .insert({
@@ -105,6 +112,7 @@ export async function POST(req: Request) {
       created_by_user_id: user_id || null,
       mileage_at_service: mileage ? parseInt(mileage) : null,
       odometer_in: mileage ? parseInt(mileage) : null,
+      ownership_type: assetOwnership,
     })
     .select()
     .single()

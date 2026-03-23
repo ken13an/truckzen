@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     .select(`id, description, line_status, estimated_hours, actual_hours, required_skills, line_type,
       service_orders!inner(id, so_number, status, shop_id, customer_id, asset_id,
         customers(company_name),
-        assets(unit_number, unit_type)
+        assets(unit_number, unit_type, ownership_type)
       )`)
     .eq('service_orders.shop_id', shopId)
     .in('line_type', ['labor', 'job'])
@@ -60,6 +60,7 @@ export async function GET(req: Request) {
       customer: wo?.customers?.company_name || '',
       unit_number: wo?.assets?.unit_number || '',
       unit_type: wo?.assets?.unit_type || 'tractor',
+      ownership_type: wo?.assets?.ownership_type || 'fleet_asset',
       mechanic_name: mechanic?.full_name || null,
       mechanic_team: mechanic?.team || null,
     }

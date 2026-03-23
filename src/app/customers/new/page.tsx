@@ -5,7 +5,7 @@ import { ChevronLeft } from 'lucide-react'
 
 export default function NewCustomerPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ company_name:'', contact_name:'', phone:'', email:'', address:'', city:'', state:'TX', zip:'', payment_terms:'Net 30', notes:'' })
+  const [form, setForm] = useState({ company_name:'', contact_name:'', phone:'', email:'', address:'', city:'', state:'TX', zip:'', payment_terms:'Net 30', default_ownership_type:'fleet_asset', notes:'' })
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
 
@@ -62,8 +62,16 @@ export default function NewCustomerPage() {
                 {['Net 30','Net 15','Net 60','COD','Credit Card','Prepaid'].map(t=><option key={t}>{t}</option>)}
               </select>
             </div>
-            <div><label style={S.label}>Notes</label><input style={S.input} value={form.notes} onChange={upd('notes')} placeholder="Optional notes"/></div>
+            <div><label style={S.label}>Default Truck Type *</label>
+              <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.default_ownership_type} onChange={upd('default_ownership_type')}>
+                <option value="fleet_asset">Company Truck</option>
+                <option value="owner_operator">Owner Operator</option>
+                <option value="outside_customer">Outside Customer</option>
+              </select>
+              <div style={{ fontSize: 10, color: '#48536A', marginTop: 3 }}>New trucks default to this type</div>
+            </div>
           </div>
+          <div><label style={S.label}>Notes</label><input style={S.input} value={form.notes} onChange={upd('notes')} placeholder="Optional notes"/></div>
         </div>
         <button type="submit" style={S.btn} disabled={saving}>{saving?'Adding...':'Add Customer →'}</button>
       </form>

@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 
 export default function FleetDetailPage() {
   const params = useParams(); const router = useRouter()
@@ -70,7 +71,8 @@ export default function FleetDetailPage() {
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:'#F0F4FF', letterSpacing:'.02em' }}>Unit #{asset.unit_number}</div>
           <div style={{ fontSize:14, color:'#DDE3EE', marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
           {asset.unit_type && <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{UNIT_TYPE_LABEL[asset.unit_type] || asset.unit_type}</div>}
-          <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{(asset.customers as any)?.company_name}{asset.ownership_type && asset.ownership_type !== 'fleet_asset' ? ` — ${asset.ownership_type.replace(/_/g, ' ')}` : ''}</div>
+          <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{(asset.customers as any)?.company_name}</div>
+          <div style={{ marginTop:6 }}><OwnershipTypeBadge type={asset.ownership_type} dark /></div>
         </div>
         <div style={{ display:'flex', gap:8, flexDirection:'column', alignItems:'flex-end' }}>
           <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]||'#7C8BA0')+'18', color:statusColor[asset.status]||'#7C8BA0', border:`1px solid ${statusColor[asset.status]||'#7C8BA0'}33` }}>
@@ -99,12 +101,13 @@ export default function FleetDetailPage() {
             </div>
             <div style={S.row2}>
               <div><label style={S.label}>Current Odometer</label><input style={S.input} type="number" value={edit?.odometer||0} onChange={e=>setEdit((a:any)=>({...a,odometer:parseInt(e.target.value)||0}))}/></div>
-              <div><label style={S.label}>Ownership Type</label>
+              <div><label style={S.label}>Truck Type</label>
                 <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={edit?.ownership_type||'fleet_asset'} onChange={e=>setEdit((a:any)=>({...a,ownership_type:e.target.value}))}>
-                  <option value="fleet_asset">Fleet Asset</option>
+                  <option value="fleet_asset">Company Truck</option>
                   <option value="owner_operator">Owner Operator</option>
                   <option value="outside_customer">Outside Customer</option>
                 </select>
+                {edit?.ownership_type !== asset?.ownership_type && <div style={{ fontSize: 10, color: '#D97706', marginTop: 3 }}>Changing truck type affects estimate requirements and pricing for future WOs</div>}
               </div>
             </div>
             <div style={S.row2}>

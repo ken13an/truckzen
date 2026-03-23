@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import SourceBadge from '@/components/ui/SourceBadge'
+import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import Pagination from '@/components/Pagination'
 
 export default function FleetPage() {
@@ -94,7 +95,7 @@ export default function FleetPage() {
                   <td style={{ padding: '9px 10px', fontSize: 12, color: '#F0F4FF', fontWeight: 600 }}>{a.make || '—'} {a.model || ''}</td>
                   <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A' }}>{a.vin || '—'}</td>
                   <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: '#DDE3EE' }}>{a.odometer?.toLocaleString() || '—'}</td>
-                  <td style={{ padding: '9px 10px', fontSize: 10, color: '#7C8BA0' }}>{OWNER_LABELS[a.ownership_type || 'fleet_asset'] || '—'}</td>
+                  <td style={{ padding: '9px 10px' }}><OwnershipTypeBadge type={a.ownership_type} size="sm" dark /></td>
                   <td style={{ padding: '9px 10px', fontSize: 11, color: '#DDE3EE' }}>{(a.customers as any)?.company_name || '—'}</td>
                   <td style={{ padding: '9px 10px' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 100, fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, background: (statusColor[a.status] || '#7C8BA0') + '18', color: statusColor[a.status] || '#7C8BA0', border: '1px solid ' + (statusColor[a.status] || '#7C8BA0') + '33' }}>

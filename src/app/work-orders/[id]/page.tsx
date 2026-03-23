@@ -6,6 +6,7 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { ChevronLeft, Users, MessageSquare, Clock, DollarSign, MoreHorizontal, Plus, Mic, Upload, X, Paperclip } from 'lucide-react'
 import AITextInput from '@/components/ai-text-input'
 import SourceBadge from '@/components/ui/SourceBadge'
+import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -560,7 +561,7 @@ export default function WorkOrderDetail() {
                 VIN: <span style={{ fontWeight: 700 }}>...{vinDisplay}</span>
               </div>
               {mileage && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{parseInt(mileage).toLocaleString()} mi</div>}
-              {asset.ownership_type && <span style={{ ...pillStyle('#F3F4F6', GRAY), marginTop: 4 }}>{asset.ownership_type}</span>}
+              <div style={{ marginTop: 4 }}><OwnershipTypeBadge type={wo.ownership_type || asset.ownership_type} size="lg" /></div>
             </>
           ) : (
             <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>Walk-in / Unit not on file</span>
