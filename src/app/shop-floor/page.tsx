@@ -42,6 +42,7 @@ export default function ShopFloorPage() {
   const [mechanics, setMechanics] = useState<any[]>([])
   const [activeClocks, setActiveClocks] = useState<any[]>([])
   const [showMechPanel, setShowMechPanel] = useState(true)
+  const [partsStatusMap, setPartsStatusMap] = useState<Record<string, string>>({})
 
   const loadJobs = useCallback(async (profile: any) => {
     const { data } = await supabase
@@ -69,6 +70,13 @@ export default function ShopFloorPage() {
       ])
       setMechanics(mechs || [])
       setActiveClocks(clocks || [])
+      // Load parts request statuses
+      const { data: prs } = await supabase.from('parts_requests').select('so_id, status, line_items').eq('shop_id', p.shop_id).is('deleted_at', null).not('status', 'in', '("delivered","picked_up")')
+      if (prs) {
+        const map: Record<string, string> = {}
+        for (const pr of prs) { if (pr.so_id) map[pr.so_id] = pr.status }
+        setPartsStatusMap(map)
+      }
       setLoading(false)
     })
   }, [])
@@ -223,7 +231,7 @@ export default function ShopFloorPage() {
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
                   <thead><tr>
-                    {['Truck', 'Team/Bay', 'Customer', 'Complaint', 'Status', 'Priority', 'Mechanic', 'Updated'].map(h => (
+                    {['Truck', 'Team/Bay', 'Customer', 'Complaint', 'Status', 'Parts', 'Priority', 'Mechanic', 'Updated'].map(h => (
                       <th key={h} style={S.th}>{h}</th>
                     ))}
                   </tr></thead>
@@ -235,6 +243,7 @@ export default function ShopFloorPage() {
                         <td style={S.td}>{(j.customers as any)?.company_name || '—'}</td>
                         <td style={{ ...S.td, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.complaint || '—'}</td>
                         <td style={S.td}><span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: STATUS_COLOR[j.status] || '#7C8BA0', background: `${STATUS_COLOR[j.status] || '#7C8BA0'}15` }}>{j.status?.replace(/_/g, ' ')}</span></td>
+                        <td style={S.td}>{partsStatusMap[j.id] ? <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: partsStatusMap[j.id] === 'ready' ? '#22C55E' : partsStatusMap[j.id] === 'submitted' || partsStatusMap[j.id] === 'partial' ? '#F59E0B' : '#7C8BA0', background: `${partsStatusMap[j.id] === 'ready' ? '#22C55E' : partsStatusMap[j.id] === 'submitted' || partsStatusMap[j.id] === 'partial' ? '#F59E0B' : '#7C8BA0'}15` }}>{partsStatusMap[j.id] === 'ready' ? 'Parts Ready' : partsStatusMap[j.id] === 'partial' ? 'Partial' : partsStatusMap[j.id] === 'submitted' ? 'Preparing' : partsStatusMap[j.id]}</span> : <span style={{ color: '#48536A', fontSize: 9 }}>—</span>}</td>
                         <td style={S.td}><span style={{ color: PRIORITY_COLOR[j.priority] || '#7C8BA0', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' }}>{j.priority}</span></td>
                         <td style={S.td}>{(j.users as any)?.full_name || <span style={{ color: '#48536A' }}>Unassigned</span>}</td>
                         <td style={{ ...S.td, color: '#48536A', fontSize: 10 }}>{timeAgo(j.updated_at || j.created_at)}</td>

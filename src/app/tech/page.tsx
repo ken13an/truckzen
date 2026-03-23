@@ -28,6 +28,7 @@ export default function TechMobilePage() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
   const [showActionRequest, setShowActionRequest] = useState(false)
+  const [partsStatusMap, setPartsStatusMap] = useState<Record<string, { status: string; line_items: any[] }>>({})
   const [actionType, setActionType] = useState('need_parts')
   const [actionDesc, setActionDesc] = useState('')
   const [actionHours, setActionHours] = useState('')
@@ -80,6 +81,13 @@ export default function TechMobilePage() {
       setUser(p)
       await loadJobs(p)
       await loadFloor(p)
+      // Load parts statuses for my jobs
+      const { data: prs } = await supabase.from('parts_requests').select('so_id, status, line_items').eq('shop_id', p.shop_id).is('deleted_at', null)
+      if (prs) {
+        const map: Record<string, { status: string; line_items: any[] }> = {}
+        for (const pr of prs) { if (pr.so_id) map[pr.so_id] = { status: pr.status, line_items: pr.line_items || [] } }
+        setPartsStatusMap(map)
+      }
       setLoading(false)
     })
   }, [])
@@ -358,6 +366,17 @@ export default function TechMobilePage() {
           </div>
           <div style={{ fontSize: 12, color: '#7C8BA0' }}>{(so.customers as any)?.company_name || '—'}</div>
           {so.complaint && <div style={{ fontSize: 12, color: '#A0AABF', marginTop: 6, lineHeight: 1.5 }}>{so.complaint.slice(0, 100)}{so.complaint.length > 100 ? '...' : ''}</div>}
+          {/* Parts status banner */}
+          {partsStatusMap[so.id] && (() => {
+            const ps = partsStatusMap[so.id]
+            const orderedCount = (ps.line_items || []).filter((l: any) => l.ordered && !l.in_stock).length
+            const eta = (ps.line_items || []).find((l: any) => l.ordered && l.eta)?.eta
+            if (ps.status === 'ready') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(29,184,112,.12)', fontSize: 11, fontWeight: 600, color: '#1DB870' }}>Parts ready — go pick up from parts dept</div>
+            if (ps.status === 'partial') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(212,136,42,.12)', fontSize: 11, fontWeight: 600, color: '#D4882A' }}>Some parts ready, {orderedCount} on order{eta ? ` until ${eta}` : ''}</div>
+            if (ps.status === 'submitted') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(212,136,42,.12)', fontSize: 11, fontWeight: 600, color: '#D4882A' }}>Parts being prepared</div>
+            if (['pending', 'requested'].includes(ps.status)) return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(124,139,160,.12)', fontSize: 11, fontWeight: 600, color: '#7C8BA0' }}>Parts request pending</div>
+            return null
+          })()}
           {clockedIn === so.id && (
             <div style={{ marginTop: 8, fontSize: 12, color: '#4D9EFF', fontWeight: 600 }}>
               Clocked in — {fmtTime(elapsed)}
@@ -390,6 +409,20 @@ export default function TechMobilePage() {
       <div style={{ display: 'inline-block', padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, color: statusColor[so.status], border: `1px solid ${statusColor[so.status]}30`, background: `${statusColor[so.status]}10`, marginBottom: 16, textTransform: 'uppercase' }}>
         {so.status?.replace(/_/g, ' ')}
       </div>
+
+      {/* Parts status banner */}
+      {partsStatusMap[so.id] && (() => {
+        const ps = partsStatusMap[so.id]
+        const orderedItems = (ps.line_items || []).filter((l: any) => l.ordered && !l.in_stock)
+        const eta = orderedItems.find((l: any) => l.eta)?.eta
+        const bg = ps.status === 'ready' ? 'rgba(29,184,112,.12)' : ps.status === 'partial' || ps.status === 'submitted' ? 'rgba(212,136,42,.12)' : 'rgba(124,139,160,.12)'
+        const clr = ps.status === 'ready' ? '#1DB870' : ps.status === 'partial' || ps.status === 'submitted' ? '#D4882A' : '#7C8BA0'
+        const msg = ps.status === 'ready' ? 'Parts ready — go pick up from parts dept'
+          : ps.status === 'partial' ? `Some parts ready, ${orderedItems.length} on order${eta ? ` until ${eta}` : ''}`
+          : ps.status === 'submitted' ? 'Parts being prepared'
+          : 'Parts request pending'
+        return <div style={{ padding: '10px 14px', borderRadius: 10, background: bg, border: `1px solid ${clr}30`, fontSize: 13, fontWeight: 600, color: clr, marginBottom: 16 }}>{msg}</div>
+      })()}
 
       {/* Complaint / Cause / Correction */}
       <div style={S.section}>

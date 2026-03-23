@@ -49,6 +49,7 @@ export async function PATCH(req: Request, { params }: P) {
     'default_location', 'preferred_vendor', 'manufacturer', 'part_category', 'item_type',
     'status', 'search_tags', 'track_quantity', 'count_group', 'cogs_account',
     'fee_discount', 'shop_supply_amount', 'website_link', 'upc', 'notes', 'cross_references',
+    'price_ugl_company', 'price_ugl_owner_operator', 'price_outside',
   ]
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }

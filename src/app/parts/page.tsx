@@ -2,13 +2,14 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useEmployeePermission } from '@/hooks/useEmployeePermission'
 
 const FONT = "'Instrument Sans', sans-serif"
 const MONO = "'IBM Plex Mono', monospace"
 const BLUE = '#1B6EE6'
 const PAGE_BG = '#F4F5F7'
 
-type SortField = 'part_number' | 'description' | 'uom' | 'on_hand' | 'allocated' | 'average_cost' | 'selling_price' | 'min_qty' | 'max_qty' | 'default_location' | 'preferred_vendor' | 'part_category' | 'status'
+type SortField = 'part_number' | 'description' | 'uom' | 'on_hand' | 'allocated' | 'average_cost' | 'selling_price' | 'price_ugl_company' | 'price_ugl_owner_operator' | 'price_outside' | 'min_qty' | 'max_qty' | 'default_location' | 'preferred_vendor' | 'part_category' | 'status'
 type SortDir = 'asc' | 'desc'
 type SubTab = 'inventory' | 'vendors' | 'history' | 'purchase_orders'
 
@@ -39,6 +40,9 @@ export default function PartsPage() {
   // Sorting
   const [sortField, setSortField] = useState<SortField>('part_number')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+
+  const canViewCostPrice = useEmployeePermission('parts.view_cost_price')
+  const canViewVendorInfo = useEmployeePermission('parts.view_vendor_info')
 
   const searchTimer = useRef<ReturnType<typeof setTimeout>>()
 
@@ -127,6 +131,9 @@ export default function PartsPage() {
   function getVendor(p: any) { return p.preferred_vendor || p.vendor || '--' }
   function getAvgCost(p: any) { return p.average_cost ?? p.cost_price ?? null }
   function getSellingPrice(p: any) { return p.selling_price ?? p.sell_price ?? null }
+  function getPriceUgl(p: any) { return p.price_ugl_company ?? null }
+  function getPriceOwnerOp(p: any) { return p.price_ugl_owner_operator ?? null }
+  function getPriceOutside(p: any) { return p.price_outside ?? p.sell_price ?? null }
   function getOnHand(p: any) { return p.on_hand ?? 0 }
   function getAllocated(p: any) { return p.allocated ?? p.reserved_qty ?? 0 }
   function getLocation(p: any) { return p.default_location || p.bin_location || '--' }
@@ -146,7 +153,9 @@ export default function PartsPage() {
     { key: 'on_hand', label: 'In Stock', align: 'right', width: 80 },
     { key: 'allocated', label: 'Allocated', align: 'right', width: 80 },
     { key: 'average_cost', label: 'Avg Cost', align: 'right', width: 90 },
-    { key: 'selling_price', label: 'Selling Price', align: 'right', width: 100 },
+    { key: 'price_ugl_company', label: 'UGL Co.', align: 'right', width: 85 },
+    { key: 'price_ugl_owner_operator', label: 'Owner Op.', align: 'right', width: 85 },
+    { key: 'price_outside', label: 'Outside', align: 'right', width: 85 },
     { key: 'min_qty', label: 'Min Qty', align: 'right', width: 70 },
     { key: 'max_qty', label: 'Max Qty', align: 'right', width: 70 },
     { key: 'default_location', label: 'Location', width: 90 },
@@ -281,11 +290,19 @@ export default function PartsPage() {
                           </td>
                           {/* Avg Cost */}
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>
-                            {fmt(getAvgCost(p))}
+                            {canViewCostPrice ? fmt(getAvgCost(p)) : '***'}
                           </td>
-                          {/* Selling Price */}
+                          {/* UGL Co. Price */}
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>
-                            {fmt(getSellingPrice(p))}
+                            {fmt(getPriceUgl(p))}
+                          </td>
+                          {/* Owner Op. Price */}
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>
+                            {fmt(getPriceOwnerOp(p))}
+                          </td>
+                          {/* Outside Price */}
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>
+                            {fmt(getPriceOutside(p))}
                           </td>
                           {/* Min Qty */}
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>
@@ -298,7 +315,7 @@ export default function PartsPage() {
                           {/* Location */}
                           <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{getLocation(p)}</td>
                           {/* Vendor */}
-                          <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getVendor(p)}</td>
+                          <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{canViewVendorInfo ? getVendor(p) : '***'}</td>
                           {/* Category */}
                           <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{getPartCategory(p)}</td>
                           {/* Status */}

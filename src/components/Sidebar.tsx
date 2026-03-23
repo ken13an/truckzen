@@ -8,11 +8,12 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
-import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2 } from 'lucide-react'
+import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock } from 'lucide-react'
 
 const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
 const TRASH_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'floor_supervisor', 'service_writer', 'office_admin']
+const PERMISSIONS_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'parts_manager', 'maintenance_manager', 'office_admin']
 
 interface DeptSection {
   label: string
@@ -281,6 +282,7 @@ export default function Sidebar() {
         {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
         {TRASH_ROLES.includes(user.role) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
         {renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
+        {PERMISSIONS_ROLES.includes(user.role) && renderNavItem({ href: '/settings/permissions', label: 'Permissions', icon: Lock })}
         <a href="#" onClick={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,.08)'}

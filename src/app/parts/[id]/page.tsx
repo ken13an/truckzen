@@ -224,6 +224,19 @@ export default function PartDetailPage() {
                   {editing && <input type="number" step="0.01" value={form.inventory_balance ?? ''} onChange={e => setForm({ ...form, inventory_balance: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />}
                 </Field>
               </div>
+              {/* Tier pricing */}
+              <div style={{ ...sectionTitle, marginTop: 20 }}>Tier Pricing</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                <Field label="UGL Company" value={editing ? undefined : fmt(part.price_ugl_company)}>
+                  {editing && <input type="number" step="0.01" value={form.price_ugl_company ?? ''} onChange={e => setForm({ ...form, price_ugl_company: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />}
+                </Field>
+                <Field label="UGL Owner Operator" value={editing ? undefined : fmt(part.price_ugl_owner_operator)}>
+                  {editing && <input type="number" step="0.01" value={form.price_ugl_owner_operator ?? ''} onChange={e => setForm({ ...form, price_ugl_owner_operator: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />}
+                </Field>
+                <Field label="Outside Customer" value={editing ? undefined : fmt(part.price_outside)}>
+                  {editing && <input type="number" step="0.01" value={form.price_outside ?? ''} onChange={e => setForm({ ...form, price_outside: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />}
+                </Field>
+              </div>
             </div>
 
             {/* Inventory section */}

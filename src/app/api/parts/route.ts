@@ -24,6 +24,7 @@ export async function GET(req: Request) {
       'manufacturer, part_category, item_type, status, search_tags, track_quantity, count_group, cogs_account, ' +
       'fee_discount, shop_supply_amount, website_link, upc, notes, cross_references, source, ' +
       'category, cost_price, sell_price, vendor, bin_location, reorder_point, reserved_qty, core_charge, warranty_months, ' +
+      'price_ugl_company, price_ugl_owner_operator, price_outside, ' +
       'created_at, updated_at',
       { count: 'exact' }
     )
@@ -66,7 +67,8 @@ export async function POST(req: Request) {
   const body = await req.json()
   const { part_number, description, category, on_hand, reorder_point, cost_price, sell_price, vendor, bin_location, core_charge, warranty_months,
     uom, average_cost, selling_price, cost_floor, markup_percent, margin_percent, min_qty, max_qty, default_location, preferred_vendor,
-    manufacturer, part_category, item_type, status, track_quantity, count_group, notes, cross_references } = body
+    manufacturer, part_category, item_type, status, track_quantity, count_group, notes, cross_references,
+    price_ugl_company, price_ugl_owner_operator, price_outside } = body
 
   if (!description) return NextResponse.json({ error: 'Description required' }, { status: 400 })
 
@@ -102,6 +104,9 @@ export async function POST(req: Request) {
     count_group:     count_group || null,
     notes:           notes || null,
     cross_references: cross_references || null,
+    price_ugl_company:        price_ugl_company != null ? parseFloat(price_ugl_company) : null,
+    price_ugl_owner_operator: price_ugl_owner_operator != null ? parseFloat(price_ugl_owner_operator) : null,
+    price_outside:            price_outside != null ? parseFloat(price_outside) : (sell_price ? parseFloat(sell_price) : null),
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

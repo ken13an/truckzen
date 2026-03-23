@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import SourceBadge from '@/components/ui/SourceBadge'
 
-type Tab = 'fleet' | 'work-orders' | 'contacts' | 'billing' | 'documents'
+type Tab = 'fleet' | 'work-orders' | 'contacts' | 'billing' | 'documents' | 'parts'
 
 export default function CustomerProfilePage() {
   const params = useParams()
@@ -259,6 +259,7 @@ export default function CustomerProfilePage() {
     { key: 'work-orders', label: 'Work Orders' },
     { key: 'contacts', label: 'Contacts' },
     { key: 'billing', label: 'Billing' },
+    { key: 'parts', label: 'Parts' },
     { key: 'documents', label: 'Documents' },
   ]
 
@@ -825,6 +826,82 @@ export default function CustomerProfilePage() {
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {/* ==================== PARTS TAB ==================== */}
+      {tab === 'parts' && (
+        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0', marginBottom: 16 }}>Pricing Tier</div>
+          <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 16, lineHeight: 1.6 }}>
+            Determines which price level is used when parts are quoted for this customer&apos;s work orders.
+          </div>
+
+          {/* Current tier badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <span style={{ fontSize: 12, color: '#7C8BA0' }}>Current tier:</span>
+            <span style={{
+              padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 700,
+              background: customer.pricing_tier === 'ugl_company' ? 'rgba(59,130,246,0.15)' : customer.pricing_tier === 'ugl_owner_operator' ? 'rgba(245,158,11,0.15)' : 'rgba(107,114,128,0.15)',
+              color: customer.pricing_tier === 'ugl_company' ? '#3B82F6' : customer.pricing_tier === 'ugl_owner_operator' ? '#F59E0B' : '#9CA3AF',
+              textTransform: 'uppercase' as const, letterSpacing: '.03em',
+            }}>
+              {customer.pricing_tier === 'ugl_company' ? 'UGL Company' : customer.pricing_tier === 'ugl_owner_operator' ? 'UGL Owner Operator' : 'Outside Customer'}
+            </span>
+          </div>
+
+          {/* Change tier */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <select
+              value={customer.pricing_tier || 'outside'}
+              onChange={async (e) => {
+                const newTier = e.target.value
+                const res = await fetch(`/api/customers/${id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ pricing_tier: newTier }),
+                })
+                if (res.ok) {
+                  const updated = await res.json()
+                  setCustomer((c: any) => ({ ...c, ...updated }))
+                  flash('Pricing tier updated')
+                }
+              }}
+              style={{
+                padding: '8px 14px', fontSize: 12, borderRadius: 8,
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                color: '#EDEDF0', fontFamily: "'Inter', sans-serif", cursor: 'pointer', outline: 'none',
+              }}
+            >
+              <option value="ugl_company" style={{ background: '#151520' }}>UGL Company</option>
+              <option value="ugl_owner_operator" style={{ background: '#151520' }}>UGL Owner Operator</option>
+              <option value="outside" style={{ background: '#151520' }}>Outside Customer</option>
+            </select>
+          </div>
+
+          {/* Tier descriptions */}
+          <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+            {[
+              { tier: 'ugl_company', label: 'UGL Company', desc: 'Company-owned trucks on UGL account', color: '#3B82F6' },
+              { tier: 'ugl_owner_operator', label: 'UGL Owner Operator', desc: 'Independent operators under UGL', color: '#F59E0B' },
+              { tier: 'outside', label: 'Outside Customer', desc: 'Standard outside customer pricing', color: '#9CA3AF' },
+            ].map(t => (
+              <div key={t.tier} style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 8,
+                background: customer.pricing_tier === t.tier ? 'rgba(255,255,255,0.04)' : 'transparent',
+                border: customer.pricing_tier === t.tier ? `1px solid ${t.color}30` : '1px solid transparent',
+              }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#EDEDF0' }}>{t.label}</div>
+                  <div style={{ fontSize: 11, color: '#7C8BA0' }}>{t.desc}</div>
+                </div>
+                {customer.pricing_tier === t.tier && (
+                  <span style={{ marginLeft: 'auto', fontSize: 10, color: t.color, fontWeight: 700 }}>ACTIVE</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

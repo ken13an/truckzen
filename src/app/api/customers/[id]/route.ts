@@ -35,7 +35,7 @@ export async function PATCH(req: Request, { params }: P) {
   const s = db()
   const body = await req.json()
 
-  const updateable = ['company_name', 'contact_name', 'phone', 'email', 'address', 'notes', 'customer_status', 'payment_terms', 'credit_limit', 'dot_number', 'mc_number']
+  const updateable = ['company_name', 'contact_name', 'phone', 'email', 'address', 'notes', 'customer_status', 'payment_terms', 'credit_limit', 'dot_number', 'mc_number', 'pricing_tier']
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }
 
