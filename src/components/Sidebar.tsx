@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
-import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers } from 'lucide-react'
+import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge } from 'lucide-react'
 
 const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
@@ -46,10 +46,21 @@ const DEPARTMENTS: DeptSection[] = [
     ],
   },
   {
-    label: 'Maintenance', icon: Cog, color: '#F59E0B', dashboardHref: '/maintenance/dashboard',
+    label: 'Maintenance', icon: Wrench, color: '#F59E0B', dashboardHref: '/maintenance',
     items: [
-      { href: '/service-requests', label: 'Service Requests', icon: FileText },
-      { href: '/maintenance/warranty-review', label: 'Warranty Review', icon: ShieldCheck },
+      { href: '/maintenance', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/maintenance/repairs', label: 'Road Repairs', icon: Truck },
+      { href: '/maintenance/drivers', label: 'Drivers', icon: Users2 },
+      { href: '/maintenance/pm', label: 'PM Schedules', icon: CalendarClock },
+      { href: '/maintenance/inspections', label: 'Inspections', icon: ClipboardCheck },
+      { href: '/maintenance/fuel', label: 'Fuel', icon: Fuel },
+      { href: '/maintenance/vendors', label: 'Vendors', icon: Building2 },
+      { href: '/maintenance/parts', label: 'Parts', icon: Package },
+      { href: '/maintenance/purchase-orders', label: 'Purchase Orders', icon: ShoppingCart },
+      { href: '/maintenance/expenses', label: 'Expenses', icon: Receipt },
+      { href: '/maintenance/equipment', label: 'Equipment', icon: Cog },
+      { href: '/maintenance/meters', label: 'Meters', icon: Gauge },
+      { href: '/maintenance/reports', label: 'Reports', icon: BarChart3 },
     ],
   },
   {
@@ -71,7 +82,7 @@ function getDeptAccess(role: string): string[] {
     case 'accountant': return ['Service', 'Accounting']
     case 'office_admin': return ['Service', 'Parts', 'Fleet', 'Accounting']
     case 'fleet_manager': return ['Fleet']
-    case 'maintenance_manager': return ['Maintenance']
+    case 'maintenance_manager': case 'maintenance': return ['Maintenance']
     case 'dispatcher': return ['Fleet']
     default: return ['Service']
   }
