@@ -53,7 +53,7 @@ export default function ServiceWriterDashboard() {
 
   return (
     <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 20 }}>Service Writer</div>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 20 }}>Service</div>
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
@@ -74,7 +74,7 @@ export default function ServiceWriterDashboard() {
         {/* Service Requests */}
         <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Service Requests</div>
-          {requests.length === 0 ? <div style={{ color: '#48536A', fontSize: 12, padding: 20, textAlign: 'center' }}>No pending requests</div> : requests.slice(0, 8).map(r => (
+          {requests.length === 0 ? <div style={{ color: '#48536A', fontSize: 12, padding: 20, textAlign: 'center' }}>No pending requests — they&apos;ll appear when customers check in</div> : requests.slice(0, 8).map(r => (
             <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }} onClick={() => window.location.href = `/service-requests`}>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#F0F4FF' }}>{r.company_name || 'Walk-in'} {r.unit_number ? `· #${r.unit_number}` : ''}</div>

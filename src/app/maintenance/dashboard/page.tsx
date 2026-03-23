@@ -93,10 +93,10 @@ export default function MaintenanceDashboard() {
           ))}
         </div>
 
-        {/* Warranty */}
-        <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Warranty Checks Pending</div>
-          {warrantyPending.length === 0 ? <div style={{ padding: 16, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No warranty checks pending</div> : warrantyPending.map(wo => (
+        {/* Warranty — hidden if none */}
+        {warrantyPending.length > 0 && <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Warranty Checks Pending ({warrantyPending.length})</div>
+          {warrantyPending.map(wo => (
             <div key={wo.id} style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }} onClick={() => window.location.href = `/work-orders/${wo.id}`}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: BLUE }}>{wo.so_number}</span>
@@ -105,7 +105,7 @@ export default function MaintenanceDashboard() {
               <div style={{ fontSize: 11, color: AMBER, marginTop: 2 }}>{(wo.assets as any)?.warranty_provider || 'Check needed'}</div>
             </div>
           ))}
-        </div>
+        </div>}
       </div>
     </div>
   )

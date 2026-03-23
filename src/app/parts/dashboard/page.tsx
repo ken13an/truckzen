@@ -45,7 +45,7 @@ export default function PartsDashboard() {
 
   return (
     <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 20 }}>Parts Department</div>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 20 }}>Parts</div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
@@ -80,15 +80,15 @@ export default function PartsDashboard() {
                 </tr>
               )
             })}
-            {pendingParts.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#48536A' }}>No pending requests</td></tr>}
+            {pendingParts.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#48536A' }}>No parts requests — all caught up</td></tr>}
           </tbody>
         </table>
       </div>
 
-      {/* Low Stock */}
-      <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16 }}>
+      {/* Low Stock — hidden if none */}
+      {lowStock.length > 0 && <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Low Stock Alerts ({lowStock.length})</div>
-        {lowStock.length === 0 ? <div style={{ padding: 16, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No low stock items</div> : lowStock.slice(0, 10).map(p => (
+        {lowStock.slice(0, 10).map(p => (
           <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
             <div>
               <div style={{ fontSize: 12, color: '#F0F4FF' }}>{p.description}</div>
@@ -100,7 +100,7 @@ export default function PartsDashboard() {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   )
 }
