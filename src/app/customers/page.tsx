@@ -45,7 +45,9 @@ export default function CustomersPage() {
           return res.json()
         })
         .then(data => {
-          setCustomers(data.data || [])
+          // Handle both paginated {data:[]} and plain array responses
+          const list = Array.isArray(data) ? data : (data.data || [])
+          setCustomers(list)
           setLoading(false)
         })
         .catch(err => {
