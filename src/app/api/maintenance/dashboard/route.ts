@@ -32,6 +32,16 @@ export async function GET(req: Request) {
 
   const fuelSpend = (fuel.data || []).reduce((sum: number, r: any) => sum + (r.total_cost || 0), 0)
 
+  // New expanded stats
+  const [overdueRem, dueSoonRem, openIssues, openFaults, overdueVR, activeWarranties] = await Promise.all([
+    s.from('maint_service_reminders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('overdue', true),
+    s.from('maint_service_reminders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'active').lte('next_due_date', in30).gt('next_due_date', today),
+    s.from('maint_issues').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'open'),
+    s.from('maint_faults').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('resolved', false),
+    s.from('maint_vehicle_renewals').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'active').lt('expiry_date', today),
+    s.from('maint_warranties').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('current_status', 'active'),
+  ])
+
   return NextResponse.json({
     activeRepairs: repairs.count || 0,
     overduePMs: overdue.count || 0,
@@ -39,5 +49,11 @@ export async function GET(req: Request) {
     fuelSpendMonth: fuelSpend,
     openDefects: defects.count || 0,
     totalDrivers: drivers.count || 0,
+    overdueReminders: overdueRem.count || 0,
+    dueSoonReminders: dueSoonRem.count || 0,
+    openIssues: openIssues.count || 0,
+    openFaults: openFaults.count || 0,
+    overdueVehicleRenewals: overdueVR.count || 0,
+    activeWarranties: activeWarranties.count || 0,
   })
 }
