@@ -12,7 +12,14 @@ export async function GET(_req: Request, { params }: P) {
 
   const { data, error } = await supabase
     .from('parts')
-    .select('*')
+    .select(
+      'id, part_number, description, uom, on_hand, allocated, in_transit, average_cost, selling_price, cost_floor, ' +
+      'markup_percent, margin_percent, inventory_balance, min_qty, max_qty, default_location, preferred_vendor, ' +
+      'manufacturer, part_category, item_type, status, search_tags, track_quantity, count_group, cogs_account, ' +
+      'fee_discount, shop_supply_amount, website_link, upc, notes, cross_references, source, ' +
+      'category, cost_price, sell_price, vendor, bin_location, reorder_point, reserved_qty, core_charge, warranty_months, ' +
+      'shop_id, created_at, updated_at'
+    )
     .eq('id', id)
     .eq('shop_id', user.shop_id)
     .single()
@@ -34,9 +41,19 @@ export async function PATCH(req: Request, { params }: P) {
   const { data: current } = await supabase.from('parts').select('*').eq('id', id).eq('shop_id', user.shop_id).single()
   if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const updateable = ['part_number','description','category','on_hand','reorder_point','cost_price','sell_price','vendor','bin_location','core_charge','warranty_months']
+  const updateable = [
+    'part_number', 'description', 'category', 'on_hand', 'reorder_point', 'cost_price', 'sell_price',
+    'vendor', 'bin_location', 'core_charge', 'warranty_months',
+    'uom', 'allocated', 'in_transit', 'average_cost', 'selling_price', 'cost_floor',
+    'markup_percent', 'margin_percent', 'inventory_balance', 'min_qty', 'max_qty',
+    'default_location', 'preferred_vendor', 'manufacturer', 'part_category', 'item_type',
+    'status', 'search_tags', 'track_quantity', 'count_group', 'cogs_account',
+    'fee_discount', 'shop_supply_amount', 'website_link', 'upc', 'notes', 'cross_references',
+  ]
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }
+
+  if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
 
   const { data, error } = await supabase.from('parts').update(update).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
