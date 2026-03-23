@@ -107,5 +107,43 @@ export async function GET(req: Request) {
     return NextResponse.json({ vendors: result })
   }
 
+  if (tab === 'Issues & Faults') {
+    const [issues, faults, topFaults] = await Promise.all([
+      s.from('maint_issues').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'open'),
+      s.from('maint_faults').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('resolved', false),
+      s.from('maint_faults').select('fault_code, severity').eq('shop_id', shopId).gte('created_at', from),
+    ])
+    const faultMap: Record<string, { count: number; severity: string }> = {}
+    for (const f of (topFaults.data || [])) {
+      if (!faultMap[f.fault_code]) faultMap[f.fault_code] = { count: 0, severity: f.severity }
+      faultMap[f.fault_code].count++
+    }
+    const topList = Object.entries(faultMap).map(([code, v]) => ({ fault_code: code, ...v })).sort((a, b) => b.count - a.count).slice(0, 10)
+    return NextResponse.json({ openIssues: issues.count || 0, openFaults: faults.count || 0, avgResolution: 0, topFaults: topList })
+  }
+
+  if (tab === 'Compliance') {
+    const today = new Date().toISOString().split('T')[0]
+    const [srOv, srOk, vrOv, vrOk, crOv, crOk] = await Promise.all([
+      s.from('maint_service_reminders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('overdue', true),
+      s.from('maint_service_reminders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'active').eq('overdue', false),
+      s.from('maint_vehicle_renewals').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'active').lt('expiry_date', today),
+      s.from('maint_vehicle_renewals').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'active').gte('expiry_date', today),
+      s.from('maint_contact_renewals').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'active').lt('expiry_date', today),
+      s.from('maint_contact_renewals').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'active').gte('expiry_date', today),
+    ])
+    return NextResponse.json({ srOverdue: srOv.count || 0, srOk: srOk.count || 0, vrOverdue: vrOv.count || 0, vrOk: vrOk.count || 0, crOverdue: crOv.count || 0, crOk: crOk.count || 0 })
+  }
+
+  if (tab === 'Warranties') {
+    const [active, claims, totalClaimed] = await Promise.all([
+      s.from('maint_warranties').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('current_status', 'active'),
+      s.from('maint_warranty_claims').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).gte('claim_date', from),
+      s.from('maint_warranty_claims').select('amount_approved').eq('shop_id', shopId).gte('claim_date', from),
+    ])
+    const total = (totalClaimed.data || []).reduce((sum: number, c: any) => sum + (c.amount_approved || 0), 0)
+    return NextResponse.json({ activeWarranties: active.count || 0, claimsCount: claims.count || 0, totalClaimed: total })
+  }
+
   return NextResponse.json({})
 }

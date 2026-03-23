@@ -15,7 +15,7 @@ const DATE_PRESETS = [
   { label: 'This Year', days: 365 },
 ]
 
-const TABS = ['Overview', 'Cost Per Truck', 'Fuel', 'PM Compliance', 'Driver', 'Vendor Spend'] as const
+const TABS = ['Overview', 'Cost Per Truck', 'Fuel', 'PM Compliance', 'Driver', 'Vendor Spend', 'Issues & Faults', 'Compliance', 'Warranties', 'Fleet Utilization', 'Service History', 'Inventory & Parts'] as const
 
 export default function MaintReportsPage() {
   const supabase = createClient()
@@ -205,6 +205,86 @@ export default function MaintReportsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {tab === 'Issues & Faults' && (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+                {[
+                  { label: 'Open Issues', value: data.openIssues || 0, color: AMBER },
+                  { label: 'Open Faults', value: data.openFaults || 0, color: RED },
+                  { label: 'Avg Resolution (days)', value: data.avgResolution || '—', color: BLUE },
+                ].map(c => (
+                  <div key={c.label} style={S.card}><div style={{ fontSize: 10, color: '#48536A', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div><div style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</div></div>
+                ))}
+              </div>
+              {(data.topFaults || []).length > 0 && (
+                <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+                  <div style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>Top Fault Codes</div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr>{['Code', 'Count', 'Severity'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
+                    <tbody>{(data.topFaults || []).map((f: any, i: number) => (<tr key={i}><td style={{ ...S.td, fontFamily: MONO, color: BLUE }}>{f.fault_code}</td><td style={{ ...S.td, fontFamily: MONO, fontWeight: 700 }}>{f.count}</td><td style={S.td}>{f.severity}</td></tr>))}</tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === 'Compliance' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              {[
+                { label: 'Service Reminders', overdue: data.srOverdue || 0, ok: data.srOk || 0 },
+                { label: 'Vehicle Renewals', overdue: data.vrOverdue || 0, ok: data.vrOk || 0 },
+                { label: 'Contact Renewals', overdue: data.crOverdue || 0, ok: data.crOk || 0 },
+              ].map(c => {
+                const total = c.overdue + c.ok
+                const pct = total > 0 ? Math.round((c.ok / total) * 100) : 0
+                return (
+                  <div key={c.label} style={S.card}>
+                    <div style={{ fontSize: 10, color: '#48536A', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 8 }}>{c.label}</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: pct >= 80 ? GREEN : pct >= 50 ? AMBER : RED }}>{pct}%</div>
+                    <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{c.overdue} overdue · {c.ok} on time</div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {tab === 'Warranties' && (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
+                {[
+                  { label: 'Active Warranties', value: data.activeWarranties || 0, color: GREEN },
+                  { label: 'Total Claimed', value: `$${(data.totalClaimed || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: BLUE },
+                  { label: 'Claims This Period', value: data.claimsCount || 0, color: AMBER },
+                ].map(c => (
+                  <div key={c.label} style={S.card}><div style={{ fontSize: 10, color: '#48536A', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div><div style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</div></div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === 'Fleet Utilization' && (
+            <div style={S.card}>
+              <div style={{ textAlign: 'center', padding: 30, color: '#48536A', fontSize: 13 }}>
+                Fleet utilization metrics will display once vehicle status and location data is available. Track days on road, in shop, and idle per truck.
+              </div>
+            </div>
+          )}
+
+          {tab === 'Service History' && (
+            <div style={S.card}>
+              <div style={{ textAlign: 'center', padding: 30, color: '#48536A', fontSize: 13 }}>
+                Service history will display once maintenance records are entered. View all services grouped by vehicle with costs and frequency.
+              </div>
+            </div>
+          )}
+
+          {tab === 'Inventory & Parts' && (
+            <div style={S.card}>
+              <div style={{ textAlign: 'center', padding: 30, color: '#48536A', fontSize: 13 }}>
+                Inventory reports will display once parts data is available. Track parts usage, inventory value, and low stock alerts.
+              </div>
             </div>
           )}
         </>
