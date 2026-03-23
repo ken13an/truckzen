@@ -48,6 +48,7 @@ export default function AccountingPage() {
       .from('service_orders')
       .select('id, so_number, status, invoice_status, complaint, grand_total, created_at, updated_at, accounting_notes, accounting_approved_at, accounting_approved_by, customers(id, company_name, contact_name), assets(id, unit_number, year, make, model)')
       .eq('shop_id', profile.shop_id)
+      .neq('status', 'void')
       .in('invoice_status', ['pending_accounting', 'accounting_approved', 'sent_to_customer', 'quality_check_failed', 'draft'])
       .order('updated_at', { ascending: false })
       .limit(200)

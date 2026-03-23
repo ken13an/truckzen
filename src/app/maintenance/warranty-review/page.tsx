@@ -36,6 +36,7 @@ export default function WarrantyReviewPage() {
       .from('service_orders')
       .select('id, so_number, status, complaint, warranty_status, warranty_notes, created_at, assets(unit_number, year, make, model, warranty_provider, warranty_expiry), customers(company_name)')
       .eq('shop_id', shopId)
+      .neq('status', 'void')
       .eq('warranty_status', 'checking')
       .order('created_at', { ascending: false })
     setWos(data || [])

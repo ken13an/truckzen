@@ -25,10 +25,10 @@ export async function GET(req: Request) {
 
       // WO stats — use service_orders.grand_total as revenue source (invoices table may be empty for historical data)
       const { count: soCount } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
-        .eq('shop_id', shopId).gte('created_at', pgFrom).lte('created_at', pgTo)
+        .eq('shop_id', shopId).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo)
 
       const { count: soCompleted } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
-        .eq('shop_id', shopId).gte('created_at', pgFrom).lte('created_at', pgTo).in('status', ['done', 'good_to_go'])
+        .eq('shop_id', shopId).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo).in('status', ['done', 'good_to_go'])
 
       // Revenue: sum grand_total from service_orders (works for both native + historical)
       // Supabase JS can't do SUM, so fetch in batches or use a simpler approach
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
       let page = 0
       while (true) {
         const { data: batch } = await supabase.from('service_orders').select('grand_total')
-          .eq('shop_id', shopId).gte('created_at', pgFrom).lte('created_at', pgTo)
+          .eq('shop_id', shopId).neq('status', 'void').gte('created_at', pgFrom).lte('created_at', pgTo)
           .range(page * 1000, (page + 1) * 1000 - 1)
         if (!batch || batch.length === 0) break
         revenue += batch.reduce((s: number, r: any) => s + (r.grand_total || 0), 0)
@@ -132,7 +132,7 @@ export async function GET(req: Request) {
       const { data: sos } = await supabase
         .from('service_orders')
         .select('grand_total, customers!inner(id, company_name)')
-        .eq('shop_id', shopId)
+        .eq('shop_id', shopId).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
 
@@ -158,7 +158,7 @@ export async function GET(req: Request) {
       const { data: sosByTech } = await supabase
         .from('service_orders')
         .select('assigned_tech, status')
-        .eq('shop_id', shopId)
+        .eq('shop_id', shopId).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
         .not('assigned_tech', 'is', null)
@@ -183,7 +183,7 @@ export async function GET(req: Request) {
       const { data: sos } = await supabase
         .from('service_orders')
         .select('grand_total, created_at, assets!inner(id, unit_number, customers(company_name))')
-        .eq('shop_id', shopId)
+        .eq('shop_id', shopId).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
 
