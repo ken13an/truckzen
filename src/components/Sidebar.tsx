@@ -17,21 +17,20 @@ interface DeptSection {
   label: string
   icon: any
   color: string
+  dashboardHref: string
   items: { href: string; label: string; icon: any }[]
 }
 
 const DEPARTMENTS: DeptSection[] = [
   {
-    label: 'Service', icon: Wrench, color: '#1D6FE8',
+    label: 'Service', icon: Wrench, color: '#1D6FE8', dashboardHref: '/service-writer/dashboard',
     items: [
-      { href: '/shop-floor', label: 'Shop Floor', icon: Factory },
       { href: '/work-orders', label: 'Work Orders', icon: Wrench },
-      { href: '/kiosk-admin', label: 'Kiosk', icon: Monitor },
-      { href: '/time-tracking', label: 'Time Tracking', icon: Clock },
+      { href: '/shop-floor', label: 'Shop Floor', icon: Factory },
     ],
   },
   {
-    label: 'Parts', icon: Package, color: '#F97316',
+    label: 'Parts', icon: Package, color: '#F97316', dashboardHref: '/parts/dashboard',
     items: [
       { href: '/parts/queue', label: 'Parts Queue', icon: ClipboardList },
       { href: '/parts', label: 'Inventory', icon: Package },
@@ -40,32 +39,23 @@ const DEPARTMENTS: DeptSection[] = [
     ],
   },
   {
-    label: 'Fleet', icon: Truck, color: '#22C55E',
+    label: 'Fleet', icon: Truck, color: '#22C55E', dashboardHref: '/fleet',
     items: [
       { href: '/service-requests', label: 'Service Requests', icon: FileText },
-      { href: '/fleet', label: 'All Units', icon: Truck },
       { href: '/customers', label: 'Customers', icon: Users2 },
-      { href: '/drivers', label: 'Drivers', icon: UserCircle },
-      { href: '/compliance', label: 'Compliance', icon: ShieldCheck },
-      { href: '/reports', label: 'Reports', icon: BarChart3 },
     ],
   },
   {
-    label: 'Maintenance', icon: Cog, color: '#F59E0B',
+    label: 'Maintenance', icon: Cog, color: '#F59E0B', dashboardHref: '/maintenance/dashboard',
     items: [
       { href: '/service-requests', label: 'Service Requests', icon: FileText },
-      { href: '/maintenance', label: 'PM Scheduling', icon: Cog },
-      { href: '/dvir', label: 'DVIR', icon: BookOpen },
       { href: '/maintenance/warranty-review', label: 'Warranty Review', icon: ShieldCheck },
-      { href: '/maintenance/tires', label: 'Tire Management', icon: Cog },
-      { href: '/maintenance/parts-lifecycle', label: 'Parts Lifecycle', icon: Layers },
     ],
   },
   {
-    label: 'Accounting', icon: Calculator, color: '#8B5CF6',
+    label: 'Accounting', icon: Calculator, color: '#8B5CF6', dashboardHref: '/accounting/dashboard',
     items: [
       { href: '/invoices', label: 'Invoices', icon: FileText },
-      { href: '/accounting', label: 'Pending Approval', icon: Calculator },
       { href: '/reports', label: 'Reports', icon: BarChart3 },
     ],
   },
@@ -122,7 +112,7 @@ export default function Sidebar() {
 
       // Auto-expand section containing active page
       for (const dept of DEPARTMENTS) {
-        if (dept.items.some(item => pathname?.startsWith(item.href))) {
+        if (pathname?.startsWith(dept.dashboardHref) || dept.items.some(item => pathname?.startsWith(item.href))) {
           setExpanded(prev => ({ ...prev, [dept.label]: true }))
         }
       }
@@ -208,11 +198,11 @@ export default function Sidebar() {
           const deptItems = dept.items.filter(item => visibleHrefs.has(item.href) || UNLIMITED_ROLES.includes(user.role))
           if (deptItems.length === 0 && !UNLIMITED_ROLES.includes(user.role)) return null
 
-          const hasDeptActive = dept.items.some(item => isActive(item.href))
+          const hasDeptActive = isActive(dept.dashboardHref) || dept.items.some(item => isActive(item.href))
 
           return (
             <div key={dept.label} style={{ marginBottom: 2 }}>
-              <div onClick={() => toggleDept(dept.label)} role="button" tabIndex={0} style={{
+              <div onClick={() => { if (collapsed) { window.location.href = dept.dashboardHref } else { toggleDept(dept.label) } }} role="button" tabIndex={0} style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: collapsed ? '8px 0' : '8px 16px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
@@ -234,6 +224,7 @@ export default function Sidebar() {
               </div>
               {isExpanded === true && collapsed === false && (
                 <div style={{ overflow: 'hidden' }}>
+                  {renderNavItem({ href: dept.dashboardHref, label: 'Dashboard', icon: dept.icon }, true)}
                   {(UNLIMITED_ROLES.includes(user.role) ? dept.items : deptItems).map(item => renderNavItem(item, true))}
                 </div>
               )}
