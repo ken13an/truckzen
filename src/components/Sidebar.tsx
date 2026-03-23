@@ -60,6 +60,8 @@ const DEPARTMENTS: DeptSection[] = [
       { href: '/maintenance/equipment', label: 'Equipment', icon: Cog },
       { href: '/maintenance/meters', label: 'Meters', icon: Gauge },
       { href: '/maintenance/reports', label: 'Reports', icon: BarChart3 },
+      { href: '/service-requests', label: 'Service Requests', icon: FileText },
+      { href: '/maintenance/warranty-review', label: 'Warranty Review', icon: ShieldCheck },
     ],
   },
   {
