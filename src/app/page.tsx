@@ -38,8 +38,7 @@ export default function HomePage() {
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', maxWidth: 1100, margin: '0 auto' }}>
         <Logo size="md" />
         <div style={{ display: 'flex', gap: 12 }}>
-          <a href="/login" style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', color: '#F0F4FF', fontSize: 14, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>Sign In</a>
-          <a href="/register" style={{ padding: '10px 20px', borderRadius: 8, background: BLUE, color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>Get Started</a>
+          <a href="/login" style={{ padding: '10px 20px', borderRadius: 8, color: '#7C8BA0', fontSize: 14, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>Sign In</a>
         </div>
       </nav>
 
@@ -51,14 +50,9 @@ export default function HomePage() {
         <p style={{ fontSize: 20, color: '#7C8BA0', lineHeight: 1.5, margin: '0 0 40px' }}>
           One platform. Every department. Zero chaos.
         </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="/register" style={{ padding: '14px 36px', borderRadius: 10, background: BLUE, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', fontFamily: FONT, boxShadow: '0 0 30px rgba(29,111,232,.25)' }}>
-            Get Started
-          </a>
-          <a href="/login" style={{ padding: '14px 36px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', color: '#F0F4FF', fontSize: 16, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>
-            Sign In
-          </a>
-        </div>
+        <a href="/register" style={{ display: 'inline-block', padding: '16px 44px', borderRadius: 10, background: BLUE, color: '#fff', fontSize: 17, fontWeight: 700, textDecoration: 'none', fontFamily: FONT, boxShadow: '0 0 30px rgba(29,111,232,.25)' }}>
+          Get Started
+        </a>
       </section>
 
       {/* ── WHAT WE DO ── */}
