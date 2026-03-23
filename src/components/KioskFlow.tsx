@@ -555,7 +555,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   // ---- Customer search (debounced) ----
   async function handleCustomerSearch(q: string) {
     setCustomerSearch(q)
-    if (q.length < 2 || !shopId) { setCustomerResults([]); return }
+    if (q.length < 1 || !shopId) { setCustomerResults([]); return }
     // Debounce 300ms to avoid race conditions on rapid typing
     if (customerSearchTimer.current) clearTimeout(customerSearchTimer.current)
     customerSearchTimer.current = setTimeout(async () => {
@@ -871,7 +871,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                   </div>
                 )}
 
-                {customerSearch.length >= 3 && customerResults.length === 0 && !selectedCustomer && !showNewCustomer && (
+                {customerSearch.length >= 2 && customerResults.length === 0 && !selectedCustomer && !showNewCustomer && (
                   <div style={{ marginTop: 20, textAlign: 'center' }}>
                     <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Not finding your company?</div>
                     <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>

@@ -17,7 +17,10 @@ export async function GET(req: Request) {
 
   // Get total count
   let countQ = s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId)
-  if (search) countQ = countQ.or(`company_name.ilike.%${search}%,contact_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+  if (search) {
+    const pattern = search.length === 1 ? `${search}%` : `%${search}%`
+    countQ = countQ.or(`company_name.ilike.${pattern},contact_name.ilike.${pattern}`)
+  }
   const { count: total } = await countQ
 
   // Get page data
@@ -30,7 +33,10 @@ export async function GET(req: Request) {
     .order('company_name')
     .range(from, to)
 
-  if (search) q = q.or(`company_name.ilike.%${search}%,contact_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+  if (search) {
+    const pattern = search.length === 1 ? `${search}%` : `%${search}%`
+    q = q.or(`company_name.ilike.${pattern},contact_name.ilike.${pattern}`)
+  }
 
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
