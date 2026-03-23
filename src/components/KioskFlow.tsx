@@ -417,6 +417,73 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
   const t = (key: string) => T[lang]?.[key] || T.en[key] || key
 
+  // ---- Admin check (must be before conditional returns) ----
+  useEffect(() => {
+    if (!shopId) return
+    const supabase = createClient()
+    ;(async () => {
+      try {
+        const user = await getCurrentUser(supabase)
+        if (user && ['owner', 'gm', 'it_person'].includes(user.role)) setIsAdmin(true)
+      } catch {}
+    })()
+  }, [shopId])
+
+  // ---- Idle reset (must be before conditional returns) ----
+  const resetAll = useCallback(() => {
+    setStep(0)
+    setSelectedCustomer(null)
+    setSelectedUnit(null)
+    setConcernText('')
+    setParkedLocation('')
+    setKeysLeft('in_truck')
+    setStaying(null)
+    const d = new Date(); d.setDate(d.getDate() + 1); setNeedByDate(d.toISOString().split('T')[0])
+    setNeedByTime('17:00')
+    setPriority('routine')
+    setAuthType('estimate_first')
+    setAuthLimit(null)
+    setContactEmail('')
+    setContactPhone('')
+    setCustomerSearch('')
+    setCustomerResults([])
+    setUnitSearch('')
+    setUnitResults([])
+    setShowNewCustomer(false)
+    setShowNewUnit(false)
+    setNewCustomer({ company_name: '', dot_number: '', mc_number: '', contact_name: '', phone: '', email: '' })
+    setNewUnit({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' })
+    setSubmitting(false)
+    setResult(null)
+    setCustomerType('company')
+    setShowForgetScreen(false)
+    setAiRewrittenText('')
+    setAiRewriting(false)
+    setShowAiApproval(false)
+    setOriginalConcernText('')
+  }, [])
+
+  useEffect(() => {
+    function resetIdle() {
+      clearTimeout(idleRef.current)
+      idleRef.current = setTimeout(resetAll, 300000)
+    }
+    window.addEventListener('touchstart', resetIdle)
+    window.addEventListener('click', resetIdle)
+    resetIdle()
+    return () => {
+      window.removeEventListener('touchstart', resetIdle)
+      window.removeEventListener('click', resetIdle)
+      clearTimeout(idleRef.current)
+    }
+  }, [resetAll])
+
+  useEffect(() => {
+    if (step !== 8) return
+    const tmr = setTimeout(resetAll, 60000)
+    return () => clearTimeout(tmr)
+  }, [step, resetAll])
+
   // Show loading while checking sessionStorage for PIN
   if (!pinChecked && kioskCode) {
     return (
@@ -484,74 +551,6 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   }
 
   // ---- Main Kiosk Flow (PIN verified) ----
-
-  // ---- Admin check ----
-  useEffect(() => {
-    if (!shopId) return
-    const supabase = createClient()
-    ;(async () => {
-      try {
-        const user = await getCurrentUser(supabase)
-        if (user && ['owner', 'gm', 'it_person'].includes(user.role)) setIsAdmin(true)
-      } catch {}
-    })()
-  }, [shopId])
-
-  // ---- Idle reset (5 min) ----
-  const resetAll = useCallback(() => {
-    setStep(0)
-    setSelectedCustomer(null)
-    setSelectedUnit(null)
-    setConcernText('')
-    setParkedLocation('')
-    setKeysLeft('in_truck')
-    setStaying(null)
-    const d = new Date(); d.setDate(d.getDate() + 1); setNeedByDate(d.toISOString().split('T')[0])
-    setNeedByTime('17:00')
-    setPriority('routine')
-    setAuthType('estimate_first')
-    setAuthLimit(null)
-    setContactEmail('')
-    setContactPhone('')
-    setCustomerSearch('')
-    setCustomerResults([])
-    setUnitSearch('')
-    setUnitResults([])
-    setShowNewCustomer(false)
-    setShowNewUnit(false)
-    setNewCustomer({ company_name: '', dot_number: '', mc_number: '', contact_name: '', phone: '', email: '' })
-    setNewUnit({ unit_number: '', vin: '', mileage: '', license_plate: '', state: '', unit_type: 'tractor' })
-    setSubmitting(false)
-    setResult(null)
-    setCustomerType('company')
-    setShowForgetScreen(false)
-    setAiRewrittenText('')
-    setAiRewriting(false)
-    setShowAiApproval(false)
-    setOriginalConcernText('')
-  }, [])
-
-  useEffect(() => {
-    function resetIdle() {
-      clearTimeout(idleRef.current)
-      idleRef.current = setTimeout(resetAll, 300000)
-    }
-    window.addEventListener('touchstart', resetIdle)
-    window.addEventListener('click', resetIdle)
-    resetIdle()
-    return () => {
-      window.removeEventListener('touchstart', resetIdle)
-      window.removeEventListener('click', resetIdle)
-      clearTimeout(idleRef.current)
-    }
-  }, [resetAll])
-
-  // Auto-reset confirmed screen after 60s
-  useEffect(() => {
-    if (step !== 8) return
-    const t = setTimeout(resetAll, 60000)
-    return () => clearTimeout(t)
-  }, [step, resetAll])
 
   // ---- Customer search (debounced) ----
   async function handleCustomerSearch(q: string) {
