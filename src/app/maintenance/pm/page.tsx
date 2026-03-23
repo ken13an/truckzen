@@ -25,7 +25,7 @@ export default function PMSchedulesPage() {
       // Load calendar data
       supabase.from('maint_pm_schedules').select('id, service_type, custom_name, next_due_date, status, assets(unit_number)')
         .eq('shop_id', p.shop_id).eq('status', 'active')
-        .then(({ data }) => setCalData(data || []))
+        .then(({ data }: any) => setCalData(data || []))
     })
   }, [])
 
