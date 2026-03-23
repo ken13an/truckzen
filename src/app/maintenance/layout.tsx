@@ -16,6 +16,19 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/maintenance/equipment': 'Equipment',
   '/maintenance/meters': 'Meters',
   '/maintenance/reports': 'Reports',
+  '/maintenance/issues': 'Issues',
+  '/maintenance/faults': 'Faults',
+  '/maintenance/recalls': 'Recalls',
+  '/maintenance/service-reminders': 'Service Reminders',
+  '/maintenance/vehicle-renewals': 'Vehicle Renewals',
+  '/maintenance/contact-renewals': 'Contact Renewals',
+  '/maintenance/service-programs': 'Service Programs',
+  '/maintenance/shop-network': 'Shop Network',
+  '/maintenance/places': 'Places',
+  '/maintenance/documents': 'Documents',
+  '/maintenance/warranties': 'Warranties',
+  '/maintenance/map': 'Fleet Map',
+  '/maintenance/activity': 'Activity Feed',
 }
 
 export default function MaintenanceLayout({ children }: { children: React.ReactNode }) {
