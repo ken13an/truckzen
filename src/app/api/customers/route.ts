@@ -67,6 +67,8 @@ export async function POST(req: Request) {
     address: body.address || null,
     notes: body.notes || null,
     source: body.source || 'walk_in',
+    payment_terms: body.payment_terms || null,
+    default_ownership_type: body.default_ownership_type || 'fleet_asset',
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

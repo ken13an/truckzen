@@ -8,6 +8,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { PageFooter } from '@/components/ui/PageControls'
+import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import SourceBadge from '@/components/ui/SourceBadge'
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
@@ -171,7 +172,10 @@ export default function WorkOrdersPage() {
                     </td>
                     <td style={{ padding: '10px 12px', fontSize: 11, color: '#9CA3AF', fontFamily: 'monospace' }}>{o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}</td>
                     <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: '#1A1A1A', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(o.customers as any)?.company_name || '—'}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>#{(o.assets as any)?.unit_number || '—'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>
+                      #{(o.assets as any)?.unit_number || '—'}
+                      {o.ownership_type && o.ownership_type !== 'fleet_asset' && <div style={{ marginTop: 2 }}><OwnershipTypeBadge type={o.ownership_type} size="sm" /></div>}
+                    </td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.complaint || '—'}</td>
                     <td style={{ padding: '10px 12px' }}><span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: st.bg, color: st.color }}>{st.label}</span></td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: '#374151' }}>{(o.users as any)?.full_name || '—'}</td>

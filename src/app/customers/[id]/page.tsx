@@ -5,6 +5,7 @@ import { ChevronLeft, Plus, Pencil, Trash2, Download, Upload, X } from 'lucide-r
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import SourceBadge from '@/components/ui/SourceBadge'
+import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 
 type Tab = 'fleet' | 'work-orders' | 'contacts' | 'billing' | 'documents' | 'parts'
 
@@ -463,7 +464,7 @@ export default function CustomerProfilePage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
               <thead>
                 <tr>
-                  {['Unit #', 'Type', 'Year / Make / Model', 'Mileage', 'Status', ''].map(h => (
+                  {['Unit #', 'Type', 'Truck Type', 'Year / Make / Model', 'Mileage', 'Status', ''].map(h => (
                     <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
@@ -482,6 +483,9 @@ export default function CustomerProfilePage() {
                         <span style={{ fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 4, background: badge.bg, color: badge.color, textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
                           {badge.label}
                         </span>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <OwnershipTypeBadge type={u.ownership_type} size="sm" dark />
                       </td>
                       <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
                         {[u.year, u.make, u.model].filter(Boolean).join(' ') || '\u2014'}

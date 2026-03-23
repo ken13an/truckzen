@@ -24,8 +24,8 @@ export async function GET(req: Request) {
     .from('service_orders')
     .select(`
       id, so_number, status, priority, complaint, bay, team, source, is_historical,
-      grand_total, created_at, updated_at, assigned_tech,
-      assets(id, unit_number, year, make, model),
+      grand_total, created_at, updated_at, assigned_tech, ownership_type,
+      assets(id, unit_number, year, make, model, ownership_type),
       customers(id, company_name),
       users!assigned_tech(id, full_name)
     `, { count: 'exact' })
