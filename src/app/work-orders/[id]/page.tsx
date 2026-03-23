@@ -893,6 +893,31 @@ export default function WorkOrderDetail() {
                   </div>
                 )}
 
+                {/* Mechanic Notes */}
+                {(() => {
+                  const notes: any[] = Array.isArray(line.mechanic_notes) ? line.mechanic_notes : []
+                  return (
+                    <div style={{ background: '#F9FAFB', borderRadius: 8, padding: '10px 12px', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: notes.length > 0 ? 8 : 0 }}>
+                        <MessageSquare size={12} style={{ color: GRAY }} />
+                        <span style={{ ...labelStyle, marginBottom: 0 }}>Mechanic Notes</span>
+                      </div>
+                      {notes.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {notes.map((n: any, ni: number) => (
+                            <div key={ni} style={{ fontSize: 12, color: '#374151', padding: '4px 0', borderBottom: ni < notes.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
+                              <div>{n.text || n.note || String(n)}</div>
+                              {n.created_at && <div style={{ fontSize: 10, color: GRAY, marginTop: 2 }}>{new Date(n.created_at).toLocaleString()}</div>}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>No mechanic notes yet</span>
+                      )}
+                    </div>
+                  )
+                })()}
+
                 {/* AI Parts Suggestion Bar */}
                 {!wo.is_historical && line.description && line.description.length >= 10 && (
                   <>

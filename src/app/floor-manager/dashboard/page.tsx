@@ -75,6 +75,8 @@ export default function FloorManagerDashboardPage() {
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
   const [secondsAgo, setSecondsAgo] = useState(0)
   const [activeTechs, setActiveTechs] = useState<any[]>([])
+  const [idleMechanics, setIdleMechanics] = useState<any[]>([])
+  const [idleExpanded, setIdleExpanded] = useState(false)
 
   // -- Data fetching --
   const fetchData = useCallback(async (shopId: string) => {
@@ -103,6 +105,16 @@ export default function FloorManagerDashboardPage() {
       if (activeRes.ok) {
         const d = await activeRes.json()
         setActiveTechs(Array.isArray(d) ? d : [])
+        // Derive idle mechanics: clocked in but not assigned to an active job entry
+        const active = Array.isArray(d) ? d : []
+        const idle = active.filter((t: any) => {
+          const minutesIdle = t.idle_minutes || (t.last_activity_at ? Math.floor((Date.now() - new Date(t.last_activity_at).getTime()) / 60000) : 0)
+          return minutesIdle > 15
+        }).map((t: any) => ({
+          ...t,
+          idle_minutes: t.idle_minutes || (t.last_activity_at ? Math.floor((Date.now() - new Date(t.last_activity_at).getTime()) / 60000) : 0),
+        }))
+        setIdleMechanics(idle)
       }
       setLastRefresh(new Date())
     } catch { /* silent */ }
@@ -354,6 +366,45 @@ export default function FloorManagerDashboardPage() {
               )
             })}
           </div>
+
+          {/* Idle Mechanics Alert */}
+          {idleMechanics.length > 0 && (
+            <div style={{
+              background: 'rgba(245,158,11,0.08)', border: `1px solid rgba(245,158,11,0.25)`,
+              borderRadius: 10, padding: '10px 16px', marginBottom: 12,
+            }}>
+              <div
+                onClick={() => setIdleExpanded(!idleExpanded)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Clock size={14} style={{ color: AMBER }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: AMBER }}>
+                    {idleMechanics.length} Idle Mechanic{idleMechanics.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, color: DIM }}>{idleExpanded ? 'Hide' : 'Show'}</span>
+              </div>
+              {idleExpanded && (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {idleMechanics.map((m: any, i: number) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '6px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 6,
+                    }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{m.full_name || m.user_name || 'Unknown'}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 11, color: DIM }}>
+                          In: {m.clocked_in_at ? new Date(m.clocked_in_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '—'}
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: AMBER }}>{m.idle_minutes}m idle</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Kanban columns */}
           <div className="fm-kanban-row" style={{ display: 'flex', gap: 12, flex: 1, overflow: 'hidden' }}>

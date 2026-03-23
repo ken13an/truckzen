@@ -343,6 +343,38 @@ export default function ReportsPage() {
           </table>
         </div>
       )}
+
+      {/* ═══ MECHANICS TAB ═══ */}
+      {!loading && tab === 5 && (
+        <div>
+          <div style={{ background: '#FAFBFC', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>Mechanic Weekly Performance</h3>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr>{['Mechanic', 'Week', 'Hours Worked', 'Jobs Completed', 'Unplanned', 'Idle Time', 'Score'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {mechanicsData.map((m, i) => {
+                  const scoreColor = (m.score || 0) >= 80 ? GREEN : (m.score || 0) >= 50 ? AMBER : RED
+                  const isExpanded = expandedMechanic === `${m.mechanic_id}-${m.week}`
+                  return (
+                    <tr key={i} onClick={() => setExpandedMechanic(isExpanded ? null : `${m.mechanic_id}-${m.week}`)} style={{ cursor: 'pointer' }}>
+                      <td style={{ ...tdStyle, fontWeight: 600 }}>{m.mechanic_name || m.name}</td>
+                      <td style={tdStyle}>{m.week ? fmtDate(m.week) : '—'}</td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>{(m.hours_worked || 0).toFixed(1)}</td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>{m.jobs_completed || 0}</td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>{m.unplanned || 0}</td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>{m.idle_time ? `${m.idle_time}m` : '—'}</td>
+                      <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: scoreColor }}>{m.score != null ? m.score : '—'}</td>
+                    </tr>
+                  )
+                })}
+                {mechanicsData.length === 0 && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: GRAY }}>No mechanic data for this period</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
