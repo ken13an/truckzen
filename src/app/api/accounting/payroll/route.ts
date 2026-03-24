@@ -4,8 +4,8 @@ import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-const FULL_ACCESS_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin']
-const SHOP_MANAGER_ROLES = ['shop_manager', 'floor_manager']
+const FULL_ACCESS_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager']
+const SHOP_MANAGER_ROLES = ['shop_manager', 'floor_manager', 'service_manager']
 const PARTS_MANAGER_ROLES = ['parts_manager']
 
 const TECH_ROLES = ['technician', 'lead_tech', 'maintenance_technician']

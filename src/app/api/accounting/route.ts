@@ -4,7 +4,7 @@ import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin']
+const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager']
 
 export async function GET(req: Request) {
   const supabase = await createServerSupabaseClient()

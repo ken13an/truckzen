@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
-const OFFICE_ROLES = ['service_writer', 'accountant', 'office_admin', 'shop_manager', 'gm', 'dispatcher']
-const FLOOR_ROLES = ['technician', 'maintenance_technician', 'maintenance_manager']
+const OFFICE_ROLES = ['service_writer', 'service_manager', 'accountant', 'accounting_manager', 'office_admin', 'shop_manager', 'gm', 'dispatcher', 'it_person']
+const FLOOR_ROLES = ['technician', 'maintenance_technician', 'maintenance_manager', 'floor_manager']
 const OTHER_ROLES = ['parts_manager', 'fleet_manager', 'driver']
 
 export default function NewUserPage() {
@@ -30,6 +30,7 @@ export default function NewUserPage() {
     if (OFFICE_ROLES.includes(role)) dept = 'office'
     else if (role === 'parts_manager') dept = 'parts'
     else if (role === 'fleet_manager' || role === 'driver') dept = 'fleet'
+    else if (role === 'floor_manager') dept = 'floor'
     setForm(f => ({ ...f, role, department: dept, team: dept === 'floor' ? f.team || 'A' : '' }))
   }
 
@@ -80,21 +81,25 @@ export default function NewUserPage() {
 
           <label style={S.label}>Role</label>
           <select style={{ ...S.input, appearance: 'none', cursor: 'pointer' }} value={form.role} onChange={e => setRole(e.target.value)}>
-            <optgroup label="Shop Floor">
+            <optgroup label="Management">
+              <option value="gm">General Manager</option>
+              <option value="shop_manager">Shop Manager</option>
+            </optgroup>
+            <optgroup label="Department Managers">
+              <option value="service_manager">Service Manager</option>
+              <option value="parts_manager">Parts Manager</option>
+              <option value="floor_manager">Floor Manager</option>
+              <option value="accounting_manager">Accounting Manager</option>
+              <option value="maintenance_manager">Maintenance Manager</option>
+              <option value="fleet_manager">Fleet Manager</option>
+            </optgroup>
+            <optgroup label="Staff">
+              <option value="service_writer">Service Writer</option>
               <option value="technician">Mechanic / Technician</option>
               <option value="maintenance_technician">Maintenance Technician</option>
-              <option value="maintenance_manager">Floor Supervisor / Maintenance Manager</option>
-            </optgroup>
-            <optgroup label="Office">
-              <option value="service_writer">Service Writer</option>
               <option value="accountant">Accounting</option>
               <option value="office_admin">Office Admin</option>
-              <option value="shop_manager">Shop Manager</option>
-              <option value="gm">General Manager</option>
-            </optgroup>
-            <optgroup label="Other Departments">
-              <option value="parts_manager">Parts Department</option>
-              <option value="fleet_manager">Fleet Manager</option>
+              <option value="it_person">IT Admin</option>
               <option value="dispatcher">Dispatcher</option>
               <option value="driver">Driver</option>
             </optgroup>

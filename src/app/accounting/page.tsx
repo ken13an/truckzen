@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { PageFooter } from '@/components/ui/PageControls'
+import FilterBar from '@/components/FilterBar'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -32,13 +33,16 @@ export default function AccountingPage() {
   const [returnNotes, setReturnNotes] = useState('')
   const [showReturnInput, setShowReturnInput] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const [acctSearch, setAcctSearch] = useState('')
+  const [acctDateFrom, setAcctDateFrom] = useState('')
+  const [acctDateTo, setAcctDateTo] = useState('')
 
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
     const profile = await getCurrentUser(supabase)
     if (!profile) { window.location.href = '/login'; return }
-    const allowed = ['owner', 'gm', 'it_person', 'accountant', 'office_admin']
+    const allowed = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager']
     if (!allowed.includes(profile.role)) { window.location.href = '/dashboard'; return }
     setUser(profile)
 
@@ -103,11 +107,31 @@ export default function AccountingPage() {
     setActionLoading(false)
   }
 
-  const filteredWos = wos.filter(wo => {
-    if (tab === 0) return wo.invoice_status === 'pending_accounting'
-    if (tab === 1) return wo.invoice_status === 'accounting_approved' || wo.invoice_status === 'sent_to_customer'
-    return true
-  })
+  const filteredWos = useMemo(() => {
+    let list = wos.filter(wo => {
+      if (tab === 0) return wo.invoice_status === 'pending_accounting'
+      if (tab === 1) return wo.invoice_status === 'accounting_approved' || wo.invoice_status === 'sent_to_customer'
+      return true
+    })
+    if (acctSearch.trim()) {
+      const q = acctSearch.toLowerCase()
+      list = list.filter(wo => {
+        const cust = wo.customers as any
+        return wo.so_number?.toLowerCase().includes(q) ||
+          cust?.company_name?.toLowerCase().includes(q) ||
+          (wo.assets as any)?.unit_number?.toLowerCase().includes(q)
+      })
+    }
+    if (acctDateFrom) {
+      const from = new Date(acctDateFrom)
+      list = list.filter(wo => (wo.created_at || wo.updated_at) && new Date(wo.created_at || wo.updated_at) >= from)
+    }
+    if (acctDateTo) {
+      const to = new Date(acctDateTo + 'T23:59:59')
+      list = list.filter(wo => (wo.created_at || wo.updated_at) && new Date(wo.created_at || wo.updated_at) <= to)
+    }
+    return list
+  }, [wos, tab, acctSearch, acctDateFrom, acctDateTo])
 
   const paginatedWos = useMemo(() => {
     if (acctPerPage === 0) return filteredWos
@@ -291,10 +315,22 @@ export default function AccountingPage() {
         ))}
       </div>
 
+      {/* FilterBar */}
+      <FilterBar
+        search={acctSearch}
+        onSearchChange={val => { setAcctSearch(val); setAcctPage(1) }}
+        searchPlaceholder="Search WO #, customer, unit..."
+        dateFrom={acctDateFrom}
+        dateTo={acctDateTo}
+        onDateFromChange={val => { setAcctDateFrom(val); setAcctPage(1) }}
+        onDateToChange={val => { setAcctDateTo(val); setAcctPage(1) }}
+        theme="dark"
+      />
+
       {/* WO Cards */}
       {filteredWos.length === 0 && (
         <div style={{ ...S.card, textAlign: 'center', color: '#9D9DA1', padding: 40 }}>
-          {tab === 0 ? 'No work orders pending review' : tab === 1 ? 'No approved invoices' : 'No work orders found'}
+          {acctSearch || acctDateFrom || acctDateTo ? 'No results found. Try adjusting your filters.' : tab === 0 ? 'No work orders pending review' : tab === 1 ? 'No approved invoices' : 'No work orders found'}
         </div>
       )}
       {paginatedWos.map(wo => {

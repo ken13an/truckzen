@@ -7,7 +7,7 @@ import { getCache, setCache, invalidateCache } from '@/lib/cache'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-const COST_VISIBLE_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'parts_manager']
+const COST_VISIBLE_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'parts_manager', 'accounting_manager']
 
 function stripCostFields(parts: any[]): any[] {
   return parts.map(p => ({ ...p, cost_price: null, sell_price: null, average_cost: null, cost_floor: null, markup_percent: null, margin_percent: null, inventory_balance: null }))

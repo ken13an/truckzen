@@ -42,6 +42,15 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
 
   shop_manager: Object.fromEntries(MODULES.map(m => [m.key, !['billing', 'admin_permissions', 'integrations', 'audit_log'].includes(m.key)])), // includes smart_drop via MODULES
 
+  service_manager: {
+    dashboard: true, floor: true, orders: true, invoices: true, customers: true,
+    parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
+    parts_lifecycle: false, compliance: false, accounting: false, reports: true,
+    time_tracking: true, settings: true, kiosk_admin: true, smart_drop: true,
+    import: false, admin_permissions: false, tech_mobile: false, dvir: false,
+    billing: false, integrations: false, audit_log: false,
+  },
+
   floor_manager: {
     dashboard: true, floor: true, orders: true, invoices: false, customers: true,
     parts: true, fleet: true, drivers: false, maintenance: false, tires: false,
@@ -49,6 +58,15 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
     time_tracking: true, settings: true,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false, kiosk_admin: false, smart_drop: false,
+  },
+
+  accounting_manager: {
+    dashboard: true, floor: false, orders: true, invoices: true, customers: true,
+    parts: true, fleet: true, drivers: false, maintenance: false, tires: false,
+    parts_lifecycle: false, compliance: false, accounting: true, reports: true,
+    time_tracking: false, settings: true,
+    import: false, admin_permissions: false, tech_mobile: false, dvir: false,
+    billing: true, integrations: false, audit_log: true,
   },
 
   technician: {
@@ -154,8 +172,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
 // Role redirect after login
 export const ROLE_REDIRECT: Record<string, string> = {
   owner: '/dashboard', gm: '/dashboard', it_person: '/dashboard',
-  shop_manager: '/dashboard', service_writer: '/dashboard',
+  shop_manager: '/dashboard', service_manager: '/dashboard', service_writer: '/dashboard',
   technician: '/dashboard', lead_tech: '/dashboard', parts_manager: '/dashboard', fleet_manager: '/dashboard',
+  floor_manager: '/dashboard', accounting_manager: '/dashboard',
   maintenance_manager: '/dashboard', maintenance_technician: '/dashboard',
   accountant: '/dashboard', office_admin: '/dashboard', dispatcher: '/dashboard',
   driver: '/dvir', customer: '/portal',
@@ -164,16 +183,16 @@ export const ROLE_REDIRECT: Record<string, string> = {
 // Role labels and colors
 export const ROLE_LABEL: Record<string, string> = {
   owner: 'Owner', gm: 'GM', it_person: 'IT Admin', shop_manager: 'Shop Manager',
-  floor_manager: 'Floor Manager',
+  service_manager: 'Service Manager', floor_manager: 'Floor Manager', accounting_manager: 'Accounting Manager',
   service_writer: 'Service Writer', technician: 'Technician', lead_tech: 'Lead Tech',
-  parts_manager: 'Parts Dept', fleet_manager: 'Fleet Manager', maintenance_manager: 'Maint. Manager',
+  parts_manager: 'Parts Manager', fleet_manager: 'Fleet Manager', maintenance_manager: 'Maintenance Manager',
   maintenance_technician: 'Maint. Tech', accountant: 'Accounting', office_admin: 'Office Admin',
   dispatcher: 'Dispatcher', driver: 'Driver', customer: 'Customer',
 }
 
 export const ROLE_COLOR: Record<string, string> = {
   owner: '#D94F4F', gm: '#D94F4F', it_person: '#D94F4F', shop_manager: '#D4882A',
-  floor_manager: '#D4882A',
+  service_manager: '#4D9EFF', floor_manager: '#D4882A', accounting_manager: '#E8692A',
   service_writer: '#4D9EFF', technician: '#1DB870',
   parts_manager: '#8B5CF6', fleet_manager: '#0E9F8E', maintenance_manager: '#0E9F8E',
   maintenance_technician: '#1DB870', accountant: '#E8692A', office_admin: '#D4882A',
@@ -182,9 +201,10 @@ export const ROLE_COLOR: Record<string, string> = {
 
 // All roles in display order
 export const ALL_ROLES = [
-  'owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer',
-  'technician', 'parts_manager', 'fleet_manager', 'maintenance_manager',
-  'maintenance_technician', 'accountant', 'office_admin', 'dispatcher', 'driver',
+  'owner', 'gm', 'it_person', 'shop_manager',
+  'service_manager', 'parts_manager', 'floor_manager', 'accounting_manager', 'maintenance_manager', 'fleet_manager',
+  'service_writer', 'technician', 'lead_tech', 'maintenance_technician',
+  'accountant', 'office_admin', 'dispatcher', 'driver',
 ]
 
 // Path → module key mapping
