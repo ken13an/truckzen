@@ -194,6 +194,12 @@ export default function PartsPage() {
   const sorted = useMemo(() => {
     const arr = [...parts]
     arr.sort((a, b) => {
+      // In-stock always floats above out-of-stock
+      const aStock = (a.on_hand ?? 0) > 0 ? 1 : 0
+      const bStock = (b.on_hand ?? 0) > 0 ? 1 : 0
+      if (bStock !== aStock) return bStock - aStock
+
+      // Then apply user's chosen sort
       let av = a[sortField] ?? ''
       let bv = b[sortField] ?? ''
       if (typeof av === 'number' && typeof bv === 'number') return sortDir === 'asc' ? av - bv : bv - av

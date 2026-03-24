@@ -92,6 +92,7 @@ export default function WorkOrderDetail() {
   const [partSearchResults, setPartSearchResults] = useState<Record<string, any[]>>({})
   const [partsSubmitted, setPartsSubmitted] = useState(false)
   const [partsSubmitting, setPartsSubmitting] = useState(false)
+  const [shopLaborRates, setShopLaborRates] = useState<any[]>([])
 
   // DATA LOADING
   const loadData = useCallback(async () => {
@@ -100,9 +101,10 @@ export default function WorkOrderDetail() {
       const u = await getCurrentUser(supabase)
       setUser(u)
 
-      const [woRes, usersRes] = await Promise.all([
+      const [woRes, usersRes, ratesRes] = await Promise.all([
         fetch(`/api/work-orders/${id}`),
         u?.shop_id ? fetch(`/api/users?shop_id=${u.shop_id}`) : Promise.resolve(null),
+        u?.shop_id ? fetch(`/api/settings/labor-rates?shop_id=${u.shop_id}`) : Promise.resolve(null),
       ])
 
       if (!woRes.ok) { setLoading(false); return }
@@ -117,6 +119,9 @@ export default function WorkOrderDetail() {
         const usersData = await usersRes.json()
         setAllUsers(usersData)
         setMechanics(usersData.filter((u: any) => ['technician', 'lead_tech', 'maintenance_technician'].includes(u.role)))
+      }
+      if (ratesRes) {
+        try { setShopLaborRates(await ratesRes.json()) } catch {}
       }
     } catch (e) {
       console.error('Load error', e)
@@ -310,7 +315,21 @@ export default function WorkOrderDetail() {
   }
 
   async function autoFillFromInventory(lineId: string, invPart: any) {
-    await patchLine(lineId, { real_name: invPart.description, part_number: invPart.part_number, parts_cost_price: invPart.cost_price, parts_sell_price: invPart.sell_price, parts_status: 'sourced' })
+    // Calculate sell price based on customer type and shop markup settings
+    let sellPrice = invPart.sell_price || 0
+    const costPrice = invPart.cost_price || invPart.average_cost || 0
+    const ownershipType = wo?.ownership_type || wo?.assets?.ownership_type
+    if (costPrice > 0 && ownershipType && shopLaborRates.length > 0) {
+      const rate = shopLaborRates.find((r: any) => r.ownership_type === ownershipType)
+      if (rate) {
+        if (rate.parts_pricing_mode === 'margin' && rate.parts_margin_pct > 0) {
+          sellPrice = costPrice / (1 - rate.parts_margin_pct / 100)
+        } else if (rate.parts_markup_pct > 0) {
+          sellPrice = costPrice * (1 + rate.parts_markup_pct / 100)
+        }
+      }
+    }
+    await patchLine(lineId, { real_name: invPart.description, part_number: invPart.part_number, parts_cost_price: costPrice, parts_sell_price: Math.round(sellPrice * 100) / 100, parts_status: 'sourced' })
     setPartSearchResults(prev => { const n = {...prev}; delete n[lineId]; return n })
     await loadData()
   }

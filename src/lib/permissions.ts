@@ -42,6 +42,15 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
 
   shop_manager: Object.fromEntries(MODULES.map(m => [m.key, !['billing', 'admin_permissions', 'integrations', 'audit_log'].includes(m.key)])), // includes smart_drop via MODULES
 
+  floor_manager: {
+    dashboard: true, floor: true, orders: true, invoices: false, customers: true,
+    parts: true, fleet: true, drivers: false, maintenance: false, tires: false,
+    parts_lifecycle: false, compliance: false, accounting: false, reports: true,
+    time_tracking: true, settings: true,
+    import: false, admin_permissions: false, tech_mobile: false, dvir: false,
+    billing: false, integrations: false, audit_log: false, kiosk_admin: false, smart_drop: false,
+  },
+
   technician: {
     dashboard: false, floor: true, orders: false, invoices: false, customers: false,
     parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
@@ -155,6 +164,7 @@ export const ROLE_REDIRECT: Record<string, string> = {
 // Role labels and colors
 export const ROLE_LABEL: Record<string, string> = {
   owner: 'Owner', gm: 'GM', it_person: 'IT Admin', shop_manager: 'Shop Manager',
+  floor_manager: 'Floor Manager',
   service_writer: 'Service Writer', technician: 'Technician', lead_tech: 'Lead Tech',
   parts_manager: 'Parts Dept', fleet_manager: 'Fleet Manager', maintenance_manager: 'Maint. Manager',
   maintenance_technician: 'Maint. Tech', accountant: 'Accounting', office_admin: 'Office Admin',
@@ -163,6 +173,7 @@ export const ROLE_LABEL: Record<string, string> = {
 
 export const ROLE_COLOR: Record<string, string> = {
   owner: '#D94F4F', gm: '#D94F4F', it_person: '#D94F4F', shop_manager: '#D4882A',
+  floor_manager: '#D4882A',
   service_writer: '#4D9EFF', technician: '#1DB870',
   parts_manager: '#8B5CF6', fleet_manager: '#0E9F8E', maintenance_manager: '#0E9F8E',
   maintenance_technician: '#1DB870', accountant: '#E8692A', office_admin: '#D4882A',
@@ -171,7 +182,7 @@ export const ROLE_COLOR: Record<string, string> = {
 
 // All roles in display order
 export const ALL_ROLES = [
-  'owner', 'gm', 'it_person', 'shop_manager', 'service_writer',
+  'owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer',
   'technician', 'parts_manager', 'fleet_manager', 'maintenance_manager',
   'maintenance_technician', 'accountant', 'office_admin', 'dispatcher', 'driver',
 ]

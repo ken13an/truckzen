@@ -1,20 +1,45 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+const FULL_ACCESS_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin']
+const SHOP_MANAGER_ROLES = ['shop_manager', 'floor_manager']
+const PARTS_MANAGER_ROLES = ['parts_manager']
 
-  // Get all active users with their payroll records
-  const { data: users } = await s.from('users')
+const TECH_ROLES = ['technician', 'lead_tech', 'maintenance_technician']
+const PARTS_ROLES = ['parts_manager', 'parts_staff']
+
+export async function GET(req: Request) {
+  const supabase = await createServerSupabaseClient()
+  const user = await getCurrentUser(supabase)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const isFullAccess = FULL_ACCESS_ROLES.includes(user.role)
+  const isShopManager = SHOP_MANAGER_ROLES.includes(user.role)
+  const isPartsManager = PARTS_MANAGER_ROLES.includes(user.role)
+
+  if (!isFullAccess && !isShopManager && !isPartsManager) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const shopId = user.shop_id
+  const s = db()
+
+  let usersQuery = s.from('users')
     .select('id, full_name, email, role, team, active')
     .eq('shop_id', shopId)
     .eq('active', true)
     .order('full_name')
+
+  if (isShopManager) {
+    usersQuery = usersQuery.in('role', TECH_ROLES)
+  } else if (isPartsManager) {
+    usersQuery = usersQuery.in('role', PARTS_ROLES)
+  }
+
+  const { data: users } = await usersQuery
 
   const { data: payroll } = await s.from('employee_payroll')
     .select('*')
@@ -32,14 +57,20 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const supabase = await createServerSupabaseClient()
+  const user = await getCurrentUser(supabase)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!FULL_ACCESS_ROLES.includes(user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const shopId = user.shop_id
   const s = db()
   const body = await req.json()
-  const { shop_id, user_id, pay_type, hourly_rate, salary_amount, weekly_hours, effective_date, notes } = body
+  const { user_id, pay_type, hourly_rate, salary_amount, weekly_hours, effective_date, notes } = body
 
-  if (!shop_id || !user_id) return NextResponse.json({ error: 'shop_id and user_id required' }, { status: 400 })
+  if (!user_id) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
 
   const { data, error } = await s.from('employee_payroll').upsert({
-    shop_id,
+    shop_id: shopId,
     user_id,
     pay_type: pay_type || 'hourly',
     hourly_rate: parseFloat(hourly_rate) || 0,

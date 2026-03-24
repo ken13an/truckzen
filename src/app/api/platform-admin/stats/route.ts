@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getCache, setCache } from '@/lib/cache'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -15,6 +16,10 @@ export async function GET(req: Request) {
 
   const { data: caller } = await s.from('users').select('is_platform_owner').eq('id', userId).single()
   if (!caller?.is_platform_owner) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+
+  const cacheKey = `platform-stats:${userId}`
+  const cached = getCache<any>(cacheKey)
+  if (cached) return NextResponse.json(cached)
 
   const [
     { count: totalShops },
@@ -74,12 +79,14 @@ export async function GET(req: Request) {
     return { ...a, shop_name: shopName, performed_by_name: performedByName }
   }))
 
-  return NextResponse.json({
+  const result = {
     total_shops: totalShops || 0,
     total_wos: totalWOs || 0,
     pending_registrations: pendingRegs || 0,
     monthly_revenue: monthlyRevenue,
     recent_shops: enrichedShops,
     recent_activity: enrichedActivity,
-  })
+  }
+  setCache(cacheKey, result, 60) // 60s TTL
+  return NextResponse.json(result)
 }

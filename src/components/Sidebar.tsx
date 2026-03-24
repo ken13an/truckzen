@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { getSidebarItems } from '@/lib/permissions'
+import { getSidebarItems, hasAccess } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
 import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock, Banknote } from 'lucide-react'
 
@@ -89,20 +89,24 @@ const DEPARTMENTS: DeptSection[] = [
   },
 ]
 
-function getDeptAccess(role: string): string[] {
-  if (UNLIMITED_ROLES.includes(role)) return ['Service', 'Parts', 'Fleet', 'Maintenance', 'Accounting']
-  switch (role) {
-    case 'shop_manager': return ['Service', 'Parts', 'Fleet', 'Accounting']
-    case 'service_writer': return ['Service']
-    case 'technician': case 'lead_tech': case 'maintenance_technician': return ['Service']
-    case 'parts_manager': return ['Parts']
-    case 'accountant': return ['Service', 'Accounting']
-    case 'office_admin': return ['Service', 'Parts', 'Fleet', 'Accounting']
-    case 'fleet_manager': return ['Fleet']
-    case 'maintenance_manager': case 'maintenance': return ['Maintenance']
-    case 'dispatcher': return ['Fleet']
-    default: return ['Service']
-  }
+// Mapping from department label to the permission module keys that represent it.
+// A role gains access to a department if it has access to ANY of those modules.
+const DEPT_MODULES: Record<string, string[]> = {
+  Service:     ['orders', 'floor'],
+  Parts:       ['parts'],
+  Fleet:       ['fleet', 'customers'],
+  Maintenance: ['maintenance'],
+  Accounting:  ['accounting', 'invoices', 'reports'],
+}
+
+function getDeptAccess(
+  role: string,
+  rolePerms: Record<string, boolean>,
+  userOverrides: Record<string, boolean>
+): string[] {
+  return Object.entries(DEPT_MODULES)
+    .filter(([, modules]) => modules.some(mod => hasAccess(role, mod, rolePerms, userOverrides)))
+    .map(([dept]) => dept)
 }
 
 export default function Sidebar() {
@@ -154,7 +158,7 @@ export default function Sidebar() {
 
   const visible = getSidebarItems(user.role, rolePerms, userOverrides)
   const visibleHrefs = new Set<string>(visible.map(i => i.href))
-  const deptAccess = getDeptAccess(user.role)
+  const deptAccess = getDeptAccess(user.role, rolePerms, userOverrides)
   // Collect all nav hrefs for longest-match comparison
   const allHrefs: string[] = []
   for (const dept of DEPARTMENTS) {
@@ -284,7 +288,7 @@ export default function Sidebar() {
       <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
         {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
         {TRASH_ROLES.includes(user.role) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
-        {renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
+        {hasAccess(user.role, 'settings', rolePerms, userOverrides) && renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
         {PERMISSIONS_ROLES.includes(user.role) && renderNavItem({ href: '/settings/permissions', label: 'Permissions', icon: Lock })}
         <a href="#" onClick={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}

@@ -35,14 +35,15 @@ export default function FloorPage() {
   }, [])
 
   useEffect(() => {
+    let channel: any = null
     async function init() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
       setUser(profile)
       await loadJobs(profile.shop_id)
 
-      // Realtime subscription
-      supabase.channel('floor-realtime')
+      // Realtime subscription — scoped to shop, cleaned up on unmount
+      channel = supabase.channel(`floor-realtime:${profile.shop_id}`)
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'service_orders',
           filter: `shop_id=eq.${profile.shop_id}`,
@@ -50,6 +51,7 @@ export default function FloorPage() {
         .subscribe()
     }
     init()
+    return () => { if (channel) supabase.removeChannel(channel) }
   }, [loadJobs])
 
   async function updateStatus(soId: string, newStatus: string) {

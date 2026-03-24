@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { log } from '@/lib/security'
+import { getCache, setCache, invalidateCache } from '@/lib/cache'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+
+const COST_VISIBLE_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'parts_manager']
+
+function stripCostFields(parts: any[]): any[] {
+  return parts.map(p => ({ ...p, cost_price: null, sell_price: null, average_cost: null, cost_floor: null, markup_percent: null, margin_percent: null, inventory_balance: null }))
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
@@ -15,20 +22,26 @@ export async function GET(req: Request) {
   const page      = parseInt(searchParams.get('page') || '1')
   const perPage   = Math.min(parseInt(searchParams.get('per_page') || '50'), 2000)
 
-  // Get shop_id: try query param first, then fall back to session user
+  // Get shop_id and user role
   let shopId = searchParams.get('shop_id')
-  if (!shopId) {
-    try {
-      const supabase = await createServerSupabaseClient()
-      const user = await getCurrentUser(supabase)
-      shopId = user?.shop_id ?? null
-    } catch {}
-  }
+  let userRole: string | null = null
+  try {
+    const supabase = await createServerSupabaseClient()
+    const user = await getCurrentUser(supabase)
+    if (user) {
+      if (!shopId) shopId = user.shop_id
+      userRole = user.role
+    }
+  } catch {}
 
   if (!shopId) {
     console.error('[Parts API] No shop_id available — returning empty')
     return NextResponse.json({ data: [], total: 0, page, per_page: perPage })
   }
+
+  const cacheKey = `parts:${shopId}:${page}:${perPage}:${search || ''}:${status || ''}:${category || ''}:${vendor || ''}:${lowStock}`
+  const cached = getCache<any>(cacheKey)
+  if (cached) return NextResponse.json(cached)
 
   const s = db()
   let q = s
@@ -44,6 +57,7 @@ export async function GET(req: Request) {
     )
     .eq('shop_id', shopId)
     .is('deleted_at', null)
+    .order('on_hand', { ascending: false })
     .order('description')
 
   // Status filter: active / inactive / all
@@ -62,7 +76,10 @@ export async function GET(req: Request) {
     const totalFiltered = filtered.length
     const from = (page - 1) * perPage
     const paged = filtered.slice(from, from + perPage)
-    return NextResponse.json({ data: paged, total: totalFiltered, page, per_page: perPage })
+    const hideCost = userRole && !COST_VISIBLE_ROLES.includes(userRole)
+    const lowStockResult = { data: hideCost ? stripCostFields(paged) : paged, total: totalFiltered, page, per_page: perPage }
+    setCache(cacheKey, lowStockResult, 60)
+    return NextResponse.json(lowStockResult)
   }
 
   // Normal pagination
@@ -73,7 +90,10 @@ export async function GET(req: Request) {
   const { data, error, count } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ data: data || [], total: count || 0, page, per_page: perPage })
+  const hideCost = userRole && !COST_VISIBLE_ROLES.includes(userRole)
+  const result = { data: hideCost ? stripCostFields(data || []) : (data || []), total: count || 0, page, per_page: perPage }
+  setCache(cacheKey, result, 60) // 60s TTL
+  return NextResponse.json(result)
 }
 
 export async function POST(req: Request) {
@@ -131,6 +151,7 @@ export async function POST(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  invalidateCache(`parts:${user.shop_id}`)
   await log('parts.added', user.shop_id, user.id, { table: 'parts', recordId: data.id, newData: { description, part_number } })
   return NextResponse.json(data, { status: 201 })
 }

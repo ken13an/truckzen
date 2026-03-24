@@ -42,6 +42,7 @@ const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
 
 const DEFAULT_PERMS: Record<string, string[]> = {
   shop_manager:           ['dashboard','floor','orders','invoices','parts','fleet','drivers','maintenance','tires','parts_lifecycle','compliance','customers','reports','time_tracking','settings','import','dvir','tech_mobile'],
+  floor_manager:          ['dashboard','floor','orders','customers','fleet','parts','reports','time_tracking','settings'],
   service_writer:         ['dashboard','floor','orders','invoices','customers','parts'],
   technician:             ['floor','parts','time_tracking','tech_mobile','dvir'],
   parts_manager:          ['dashboard','floor','orders','parts','parts_lifecycle'],

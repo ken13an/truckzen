@@ -131,6 +131,7 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ['truckzen.com', 'www.truckzen.com'],
     },
+    optimizeCss: true,
   },
 
   // ── ENV VALIDATION ───────────────────────────────────────
