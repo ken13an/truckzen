@@ -569,6 +569,29 @@ export default function WorkOrderDetail() {
         </div>
       </div>
 
+      {/* ESTIMATE REQUIREMENT BANNER */}
+      {!wo.is_historical && wo.estimate_required && (
+        <div style={{
+          padding: '12px 16px', borderRadius: 8, marginBottom: 12, fontSize: 13, fontWeight: 700,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          ...(wo.estimate_approved
+            ? { background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)', color: GREEN }
+            : wo.estimate_status === 'sent'
+            ? { background: 'rgba(29,111,232,0.08)', border: '1px solid rgba(29,111,232,0.2)', color: BLUE }
+            : wo.estimate_status === 'declined'
+            ? { background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: RED }
+            : { background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.2)', color: AMBER })
+        }}>
+          <span>
+            {wo.estimate_approved ? 'Estimate approved — work can begin'
+            : wo.estimate_status === 'sent' ? 'Estimate sent to customer — awaiting approval'
+            : wo.estimate_status === 'declined' ? `Estimate declined${wo.estimate_declined_reason ? ` — ${wo.estimate_declined_reason}` : ''} — follow up required`
+            : 'Estimate required — build and send before assigning work'}
+          </span>
+          {!wo.estimate_approved && <a href="#estimate" onClick={() => setTab(2)} style={{ fontSize: 12, fontWeight: 600, color: BLUE, textDecoration: 'none', marginLeft: 12 }}>Go to Estimate</a>}
+        </div>
+      )}
+
       {/* WARRANTY BANNER — 3 scenarios */}
       {!wo.is_historical && (wo.warranty_status === 'not_checked' || wo.warranty_status === 'none' || !wo.warranty_status) && (() => {
         const isFleet = customer?.is_fleet
@@ -684,7 +707,13 @@ export default function WorkOrderDetail() {
       {!wo.is_historical && (
         <div data-no-print style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {[
-            { icon: <Users size={16} />, label: 'Team', onClick: () => setShowTeamModal(true) },
+            { icon: <Users size={16} />, label: 'Team', onClick: () => {
+              if (wo.estimate_required && !wo.estimate_approved) {
+                alert('Estimate must be approved before this WO can be assigned. Go to the Estimate tab to build and send the estimate.')
+                return
+              }
+              setShowTeamModal(true)
+            }},
             { icon: <MessageSquare size={16} />, label: 'Notes', onClick: () => setTab(3) },
             { icon: <Clock size={16} />, label: 'Activity', onClick: () => setTab(4) },
             { icon: <DollarSign size={16} />, label: 'Billing', onClick: () => setTab(2) },
