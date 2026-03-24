@@ -116,7 +116,7 @@ export default function DashboardPage() {
         {statCards.map(c => (
           <div key={c.label} style={{ ...card, borderLeft: `3px solid ${c.color}` }}>
             <div style={{ fontSize: 11, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>{c.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#111827' }}>{c.value}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: '#111827' }}>{String(c.value)}</div>
           </div>
         ))}
       </div>
