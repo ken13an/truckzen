@@ -16,6 +16,11 @@ export async function GET(req: Request) {
   const page      = parseInt(searchParams.get('page') || '1')
   const perPage   = Math.min(parseInt(searchParams.get('per_page') || '50'), 2000)
 
+  if (!user.shop_id) {
+    console.error('[Parts API] user.shop_id is null — returning empty')
+    return NextResponse.json({ data: [], total: 0, page, per_page: perPage })
+  }
+
   let q = supabase
     .from('parts')
     .select(
@@ -28,12 +33,11 @@ export async function GET(req: Request) {
       'created_at, updated_at',
       { count: 'exact' }
     )
-    .or(`shop_id.eq.${user.shop_id},shop_id.is.null`)
+    .eq('shop_id', user.shop_id)
     .is('deleted_at', null)
     .order('description')
 
   // Status filter: active / inactive / all
-  // 'active' includes parts with status='active', NULL status, or empty status (imported parts)
   if (status === 'active')   q = q.not('status', 'eq', 'inactive')
   if (status === 'inactive') q = q.eq('status', 'inactive')
 
