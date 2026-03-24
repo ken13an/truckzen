@@ -1,6 +1,5 @@
 'use client'
 import { usePathname } from 'next/navigation'
-import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
@@ -116,17 +115,17 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
 
         {/* Bottom */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '8px 0' }}>
-          <Link href="/dashboard" style={{
+          <div style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 18px', margin: '1px 6px', borderRadius: 8,
               cursor: 'pointer', transition: 'all .12s',
-              textDecoration: 'none',
             }}
+            onClick={() => { window.location.href = '/dashboard' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
               <ChevronLeft size={15} strokeWidth={1.5} color="#7C8BA0" />
               <span style={{ fontSize: 12, color: '#7C8BA0' }}>Back to Dashboard</span>
-          </Link>
+          </div>
         </div>
       </aside>
 
