@@ -230,6 +230,15 @@ export default function PartsPage() {
   function getPriceOutside(p: any) { return p.price_outside ?? p.sell_price ?? null }
   function getOnHand(p: any) { return p.on_hand ?? 0 }
   function getAllocated(p: any) { return p.allocated ?? p.reserved ?? 0 }
+  function getStockStatus(p: any): { label: string; bg: string; color: string } {
+    const onHand = p.on_hand ?? 0
+    const inTransit = p.in_transit ?? 0
+    const reorder = p.reorder_point ?? 0
+    if (onHand === 0 && inTransit > 0) return { label: 'On Order', bg: 'rgba(29,111,232,.1)', color: '#4D9EFF' }
+    if (onHand === 0) return { label: 'Out of Stock', bg: 'rgba(239,68,68,.1)', color: '#EF4444' }
+    if (onHand > 0 && reorder > 0 && onHand <= reorder) return { label: 'Low Stock', bg: 'rgba(245,158,11,.1)', color: '#F59E0B' }
+    return { label: 'In Stock', bg: 'rgba(22,163,74,.1)', color: '#16A34A' }
+  }
   function getLocation(p: any) { return p.default_location || p.bin_location || '--' }
   function getStatus(p: any) { return p.status || 'active' }
 
@@ -370,6 +379,7 @@ export default function PartsPage() {
                     {sorted.map(p => {
                       const onHand = getOnHand(p)
                       const partStatus = getStatus(p)
+                      const stockStatus = getStockStatus(p)
                       return (
                         <tr key={p.id} onClick={() => window.location.href = `/parts/${p.id}`}
                           style={{ borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }}
@@ -378,7 +388,12 @@ export default function PartsPage() {
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE, whiteSpace: 'nowrap' }}>{p.part_number || '--'}</td>
                           <td style={{ padding: '10px 10px', fontSize: 12, fontWeight: 500, color: '#1A1A1A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description ? (p.description.length > 40 ? p.description.slice(0, 40) + '...' : p.description) : '--'}</td>
                           <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{p.uom || '--'}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 12, fontWeight: 700, textAlign: 'right', color: onHand > 0 ? BLUE : '#9CA3AF' }}>{fmtQty(onHand)}</td>
+                          <td style={{ padding: '10px 10px', textAlign: 'right' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: onHand > 0 ? '#1A1A1A' : '#9CA3AF' }}>{fmtQty(onHand)}</span>
+                              <span style={{ padding: '1px 6px', borderRadius: 100, fontSize: 9, fontWeight: 700, background: stockStatus.bg, color: stockStatus.color, whiteSpace: 'nowrap' }}>{stockStatus.label}</span>
+                            </span>
+                          </td>
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{fmtQty(getAllocated(p))}</td>
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{canViewCostPrice ? fmt(getAvgCost(p)) : '***'}</td>
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>{fmt(getPriceUgl(p))}</td>

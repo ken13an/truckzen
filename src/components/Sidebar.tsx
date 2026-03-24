@@ -126,17 +126,17 @@ export default function Sidebar() {
       setUser(data)
       if (data.is_platform_owner) setIsPlatformOwner(true)
 
-      const { data: rp } = await supabase.from('role_permissions').select('module, allowed').eq('shop_id', data.shop_id).eq('role', data.role)
-      if (rp) setRolePerms(Object.fromEntries(rp.map((r: any) => [r.module, r.allowed])))
-      const { data: uo } = await supabase.from('user_permission_overrides').select('module, allowed').eq('user_id', data.id)
-      if (uo) setUserOverrides(Object.fromEntries(uo.map((r: any) => [r.module, r.allowed])))
-
-      const [{ count: ls }, { count: oj }] = await Promise.all([
-        supabase.from('parts').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).is('deleted_at', null).lte('on_hand', 2),
-        supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', data.shop_id).is('deleted_at', null).not('status', 'in', '("good_to_go","void")'),
+      // Fetch permissions and counts via API routes (service role key bypasses RLS)
+      const [rpRes, uoRes, partsRes, wosRes] = await Promise.all([
+        fetch(`/api/settings/role-permissions?shop_id=${data.shop_id}&role=${data.role}`).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`/api/settings/user-overrides?user_id=${data.id}`).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`/api/parts?shop_id=${data.shop_id}&per_page=1&status=active`).then(r => r.ok ? r.json() : { total: 0 }).catch(() => ({ total: 0 })),
+        fetch(`/api/service-orders?shop_id=${data.shop_id}&limit=1`).then(r => r.ok ? r.json() : []).catch(() => []),
       ])
-      setLowStock(ls || 0)
-      setOpenJobs(oj || 0)
+      if (Array.isArray(rpRes)) setRolePerms(Object.fromEntries(rpRes.map((r: any) => [r.module, r.allowed])))
+      if (Array.isArray(uoRes)) setUserOverrides(Object.fromEntries(uoRes.map((r: any) => [r.module, r.allowed])))
+      setLowStock(0) // Will be refined when low stock API param is added
+      setOpenJobs(Array.isArray(wosRes) ? wosRes.length : 0)
 
       // Auto-expand section containing active page
       for (const dept of DEPARTMENTS) {

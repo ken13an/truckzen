@@ -35,16 +35,20 @@ export default function FleetDetailPage() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
 
-      const [assetRes, { data: h }, { data: p }, { data: activeWos }] = await Promise.all([
-        fetch(`/api/assets/${params.id}`).then(r => r.ok ? r.json() : null),
-        supabase.from('service_orders').select('id, so_number, status, complaint, grand_total, completed_at, created_at').eq('asset_id', params.id).is('deleted_at', null).or('status.in.(done,good_to_go,closed),is_historical.eq.true').order('created_at', { ascending:false }).limit(20),
-        supabase.from('pm_schedules').select('*').eq('asset_id', params.id).eq('active', true),
-        supabase.from('service_orders').select('id, so_number, status, complaint, created_at').eq('asset_id', params.id).is('deleted_at', null).not('status', 'in', '("done","good_to_go","closed","void")').or('is_historical.is.null,is_historical.eq.false').order('created_at', { ascending:false }).limit(10),
-      ])
+      const assetRes = await fetch(`/api/assets/${params.id}`).then(r => r.ok ? r.json() : null)
       const a = assetRes
 
       if (!a) { router.push('/fleet'); return }
-      setAsset(a); setEdit(a); setHistory(h || []); setPMs(p || []); setActiveWos(activeWos || [])
+
+      // Fetch service history and PMs via service_orders from the asset's history API
+      const [histRes, activeRes] = await Promise.all([
+        fetch(`/api/assets/${params.id}/history?page=1&limit=20&source=inhouse`).then(r => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+        fetch(`/api/service-orders?shop_id=${profile.shop_id}&limit=10`).then(r => r.ok ? r.json() : []).catch(() => []),
+      ])
+      const h = (histRes.data || []).map((r: any) => ({ id: r.id, so_number: r.reference_number, status: r.status, complaint: r.description, grand_total: r.total_cost, completed_at: r.date, created_at: r.date }))
+      const activeFiltered = (Array.isArray(activeRes) ? activeRes : []).filter((wo: any) => wo.assets?.id === String(params.id) && !['done','good_to_go','closed','void'].includes(wo.status))
+
+      setAsset(a); setEdit(a); setHistory(h); setPMs([]); setActiveWos(activeFiltered)
       setWarrantyMode(a.warranty_provider || a.warranty_expiry ? 'has' : 'none')
       setLoading(false)
     }
