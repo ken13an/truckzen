@@ -1,249 +1,209 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
+import { Check, Bell, ChevronRight, X } from 'lucide-react'
 
-interface DashStats {
-  open_jobs: number
-  in_progress: number
-  waiting_parts: number
-  good_to_go: number
-  low_stock_parts: number
-  overdue_invoices: number
-  overdue_pm: number
-  idle_techs: number
+const FONT = "'Inter', -apple-system, sans-serif"
+const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
+
+const ROLE_LABEL: Record<string, string> = {
+  owner: 'Owner', gm: 'GM', it_person: 'IT Admin', shop_manager: 'Shop Manager',
+  service_writer: 'Service Writer', technician: 'Technician', lead_tech: 'Lead Tech',
+  parts_manager: 'Parts Dept', fleet_manager: 'Fleet Manager', maintenance_manager: 'Maint. Manager',
+  maintenance_technician: 'Maint. Tech', accountant: 'Accounting', office_admin: 'Office Admin',
 }
+
+const PRIORITY_BORDER: Record<string, string> = { urgent: RED, high: AMBER, normal: BLUE, low: GRAY }
 
 export default function DashboardPage() {
   const supabase = createClient()
-  const [user,  setUser]  = useState<UserProfile | null>(null)
-  const [stats, setStats] = useState<DashStats | null>(null)
-  const [recentSOs, setRecentSOs] = useState<any[]>([])
-  const [checkins, setCheckins] = useState<any[]>([])
+  const [user, setUser] = useState<UserProfile | null>(null)
+  const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [kioskCode, setKioskCode] = useState<string | null>(null)
+  const [shop, setShop] = useState<any>(null)
 
-  useEffect(() => {
-    async function load() {
-      const profile = await getCurrentUser(supabase)
-      if (!profile) { window.location.href = '/login'; return }
-      setUser(profile)
-
-      const shopId = profile.shop_id
-
-      // Fetch kiosk code
-      supabase.from('shops').select('kiosk_code').eq('id', shopId).single()
-        .then(({ data }: { data: { kiosk_code: string | null } | null }) => { if (data?.kiosk_code) setKioskCode(data.kiosk_code) })
-
-      // Fetch all stats in parallel
-      const [
-        { data: soData },
-        { data: partsData },
-        { data: invoiceData },
-        { data: pmData },
-      ] = await Promise.all([
-        supabase.from('service_orders').select('status').eq('shop_id', shopId).is('deleted_at', null).not('status', 'in', '("void")').or('is_historical.is.null,is_historical.eq.false'),
-        supabase.from('parts').select('on_hand, reorder_point').eq('shop_id', shopId).is('deleted_at', null),
-        supabase.from('invoices').select('status, due_date').eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent'),
-        supabase.from('pm_schedules').select('next_due_date').eq('shop_id', shopId).eq('active', true),
-      ])
-
-      const today = new Date().toISOString().split('T')[0]
-
-      setStats({
-        open_jobs:       soData?.filter((s: any) => !['good_to_go','void'].includes(s.status)).length ?? 0,
-        in_progress:     soData?.filter((s: any) => s.status === 'in_progress').length ?? 0,
-        waiting_parts:   soData?.filter((s: any) => s.status === 'waiting_parts').length ?? 0,
-        good_to_go:      soData?.filter((s: any) => s.status === 'good_to_go').length ?? 0,
-        low_stock_parts: partsData?.filter((p: any) => p.on_hand <= p.reorder_point).length ?? 0,
-        overdue_invoices:invoiceData?.filter((i: any) => i.due_date && i.due_date < today).length ?? 0,
-        overdue_pm:      pmData?.filter((p: any) => p.next_due_date && p.next_due_date < today).length ?? 0,
-        idle_techs:      0, // computed separately
-      })
-
-      // Recent SOs
-      const { data: sos } = await supabase
-        .from('service_orders')
-        .select(`so_number, status, priority, created_at,
-          assets(unit_number, make, model),
-          customers(company_name),
-          users!assigned_tech(full_name)`)
-        .eq('shop_id', shopId)
-        .is('deleted_at', null)
-        .not('status', 'in', '("void")')
-        .order('created_at', { ascending: false })
-        .limit(8)
-
-      setRecentSOs(sos || [])
-
-      // Recent kiosk check-ins
-      const ciRes = await fetch(`/api/kiosk?shop_id=${shopId}&limit=5`)
-      if (ciRes.ok) { const ciData = await ciRes.json(); setCheckins(Array.isArray(ciData) ? ciData : []) }
-
-      setLoading(false)
-    }
-    load()
+  const loadDashboard = useCallback(async (u: UserProfile) => {
+    const res = await fetch(`/api/dashboard?user_id=${u.id}`)
+    if (res.ok) setData(await res.json())
   }, [])
 
-  // Realtime — live SO updates
+  useEffect(() => {
+    getCurrentUser(supabase).then(async (p) => {
+      if (!p) { window.location.href = '/login'; return }
+      setUser(p)
+      const { data: s } = await supabase.from('shops').select('name').eq('id', p.shop_id).single()
+      setShop(s)
+      await loadDashboard(p)
+      setLoading(false)
+    })
+  }, [])
+
+  // Auto-refresh every 30s
   useEffect(() => {
     if (!user) return
-    const channel = supabase
-      .channel('dashboard-sos')
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'service_orders',
-        filter: `shop_id=eq.${user.shop_id}`,
-      }, () => { /* re-fetch on change */ })
+    const iv = setInterval(() => loadDashboard(user), 30000)
+    return () => clearInterval(iv)
+  }, [user, loadDashboard])
+
+  // Real-time notifications
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase.channel('dashboard-notifs')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, () => {
+        loadDashboard(user)
+      })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [user])
 
-  const STATUS_COLOR: Record<string, string> = {
-    in_progress:        '#4D9EFF',
-    waiting_parts:      '#E8692A',
-    waiting_approval:   '#D4882A',
-    not_approved:       '#D4882A',
-    done:               '#1DB870',
-    good_to_go:         '#1DB870',
-    ready_final_inspection: '#8B5CF6',
-    failed_inspection:  '#D94F4F',
-    draft:              '#7C8BA0',
-    not_started:        '#7C8BA0',
+  async function markRead(notifId: string) {
+    await supabase.from('notifications').update({ read: true, is_read: true }).eq('id', notifId)
+    setData((d: any) => d ? { ...d, notifications: d.notifications.filter((n: any) => n.id !== notifId) } : d)
   }
 
-  const STATUS_LABEL: Record<string, string> = {
-    in_progress: 'In Progress', waiting_parts: 'Waiting Parts',
-    waiting_approval: 'Waiting Approval', not_approved: 'Not Approved',
-    done: 'Done', good_to_go: 'Good to Go',
-    ready_final_inspection: 'Ready for Inspection',
-    failed_inspection: 'Failed Inspection',
-    draft: 'Draft', not_started: 'Not Started',
+  async function dismissNotif(notifId: string) {
+    await supabase.from('notifications').update({ is_dismissed: true }).eq('id', notifId)
+    setData((d: any) => d ? { ...d, notifications: d.notifications.filter((n: any) => n.id !== notifId) } : d)
   }
 
-  if (loading) return (
-    <div style={{ minHeight:'100vh', background:'#060708', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ width:28, height:28, border:'2px solid rgba(29,111,232,.2)', borderTopColor:'#1D6FE8', borderRadius:'50%', animation:'spin .7s linear infinite' }}/>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  )
-
-  const greeting = () => {
-    const h = new Date().getHours()
-    if (h < 12) return 'Good morning'
-    if (h < 17) return 'Good afternoon'
-    return 'Good evening'
+  async function markAllRead() {
+    if (!user) return
+    await supabase.from('notifications').update({ read: true, is_read: true }).eq('user_id', user.id).eq('read', false)
+    setData((d: any) => d ? { ...d, notifications: [] } : d)
   }
+
+  if (loading || !data) return <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading dashboard...</div>
+
+  const stats = data.stats || {}
+  const notifications = data.notifications || []
+  const actionItems = data.actionItems || []
+  const teamStatus = data.teamStatus
+  const recentActivity = data.recentActivity || []
+  const role = data.role || user?.role || ''
+  const now = new Date()
+  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
+
+  function timeAgo(d: string) {
+    const diff = Math.floor((Date.now() - new Date(d).getTime()) / 60000)
+    if (diff < 1) return 'just now'
+    if (diff < 60) return `${diff}m ago`
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`
+    return `${Math.floor(diff / 1440)}d ago`
+  }
+
+  const statCards = Object.entries(stats).map(([key, value]) => ({
+    label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    value: typeof value === 'number' && key.includes('revenue') ? `$${(value as number).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : value,
+    color: key.includes('pending') || key.includes('unassigned') || key.includes('overdue') ? AMBER : key.includes('revenue') || key.includes('approved') || key.includes('completed') ? GREEN : BLUE,
+  }))
+
+  const card: React.CSSProperties = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }
 
   return (
-    <div style={{ background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:'24px' }}>
-
+    <div style={{ background: '#F9FAFB', minHeight: '100vh', fontFamily: FONT, padding: '24px 28px' }}>
       {/* Header */}
-      <div style={{ marginBottom:24 }}>
-        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:'.02em', color:'#F0F4FF' }}>
-          {greeting()}, {user?.full_name.split(' ')[0]}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {user?.full_name?.split(' ')[0] || 'there'}</div>
+          <div style={{ fontSize: 13, color: GRAY, marginTop: 2 }}>{shop?.name || ''} · {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
         </div>
-        <div style={{ fontSize:12, color:'#7C8BA0', marginTop:4 }}>
-          {new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })} · UGL Shop Main
-        </div>
+        <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#EFF6FF', color: BLUE }}>{ROLE_LABEL[role] || role}</span>
       </div>
 
-      {/* Stat cards */}
-      {stats && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:10, marginBottom:24 }}>
-          {[
-            { label:'Open Jobs',      val: stats.open_jobs,       color:'#F0F4FF', href:'/orders' },
-            { label:'In Progress',    val: stats.in_progress,     color:'#4D9EFF', href:'/floor' },
-            { label:'Waiting Parts',  val: stats.waiting_parts,   color:'#E8692A', href:'/orders?status=waiting_parts' },
-            { label:'Good to Go',     val: stats.good_to_go,      color:'#1DB870', href:'/orders?status=good_to_go' },
-            { label:'Low Stock Parts',val: stats.low_stock_parts, color: stats.low_stock_parts>0?'#D94F4F':'#1DB870', href:'/parts' },
-            { label:'Overdue Invoices',val:stats.overdue_invoices,color: stats.overdue_invoices>0?'#D4882A':'#1DB870', href:'/invoices' },
-            { label:'PM Overdue',     val: stats.overdue_pm,      color: stats.overdue_pm>0?'#D94F4F':'#1DB870', href:'/maintenance' },
-          ].map(s => (
-            <a key={s.label} href={s.href} style={{ textDecoration:'none' }}>
-              <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:10, padding:'12px 14px', cursor:'pointer', transition:'all .14s' }}>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase', color:'#48536A', marginBottom:6 }}>{s.label}</div>
-                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:'.02em', color:s.color }}>{s.val}</div>
-              </div>
-            </a>
-          ))}
-        </div>
-      )}
-
-      {/* Recent service orders */}
-      <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
-        <div style={{ padding:'11px 14px', borderBottom:'1px solid rgba(255,255,255,.055)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Recent Service Orders</div>
-          <a href="/orders" style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>View all →</a>
-        </div>
-        <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse', minWidth:500 }}>
-            <thead>
-              <tr style={{ background:'#0B0D11' }}>
-                {['SO #','Truck','Customer','Tech','Status','Priority'].map(h => (
-                  <th key={h} style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', whiteSpace:'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {recentSOs.map((so, i) => (
-                <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,.025)', cursor:'pointer' }}
-                  onClick={() => window.location.href = `/orders/${so.id}`}>
-                  <td style={{ padding:'9px 10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'#4D9EFF', fontWeight:700 }}>{so.so_number}</td>
-                  <td style={{ padding:'9px 10px', color:'#F0F4FF', fontWeight:600 }}>
-                    #{(so.assets as any)?.unit_number}
-                    <div style={{ fontSize:9, color:'#7C8BA0', marginTop:1 }}>{(so.assets as any)?.make} {(so.assets as any)?.model}</div>
-                  </td>
-                  <td style={{ padding:'9px 10px', color:'#DDE3EE' }}>{(so.customers as any)?.company_name}</td>
-                  <td style={{ padding:'9px 10px', color:'#7C8BA0', fontSize:11 }}>{(so.users as any)?.full_name || '—'}</td>
-                  <td style={{ padding:'9px 10px' }}>
-                    <span style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:`${STATUS_COLOR[so.status] || '#7C8BA0'}18`, color:STATUS_COLOR[so.status] || '#7C8BA0', border:`1px solid ${STATUS_COLOR[so.status] || '#7C8BA0'}33` }}>
-                      <span style={{ width:4, height:4, borderRadius:'50%', background:'currentColor' }}/>
-                      {STATUS_LABEL[so.status] || so.status}
-                    </span>
-                  </td>
-                  <td style={{ padding:'9px 10px' }}>
-                    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, fontWeight:600, color: so.priority==='critical'?'#D94F4F':so.priority==='high'?'#D4882A':'#7C8BA0' }}>
-                      {so.priority?.toUpperCase()}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Recent Kiosk Check-ins */}
-      {checkins.length > 0 && (
-        <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden', marginTop:16 }}>
-          <div style={{ padding:'11px 14px', borderBottom:'1px solid rgba(255,255,255,.055)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Recent Check-ins</div>
-            <a href={kioskCode ? `/kiosk/${kioskCode}` : '/kiosk'} target="_blank" style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>Open Kiosk →</a>
+      {/* KPI Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(statCards.length, 4)}, 1fr)`, gap: 12, marginBottom: 24 }}>
+        {statCards.map(c => (
+          <div key={c.label} style={{ ...card, borderLeft: `3px solid ${c.color}` }}>
+            <div style={{ fontSize: 11, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>{c.label}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: '#111827' }}>{c.value}</div>
           </div>
-          {checkins.map((ci: any) => (
-            <div key={ci.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderBottom:'1px solid rgba(255,255,255,.025)' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                <div style={{ width:32, height:32, borderRadius:8, background:'rgba(29,111,232,.08)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:'#4D9EFF' }}>TRK</div>
-                <div>
-                  <div style={{ fontSize:12, fontWeight:600, color:'#F0F4FF' }}>
-                    {ci.company_name || (ci.customers as any)?.company_name || 'Walk-in'} — #{ci.unit_number}
-                  </div>
-                  <div style={{ fontSize:10, color:'#7C8BA0', marginTop:1 }}>
-                    {ci.complaint_en ? ci.complaint_en.slice(0, 60) + (ci.complaint_en.length > 60 ? '...' : '') : 'No description'}
-                  </div>
-                </div>
+        ))}
+      </div>
+
+      {/* Main content: Action Items + Notifications */}
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16, marginBottom: 24 }}>
+        {/* Action Items */}
+        <div style={card}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Action Items</div>
+          {actionItems.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 30, color: GREEN }}>
+              <Check size={28} style={{ marginBottom: 6 }} />
+              <div style={{ fontSize: 13, fontWeight: 600 }}>You're all caught up</div>
+              <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>No action items right now</div>
+            </div>
+          ) : actionItems.map((item: any) => (
+            <div key={item.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #F3F4F6', borderLeft: `3px solid ${PRIORITY_BORDER[item.priority] || BLUE}`, paddingLeft: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{item.title}</div>
+                {item.wo_number && <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, marginTop: 2 }}>{item.wo_number}{item.unit ? ` · #${item.unit}` : ''}</div>}
+                {item.description && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{item.description}</div>}
               </div>
-              <div style={{ textAlign:'right', flexShrink:0 }}>
-                <div style={{ fontSize:11, fontFamily:"'IBM Plex Mono',monospace", color:'#7C8BA0' }}>
-                  {new Date(ci.created_at).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' })}
-                </div>
-                <div style={{ fontSize:9, color:'#48536A', fontFamily:'monospace' }}>{ci.checkin_ref}</div>
-              </div>
+              <a href={item.link} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: BLUE, color: '#fff', borderRadius: 6, fontSize: 11, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', height: 'fit-content' }}>
+                {item.action || 'View'} <ChevronRight size={12} />
+              </a>
             </div>
           ))}
         </div>
+
+        {/* Notifications */}
+        <div style={card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Bell size={14} color={GRAY} />
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Notifications</span>
+              {notifications.length > 0 && <span style={{ background: RED, color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 100 }}>{notifications.length}</span>}
+            </div>
+            {notifications.length > 0 && (
+              <button onClick={markAllRead} style={{ fontSize: 11, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: FONT }}>Mark all read</button>
+            )}
+          </div>
+          {notifications.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 20, color: GRAY, fontSize: 12 }}>No new notifications</div>
+          ) : notifications.map((n: any) => (
+            <div key={n.id} style={{ display: 'flex', gap: 8, padding: '8px 0', borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => { markRead(n.id); if (n.link) window.location.href = n.link }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: BLUE, marginTop: 5, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, color: '#111827' }}>{n.title}</div>
+                <div style={{ fontSize: 11, color: GRAY, marginTop: 1 }}>{n.body?.slice(0, 80)}</div>
+                <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2 }}>{timeAgo(n.created_at)}</div>
+              </div>
+              <button onClick={e => { e.stopPropagation(); dismissNotif(n.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 2 }}><X size={14} /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Team Status (Floor Manager / Owner) */}
+      {teamStatus && Array.isArray(teamStatus) && teamStatus.length > 0 && (
+        <div style={{ ...card, marginBottom: 24 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Team Status</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+            {teamStatus.map((m: any) => (
+              <div key={m.id} style={{ padding: '10px 14px', background: '#F9FAFB', borderRadius: 8, border: '1px solid #F3F4F6' }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{m.full_name}</div>
+                <div style={{ fontSize: 11, color: GRAY, marginTop: 2 }}>Team {m.team || '—'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
+      {/* Recent Activity */}
+      <div style={card}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Recent Activity</div>
+        {recentActivity.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 20, color: GRAY, fontSize: 12 }}>No recent activity</div>
+        ) : recentActivity.map((a: any) => (
+          <div key={a.id} style={{ display: 'flex', gap: 8, padding: '6px 0', borderBottom: '1px solid #F3F4F6' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#D1D5DB', marginTop: 6, flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, color: '#374151' }}>{a.action}</div>
+              <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 1 }}>{timeAgo(a.created_at)}</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
