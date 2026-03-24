@@ -9,7 +9,7 @@ type P = { params: Promise<{ id: string }> }
 
 export async function POST(_req: Request, { params }: P) {
   const { id } = await params;
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const { email, password } = await req.json()
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) return NextResponse.json({ error: error.message }, { status: 401 })
@@ -35,7 +35,7 @@ import { getCurrentUser, isTechnician } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 
 export async function GET(req: Request) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
 // ── app/api/service-orders/[id]/route.ts ────────────────────
 /*
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -159,7 +159,7 @@ import { NextResponse } from 'next/server'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: Request) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -247,7 +247,7 @@ export async function POST(req: Request) {
 // ── app/api/kiosk/checkin/route.ts ───────────────────────────
 /*
 export async function POST(req: Request) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { unit_number, complaint_raw, complaint_lang, complaint_en, shop_id } = await req.json()
 
   // Find existing asset

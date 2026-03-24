@@ -6,7 +6,7 @@ type P = { params: Promise<{ id: string }> }
 
 export async function PATCH(req: Request, { params }: P) {
   const { id } = await params;
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -22,7 +22,7 @@ export async function PATCH(req: Request, { params }: P) {
 
 export async function DELETE(_req: Request, { params }: P) {
   const { id } = await params;
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   await supabase.from('pm_schedules').update({ active: false }).eq('id', id).eq('shop_id', user.shop_id)
