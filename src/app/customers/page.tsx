@@ -1,11 +1,10 @@
 'use client'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
 import ExcelJS from 'exceljs'
-import PageControls, { PageFooter } from '@/components/ui/PageControls'
+import { PageFooter } from '@/components/ui/PageControls'
 import SourceBadge from '@/components/ui/SourceBadge'
 import FilterBar from '@/components/FilterBar'
 
@@ -28,6 +27,9 @@ export default function CustomersPage() {
   const supabase = createClient()
   const router = useRouter()
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [total, setTotal] = useState(0)
+  const [activeCount, setActiveCount] = useState(0)
+  const [inactiveCount, setInactiveCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
@@ -37,16 +39,25 @@ export default function CustomersPage() {
   const [perPage, setPerPage] = useState(25)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
 
-  const loadCustomers = async (sid: string) => {
+  const fetchCustomers = async (sid: string, p: number) => {
+    if (!sid) return
     setLoading(true)
     setError('')
     try {
-      const res = await fetch(`/api/customers?shop_id=${sid}&per_page=2000`)
+      let url = `/api/customers?shop_id=${sid}&page=${p}&per_page=${perPage}`
+      if (search) url += `&q=${encodeURIComponent(search)}`
+      if (statusFilter !== 'all') url += `&status=${statusFilter}`
+      if (dateFrom) url += `&date_from=${dateFrom}`
+      if (dateTo) url += `&date_to=${dateTo}`
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to load customers')
-      const data = await res.json()
-      const list = Array.isArray(data) ? data : (data.data || [])
-      setCustomers(list)
+      const json = await res.json()
+      setCustomers(json.data || [])
+      setTotal(json.total || 0)
+      setActiveCount(json.active_count || 0)
+      setInactiveCount(json.inactive_count || 0)
     } catch (err: any) {
       setError(err.message || 'Failed to load customers')
     }
@@ -57,50 +68,24 @@ export default function CustomersPage() {
     getCurrentUser(supabase).then((p: any) => {
       if (!p) { window.location.href = '/login'; return }
       setShopId(p.shop_id)
-      loadCustomers(p.shop_id)
+      fetchCustomers(p.shop_id, 1)
     })
   }, [])
 
-  const filtered = useMemo(() => {
-    let list = customers
+  // Re-fetch when page, status filter, or date filters change
+  useEffect(() => {
+    if (!shopId) return
+    fetchCustomers(shopId, page)
+  }, [page, statusFilter, dateFrom, dateTo, perPage])
 
-    if (statusFilter !== 'all') {
-      list = list.filter(c => {
-        const s = (c.customer_status || 'active').toLowerCase()
-        return s === statusFilter
-      })
-    }
-
-    if (search.trim()) {
-      const q = search.toLowerCase().trim()
-      list = list.filter(c =>
-        (c.company_name || '').toLowerCase().includes(q) ||
-        (c.dot_number || '').toLowerCase().includes(q) ||
-        (c.phone || '').toLowerCase().includes(q) ||
-        (c.contact_name || '').toLowerCase().includes(q)
-      )
-    }
-
-    if (dateFrom) {
-      const from = new Date(dateFrom)
-      list = list.filter(c => c.created_at && new Date(c.created_at) >= from)
-    }
-    if (dateTo) {
-      const to = new Date(dateTo + 'T23:59:59')
-      list = list.filter(c => c.created_at && new Date(c.created_at) <= to)
-    }
-
-    return list
-  }, [customers, search, statusFilter, dateFrom, dateTo])
-
-  const paginated = useMemo(() => {
-    if (perPage === 0) return filtered
-    const start = (page - 1) * perPage
-    return filtered.slice(start, start + perPage)
-  }, [filtered, page, perPage])
-
-  const activeCount = useMemo(() => customers.filter(c => (c.customer_status || 'active').toLowerCase() === 'active').length, [customers])
-  const inactiveCount = useMemo(() => customers.filter(c => (c.customer_status || 'active').toLowerCase() === 'inactive').length, [customers])
+  // Debounced search
+  useEffect(() => {
+    if (!shopId) return
+    if (searchTimer) clearTimeout(searchTimer)
+    const t = setTimeout(() => { setPage(1); fetchCustomers(shopId, 1) }, 400)
+    setSearchTimer(t)
+    return () => clearTimeout(t)
+  }, [search])
 
 
 
@@ -242,12 +227,6 @@ export default function CustomersPage() {
     )
   }
 
-  const filterPills: { key: FilterStatus; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: customers.length },
-    { key: 'active', label: 'Active', count: activeCount },
-    { key: 'inactive', label: 'Inactive', count: inactiveCount },
-  ]
-
   return (
     <div style={{
       background: '#0C0C12',
@@ -276,7 +255,7 @@ export default function CustomersPage() {
             Customers
           </h1>
           <div style={{ fontSize: 13, color: '#6B7280', marginTop: 4 }}>
-            {filtered.length} of {customers.length} customers
+            {total.toLocaleString()} customers
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -318,10 +297,10 @@ export default function CustomersPage() {
       {/* FilterBar */}
       <FilterBar
         search={search}
-        onSearchChange={val => { setSearch(val); setPage(1) }}
+        onSearchChange={val => { setSearch(val) }}
         searchPlaceholder="Search by company name, DOT#, phone, or contact..."
         statusOptions={[
-          { value: 'all', label: `All (${customers.length})` },
+          { value: 'all', label: `All (${(activeCount + inactiveCount).toLocaleString()})` },
           { value: 'active', label: `Active (${activeCount})` },
           { value: 'inactive', label: `Inactive (${inactiveCount})` },
         ]}
@@ -386,13 +365,13 @@ export default function CustomersPage() {
                     Loading...
                   </td>
                 </tr>
-              ) : filtered.length === 0 ? (
+              ) : customers.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', color: '#6B7280', padding: 48, fontSize: 13 }}>
                     {search || statusFilter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No customers found'}
                   </td>
                 </tr>
-              ) : paginated.map(c => (
+              ) : customers.map(c => (
                 <tr
                   key={c.id}
                   onClick={() => router.push(`/customers/${c.id}`)}
@@ -454,7 +433,7 @@ export default function CustomersPage() {
           </table>
         </div>
       </div>
-      <PageFooter total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
+      <PageFooter total={total} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
     </div>
   )
 }

@@ -13,7 +13,10 @@ export async function GET(req: Request) {
   const shopId = searchParams.get('shop_id')
   const search = searchParams.get('q')
   const page = parseInt(searchParams.get('page') || '1')
-  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 5000)
+  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)
+  const statusFilter = searchParams.get('status') // active / inactive / all
+  const dateFrom = searchParams.get('date_from')
+  const dateTo = searchParams.get('date_to')
 
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
@@ -21,17 +24,33 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
-  const cacheKey = `customers:${shopId}:${page}:${perPage}:${search || ''}`
+  const cacheKey = `customers:${shopId}:${page}:${perPage}:${search || ''}:${statusFilter || ''}:${dateFrom || ''}:${dateTo || ''}`
   const cached = getCache<any>(cacheKey)
   if (cached) return NextResponse.json(cached)
 
-  // Get total count
-  let countQ = s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null)
-  if (search) {
-    const pattern = search.length === 1 ? `${search}%` : `%${search}%`
-    countQ = countQ.or(`company_name.ilike.${pattern},contact_name.ilike.${pattern}`)
+  // Build shared filters
+  function applyFilters(q: any) {
+    if (search) {
+      const pattern = search.length === 1 ? `${search}%` : `%${search}%`
+      q = q.or(`company_name.ilike.${pattern},contact_name.ilike.${pattern},dot_number.ilike.${pattern},phone.ilike.${pattern}`)
+    }
+    if (statusFilter === 'active') q = q.or('customer_status.eq.active,customer_status.is.null')
+    if (statusFilter === 'inactive') q = q.eq('customer_status', 'inactive')
+    if (dateFrom) q = q.gte('created_at', dateFrom)
+    if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59')
+    return q
   }
+
+  // Separate count query (HEAD — no data returned)
+  let countQ = s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null)
+  countQ = applyFilters(countQ)
   const { count: total } = await countQ
+
+  // Status counts (for filter pills — always unfiltered by status)
+  const [{ count: activeCount }, { count: inactiveCount }] = await Promise.all([
+    s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).or('customer_status.eq.active,customer_status.is.null'),
+    s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('customer_status', 'inactive'),
+  ])
 
   // Get page data
   const from = (page - 1) * perPage
@@ -43,11 +62,7 @@ export async function GET(req: Request) {
     .is('deleted_at', null)
     .order('company_name')
     .range(from, to)
-
-  if (search) {
-    const pattern = search.length === 1 ? `${search}%` : `%${search}%`
-    q = q.or(`company_name.ilike.${pattern},contact_name.ilike.${pattern}`)
-  }
+  q = applyFilters(q)
 
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -58,6 +73,8 @@ export async function GET(req: Request) {
     page,
     per_page: perPage,
     total_pages: Math.ceil((total || 0) / perPage),
+    active_count: activeCount || 0,
+    inactive_count: inactiveCount || 0,
   }
   setCache(cacheKey, result, 30) // 30s TTL
   return NextResponse.json(result)

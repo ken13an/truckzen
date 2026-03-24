@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   const paginated = !!searchParams.get('page')
   let q = s
     .from('assets')
-    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, unit_type, source, customers(company_name)', paginated ? { count: 'exact' } : {})
+    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, is_owner_operator, unit_type, source, customers(company_name)', paginated ? { count: 'exact' } : {})
     .eq('shop_id', shopId)
     .is('deleted_at', null)
     .order('unit_number')
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
   const pageParam = searchParams.get('page')
   if (pageParam) {
     const page = Math.max(parseInt(pageParam), 1)
-    const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 5000)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 50)
     const offset = (page - 1) * limit
     q = q.range(offset, offset + limit - 1)
     const { data, error, count } = await (q as any)

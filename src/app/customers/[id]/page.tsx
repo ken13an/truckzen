@@ -500,7 +500,7 @@ export default function CustomerProfilePage() {
                         </span>
                       </td>
                       <td style={{ padding: '10px 12px' }}>
-                        <OwnershipTypeBadge type={u.ownership_type} size="sm" dark />
+                        <OwnershipTypeBadge type={u.is_owner_operator ? 'owner_operator' : u.ownership_type} size="sm" dark />
                       </td>
                       <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
                         {[u.year, u.make, u.model].filter(Boolean).join(' ') || '\u2014'}

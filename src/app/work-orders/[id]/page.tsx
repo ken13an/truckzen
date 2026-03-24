@@ -580,7 +580,7 @@ export default function WorkOrderDetail() {
                 VIN: <span style={{ fontWeight: 700 }}>...{vinDisplay}</span>
               </div>
               {mileage && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{parseInt(mileage).toLocaleString()} mi</div>}
-              <div style={{ marginTop: 4 }}><OwnershipTypeBadge type={wo.ownership_type || asset.ownership_type} size="lg" /></div>
+              <div style={{ marginTop: 4 }}><OwnershipTypeBadge type={asset.is_owner_operator ? 'owner_operator' : (wo.ownership_type || asset.ownership_type)} size="lg" /></div>
             </>
           ) : (
             <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>Walk-in / Unit not on file</span>
@@ -665,7 +665,7 @@ export default function WorkOrderDetail() {
       )}
 
       {/* OWNER OPERATOR BANNER */}
-      {!wo.is_historical && customer?.customer_type === 'owner_operator' && jobLines.some((l: any) => l.approval_status === 'needs_approval') && (
+      {!wo.is_historical && (wo.ownership_type === 'owner_operator' || wo.assets?.is_owner_operator) && jobLines.some((l: any) => l.approval_status === 'needs_approval') && (
         <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: AMBER, fontWeight: 600 }}>
           Owner Operator truck — customer approval required before work begins
         </div>

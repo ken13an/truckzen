@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   const status = searchParams.get('status')
   const search = searchParams.get('q')
   const historical = searchParams.get('historical')
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '25'), 5000)
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '25'), 50)
   const page = Math.max(parseInt(searchParams.get('page') ?? '1'), 1)
   const offset = (page - 1) * limit
 
@@ -98,8 +98,10 @@ export async function POST(req: Request) {
   let assetOwnership = 'fleet_asset'
   let assetUnitNumber = ''
   if (asset_id) {
-    const { data: assetData } = await s.from('assets').select('ownership_type, unit_number').eq('id', asset_id).single()
+    const { data: assetData } = await s.from('assets').select('ownership_type, unit_number, is_owner_operator').eq('id', asset_id).single()
     if (assetData?.ownership_type) assetOwnership = assetData.ownership_type
+    // If asset is flagged as owner operator, override ownership_type
+    if (assetData?.is_owner_operator) assetOwnership = 'owner_operator'
     if (assetData?.unit_number) assetUnitNumber = assetData.unit_number
   }
 

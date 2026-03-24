@@ -115,7 +115,7 @@ export default function FleetDetailPage() {
           <div style={{ fontSize:14, color:'#DDE3EE', marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
           {asset.unit_type && <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{UNIT_TYPE_LABEL[asset.unit_type] || asset.unit_type}</div>}
           <div style={{ fontSize:12, color:'#7C8BA0', marginTop:2 }}>{(asset.customers as any)?.company_name}</div>
-          <div style={{ marginTop:6 }}><OwnershipTypeBadge type={asset.ownership_type} dark /></div>
+          <div style={{ marginTop:6 }}><OwnershipTypeBadge type={asset.is_owner_operator ? 'owner_operator' : asset.ownership_type} dark /></div>
         </div>
         <div style={{ display:'flex', gap:8, flexDirection:'column', alignItems:'flex-end' }}>
           <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]||'#7C8BA0')+'18', color:statusColor[asset.status]||'#7C8BA0', border:`1px solid ${statusColor[asset.status]||'#7C8BA0'}33` }}>

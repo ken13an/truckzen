@@ -566,7 +566,7 @@ export default function UnitProfilePage() {
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, fontSize: 12, color: GRAY, marginTop: 6 }}>
             <span>VIN: {vinDisplay(unit.vin)}</span>
-            {unit.ownership_type && <OwnershipTypeBadge type={unit.ownership_type} />}
+            {(unit.ownership_type || unit.is_owner_operator) && <OwnershipTypeBadge type={unit.is_owner_operator ? 'owner_operator' : unit.ownership_type} />}
             {unit.odometer != null && (
               <span>{Number(unit.odometer).toLocaleString()} mi</span>
             )}

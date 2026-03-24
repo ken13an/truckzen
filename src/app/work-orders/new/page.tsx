@@ -353,11 +353,12 @@ export default function NewWorkOrderPage() {
 
             {/* Estimate requirement indicator */}
             {selectedAsset && (() => {
-              const ot = (selectedAsset as any).ownership_type || 'fleet_asset'
+              const asset = selectedAsset as any
+              const ot = asset.is_owner_operator ? 'owner_operator' : (asset.ownership_type || 'fleet_asset')
               const needsEstimate = (ot === 'owner_operator' || ot === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(jobType)
               return (
                 <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: needsEstimate ? 'rgba(217,119,6,0.08)' : 'rgba(22,163,74,0.08)', border: `1px solid ${needsEstimate ? 'rgba(217,119,6,0.2)' : 'rgba(22,163,74,0.2)'}`, color: needsEstimate ? '#D97706' : '#16A34A' }}>
-                  {needsEstimate ? 'Estimate required before work begins' : 'No estimate required — work can start immediately'}
+                  {needsEstimate ? 'Estimate required — customer must approve before work begins' : 'No estimate required — work can start immediately'}
                 </div>
               )
             })()}

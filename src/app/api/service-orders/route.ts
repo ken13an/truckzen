@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const team = searchParams.get('team')
   const role = searchParams.get('role') ?? ''
   const userTeam = searchParams.get('user_team') ?? ''
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 5000)
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 50)
   const page = Math.max(parseInt(searchParams.get('page') ?? '1'), 1)
 
   const includeSoLines = searchParams.get('include_so_lines') === 'true'
