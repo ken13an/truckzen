@@ -56,6 +56,18 @@ export default function MechanicReportsPage() {
 
   const fmt = (n: number) => '$' + (n || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })
 
+  function exportCSV() {
+    if (!mechanics.length) return
+    const header = 'Name,Role,Jobs Completed,Hours Logged,Avg Time/Job (min),Productivity Score'
+    const rows = mechanics.map((m: any) => `"${m.full_name}",${m.role},${m.jobs_completed},${m.hours_logged},${m.avg_time_per_job_min},${m.productivity_score}`)
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = `mechanic-report-${data?.period?.from || 'report'}.csv`; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (loading && !data) return <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>Loading...</div>
 
   const summary = data?.summary || {}
@@ -77,6 +89,10 @@ export default function MechanicReportsPage() {
               color: period === p.key ? BLUE : '#6B7280',
             }}>{p.label}</button>
           ))}
+          <button onClick={exportCSV} style={{
+            padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
+            border: '1px solid #D1D5DB', background: '#fff', color: '#374151',
+          }}>Export CSV</button>
         </div>
       </div>
 
