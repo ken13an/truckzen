@@ -10,6 +10,7 @@ const SECTIONS = [
   { key: 'notifications', label: 'Notifications' },
   { key: 'integrations', label: 'Integrations' },
   { key: 'billing', label: 'Billing' },
+  { key: 'labor_rates', label: 'Labor Rates' },
   { key: 'shop', label: 'Shop Information' },
   { key: 'branding', label: 'Shop Branding' },
   { key: 'data_retention', label: 'Data Retention' },
@@ -34,6 +35,8 @@ export default function SettingsPage() {
   const [brandingShop, setBrandingShop] = useState<any>({})
   const [brandingSaving, setBrandingSaving] = useState(false)
   const [logoUploading, setLogoUploading] = useState(false)
+  const [laborRates, setLaborRates] = useState<any[]>([])
+  const [laborSaving, setLaborSaving] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -56,6 +59,9 @@ export default function SettingsPage() {
           if (retData.retention_policy) setRetentionPolicy(retData.retention_policy)
         }
       } catch {}
+      // Load labor rates
+      const { data: rates } = await supabase.from('shop_labor_rates').select('*').eq('shop_id', profile.shop_id).order('ownership_type')
+      if (rates) setLaborRates(rates)
     }
     load()
   }, [])
@@ -127,6 +133,62 @@ export default function SettingsPage() {
       <span>&larr;</span> Settings
     </div>
   )
+
+  // Labor Rates
+  if (activeSection === 'labor_rates') {
+    const RATE_LABELS: Record<string, { label: string; color: string }> = {
+      fleet_asset: { label: 'Company Truck', color: '#1D6FE8' },
+      owner_operator: { label: 'Owner Operator', color: '#D97706' },
+      outside_customer: { label: 'Outside Customer', color: '#6B7280' },
+    }
+    async function saveLaborRates() {
+      setLaborSaving(true)
+      for (const r of laborRates) {
+        await supabase.from('shop_labor_rates').update({ rate_per_hour: r.rate_per_hour, updated_by: user?.id, updated_at: new Date().toISOString() }).eq('id', r.id)
+      }
+      setLaborSaving(false)
+    }
+    return (
+      <div style={S.page}>
+        {backBtn}
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 }}>Labor Rates</div>
+        <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>Set hourly labor rates by truck type. These rates auto-fill when building estimates.</div>
+        <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
+          {laborRates.length === 0 ? (
+            <div style={{ color: '#48536A', fontSize: 13, textAlign: 'center', padding: 20 }}>No labor rates configured. Check database setup.</div>
+          ) : laborRates.map((r: any) => {
+            const cfg = RATE_LABELS[r.ownership_type] || { label: r.ownership_type, color: '#7C8BA0' }
+            return (
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: cfg.color }}>{cfg.label}</div>
+                  {r.updated_at && <div style={{ fontSize: 10, color: '#48536A', marginTop: 2 }}>Last updated: {new Date(r.updated_at).toLocaleDateString()}</div>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 14, color: '#7C8BA0' }}>$</span>
+                  <input
+                    type="number" step="0.01" min="0"
+                    value={r.rate_per_hour}
+                    onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, rate_per_hour: parseFloat(e.target.value) || 0 } : x))}
+                    style={{ width: 100, padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }}
+                  />
+                  <span style={{ fontSize: 12, color: '#7C8BA0' }}>/hr</span>
+                </div>
+              </div>
+            )
+          })}
+          {laborRates.some((r: any) => r.rate_per_hour === 0) && (
+            <div style={{ padding: '10px 12px', background: 'rgba(217,119,6,.08)', border: '1px solid rgba(217,119,6,.2)', borderRadius: 8, fontSize: 12, color: '#D97706', marginTop: 12 }}>
+              Warning: One or more labor rates are $0 — estimates will show $0 labor charges.
+            </div>
+          )}
+          <button onClick={saveLaborRates} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            {laborSaving ? 'Saving...' : 'Save Rates'}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   // Tax & Location
   if (activeSection === 'tax') {
