@@ -98,7 +98,7 @@ export async function PATCH(req: Request) {
               title: 'Diagnostic Complete — Add Findings',
               message: `Diagnostic complete — WO #${wo.so_number} #${unitNum} — add findings and build estimate`,
               link: `/work-orders/${wo.id}`,
-            }).catch(() => {}) // fire and forget
+            })
           }
         }
       }

@@ -150,7 +150,7 @@ export default function SettingsPage() {
     }
     return (
       <div style={S.page}>
-        {backBtn}
+        {backBar}
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 }}>Labor Rates</div>
         <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>Set hourly labor rates by truck type. These rates auto-fill when building estimates.</div>
         <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
