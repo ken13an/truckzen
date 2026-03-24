@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const lowStock  = searchParams.get('low_stock') === 'true'
   const search    = searchParams.get('q') || searchParams.get('search')
   const page      = parseInt(searchParams.get('page') || '1')
-  const perPage   = parseInt(searchParams.get('per_page') || '500')
+  const perPage   = Math.min(parseInt(searchParams.get('per_page') || '50'), 2000)
 
   let q = supabase
     .from('parts')
@@ -28,12 +28,13 @@ export async function GET(req: Request) {
       'created_at, updated_at',
       { count: 'exact' }
     )
-    .eq('shop_id', user.shop_id)
+    .or(`shop_id.eq.${user.shop_id},shop_id.is.null`)
     .is('deleted_at', null)
     .order('description')
 
-  // Status filter: active / inactive
-  if (status === 'active')   q = q.or('status.eq.active,status.is.null')
+  // Status filter: active / inactive / all
+  // 'active' includes parts with status='active', NULL status, or empty status (imported parts)
+  if (status === 'active')   q = q.not('status', 'eq', 'inactive')
   if (status === 'inactive') q = q.eq('status', 'inactive')
 
   if (category) q = q.or(`category.eq.${category},part_category.eq.${category}`)

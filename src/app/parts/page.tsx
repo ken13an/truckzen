@@ -9,9 +9,9 @@ const MONO = "'IBM Plex Mono', monospace"
 const BLUE = '#1B6EE6'
 const PAGE_BG = '#F4F5F7'
 
-type SortField = 'part_number' | 'description' | 'uom' | 'on_hand' | 'allocated' | 'average_cost' | 'selling_price' | 'price_ugl_company' | 'price_ugl_owner_operator' | 'price_outside' | 'min_qty' | 'max_qty' | 'default_location' | 'preferred_vendor' | 'part_category' | 'status'
+type SortField = 'part_number' | 'description' | 'uom' | 'on_hand' | 'allocated' | 'average_cost' | 'price_ugl_company' | 'price_ugl_owner_operator' | 'price_outside' | 'min_qty' | 'max_qty' | 'default_location' | 'preferred_vendor' | 'part_category' | 'status'
 type SortDir = 'asc' | 'desc'
-type SubTab = 'inventory' | 'vendors' | 'history' | 'purchase_orders'
+type SubTab = 'inventory' | 'reorder' | 'vendors' | 'history' | 'purchase_orders'
 
 export default function PartsPage() {
   const supabase = createClient()
@@ -35,7 +35,16 @@ export default function PartsPage() {
 
   // Pagination
   const [page, setPage] = useState(1)
-  const perPage = 25
+  const perPage = 50
+
+  // Reorder tab state
+  const [reorderParts, setReorderParts] = useState<any[]>([])
+  const [reorderTotal, setReorderTotal] = useState(0)
+  const [reorderPage, setReorderPage] = useState(1)
+  const [reorderLoading, setReorderLoading] = useState(false)
+  const [selectedReorder, setSelectedReorder] = useState<Set<string>>(new Set())
+  const [creatingPO, setCreatingPO] = useState(false)
+  const [poDone, setPoDone] = useState<any>(null)
 
   // Sorting
   const [sortField, setSortField] = useState<SortField>('part_number')
@@ -46,7 +55,7 @@ export default function PartsPage() {
 
   const searchTimer = useRef<ReturnType<typeof setTimeout>>()
 
-  // Load user + initial data
+  // Load user
   useEffect(() => {
     getCurrentUser(supabase).then(p => {
       if (!p) { window.location.href = '/login'; return }
@@ -54,7 +63,7 @@ export default function PartsPage() {
     })
   }, [])
 
-  // Fetch parts when filters change
+  // Fetch parts when filters change (inventory tab)
   const fetchParts = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -70,19 +79,34 @@ export default function PartsPage() {
       if (Array.isArray(json)) {
         setParts(json); setTotal(json.length)
       } else {
-        setParts(json.data || []); setTotal(json.total || 0)
+        setParts(json.data ?? []); setTotal(json.total ?? 0)
       }
     }
     setLoading(false)
   }, [user, page, statusFilter, categoryFilter, vendorFilter, search])
 
-  useEffect(() => { fetchParts() }, [fetchParts])
+  useEffect(() => { if (subTab === 'inventory') fetchParts() }, [fetchParts, subTab])
+
+  // Fetch reorder parts
+  const fetchReorder = useCallback(async () => {
+    if (!user) return
+    setReorderLoading(true)
+    const res = await fetch(`/api/parts?per_page=${perPage}&page=${reorderPage}&low_stock=true&status=all`)
+    if (res.ok) {
+      const json = await res.json()
+      setReorderParts(json.data ?? [])
+      setReorderTotal(json.total ?? 0)
+    }
+    setReorderLoading(false)
+  }, [user, reorderPage])
+
+  useEffect(() => { if (subTab === 'reorder') fetchReorder() }, [fetchReorder, subTab])
 
   // Load distinct categories and vendors once
   useEffect(() => {
     if (!user) return
     fetch('/api/parts?per_page=2000&status=all').then(r => r.json()).then(json => {
-      const list = Array.isArray(json) ? json : (json.data || [])
+      const list = Array.isArray(json) ? json : (json.data ?? [])
       const cats = new Set<string>()
       const vends = new Set<string>()
       list.forEach((p: any) => {
@@ -112,6 +136,7 @@ export default function PartsPage() {
   }, [parts, sortField, sortDir])
 
   const totalPages = Math.ceil(total / perPage) || 1
+  const reorderTotalPages = Math.ceil(reorderTotal / perPage) || 1
 
   function handleSort(field: SortField) {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -130,7 +155,6 @@ export default function PartsPage() {
   function getPartCategory(p: any) { return p.part_category || p.category || '--' }
   function getVendor(p: any) { return p.preferred_vendor || p.vendor || '--' }
   function getAvgCost(p: any) { return p.average_cost ?? p.cost_price ?? null }
-  function getSellingPrice(p: any) { return p.selling_price ?? p.sell_price ?? null }
   function getPriceUgl(p: any) { return p.price_ugl_company ?? null }
   function getPriceOwnerOp(p: any) { return p.price_ugl_owner_operator ?? null }
   function getPriceOutside(p: any) { return p.price_outside ?? p.sell_price ?? null }
@@ -139,8 +163,29 @@ export default function PartsPage() {
   function getLocation(p: any) { return p.default_location || p.bin_location || '--' }
   function getStatus(p: any) { return p.status || 'active' }
 
+  // Reorder PO creation
+  async function createPO() {
+    if (!selectedReorder.size) return
+    setCreatingPO(true)
+    const lines = reorderParts.filter(p => selectedReorder.has(p.id)).map(p => ({
+      part_id: p.id,
+      part_number: p.part_number,
+      description: p.description,
+      quantity: Math.max(1, (p.reorder_point ?? 2) - (p.on_hand ?? 0) + (p.reorder_point ?? 2)),
+      unit_cost: p.cost_price || 0,
+    }))
+    const res = await fetch('/api/purchase-orders', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendor_name: 'Various', lines }),
+    })
+    const data = await res.json()
+    setCreatingPO(false)
+    if (res.ok) setPoDone(data)
+  }
+
   const SUB_TABS: { key: SubTab; label: string }[] = [
     { key: 'inventory', label: 'Inventory' },
+    { key: 'reorder', label: 'Reorder' },
     { key: 'vendors', label: 'Vendors' },
     { key: 'history', label: 'Part History' },
     { key: 'purchase_orders', label: 'Purchase Orders' },
@@ -164,6 +209,19 @@ export default function PartsPage() {
     { key: 'status', label: 'Status', width: 90 },
   ]
 
+  function Pagination({ currentPage, totalPg, totalCount, onPrev, onNext }: { currentPage: number; totalPg: number; totalCount: number; onPrev: () => void; onNext: () => void }) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', fontSize: 13, color: '#6B7280' }}>
+        <span>{totalCount.toLocaleString()} total</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button disabled={currentPage <= 1} onClick={onPrev} style={paginationBtn(currentPage <= 1)}>Previous</button>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Page {currentPage} of {totalPg.toLocaleString()}</span>
+          <button disabled={currentPage >= totalPg} onClick={onNext} style={paginationBtn(currentPage >= totalPg)}>Next</button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: FONT, padding: 24 }}>
       {/* Header */}
@@ -178,7 +236,7 @@ export default function PartsPage() {
       {/* Sub-tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 16 }}>
         {SUB_TABS.map(t => (
-          <button key={t.key} onClick={() => setSubTab(t.key)} style={{
+          <button key={t.key} onClick={() => { setSubTab(t.key); if (t.key === 'reorder') setPoDone(null) }} style={{
             padding: '10px 18px', background: 'none', border: 'none',
             borderBottom: subTab === t.key ? `2px solid ${BLUE}` : '2px solid transparent',
             color: subTab === t.key ? BLUE : '#9CA3AF',
@@ -188,50 +246,28 @@ export default function PartsPage() {
         ))}
       </div>
 
-      {/* Coming Soon for other tabs */}
-      {subTab !== 'inventory' && (
-        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 64, textAlign: 'center' }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>{SUB_TABS.find(t => t.key === subTab)?.label}</div>
-          <div style={{ fontSize: 14, color: '#9CA3AF' }}>Coming Soon</div>
-        </div>
-      )}
-
-      {/* Inventory tab */}
+      {/* ==================== INVENTORY TAB ==================== */}
       {subTab === 'inventory' && (
         <>
           {/* Filters bar */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Search */}
             <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: 320 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
-              <input
-                value={search}
-                onChange={e => handleSearch(e.target.value)}
-                placeholder="Search part #, description..."
-                style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }}
-              />
+              <input value={search} onChange={e => handleSearch(e.target.value)} placeholder="Search part #, description..."
+                style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
             </div>
-
-            {/* Status dropdown */}
-            <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
-              style={dropdownStyle}>
+            <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }} style={dropdownStyle}>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="all">All Status</option>
             </select>
-
-            {/* Category dropdown */}
-            <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1) }}
-              style={dropdownStyle}>
+            <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1) }} style={dropdownStyle}>
               <option value="">All Categories</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-
-            {/* Vendor dropdown */}
-            <select value={vendorFilter} onChange={e => { setVendorFilter(e.target.value); setPage(1) }}
-              style={dropdownStyle}>
+            <select value={vendorFilter} onChange={e => { setVendorFilter(e.target.value); setPage(1) }} style={dropdownStyle}>
               <option value="">All Vendors</option>
               {vendors.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
@@ -265,67 +301,27 @@ export default function PartsPage() {
                       const onHand = getOnHand(p)
                       const partStatus = getStatus(p)
                       return (
-                        <tr key={p.id}
-                          onClick={() => window.location.href = `/parts/${p.id}`}
+                        <tr key={p.id} onClick={() => window.location.href = `/parts/${p.id}`}
                           style={{ borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }}
                           onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
                           onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                          {/* Part # */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE, whiteSpace: 'nowrap' }}>
-                            {p.part_number || '--'}
-                          </td>
-                          {/* Description */}
-                          <td style={{ padding: '10px 10px', fontSize: 12, fontWeight: 500, color: '#1A1A1A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {p.description ? (p.description.length > 40 ? p.description.slice(0, 40) + '...' : p.description) : '--'}
-                          </td>
-                          {/* UOM */}
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE, whiteSpace: 'nowrap' }}>{p.part_number || '--'}</td>
+                          <td style={{ padding: '10px 10px', fontSize: 12, fontWeight: 500, color: '#1A1A1A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description ? (p.description.length > 40 ? p.description.slice(0, 40) + '...' : p.description) : '--'}</td>
                           <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{p.uom || '--'}</td>
-                          {/* In Stock */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 12, fontWeight: 700, textAlign: 'right', color: onHand > 0 ? BLUE : '#9CA3AF' }}>
-                            {fmtQty(onHand)}
-                          </td>
-                          {/* Allocated */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>
-                            {fmtQty(getAllocated(p))}
-                          </td>
-                          {/* Avg Cost */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>
-                            {canViewCostPrice ? fmt(getAvgCost(p)) : '***'}
-                          </td>
-                          {/* UGL Co. Price */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>
-                            {fmt(getPriceUgl(p))}
-                          </td>
-                          {/* Owner Op. Price */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>
-                            {fmt(getPriceOwnerOp(p))}
-                          </td>
-                          {/* Outside Price */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>
-                            {fmt(getPriceOutside(p))}
-                          </td>
-                          {/* Min Qty */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>
-                            {fmtQty(p.min_qty)}
-                          </td>
-                          {/* Max Qty */}
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>
-                            {fmtQty(p.max_qty)}
-                          </td>
-                          {/* Location */}
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 12, fontWeight: 700, textAlign: 'right', color: onHand > 0 ? BLUE : '#9CA3AF' }}>{fmtQty(onHand)}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{fmtQty(getAllocated(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{canViewCostPrice ? fmt(getAvgCost(p)) : '***'}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>{fmt(getPriceUgl(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>{fmt(getPriceOwnerOp(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>{fmt(getPriceOutside(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{fmtQty(p.min_qty)}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{fmtQty(p.max_qty)}</td>
                           <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{getLocation(p)}</td>
-                          {/* Vendor */}
                           <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{canViewVendorInfo ? getVendor(p) : '***'}</td>
-                          {/* Category */}
                           <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{getPartCategory(p)}</td>
-                          {/* Status */}
                           <td style={{ padding: '10px 10px' }}>
-                            <span style={{
-                              display: 'inline-block', padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600,
-                              background: partStatus === 'active' ? '#F0FDF4' : '#F3F4F6',
-                              color: partStatus === 'active' ? '#16A34A' : '#9CA3AF',
-                            }}>
-                              {partStatus === 'active' ? 'Active' : 'Inactive'}
+                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: partStatus === 'active' ? '#F0FDF4' : '#F3F4F6', color: partStatus === 'active' ? '#16A34A' : '#9CA3AF' }}>
+                              {partStatus === 'active' ? 'Active' : partStatus === 'inactive' ? 'Inactive' : partStatus || 'Active'}
                             </span>
                           </td>
                         </tr>
@@ -336,19 +332,87 @@ export default function PartsPage() {
               </div>
             )}
           </div>
-
-          {/* Pagination */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', fontSize: 13, color: '#6B7280' }}>
-            <span>{total.toLocaleString()} total</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-                style={paginationBtn(page <= 1)}>Previous</button>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Page {page} of {totalPages.toLocaleString()}</span>
-              <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
-                style={paginationBtn(page >= totalPages)}>Next</button>
-            </div>
-          </div>
+          <Pagination currentPage={page} totalPg={totalPages} totalCount={total} onPrev={() => setPage(p => p - 1)} onNext={() => setPage(p => p + 1)} />
         </>
+      )}
+
+      {/* ==================== REORDER TAB ==================== */}
+      {subTab === 'reorder' && (
+        <>
+          {poDone ? (
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 64, textAlign: 'center' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#16A34A', marginBottom: 12 }}>Purchase Order Created</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#1A1A1A', marginBottom: 8 }}>{poDone.po_number}</div>
+              <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 24 }}>{selectedReorder.size} parts selected</div>
+              <button onClick={() => { setPoDone(null); setSelectedReorder(new Set()) }} style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Back to Reorder</button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ fontSize: 13, color: '#6B7280' }}>{reorderTotal} parts below reorder point</div>
+                {selectedReorder.size > 0 && (
+                  <button onClick={createPO} disabled={creatingPO} style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: creatingPO ? 0.5 : 1 }}>
+                    {creatingPO ? 'Creating...' : `Create PO (${selectedReorder.size} parts)`}
+                  </button>
+                )}
+              </div>
+              <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+                {reorderLoading ? (
+                  <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+                ) : reorderParts.length === 0 ? (
+                  <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>All parts are above reorder point</div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                          <th style={{ ...thStyle, width: 40 }}>
+                            <input type="checkbox" checked={selectedReorder.size === reorderParts.length && reorderParts.length > 0}
+                              onChange={() => { if (selectedReorder.size === reorderParts.length) setSelectedReorder(new Set()); else setSelectedReorder(new Set(reorderParts.map(p => p.id))) }}
+                              style={{ cursor: 'pointer' }} />
+                          </th>
+                          {['Part #', 'Description', 'On Hand', 'Reorder At', 'Order Qty', 'Unit Cost', 'Total', 'Vendor'].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reorderParts.map(p => {
+                          const orderQty = Math.max(1, (p.reorder_point ?? 2) - (p.on_hand ?? 0) + (p.reorder_point ?? 2))
+                          const lineCost = (p.cost_price || 0) * orderQty
+                          const isOut = (p.on_hand ?? 0) === 0
+                          return (
+                            <tr key={p.id} style={{ cursor: 'pointer', background: selectedReorder.has(p.id) ? '#F0F9FF' : '' }}
+                              onClick={() => setSelectedReorder(s => { const n = new Set(s); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n })}>
+                              <td style={{ ...tdStyle, textAlign: 'center' }}>
+                                <input type="checkbox" checked={selectedReorder.has(p.id)} onChange={() => {}} style={{ cursor: 'pointer' }} />
+                              </td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, fontSize: 11, color: BLUE, fontWeight: 700 }}>{p.part_number || '--'}</td>
+                              <td style={{ ...tdStyle, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description || '--'}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, fontWeight: 700, color: isOut ? '#DC2626' : '#D97706', textAlign: 'center' }}>{p.on_hand ?? 0}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, color: '#6B7280', textAlign: 'center' }}>{p.reorder_point ?? 2}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, fontWeight: 700, color: BLUE, textAlign: 'center' }}>{orderQty}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, color: '#6B7280' }}>{fmt(p.cost_price)}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, fontWeight: 700, color: '#1A1A1A' }}>{fmt(lineCost)}</td>
+                              <td style={{ ...tdStyle, fontSize: 11, color: '#6B7280' }}>{p.vendor || p.preferred_vendor || '--'}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <Pagination currentPage={reorderPage} totalPg={reorderTotalPages} totalCount={reorderTotal} onPrev={() => setReorderPage(p => p - 1)} onNext={() => setReorderPage(p => p + 1)} />
+            </>
+          )}
+        </>
+      )}
+
+      {/* ==================== COMING SOON TABS ==================== */}
+      {(subTab === 'vendors' || subTab === 'history' || subTab === 'purchase_orders') && (
+        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 64, textAlign: 'center' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>{SUB_TABS.find(t => t.key === subTab)?.label}</div>
+          <div style={{ fontSize: 14, color: '#9CA3AF' }}>Coming Soon</div>
+        </div>
       )}
     </div>
   )
@@ -366,3 +430,13 @@ const paginationBtn = (disabled: boolean): React.CSSProperties => ({
   fontSize: 12, fontWeight: 600, cursor: disabled ? 'default' : 'pointer',
   fontFamily: "'Instrument Sans', sans-serif",
 })
+
+const thStyle: React.CSSProperties = {
+  padding: '8px 10px', textAlign: 'left', fontSize: 10, fontWeight: 600,
+  color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em',
+  whiteSpace: 'nowrap',
+}
+
+const tdStyle: React.CSSProperties = {
+  padding: '10px 10px', borderBottom: '1px solid #F3F4F6', fontSize: 12, color: '#1A1A1A',
+}

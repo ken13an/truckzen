@@ -51,9 +51,9 @@ export default function PODetailPage() {
   async function receiveLine(lineId: string, qty: number) {
     await fetch('/api/maintenance/crud', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ table: 'maint_purchase_order_lines', id: lineId, received_qty: qty }),
+      body: JSON.stringify({ table: 'maint_purchase_order_lines', id: lineId, quantity_received: qty }),
     })
-    setLines(l => l.map(x => x.id === lineId ? { ...x, received_qty: qty } : x))
+    setLines(l => l.map(x => x.id === lineId ? { ...x, quantity_received: qty } : x))
   }
 
   if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
@@ -123,7 +123,7 @@ export default function PODetailPage() {
                 <tr key={l.id}>
                   <td style={{ padding: 8, fontSize: 12, color: '#F0F4FF' }}>{l.description}</td>
                   <td style={{ padding: 8, fontSize: 10, fontFamily: MONO, color: MUTED }}>{l.part_number || '—'}</td>
-                  <td style={{ padding: 8, fontSize: 12, fontFamily: MONO }}>{l.quantity}</td>
+                  <td style={{ padding: 8, fontSize: 12, fontFamily: MONO }}>{l.quantity_ordered ?? l.quantity}</td>
                   <td style={{ padding: 8, fontSize: 12, fontFamily: MONO }}>${(l.unit_cost || 0).toFixed(2)}</td>
                   <td style={{ padding: 8, fontSize: 12, fontFamily: MONO, fontWeight: 700 }}>${(l.total || 0).toFixed(2)}</td>
                 </tr>
@@ -140,11 +140,11 @@ export default function PODetailPage() {
             <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
               <div>
                 <div style={{ fontSize: 12, color: '#F0F4FF' }}>{l.description}</div>
-                <div style={{ fontSize: 10, color: MUTED }}>Ordered: {l.quantity} · Received: {l.received_qty || 0}</div>
+                <div style={{ fontSize: 10, color: MUTED }}>Ordered: {l.quantity_ordered ?? l.quantity} · Received: {l.quantity_received || 0}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="number" defaultValue={l.received_qty || 0} min={0} max={l.quantity} style={{ width: 60, padding: '4px 8px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 12, color: '#DDE3EE', textAlign: 'center', fontFamily: MONO }} onBlur={e => receiveLine(l.id, parseFloat(e.target.value) || 0)} />
-                {(l.received_qty || 0) >= l.quantity && <span style={{ fontSize: 9, color: GREEN, fontWeight: 700 }}>FULL</span>}
+                <input type="number" defaultValue={l.quantity_received || 0} min={0} max={l.quantity_ordered ?? l.quantity} style={{ width: 60, padding: '4px 8px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 12, color: '#DDE3EE', textAlign: 'center', fontFamily: MONO }} onBlur={e => receiveLine(l.id, parseFloat(e.target.value) || 0)} />
+                {(l.quantity_received || 0) >= (l.quantity_ordered ?? l.quantity) && <span style={{ fontSize: 9, color: GREEN, fontWeight: 700 }}>FULL</span>}
               </div>
             </div>
           ))}
