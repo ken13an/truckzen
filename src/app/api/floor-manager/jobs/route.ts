@@ -82,5 +82,28 @@ export async function PATCH(req: Request) {
   const lineStatusMap: Record<string, string> = { pending: 'unassigned', accepted: 'in_progress', in_progress: 'in_progress', completed: 'completed' }
   await s.from('so_lines').update({ line_status: lineStatusMap[status] || status }).eq('id', id)
 
+  // Diagnostic complete notification: if job marked completed on OO/outside diagnostic WO
+  if (status === 'completed') {
+    try {
+      const { data: line } = await s.from('so_lines').select('so_id').eq('id', id).single()
+      if (line?.so_id) {
+        const { data: wo } = await s.from('service_orders').select('id, so_number, job_type, ownership_type, shop_id, assets(unit_number)').eq('id', line.so_id).single()
+        if (wo && ['diagnostic', 'full_inspection'].includes(wo.job_type) && ['owner_operator', 'outside_customer'].includes(wo.ownership_type)) {
+          // Create notification for service writers
+          const { data: writers } = await s.from('users').select('id').eq('shop_id', wo.shop_id).in('role', ['service_writer', 'owner', 'gm'])
+          const unitNum = (wo.assets as any)?.unit_number || ''
+          for (const w of (writers || [])) {
+            await s.from('notifications').insert({
+              user_id: w.id, shop_id: wo.shop_id, type: 'findings_needed',
+              title: 'Diagnostic Complete — Add Findings',
+              message: `Diagnostic complete — WO #${wo.so_number} #${unitNum} — add findings and build estimate`,
+              link: `/work-orders/${wo.id}`,
+            }).catch(() => {}) // fire and forget
+          }
+        }
+      }
+    } catch {} // non-blocking
+  }
+
   return NextResponse.json({ ok: true })
 }
