@@ -104,6 +104,31 @@ export async function middleware(request: NextRequest) {
   // API routes handle their own auth — skip middleware permission checks
   if (pathname.startsWith('/api/')) return response
 
+  // Session inactivity timeout — 8 hours
+  const SESSION_TIMEOUT_MS = 8 * 60 * 60 * 1000
+  if (user) {
+    const lastActivity = request.cookies.get('tz_last_activity')?.value
+    if (lastActivity) {
+      const elapsed = Date.now() - parseInt(lastActivity, 10)
+      if (elapsed > SESSION_TIMEOUT_MS) {
+        // Session expired — sign out and redirect
+        await supabase.auth.signOut()
+        const loginUrl = new URL('/login?expired=1', request.url)
+        const expiredResponse = NextResponse.redirect(loginUrl)
+        expiredResponse.cookies.delete('tz_last_activity')
+        return expiredResponse
+      }
+    }
+    // Update last activity timestamp
+    response.cookies.set('tz_last_activity', String(Date.now()), {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: SESSION_TIMEOUT_MS / 1000,
+    })
+  }
+
   // Homepage — platform owners go to /platform-admin, others to /dashboard
   if (pathname === '/') {
     if (user) {

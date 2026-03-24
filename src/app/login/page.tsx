@@ -7,6 +7,43 @@ import { createClient } from '@/lib/supabase/client'
 import { ROLE_REDIRECT } from '@/lib/permissions'
 import Logo from '@/components/Logo'
 
+const LOCKOUT_KEY = 'tz_login_attempts'
+const MAX_ATTEMPTS = 5
+const LOCKOUT_MINUTES = 15
+
+function getAttempts(email: string): { count: number; lockedUntil: number } {
+  try {
+    const raw = localStorage.getItem(LOCKOUT_KEY)
+    if (!raw) return { count: 0, lockedUntil: 0 }
+    const data = JSON.parse(raw)
+    return data[email] || { count: 0, lockedUntil: 0 }
+  } catch { return { count: 0, lockedUntil: 0 } }
+}
+
+function recordFailure(email: string) {
+  try {
+    const raw = localStorage.getItem(LOCKOUT_KEY)
+    const data = raw ? JSON.parse(raw) : {}
+    const current = data[email] || { count: 0, lockedUntil: 0 }
+    current.count += 1
+    if (current.count >= MAX_ATTEMPTS) {
+      current.lockedUntil = Date.now() + LOCKOUT_MINUTES * 60 * 1000
+    }
+    data[email] = current
+    localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data))
+  } catch {}
+}
+
+function clearAttempts(email: string) {
+  try {
+    const raw = localStorage.getItem(LOCKOUT_KEY)
+    if (!raw) return
+    const data = JSON.parse(raw)
+    delete data[email]
+    localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data))
+  } catch {}
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -17,6 +54,11 @@ export default function LoginPage() {
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState('')
   const [checkingSession, setCheckingSession] = useState(true)
+  const [sessionExpired, setSessionExpired] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('expired=1')) setSessionExpired(true)
+  }, [])
 
   // ── ALREADY LOGGED IN? ───────────────────────────────────
   useEffect(() => {
@@ -79,21 +121,37 @@ export default function LoginPage() {
       return
     }
 
+    const normalizedEmail = email.trim().toLowerCase()
+
+    // Check lockout
+    const attempts = getAttempts(normalizedEmail)
+    if (attempts.lockedUntil > Date.now()) {
+      const minutesLeft = Math.ceil((attempts.lockedUntil - Date.now()) / 60000)
+      setError(`Account locked. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''}.`)
+      return
+    }
+
     setLoading(true)
     setError('')
+    setSessionExpired(false)
 
     const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password,
     })
 
     if (authError) {
       setLoading(false)
-      // Don't reveal whether the email exists — same message for both cases
-      if (authError.message.includes('Invalid login') ||
+      recordFailure(normalizedEmail)
+      const updated = getAttempts(normalizedEmail)
+
+      if (updated.lockedUntil > Date.now()) {
+        setError(`Too many failed attempts. Account locked for ${LOCKOUT_MINUTES} minutes.`)
+      } else if (authError.message.includes('Invalid login') ||
           authError.message.includes('Email not confirmed') ||
           authError.message.includes('Invalid email')) {
-        setError('Incorrect email or password.')
+        const remaining = MAX_ATTEMPTS - updated.count
+        setError(`Incorrect email or password.${remaining <= 2 ? ` ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.` : ''}`)
       } else if (authError.message.includes('Too many')) {
         setError('Too many attempts. Wait a few minutes and try again.')
       } else {
@@ -108,6 +166,7 @@ export default function LoginPage() {
       return
     }
 
+    clearAttempts(normalizedEmail)
     await redirectByRole(data.user.id)
   }
 
@@ -198,6 +257,13 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
+          {/* Session expired banner */}
+          {sessionExpired && !error && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 13, color: '#D97706', marginBottom: 4 }}>
+              Session expired, please log in again.
+            </div>
+          )}
 
           {/* Error */}
           {error && (
