@@ -65,7 +65,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const s = db()
   const body = await req.json()
-  const { shop_id, user_id, asset_id, customer_id, complaint, priority, job_lines, mileage } = body
+  const { shop_id, user_id, asset_id, customer_id, complaint, priority, job_lines, mileage, job_type } = body
 
   if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!complaint?.trim()) return NextResponse.json({ error: 'Concern description required' }, { status: 400 })
@@ -113,6 +113,8 @@ export async function POST(req: Request) {
       mileage_at_service: mileage ? parseInt(mileage) : null,
       odometer_in: mileage ? parseInt(mileage) : null,
       ownership_type: assetOwnership,
+      job_type: job_type || 'repair',
+      estimate_required: (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(job_type || 'repair'),
     })
     .select()
     .single()

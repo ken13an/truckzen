@@ -11,7 +11,7 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
-interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string }
+interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string; ownership_type?: string }
 
 const FONT = "'Instrument Sans', sans-serif"
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20 }
@@ -48,6 +48,7 @@ export default function NewWorkOrderPage() {
 
   const [complaint, setComplaint] = useState('')
   const [priority, setPriority] = useState('normal')
+  const [jobType, setJobType] = useState('repair')
   const [customerProvidesParts, setCustomerProvidesParts] = useState(false)
   const [mileage, setMileage] = useState('')
   const [lastMileage, setLastMileage] = useState<{ value: number; date: string } | null>(null)
@@ -197,7 +198,7 @@ export default function NewWorkOrderPage() {
         body: JSON.stringify({
           shop_id: profile.shop_id, user_id: profile.id,
           asset_id: selectedAsset?.id || null, customer_id: selectedCustomer?.id || null,
-          complaint: complaint.trim(), priority, mileage: parseInt(mileage) || null,
+          complaint: complaint.trim(), priority, mileage: parseInt(mileage) || null, job_type: jobType,
           job_lines: jobLines.filter(l => l.description.trim()).map(l => ({
             description: l.description, skills: l.skills,
             customer_provides_parts: customerProvidesParts,
@@ -339,6 +340,28 @@ export default function NewWorkOrderPage() {
                 <option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="critical">Critical</option>
               </select>
             </div>
+            <div style={{ marginTop: 12 }}>
+              <span style={lbl}>Job Type</span>
+              <select value={jobType} onChange={e => setJobType(e.target.value)} style={{ ...inp, appearance: 'auto' }}>
+                <option value="repair">Repair</option>
+                <option value="diagnostic">Diagnostic</option>
+                <option value="full_inspection">Full Inspection</option>
+                <option value="pm">Preventive Maintenance</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            {/* Estimate requirement indicator */}
+            {selectedAsset && (() => {
+              const ot = (selectedAsset as any).ownership_type || 'fleet_asset'
+              const needsEstimate = (ot === 'owner_operator' || ot === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(jobType)
+              return (
+                <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: needsEstimate ? 'rgba(217,119,6,0.08)' : 'rgba(22,163,74,0.08)', border: `1px solid ${needsEstimate ? 'rgba(217,119,6,0.2)' : 'rgba(22,163,74,0.2)'}`, color: needsEstimate ? '#D97706' : '#16A34A' }}>
+                  {needsEstimate ? 'Estimate required before work begins' : 'No estimate required — work can start immediately'}
+                </div>
+              )
+            })()}
+
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 13, color: '#374151', cursor: 'pointer' }}>
               <input type="checkbox" checked={customerProvidesParts} onChange={e => setCustomerProvidesParts(e.target.checked)} style={{ accentColor: '#0E9F8E' }} />
               Customer provides own parts
