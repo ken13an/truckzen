@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems } from '@/lib/permissions'
 import Logo, { LogoIcon } from '@/components/Logo'
-import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock } from 'lucide-react'
+import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock, Banknote } from 'lucide-react'
 
 const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
@@ -84,6 +84,7 @@ const DEPARTMENTS: DeptSection[] = [
     items: [
       { href: '/invoices', label: 'Invoices', icon: FileText },
       { href: '/reports', label: 'Reports', icon: BarChart3 },
+      { href: '/accounting/payroll', label: 'Payroll', icon: Banknote },
     ],
   },
 ]

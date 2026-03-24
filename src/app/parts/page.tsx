@@ -46,6 +46,11 @@ export default function PartsPage() {
   const [creatingPO, setCreatingPO] = useState(false)
   const [poDone, setPoDone] = useState<any>(null)
 
+  // Vendors tab state
+  const [vendorList, setVendorList] = useState<any[]>([])
+  const [vendorLoading, setVendorLoading] = useState(false)
+  const [vendorSearch, setVendorSearch] = useState('')
+
   // Sorting
   const [sortField, setSortField] = useState<SortField>('part_number')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
@@ -63,79 +68,63 @@ export default function PartsPage() {
     })
   }, [])
 
-  // Fetch parts directly from Supabase (bypasses API route auth issues on Vercel)
+  // Fetch parts via API route (service role key — bypasses RLS)
   const fetchParts = useCallback(async () => {
     if (!user) return
     setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        shop_id: user.shop_id,
+        page: String(page),
+        per_page: String(perPage),
+      })
+      if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter)
+      if (categoryFilter) params.set('category', categoryFilter)
+      if (vendorFilter) params.set('vendor', vendorFilter)
+      if (search) params.set('search', search)
 
-    const from = (page - 1) * perPage
-    const to = from + perPage - 1
-
-    let q = supabase
-      .from('parts')
-      .select(
-        'id, part_number, description, uom, on_hand, allocated, in_transit, average_cost, selling_price, cost_floor, ' +
-        'markup_percent, margin_percent, inventory_balance, min_qty, max_qty, default_location, preferred_vendor, ' +
-        'manufacturer, part_category, item_type, status, notes, cross_references, source, ' +
-        'category, cost_price, sell_price, vendor, bin_location, reorder_point, reserved_qty, core_charge, warranty_months, ' +
-        'price_ugl_company, price_ugl_owner_operator, price_outside, created_at, updated_at',
-        { count: 'exact' }
-      )
-      .eq('shop_id', user.shop_id)
-      .is('deleted_at', null)
-      .order('description')
-
-    if (statusFilter === 'active') q = q.not('status', 'eq', 'inactive')
-    if (statusFilter === 'inactive') q = q.eq('status', 'inactive')
-    if (categoryFilter) q = q.or(`category.eq.${categoryFilter},part_category.eq.${categoryFilter}`)
-    if (vendorFilter) q = q.or(`vendor.eq.${vendorFilter},preferred_vendor.eq.${vendorFilter}`)
-    if (search) q = q.or(`description.ilike.%${search}%,part_number.ilike.%${search}%`)
-
-    q = q.range(from, to)
-    const { data, count } = await q
-    setParts(data ?? [])
-    setTotal(count ?? 0)
+      const res = await fetch(`/api/parts?${params}`)
+      if (res.ok) {
+        const json = await res.json()
+        setParts(json.data || [])
+        setTotal(json.total || 0)
+      }
+    } catch (err) {
+      console.error('Failed to fetch parts:', err)
+    }
     setLoading(false)
   }, [user, page, statusFilter, categoryFilter, vendorFilter, search])
 
   useEffect(() => { if (subTab === 'inventory') fetchParts() }, [fetchParts, subTab])
 
-  // Fetch reorder parts directly from Supabase
+  // Fetch reorder parts via API route
   const fetchReorder = useCallback(async () => {
     if (!user) return
     setReorderLoading(true)
-
-    // Fetch all parts with on_hand <= reorder_point (client-side filter since Supabase can't compare columns)
-    const { data: allParts } = await supabase
-      .from('parts')
-      .select('id, part_number, description, on_hand, reorder_point, cost_price, sell_price, vendor, preferred_vendor, category, part_category, status')
-      .eq('shop_id', user.shop_id)
-      .is('deleted_at', null)
-      .order('description')
-      .limit(2000)
-
-    const lowStock = (allParts ?? []).filter((p: any) => (p.on_hand ?? 0) <= (p.reorder_point ?? 0))
-    const reorderFrom = (reorderPage - 1) * perPage
-    setReorderParts(lowStock.slice(reorderFrom, reorderFrom + perPage))
-    setReorderTotal(lowStock.length)
+    try {
+      const res = await fetch(`/api/parts?shop_id=${user.shop_id}&low_stock=true&per_page=2000&page=${reorderPage}`)
+      if (res.ok) {
+        const json = await res.json()
+        setReorderParts(json.data || [])
+        setReorderTotal(json.total || 0)
+      }
+    } catch (err) {
+      console.error('Failed to fetch reorder parts:', err)
+    }
     setReorderLoading(false)
   }, [user, reorderPage])
 
   useEffect(() => { if (subTab === 'reorder') fetchReorder() }, [fetchReorder, subTab])
 
-  // Load distinct categories and vendors once (direct Supabase query)
+  // Load distinct categories and vendors via API route
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('parts')
-      .select('part_category, category, preferred_vendor, vendor')
-      .eq('shop_id', user.shop_id)
-      .is('deleted_at', null)
-      .limit(2000)
-      .then(({ data }: any) => {
+    fetch(`/api/parts?shop_id=${user.shop_id}&per_page=2000&status=all`)
+      .then(r => r.json())
+      .then((json: any) => {
         const cats = new Set<string>()
         const vends = new Set<string>()
-        ;(data ?? []).forEach((p: any) => {
+        ;(json.data ?? []).forEach((p: any) => {
           const cat = p.part_category || p.category
           if (cat) cats.add(cat)
           const v = p.preferred_vendor || p.vendor
@@ -144,7 +133,21 @@ export default function PartsPage() {
         setCategories(Array.from(cats).sort())
         setVendors(Array.from(vends).sort())
       })
+      .catch(() => {})
   }, [user])
+
+  // Fetch vendors list via API route
+  const fetchVendors = useCallback(async () => {
+    if (!user) return
+    setVendorLoading(true)
+    try {
+      const res = await fetch(`/api/vendors?shop_id=${user.shop_id}`)
+      if (res.ok) setVendorList(await res.json())
+    } catch {}
+    setVendorLoading(false)
+  }, [user])
+
+  useEffect(() => { if (subTab === 'vendors') fetchVendors() }, [fetchVendors, subTab])
 
   // Sort client-side
   const sorted = useMemo(() => {
@@ -433,8 +436,68 @@ export default function PartsPage() {
         </>
       )}
 
+      {/* ==================== VENDORS TAB ==================== */}
+      {subTab === 'vendors' && (
+        <>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: 320 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+              </svg>
+              <input value={vendorSearch} onChange={e => setVendorSearch(e.target.value)} placeholder="Search vendors..."
+                style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
+            </div>
+            <span style={{ fontSize: 13, color: '#6B7280' }}>
+              {vendorList.filter(v => {
+                if (!vendorSearch) return true
+                return (v.name || '').toLowerCase().includes(vendorSearch.toLowerCase())
+              }).length} vendors
+            </span>
+          </div>
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+            {vendorLoading ? (
+              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      {['Vendor Name', 'Source', 'Phone', 'Email', 'Parts Linked'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vendorList
+                      .filter(v => !vendorSearch || (v.name || '').toLowerCase().includes(vendorSearch.toLowerCase()))
+                      .map(v => (
+                      <tr key={v.id} style={{ borderBottom: '1px solid #F3F4F6' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                        <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{v.name || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11 }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: v.source === 'fullbay' ? 'rgba(29,111,232,0.1)' : 'rgba(255,255,255,0.06)', color: v.source === 'fullbay' ? BLUE : '#6B7280' }}>
+                            {v.source || 'manual'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{v.phone || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{v.email || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: v.parts_count > 0 ? BLUE : '#9CA3AF', textAlign: 'center' }}>{v.parts_count}</td>
+                      </tr>
+                    ))}
+                    {vendorList.filter(v => !vendorSearch || (v.name || '').toLowerCase().includes(vendorSearch.toLowerCase())).length === 0 && (
+                      <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No vendors found</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
       {/* ==================== COMING SOON TABS ==================== */}
-      {(subTab === 'vendors' || subTab === 'history' || subTab === 'purchase_orders') && (
+      {(subTab === 'history' || subTab === 'purchase_orders') && (
         <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 64, textAlign: 'center' }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>{SUB_TABS.find(t => t.key === subTab)?.label}</div>
           <div style={{ fontSize: 14, color: '#9CA3AF' }}>Coming Soon</div>

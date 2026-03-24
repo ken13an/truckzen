@@ -42,45 +42,49 @@ export default function CustomerProfilePage() {
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2500) }
 
+  const [loadError, setLoadError] = useState('')
+
   useEffect(() => {
-    async function load() {
-      const profile = await getCurrentUser(supabase)
-      if (!profile) { router.push('/login'); return }
-      setUser(profile)
-
-      // Fetch customer data
-      const res = await fetch(`/api/customers/${id}?shop_id=${profile.shop_id}`)
-      if (!res.ok) { router.push('/customers'); return }
-      const data = await res.json()
-      setCustomer(data)
-      setUnits(data.assets || [])
-
-      // Fetch work orders - API doesn't support customer_id filter, so fetch all and filter
-      const woRes = await fetch(`/api/work-orders?shop_id=${profile.shop_id}&limit=500`)
-      if (woRes.ok) {
-        const allWOs = await woRes.json()
-        setWorkOrders(allWOs.filter((wo: any) => wo.customers?.id === id))
+    let cancelled = false
+    const timeout = setTimeout(() => {
+      if (!cancelled && loading) {
+        setLoading(false)
+        setLoadError('Loading timed out. Please refresh the page.')
       }
+    }, 10000)
 
-      // Fetch contacts directly from Supabase
-      const { data: contactsData } = await supabase
-        .from('customer_contacts')
-        .select('*')
-        .eq('customer_id', id)
-        .order('is_primary', { ascending: false })
-      setContacts(contactsData || [])
+    async function load() {
+      try {
+        const profile = await getCurrentUser(supabase)
+        if (!profile) { router.push('/login'); return }
+        if (cancelled) return
+        setUser(profile)
 
-      // Fetch documents directly from Supabase
-      const { data: docsData } = await supabase
-        .from('customer_documents')
-        .select('*')
-        .eq('customer_id', id)
-        .order('created_at', { ascending: false })
-      setDocuments(docsData || [])
+        // Fetch customer data (includes assets + service_orders via API)
+        const res = await fetch(`/api/customers/${id}?shop_id=${profile.shop_id}`)
+        if (!res.ok) { router.push('/customers'); return }
+        if (cancelled) return
+        const data = await res.json()
+        setCustomer(data)
+        setUnits(data.assets || [])
+        setWorkOrders(data.service_orders || [])
 
-      setLoading(false)
+        // Fetch contacts and documents in parallel
+        const [contactsRes, docsRes] = await Promise.all([
+          supabase.from('customer_contacts').select('*').eq('customer_id', id).order('is_primary', { ascending: false }),
+          supabase.from('customer_documents').select('*').eq('customer_id', id).order('created_at', { ascending: false }),
+        ])
+        if (cancelled) return
+        setContacts(contactsRes.data || [])
+        setDocuments(docsRes.data || [])
+      } catch (err: any) {
+        if (!cancelled) setLoadError(err.message || 'Failed to load customer')
+      }
+      if (!cancelled) setLoading(false)
     }
     load()
+
+    return () => { cancelled = true; clearTimeout(timeout) }
   }, [id])
 
   // -- Customer status change --
@@ -211,6 +215,15 @@ export default function CustomerProfilePage() {
     return (
       <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: '#7C8BA0' }}>
         Loading...
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: '#EF4444', gap: 16 }}>
+        <div style={{ fontSize: 15 }}>{loadError}</div>
+        <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
       </div>
     )
   }

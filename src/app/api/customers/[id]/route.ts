@@ -17,8 +17,7 @@ export async function GET(_req: Request, { params }: P) {
     .select(`
       *,
       assets(id, unit_number, year, make, model, vin, odometer, status, unit_type, ownership_type),
-      invoices(id, invoice_number, status, total, amount_paid, balance_due, due_date, created_at),
-      service_orders(id, so_number, status, priority, complaint, grand_total, labor_total, parts_total, created_at, completed_at, assets(unit_number), users!assigned_tech(full_name)),
+      service_orders(id, so_number, status, priority, complaint, grand_total, labor_total, parts_total, created_at, completed_at),
       kiosk_checkins(id, unit_number, company_name, contact_name, complaint_en, checkin_ref, status, created_at)
     `)
     .eq('id', id)
