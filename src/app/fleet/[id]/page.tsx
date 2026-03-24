@@ -20,6 +20,7 @@ export default function FleetDetailPage() {
   const [activeWos, setActiveWos] = useState<any[]>([])
   const [warrantyMode, setWarrantyMode] = useState<'none' | 'has'>('none')
   const [pageTab, setPageTab] = useState<PageTab>('overview')
+  const [userRole, setUserRole] = useState('')
 
   // Full History state
   const [historyData, setHistoryData] = useState<any[]>([])
@@ -34,6 +35,7 @@ export default function FleetDetailPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
+      setUserRole(profile.role)
 
       const assetRes = await fetch(`/api/assets/${params.id}`).then(r => r.ok ? r.json() : null)
       const a = assetRes
@@ -330,20 +332,46 @@ export default function FleetDetailPage() {
       {/* Full History tab */}
       {pageTab === 'history' && (
         <div>
-          {/* Summary cards */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:12, marginBottom:16 }}>
-            {[
-              { label: 'Total Records', value: historySummary ? (historySummary.inhouse_count + historySummary.outside_count).toString() : '—', color: '#F0F4FF' },
-              { label: 'In-House Jobs', value: historySummary?.inhouse_count?.toString() ?? '—', color: '#1D6FE8' },
-              { label: 'Outside Repairs', value: historySummary?.outside_count?.toString() ?? '—', color: '#D4882A' },
-              { label: 'Total Spent', value: historySummary ? fmt((historySummary.inhouse_total || 0) + (historySummary.outside_total || 0)) : '—', color: '#1DB870' },
-            ].map(c => (
-              <div key={c.label} style={S.card}>
-                <div style={{ ...S.label, marginBottom:8 }}>{c.label}</div>
-                <div style={{ fontSize:22, fontWeight:800, color:c.color, fontFamily:"'IBM Plex Mono',monospace" }}>{c.value}</div>
-              </div>
-            ))}
-          </div>
+          {/* Summary cards + cost comparison */}
+          {(() => {
+            const COST_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'floor_manager', 'shop_manager', 'parts_manager']
+            const canSeeCost = COST_ROLES.includes(userRole)
+            const ihCount = historySummary?.inhouse_count || 0
+            const ohCount = historySummary?.outside_count || 0
+            const ihTotal = historySummary?.inhouse_total || 0
+            const ohTotal = historySummary?.outside_total || 0
+            const totalCost = ihTotal + ohTotal
+            const ihPct = totalCost > 0 ? Math.round((ihTotal / totalCost) * 100) : 0
+            return (
+              <>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:12, marginBottom:12 }}>
+                  {[
+                    { label: 'Total Records', value: historySummary ? String(ihCount + ohCount) : '—', color: '#F0F4FF' },
+                    { label: 'In-House Jobs', value: String(ihCount), sub: canSeeCost ? fmt(ihTotal) : '***', color: '#1D6FE8' },
+                    { label: 'Outside Repairs', value: String(ohCount), sub: canSeeCost ? fmt(ohTotal) : '***', color: '#D4882A' },
+                    { label: 'Total Spent', value: canSeeCost ? fmt(totalCost) : '***', color: '#1DB870' },
+                  ].map(c => (
+                    <div key={c.label} style={S.card}>
+                      <div style={{ ...S.label, marginBottom:8 }}>{c.label}</div>
+                      <div style={{ fontSize:22, fontWeight:800, color:c.color, fontFamily:"'IBM Plex Mono',monospace" }}>{c.value}</div>
+                      {(c as any).sub && <div style={{ fontSize:11, color:'#7C8BA0', marginTop:4, fontFamily:"'IBM Plex Mono',monospace" }}>{(c as any).sub}</div>}
+                    </div>
+                  ))}
+                </div>
+                {canSeeCost && totalCost > 0 && (
+                  <div style={{ ...S.card, marginBottom:16, padding:'12px 16px' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#7C8BA0', marginBottom:6, fontFamily:"'IBM Plex Mono',monospace" }}>
+                      <span>In-House {ihPct}%</span>
+                      <span>Outside {100 - ihPct}%</span>
+                    </div>
+                    <div style={{ height:8, borderRadius:4, background:'rgba(212,136,42,.2)', overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${ihPct}%`, background:'#1D6FE8', borderRadius:4, transition:'width .3s' }} />
+                    </div>
+                  </div>
+                )}
+              </>
+            )
+          })()}
 
           {/* Filters */}
           <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
@@ -408,7 +436,9 @@ export default function FleetDetailPage() {
                           {row.assigned_to || '—'}
                         </td>
                         <td style={{ ...S.td, fontFamily:'monospace', textAlign:'right' }}>
-                          {row.total_cost != null ? `$${Number(row.total_cost).toLocaleString(undefined, { minimumFractionDigits: 0 })}` : '—'}
+                          {['owner','gm','it_person','accountant','office_admin','floor_manager','shop_manager','parts_manager'].includes(userRole)
+                            ? (row.total_cost != null ? `$${Number(row.total_cost).toLocaleString(undefined, { minimumFractionDigits: 0 })}` : '—')
+                            : '***'}
                         </td>
                         <td style={S.td}>
                           <span style={{
