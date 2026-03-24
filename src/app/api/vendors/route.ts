@@ -14,7 +14,6 @@ export async function GET(req: Request) {
     .from('vendors')
     .select('*')
     .eq('shop_id', shopId)
-    .is('deleted_at', null)
     .order('name')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

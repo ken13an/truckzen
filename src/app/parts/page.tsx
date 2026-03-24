@@ -51,6 +51,19 @@ export default function PartsPage() {
   const [vendorLoading, setVendorLoading] = useState(false)
   const [vendorSearch, setVendorSearch] = useState('')
 
+  // Part History tab state
+  const [historyData, setHistoryData] = useState<any[]>([])
+  const [historyTotal, setHistoryTotal] = useState(0)
+  const [historyPage, setHistoryPage] = useState(1)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historySearch, setHistorySearch] = useState('')
+
+  // Purchase Orders tab state
+  const [poData, setPoData] = useState<any[]>([])
+  const [poTotal, setPoTotal] = useState(0)
+  const [poPage, setPoPage] = useState(1)
+  const [poLoading, setPoLoading] = useState(false)
+
   // Sorting
   const [sortField, setSortField] = useState<SortField>('part_number')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
@@ -148,6 +161,34 @@ export default function PartsPage() {
   }, [user])
 
   useEffect(() => { if (subTab === 'vendors') fetchVendors() }, [fetchVendors, subTab])
+
+  // Fetch part history via API route
+  const fetchHistory = useCallback(async () => {
+    if (!user) return
+    setHistoryLoading(true)
+    try {
+      const params = new URLSearchParams({ shop_id: user.shop_id, page: String(historyPage), per_page: '50' })
+      if (historySearch) params.set('search', historySearch)
+      const res = await fetch(`/api/part-history?${params}`)
+      if (res.ok) { const json = await res.json(); setHistoryData(json.data || []); setHistoryTotal(json.total || 0) }
+    } catch {}
+    setHistoryLoading(false)
+  }, [user, historyPage, historySearch])
+
+  useEffect(() => { if (subTab === 'history') fetchHistory() }, [fetchHistory, subTab])
+
+  // Fetch purchase orders via API route
+  const fetchPOs = useCallback(async () => {
+    if (!user) return
+    setPoLoading(true)
+    try {
+      const res = await fetch(`/api/purchase-orders?shop_id=${user.shop_id}&page=${poPage}&per_page=50`)
+      if (res.ok) { const json = await res.json(); setPoData(json.data || []); setPoTotal(json.total || 0) }
+    } catch {}
+    setPoLoading(false)
+  }, [user, poPage])
+
+  useEffect(() => { if (subTab === 'purchase_orders') fetchPOs() }, [fetchPOs, subTab])
 
   // Sort client-side
   const sorted = useMemo(() => {
@@ -496,12 +537,103 @@ export default function PartsPage() {
         </>
       )}
 
-      {/* ==================== COMING SOON TABS ==================== */}
-      {(subTab === 'history' || subTab === 'purchase_orders') && (
-        <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 64, textAlign: 'center' }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>{SUB_TABS.find(t => t.key === subTab)?.label}</div>
-          <div style={{ fontSize: 14, color: '#9CA3AF' }}>Coming Soon</div>
-        </div>
+      {/* ==================== PART HISTORY TAB ==================== */}
+      {subTab === 'history' && (
+        <>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: 320 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+              </svg>
+              <input value={historySearch} onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }} placeholder="Search part #, description..."
+                style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
+            </div>
+            <span style={{ fontSize: 13, color: '#6B7280' }}>{historyTotal.toLocaleString()} records</span>
+          </div>
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+            {historyLoading ? (
+              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+            ) : historyData.length === 0 ? (
+              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No part history found</div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      {['Part #', 'Description', 'PO #', 'Vendor', 'Qty', 'Cost', 'Date'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyData.map((r: any) => (
+                      <tr key={r.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{r.part_number || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: '#6B7280' }}>{r.po_number || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{r.vendor || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: '#1A1A1A', textAlign: 'right' }}>{r.quantity ?? 0}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280', textAlign: 'right' }}>{r.cost_price != null ? '$' + Number(r.cost_price).toFixed(2) : '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{r.date ? new Date(r.date).toLocaleDateString() : '--'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+          <Pagination currentPage={historyPage} totalPg={Math.ceil(historyTotal / 50) || 1} totalCount={historyTotal} onPrev={() => setHistoryPage(p => p - 1)} onNext={() => setHistoryPage(p => p + 1)} />
+        </>
+      )}
+
+      {/* ==================== PURCHASE ORDERS TAB ==================== */}
+      {subTab === 'purchase_orders' && (
+        <>
+          <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>{poTotal.toLocaleString()} purchase orders</div>
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+            {poLoading ? (
+              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+            ) : poData.length === 0 ? (
+              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No purchase orders found</div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      {['PO #', 'Vendor', 'Status', 'Lines', 'Total', 'Date', 'Source'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {poData.map((po: any) => (
+                      <tr key={po.id} style={{ borderBottom: '1px solid #F3F4F6' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{po.po_number || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{po.vendor_name || '--'}</td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: po.status === 'paid' ? '#F0FDF4' : po.status === 'received' ? '#EFF6FF' : '#F3F4F6', color: po.status === 'paid' ? '#16A34A' : po.status === 'received' ? BLUE : '#6B7280' }}>
+                            {po.status || 'draft'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280', textAlign: 'center' }}>{po.line_count}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: '#1A1A1A', textAlign: 'right' }}>${(po.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{po.received_date ? new Date(po.received_date).toLocaleDateString() : po.created_at ? new Date(po.created_at).toLocaleDateString() : '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11 }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: po.source === 'fullbay' ? 'rgba(29,111,232,0.1)' : '#F3F4F6', color: po.source === 'fullbay' ? BLUE : '#6B7280' }}>
+                            {po.source || 'manual'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+          <Pagination currentPage={poPage} totalPg={Math.ceil(poTotal / 50) || 1} totalCount={poTotal} onPrev={() => setPoPage(p => p - 1)} onNext={() => setPoPage(p => p + 1)} />
+        </>
       )}
     </div>
   )
