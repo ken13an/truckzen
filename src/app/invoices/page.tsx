@@ -3,7 +3,7 @@
  * Built independently by TruckZen development team
  */
 'use client'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { PageFooter } from '@/components/ui/PageControls'
@@ -20,6 +20,8 @@ const STATUS_CFG: Record<string, { label: string; color: string }> = {
 export default function InvoicesPage() {
   const supabase = createClient()
   const [invoices, setInvoices] = useState<any[]>([])
+  const [total, setTotal] = useState(0)
+  const [summary, setSummary] = useState<any>({})
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -27,52 +29,45 @@ export default function InvoicesPage() {
   const [perPage, setPerPage] = useState(25)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
+
+  async function fetchInvoices(p: number) {
+    setLoading(true)
+    let url = `/api/invoices?page=${p}&per_page=${perPage}`
+    if (filter !== 'all') url += `&status=${filter}`
+    if (search) url += `&q=${encodeURIComponent(search)}`
+    if (dateFrom) url += `&date_from=${dateFrom}`
+    if (dateTo) url += `&date_to=${dateTo}`
+    const res = await fetch(url)
+    if (res.ok) {
+      const json = await res.json()
+      if (Array.isArray(json)) {
+        setInvoices(json); setTotal(json.length)
+      } else {
+        setInvoices(json.data || []); setTotal(json.total || 0)
+        if (json.summary) setSummary(json.summary)
+      }
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
-    async function load() {
-      const profile = await getCurrentUser(supabase)
+    getCurrentUser(supabase).then((profile: any) => {
       if (!profile) { window.location.href = '/login'; return }
-      const url = '/api/invoices' + (filter !== 'all' ? `?status=${filter}` : '')
-      const res = await fetch(url)
-      const data = await res.json()
-      setInvoices(Array.isArray(data) ? data : [])
-      setLoading(false)
-    }
-    load()
-  }, [filter])
+      fetchInvoices(1)
+    })
+  }, [])
 
-  const filtered = useMemo(() => {
-    let list = invoices
-    if (search) {
-      const q = search.toLowerCase()
-      list = list.filter(inv => {
-        const cust = inv.customers as any
-        const so = inv.service_orders as any
-        return inv.invoice_number?.toLowerCase().includes(q) ||
-          cust?.company_name?.toLowerCase().includes(q) ||
-          so?.so_number?.toLowerCase().includes(q) ||
-          so?.assets?.unit_number?.toLowerCase().includes(q)
-      })
-    }
-    if (dateFrom) {
-      const from = new Date(dateFrom)
-      list = list.filter(inv => inv.created_at && new Date(inv.created_at) >= from)
-    }
-    if (dateTo) {
-      const to = new Date(dateTo + 'T23:59:59')
-      list = list.filter(inv => inv.created_at && new Date(inv.created_at) <= to)
-    }
-    return list
-  }, [invoices, search, dateFrom, dateTo])
+  useEffect(() => { fetchInvoices(page) }, [page, filter, dateFrom, dateTo, perPage])
 
-  const paginated = useMemo(() => {
-    if (perPage === 0) return filtered
-    const start = (page - 1) * perPage
-    return filtered.slice(start, start + perPage)
-  }, [filtered, page, perPage])
+  // Debounced search
+  useEffect(() => {
+    if (searchTimer) clearTimeout(searchTimer)
+    const t = setTimeout(() => { setPage(1); fetchInvoices(1) }, 400)
+    setSearchTimer(t)
+    return () => clearTimeout(t)
+  }, [search])
 
-  const totalOutstanding = invoices.filter(i => i.status === 'sent').reduce((s, i) => s + (i.balance_due || 0), 0)
-  const totalPaid = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + (i.total || 0), 0)
   const fmt = (n: number) => '$' + (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
   return (
@@ -81,7 +76,7 @@ export default function InvoicesPage() {
         <div>
           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Invoices</div>
           <div style={{ fontSize: 12, color: '#7C8BA0' }}>
-            {filtered.length} invoices · Outstanding: {fmt(totalOutstanding)} · Paid: {fmt(totalPaid)}
+            {total.toLocaleString()} invoices{summary.sent ? ` · ${summary.sent} pending` : ''}{summary.paid ? ` · ${summary.paid} paid` : ''}
           </div>
         </div>
       </div>
@@ -117,9 +112,9 @@ export default function InvoicesPage() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: '#7C8BA0' }}>Loading...</td></tr>
-              ) : paginated.length === 0 ? (
+              ) : invoices.length === 0 ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: '#7C8BA0' }}>{search || filter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No invoices found'}</td></tr>
-              ) : paginated.map(inv => {
+              ) : invoices.map(inv => {
                 const cust = inv.customers as any
                 const so = inv.service_orders as any
                 const cfg = STATUS_CFG[inv.status] || { label: inv.status, color: '#7C8BA0' }
@@ -151,7 +146,7 @@ export default function InvoicesPage() {
           </table>
         </div>
       </div>
-      <PageFooter total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
+      <PageFooter total={total} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
     </div>
   )
 }

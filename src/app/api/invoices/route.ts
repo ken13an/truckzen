@@ -14,20 +14,65 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
+  const search = searchParams.get('q')
+  const page = Math.max(parseInt(searchParams.get('page') || '1'), 1)
+  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)
+  const dateFrom = searchParams.get('date_from')
+  const dateTo = searchParams.get('date_to')
 
+  // Shared filter builder
+  function applyFilters(q: any) {
+    if (status && status !== 'all') q = q.eq('status', status)
+    if (search) q = q.or(`invoice_number.ilike.%${search}%`)
+    if (dateFrom) q = q.gte('created_at', dateFrom)
+    if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59')
+    return q
+  }
+
+  // Separate HEAD count query
+  let countQ = supabase
+    .from('invoices')
+    .select('*', { count: 'exact', head: true })
+    .eq('shop_id', user.shop_id)
+    .is('deleted_at', null)
+  countQ = applyFilters(countQ)
+
+  // Summary counts (unfiltered by status for pills)
+  const summaryQ = Promise.all([
+    supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null),
+    supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'sent'),
+    supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'paid'),
+    supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'overdue'),
+  ])
+
+  // Page data query
+  const from = (page - 1) * perPage
+  const to = from + perPage - 1
   let q = supabase
     .from('invoices')
     .select('id, invoice_number, status, subtotal, tax_amount, total, balance_due, amount_paid, due_date, paid_at, created_at, customers(company_name), service_orders(so_number, assets(unit_number))')
     .eq('shop_id', user.shop_id)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
-    .limit(100)
+    .range(from, to)
+  q = applyFilters(q)
 
-  if (status) q = q.eq('status', status)
-
-  const { data, error } = await q
+  const [{ count: total }, { data, error }, [allCount, sentCount, paidCount, overdueCount]] = await Promise.all([countQ, q, summaryQ])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  return NextResponse.json({
+    data: data || [],
+    total: total || 0,
+    page,
+    per_page: perPage,
+    total_pages: Math.ceil((total || 0) / perPage),
+    summary: {
+      all: allCount.count || 0,
+      sent: sentCount.count || 0,
+      paid: paidCount.count || 0,
+      overdue: overdueCount.count || 0,
+    },
+  })
 }
 
 export async function POST(req: Request) {
