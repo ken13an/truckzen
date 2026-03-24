@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 
 const SECTIONS = [
   { key: 'team', label: 'Team Members', href: '/settings/users' },
+  { key: 'staff_import', label: 'Staff Bulk Import', href: '/settings/staff-import' },
   { key: 'kiosk', label: 'Kiosk Mode' },
   { key: 'tax', label: 'Tax & Location' },
   { key: 'notifications', label: 'Notifications' },
