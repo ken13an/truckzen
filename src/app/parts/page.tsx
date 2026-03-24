@@ -52,8 +52,10 @@ export default function PartsPage() {
 
   // Vendors tab state
   const [vendorList, setVendorList] = useState<any[]>([])
+  const [vendorTotal, setVendorTotal] = useState(0)
   const [vendorLoading, setVendorLoading] = useState(false)
   const [vendorSearch, setVendorSearch] = useState('')
+  const [vendorPage, setVendorPage] = useState(1)
 
   // Part History tab state
   const [historyData, setHistoryData] = useState<any[]>([])
@@ -154,15 +156,20 @@ export default function PartsPage() {
   }, [user])
 
   // Fetch vendors list via API route
-  const fetchVendors = useCallback(async () => {
+  const fetchVendors = useCallback(async (p?: number) => {
     if (!user) return
     setVendorLoading(true)
     try {
-      const res = await fetch(`/api/vendors?shop_id=${user.shop_id}`)
-      if (res.ok) setVendorList(await res.json())
+      const pg = p ?? vendorPage
+      const res = await fetch(`/api/vendors?shop_id=${user.shop_id}&page=${pg}&per_page=50`)
+      if (res.ok) {
+        const json = await res.json()
+        if (Array.isArray(json)) { setVendorList(json); setVendorTotal(json.length) }
+        else { setVendorList(json.data || []); setVendorTotal(json.total || 0) }
+      }
     } catch {}
     setVendorLoading(false)
-  }, [user])
+  }, [user, vendorPage])
 
   useEffect(() => { if (subTab === 'vendors') fetchVendors() }, [fetchVendors, subTab])
 
@@ -528,10 +535,7 @@ export default function PartsPage() {
                 style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
             </div>
             <span style={{ fontSize: 13, color: '#6B7280' }}>
-              {vendorList.filter(v => {
-                if (!vendorSearch) return true
-                return (v.name || '').toLowerCase().includes(vendorSearch.toLowerCase())
-              }).length} vendors
+              {vendorTotal.toLocaleString()} vendors
             </span>
           </div>
           <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
@@ -573,6 +577,7 @@ export default function PartsPage() {
               </div>
             )}
           </div>
+          <Pagination currentPage={vendorPage} totalPg={Math.ceil(vendorTotal / 50) || 1} totalCount={vendorTotal} onPrev={() => setVendorPage(p => p - 1)} onNext={() => setVendorPage(p => p + 1)} />
         </>
       )}
 
