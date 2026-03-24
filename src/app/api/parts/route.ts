@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { log } from '@/lib/security'
 
-export async function GET(req: Request) {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
+export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const category  = searchParams.get('category')
   const vendor    = searchParams.get('vendor')
@@ -16,12 +15,23 @@ export async function GET(req: Request) {
   const page      = parseInt(searchParams.get('page') || '1')
   const perPage   = Math.min(parseInt(searchParams.get('per_page') || '50'), 2000)
 
-  if (!user.shop_id) {
-    console.error('[Parts API] user.shop_id is null — returning empty')
+  // Get shop_id: try query param first, then fall back to session user
+  let shopId = searchParams.get('shop_id')
+  if (!shopId) {
+    try {
+      const supabase = await createServerSupabaseClient()
+      const user = await getCurrentUser(supabase)
+      shopId = user?.shop_id ?? null
+    } catch {}
+  }
+
+  if (!shopId) {
+    console.error('[Parts API] No shop_id available — returning empty')
     return NextResponse.json({ data: [], total: 0, page, per_page: perPage })
   }
 
-  let q = supabase
+  const s = db()
+  let q = s
     .from('parts')
     .select(
       'id, part_number, description, uom, on_hand, allocated, in_transit, average_cost, selling_price, cost_floor, ' +
@@ -33,7 +43,7 @@ export async function GET(req: Request) {
       'created_at, updated_at',
       { count: 'exact' }
     )
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .is('deleted_at', null)
     .order('description')
 

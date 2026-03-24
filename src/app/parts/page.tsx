@@ -67,7 +67,7 @@ export default function PartsPage() {
   const fetchParts = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    let url = `/api/parts?per_page=${perPage}&page=${page}`
+    let url = `/api/parts?shop_id=${user.shop_id}&per_page=${perPage}&page=${page}`
     if (search) url += `&search=${encodeURIComponent(search)}`
     if (statusFilter && statusFilter !== 'all') url += `&status=${statusFilter}`
     if (categoryFilter) url += `&category=${encodeURIComponent(categoryFilter)}`
@@ -91,7 +91,7 @@ export default function PartsPage() {
   const fetchReorder = useCallback(async () => {
     if (!user) return
     setReorderLoading(true)
-    const res = await fetch(`/api/parts?per_page=${perPage}&page=${reorderPage}&low_stock=true&status=all`)
+    const res = await fetch(`/api/parts?shop_id=${user.shop_id}&per_page=${perPage}&page=${reorderPage}&low_stock=true&status=all`)
     if (res.ok) {
       const json = await res.json()
       setReorderParts(json.data ?? [])
@@ -105,7 +105,7 @@ export default function PartsPage() {
   // Load distinct categories and vendors once
   useEffect(() => {
     if (!user) return
-    fetch('/api/parts?per_page=2000&status=all').then(r => r.json()).then(json => {
+    fetch(`/api/parts?shop_id=${user.shop_id}&per_page=2000&status=all`).then(r => r.json()).then(json => {
       const list = Array.isArray(json) ? json : (json.data ?? [])
       const cats = new Set<string>()
       const vends = new Set<string>()
