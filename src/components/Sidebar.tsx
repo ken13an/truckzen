@@ -62,7 +62,7 @@ const DEPARTMENTS: DeptSection[] = [
       { href: '/maintenance/equipment', label: 'Equipment', icon: Cog },
       { href: '/maintenance/meters', label: 'Meters', icon: Gauge },
       { href: '/maintenance/reports', label: 'Reports', icon: BarChart3 },
-      { href: '/service-requests', label: 'Service Requests', icon: FileText },
+      { href: '/maintenance/service-requests', label: 'Service Requests', icon: FileText },
       { href: '/maintenance/warranty-review', label: 'Warranty Review', icon: ShieldCheck },
       { href: '/maintenance/issues', label: 'Issues', icon: AlertTriangle },
       { href: '/maintenance/faults', label: 'Faults', icon: Zap },
@@ -140,7 +140,9 @@ export default function Sidebar() {
 
       // Auto-expand section containing active page
       for (const dept of DEPARTMENTS) {
-        if (pathname?.startsWith(dept.dashboardHref) || dept.items.some(item => pathname?.startsWith(item.href))) {
+        const matchesDept = pathname === dept.dashboardHref || pathname?.startsWith(dept.dashboardHref + '/')
+        const matchesItem = dept.items.some(item => pathname === item.href || pathname?.startsWith(item.href + '/'))
+        if (matchesDept || matchesItem) {
           setExpanded(prev => ({ ...prev, [dept.label]: true }))
         }
       }
