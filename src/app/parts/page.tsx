@@ -188,7 +188,7 @@ export default function PartsPage() {
   function getPriceOwnerOp(p: any) { return p.price_ugl_owner_operator ?? null }
   function getPriceOutside(p: any) { return p.price_outside ?? p.sell_price ?? null }
   function getOnHand(p: any) { return p.on_hand ?? 0 }
-  function getAllocated(p: any) { return p.allocated ?? p.reserved_qty ?? 0 }
+  function getAllocated(p: any) { return p.allocated ?? p.reserved ?? 0 }
   function getLocation(p: any) { return p.default_location || p.bin_location || '--' }
   function getStatus(p: any) { return p.status || 'active' }
 
