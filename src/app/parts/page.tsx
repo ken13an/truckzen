@@ -63,61 +63,87 @@ export default function PartsPage() {
     })
   }, [])
 
-  // Fetch parts when filters change (inventory tab)
+  // Fetch parts directly from Supabase (bypasses API route auth issues on Vercel)
   const fetchParts = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    let url = `/api/parts?shop_id=${user.shop_id}&per_page=${perPage}&page=${page}`
-    if (search) url += `&search=${encodeURIComponent(search)}`
-    if (statusFilter && statusFilter !== 'all') url += `&status=${statusFilter}`
-    if (categoryFilter) url += `&category=${encodeURIComponent(categoryFilter)}`
-    if (vendorFilter) url += `&vendor=${encodeURIComponent(vendorFilter)}`
 
-    const res = await fetch(url)
-    if (res.ok) {
-      const json = await res.json()
-      if (Array.isArray(json)) {
-        setParts(json); setTotal(json.length)
-      } else {
-        setParts(json.data ?? []); setTotal(json.total ?? 0)
-      }
-    }
+    const from = (page - 1) * perPage
+    const to = from + perPage - 1
+
+    let q = supabase
+      .from('parts')
+      .select(
+        'id, part_number, description, uom, on_hand, allocated, in_transit, average_cost, selling_price, cost_floor, ' +
+        'markup_percent, margin_percent, inventory_balance, min_qty, max_qty, default_location, preferred_vendor, ' +
+        'manufacturer, part_category, item_type, status, notes, cross_references, source, ' +
+        'category, cost_price, sell_price, vendor, bin_location, reorder_point, reserved_qty, core_charge, warranty_months, ' +
+        'price_ugl_company, price_ugl_owner_operator, price_outside, created_at, updated_at',
+        { count: 'exact' }
+      )
+      .eq('shop_id', user.shop_id)
+      .is('deleted_at', null)
+      .order('description')
+
+    if (statusFilter === 'active') q = q.not('status', 'eq', 'inactive')
+    if (statusFilter === 'inactive') q = q.eq('status', 'inactive')
+    if (categoryFilter) q = q.or(`category.eq.${categoryFilter},part_category.eq.${categoryFilter}`)
+    if (vendorFilter) q = q.or(`vendor.eq.${vendorFilter},preferred_vendor.eq.${vendorFilter}`)
+    if (search) q = q.or(`description.ilike.%${search}%,part_number.ilike.%${search}%`)
+
+    q = q.range(from, to)
+    const { data, count } = await q
+    setParts(data ?? [])
+    setTotal(count ?? 0)
     setLoading(false)
   }, [user, page, statusFilter, categoryFilter, vendorFilter, search])
 
   useEffect(() => { if (subTab === 'inventory') fetchParts() }, [fetchParts, subTab])
 
-  // Fetch reorder parts
+  // Fetch reorder parts directly from Supabase
   const fetchReorder = useCallback(async () => {
     if (!user) return
     setReorderLoading(true)
-    const res = await fetch(`/api/parts?shop_id=${user.shop_id}&per_page=${perPage}&page=${reorderPage}&low_stock=true&status=all`)
-    if (res.ok) {
-      const json = await res.json()
-      setReorderParts(json.data ?? [])
-      setReorderTotal(json.total ?? 0)
-    }
+
+    // Fetch all parts with on_hand <= reorder_point (client-side filter since Supabase can't compare columns)
+    const { data: allParts } = await supabase
+      .from('parts')
+      .select('id, part_number, description, on_hand, reorder_point, cost_price, sell_price, vendor, preferred_vendor, category, part_category, status')
+      .eq('shop_id', user.shop_id)
+      .is('deleted_at', null)
+      .order('description')
+      .limit(2000)
+
+    const lowStock = (allParts ?? []).filter((p: any) => (p.on_hand ?? 0) <= (p.reorder_point ?? 0))
+    const reorderFrom = (reorderPage - 1) * perPage
+    setReorderParts(lowStock.slice(reorderFrom, reorderFrom + perPage))
+    setReorderTotal(lowStock.length)
     setReorderLoading(false)
   }, [user, reorderPage])
 
   useEffect(() => { if (subTab === 'reorder') fetchReorder() }, [fetchReorder, subTab])
 
-  // Load distinct categories and vendors once
+  // Load distinct categories and vendors once (direct Supabase query)
   useEffect(() => {
     if (!user) return
-    fetch(`/api/parts?shop_id=${user.shop_id}&per_page=2000&status=all`).then(r => r.json()).then(json => {
-      const list = Array.isArray(json) ? json : (json.data ?? [])
-      const cats = new Set<string>()
-      const vends = new Set<string>()
-      list.forEach((p: any) => {
-        const cat = p.part_category || p.category
-        if (cat) cats.add(cat)
-        const v = p.preferred_vendor || p.vendor
-        if (v) vends.add(v)
+    supabase
+      .from('parts')
+      .select('part_category, category, preferred_vendor, vendor')
+      .eq('shop_id', user.shop_id)
+      .is('deleted_at', null)
+      .limit(2000)
+      .then(({ data }: any) => {
+        const cats = new Set<string>()
+        const vends = new Set<string>()
+        ;(data ?? []).forEach((p: any) => {
+          const cat = p.part_category || p.category
+          if (cat) cats.add(cat)
+          const v = p.preferred_vendor || p.vendor
+          if (v) vends.add(v)
+        })
+        setCategories(Array.from(cats).sort())
+        setVendors(Array.from(vends).sort())
       })
-      setCategories(Array.from(cats).sort())
-      setVendors(Array.from(vends).sort())
-    })
   }, [user])
 
   // Sort client-side

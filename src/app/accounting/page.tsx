@@ -7,25 +7,7 @@ import { PageFooter } from '@/components/ui/PageControls'
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
 
-const TABS = ['Pending Review', 'Approved', 'All', 'Payroll']
-
-const PAY_TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  hourly:           { label: 'Hourly',     bg: '#EFF6FF', color: '#1D6FE8' },
-  weekly_salary:    { label: 'Weekly',     bg: '#F0FDF4', color: '#16A34A' },
-  biweekly_salary:  { label: 'Bi-Weekly',  bg: '#F5F3FF', color: '#7C3AED' },
-  monthly_salary:   { label: 'Monthly',    bg: '#FFFBEB', color: '#D97706' },
-}
-
-function calcWeeklyCost(p: any): number {
-  if (!p) return 0
-  switch (p.pay_type) {
-    case 'hourly': return (p.hourly_rate || 0) * (p.weekly_hours || 40)
-    case 'weekly_salary': return p.salary_amount || 0
-    case 'biweekly_salary': return (p.salary_amount || 0) / 2
-    case 'monthly_salary': return (p.salary_amount || 0) * 12 / 52
-    default: return 0
-  }
-}
+const TABS = ['Pending Review', 'Approved', 'All']
 
 const INVOICE_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   draft:                { label: 'Draft',            bg: '#F3F4F6', color: GRAY },
@@ -50,19 +32,8 @@ export default function AccountingPage() {
   const [returnNotes, setReturnNotes] = useState('')
   const [showReturnInput, setShowReturnInput] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
-  const [payrollData, setPayrollData] = useState<any[]>([])
-  const [payrollSearch, setPayrollSearch] = useState('')
-  const [payrollFilter, setPayrollFilter] = useState('all')
-  const [editingPayroll, setEditingPayroll] = useState<string | null>(null)
-  const [payrollForm, setPayrollForm] = useState({ pay_type: 'hourly', hourly_rate: '0', salary_amount: '0', weekly_hours: '40', effective_date: '', notes: '' })
-  const [payrollSaving, setPayrollSaving] = useState(false)
 
   useEffect(() => { loadData() }, [])
-  useEffect(() => {
-    if (tab === 3 && user?.shop_id && payrollData.length === 0) {
-      fetch(`/api/accounting/payroll?shop_id=${user.shop_id}`).then(r => r.json()).then(d => setPayrollData(Array.isArray(d) ? d : []))
-    }
-  }, [tab, user])
 
   async function loadData() {
     const profile = await getCurrentUser(supabase)
@@ -364,152 +335,7 @@ export default function AccountingPage() {
           </div>
         )
       })}
-      {tab !== 3 && <PageFooter total={filteredWos.length} page={acctPage} perPage={acctPerPage} onPageChange={setAcctPage} onPerPageChange={setAcctPerPage} />}
-
-      {/* ═══ PAYROLL TAB ═══ */}
-      {tab === 3 && (() => {
-        const filtered = payrollData.filter(e => {
-          if (payrollSearch) {
-            const q = payrollSearch.toLowerCase()
-            if (!(e.full_name || '').toLowerCase().includes(q)) return false
-          }
-          if (payrollFilter === 'hourly') return e.payroll?.pay_type === 'hourly'
-          if (payrollFilter === 'salaried') return e.payroll && e.payroll.pay_type !== 'hourly'
-          return true
-        })
-        const totalWeekly = filtered.reduce((s: number, e: any) => s + calcWeeklyCost(e.payroll), 0)
-        const hourlyCount = filtered.filter(e => e.payroll?.pay_type === 'hourly').length
-        const salariedCount = filtered.filter(e => e.payroll && e.payroll.pay_type !== 'hourly').length
-
-        async function savePayroll(userId: string) {
-          setPayrollSaving(true)
-          await fetch('/api/accounting/payroll', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ shop_id: user.shop_id, user_id: userId, ...payrollForm }),
-          })
-          const res = await fetch(`/api/accounting/payroll?shop_id=${user.shop_id}`)
-          if (res.ok) setPayrollData(await res.json())
-          setEditingPayroll(null)
-          setPayrollSaving(false)
-        }
-
-        return (
-          <>
-            {/* Summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
-              {[
-                { label: 'Total Employees', value: String(filtered.length), color: BLUE },
-                { label: 'Est. Weekly Payroll', value: '$' + totalWeekly.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','), color: GREEN },
-                { label: 'Hourly Staff', value: String(hourlyCount), color: BLUE },
-                { label: 'Salaried Staff', value: String(salariedCount), color: AMBER },
-              ].map(c => (
-                <div key={c.label} style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{c.label}</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: c.color }}>{c.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Filters */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-              <input value={payrollSearch} onChange={e => setPayrollSearch(e.target.value)} placeholder="Search employee..." style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#151520', color: '#EDEDF0', fontSize: 13, fontFamily: FONT, outline: 'none', width: 220 }} />
-              {['all', 'hourly', 'salaried'].map(f => (
-                <button key={f} onClick={() => setPayrollFilter(f)} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: payrollFilter === f ? `1px solid ${BLUE}` : '1px solid rgba(255,255,255,0.08)', background: payrollFilter === f ? 'rgba(29,111,232,.1)' : 'transparent', color: payrollFilter === f ? '#4D9EFF' : '#7C8BA0', fontFamily: FONT, textTransform: 'capitalize' }}>{f}</button>
-              ))}
-            </div>
-
-            {/* Table */}
-            <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr>{['Employee', 'Role', 'Pay Type', 'Rate', 'Est. Weekly Cost', 'Actions'].map(h => (
-                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#12121A' }}>{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody>
-                  {filtered.map(e => {
-                    const p = e.payroll
-                    const isEditing = editingPayroll === e.id
-                    const badge = p ? PAY_TYPE_BADGE[p.pay_type] || PAY_TYPE_BADGE.hourly : null
-                    const weekly = calcWeeklyCost(p)
-
-                    if (isEditing) {
-                      return (
-                        <tr key={e.id} style={{ background: 'rgba(29,111,232,0.04)' }}>
-                          <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#EDEDF0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{e.full_name}</td>
-                          <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                            <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: '#7C8BA0', textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ')}</span>
-                          </td>
-                          <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                            <select value={payrollForm.pay_type} onChange={ev => setPayrollForm(f => ({ ...f, pay_type: ev.target.value }))} style={{ padding: '4px 8px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 12, fontFamily: FONT }}>
-                              <option value="hourly">Hourly</option>
-                              <option value="weekly_salary">Weekly Salary</option>
-                              <option value="biweekly_salary">Bi-Weekly Salary</option>
-                              <option value="monthly_salary">Monthly Salary</option>
-                            </select>
-                          </td>
-                          <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                            {payrollForm.pay_type === 'hourly' ? (
-                              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                                <span style={{ color: '#7C8BA0', fontSize: 12 }}>$</span>
-                                <input value={payrollForm.hourly_rate} onChange={ev => setPayrollForm(f => ({ ...f, hourly_rate: ev.target.value }))} style={{ width: 70, padding: '4px 6px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
-                                <span style={{ color: '#7C8BA0', fontSize: 11 }}>/hr</span>
-                                <span style={{ color: '#48536A', fontSize: 11, marginLeft: 4 }}>x</span>
-                                <input value={payrollForm.weekly_hours} onChange={ev => setPayrollForm(f => ({ ...f, weekly_hours: ev.target.value }))} style={{ width: 40, padding: '4px 6px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
-                                <span style={{ color: '#7C8BA0', fontSize: 11 }}>hrs</span>
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                                <span style={{ color: '#7C8BA0', fontSize: 12 }}>$</span>
-                                <input value={payrollForm.salary_amount} onChange={ev => setPayrollForm(f => ({ ...f, salary_amount: ev.target.value }))} style={{ width: 90, padding: '4px 6px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
-                              </div>
-                            )}
-                          </td>
-                          <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }} />
-                          <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <button onClick={() => savePayroll(e.id)} disabled={payrollSaving} style={{ padding: '4px 12px', borderRadius: 6, background: BLUE, color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{payrollSaving ? '...' : 'Save'}</button>
-                              <button onClick={() => setEditingPayroll(null)} style={{ padding: '4px 12px', borderRadius: 6, background: 'transparent', color: '#7C8BA0', border: '1px solid rgba(255,255,255,0.08)', fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    }
-
-                    return (
-                      <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                        <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#EDEDF0' }}>{e.full_name || '—'}</td>
-                        <td style={{ padding: '10px 14px' }}>
-                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: '#7C8BA0', textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ') || '—'}</span>
-                        </td>
-                        <td style={{ padding: '10px 14px' }}>
-                          {badge ? <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: badge.bg, color: badge.color }}>{badge.label}</span> : <span style={{ color: '#48536A', fontSize: 12 }}>Not Set</span>}
-                        </td>
-                        <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: p ? '#EDEDF0' : '#48536A' }}>
-                          {p ? (p.pay_type === 'hourly' ? `$${(p.hourly_rate || 0).toFixed(2)} / hr` : `$${(p.salary_amount || 0).toFixed(2)}`) : '—'}
-                        </td>
-                        <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 700, color: weekly > 0 ? BLUE : '#48536A' }}>
-                          {weekly > 0 ? '$' + weekly.toFixed(2) : '—'}
-                        </td>
-                        <td style={{ padding: '10px 14px' }}>
-                          <button onClick={() => { setEditingPayroll(e.id); setPayrollForm(p ? { pay_type: p.pay_type, hourly_rate: String(p.hourly_rate || 0), salary_amount: String(p.salary_amount || 0), weekly_hours: String(p.weekly_hours || 40), effective_date: p.effective_date || '', notes: p.notes || '' } : { pay_type: 'hourly', hourly_rate: '0', salary_amount: '0', weekly_hours: '40', effective_date: '', notes: '' }) }}
-                            style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${p ? 'rgba(255,255,255,0.08)' : BLUE}`, background: p ? 'transparent' : 'rgba(29,111,232,.1)', color: p ? '#7C8BA0' : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
-                            {p ? 'Edit' : '+ Set Pay'}
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                  {filtered.length === 0 && (
-                    <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#48536A', fontSize: 13 }}>No employees found</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )
-      })()}
+      <PageFooter total={filteredWos.length} page={acctPage} perPage={acctPerPage} onPageChange={setAcctPage} onPerPageChange={setAcctPerPage} />
     </div>
   )
 }
