@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase/server'
 import { log } from '@/lib/security'
 
 type P = { params: Promise<{ id: string }> }
@@ -12,14 +12,7 @@ export async function GET(_req: Request, { params }: P) {
 
   const { data, error } = await supabase
     .from('parts')
-    .select(
-      'id, part_number, description, uom, on_hand, allocated, in_transit, average_cost, selling_price, cost_floor, ' +
-      'markup_percent, margin_percent, inventory_balance, min_qty, max_qty, default_location, preferred_vendor, ' +
-      'manufacturer, part_category, item_type, status, search_tags, track_quantity, count_group, cogs_account, ' +
-      'fee_discount, shop_supply_amount, website_link, upc, notes, cross_references, source, ' +
-      'category, cost_price, sell_price, vendor, bin_location, reorder_point, reserved_qty, core_charge, warranty_months, ' +
-      'shop_id, created_at, updated_at'
-    )
+    .select('*')
     .eq('id', id)
     .eq('shop_id', user.shop_id)
     .single()
