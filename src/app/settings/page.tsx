@@ -44,24 +44,26 @@ export default function SettingsPage() {
       if (!profile) { window.location.href = '/login'; return }
       if (!['owner', 'gm', 'it_person', 'office_admin'].includes(profile.role)) { window.location.href = '/dashboard'; return }
       setUser(profile)
-      const { data } = await supabase.from('shops').select('*').eq('id', profile.shop_id).single()
-      if (data) {
-        setShop(data); setEditShop(data); setBrandingShop(data)
-        if (data.kiosk_code) setKioskCode(data.kiosk_code)
-        if (data.kiosk_enabled != null) setKioskEnabled(data.kiosk_enabled)
-        if (data.kiosk_pin) setKioskPin(data.kiosk_pin)
-      }
-      // Load retention policy
+      // Load shop settings (includes all shop fields + retention_policy)
       try {
-        const retRes = await fetch(`/api/settings?shop_id=${profile.shop_id}`)
-        if (retRes.ok) {
-          const retData = await retRes.json()
-          if (retData.retention_policy) setRetentionPolicy(retData.retention_policy)
+        const shopRes = await fetch(`/api/settings?shop_id=${profile.shop_id}`)
+        if (shopRes.ok) {
+          const shopData = await shopRes.json()
+          setShop(shopData); setEditShop(shopData); setBrandingShop(shopData)
+          if (shopData.kiosk_code) setKioskCode(shopData.kiosk_code)
+          if (shopData.kiosk_enabled != null) setKioskEnabled(shopData.kiosk_enabled)
+          if (shopData.kiosk_pin) setKioskPin(shopData.kiosk_pin)
+          if (shopData.retention_policy) setRetentionPolicy(shopData.retention_policy)
         }
       } catch {}
       // Load labor rates
-      const { data: rates } = await supabase.from('shop_labor_rates').select('*').eq('shop_id', profile.shop_id).order('ownership_type')
-      if (rates) setLaborRates(rates)
+      try {
+        const ratesRes = await fetch(`/api/settings/labor-rates?shop_id=${profile.shop_id}`)
+        if (ratesRes.ok) {
+          const rates = await ratesRes.json()
+          if (Array.isArray(rates)) setLaborRates(rates)
+        }
+      } catch {}
     }
     load()
   }, [])

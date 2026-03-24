@@ -49,29 +49,39 @@ export default function UnitProfilePage() {
       if (!profile) return
       setUser(profile)
 
-      const [unitRes, custRes, woRes] = await Promise.all([
-        supabase.from('assets').select('*').eq('id', unitId).single(),
-        supabase.from('customers').select('id, company_name').eq('id', id).single(),
-        supabase.from('service_orders').select('id, so_number, status, wo_status, complaint, grand_total, created_at, mileage_at_checkin, assigned_tech').eq('asset_id', unitId).is('deleted_at', null).neq('status', 'void').order('created_at', { ascending: false }),
+      const shopId = profile.shop_id
+
+      const [unitData, custData, allWos] = await Promise.all([
+        fetch(`/api/assets/${unitId}`).then((r) => r.ok ? r.json() : null),
+        fetch(`/api/customers/${id}?shop_id=${shopId}`).then((r) => r.ok ? r.json() : null),
+        fetch(`/api/service-orders?shop_id=${shopId}&limit=200`).then((r) => r.ok ? r.json() : []),
       ])
 
-      if (unitRes.data) {
-        setUnit(unitRes.data)
-        setEditForm({ ...unitRes.data })
+      if (unitData) {
+        setUnit(unitData)
+        setEditForm({ ...unitData })
       }
-      if (custRes.data) setCustomer(custRes.data)
+      if (custData) setCustomer(custData)
 
-      const wos = woRes.data || []
+      // Filter work orders for this specific asset client-side
+      // The API returns assets as a nested object { id, ... }, not a flat asset_id field
+      const wos: any[] = (Array.isArray(allWos) ? allWos : []).filter(
+        (w: any) => w.assets?.id === unitId || w.asset_id === unitId
+      )
+      // The API already excludes deleted_at and void; re-sort descending by created_at
+      wos.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       setWorkOrders(wos)
 
       const woIds = wos.map((w: any) => w.id)
 
       if (woIds.length > 0) {
-        const [linesRes, partsRes] = await Promise.all([
-          supabase.from('so_lines').select('*').in('so_id', woIds),
+        const [linesArrays, partsRes] = await Promise.all([
+          Promise.all(woIds.map((soId: string) =>
+            fetch(`/api/so-lines?so_id=${soId}`).then((r) => r.ok ? r.json() : [])
+          )),
           supabase.from('wo_parts').select('*, so_lines(description), service_orders(so_number, created_at)').in('wo_id', woIds),
         ])
-        setWoLines(linesRes.data || [])
+        setWoLines((linesArrays as any[][]).flat())
         setWoParts(partsRes.data || [])
       }
 

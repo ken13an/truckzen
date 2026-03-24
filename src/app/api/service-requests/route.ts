@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const status = searchParams.get('status')
 
   let q = s.from('service_requests')
-    .select('id, shop_id, customer_id, asset_id, unit_number, company_name, contact_name, phone, description, source, status, reject_reason, scheduled_date, converted_so_id, created_by, created_at')
+    .select('id, shop_id, customer_id, asset_id, unit_number, company_name, contact_name, phone, description, source, check_in_type, status, urgency, priority, reject_reason, scheduled_date, expected_arrival, promised_date, parking_location, key_location, converted_so_id, created_by, created_at, kiosk_checkin_id')
     .eq('shop_id', shopId)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })

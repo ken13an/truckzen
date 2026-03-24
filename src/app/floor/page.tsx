@@ -27,19 +27,10 @@ export default function FloorPage() {
   const [loading,setLoading]= useState(true)
 
   const loadJobs = useCallback(async (shopId: string) => {
-    const { data } = await supabase
-      .from('service_orders')
-      .select(`
-        id, so_number, status, priority, bay, team, complaint,
-        assets(unit_number, year, make, model),
-        customers(company_name),
-        users!assigned_tech(full_name)
-      `)
-      .eq('shop_id', shopId)
-      .is('deleted_at', null)
-      .not('status', 'in', '("void","good_to_go")')
-      .order('priority', { ascending: false })
-    setJobs(data || [])
+    const res = await fetch(`/api/service-orders?shop_id=${shopId}&limit=200`)
+    const data: any[] = res.ok ? await res.json() : []
+    const filtered = data.filter((j: any) => j.status !== 'good_to_go')
+    setJobs(filtered)
     setLoading(false)
   }, [])
 

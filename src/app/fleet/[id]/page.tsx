@@ -35,12 +35,13 @@ export default function FleetDetailPage() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
 
-      const [{ data: a }, { data: h }, { data: p }, { data: activeWos }] = await Promise.all([
-        supabase.from('assets').select('*, customers(company_name, is_fleet)').eq('id', params.id).eq('shop_id', profile.shop_id).single(),
+      const [assetRes, { data: h }, { data: p }, { data: activeWos }] = await Promise.all([
+        fetch(`/api/assets/${params.id}`).then(r => r.ok ? r.json() : null),
         supabase.from('service_orders').select('id, so_number, status, complaint, grand_total, completed_at, created_at').eq('asset_id', params.id).is('deleted_at', null).or('status.in.(done,good_to_go,closed),is_historical.eq.true').order('created_at', { ascending:false }).limit(20),
         supabase.from('pm_schedules').select('*').eq('asset_id', params.id).eq('active', true),
         supabase.from('service_orders').select('id, so_number, status, complaint, created_at').eq('asset_id', params.id).is('deleted_at', null).not('status', 'in', '("done","good_to_go","closed","void")').or('is_historical.is.null,is_historical.eq.false').order('created_at', { ascending:false }).limit(10),
       ])
+      const a = assetRes
 
       if (!a) { router.push('/fleet'); return }
       setAsset(a); setEdit(a); setHistory(h || []); setPMs(p || []); setActiveWos(activeWos || [])

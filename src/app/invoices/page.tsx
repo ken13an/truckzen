@@ -29,14 +29,10 @@ export default function InvoicesPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
-      let q = supabase.from('invoices')
-        .select('id, invoice_number, status, subtotal, tax_amount, total, balance_due, amount_paid, due_date, paid_at, created_at, so_id, customers(company_name), service_orders(so_number, is_historical, source, assets(unit_number))')
-        .eq('shop_id', profile.shop_id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
-      if (filter !== 'all') q = q.eq('status', filter)
-      const { data } = await q.limit(500)
-      setInvoices(data || [])
+      const url = '/api/invoices' + (filter !== 'all' ? `?status=${filter}` : '')
+      const res = await fetch(url)
+      const data = await res.json()
+      setInvoices(Array.isArray(data) ? data : [])
       setLoading(false)
     }
     load()

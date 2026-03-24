@@ -23,18 +23,30 @@ export default function AccountingDashboard() {
     const shopId = profile.shop_id
     const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
 
-    const [{ data: ready }, { data: outst }, { data: paidThisMonth }] = await Promise.all([
-      supabase.from('service_orders').select('id, so_number, status, grand_total, completed_at, created_at, assets(unit_number, make, model), customers(company_name)').eq('shop_id', shopId).is('deleted_at', null).in('status', ['done', 'good_to_go']).or('is_historical.is.null,is_historical.eq.false').order('completed_at', { ascending: true }).limit(30),
-      supabase.from('invoices').select('id, invoice_number, total, balance_due, created_at, status, customers(company_name)').eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent').order('created_at', { ascending: true }).limit(30),
-      supabase.from('invoices').select('total').eq('shop_id', shopId).is('deleted_at', null).eq('status', 'paid').gte('paid_at', monthStart.toISOString()),
+    const [doneRes, gtagRes, outstRes, paidRes] = await Promise.all([
+      fetch(`/api/service-orders?shop_id=${shopId}&status=done&limit=30`),
+      fetch(`/api/service-orders?shop_id=${shopId}&status=good_to_go&limit=30`),
+      fetch(`/api/invoices?status=sent`),
+      fetch(`/api/invoices?status=paid`),
     ])
 
-    setReadyToInvoice(ready || [])
-    setOutstanding(outst || [])
-    const revenue = (paidThisMonth || []).reduce((s: number, i: any) => s + (i.total || 0), 0)
-    const outTotal = (outst || []).reduce((s: number, i: any) => s + (i.balance_due || i.total || 0), 0)
-    setStats({ readyCount: (ready || []).length, revenue, outstandingCount: (outst || []).length, outstandingTotal: outTotal, avgWoValue: (ready || []).length > 0 ? (ready || []).reduce((s: number, w: any) => s + (w.grand_total || 0), 0) / (ready || []).length : 0 })
-  }, [supabase])
+    const [doneData, gtagData, outstData, paidData] = await Promise.all([
+      doneRes.ok ? doneRes.json() : [],
+      gtagRes.ok ? gtagRes.json() : [],
+      outstRes.ok ? outstRes.json() : [],
+      paidRes.ok ? paidRes.json() : [],
+    ])
+
+    const ready = [...(doneData || []), ...(gtagData || [])]
+    const outst = outstData || []
+    const paidThisMonth = (paidData || []).filter((i: any) => i.paid_at && new Date(i.paid_at) >= monthStart)
+
+    setReadyToInvoice(ready)
+    setOutstanding(outst)
+    const revenue = paidThisMonth.reduce((s: number, i: any) => s + (i.total || 0), 0)
+    const outTotal = outst.reduce((s: number, i: any) => s + (i.balance_due || i.total || 0), 0)
+    setStats({ readyCount: ready.length, revenue, outstandingCount: outst.length, outstandingTotal: outTotal, avgWoValue: ready.length > 0 ? ready.reduce((s: number, w: any) => s + (w.grand_total || 0), 0) / ready.length : 0 })
+  }, [])
 
   useEffect(() => { getCurrentUser(supabase).then(async (p: any) => { if (!p) { window.location.href = '/login'; return }; setUser(p); await loadData(p); setLoading(false) }) }, [])
   useEffect(() => { if (!user) return; const iv = setInterval(() => loadData(user), 30000); return () => clearInterval(iv) }, [user])

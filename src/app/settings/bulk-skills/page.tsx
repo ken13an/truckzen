@@ -34,11 +34,14 @@ export default function BulkSkillsPage() {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
-      const [{ data: mechs }, { data: sk }] = await Promise.all([
-        supabase.from('users').select('id, full_name, role, team').eq('shop_id', p.shop_id).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).is('deleted_at', null).order('full_name'),
+      const [usersRes, sk] = await Promise.all([
+        fetch(`/api/users?shop_id=${p.shop_id}`).then(r => r.json()),
         fetch(`/api/mechanic-skills?shop_id=${p.shop_id}&type=list`).then(r => r.json()),
       ])
-      setMechanics(mechs || [])
+      const mechs = Array.isArray(usersRes)
+        ? usersRes.filter((u: any) => ['technician', 'lead_tech', 'maintenance_technician'].includes(u.role) && u.active && !u.deleted_at)
+        : []
+      setMechanics(mechs)
       setSkills(Array.isArray(sk) ? sk : [])
       setLoading(false)
     })

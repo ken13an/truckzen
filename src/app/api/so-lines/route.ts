@@ -8,8 +8,33 @@ function db() {
 export async function GET(req: Request) {
   const s = db()
   const { searchParams } = new URL(req.url)
-  const soId = searchParams.get('so_id')
-  if (!soId) return NextResponse.json({ error: 'so_id required' }, { status: 400 })
+  const soId    = searchParams.get('so_id')
+  const shopId  = searchParams.get('shop_id')
+
+  // Shop-scoped query: returns part lines with nested service_order info
+  if (shopId) {
+    const partsStatus = searchParams.get('parts_status') // e.g. "rough,sourced,ordered"
+    const lineType    = searchParams.get('line_type')
+    const limit       = Math.min(parseInt(searchParams.get('limit') || '100'), 500)
+    const today       = searchParams.get('updated_since') // ISO date string
+
+    let q = s
+      .from('so_lines')
+      .select('id, description, rough_name, real_name, parts_status, quantity, created_at, updated_at, line_type, service_orders!inner(id, so_number, shop_id, assets(unit_number), users!assigned_tech(full_name))')
+      .eq('service_orders.shop_id', shopId)
+      .order('created_at', { ascending: true })
+      .limit(limit)
+
+    if (lineType)    q = q.eq('line_type', lineType)
+    if (partsStatus) q = q.in('parts_status', partsStatus.split(','))
+    if (today)       q = (q as any).gte('updated_at', today)
+
+    const { data, error } = await q
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data)
+  }
+
+  if (!soId) return NextResponse.json({ error: 'so_id or shop_id required' }, { status: 400 })
 
   const { data, error } = await s.from('so_lines').select('*').eq('so_id', soId).order('sort_order').order('created_at')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -55,33 +55,14 @@ export default function InvoiceDetailPage() {
       if (!profile) { window.location.href = '/login'; return }
       setUser(profile)
 
-      const { data: inv } = await supabase
-        .from('invoices')
-        .select(`
-          *,
-          service_orders(
-            id, so_number, status, complaint, cause, correction, is_historical, source,
-            labor_total, parts_total, grand_total,
-            assets(unit_number, year, make, model, odometer),
-            users!assigned_tech(full_name)
-          ),
-          customers(company_name, contact_name, phone, email)
-        `)
-        .eq('id', params.id)
-        .eq('shop_id', profile.shop_id)
-        .single()
+      const res = await fetch(`/api/invoices/${params.id}`)
+      if (!res.ok) { window.location.href = '/invoices'; return }
+      const inv = await res.json()
 
-      if (!inv) { window.location.href = '/invoices'; return }
+      if (!inv || inv.error) { window.location.href = '/invoices'; return }
 
-      // Fetch so_lines separately via service order
-      let soLines: any[] = []
-      if (inv.service_orders?.id) {
-        const { data: lines } = await supabase
-          .from('so_lines')
-          .select('id, line_type, description, part_number, quantity, unit_price, total_price')
-          .eq('so_id', inv.service_orders.id)
-        soLines = lines || []
-      }
+      // so_lines are nested inside service_orders from the API response
+      const soLines: any[] = inv.service_orders?.so_lines || []
       inv.so_lines = soLines
 
       setInvoice(inv)
@@ -176,20 +157,14 @@ export default function InvoiceDetailPage() {
       })
 
       // Refresh
-      const { data: refreshed } = await supabase
-        .from('invoices')
-        .select(`*, service_orders(id, so_number, status, complaint, cause, correction, is_historical, source, labor_total, parts_total, grand_total, assets(unit_number, year, make, model, odometer), users!assigned_tech(full_name)), customers(company_name, contact_name, phone, email)`)
-        .eq('id', params.id)
-        .single()
-
-      if (refreshed) {
-        // Fetch lines separately
-        const { data: refreshedLines } = await supabase.from('so_lines')
-          .select('id, line_type, description, part_number, quantity, unit_price, total_price')
-          .eq('so_id', refreshed.service_orders?.id)
-        refreshed.so_lines = refreshedLines || []
-        setInvoice(refreshed)
-        setEditingLines((refreshed.so_lines || []).map((l: any) => ({ ...l })))
+      const refreshRes = await fetch(`/api/invoices/${params.id}`)
+      if (refreshRes.ok) {
+        const refreshed = await refreshRes.json()
+        if (refreshed && !refreshed.error) {
+          refreshed.so_lines = refreshed.service_orders?.so_lines || []
+          setInvoice(refreshed)
+          setEditingLines((refreshed.so_lines || []).map((l: any) => ({ ...l })))
+        }
       }
       setIsEditing(false)
     } catch (err) {

@@ -19,13 +19,15 @@ export default function PartsReorderPage() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
       setUser(profile)
-      const [{ data: p }, { data: v }] = await Promise.all([
-        supabase.from('parts').select('id, part_number, description, category, on_hand, reorder_point, cost_price, vendor, bin_location').eq('shop_id', profile.shop_id).is('deleted_at', null).order('description'),
-        supabase.from('vendors').select('id, name').eq('shop_id', profile.shop_id).eq('active', true).order('name'),
+      const [partsRes, vendorsRes] = await Promise.all([
+        fetch(`/api/parts?shop_id=${profile.shop_id}&per_page=2000&low_stock=true`),
+        fetch(`/api/vendors?shop_id=${profile.shop_id}`),
       ])
-      // Only low stock parts
-      setParts((p || []).filter((pt: any) => pt.on_hand <= pt.reorder_point))
-      setVendors(v || [])
+      const partsJson   = partsRes.ok   ? await partsRes.json()   : { data: [] }
+      const vendorsJson = vendorsRes.ok ? await vendorsRes.json() : []
+      // /api/parts with low_stock=true already filters on_hand <= reorder_point server-side
+      setParts(partsJson.data || [])
+      setVendors(Array.isArray(vendorsJson) ? vendorsJson : [])
       setLoading(false)
     }
     load()

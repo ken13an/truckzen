@@ -18,20 +18,37 @@ export async function GET(req: Request) {
   const userTeam = searchParams.get('user_team') ?? ''
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 200)
 
-  let q = supabase
-    .from('service_orders')
-    .select(`
-      id, so_number, status, priority, complaint, bay, team,
+  const includeSoLines = searchParams.get('include_so_lines') === 'true'
+  const excludeStatuses = searchParams.get('exclude_status') // comma-separated
+  const excludeHistorical = searchParams.get('exclude_historical') === 'true'
+
+  const selectFields = includeSoLines
+    ? `id, so_number, status, priority, complaint, bay, team,
       grand_total, created_at, updated_at,
       assets(id, unit_number, year, make, model),
       customers(id, company_name),
-      users!assigned_tech(id, full_name)
-    `)
+      users!assigned_tech(id, full_name),
+      so_lines(id, line_type, description, parts_status, real_name, rough_name)`
+    : `id, so_number, status, priority, complaint, bay, team,
+      grand_total, created_at, updated_at,
+      assets(id, unit_number, year, make, model),
+      customers(id, company_name),
+      users!assigned_tech(id, full_name)`
+
+  let q = supabase
+    .from('service_orders')
+    .select(selectFields)
     .eq('shop_id', shopId)
     .is('deleted_at', null)
     .not('status', 'eq', 'void')
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  if (excludeHistorical) q = (q as any).or('is_historical.is.null,is_historical.eq.false')
+  if (excludeStatuses) {
+    const statuses = excludeStatuses.split(',').map(s => s.trim())
+    for (const s of statuses) q = q.not('status', 'eq', s)
+  }
 
   const limitedRoles = ['technician', 'maintenance_technician']
   if (limitedRoles.includes(role) && userTeam) q = q.eq('team', userTeam)

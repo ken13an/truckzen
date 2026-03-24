@@ -46,16 +46,11 @@ export default function PartsQueuePage() {
       setRequests(data)
     }
     // Also fetch WOs with part lines (existing workflow)
-    const { data } = await supabase
-      .from('service_orders')
-      .select('id, so_number, status, priority, created_at, assets(unit_number, year, make, model), customers(company_name), so_lines(id, line_type, description, parts_status, real_name, rough_name)')
-      .eq('shop_id', profile.shop_id)
-      .is('deleted_at', null)
-      .or('is_historical.is.null,is_historical.eq.false')
-      .not('status', 'in', '("good_to_go","void","done")')
-      .order('created_at', { ascending: false })
-      .limit(100)
-    setWos(data || [])
+    const woRes = await fetch(
+      `/api/service-orders?shop_id=${profile.shop_id}&include_so_lines=true&exclude_historical=true&exclude_status=good_to_go,void,done&limit=100`
+    )
+    const wosData = woRes.ok ? await woRes.json() : []
+    setWos(Array.isArray(wosData) ? wosData : [])
   }
 
   // Quick action: Mark Ready

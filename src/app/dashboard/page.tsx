@@ -32,8 +32,8 @@ export default function DashboardPage() {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
-      const { data: s } = await supabase.from('shops').select('name').eq('id', p.shop_id).single()
-      setShop(s)
+      const shopRes = await fetch(`/api/settings?shop_id=${p.shop_id}`)
+      if (shopRes.ok) setShop(await shopRes.json())
       await loadDashboard(p)
       setLoading(false)
     })
@@ -58,18 +58,18 @@ export default function DashboardPage() {
   }, [user])
 
   async function markRead(notifId: string) {
-    await supabase.from('notifications').update({ read: true, is_read: true }).eq('id', notifId)
+    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notifId, action: 'mark_read', user_id: user?.id }) })
     setData((d: any) => d ? { ...d, notifications: d.notifications.filter((n: any) => n.id !== notifId) } : d)
   }
 
   async function dismissNotif(notifId: string) {
-    await supabase.from('notifications').update({ is_dismissed: true }).eq('id', notifId)
+    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notifId, action: 'dismiss', user_id: user?.id }) })
     setData((d: any) => d ? { ...d, notifications: d.notifications.filter((n: any) => n.id !== notifId) } : d)
   }
 
   async function markAllRead() {
     if (!user) return
-    await supabase.from('notifications').update({ read: true, is_read: true }).eq('user_id', user.id).eq('read', false)
+    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'all', action: 'mark_read', user_id: user.id }) })
     setData((d: any) => d ? { ...d, notifications: [] } : d)
   }
 

@@ -24,18 +24,20 @@ export default function MaintenanceDashboard() {
     const shopId = profile.shop_id
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString()
 
-    const [{ data: fleet }, { data: reqs }, { data: warranty }, { count: completed }] = await Promise.all([
-      supabase.from('service_orders').select('id, so_number, status, complaint, created_at, assets(unit_number, make, model), customers(company_name, is_fleet), users!assigned_tech(full_name)').eq('shop_id', shopId).is('deleted_at', null).or('is_historical.is.null,is_historical.eq.false').not('status', 'in', '("good_to_go","void","done")').order('created_at', { ascending: false }).limit(30),
-      supabase.from('service_requests').select('id, company_name, unit_number, description, urgency, created_at, source').eq('shop_id', shopId).is('deleted_at', null).in('status', ['new', 'scheduled']).order('created_at', { ascending: false }).limit(20),
+    const [fleetRes, reqsRes, { data: warranty }, { count: completed }] = await Promise.all([
+      fetch(`/api/service-orders?shop_id=${shopId}&exclude_status=good_to_go,void,done&exclude_historical=true&limit=30`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/service-requests?shop_id=${shopId}`).then(r => r.ok ? r.json() : []),
       supabase.from('service_orders').select('id, so_number, complaint, warranty_status, assets(unit_number, make, model, warranty_provider)').eq('shop_id', shopId).is('deleted_at', null).eq('warranty_status', 'checking').order('created_at', { ascending: false }),
       supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).in('status', ['done', 'good_to_go']).gte('completed_at', weekAgo),
     ])
 
-    const fleetWos = (fleet || []).filter((w: any) => (w.customers as any)?.is_fleet)
+    const fleet: any[] = Array.isArray(fleetRes) ? fleetRes : []
+    const reqs: any[] = (Array.isArray(reqsRes) ? reqsRes : []).filter((r: any) => ['new', 'scheduled'].includes(r.status)).slice(0, 20)
+    const fleetWos = fleet.filter((w: any) => (w.customers as any)?.is_fleet)
     setFleetInShop(fleetWos)
-    setRequests(reqs || [])
+    setRequests(reqs)
     setWarrantyPending(warranty || [])
-    setStats({ inShop: fleetWos.length, newRequests: (reqs || []).length, warrantyChecks: (warranty || []).length, completedWeek: completed || 0 })
+    setStats({ inShop: fleetWos.length, newRequests: reqs.length, warrantyChecks: (warranty || []).length, completedWeek: completed || 0 })
   }, [supabase])
 
   useEffect(() => { getCurrentUser(supabase).then(async (p: any) => { if (!p) { window.location.href = '/login'; return }; setUser(p); await loadData(p); setLoading(false) }) }, [])

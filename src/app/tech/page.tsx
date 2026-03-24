@@ -82,10 +82,11 @@ export default function TechMobilePage() {
       await loadJobs(p)
       await loadFloor(p)
       // Load parts statuses for my jobs
-      const { data: prs } = await supabase.from('parts_requests').select('so_id, status, line_items').eq('shop_id', p.shop_id).is('deleted_at', null)
-      if (prs) {
+      const prsRes = await fetch(`/api/parts-requests?shop_id=${p.shop_id}`)
+      if (prsRes.ok) {
+        const prs = await prsRes.json()
         const map: Record<string, { status: string; line_items: any[] }> = {}
-        for (const pr of prs) { if (pr.so_id) map[pr.so_id] = { status: pr.status, line_items: pr.line_items || [] } }
+        for (const pr of (Array.isArray(prs) ? prs : [])) { if (pr.so_id) map[pr.so_id] = { status: pr.status, line_items: pr.line_items || [] } }
         setPartsStatusMap(map)
       }
       setLoading(false)
@@ -531,9 +532,9 @@ export default function TechMobilePage() {
     const [search, setSearch] = useState('')
     useEffect(() => {
       if (!user) return
-      supabase.from('parts').select('part_number, description, category, on_hand, bin_location')
-        .eq('shop_id', user.shop_id).is('deleted_at', null).order('description').limit(100)
-        .then(({ data }: any) => setParts(data || []))
+      fetch(`/api/parts?shop_id=${user.shop_id}&per_page=2000`)
+        .then(r => r.ok ? r.json() : { data: [] })
+        .then((res: any) => setParts(Array.isArray(res) ? res : (res.data || [])))
     }, [user])
 
     const filtered = parts.filter(p =>
@@ -567,9 +568,9 @@ export default function TechMobilePage() {
     const [myAssets, setMyAssets] = useState<any[]>([])
     useEffect(() => {
       if (!user) return
-      supabase.from('assets').select('id, unit_number, year, make, model')
-        .eq('shop_id', user.shop_id).eq('status', 'on_road').is('deleted_at', null).order('unit_number').limit(50)
-        .then(({ data }: any) => setMyAssets(data || []))
+      fetch(`/api/assets?shop_id=${user.shop_id}&status=on_road`)
+        .then(r => r.ok ? r.json() : [])
+        .then((res: any) => setMyAssets(Array.isArray(res) ? res : (res.data || [])))
     }, [user])
 
     return <>

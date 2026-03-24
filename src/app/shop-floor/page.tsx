@@ -45,36 +45,47 @@ export default function ShopFloorPage() {
   const [partsStatusMap, setPartsStatusMap] = useState<Record<string, string>>({})
 
   const loadJobs = useCallback(async (profile: any) => {
-    const { data } = await supabase
-      .from('service_orders')
-      .select('id, so_number, status, priority, complaint, bay, team, internal_notes, grand_total, created_at, updated_at, promised_date, completed_at, assets(unit_number, year, make, model), customers(company_name), users!assigned_tech(full_name)')
-      .eq('shop_id', profile.shop_id)
-      .is('deleted_at', null)
-      .or('is_historical.is.null,is_historical.eq.false')
-      .not('status', 'in', '("good_to_go","void")')
-      .order('priority', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(100)
-    setJobs(data || [])
-  }, [supabase])
+    const res = await fetch(`/api/service-orders?shop_id=${profile.shop_id}&limit=100&historical=false`)
+    const data = res.ok ? await res.json() : []
+    const filtered = (data || []).filter((j: any) => j.status !== 'good_to_go')
+    setJobs(filtered)
+  }, [])
 
   useEffect(() => {
     getCurrentUser(supabase).then(async (p: any) => {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
       await loadJobs(p)
-      // Load mechanics + clocks
-      const [{ data: mechs }, { data: clocks }] = await Promise.all([
-        supabase.from('users').select('id, full_name, role, team').eq('shop_id', p.shop_id).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).is('deleted_at', null).order('full_name'),
-        supabase.from('time_entries').select('user_id, clock_in, so_id, service_orders(so_number, assets(unit_number))').eq('shop_id', p.shop_id).is('clock_out', null),
+      // Load mechanics + clocks + parts request statuses
+      const [usersRes, clocksRes, prsRes] = await Promise.all([
+        fetch(`/api/users?shop_id=${p.shop_id}`),
+        fetch(`/api/time-tracking/active?shop_id=${p.shop_id}`),
+        fetch(`/api/parts-requests?shop_id=${p.shop_id}`),
       ])
-      setMechanics(mechs || [])
-      setActiveClocks(clocks || [])
-      // Load parts request statuses
-      const { data: prs } = await supabase.from('parts_requests').select('so_id, status, line_items').eq('shop_id', p.shop_id).is('deleted_at', null).not('status', 'in', '("delivered","picked_up")')
-      if (prs) {
+      const allUsers = usersRes.ok ? await usersRes.json() : []
+      const mechRoles = ['technician', 'lead_tech', 'maintenance_technician']
+      const mechs = (allUsers || []).filter((u: any) => mechRoles.includes(u.role) && u.active && !u.deleted_at)
+      mechs.sort((a: any, b: any) => (a.full_name || '').localeCompare(b.full_name || ''))
+      // active clocks from /api/time-tracking/active returns { id, mechanic_name, team, wo_number, job_description, clocked_in_at }
+      // normalise to shape the Mechanic Status panel expects: { user_id, clock_in, service_orders: { so_number, assets: { unit_number } } }
+      const rawClocks = clocksRes.ok ? await clocksRes.json() : []
+      const clocks = (rawClocks || []).map((c: any) => {
+        // match back to mechanic by name since active endpoint doesn't return user_id directly
+        const mechMatch = mechs.find((m: any) => m.full_name === c.mechanic_name)
+        return {
+          user_id: mechMatch?.id ?? null,
+          clock_in: c.clocked_in_at,
+          so_id: null,
+          service_orders: { so_number: c.wo_number, assets: { unit_number: null } },
+        }
+      })
+      setMechanics(mechs)
+      setActiveClocks(clocks)
+      const prsData = prsRes.ok ? await prsRes.json() : []
+      const activePrs = (prsData || []).filter((pr: any) => pr.status !== 'delivered' && pr.status !== 'picked_up')
+      if (activePrs.length) {
         const map: Record<string, string> = {}
-        for (const pr of prs) { if (pr.so_id) map[pr.so_id] = pr.status }
+        for (const pr of activePrs) { if (pr.so_id) map[pr.so_id] = pr.status }
         setPartsStatusMap(map)
       }
       setLoading(false)

@@ -71,12 +71,14 @@ export default function NewWorkOrderPage() {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
       setProfile(p)
-      const [{ data: custs }, { data: parts }] = await Promise.all([
-        supabase.from('customers').select('id, company_name, contact_name, phone, is_fleet').eq('shop_id', p.shop_id).is('deleted_at', null),
-        supabase.from('parts').select('id, part_number, description, on_hand').eq('shop_id', p.shop_id).is('deleted_at', null).order('description'),
+      const [custsRes, partsRes] = await Promise.all([
+        fetch(`/api/customers?shop_id=${p.shop_id}&per_page=2000`),
+        fetch(`/api/parts?shop_id=${p.shop_id}&per_page=2000`),
       ])
-      if (custs) setCustomers(custs)
-      if (parts) setInventoryParts(parts)
+      const custsData = await custsRes.json()
+      const partsData = await partsRes.json()
+      if (custsData.data) setCustomers(custsData.data)
+      if (partsData.data) setInventoryParts(partsData.data)
     })
   }, [])
 
@@ -92,14 +94,12 @@ export default function NewWorkOrderPage() {
   useEffect(() => {
     if (!selectedAsset || !profile) { setLastMileage(null); return }
     // Check asset's current odometer
-    if (selectedAsset.vin) {
-      supabase.from('assets').select('odometer').eq('id', selectedAsset.id).single().then(({ data }: any) => {
-        if (data?.odometer) {
-          setLastMileage({ value: data.odometer, date: '' })
-          setMileage(String(data.odometer))
-        }
-      })
-    }
+    fetch(`/api/assets/${selectedAsset.id}`).then(r => r.json()).then((data: any) => {
+      if (data?.odometer) {
+        setLastMileage({ value: data.odometer, date: '' })
+        setMileage(String(data.odometer))
+      }
+    })
     // Check last WO mileage for better date info
     supabase.from('service_orders').select('mileage_at_service, odometer_in, created_at')
       .eq('asset_id', selectedAsset.id).is('deleted_at', null).not('mileage_at_service', 'is', null)

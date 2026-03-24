@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
   const s = db()
-  const { data, error } = await s.from('shops').select('id, name, retention_policy').eq('id', shop_id).single()
+  const { data, error } = await s.from('shops').select('*').eq('id', shop_id).single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json(data)

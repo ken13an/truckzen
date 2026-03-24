@@ -23,18 +23,25 @@ export default function PartsDashboard() {
     const shopId = profile.shop_id
     const today = new Date().toISOString().split('T')[0]
 
-    const [{ data: parts }, { data: low }, { count: fulfilled }] = await Promise.all([
-      supabase.from('so_lines').select('id, description, rough_name, real_name, parts_status, quantity, created_at, service_orders!inner(id, so_number, shop_id, assets(unit_number), users!assigned_tech(full_name))').eq('service_orders.shop_id', shopId).eq('line_type', 'part').in('parts_status', ['rough', 'sourced', 'ordered']).order('created_at', { ascending: true }).limit(30),
-      supabase.from('parts').select('id, description, part_number, on_hand, reorder_point').eq('shop_id', shopId).is('deleted_at', null).order('on_hand', { ascending: true }).limit(20),
-      supabase.from('so_lines').select('*', { count: 'exact', head: true }).eq('line_type', 'part').eq('parts_status', 'received').gte('updated_at', today),
+    const [soLinesRes, lowRes, fulfilledRes] = await Promise.all([
+      fetch(`/api/so-lines?shop_id=${shopId}&line_type=part&parts_status=rough,sourced,ordered&limit=30`),
+      fetch(`/api/parts?shop_id=${shopId}&per_page=20&low_stock=true`),
+      fetch(`/api/so-lines?shop_id=${shopId}&line_type=part&parts_status=received&updated_since=${today}&limit=500`),
     ])
 
-    const pendingList = (parts || []).filter((p: any) => p.service_orders)
+    const soLinesJson  = soLinesRes.ok  ? await soLinesRes.json()  : []
+    const lowJson      = lowRes.ok      ? await lowRes.json()       : { data: [] }
+    const fulfilledArr = fulfilledRes.ok ? await fulfilledRes.json() : []
+
+    const parts     = Array.isArray(soLinesJson) ? soLinesJson : []
+    const low       = (lowJson.data || []) as any[]
+    const fulfilled = Array.isArray(fulfilledArr) ? fulfilledArr.length : 0
+
+    const pendingList = parts.filter((p: any) => p.service_orders)
     setPendingParts(pendingList)
-    const lowStockItems = (low || []).filter((p: any) => p.on_hand <= (p.reorder_point || 2))
-    setLowStock(lowStockItems)
-    setStats({ pending: pendingList.length, warrantyParts: 0, lowStockCount: lowStockItems.length, fulfilledToday: fulfilled || 0 })
-  }, [supabase])
+    setLowStock(low)
+    setStats({ pending: pendingList.length, warrantyParts: 0, lowStockCount: low.length, fulfilledToday: fulfilled })
+  }, [])
 
   useEffect(() => { getCurrentUser(supabase).then(async (p: any) => { if (!p) { window.location.href = '/login'; return }; setUser(p); await loadData(p); setLoading(false) }) }, [])
   useEffect(() => { if (!user) return; const iv = setInterval(() => loadData(user), 30000); return () => clearInterval(iv) }, [user])

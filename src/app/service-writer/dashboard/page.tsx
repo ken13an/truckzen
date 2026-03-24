@@ -24,18 +24,26 @@ export default function ServiceWriterDashboard() {
     const shopId = profile.shop_id
     const today = new Date().toISOString().split('T')[0]
 
-    const [{ data: reqs }, { data: wos }, { data: ests }, { count: completed }] = await Promise.all([
-      supabase.from('service_requests').select('id, company_name, unit_number, description, source, created_at, status').eq('shop_id', shopId).is('deleted_at', null).in('status', ['new', 'scheduled']).order('created_at', { ascending: false }).limit(20),
-      supabase.from('service_orders').select('id, so_number, status, complaint, created_at, updated_at, assets(unit_number, make, model), customers(company_name), users!assigned_tech(full_name)').eq('shop_id', shopId).is('deleted_at', null).or('is_historical.is.null,is_historical.eq.false').not('status', 'in', '("good_to_go","void","done")').order('created_at', { ascending: false }).limit(30),
-      supabase.from('estimates').select('id, estimate_number, grand_total, sent_at, wo_id, customer_name, service_orders(so_number)').eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent').order('sent_at', { ascending: true }),
-      supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).in('status', ['done', 'good_to_go']).gte('completed_at', today),
+    const [reqsRes, wosRes, estsRes] = await Promise.all([
+      fetch(`/api/service-requests?shop_id=${shopId}`).then(r => r.json()),
+      fetch(`/api/service-orders?shop_id=${shopId}&limit=100`).then(r => r.json()),
+      fetch(`/api/estimates?shop_id=${shopId}&status=sent`).then(r => r.json()),
     ])
 
-    setRequests(reqs || [])
-    setMyWos(wos || [])
-    setPendingEstimates(ests || [])
-    setStats({ requests: (reqs || []).length, openWos: (wos || []).length, pendingApprovals: (ests || []).length, completedToday: completed || 0 })
-  }, [supabase])
+    const allReqs: any[] = Array.isArray(reqsRes) ? reqsRes : []
+    const allWos: any[] = Array.isArray(wosRes) ? wosRes : []
+    const allEsts: any[] = Array.isArray(estsRes) ? estsRes : []
+
+    const reqs = allReqs.filter(r => r.status === 'new' || r.status === 'scheduled').slice(0, 20)
+    const excludedStatuses = new Set(['good_to_go', 'void', 'done'])
+    const wos = allWos.filter(wo => !excludedStatuses.has(wo.status) && !wo.is_historical).slice(0, 30)
+    const completedToday = allWos.filter(wo => (wo.status === 'done' || wo.status === 'good_to_go') && wo.completed_at && wo.completed_at.startsWith(today)).length
+
+    setRequests(reqs)
+    setMyWos(wos)
+    setPendingEstimates(allEsts)
+    setStats({ requests: reqs.length, openWos: wos.length, pendingApprovals: allEsts.length, completedToday })
+  }, [])
 
   useEffect(() => {
     getCurrentUser(supabase).then(async (p: any) => {

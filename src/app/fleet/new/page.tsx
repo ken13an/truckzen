@@ -19,8 +19,9 @@ export default function NewFleetPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
-      const { data } = await supabase.from('customers').select('id, company_name, default_ownership_type').eq('shop_id', profile.shop_id).is('deleted_at', null).order('company_name')
-      setCustomers(data || [])
+      const res = await fetch(`/api/customers?shop_id=${profile.shop_id}&per_page=2000`)
+      const json = res.ok ? await res.json() : { data: [] }
+      setCustomers(json.data || [])
     }
     load()
   }, [])
