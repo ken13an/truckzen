@@ -3,10 +3,11 @@
  * Service Requests — intake system for Maintenance & Fleet departments
  */
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import Pagination from '@/components/Pagination'
+import FilterBar from '@/components/FilterBar'
 
 const URGENCY: Record<string, { label: string; color: string; bg: string }> = {
   low:      { label: 'LOW',      color: '#48536A', bg: 'rgba(72,83,106,.1)' },
@@ -33,6 +34,9 @@ export default function ServiceRequestsPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [toast, setToast] = useState('')
   const [page, setPage] = useState(1)
+  const [srSearch, setSrSearch] = useState('')
+  const [srDateFrom, setSrDateFrom] = useState('')
+  const [srDateTo, setSrDateTo] = useState('')
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
@@ -56,12 +60,32 @@ export default function ServiceRequestsPage() {
     setLoading(false)
   }
 
-  const filtered = requests.filter(r => {
-    if (tab === 'new') return r.status === 'new' || r.status === 'scheduled'
-    if (tab === 'converted') return r.status === 'converted'
-    if (tab === 'rejected') return r.status === 'rejected'
-    return true
-  })
+  const filtered = useMemo(() => {
+    let list = requests.filter(r => {
+      if (tab === 'new') return r.status === 'new' || r.status === 'scheduled'
+      if (tab === 'converted') return r.status === 'converted'
+      if (tab === 'rejected') return r.status === 'rejected'
+      return true
+    })
+    if (srSearch.trim()) {
+      const q = srSearch.toLowerCase()
+      list = list.filter(r =>
+        (r.unit_number || '').toLowerCase().includes(q) ||
+        (r.company_name || '').toLowerCase().includes(q) ||
+        (r.contact_name || '').toLowerCase().includes(q) ||
+        (r.description || '').toLowerCase().includes(q)
+      )
+    }
+    if (srDateFrom) {
+      const from = new Date(srDateFrom)
+      list = list.filter(r => r.created_at && new Date(r.created_at) >= from)
+    }
+    if (srDateTo) {
+      const to = new Date(srDateTo + 'T23:59:59')
+      list = list.filter(r => r.created_at && new Date(r.created_at) <= to)
+    }
+    return list
+  }, [requests, tab, srSearch, srDateFrom, srDateTo])
 
   const PER_PAGE = 25
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
@@ -136,10 +160,22 @@ export default function ServiceRequestsPage() {
         ))}
       </div>
 
+      {/* FilterBar */}
+      <FilterBar
+        search={srSearch}
+        onSearchChange={val => { setSrSearch(val); setPage(1) }}
+        searchPlaceholder="Search unit #, customer, description..."
+        dateFrom={srDateFrom}
+        dateTo={srDateTo}
+        onDateFromChange={val => { setSrDateFrom(val); setPage(1) }}
+        onDateToChange={val => { setSrDateTo(val); setPage(1) }}
+        theme="dark"
+      />
+
       {/* Request cards */}
       {filtered.length === 0 ? (
         <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: '#7C8BA0', fontSize: 13 }}>
-          {tab === 'new' ? 'No pending service requests' : `No ${tab} requests`}
+          {srSearch || srDateFrom || srDateTo ? 'No results found. Try adjusting your filters.' : tab === 'new' ? 'No pending service requests' : `No ${tab} requests`}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

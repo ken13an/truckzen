@@ -90,7 +90,7 @@ export async function PATCH(req: Request) {
         const { data: wo } = await s.from('service_orders').select('id, so_number, job_type, ownership_type, shop_id, assets(unit_number)').eq('id', line.so_id).single()
         if (wo && ['diagnostic', 'full_inspection'].includes(wo.job_type) && ['owner_operator', 'outside_customer'].includes(wo.ownership_type)) {
           // Create notification for service writers
-          const { data: writers } = await s.from('users').select('id').eq('shop_id', wo.shop_id).in('role', ['service_writer', 'owner', 'gm'])
+          const { data: writers } = await s.from('users').select('id').eq('shop_id', wo.shop_id).in('role', ['service_writer', 'owner', 'gm']).or('is_autobot.is.null,is_autobot.eq.false')
           const unitNum = (wo.assets as any)?.unit_number || ''
           for (const w of (writers || [])) {
             await s.from('notifications').insert({

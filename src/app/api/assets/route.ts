@@ -37,7 +37,7 @@ export async function GET(req: Request) {
   const pageParam = searchParams.get('page')
   if (pageParam) {
     const page = Math.max(parseInt(pageParam), 1)
-    const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 100)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 5000)
     const offset = (page - 1) * limit
     q = q.range(offset, offset + limit - 1)
     const { data, error, count } = await (q as any)

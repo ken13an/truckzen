@@ -10,6 +10,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { PageFooter } from '@/components/ui/PageControls'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import SourceBadge from '@/components/ui/SourceBadge'
+import FilterBar from '@/components/FilterBar'
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   draft:            { label: 'Draft',          bg: '#F3F4F6', color: '#6B7280' },
@@ -49,10 +50,11 @@ export default function WorkOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [viewFilter, setViewFilter] = useState<ViewFilter>('active')
   const [dateRange, setDateRange] = useState<DateRange>('all')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
   const [perPage] = useState(25)
   const [shopId, setShopId] = useState('')
-  const [searchTimer, setSearchTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
 
   // Fetch WOs from API with server-side pagination
   const fetchOrders = async (sid: string, p: number) => {
@@ -85,28 +87,29 @@ export default function WorkOrdersPage() {
     })
   }, [])
 
-  // Re-fetch when filters or page change
+  // Re-fetch when filters, page, or search change
   useEffect(() => {
     if (!shopId) return
     fetchOrders(shopId, page)
-  }, [page, viewFilter, statusFilter, shopId])
-
-  // Debounced search
-  useEffect(() => {
-    if (!shopId) return
-    if (searchTimer) clearTimeout(searchTimer)
-    const t = setTimeout(() => { setPage(1); fetchOrders(shopId, 1) }, 400)
-    setSearchTimer(t)
-    return () => clearTimeout(t)
-  }, [search])
+  }, [page, viewFilter, statusFilter, search, shopId])
 
   // Date range filter (client-side on current page results)
   const filtered = useMemo(() => {
-    if (dateRange === 'all') return orders
-    const rangeStart = getDateRangeStart(dateRange)
-    if (!rangeStart) return orders
-    return orders.filter(o => o.created_at && new Date(o.created_at) >= rangeStart)
-  }, [orders, dateRange])
+    let list = orders
+    if (dateRange !== 'all') {
+      const rangeStart = getDateRangeStart(dateRange)
+      if (rangeStart) list = list.filter(o => o.created_at && new Date(o.created_at) >= rangeStart)
+    }
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      list = list.filter(o => o.created_at && new Date(o.created_at) >= from)
+    }
+    if (dateTo) {
+      const to = new Date(dateTo + 'T23:59:59')
+      list = list.filter(o => o.created_at && new Date(o.created_at) <= to)
+    }
+    return list
+  }, [orders, dateRange, dateFrom, dateTo])
   const fmt = (n: number) => n ? `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—'
 
   return (
@@ -129,18 +132,26 @@ export default function WorkOrdersPage() {
         ))}
       </div>
 
-      {/* Status + search + date filters */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-        {[['all', 'All'], ['open', 'Open'], ['in_progress', 'In Progress'], ['completed', 'Completed'], ['closed', 'Closed']].map(([v, l]) => (
-          <button key={v} onClick={() => { setStatusFilter(v); setPage(1) }} style={{ padding: '5px 12px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: statusFilter === v ? '1px solid #1D6FE8' : '1px solid #D1D5DB', background: statusFilter === v ? '#EFF6FF' : '#fff', color: statusFilter === v ? '#1D6FE8' : '#6B7280', fontFamily: 'inherit' }}>{l}</button>
-        ))}
-        <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Search WO #, customer, unit..." style={{ marginLeft: 4, padding: '6px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', width: 220, background: '#fff' }} />
-      </div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16, flexWrap: 'wrap' }}>
-        {([['today', 'Today'], ['week', 'This Week'], ['month', 'This Month'], ['3months', 'Last 3 Months'], ['all', 'All Time']] as [DateRange, string][]).map(([v, l]) => (
-          <button key={v} onClick={() => { setDateRange(v); setPage(1) }} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', border: dateRange === v ? '1px solid #1D6FE8' : '1px solid #E5E7EB', background: dateRange === v ? '#EFF6FF' : '#fff', color: dateRange === v ? '#1D6FE8' : '#9CA3AF', fontFamily: 'inherit' }}>{l}</button>
-        ))}
-      </div>
+      {/* FilterBar: status + search + date filters */}
+      <FilterBar
+        search={search}
+        onSearchChange={val => { setSearch(val) }}
+        searchPlaceholder="Search WO #, customer, unit..."
+        statusOptions={[
+          { value: 'all', label: 'All Statuses' },
+          { value: 'open', label: 'Open' },
+          { value: 'in_progress', label: 'In Progress' },
+          { value: 'completed', label: 'Completed' },
+          { value: 'closed', label: 'Closed' },
+        ]}
+        statusValue={statusFilter}
+        onStatusChange={val => { setStatusFilter(val); setPage(1) }}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={val => { setDateFrom(val); setDateRange('all'); setPage(1) }}
+        onDateToChange={val => { setDateTo(val); setDateRange('all'); setPage(1) }}
+        theme="light"
+      />
 
       {/* Table */}
       <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
@@ -148,7 +159,7 @@ export default function WorkOrdersPage() {
           <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
         ) : filtered.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>
-            {viewFilter === 'active' ? 'No active work orders. Create your first work order or view historical records.' : 'No work orders found'}
+            {search || statusFilter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : viewFilter === 'active' ? 'No active work orders. Create your first work order or view historical records.' : 'No work orders found'}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>

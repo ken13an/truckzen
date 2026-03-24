@@ -7,6 +7,7 @@ import { ChevronLeft } from 'lucide-react'
 import ExcelJS from 'exceljs'
 import PageControls, { PageFooter } from '@/components/ui/PageControls'
 import SourceBadge from '@/components/ui/SourceBadge'
+import FilterBar from '@/components/FilterBar'
 
 type Customer = {
   id: string
@@ -34,6 +35,8 @@ export default function CustomersPage() {
   const [shopId, setShopId] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(25)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   const loadCustomers = async (sid: string) => {
     setLoading(true)
@@ -78,8 +81,17 @@ export default function CustomersPage() {
       )
     }
 
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      list = list.filter(c => c.created_at && new Date(c.created_at) >= from)
+    }
+    if (dateTo) {
+      const to = new Date(dateTo + 'T23:59:59')
+      list = list.filter(c => c.created_at && new Date(c.created_at) <= to)
+    }
+
     return list
-  }, [customers, search, statusFilter])
+  }, [customers, search, statusFilter, dateFrom, dateTo])
 
   const paginated = useMemo(() => {
     if (perPage === 0) return filtered
@@ -303,34 +315,24 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <PageControls total={filtered.length} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search by company name, DOT#, phone, or contact..." />
-
-      {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
-        {filterPills.map(pill => {
-          const active = statusFilter === pill.key
-          return (
-            <button
-              key={pill.key}
-              onClick={() => setStatusFilter(pill.key)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 999,
-                border: active ? '1px solid rgba(29,111,232,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                background: active ? 'rgba(29,111,232,0.12)' : 'transparent',
-                color: active ? '#60A5FA' : '#6B7280',
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              {pill.label} ({pill.count})
-            </button>
-          )
-        })}
-      </div>
+      {/* FilterBar */}
+      <FilterBar
+        search={search}
+        onSearchChange={val => { setSearch(val); setPage(1) }}
+        searchPlaceholder="Search by company name, DOT#, phone, or contact..."
+        statusOptions={[
+          { value: 'all', label: `All (${customers.length})` },
+          { value: 'active', label: `Active (${activeCount})` },
+          { value: 'inactive', label: `Inactive (${inactiveCount})` },
+        ]}
+        statusValue={statusFilter}
+        onStatusChange={val => { setStatusFilter(val as FilterStatus); setPage(1) }}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={val => { setDateFrom(val); setPage(1) }}
+        onDateToChange={val => { setDateTo(val); setPage(1) }}
+        theme="dark"
+      />
 
       {/* Error */}
       {error && (
@@ -387,7 +389,7 @@ export default function CustomersPage() {
               ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', color: '#6B7280', padding: 48, fontSize: 13 }}>
-                    {search || statusFilter !== 'all' ? 'No customers match your filters' : 'No customers found'}
+                    {search || statusFilter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No customers found'}
                   </td>
                 </tr>
               ) : paginated.map(c => (

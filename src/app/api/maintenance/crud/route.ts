@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const shopId = searchParams.get('shop_id')
   const select = searchParams.get('select') || '*'
   const page = Math.max(parseInt(searchParams.get('page') || '1'), 1)
-  const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 100)
+  const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 5000)
   const search = searchParams.get('q')
   const searchCols = searchParams.get('search_cols')
   const orderBy = searchParams.get('order_by') || 'created_at'

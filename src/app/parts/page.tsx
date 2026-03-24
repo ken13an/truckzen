@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { useEmployeePermission } from '@/hooks/useEmployeePermission'
+import FilterBar from '@/components/FilterBar'
 
 const FONT = "'Instrument Sans', sans-serif"
 const MONO = "'IBM Plex Mono', monospace"
@@ -26,8 +27,11 @@ export default function PartsPage() {
   // Filters
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('active')
+  const [stockFilter, setStockFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [vendorFilter, setVendorFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   // Distinct values for dropdowns
   const [categories, setCategories] = useState<string[]>([])
@@ -190,9 +194,12 @@ export default function PartsPage() {
 
   useEffect(() => { if (subTab === 'purchase_orders') fetchPOs() }, [fetchPOs, subTab])
 
-  // Sort client-side
+  // Filter by stock level, then sort client-side
   const sorted = useMemo(() => {
-    const arr = [...parts]
+    let arr = [...parts]
+    // Stock filter
+    if (stockFilter === 'in_stock') arr = arr.filter(p => (p.on_hand ?? 0) > 0)
+    if (stockFilter === 'out_of_stock') arr = arr.filter(p => (p.on_hand ?? 0) === 0)
     arr.sort((a, b) => {
       // In-stock always floats above out-of-stock
       const aStock = (a.on_hand ?? 0) > 0 ? 1 : 0
@@ -209,7 +216,7 @@ export default function PartsPage() {
       return 0
     })
     return arr
-  }, [parts, sortField, sortDir])
+  }, [parts, sortField, sortDir, stockFilter])
 
   const totalPages = Math.ceil(total / perPage) || 1
   const reorderTotalPages = Math.ceil(reorderTotal / perPage) || 1
@@ -335,14 +342,25 @@ export default function PartsPage() {
       {subTab === 'inventory' && (
         <>
           {/* Filters bar */}
+          <FilterBar
+            search={search}
+            onSearchChange={val => { handleSearch(val) }}
+            searchPlaceholder="Search part #, description..."
+            statusOptions={[
+              { value: 'all', label: 'All' },
+              { value: 'in_stock', label: 'In Stock' },
+              { value: 'out_of_stock', label: 'Out of Stock' },
+            ]}
+            statusValue={stockFilter}
+            onStatusChange={val => { setStockFilter(val); setPage(1) }}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            onDateFromChange={val => { setDateFrom(val); setPage(1) }}
+            onDateToChange={val => { setDateTo(val); setPage(1) }}
+            theme="light"
+            onClearAll={() => { setStatusFilter('active'); setCategoryFilter(''); setVendorFilter(''); setPage(1) }}
+          />
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: 320 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
-                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
-              </svg>
-              <input value={search} onChange={e => handleSearch(e.target.value)} placeholder="Search part #, description..."
-                style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
-            </div>
             <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }} style={dropdownStyle}>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -363,7 +381,7 @@ export default function PartsPage() {
             {loading ? (
               <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
             ) : sorted.length === 0 ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No parts found</div>
+              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>{search || statusFilter !== 'active' || stockFilter !== 'all' || categoryFilter || vendorFilter || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No parts found'}</div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1200 }}>

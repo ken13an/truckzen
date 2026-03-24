@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import DataTable from '@/components/DataTable'
+import FilterBar from '@/components/FilterBar'
 
 const FONT = "'Instrument Sans',sans-serif"
 
@@ -31,6 +32,9 @@ export function MaintListPage(config: MaintListConfig) {
     const supabase = createClient()
     const [shopId, setShopId] = useState('')
     const [filter, setFilter] = useState('all')
+    const [filterSearch, setFilterSearch] = useState('')
+    const [dateFrom, setDateFrom] = useState('')
+    const [dateTo, setDateTo] = useState('')
 
     useEffect(() => {
       getCurrentUser(supabase).then((p: any) => {
@@ -48,21 +52,30 @@ export function MaintListPage(config: MaintListConfig) {
           {config.newHref && <a href={config.newHref} style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>}
         </div>
 
-        {config.filterOptions && (
-          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-            {config.filterOptions.map(f => (
-              <button key={f.value} onClick={() => setFilter(f.value)} style={{ padding: '5px 12px', borderRadius: 100, border: filter === f.value ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)', background: filter === f.value ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f.value ? '#4D9EFF' : '#7C8BA0', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{f.label}</button>
-            ))}
-          </div>
-        )}
+        <FilterBar
+          search={filterSearch}
+          onSearchChange={setFilterSearch}
+          searchPlaceholder={config.searchPlaceholder || `Search ${config.label}...`}
+          statusOptions={config.filterOptions}
+          statusValue={filter}
+          onStatusChange={setFilter}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+          theme="dark"
+        />
 
         <DataTable
           columns={config.columns}
           fetchData={async (page, limit, search) => {
+            const combinedSearch = filterSearch || search
             let url = `/api/maintenance/crud?table=${config.table}&shop_id=${shopId}&page=${page}&limit=${limit}&order_by=${config.orderBy || 'created_at'}&search_cols=${config.searchCols}`
-            if (search) url += `&q=${encodeURIComponent(search)}`
+            if (combinedSearch) url += `&q=${encodeURIComponent(combinedSearch)}`
             if (config.select) url += `&select=${encodeURIComponent(config.select)}`
             if (config.filterKey && filter !== 'all') url += `&filter_key=${config.filterKey}&filter_val=${filter}`
+            if (dateFrom) url += `&date_from=${dateFrom}`
+            if (dateTo) url += `&date_to=${dateTo}`
             const res = await fetch(url)
             return res.ok ? res.json() : { data: [], total: 0 }
           }}
@@ -70,6 +83,10 @@ export function MaintListPage(config: MaintListConfig) {
           searchPlaceholder={config.searchPlaceholder || `Search ${config.label}...`}
           onRowClick={config.onRowClick}
           emptyMessage={config.emptyMessage || `No ${config.label} yet`}
+          externalSearch={filterSearch}
+          externalFilter={filter}
+          externalDateFrom={dateFrom}
+          externalDateTo={dateTo}
         />
       </div>
     )

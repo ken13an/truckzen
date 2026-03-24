@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   const status = searchParams.get('status')
   const search = searchParams.get('q')
   const historical = searchParams.get('historical')
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '25'), 100)
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '25'), 5000)
   const page = Math.max(parseInt(searchParams.get('page') ?? '1'), 1)
   const offset = (page - 1) * limit
 

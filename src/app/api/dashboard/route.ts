@@ -56,7 +56,7 @@ export async function GET(req: Request) {
       s.from('so_lines').select('*', { count: 'exact', head: true }).eq('line_status', 'in_progress'),
       s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).is('assigned_tech', null).not('status', 'in', '("good_to_go","done","void","draft")'),
       s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'waiting_parts').is('deleted_at', null),
-      s.from('users').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']),
+      s.from('users').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']).or('is_autobot.is.null,is_autobot.eq.false'),
     ])
     stats = { jobs_in_progress: inProgress.count || 0, jobs_unassigned: unassigned.count || 0, parts_waiting: partsWait.count || 0, mechanics_active: mechsActive.count || 0 }
 
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
 
     // Team status
     const { data: mechs } = await s.from('users').select('id, full_name, team')
-      .eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician'])
+      .eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']).or('is_autobot.is.null,is_autobot.eq.false')
     teamStatus = mechs || []
   }
 
@@ -129,7 +129,7 @@ export async function GET(req: Request) {
     const [openWos, revToday, activeMechs, pendEst] = await Promise.all([
       s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).not('status', 'in', '("good_to_go","done","void")'),
       s.from('invoices').select('amount_paid').eq('shop_id', shopId).gte('updated_at', today),
-      s.from('users').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']),
+      s.from('users').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']).or('is_autobot.is.null,is_autobot.eq.false'),
       s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('estimate_required', true).eq('estimate_approved', false).is('deleted_at', null).not('status', 'in', '("good_to_go","done","void")'),
     ])
     const revenue = (revToday.data || []).reduce((sum: number, i: any) => sum + (i.amount_paid || 0), 0)

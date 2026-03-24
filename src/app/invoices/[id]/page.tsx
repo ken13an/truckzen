@@ -38,6 +38,7 @@ export default function InvoiceDetailPage() {
   const [paymentAmount, setPaymentAmount]       = useState('')
   const [paymentRef,    setPaymentRef]          = useState('')
   const [paymentNotes,  setPaymentNotes]        = useState('')
+  const [paymentDate,   setPaymentDate]         = useState(new Date().toISOString().split('T')[0])
   const [markingPaid,   setMarkingPaid]         = useState(false)
   const [payments,      setPayments]            = useState<any[]>([])
 
@@ -198,6 +199,7 @@ export default function InvoiceDetailPage() {
           payment_method: paymentMethod,
           amount: amt,
           reference_number: paymentRef || null,
+          received_at: paymentDate ? paymentDate + 'T12:00:00Z' : null,
           notes: paymentNotes || null,
         }),
       })
@@ -341,6 +343,8 @@ export default function InvoiceDetailPage() {
             <input type="number" step="0.01" value={paymentAmount || (invoice.balance_due ?? invoice.total ?? 0)} onChange={e => setPaymentAmount(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:14, fontFamily:"'IBM Plex Mono',monospace", marginBottom:12, boxSizing:'border-box' }} />
             <label style={{ ...S.label, marginBottom:4 }}>Reference # (optional)</label>
             <input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Check #, Zelle ID, etc." style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
+            <label style={{ ...S.label, marginBottom:4 }}>Date Received</label>
+            <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
             <label style={{ ...S.label, marginBottom:4 }}>Notes (optional)</label>
             <textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} rows={2} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:12, marginBottom:16, fontFamily:'inherit', resize:'vertical', boxSizing:'border-box' }} />
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>

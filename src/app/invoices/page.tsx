@@ -7,6 +7,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { PageFooter } from '@/components/ui/PageControls'
+import FilterBar from '@/components/FilterBar'
 
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
   draft:   { label: 'Draft',   color: '#7C8BA0' },
@@ -24,6 +25,8 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(25)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -39,17 +42,28 @@ export default function InvoicesPage() {
   }, [filter])
 
   const filtered = useMemo(() => {
-    if (!search) return invoices
-    const q = search.toLowerCase()
-    return invoices.filter(inv => {
-      const cust = inv.customers as any
-      const so = inv.service_orders as any
-      return inv.invoice_number?.toLowerCase().includes(q) ||
-        cust?.company_name?.toLowerCase().includes(q) ||
-        so?.so_number?.toLowerCase().includes(q) ||
-        so?.assets?.unit_number?.toLowerCase().includes(q)
-    })
-  }, [invoices, search])
+    let list = invoices
+    if (search) {
+      const q = search.toLowerCase()
+      list = list.filter(inv => {
+        const cust = inv.customers as any
+        const so = inv.service_orders as any
+        return inv.invoice_number?.toLowerCase().includes(q) ||
+          cust?.company_name?.toLowerCase().includes(q) ||
+          so?.so_number?.toLowerCase().includes(q) ||
+          so?.assets?.unit_number?.toLowerCase().includes(q)
+      })
+    }
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      list = list.filter(inv => inv.created_at && new Date(inv.created_at) >= from)
+    }
+    if (dateTo) {
+      const to = new Date(dateTo + 'T23:59:59')
+      list = list.filter(inv => inv.created_at && new Date(inv.created_at) <= to)
+    }
+    return list
+  }, [invoices, search, dateFrom, dateTo])
 
   const paginated = useMemo(() => {
     if (perPage === 0) return filtered
@@ -72,23 +86,25 @@ export default function InvoicesPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        {['all', 'draft', 'sent', 'paid', 'overdue'].map(s => (
-          <button key={s} onClick={() => { setFilter(s); setPage(1) }} style={{
-            padding: '5px 12px', borderRadius: 100, fontSize: 10, fontWeight: 600, cursor: 'pointer',
-            border: '1px solid rgba(255,255,255,.08)',
-            background: filter === s ? 'rgba(29,111,232,.1)' : '#1C2130',
-            color: filter === s ? '#4D9EFF' : '#7C8BA0', fontFamily: 'inherit',
-          }}>
-            {s === 'all' ? 'All' : STATUS_CFG[s]?.label || s}
-          </button>
-        ))}
-        <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Search invoice #, customer, WO..." style={{
-          marginLeft: 6, padding: '6px 12px', background: 'rgba(255,255,255,.06)',
-          border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12,
-          color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', width: 220,
-        }} />
-      </div>
+      <FilterBar
+        search={search}
+        onSearchChange={val => { setSearch(val); setPage(1) }}
+        searchPlaceholder="Search invoice #, customer, WO..."
+        statusOptions={[
+          { value: 'all', label: 'All Statuses' },
+          { value: 'draft', label: 'Draft' },
+          { value: 'sent', label: 'Pending' },
+          { value: 'paid', label: 'Paid' },
+          { value: 'overdue', label: 'Overdue' },
+        ]}
+        statusValue={filter}
+        onStatusChange={val => { setFilter(val); setPage(1) }}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={val => { setDateFrom(val); setPage(1) }}
+        onDateToChange={val => { setDateTo(val); setPage(1) }}
+        theme="dark"
+      />
 
       <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
@@ -102,7 +118,7 @@ export default function InvoicesPage() {
               {loading ? (
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: '#7C8BA0' }}>Loading...</td></tr>
               ) : paginated.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: '#7C8BA0' }}>No invoices found</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: '#7C8BA0' }}>{search || filter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No invoices found'}</td></tr>
               ) : paginated.map(inv => {
                 const cust = inv.customers as any
                 const so = inv.service_orders as any

@@ -27,11 +27,16 @@ interface DataTableProps {
   onRowClick?: (row: any) => void
   emptyMessage?: string
   headerActions?: React.ReactNode
+  externalSearch?: string
+  externalFilter?: string
+  externalDateFrom?: string
+  externalDateTo?: string
 }
 
 export default function DataTable({
   columns, fetchData, label, perPage = 25, searchPlaceholder = 'Search...',
   onRowClick, emptyMessage = 'No data found', headerActions,
+  externalSearch, externalFilter, externalDateFrom, externalDateTo,
 }: DataTableProps) {
   const [data, setData] = useState<any[]>([])
   const [total, setTotal] = useState(0)
@@ -40,6 +45,7 @@ export default function DataTable({
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const didMount = useRef(false)
 
   async function load(p: number, q: string) {
     setLoading(true)
@@ -52,8 +58,12 @@ export default function DataTable({
     setLoading(false)
   }
 
-  useEffect(() => { load(1, '') }, [])
-  useEffect(() => { load(page, search) }, [page])
+  useEffect(() => { load(1, externalSearch || ''); didMount.current = true }, [])
+  useEffect(() => { load(page, externalSearch || search) }, [page])
+  useEffect(() => {
+    if (!didMount.current) return
+    setPage(1); load(1, externalSearch || search)
+  }, [externalSearch, externalFilter, externalDateFrom, externalDateTo])
 
   function handleSearch(val: string) {
     setSearch(val)
@@ -63,16 +73,23 @@ export default function DataTable({
 
   return (
     <div>
-      {/* Search + header actions */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input
-          value={search}
-          onChange={e => handleSearch(e.target.value)}
-          placeholder={searchPlaceholder}
-          style={{ padding: '7px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#DDE3EE', fontSize: 12, fontFamily: FONT, outline: 'none', flex: 1, minWidth: 180, maxWidth: 300 }}
-        />
-        {headerActions}
-      </div>
+      {/* Search + header actions — hidden when external FilterBar is used */}
+      {externalSearch === undefined && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            value={search}
+            onChange={e => handleSearch(e.target.value)}
+            placeholder={searchPlaceholder}
+            style={{ padding: '7px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#DDE3EE', fontSize: 12, fontFamily: FONT, outline: 'none', flex: 1, minWidth: 180, maxWidth: 300 }}
+          />
+          {headerActions}
+        </div>
+      )}
+      {externalSearch !== undefined && headerActions && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          {headerActions}
+        </div>
+      )}
 
       {/* Table */}
       <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>

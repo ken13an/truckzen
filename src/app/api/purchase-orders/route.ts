@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
   const page = parseInt(searchParams.get('page') || '1')
-  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 200)
+  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 5000)
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 

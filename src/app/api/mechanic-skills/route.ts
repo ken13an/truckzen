@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
     // Get all mechanics
     const { data: mechanics } = await s.from('users').select('id, full_name')
-      .eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).is('deleted_at', null)
+      .eq('shop_id', shopId).in('role', ['technician', 'lead_tech', 'maintenance_technician']).eq('active', true).is('deleted_at', null).or('is_autobot.is.null,is_autobot.eq.false')
     // Get all skills
     const { data: skills } = await s.from('mechanic_skills').select('user_id, skill_name, skill_category, experience_level, certified').eq('shop_id', shopId)
     // Get active clocks

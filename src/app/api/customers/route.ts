@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const shopId = searchParams.get('shop_id')
   const search = searchParams.get('q')
   const page = parseInt(searchParams.get('page') || '1')
-  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 200)
+  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 5000)
 
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 

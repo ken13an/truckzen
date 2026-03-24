@@ -3,7 +3,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
-import { LayoutDashboard, Store, FileText, Users, Activity, Shield, LogOut, ChevronLeft, DollarSign, Cpu } from 'lucide-react'
+import { LayoutDashboard, Store, FileText, Users, Activity, Shield, LogOut, ChevronLeft, DollarSign, Cpu, Bot, ClipboardCheck } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/platform-admin', label: 'Overview', icon: LayoutDashboard, exact: true },
@@ -13,6 +13,8 @@ const NAV_ITEMS = [
   { href: '/platform-admin/activity', label: 'Activity Log', icon: Activity },
   { href: '/platform-admin/costs', label: 'Costs & Services', icon: DollarSign },
   { href: '/platform-admin/ai-usage', label: 'AI Usage', icon: Cpu },
+  { href: '/platform-admin/autobots', label: 'AutoBots', icon: Bot },
+  { href: '/platform-admin/test-results', label: 'Test Results', icon: ClipboardCheck },
 ]
 
 export default function PlatformAdminLayout({ children }: { children: React.ReactNode }) {

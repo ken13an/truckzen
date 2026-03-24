@@ -9,18 +9,31 @@ export async function GET(req: Request) {
   const shopId = searchParams.get('shop_id')
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
-  const cacheKey = `vendors:${shopId}`
+  const page = parseInt(searchParams.get('page') || '1')
+  const perPage = Math.min(parseInt(searchParams.get('per_page') || '500'), 5000)
+  const paginated = !!searchParams.get('page')
+
+  const cacheKey = `vendors:${shopId}:${page}:${perPage}`
   const cached = getCache<any>(cacheKey)
   if (cached) return NextResponse.json(cached)
 
   const s = db()
+
+  // Count query (separate)
+  const { count: total } = await s
+    .from('vendors')
+    .select('*', { count: 'exact', head: true })
+    .eq('shop_id', shopId)
+
+  const from = (page - 1) * perPage
+  const to = from + perPage - 1
 
   const { data: vendors, error } = await s
     .from('vendors')
     .select('*')
     .eq('shop_id', shopId)
     .order('name')
-    .limit(500)
+    .range(from, to)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -38,11 +51,18 @@ export async function GET(req: Request) {
     if (v) vendorPartCounts.set(v, (vendorPartCounts.get(v) || 0) + 1)
   }
 
-  const result = (vendors || []).map(v => ({
+  const enriched = (vendors || []).map(v => ({
     ...v,
     parts_count: vendorPartCounts.get((v.name || '').toLowerCase().trim()) || 0,
   }))
 
-  setCache(cacheKey, result, 300) // 5 min TTL
-  return NextResponse.json(result)
+  // Return paginated response when page param is present, otherwise legacy array
+  if (paginated) {
+    const result = { data: enriched, total: total || 0, page, per_page: perPage, totalPages: Math.ceil((total || 0) / perPage) }
+    setCache(cacheKey, result, 300)
+    return NextResponse.json(result)
+  }
+
+  setCache(cacheKey, enriched, 300) // 5 min TTL — legacy array format
+  return NextResponse.json(enriched)
 }

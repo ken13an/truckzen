@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     const custList = customers || []
     const { data: assets } = await s.from('assets').select('id, unit_number, vin').eq('shop_id', shop_id)
     const assetList = assets || []
-    const { data: users } = await s.from('users').select('id, full_name, role').eq('shop_id', shop_id)
+    const { data: users } = await s.from('users').select('id, full_name, role').eq('shop_id', shop_id).or('is_autobot.is.null,is_autobot.eq.false')
     const userList = users || []
 
     let imported = 0, updated = 0, skipped = 0

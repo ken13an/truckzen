@@ -31,6 +31,7 @@ export async function GET(req: Request) {
     .select('id, full_name, email, role, team, active')
     .eq('shop_id', shopId)
     .eq('active', true)
+    .or('is_autobot.is.null,is_autobot.eq.false')
     .order('full_name')
 
   if (isShopManager) {

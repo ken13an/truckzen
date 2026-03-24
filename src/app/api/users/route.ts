@@ -16,6 +16,7 @@ export async function GET(req: Request) {
     .select('id, full_name, email, role, team, language, telegram_id, active, can_create_so, can_impersonate, created_at, deleted_at, skills, availability')
     .eq('shop_id', shopId)
     .is('deleted_at', null)
+    .or('is_autobot.is.null,is_autobot.eq.false')
     .order('full_name')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

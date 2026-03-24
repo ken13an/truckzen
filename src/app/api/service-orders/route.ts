@@ -16,7 +16,8 @@ export async function GET(req: Request) {
   const team = searchParams.get('team')
   const role = searchParams.get('role') ?? ''
   const userTeam = searchParams.get('user_team') ?? ''
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 200)
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '50'), 5000)
+  const page = Math.max(parseInt(searchParams.get('page') ?? '1'), 1)
 
   const includeSoLines = searchParams.get('include_so_lines') === 'true'
   const excludeStatuses = searchParams.get('exclude_status') // comma-separated
@@ -35,6 +36,15 @@ export async function GET(req: Request) {
       customers(id, company_name),
       users!assigned_tech(id, full_name)`
 
+  // Separate count query
+  let countQ = supabase
+    .from('service_orders')
+    .select('*', { count: 'exact', head: true })
+    .eq('shop_id', shopId)
+    .is('deleted_at', null)
+    .not('status', 'eq', 'void')
+
+  const offset = (page - 1) * limit
   let q = supabase
     .from('service_orders')
     .select(selectFields)
@@ -42,19 +52,44 @@ export async function GET(req: Request) {
     .is('deleted_at', null)
     .not('status', 'eq', 'void')
     .order('created_at', { ascending: false })
-    .limit(limit)
+    .range(offset, offset + limit - 1)
 
-  if (excludeHistorical) q = (q as any).or('is_historical.is.null,is_historical.eq.false')
+  if (excludeHistorical) {
+    q = (q as any).or('is_historical.is.null,is_historical.eq.false')
+    countQ = (countQ as any).or('is_historical.is.null,is_historical.eq.false')
+  }
   if (excludeStatuses) {
     const statuses = excludeStatuses.split(',').map(s => s.trim())
-    for (const s of statuses) q = q.not('status', 'eq', s)
+    for (const s of statuses) {
+      q = q.not('status', 'eq', s)
+      countQ = countQ.not('status', 'eq', s)
+    }
   }
 
   const limitedRoles = ['technician', 'maintenance_technician']
-  if (limitedRoles.includes(role) && userTeam) q = q.eq('team', userTeam)
-  if (status) q = q.eq('status', status)
-  if (team && !limitedRoles.includes(role)) q = q.eq('team', team)
+  if (limitedRoles.includes(role) && userTeam) {
+    q = q.eq('team', userTeam)
+    countQ = countQ.eq('team', userTeam)
+  }
+  if (status) {
+    q = q.eq('status', status)
+    countQ = countQ.eq('status', status)
+  }
+  if (team && !limitedRoles.includes(role)) {
+    q = q.eq('team', team)
+    countQ = countQ.eq('team', team)
+  }
 
+  // When page param is explicitly provided, return paginated format with total count
+  const wantsPaginated = !!searchParams.get('page')
+
+  if (wantsPaginated) {
+    const [{ data, error }, { count: total }] = await Promise.all([q, countQ])
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ data: data || [], total: total || 0, page, limit, totalPages: Math.ceil((total || 0) / limit) })
+  }
+
+  // Legacy: return raw array for backward compatibility
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
