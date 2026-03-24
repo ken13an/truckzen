@@ -41,18 +41,24 @@ export async function GET(req: Request) {
   if (vendor)   q = q.or(`vendor.eq.${vendor},preferred_vendor.eq.${vendor}`)
   if (search)   q = q.or(`description.ilike.%${search}%,part_number.ilike.%${search}%`)
 
-  // Pagination
+  // Low stock filter: fetch all matching, filter, then paginate manually
+  if (lowStock) {
+    const { data: allData, error: allErr } = await q.limit(2000)
+    if (allErr) return NextResponse.json({ error: allErr.message }, { status: 500 })
+    const filtered = (allData || []).filter((p: any) => (p.on_hand ?? 0) <= (p.reorder_point ?? 0))
+    const totalFiltered = filtered.length
+    const from = (page - 1) * perPage
+    const paged = filtered.slice(from, from + perPage)
+    return NextResponse.json({ data: paged, total: totalFiltered, page, per_page: perPage })
+  }
+
+  // Normal pagination
   const from = (page - 1) * perPage
   const to = from + perPage - 1
   q = q.range(from, to)
 
   const { data, error, count } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  if (lowStock) {
-    const filtered = (data || []).filter((p: any) => (p.on_hand ?? 0) <= (p.reorder_point ?? 0))
-    return NextResponse.json({ data: filtered, total: filtered.length, page, per_page: perPage })
-  }
 
   return NextResponse.json({ data: data || [], total: count || 0, page, per_page: perPage })
 }
