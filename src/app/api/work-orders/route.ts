@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { logAction } from '@/lib/services/auditLog'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -11,6 +12,10 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const shopId = searchParams.get('shop_id')
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+
+  if (!checkRateLimit(`${shopId}:work-orders`, 200, 60000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
 
   const status = searchParams.get('status')
   const search = searchParams.get('q')

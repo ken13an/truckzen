@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { log } from '@/lib/security'
+import { checkRateLimit } from '@/lib/rateLimit'
 import { getCache, setCache, invalidateCache } from '@/lib/cache'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
@@ -31,6 +32,9 @@ export async function GET(req: Request) {
     if (user) {
       if (!shopId) shopId = user.shop_id
       userRole = user.role
+      if (!checkRateLimit(`${user.id}:parts`, 200, 60000)) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+      }
     }
   } catch {}
 

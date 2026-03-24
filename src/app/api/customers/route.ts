@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -14,6 +15,10 @@ export async function GET(req: Request) {
   const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 2000)
 
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+
+  if (!checkRateLimit(`${shopId}:customers`, 200, 60000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
 
   // Get total count
   let countQ = s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null)
