@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     .select('id')
     .eq('email', normalizedEmail)
     .eq('success', false)
-    .gte('attempted_at', cutoff)
+    .gte('created_at', cutoff)
 
   const failCount = recentFailures?.length ?? 0
 
