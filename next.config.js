@@ -38,6 +38,12 @@ const securityHeaders = [
       "worker-src 'self' blob:",
       // Media (voice recording for AI writer)
       "media-src 'self' blob:",
+      // Prevent page from being embedded
+      "frame-ancestors 'none'",
+      // Restrict base URI
+      "base-uri 'self'",
+      // Restrict form targets
+      "form-action 'self'",
     ].join('; '),
   },
   // Stops referrer leaking sensitive URL info to third parties
@@ -56,6 +62,11 @@ const securityHeaders = [
       'usb=()',
       'bluetooth=()',
     ].join(', '),
+  },
+  // Legacy XSS protection for older browsers
+  {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block',
   },
   // Prevent DNS prefetch leaking visited pages
   {

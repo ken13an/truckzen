@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyRole } from '@/lib/notify'
+import { checkKioskLimit } from '@/lib/kioskRateLimit'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -25,6 +26,11 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown'
+  if (!checkKioskLimit(ip)) {
+    return NextResponse.json({ error: 'Too many check-ins from this location. Try again later.' }, { status: 429 })
+  }
+
   const s = db()
   const body = await req.json()
   const { shop_id, unit_number, vin, complaint_raw, complaint_lang, complaint_en, company_name, contact_name, phone, email, odometer } = body

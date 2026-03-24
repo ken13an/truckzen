@@ -17,16 +17,18 @@ export async function GET() {
 
   const [jobs, notifications, timeClock] = await Promise.all([
     supabase.from('service_orders')
-      .select('id, so_number, status, customer_name, unit_number, priority')
+      .select('id, so_number, status, complaint, priority, assets(unit_number), customers(company_name)')
       .eq('shop_id', shopId)
-      .eq('assigned_mechanic_id', userId)
-      .not('status', 'in', '("done","void","closed")')
+      .eq('assigned_tech', userId)
+      .is('deleted_at', null)
+      .not('status', 'in', '("done","void","good_to_go")')
       .order('created_at', { ascending: false })
       .limit(20),
     supabase.from('notifications')
-      .select('id, title, message, type, created_at')
+      .select('id, title, body, type, created_at')
       .eq('user_id', userId)
       .eq('is_read', false)
+      .eq('is_dismissed', false)
       .order('created_at', { ascending: false })
       .limit(10),
     supabase.from('time_clock_entries')

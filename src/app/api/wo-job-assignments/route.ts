@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const woId = searchParams.get('wo_id')
 
   if (lineId) {
-    const { data } = await s.from('wo_job_assignments').select('*, users(id, full_name, team)').eq('line_id', lineId).order('created_at')
+    const { data } = await s.from('wo_job_assignments').select('*, users(id, full_name, team)').eq('line_id', lineId).order('created_at').limit(100)
     return NextResponse.json(data || [])
   }
 
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     const { data: lines } = await s.from('so_lines').select('id').eq('so_id', woId)
     if (!lines || lines.length === 0) return NextResponse.json([])
     const lineIds = lines.map(l => l.id)
-    const { data } = await s.from('wo_job_assignments').select('*, users(id, full_name, team)').in('line_id', lineIds).order('created_at')
+    const { data } = await s.from('wo_job_assignments').select('*, users(id, full_name, team)').in('line_id', lineIds).order('created_at').limit(500)
     return NextResponse.json(data || [])
   }
 

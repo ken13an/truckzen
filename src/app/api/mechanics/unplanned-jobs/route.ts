@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   if (from) query = query.gte('created_at', from)
   if (to) query = query.lte('created_at', to + 'T23:59:59')
 
-  const { data, error } = await query
+  const { data, error } = await query.limit(200)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)

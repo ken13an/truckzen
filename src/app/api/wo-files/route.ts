@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const woId = searchParams.get('wo_id')
   if (!woId) return NextResponse.json({ error: 'wo_id required' }, { status: 400 })
 
-  const { data, error } = await s.from('wo_files').select('*').eq('wo_id', woId).order('created_at', { ascending: false })
+  const { data, error } = await s.from('wo_files').select('*').eq('wo_id', woId).order('created_at', { ascending: false }).limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }

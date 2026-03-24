@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { getCache, setCache, invalidateCache } from '@/lib/cache'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -12,13 +13,17 @@ export async function GET(req: Request) {
   const shopId = searchParams.get('shop_id')
   const search = searchParams.get('q')
   const page = parseInt(searchParams.get('page') || '1')
-  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 2000)
+  const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 200)
 
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
   if (!checkRateLimit(`${shopId}:customers`, 200, 60000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
+
+  const cacheKey = `customers:${shopId}:${page}:${perPage}:${search || ''}`
+  const cached = getCache<any>(cacheKey)
+  if (cached) return NextResponse.json(cached)
 
   // Get total count
   let countQ = s.from('customers').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null)
@@ -47,13 +52,15 @@ export async function GET(req: Request) {
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({
+  const result = {
     data: data || [],
     total: total || 0,
     page,
     per_page: perPage,
     total_pages: Math.ceil((total || 0) / perPage),
-  })
+  }
+  setCache(cacheKey, result, 30) // 30s TTL
+  return NextResponse.json(result)
 }
 
 export async function POST(req: Request) {
@@ -77,5 +84,6 @@ export async function POST(req: Request) {
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  invalidateCache(`customers:${body.shop_id}`)
   return NextResponse.json(data, { status: 201 })
 }

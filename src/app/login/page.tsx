@@ -55,9 +55,14 @@ export default function LoginPage() {
   const [error,       setError]       = useState('')
   const [checkingSession, setCheckingSession] = useState(true)
   const [sessionExpired, setSessionExpired] = useState(false)
+  const [accountDisabled, setAccountDisabled] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('expired=1')) setSessionExpired(true)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('expired') === '1') setSessionExpired(true)
+      if (params.get('reason') === 'account_disabled') setAccountDisabled(true)
+    }
   }, [])
 
   // ── ALREADY LOGGED IN? ───────────────────────────────────
@@ -258,8 +263,15 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Account disabled banner */}
+          {accountDisabled && !error && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.25)', fontSize: 13, color: '#EF4444', marginBottom: 4 }}>
+              Your account has been disabled. Contact your manager.
+            </div>
+          )}
+
           {/* Session expired banner */}
-          {sessionExpired && !error && (
+          {sessionExpired && !error && !accountDisabled && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 13, color: '#D97706', marginBottom: 4 }}>
               Session expired, please log in again.
             </div>

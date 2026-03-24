@@ -26,7 +26,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
   // Real-time subscription
   useEffect(() => {
     if (!userId) return
-    const channel = supabase.channel('bell-notifs')
+    const channel = supabase.channel(`bell-notifs:${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
         loadNotifications()
       })

@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   const today = new Date().toISOString().split('T')[0]
 
   // Notifications — unread for this user
-  const { data: notifications } = await s.from('notifications').select('*')
+  const { data: notifications } = await s.from('notifications').select('id, title, body, link, type, priority, created_at')
     .eq('user_id', userId).eq('read', false).eq('is_dismissed', false)
     .order('created_at', { ascending: false }).limit(20)
 
@@ -136,7 +136,7 @@ export async function GET(req: Request) {
     stats = { open_wos: openWos.count || 0, revenue_today: revenue, active_mechanics: activeMechs.count || 0, pending_estimates: pendEst.count || 0 }
 
     // All-shop notifications for admins
-    const { data: allNotifs } = await s.from('notifications').select('*')
+    const { data: allNotifs } = await s.from('notifications').select('id, title, body, link, type, priority, created_at')
       .eq('shop_id', shopId).eq('read', false).eq('is_dismissed', false)
       .order('created_at', { ascending: false }).limit(20)
 

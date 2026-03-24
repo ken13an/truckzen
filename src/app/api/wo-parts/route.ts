@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   if (woId) q = q.eq('wo_id', woId)
   if (lineId) q = q.eq('line_id', lineId)
 
-  const { data, error } = await q
+  const { data, error } = await q.limit(500)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data || [])
 }

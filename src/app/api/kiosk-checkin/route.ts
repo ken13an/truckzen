@@ -4,6 +4,7 @@ import { sendEmail, getStaffEmails, getShopInfo } from '@/lib/services/email'
 import { checkinConfirmedEmail } from '@/lib/emails/checkinConfirmed'
 import { staffCheckinAlertEmail } from '@/lib/emails/staffCheckinAlert'
 import { sendPushToRole } from '@/lib/services/notifications'
+import { checkKioskLimit } from '@/lib/kioskRateLimit'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -11,6 +12,11 @@ function db() {
 
 // POST — submit a kiosk check-in, create WO + job lines
 export async function POST(req: Request) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown'
+  if (!checkKioskLimit(ip)) {
+    return NextResponse.json({ error: 'Too many check-ins from this location. Try again later.' }, { status: 429 })
+  }
+
   const s = db()
   const body = await req.json()
   const {

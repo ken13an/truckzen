@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   const lowStock  = searchParams.get('low_stock') === 'true'
   const search    = searchParams.get('q') || searchParams.get('search')
   const page      = parseInt(searchParams.get('page') || '1')
-  const perPage   = Math.min(parseInt(searchParams.get('per_page') || '50'), 2000)
+  const perPage   = Math.min(parseInt(searchParams.get('per_page') || '50'), 200)
 
   // Get shop_id and user role
   let shopId = searchParams.get('shop_id')
