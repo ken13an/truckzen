@@ -32,10 +32,14 @@ export default function InvoiceDetailPage() {
   const [isEditing,    setIsEditing]    = useState(false)
   const [editingCell,  setEditingCell]  = useState<string | null>(null)
 
-  // Mark as Paid modal
+  // Record Payment modal
   const [showPaidModal, setShowPaidModal]       = useState(false)
   const [paymentMethod, setPaymentMethod]       = useState('cash')
+  const [paymentAmount, setPaymentAmount]       = useState('')
+  const [paymentRef,    setPaymentRef]          = useState('')
+  const [paymentNotes,  setPaymentNotes]        = useState('')
   const [markingPaid,   setMarkingPaid]         = useState(false)
+  const [payments,      setPayments]            = useState<any[]>([])
 
   const isDraft = invoice?.status === 'draft'
 
@@ -67,6 +71,13 @@ export default function InvoiceDetailPage() {
 
       setInvoice(inv)
       setEditingLines(soLines.map((l: any) => ({ ...l })))
+
+      // Load payment history
+      try {
+        const payRes = await fetch(`/api/invoice-payments?invoice_id=${params.id}`)
+        if (payRes.ok) setPayments(await payRes.json())
+      } catch {}
+
       setLoading(false)
     }
     load()
@@ -174,31 +185,43 @@ export default function InvoiceDetailPage() {
     setSaving(false)
   }
 
-  async function markAsPaid() {
+  async function recordPayment() {
+    const amt = parseFloat(paymentAmount) || invoice?.balance_due || invoice?.total || 0
+    if (amt <= 0) { alert('Enter a valid amount'); return }
     setMarkingPaid(true)
     try {
-      await fetch(`/api/invoices/${params.id}`, {
-        method: 'PATCH',
+      const res = await fetch('/api/invoice-payments', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: 'paid',
+          invoice_id: params.id,
           payment_method: paymentMethod,
-          paid_at: new Date().toISOString(),
-          amount_paid: invoice.total || 0,
-          balance_due: 0,
+          amount: amt,
+          reference_number: paymentRef || null,
+          notes: paymentNotes || null,
         }),
       })
-      setInvoice((i: any) => ({
-        ...i,
-        status: 'paid',
-        payment_method: paymentMethod,
-        paid_at: new Date().toISOString(),
-        amount_paid: i.total || 0,
-        balance_due: 0,
-      }))
-      setShowPaidModal(false)
+      if (res.ok) {
+        const result = await res.json()
+        setInvoice((i: any) => ({
+          ...i,
+          status: result.status,
+          payment_method: paymentMethod,
+          paid_at: result.status === 'paid' ? new Date().toISOString() : i.paid_at,
+          amount_paid: result.total_paid,
+          balance_due: result.balance_due,
+        }))
+        // Reload payments
+        const payRes = await fetch(`/api/invoice-payments?invoice_id=${params.id}`)
+        if (payRes.ok) setPayments(await payRes.json())
+        setShowPaidModal(false)
+        setPaymentAmount(''); setPaymentRef(''); setPaymentNotes('')
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Failed to record payment')
+      }
     } catch {
-      alert('Failed to mark as paid')
+      alert('Failed to record payment')
     }
     setMarkingPaid(false)
   }
@@ -300,34 +323,30 @@ export default function InvoiceDetailPage() {
 
   return (
     <div style={S.page}>
-      {/* Mark as Paid Modal */}
+      {/* Record Payment Modal */}
       {showPaidModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
-          <div style={{ background:'#1C2130', border:'1px solid rgba(255,255,255,.1)', borderRadius:14, padding:28, minWidth:340, maxWidth:400 }}>
-            <div style={{ fontSize:16, fontWeight:700, color:'#F0F4FF', marginBottom:4 }}>Mark as Paid</div>
+          <div style={{ background:'#1C2130', border:'1px solid rgba(255,255,255,.1)', borderRadius:14, padding:28, minWidth:380, maxWidth:440 }}>
+            <div style={{ fontSize:16, fontWeight:700, color:'#F0F4FF', marginBottom:4 }}>Record Payment</div>
             <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:20 }}>
-              Total: ${(invoice.total || 0).toFixed(2)}
+              Invoice Total: ${(invoice.total || 0).toFixed(2)} | Balance Due: ${(invoice.balance_due ?? invoice.total ?? 0).toFixed(2)}
             </div>
-            <label style={{ ...S.label, marginBottom:8 }}>Payment Method</label>
-            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:24 }}>
-              {['cash', 'check', 'ach', 'other'].map(m => (
-                <label key={m} style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer', fontSize:13, color:'#DDE3EE' }}>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value={m}
-                    checked={paymentMethod === m}
-                    onChange={() => setPaymentMethod(m)}
-                    style={{ accentColor:'#1D6FE8' }}
-                  />
-                  {m.charAt(0).toUpperCase() + m.slice(1)}
-                </label>
+            <label style={{ ...S.label, marginBottom:4 }}>Payment Method</label>
+            <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:13, marginBottom:12, fontFamily:'inherit' }}>
+              {['cash', 'zelle', 'card', 'bank_transfer', 'check', 'ach', 'other'].map(m => (
+                <option key={m} value={m}>{m.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
               ))}
-            </div>
+            </select>
+            <label style={{ ...S.label, marginBottom:4 }}>Amount</label>
+            <input type="number" step="0.01" value={paymentAmount || (invoice.balance_due ?? invoice.total ?? 0)} onChange={e => setPaymentAmount(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:14, fontFamily:"'IBM Plex Mono',monospace", marginBottom:12, boxSizing:'border-box' }} />
+            <label style={{ ...S.label, marginBottom:4 }}>Reference # (optional)</label>
+            <input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Check #, Zelle ID, etc." style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
+            <label style={{ ...S.label, marginBottom:4 }}>Notes (optional)</label>
+            <textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} rows={2} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:12, marginBottom:16, fontFamily:'inherit', resize:'vertical', boxSizing:'border-box' }} />
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button onClick={() => setShowPaidModal(false)} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.1)' }}>Cancel</button>
-              <button onClick={markAsPaid} disabled={markingPaid} style={{ ...S.btn, background:'linear-gradient(135deg,#1DB870,#15955a)', color:'#fff' }}>
-                {markingPaid ? 'Saving...' : 'Confirm Payment'}
+              <button onClick={recordPayment} disabled={markingPaid} style={{ ...S.btn, background:'linear-gradient(135deg,#1DB870,#15955a)', color:'#fff' }}>
+                {markingPaid ? 'Saving...' : 'Record Payment'}
               </button>
             </div>
           </div>
@@ -521,6 +540,27 @@ export default function InvoiceDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Payment History */}
+          {payments.length > 0 && (
+            <div style={S.card}>
+              <label style={S.label}>Payment History</label>
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {payments.map((p: any) => (
+                  <div key={p.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,.03)', fontSize:12 }}>
+                    <div>
+                      <div style={{ color:'#DDE3EE', fontWeight:600 }}>${Number(p.amount).toFixed(2)}</div>
+                      <div style={{ color:'#48536A', fontSize:10, marginTop:2 }}>{p.payment_method?.replace(/_/g,' ')} {p.reference_number ? `- ${p.reference_number}` : ''}</div>
+                    </div>
+                    <div style={{ textAlign:'right' }}>
+                      <div style={{ color:'#7C8BA0', fontSize:10 }}>{p.received_at ? new Date(p.received_at).toLocaleDateString() : ''}</div>
+                      <div style={{ color:'#48536A', fontSize:9 }}>{(p.users as any)?.full_name || ''}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Details */}
           <div style={S.card}>

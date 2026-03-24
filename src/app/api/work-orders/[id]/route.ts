@@ -115,9 +115,9 @@ export async function PATCH(req: Request, { params }: Params) {
         if (!wo) return
 
         const { data: customer } = await s.from('customers')
-          .select('email, contact_name, company_name')
+          .select('email, contact_name, company_name, phone, sms_opted_out')
           .eq('id', wo.customer_id).single()
-        if (!customer?.email) return
+        if (!customer?.email && !customer?.phone) return
 
         const { data: asset } = await s.from('assets')
           .select('unit_number, year, make, model')
@@ -157,6 +157,15 @@ export async function PATCH(req: Request, { params }: Params) {
             shop,
           })
           await sendEmail(customer.email, subject, html)
+
+          // Send SMS via Twilio if customer has a phone number
+          if (customer.phone && !customer.sms_opted_out) {
+            try {
+              const { sendSMS } = await import('@/lib/integrations/twilio')
+              const smsBody = `Your truck ${unitNumber} is ready for pickup at ${shop?.name || 'the shop'}. WO #${wo.so_number}. Call us: ${shop?.phone || ''}. Reply STOP to unsubscribe.`
+              await sendSMS(customer.phone, smsBody.slice(0, 160))
+            } catch {}
+          }
         }
       } catch {}
     })()
