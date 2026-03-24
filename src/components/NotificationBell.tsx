@@ -23,10 +23,22 @@ export default function NotificationBell({ userId }: { userId: string }) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // Real-time subscription
+  useEffect(() => {
+    if (!userId) return
+    const channel = supabase.channel('bell-notifs')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
+        loadNotifications()
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [userId])
+
   async function loadNotifications() {
     const { data } = await supabase.from('notifications')
-      .select('id, title, body, link, read, created_at')
+      .select('id, title, body, link, read, type, priority, created_at')
       .eq('user_id', userId)
+      .eq('is_dismissed', false)
       .order('created_at', { ascending: false })
       .limit(20)
     setNotifications(data || [])
@@ -98,6 +110,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
               </a>
             ))
           )}
+          <a href="/dashboard" style={{ display: 'block', padding: '10px 16px', textAlign: 'center', fontSize: 11, color: '#4D9EFF', textDecoration: 'none', borderTop: '1px solid #1A1D23', fontWeight: 600 }}>
+            View all on dashboard
+          </a>
         </div>
       )}
     </div>

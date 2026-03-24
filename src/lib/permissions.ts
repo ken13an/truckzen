@@ -145,10 +145,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
 // Role redirect after login
 export const ROLE_REDIRECT: Record<string, string> = {
   owner: '/dashboard', gm: '/dashboard', it_person: '/dashboard',
-  shop_manager: '/floor-manager/dashboard', service_writer: '/work-orders',
-  technician: '/mechanic/dashboard', lead_tech: '/mechanic/dashboard', parts_manager: '/parts', fleet_manager: '/fleet',
-  maintenance_manager: '/maintenance', maintenance_technician: '/mechanic/dashboard',
-  accountant: '/accounting', office_admin: '/dashboard', dispatcher: '/fleet',
+  shop_manager: '/dashboard', service_writer: '/dashboard',
+  technician: '/dashboard', lead_tech: '/dashboard', parts_manager: '/dashboard', fleet_manager: '/dashboard',
+  maintenance_manager: '/dashboard', maintenance_technician: '/dashboard',
+  accountant: '/dashboard', office_admin: '/dashboard', dispatcher: '/dashboard',
   driver: '/dvir', customer: '/portal',
 }
 
