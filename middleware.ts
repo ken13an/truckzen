@@ -188,15 +188,19 @@ export async function middleware(request: NextRequest) {
   // Not logged in → login
   if (!user) return NextResponse.redirect(new URL('/login', request.url))
 
-  // Platform admin — only platform owners
-  if (pathname.startsWith('/platform-admin')) {
+  // Platform owner — can access any route (checked early to avoid profile/role gates)
+  {
     const { data: po } = await supabase.from('users').select('is_platform_owner').eq('id', user.id).single()
-    if (!po?.is_platform_owner) return NextResponse.redirect(new URL('/dashboard', request.url))
-    return response
+    if (po?.is_platform_owner) return response
+  }
+
+  // Non-platform-owners cannot access /platform-admin
+  if (pathname.startsWith('/platform-admin')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Get user profile
-  const { data: profile } = await supabase.from('users').select('role, shop_id, is_active, is_platform_owner').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('users').select('role, shop_id, is_active').eq('id', user.id).single()
   if (!profile) return NextResponse.redirect(new URL('/login', request.url))
 
   // Deactivated user — force logout
@@ -206,9 +210,6 @@ export async function middleware(request: NextRequest) {
     disabledResponse.cookies.delete('tz_last_activity')
     return disabledResponse
   }
-
-  // Platform owners can access any route
-  if (profile.is_platform_owner) return response
 
   // Unlimited roles can access everything
   if (UNLIMITED_ROLES.includes(profile.role)) {
