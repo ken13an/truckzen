@@ -129,6 +129,40 @@ export async function middleware(request: NextRequest) {
     })
   }
 
+  // Single-device session enforcement (check every 60 seconds)
+  if (user) {
+    const sessionToken = request.cookies.get('tz_session_token')?.value
+    const lastChecked = request.cookies.get('tz_session_checked')?.value
+    const now = Date.now()
+    const shouldCheck = !lastChecked || (now - parseInt(lastChecked, 10)) > 60000
+
+    if (sessionToken && shouldCheck) {
+      try {
+        const checkRes = await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/users?id=eq.${user.id}&select=session_token`,
+          { headers: { 'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY!, 'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}` } }
+        )
+        const rows = await checkRes.json()
+        const dbToken = rows?.[0]?.session_token
+
+        if (dbToken && dbToken !== sessionToken) {
+          // Session was replaced by another device
+          await supabase.auth.signOut()
+          const replacedResponse = NextResponse.redirect(new URL('/login?reason=session_replaced', request.url))
+          replacedResponse.cookies.delete('tz_session_token')
+          replacedResponse.cookies.delete('tz_session_checked')
+          replacedResponse.cookies.delete('tz_last_activity')
+          return replacedResponse
+        }
+      } catch {}
+
+      // Update last check timestamp
+      response.cookies.set('tz_session_checked', String(now), {
+        path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 3600,
+      })
+    }
+  }
+
   // Homepage — platform owners go to /platform-admin, others to /dashboard
   if (pathname === '/') {
     if (user) {

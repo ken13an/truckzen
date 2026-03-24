@@ -56,12 +56,14 @@ export default function LoginPage() {
   const [checkingSession, setCheckingSession] = useState(true)
   const [sessionExpired, setSessionExpired] = useState(false)
   const [accountDisabled, setAccountDisabled] = useState(false)
+  const [sessionReplaced, setSessionReplaced] = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       if (params.get('expired') === '1') setSessionExpired(true)
       if (params.get('reason') === 'account_disabled') setAccountDisabled(true)
+      if (params.get('reason') === 'session_replaced') setSessionReplaced(true)
     }
   }, [])
 
@@ -172,6 +174,10 @@ export default function LoginPage() {
     }
 
     clearAttempts(normalizedEmail)
+
+    // Register single-device session token
+    try { await fetch('/api/auth/session', { method: 'POST' }) } catch {}
+
     await redirectByRole(data.user.id)
   }
 
@@ -270,8 +276,15 @@ export default function LoginPage() {
             </div>
           )}
 
+          {/* Session replaced banner */}
+          {sessionReplaced && !error && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 13, color: '#D97706', marginBottom: 4 }}>
+              You were signed in on another device. Please log in again.
+            </div>
+          )}
+
           {/* Session expired banner */}
-          {sessionExpired && !error && !accountDisabled && (
+          {sessionExpired && !error && !accountDisabled && !sessionReplaced && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 13, color: '#D97706', marginBottom: 4 }}>
               Session expired, please log in again.
             </div>

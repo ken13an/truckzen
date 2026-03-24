@@ -290,7 +290,7 @@ export default function Sidebar() {
         {TRASH_ROLES.includes(user.role) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
         {hasAccess(user.role, 'settings', rolePerms, userOverrides) && renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
         {PERMISSIONS_ROLES.includes(user.role) && renderNavItem({ href: '/settings/permissions', label: 'Permissions', icon: Lock })}
-        <a href="#" onClick={async (e) => { e.preventDefault(); await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
+        <a href="#" onClick={async (e) => { e.preventDefault(); try { await fetch('/api/auth/session', { method: 'DELETE' }) } catch {}; await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,.08)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
