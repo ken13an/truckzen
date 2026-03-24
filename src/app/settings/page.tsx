@@ -145,9 +145,11 @@ export default function SettingsPage() {
     }
     async function saveLaborRates() {
       setLaborSaving(true)
-      for (const r of laborRates) {
-        await supabase.from('shop_labor_rates').update({ rate_per_hour: r.rate_per_hour, updated_by: user?.id, updated_at: new Date().toISOString() }).eq('id', r.id)
-      }
+      await fetch('/api/settings/labor-rates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rates: laborRates.map(r => ({ id: r.id, rate_per_hour: r.rate_per_hour })), user_id: user?.id }),
+      })
       setLaborSaving(false)
     }
     return (
@@ -186,6 +188,59 @@ export default function SettingsPage() {
           )}
           <button onClick={saveLaborRates} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {laborSaving ? 'Saving...' : 'Save Rates'}
+          </button>
+        </div>
+
+        {/* Parts Pricing */}
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4, marginTop: 32 }}>Parts Pricing</div>
+        <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>Set parts markup by truck type. Applied automatically when adding parts to work orders.</div>
+        <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
+          {laborRates.map((r: any) => {
+            const cfg = RATE_LABELS[r.ownership_type] || { label: r.ownership_type, color: '#7C8BA0' }
+            const costExample = 10
+            const markupSell = costExample * (1 + (r.parts_markup_pct || 0) / 100)
+            const marginSell = r.parts_margin_pct > 0 ? costExample / (1 - (r.parts_margin_pct || 0) / 100) : costExample
+            return (
+              <div key={r.id + '-parts'} style={{ padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: cfg.color, marginBottom: 12 }}>{cfg.label}</div>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div>
+                    <label style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Mode</label>
+                    <select value={r.parts_pricing_mode || 'markup'} onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_pricing_mode: e.target.value } : x))}
+                      style={{ padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+                      <option value="markup">Markup %</option>
+                      <option value="margin">Margin %</option>
+                    </select>
+                  </div>
+                  {(r.parts_pricing_mode === 'markup' || !r.parts_pricing_mode) && (
+                    <div>
+                      <label style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Markup %</label>
+                      <input type="number" step="0.1" min="0" value={r.parts_markup_pct ?? 0}
+                        onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_markup_pct: parseFloat(e.target.value) || 0 } : x))}
+                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                    </div>
+                  )}
+                  {r.parts_pricing_mode === 'margin' && (
+                    <div>
+                      <label style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Margin %</label>
+                      <input type="number" step="0.1" min="0" max="99" value={r.parts_margin_pct ?? 0}
+                        onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_margin_pct: parseFloat(e.target.value) || 0 } : x))}
+                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                    </div>
+                  )}
+                  <div style={{ fontSize: 12, color: '#7C8BA0', background: 'rgba(255,255,255,.03)', padding: '8px 12px', borderRadius: 8, fontFamily: "'IBM Plex Mono', monospace" }}>
+                    Cost $10.00 → Sell <span style={{ fontWeight: 700, color: '#1DB870' }}>${(r.parts_pricing_mode === 'margin' ? marginSell : markupSell).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+          <button onClick={async () => {
+            setLaborSaving(true)
+            await fetch('/api/settings/labor-rates', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rates: laborRates.map(r => ({ id: r.id, parts_margin_pct: r.parts_margin_pct, parts_markup_pct: r.parts_markup_pct, parts_pricing_mode: r.parts_pricing_mode })), user_id: user?.id }) })
+            setLaborSaving(false)
+          }} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            {laborSaving ? 'Saving...' : 'Save Parts Pricing'}
           </button>
         </div>
       </div>

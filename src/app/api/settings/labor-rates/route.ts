@@ -20,12 +20,13 @@ export async function PATCH(req: Request) {
   if (!rates || !Array.isArray(rates)) return NextResponse.json({ error: 'rates array required' }, { status: 400 })
 
   for (const r of rates) {
-    if (!r.id || r.rate_per_hour == null) continue
-    await s.from('shop_labor_rates').update({
-      rate_per_hour: r.rate_per_hour,
-      updated_by: user_id || null,
-      updated_at: new Date().toISOString(),
-    }).eq('id', r.id)
+    if (!r.id) continue
+    const update: any = { updated_by: user_id || null, updated_at: new Date().toISOString() }
+    if (r.rate_per_hour != null) update.rate_per_hour = r.rate_per_hour
+    if (r.parts_margin_pct != null) update.parts_margin_pct = r.parts_margin_pct
+    if (r.parts_markup_pct != null) update.parts_markup_pct = r.parts_markup_pct
+    if (r.parts_pricing_mode != null) update.parts_pricing_mode = r.parts_pricing_mode
+    await s.from('shop_labor_rates').update(update).eq('id', r.id)
   }
 
   return NextResponse.json({ ok: true })
