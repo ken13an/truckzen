@@ -80,6 +80,22 @@ export async function GET(req: Request) {
     countQ = countQ.eq('team', team)
   }
 
+  // Server-side search across WO number, complaint, customer name, unit number
+  const search = searchParams.get('q') || searchParams.get('search')
+  if (search) {
+    const [{ data: matchCust }, { data: matchAsset }] = await Promise.all([
+      supabase.from('customers').select('id').eq('shop_id', shopId).ilike('company_name', `%${search}%`),
+      supabase.from('assets').select('id').eq('shop_id', shopId).or(`unit_number.ilike.%${search}%,vin.ilike.%${search}%`),
+    ])
+    const custIds = (matchCust || []).map((c: any) => c.id)
+    const assetIds = (matchAsset || []).map((a: any) => a.id)
+    const orParts = [`so_number.ilike.%${search}%`, `complaint.ilike.%${search}%`]
+    if (custIds.length > 0) orParts.push(`customer_id.in.(${custIds.join(',')})`)
+    if (assetIds.length > 0) orParts.push(`asset_id.in.(${assetIds.join(',')})`)
+    q = q.or(orParts.join(','))
+    countQ = countQ.or(orParts.join(','))
+  }
+
   // When page param is explicitly provided, return paginated format with total count
   const wantsPaginated = !!searchParams.get('page')
 

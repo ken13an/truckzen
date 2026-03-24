@@ -46,9 +46,21 @@ export async function GET(req: Request) {
   const warrantyFilter = searchParams.get('warranty_status')
   if (warrantyFilter) q = q.eq('warranty_status', warrantyFilter)
 
-  // Apply search server-side if possible, or filter after
+  // Server-side search across WO number, complaint, customer name, unit number, VIN
   if (search) {
-    q = q.or(`so_number.ilike.%${search}%,complaint.ilike.%${search}%`)
+    // Find matching customer and asset IDs first (PostgREST can't filter on joined columns)
+    const [{ data: matchCust }, { data: matchAsset }] = await Promise.all([
+      s.from('customers').select('id').eq('shop_id', shopId).ilike('company_name', `%${search}%`),
+      s.from('assets').select('id').eq('shop_id', shopId).or(`unit_number.ilike.%${search}%,vin.ilike.%${search}%`),
+    ])
+    const custIds = (matchCust || []).map((c: any) => c.id)
+    const assetIds = (matchAsset || []).map((a: any) => a.id)
+
+    // Build OR filter: WO fields + matched customer/asset IDs
+    const orParts = [`so_number.ilike.%${search}%`, `complaint.ilike.%${search}%`]
+    if (custIds.length > 0) orParts.push(`customer_id.in.(${custIds.join(',')})`)
+    if (assetIds.length > 0) orParts.push(`asset_id.in.(${assetIds.join(',')})`)
+    q = q.or(orParts.join(','))
   }
 
   // Apply pagination
