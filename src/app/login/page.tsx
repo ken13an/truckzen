@@ -7,43 +7,6 @@ import { createClient } from '@/lib/supabase/client'
 import { ROLE_REDIRECT } from '@/lib/permissions'
 import Logo from '@/components/Logo'
 
-const LOCKOUT_KEY = 'tz_login_attempts'
-const MAX_ATTEMPTS = 5
-const LOCKOUT_MINUTES = 15
-
-function getAttempts(email: string): { count: number; lockedUntil: number } {
-  try {
-    const raw = localStorage.getItem(LOCKOUT_KEY)
-    if (!raw) return { count: 0, lockedUntil: 0 }
-    const data = JSON.parse(raw)
-    return data[email] || { count: 0, lockedUntil: 0 }
-  } catch { return { count: 0, lockedUntil: 0 } }
-}
-
-function recordFailure(email: string) {
-  try {
-    const raw = localStorage.getItem(LOCKOUT_KEY)
-    const data = raw ? JSON.parse(raw) : {}
-    const current = data[email] || { count: 0, lockedUntil: 0 }
-    current.count += 1
-    if (current.count >= MAX_ATTEMPTS) {
-      current.lockedUntil = Date.now() + LOCKOUT_MINUTES * 60 * 1000
-    }
-    data[email] = current
-    localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data))
-  } catch {}
-}
-
-function clearAttempts(email: string) {
-  try {
-    const raw = localStorage.getItem(LOCKOUT_KEY)
-    if (!raw) return
-    const data = JSON.parse(raw)
-    delete data[email]
-    localStorage.setItem(LOCKOUT_KEY, JSON.stringify(data))
-  } catch {}
-}
-
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -128,57 +91,59 @@ export default function LoginPage() {
       return
     }
 
-    const normalizedEmail = email.trim().toLowerCase()
-
-    // Check lockout
-    const attempts = getAttempts(normalizedEmail)
-    if (attempts.lockedUntil > Date.now()) {
-      const minutesLeft = Math.ceil((attempts.lockedUntil - Date.now()) / 60000)
-      setError(`Account locked. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''}.`)
-      return
-    }
-
     setLoading(true)
     setError('')
     setSessionExpired(false)
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: normalizedEmail,
-      password,
-    })
+    const normalizedEmail = email.trim().toLowerCase()
 
-    if (authError) {
-      setLoading(false)
-      recordFailure(normalizedEmail)
-      const updated = getAttempts(normalizedEmail)
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      })
 
-      if (updated.lockedUntil > Date.now()) {
-        setError(`Too many failed attempts. Account locked for ${LOCKOUT_MINUTES} minutes.`)
-      } else if (authError.message.includes('Invalid login') ||
-          authError.message.includes('Email not confirmed') ||
-          authError.message.includes('Invalid email')) {
-        const remaining = MAX_ATTEMPTS - updated.count
-        setError(`Incorrect email or password.${remaining <= 2 ? ` ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.` : ''}`)
-      } else if (authError.message.includes('Too many')) {
-        setError('Too many attempts. Wait a few minutes and try again.')
-      } else {
-        setError('Login failed. Contact your admin if this continues.')
+      const body = await res.json()
+
+      if (!res.ok) {
+        setLoading(false)
+        if (res.status === 429) {
+          setError(body.error)
+        } else if (res.status === 401) {
+          const msg = body.remaining <= 2
+            ? `${body.error} ${body.remaining} attempt${body.remaining !== 1 ? 's' : ''} remaining.`
+            : body.error
+          setError(msg)
+        } else {
+          setError('Login failed. Contact your admin if this continues.')
+        }
+        return
       }
-      return
-    }
 
-    if (!data.user) {
+      // Set the session client-side so Supabase auth picks it up
+      if (body.session) {
+        await supabase.auth.setSession({
+          access_token: body.session.access_token,
+          refresh_token: body.session.refresh_token,
+        })
+      }
+
+      // Check if 2FA is required
+      if (body.requires2FA) {
+        sessionStorage.setItem('tz_2fa_pending', body.user.id)
+        router.replace('/login/2fa')
+        return
+      }
+
+      // Register single-device session token
+      try { await fetch('/api/auth/session', { method: 'POST' }) } catch {}
+
+      await redirectByRole(body.user.id)
+    } catch {
       setLoading(false)
       setError('Login failed. Try again.')
-      return
     }
-
-    clearAttempts(normalizedEmail)
-
-    // Register single-device session token
-    try { await fetch('/api/auth/session', { method: 'POST' }) } catch {}
-
-    await redirectByRole(data.user.id)
   }
 
   // ── LOADING STATE ────────────────────────────────────────

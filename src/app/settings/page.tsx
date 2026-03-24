@@ -15,6 +15,7 @@ const SECTIONS = [
   { key: 'shop', label: 'Shop Information' },
   { key: 'branding', label: 'Shop Branding' },
   { key: 'data_retention', label: 'Data Retention' },
+  { key: 'security', label: 'Two-Factor Auth (2FA)' },
   { key: 'export', label: 'Data Export', href: '/settings/export' },
 ]
 
@@ -38,6 +39,14 @@ export default function SettingsPage() {
   const [logoUploading, setLogoUploading] = useState(false)
   const [laborRates, setLaborRates] = useState<any[]>([])
   const [laborSaving, setLaborSaving] = useState(false)
+
+  // 2FA state
+  const [tfaStatus, setTfaStatus] = useState<{ enabled: boolean; verified_at: string | null } | null>(null)
+  const [tfaQR, setTfaQR] = useState<string | null>(null)
+  const [tfaSecret, setTfaSecret] = useState('')
+  const [tfaCode, setTfaCode] = useState('')
+  const [tfaMsg, setTfaMsg] = useState('')
+  const [tfaLoading, setTfaLoading] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -68,6 +77,14 @@ export default function SettingsPage() {
     }
     load()
   }, [])
+
+  // Load 2FA status when security section is opened
+  useEffect(() => {
+    if (activeSection === 'security') {
+      fetch('/api/auth/2fa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status' }) })
+        .then(r => r.json()).then(setTfaStatus).catch(() => {})
+    }
+  }, [activeSection])
 
   async function saveShop() {
     setSaving(true)
@@ -524,6 +541,98 @@ export default function SettingsPage() {
             These settings define your shop&#39;s data retention policy. Actual archival runs automatically based on these rules.
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // Two-Factor Authentication
+  if (activeSection === 'security') {
+    const TWO_FA_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin']
+    const canSetup2FA = TWO_FA_ROLES.includes(user?.role)
+
+    async function startSetup() {
+      setTfaLoading(true); setTfaMsg('')
+      const res = await fetch('/api/auth/2fa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'setup' }) })
+      if (res.ok) { const d = await res.json(); setTfaQR(d.qr); setTfaSecret(d.secret) }
+      else setTfaMsg('Failed to generate 2FA secret.')
+      setTfaLoading(false)
+    }
+
+    async function verifyCode() {
+      if (tfaCode.length !== 6) { setTfaMsg('Enter a 6-digit code.'); return }
+      setTfaLoading(true); setTfaMsg('')
+      const res = await fetch('/api/auth/2fa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'verify', code: tfaCode }) })
+      if (res.ok) { setTfaStatus({ enabled: true, verified_at: new Date().toISOString() }); setTfaQR(null); setTfaCode(''); setTfaMsg('2FA enabled successfully.') }
+      else { const d = await res.json(); setTfaMsg(d.error || 'Invalid code.') }
+      setTfaLoading(false)
+    }
+
+    async function disable2FA() {
+      setTfaLoading(true)
+      await fetch('/api/auth/2fa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'disable' }) })
+      setTfaStatus({ enabled: false, verified_at: null }); setTfaMsg('2FA disabled.')
+      setTfaLoading(false)
+    }
+
+    return (
+      <div style={S.page}>
+        {backBar}
+        <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Two-Factor Authentication</div>
+        {!canSetup2FA ? (
+          <div style={S.card}>
+            <div style={{ color: '#9D9DA1', fontSize: 13, padding: 20, textAlign: 'center' }}>
+              2FA is available for Owner and Accounting roles only.
+            </div>
+          </div>
+        ) : (
+          <div style={S.card}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>Status</div>
+                <div style={{ fontSize: 12, color: tfaStatus?.enabled ? '#1DB870' : '#7C8BA0', marginTop: 4, fontWeight: 600 }}>
+                  {tfaStatus?.enabled ? 'Enabled' : 'Not enabled'}
+                </div>
+              </div>
+              {tfaStatus?.enabled ? (
+                <button onClick={disable2FA} disabled={tfaLoading} style={{ padding: '8px 16px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.25)', borderRadius: 8, color: '#EF4444', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Disable 2FA
+                </button>
+              ) : !tfaQR ? (
+                <button onClick={startSetup} disabled={tfaLoading} style={{ ...S.btn, padding: '8px 16px' }}>
+                  {tfaLoading ? 'Loading...' : 'Enable 2FA'}
+                </button>
+              ) : null}
+            </div>
+
+            {tfaQR && (
+              <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', paddingTop: 16 }}>
+                <div style={{ fontSize: 13, color: '#EDEDF0', marginBottom: 12 }}>
+                  Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):
+                </div>
+                <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                  <img src={tfaQR} alt="2FA QR Code" style={{ width: 200, height: 200, borderRadius: 8, background: '#fff', padding: 8 }} />
+                </div>
+                <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 16, textAlign: 'center' }}>
+                  Or enter manually: <code style={{ fontFamily: "'IBM Plex Mono', monospace", background: 'rgba(255,255,255,.06)', padding: '2px 6px', borderRadius: 4, fontSize: 11, letterSpacing: '.05em' }}>{tfaSecret}</code>
+                </div>
+                <div style={{ fontSize: 13, color: '#EDEDF0', marginBottom: 8 }}>Enter the 6-digit code to verify:</div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input value={tfaCode} onChange={e => setTfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" maxLength={6}
+                    style={{ ...S.input, width: 120, textAlign: 'center', letterSpacing: '.2em', fontFamily: "'IBM Plex Mono', monospace", fontSize: 18, fontWeight: 700 }} />
+                  <button onClick={verifyCode} disabled={tfaLoading || tfaCode.length !== 6} style={{ ...S.btn, padding: '8px 16px' }}>
+                    {tfaLoading ? 'Verifying...' : 'Verify & Enable'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {tfaMsg && (
+              <div style={{ marginTop: 12, fontSize: 12, color: tfaMsg.includes('success') || tfaMsg.includes('enabled') ? '#1DB870' : tfaMsg.includes('disabled') ? '#7C8BA0' : '#EF4444' }}>
+                {tfaMsg}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     )
   }
