@@ -1314,6 +1314,13 @@ export default function WorkOrderDetail() {
       {/* ========== TAB 2: ESTIMATE & BILLING ========== */}
       {tab === 2 && (
         <div>
+          {/* Estimate requirement notice */}
+          {!wo.estimate_required && !wo.is_historical && (
+            <div style={{ ...cardStyle, background: '#F0FDF4', border: '1px solid #BBF7D0', marginBottom: 12, fontSize: 13, color: '#15803D', fontWeight: 600 }}>
+              Estimate not required for company trucks. You can still create one manually if needed.
+            </div>
+          )}
+
           {/* Summary cards */}
           {(() => {
             const partsAmt = woPartsTotal + partsLineTotal + (wo.is_historical && partLines.length === 0 ? (wo.parts_total || 0) : 0)

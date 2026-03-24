@@ -22,6 +22,12 @@ export async function POST(req: Request, { params }: P) {
   const { data, error } = await s.from('parts_requests').update(update).eq('id', id).select('*, service_orders:so_id(so_number, shop_id, assigned_tech, assets(unit_number))').single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Log to wo_activity_log
+  const soId = (data as any).so_id
+  if (soId && user_id) {
+    await s.from('wo_activity_log').insert({ wo_id: soId, user_id, action: 'Parts submitted — supervisor and mechanic notified' })
+  }
+
   // Send notifications to floor manager + mechanic
   const wo = (data as any).service_orders
   if (wo) {
@@ -51,6 +57,25 @@ export async function POST(req: Request, { params }: P) {
         })
       } catch {}
     }
+  }
+
+  // In-app notification
+  if (wo) {
+    try {
+      const { createNotification } = await import('@/lib/createNotification')
+      const soNum = wo.so_number || ''
+      const unit = wo.assets?.unit_number || ''
+      const managerIds = (await s.from('users').select('id').eq('shop_id', wo.shop_id).in('role', ['shop_manager', 'floor_manager'])).data?.map((u: any) => u.id) || []
+      const techId = wo.assigned_tech
+      const allIds = [...new Set([...managerIds, ...(techId ? [techId] : [])])]
+      if (allIds.length > 0) {
+        await createNotification({
+          shopId: wo.shop_id, recipientId: allIds, type: 'parts_submitted',
+          title: 'Parts Submitted', body: `Parts submitted for WO #${soNum} #${unit}`,
+          link: `/work-orders/${(data as any).so_id}`, relatedUnit: unit,
+        })
+      }
+    } catch {}
   }
 
   return NextResponse.json(data)

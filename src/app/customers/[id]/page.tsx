@@ -255,12 +255,14 @@ export default function CustomerProfilePage() {
   }
 
   const ptc = paymentTermsColor(customer?.payment_terms || '')
+  const PRICING_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'service_writer', 'accountant', 'office_admin']
+  const canSeePricing = user && PRICING_ROLES.includes(user.role)
   const tabs: { key: Tab; label: string }[] = [
     { key: 'fleet', label: 'Fleet' },
     { key: 'work-orders', label: 'Work Orders' },
     { key: 'contacts', label: 'Contacts' },
     { key: 'billing', label: 'Billing' },
-    { key: 'parts', label: 'Parts' },
+    ...(canSeePricing ? [{ key: 'parts' as Tab, label: 'Parts' }] : []),
     { key: 'documents', label: 'Documents' },
   ]
 
@@ -746,8 +748,20 @@ export default function CustomerProfilePage() {
             </div>
           </div>
 
-          <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', color: '#7C8BA0', fontSize: 13 }}>
-            Full billing features coming with invoicing module.
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Default Truck Type</label>
+              <select
+                value={customer.default_ownership_type || 'fleet_asset'}
+                onChange={e => updateField('default_ownership_type', e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: "'Inter', sans-serif", appearance: 'none' as const, boxSizing: 'border-box' as const }}
+              >
+                <option value="fleet_asset" style={{ background: '#151520' }}>Company Truck</option>
+                <option value="owner_operator" style={{ background: '#151520' }}>Owner Operator</option>
+                <option value="outside_customer" style={{ background: '#151520' }}>Outside Customer</option>
+              </select>
+              <div style={{ fontSize: 10, color: '#48536A', marginTop: 4 }}>Changing this does not update existing trucks — only new trucks added after this change</div>
+            </div>
           </div>
         </div>
       )}

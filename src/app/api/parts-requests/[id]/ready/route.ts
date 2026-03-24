@@ -23,6 +23,12 @@ export async function POST(req: Request, { params }: P) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Log to wo_activity_log
+  const soId = (data as any).so_id
+  if (soId) {
+    await s.from('wo_activity_log').insert({ wo_id: soId, user_id: null, action: partial ? 'Some parts marked ready — partial pickup available' : 'All parts marked ready for pickup' })
+  }
+
   // Notify mechanic
   const wo = (data as any).service_orders
   if (wo?.assigned_tech) {

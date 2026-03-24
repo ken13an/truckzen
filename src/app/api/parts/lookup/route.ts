@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   // Look up part
   const { data: part } = await supabase
     .from('parts')
-    .select('id, part_number, description, on_hand, cost_price, sell_price, price_ugl_company, price_ugl_owner_operator, price_outside, bin_location')
+    .select('id, part_number, description, on_hand, sell_price, price_ugl_company, price_ugl_owner_operator, price_outside, bin_location')
     .eq('shop_id', user.shop_id)
     .is('deleted_at', null)
     .ilike('part_number', partNumber)

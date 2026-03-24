@@ -69,6 +69,23 @@ export async function POST(req: Request) {
     })
   }
 
+  // Notify assigned mechanics
+  if (assignments.length > 0 && wo_id) {
+    try {
+      const { createNotification } = await import('@/lib/createNotification')
+      const { data: wo } = await s.from('service_orders').select('so_number, shop_id, assets(unit_number)').eq('id', wo_id).single()
+      if (wo) {
+        const mechIds = assignments.filter((a: any) => a.user_id).map((a: any) => a.user_id)
+        const unitNum = (wo.assets as any)?.unit_number || ''
+        await createNotification({
+          shopId: wo.shop_id, recipientId: mechIds, type: 'job_assigned',
+          title: 'New Job Assigned', body: `You've been assigned to ${wo.so_number} #${unitNum}`,
+          link: `/work-orders/${wo_id}`, relatedWoId: wo_id, relatedUnit: unitNum,
+        })
+      }
+    } catch {}
+  }
+
   return NextResponse.json({ ok: true })
 }
 

@@ -131,7 +131,21 @@ export default function PartsWOView() {
   }
 
   function updateLine(index: number, field: keyof LineItem, value: any) {
-    setLineItems(prev => prev.map((l, i) => i === index ? { ...l, [field]: value } : l))
+    setLineItems(prev => {
+      const updated = prev.map((l, i) => i === index ? { ...l, [field]: value } : l)
+      // Auto-prompt when all parts become in-stock after a change
+      if (field === 'in_stock' && value === true && isSubmitted && !isReady) {
+        const allNowInStock = updated.every(l => l.in_stock)
+        if (allNowInStock) {
+          setTimeout(() => {
+            if (confirm('All parts are now in stock. Mark as Ready for pickup?')) {
+              markReady(false)
+            }
+          }, 100)
+        }
+      }
+      return updated
+    })
   }
 
   function addLine() { setLineItems(prev => [...prev, emptyLine()]) }
@@ -144,7 +158,7 @@ export default function PartsWOView() {
     await fetch(`/api/parts-requests/${partsRequest.id}/line-items`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ line_items: lineItems }),
+      body: JSON.stringify({ line_items: lineItems, user_id: user?.id }),
     })
     setSaving(false)
     flash('Saved')

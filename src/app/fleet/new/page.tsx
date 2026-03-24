@@ -19,7 +19,7 @@ export default function NewFleetPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
-      const { data } = await supabase.from('customers').select('id, company_name').eq('shop_id', profile.shop_id).is('deleted_at', null).order('company_name')
+      const { data } = await supabase.from('customers').select('id, company_name, default_ownership_type').eq('shop_id', profile.shop_id).is('deleted_at', null).order('company_name')
       setCustomers(data || [])
     }
     load()
@@ -145,7 +145,7 @@ export default function NewFleetPage() {
             </div>
             <div>
               <label style={S.label}>Owner / Customer</label>
-              <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.customer_id} onChange={e=>setForm(f=>({...f,customer_id:e.target.value}))}>
+              <select style={{ ...S.input, appearance:'none', cursor:'pointer' }} value={form.customer_id} onChange={e=>{const cust = customers.find((c: any)=>c.id===e.target.value); setForm(f=>({...f, customer_id:e.target.value, ownership_type: cust?.default_ownership_type || f.ownership_type}))}}>
                 <option value="">No customer linked</option>
                 {customers.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
               </select>
