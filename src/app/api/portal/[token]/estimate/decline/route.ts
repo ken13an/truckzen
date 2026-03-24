@@ -50,5 +50,16 @@ export async function POST(req: Request, { params }: P) {
     } catch {}
   })()
 
+  // In-app notification
+  try {
+    const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
+    const writers = await getUserIdsByRole(wo.shop_id, ['service_writer', 'service_advisor'])
+    await createNotification({
+      shopId: wo.shop_id, recipientId: writers, type: 'estimate_declined',
+      title: 'Estimate Declined', body: `Customer declined estimate for ${wo.so_number}${body.reason ? ' — ' + body.reason : ''} — follow up required`,
+      link: `/work-orders/${wo.id}`, relatedWoId: wo.id, priority: 'urgent',
+    })
+  } catch {}
+
   return NextResponse.json({ ok: true })
 }

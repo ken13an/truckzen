@@ -91,9 +91,11 @@ export async function POST(req: Request) {
 
   // Snapshot ownership_type from asset
   let assetOwnership = 'fleet_asset'
+  let assetUnitNumber = ''
   if (asset_id) {
-    const { data: assetData } = await s.from('assets').select('ownership_type').eq('id', asset_id).single()
+    const { data: assetData } = await s.from('assets').select('ownership_type, unit_number').eq('id', asset_id).single()
     if (assetData?.ownership_type) assetOwnership = assetData.ownership_type
+    if (assetData?.unit_number) assetUnitNumber = assetData.unit_number
   }
 
   const { data: wo, error } = await s
@@ -166,6 +168,20 @@ export async function POST(req: Request) {
 
   // Fire and forget
   logAction({ shop_id, user_id, action: 'wo.created', entity_type: 'service_order', entity_id: wo.id, details: { so_number: wo.so_number } }).catch(() => {})
+
+  // Notify service writers if estimate required
+  if (wo.estimate_required) {
+    try {
+      const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
+      const writers = await getUserIdsByRole(shop_id, ['service_writer', 'service_advisor'])
+      const unitNum = assetUnitNumber
+      await createNotification({
+        shopId: shop_id, recipientId: writers, type: 'estimate_required',
+        title: 'Estimate Required', body: `WO ${woNum} #${unitNum} — build and send estimate before work begins`,
+        link: `/work-orders/${wo.id}`, relatedWoId: wo.id, relatedUnit: unitNum, priority: 'high',
+      })
+    } catch {}
+  }
 
   return NextResponse.json(wo, { status: 201 })
 }

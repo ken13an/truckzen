@@ -17,6 +17,7 @@ export async function POST(req: Request, { params }: P) {
   const now = new Date().toISOString()
   await s.from('service_orders').update({
     estimate_status: 'approved',
+    estimate_approved: true,
     estimate_approved_date: now,
     approved_at: now,
     approved_by: 'customer_portal',
@@ -53,6 +54,19 @@ export async function POST(req: Request, { params }: P) {
       }
     } catch {}
   })()
+
+  // In-app notifications
+  try {
+    const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
+    // Notify service writer + floor managers
+    const swIds = await getUserIdsByRole(wo.shop_id, ['service_writer', 'service_advisor'])
+    const fmIds = await getUserIdsByRole(wo.shop_id, ['shop_manager', 'floor_manager'])
+    await createNotification({
+      shopId: wo.shop_id, recipientId: [...swIds, ...fmIds], type: 'customer_approved',
+      title: 'Estimate Approved', body: `Customer approved estimate for ${wo.so_number} — work can now be assigned`,
+      link: `/work-orders/${wo.id}`, relatedWoId: wo.id, priority: 'high',
+    })
+  } catch {}
 
   return NextResponse.json({ ok: true })
 }

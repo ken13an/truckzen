@@ -106,6 +106,18 @@ export async function POST(req: Request) {
       sendPushToUser(wo.service_writer_id, 'Invoice Approved', `WO-${wo.so_number} invoice approved and sent to customer`).catch(() => {})
     }
 
+    // In-app notification
+    try {
+      const { createNotification } = await import('@/lib/createNotification')
+      if (wo.service_writer_id) {
+        await createNotification({
+          shopId: wo.shop_id, recipientId: wo.service_writer_id, type: 'invoice_approved',
+          title: 'Invoice Approved', body: `WO-${wo.so_number} invoice approved — sent to customer`,
+          link: `/work-orders/${wo_id}`, relatedWoId: wo_id, priority: 'normal',
+        })
+      }
+    } catch {}
+
     return NextResponse.json({ success: true, action: 'approved' })
   }
 
