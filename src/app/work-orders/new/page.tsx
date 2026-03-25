@@ -71,13 +71,8 @@ export default function NewWorkOrderPage() {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
       setProfile(p)
-      const [custsRes, partsRes] = await Promise.all([
-        fetch(`/api/customers?shop_id=${p.shop_id}&per_page=2000`),
-        fetch(`/api/parts?shop_id=${p.shop_id}&per_page=2000`),
-      ])
-      const custsData = await custsRes.json()
+      const partsRes = await fetch(`/api/parts?shop_id=${p.shop_id}&per_page=50`)
       const partsData = await partsRes.json()
-      if (custsData.data) setCustomers(custsData.data)
       if (partsData.data) setInventoryParts(partsData.data)
     })
   }, [])
@@ -136,9 +131,20 @@ export default function NewWorkOrderPage() {
     else setSuggestions([])
   }, [complaint, inventoryParts])
 
-  const filteredCustomers = customerSearch.trim()
-    ? customers.filter(c => { const q = customerSearch.toLowerCase(); return c.company_name?.toLowerCase().includes(q) || c.contact_name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q) }).slice(0, 10)
-    : []
+  // Server-side customer search
+  useEffect(() => {
+    if (!profile || !customerSearch.trim()) { setCustomers([]); return }
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/customers?shop_id=${profile.shop_id}&q=${encodeURIComponent(customerSearch)}&per_page=10`)
+      if (res.ok) {
+        const json = await res.json()
+        setCustomers(json.data || [])
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [customerSearch, profile])
+
+  const filteredCustomers = customers
 
   // Duplicate detection: >80% similarity check
   function checkDuplicates(lines: typeof jobLines) {

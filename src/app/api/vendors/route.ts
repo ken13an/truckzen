@@ -12,28 +12,25 @@ export async function GET(req: Request) {
   const page = parseInt(searchParams.get('page') || '1')
   const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)
   const paginated = !!searchParams.get('page')
+  const search = searchParams.get('q') || searchParams.get('search')
 
-  const cacheKey = `vendors:${shopId}:${page}:${perPage}`
+  const cacheKey = `vendors:${shopId}:${page}:${perPage}:${search || ''}`
   const cached = getCache<any>(cacheKey)
   if (cached) return NextResponse.json(cached)
 
   const s = db()
 
   // Count query (separate)
-  const { count: total } = await s
-    .from('vendors')
-    .select('*', { count: 'exact', head: true })
-    .eq('shop_id', shopId)
+  let countQ = s.from('vendors').select('*', { count: 'exact', head: true }).eq('shop_id', shopId)
+  if (search) countQ = countQ.ilike('name', `%${search}%`)
+  const { count: total } = await countQ
 
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
-  const { data: vendors, error } = await s
-    .from('vendors')
-    .select('*')
-    .eq('shop_id', shopId)
-    .order('name')
-    .range(from, to)
+  let dataQ = s.from('vendors').select('*').eq('shop_id', shopId).order('name').range(from, to)
+  if (search) dataQ = dataQ.ilike('name', `%${search}%`)
+  const { data: vendors, error } = await dataQ
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

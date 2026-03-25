@@ -19,9 +19,16 @@ export default function NewFleetPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { router.push('/login'); return }
-      const res = await fetch(`/api/customers?shop_id=${profile.shop_id}&per_page=2000`)
-      const json = res.ok ? await res.json() : { data: [] }
-      setCustomers(json.data || [])
+      // Load all customers by paginating through pages
+      let all: any[] = [], pg = 1, hasMore = true
+      while (hasMore) {
+        const res = await fetch(`/api/customers?shop_id=${profile.shop_id}&page=${pg}&per_page=50`)
+        const json = res.ok ? await res.json() : { data: [], total_pages: 0 }
+        all = all.concat(json.data || [])
+        hasMore = pg < (json.total_pages || 0)
+        pg++
+      }
+      setCustomers(all)
     }
     load()
   }, [])

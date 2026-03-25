@@ -161,7 +161,9 @@ export default function PartsPage() {
     setVendorLoading(true)
     try {
       const pg = p ?? vendorPage
-      const res = await fetch(`/api/vendors?shop_id=${user.shop_id}&page=${pg}&per_page=50`)
+      let url = `/api/vendors?shop_id=${user.shop_id}&page=${pg}&per_page=50`
+      if (vendorSearch) url += `&q=${encodeURIComponent(vendorSearch)}`
+      const res = await fetch(url)
       if (res.ok) {
         const json = await res.json()
         if (Array.isArray(json)) { setVendorList(json); setVendorTotal(json.length) }
@@ -169,7 +171,7 @@ export default function PartsPage() {
       }
     } catch {}
     setVendorLoading(false)
-  }, [user, vendorPage])
+  }, [user, vendorPage, vendorSearch])
 
   useEffect(() => { if (subTab === 'vendors') fetchVendors() }, [fetchVendors, subTab])
 
@@ -531,7 +533,7 @@ export default function PartsPage() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
-              <input value={vendorSearch} onChange={e => setVendorSearch(e.target.value)} placeholder="Search vendors..."
+              <input value={vendorSearch} onChange={e => { setVendorSearch(e.target.value); setVendorPage(1) }} placeholder="Search vendors..."
                 style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
             </div>
             <span style={{ fontSize: 13, color: '#6B7280' }}>
@@ -552,9 +554,7 @@ export default function PartsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {vendorList
-                      .filter(v => !vendorSearch || (v.name || '').toLowerCase().includes(vendorSearch.toLowerCase()))
-                      .map(v => (
+                    {vendorList.map(v => (
                       <tr key={v.id} style={{ borderBottom: '1px solid #F3F4F6' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
@@ -569,7 +569,7 @@ export default function PartsPage() {
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: v.parts_count > 0 ? BLUE : '#9CA3AF', textAlign: 'center' }}>{v.parts_count}</td>
                       </tr>
                     ))}
-                    {vendorList.filter(v => !vendorSearch || (v.name || '').toLowerCase().includes(vendorSearch.toLowerCase())).length === 0 && (
+                    {vendorList.length === 0 && (
                       <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No vendors found</td></tr>
                     )}
                   </tbody>
