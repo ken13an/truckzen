@@ -451,8 +451,12 @@ export default function NewWorkOrderPage() {
                 <div>
                   <span style={{ fontSize: 14, fontWeight: 700, color: '#1A1A1A' }}>#{selectedAsset.unit_number}</span>
                   <span style={{ fontSize: 13, color: '#6B7280', marginLeft: 8 }}>{[selectedAsset.year, selectedAsset.make, selectedAsset.model].filter(Boolean).join(' ')}</span>
-                  {isFleet ? <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#F0FDF4', color: '#16A34A' }}>Company</span>
-                    : <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#FFFBEB', color: '#D97706' }}>Owner Op</span>}
+                  {(() => {
+                    const ot = unitType || selectedAsset?.ownership_type || 'fleet_asset'
+                    if (ot === 'owner_operator') return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#FFFBEB', color: '#D97706' }}>Owner Operator</span>
+                    if (ot === 'outside_customer') return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#EFF6FF', color: '#1D6FE8' }}>Outside Customer</span>
+                    return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#F0FDF4', color: '#16A34A' }}>Company Truck</span>
+                  })()}
                 </div>
                 <button onClick={() => { setShowVehicleList(true); setSelectedAsset(null) }} style={btnS}>Change</button>
               </div>
