@@ -125,6 +125,38 @@ export default function FleetDetailPage() {
         </div>
       </div>
 
+      {/* OWNERSHIP & DRIVER */}
+      {(asset.owner_name || asset.driver_name) && (
+        <div style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:10, padding:'12px 16px', marginBottom:16, display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, fontSize:12 }}>
+          <div>
+            <div style={{ fontSize:9, fontWeight:700, color:'#7C8BA0', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Owner</div>
+            <div style={{ color:'#F0F4FF', fontWeight:600 }}>
+              {asset.owner_name || <span style={{ color:'#7C8BA0', fontStyle:'italic' }}>Not assigned</span>}
+            </div>
+            {asset.owner_phone && <a href={`tel:${asset.owner_phone}`} style={{ color:'#1D6FE8', textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.owner_phone}</a>}
+          </div>
+          <div>
+            <div style={{ fontSize:9, fontWeight:700, color:'#7C8BA0', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Driver</div>
+            <div style={{ color:'#F0F4FF', fontWeight:600 }}>
+              {asset.driver_name || <span style={{ color:'#7C8BA0', fontStyle:'italic' }}>Not assigned</span>}
+            </div>
+            {asset.driver_phone && <a href={`tel:${asset.driver_phone}`} style={{ color:'#1D6FE8', textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.driver_phone}</a>}
+          </div>
+          {asset.lease_info && (
+            <div>
+              <div style={{ fontSize:9, fontWeight:700, color:'#7C8BA0', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Lease</div>
+              <div style={{ color:'#DDE3EE' }}>{asset.lease_info}</div>
+            </div>
+          )}
+          {asset.asset_status && asset.asset_status !== 'active' && (
+            <div>
+              <div style={{ fontSize:9, fontWeight:700, color:'#7C8BA0', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Status</div>
+              <span style={{ padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:600, background:'rgba(220,38,38,.12)', color:'#DC2626', border:'1px solid rgba(220,38,38,.2)' }}>Removed</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tab bar */}
       <div style={{ display:'flex', gap:0, borderBottom:'1px solid rgba(255,255,255,.08)', marginBottom:16 }}>
         {([['overview', 'Overview'], ['history', 'Full History']] as const).map(([key, label]) => (

@@ -19,7 +19,7 @@ export async function GET(req: Request, { params }: Params) {
     .from('service_orders')
     .select(`
       *,
-      assets(id, unit_number, year, make, model, vin, odometer, engine, ownership_type, is_owner_operator),
+      assets(id, unit_number, year, make, model, vin, odometer, engine, ownership_type, is_owner_operator, owner_name, owner_phone, driver_name, driver_phone, lease_info, asset_status),
       customers(id, company_name, contact_name, phone, email, address),
       users!assigned_tech(id, full_name, role, team),
       so_lines(id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts),

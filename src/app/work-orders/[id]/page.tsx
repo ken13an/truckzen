@@ -664,6 +664,30 @@ export default function WorkOrderDetail() {
         </div>
       </div>
 
+      {/* OWNER & DRIVER INFO */}
+      {wo.assets && (asset.owner_name || asset.driver_name) && (
+        <div style={{ ...cardStyle, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '10px 16px', fontSize: 12 }}>
+          <div>
+            <span style={{ ...labelStyle, marginBottom: 2 }}>Owner</span>
+            <div style={{ fontWeight: 600, color: '#1A1A1A' }}>
+              {asset.owner_name || <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>Not assigned</span>}
+              {asset.owner_phone && (
+                <a href={`tel:${asset.owner_phone}`} style={{ color: BLUE, textDecoration: 'none', marginLeft: 8, fontWeight: 400 }}>{asset.owner_phone}</a>
+              )}
+            </div>
+          </div>
+          <div>
+            <span style={{ ...labelStyle, marginBottom: 2 }}>Driver</span>
+            <div style={{ fontWeight: 600, color: '#1A1A1A' }}>
+              {asset.driver_name || <span style={{ color: '#9CA3AF', fontStyle: 'italic' }}>Not assigned</span>}
+              {asset.driver_phone && (
+                <a href={`tel:${asset.driver_phone}`} style={{ color: BLUE, textDecoration: 'none', marginLeft: 8, fontWeight: 400 }}>{asset.driver_phone}</a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ESTIMATE REQUIREMENT BANNER */}
       {!wo.is_historical && wo.estimate_required && (() => {
         const estStatus = wo.estimate_status || 'draft'
