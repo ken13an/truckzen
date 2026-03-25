@@ -553,7 +553,7 @@ export default function WorkOrderDetail() {
       <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderBottom: '2px solid #E5E7EB' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <span style={{ fontSize: 26, fontWeight: 800 }}>WO-{wo.wo_number || wo.id?.slice(0, 6)}</span>
+            <span style={{ fontSize: 26, fontWeight: 800 }}>{wo.so_number || ('WO-' + wo.id?.slice(0, 6))}</span>
             <span style={pillStyle(woStatus.bg, woStatus.color)}>{woStatus.label}</span>
             <SourceBadge source={wo.source} />
             {wo.payment_terms === 'cod' && <span style={pillStyle('#FEF2F2', RED)}>COD</span>}
