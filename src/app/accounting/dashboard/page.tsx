@@ -21,31 +21,50 @@ export default function AccountingDashboard() {
 
   const loadData = useCallback(async (profile: any) => {
     const shopId = profile.shop_id
-    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
 
-    const [doneRes, gtagRes, outstRes, paidRes] = await Promise.all([
+    const [doneRes, gtagRes, outstRes, paidRes, pendingRes] = await Promise.all([
       fetch(`/api/service-orders?shop_id=${shopId}&status=done&limit=30`),
       fetch(`/api/service-orders?shop_id=${shopId}&status=good_to_go&limit=30`),
       fetch(`/api/invoices?status=sent`),
-      fetch(`/api/invoices?status=paid`),
+      fetch(`/api/invoices?status=paid&per_page=50`),
+      fetch(`/api/accounting?shop_id=${shopId}`),
     ])
 
-    const [doneData, gtagData, outstData, paidData] = await Promise.all([
+    const [doneData, gtagData, outstData, paidData, pendingData] = await Promise.all([
       doneRes.ok ? doneRes.json() : [],
       gtagRes.ok ? gtagRes.json() : [],
       outstRes.ok ? outstRes.json() : [],
       paidRes.ok ? paidRes.json() : [],
+      pendingRes.ok ? pendingRes.json() : [],
     ])
 
-    const ready = [...(doneData || []), ...(gtagData || [])]
-    const outst = outstData || []
-    const paidThisMonth = (paidData || []).filter((i: any) => i.paid_at && new Date(i.paid_at) >= monthStart)
+    const ready = [...(Array.isArray(doneData) ? doneData : doneData?.data || []), ...(Array.isArray(gtagData) ? gtagData : gtagData?.data || [])]
+    const outst = Array.isArray(outstData) ? outstData : outstData?.data || []
+    const paid = Array.isArray(paidData) ? paidData : paidData?.data || []
+    // Use summary counts if available (more accurate than array length)
+    const paidSummary = paidData?.summary || null
+    const paidTotalCount = paidSummary?.paid || paid.length
+    const pending = Array.isArray(pendingData) ? pendingData : []
 
     setReadyToInvoice(ready)
     setOutstanding(outst)
-    const revenue = paidThisMonth.reduce((s: number, i: any) => s + (i.total || 0), 0)
+
+    // Total revenue = sum of all paid invoices
+    const totalRevenue = paid.reduce((s: number, i: any) => s + (i.total || 0), 0)
     const outTotal = outst.reduce((s: number, i: any) => s + (i.balance_due || i.total || 0), 0)
-    setStats({ readyCount: ready.length, revenue, outstandingCount: outst.length, outstandingTotal: outTotal, avgWoValue: ready.length > 0 ? ready.reduce((s: number, w: any) => s + (w.grand_total || 0), 0) / ready.length : 0 })
+    // Pending review count from accounting queue
+    const pendingCount = pending.filter((w: any) => w.invoice_status === 'pending_accounting').length
+    // Avg WO value from ready WOs, or from paid invoices if no ready WOs
+    const avgSource = ready.length > 0 ? ready : paid.slice(0, 100)
+    const avgValue = avgSource.length > 0 ? avgSource.reduce((s: number, w: any) => s + (w.grand_total || w.total || 0), 0) / avgSource.length : 0
+
+    setStats({
+      readyCount: ready.length + pendingCount,
+      revenue: totalRevenue,
+      outstandingCount: outst.length,
+      outstandingTotal: outTotal,
+      avgWoValue: avgValue,
+    })
   }, [])
 
   useEffect(() => { getCurrentUser(supabase).then(async (p: any) => { if (!p) { window.location.href = '/login'; return }; setUser(p); await loadData(p); setLoading(false) }) }, [])
@@ -62,9 +81,9 @@ export default function AccountingDashboard() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Ready to Invoice', value: String(stats.readyCount), color: AMBER },
-          { label: 'Revenue This Month', value: fmt(stats.revenue), color: GREEN },
-          { label: 'Outstanding', value: `${stats.outstandingCount} (${fmt(stats.outstandingTotal)})`, color: RED },
+          { label: 'Ready / Pending', value: String(stats.readyCount), color: AMBER },
+          { label: 'Total Revenue (Paid)', value: fmt(stats.revenue), color: GREEN },
+          { label: 'Outstanding', value: stats.outstandingCount > 0 ? `${stats.outstandingCount} (${fmt(stats.outstandingTotal)})` : 'None', color: stats.outstandingCount > 0 ? RED : MUTED },
           { label: 'Avg WO Value', value: fmt(stats.avgWoValue), color: BLUE },
         ].map(s => (
           <div key={s.label} style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '16px 18px' }}>
