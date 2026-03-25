@@ -11,7 +11,7 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
-interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string; ownership_type?: string; unit_type?: string }
+interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string; ownership_type?: string; unit_type?: string; is_owner_operator?: boolean }
 
 const FONT = "'Instrument Sans', sans-serif"
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20 }
@@ -96,19 +96,23 @@ export default function NewWorkOrderPage() {
   // Load last mileage and ownership_type when asset selected
   useEffect(() => {
     if (!selectedAsset || !profile) { setLastMileage(null); setUnitType(null); return }
-    // Fetch ownership_type (determines estimate requirement)
+    // Set unitType immediately from selectedAsset (already has data from list query)
+    if (selectedAsset.is_owner_operator) setUnitType('owner_operator')
+    else if (selectedAsset.ownership_type) setUnitType(selectedAsset.ownership_type)
+    else setUnitType('fleet_asset')
+    // Fetch full asset details for odometer and to confirm ownership_type
     fetch(`/api/assets/${selectedAsset.id}`).then(r => r.ok ? r.json() : null).then((data: any) => {
-      if (data?.is_owner_operator) setUnitType('owner_operator')
-      else if (data?.ownership_type) setUnitType(data.ownership_type)
+      if (!data) return
+      // Update unitType from full asset data (authoritative)
+      if (data.is_owner_operator) setUnitType('owner_operator')
+      else if (data.ownership_type) setUnitType(data.ownership_type)
       else setUnitType('fleet_asset')
-    }).catch(() => {})
-    // Check asset's current odometer
-    fetch(`/api/assets/${selectedAsset.id}`).then(r => r.json()).then((data: any) => {
-      if (data?.odometer) {
+      // Set odometer
+      if (data.odometer) {
         setLastMileage({ value: data.odometer, date: '' })
         setMileage(String(data.odometer))
       }
-    })
+    }).catch(() => {})
     // Check last WO mileage for better date info
     supabase.from('service_orders').select('mileage_at_service, odometer_in, created_at')
       .eq('asset_id', selectedAsset.id).is('deleted_at', null).not('mileage_at_service', 'is', null)
