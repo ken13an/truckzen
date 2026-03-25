@@ -91,6 +91,7 @@ export default function WorkOrderDetail() {
   const [invoiceLoading, setInvoiceLoading] = useState(false)
   const [returnReason, setReturnReason] = useState('')
   const [partSearchResults, setPartSearchResults] = useState<Record<string, any[]>>({})
+  const partDropdownClicked = useRef(false)
   const [partsSubmitted, setPartsSubmitted] = useState(false)
   const [partsSubmitting, setPartsSubmitting] = useState(false)
   const [shopLaborRates, setShopLaborRates] = useState<any[]>([])
@@ -1298,12 +1299,12 @@ export default function WorkOrderDetail() {
                           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
                             <div style={{ position: 'relative' }}>
                               <span style={labelStyle}>Real Name</span>
-                              <input defaultValue={p.real_name || ''} onChange={e => searchInventory(p.id, e.target.value)} onBlur={e => { if (e.target.value) { patchLine(p.id, { real_name: e.target.value }); setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) } }} placeholder="Type to search inventory..." style={inputStyle} />
+                              <input defaultValue={p.real_name || ''} onChange={e => searchInventory(p.id, e.target.value)} onBlur={e => { if (partDropdownClicked.current) { partDropdownClicked.current = false; return } if (e.target.value) { patchLine(p.id, { real_name: e.target.value }) } setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="Type to search inventory..." style={inputStyle} />
                               {/* Inventory search dropdown */}
                               {partSearchResults[p.id]?.length > 0 && (
                                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 160, overflowY: 'auto' }}>
                                   {partSearchResults[p.id].map((inv: any) => (
-                                    <div key={inv.id} onMouseDown={() => autoFillFromInventory(p.id, inv)} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #F3F4F6', fontSize: 12 }}
+                                    <div key={inv.id} onMouseDown={() => { partDropdownClicked.current = true; autoFillFromInventory(p.id, inv) }} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #F3F4F6', fontSize: 12 }}
                                       onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
                                       <div style={{ fontWeight: 600, color: '#1A1A1A' }}>{inv.description}</div>
                                       <div style={{ fontSize: 10, color: GRAY }}>{inv.part_number || '—'} · Cost: {fmt(inv.cost_price || 0)} · Sell: {fmt(inv.sell_price || 0)} · {inv.on_hand || 0} in stock</div>
@@ -1314,7 +1315,7 @@ export default function WorkOrderDetail() {
                             </div>
                             <div>
                               <span style={labelStyle}>Part #</span>
-                              <input defaultValue={p.part_number || ''} onChange={e => searchInventory(p.id, e.target.value)} onBlur={e => { patchLine(p.id, { part_number: e.target.value }); setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="PN" style={inputStyle} />
+                              <input defaultValue={p.part_number || ''} onChange={e => searchInventory(p.id, e.target.value)} onBlur={e => { if (partDropdownClicked.current) return; patchLine(p.id, { part_number: e.target.value }); setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="PN" style={inputStyle} />
                             </div>
                             <div>
                               <span style={labelStyle}>Qty</span>
