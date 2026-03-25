@@ -27,7 +27,7 @@ const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> =
 }
 
 type DateRange = 'today' | 'week' | 'month' | '3months' | 'all'
-type ViewFilter = 'all' | 'active' | 'historical' | 'dealer'
+type ViewFilter = 'all' | 'active' | 'historical' | 'dealer' | 'drafts'
 
 function getDateRangeStart(range: DateRange): Date | null {
   const now = new Date()
@@ -64,6 +64,7 @@ export default function WorkOrdersPage() {
     if (viewFilter === 'active') url += '&historical=false'
     if (viewFilter === 'historical') url += '&historical=true'
     if (viewFilter === 'dealer') url += '&warranty_status=send_to_dealer'
+    if (viewFilter === 'drafts') url += '&status=draft&include_drafts=true'
     if (statusFilter !== 'all') url += `&status=${statusFilter}`
     if (search) url += `&q=${encodeURIComponent(search)}`
     const res = await fetch(url)
@@ -124,7 +125,7 @@ export default function WorkOrdersPage() {
 
       {/* View filter: All / Active / Historical */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 12 }}>
-        {([['active', 'Active'], ['all', 'All'], ['historical', 'Historical'], ['dealer', 'Sent to Dealer']] as [ViewFilter, string][]).map(([v, l]) => (
+        {([['active', 'Active'], ['all', 'All'], ['drafts', 'Drafts'], ['historical', 'Historical'], ['dealer', 'Sent to Dealer']] as [ViewFilter, string][]).map(([v, l]) => (
           <button key={v} onClick={() => { setViewFilter(v); setPage(1) }} style={{
             padding: '10px 18px', background: 'none', border: 'none', borderBottom: viewFilter === v ? '2px solid #1D6FE8' : '2px solid transparent',
             color: viewFilter === v ? '#1D6FE8' : '#9CA3AF', fontWeight: viewFilter === v ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginBottom: -2,

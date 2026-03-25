@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const paginated = !!searchParams.get('page')
   const search = searchParams.get('q') || searchParams.get('search')
 
-  const cacheKey = `vendors:${shopId}:${page}:${perPage}:${search || ''}`
+  const cacheKey = `vendors:${shopId}:${page}:${perPage}:${search || ''}:${paginated ? 'p' : 'a'}`
   const cached = getCache<any>(cacheKey)
   if (cached) return NextResponse.json(cached)
 

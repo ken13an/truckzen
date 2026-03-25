@@ -32,8 +32,8 @@ export async function GET(req: Request) {
   // ---- SERVICE WRITER ----
   if (['service_writer', 'service_advisor'].includes(role)) {
     const [openWos, estPending, estApprovedToday, invoiceReview] = await Promise.all([
-      s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).not('status', 'in', '("good_to_go","done","void")'),
-      s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('estimate_required', true).eq('estimate_approved', false).is('deleted_at', null).not('status', 'in', '("good_to_go","done","void")'),
+      s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).not('status', 'in', '("good_to_go","done","void")').not('so_number', 'like', 'DRAFT-%'),
+      s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('estimate_required', true).eq('estimate_approved', false).is('deleted_at', null).not('status', 'in', '("good_to_go","done","void")').not('so_number', 'like', 'DRAFT-%'),
       s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('estimate_approved', true).gte('updated_at', today),
       s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('invoice_status', 'pending_review').is('deleted_at', null),
     ])

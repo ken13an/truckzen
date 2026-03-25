@@ -3,7 +3,7 @@
  * New Work Order — AI built into flow, tire positions, single button
  */
 'use client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { VinInput } from '@/components/shared/VinInput'
 import { createClient } from '@/lib/supabase/client'
@@ -66,6 +66,11 @@ export default function NewWorkOrderPage() {
   const [newUnit, setNewUnit] = useState({ number: '', vin: '', year: '', make: '', model: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  // Draft auto-save state
+  const [draftId, setDraftId] = useState<string | null>(null)
+  const [draftBanner, setDraftBanner] = useState<{ id: string; complaint: string; customer: any; asset: any; priority: string; jobType: string; mileage: string; customerProvidesParts: boolean } | null>(null)
+  const draftSavingRef = useRef(false)
 
   useEffect(() => {
     getCurrentUser(supabase).then(async (p) => {
@@ -144,6 +149,110 @@ export default function NewWorkOrderPage() {
     return () => clearTimeout(timer)
   }, [customerSearch, profile])
 
+  // --- Draft auto-save ---
+  const saveDraft = useCallback(async (beacon = false) => {
+    if (!profile || !selectedCustomer || !selectedAsset) return
+    if (draftSavingRef.current) return
+    draftSavingRef.current = true
+    const draftData = JSON.stringify({
+      customer: selectedCustomer,
+      asset: selectedAsset,
+      complaint, priority, jobType, mileage,
+      customerProvidesParts,
+      newUnit: showNewUnit ? newUnit : null,
+    })
+    const payload = {
+      shop_id: profile.shop_id, user_id: profile.id,
+      customer_id: selectedCustomer.id, asset_id: selectedAsset.id,
+      complaint, priority, job_type: jobType, mileage,
+      draft_data: draftData,
+    }
+    try {
+      if (beacon) {
+        navigator.sendBeacon('/api/work-orders/draft', new Blob([JSON.stringify(payload)], { type: 'application/json' }))
+      } else {
+        await fetch('/api/work-orders/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      }
+    } catch { /* silent — never show draft errors to user */ }
+    draftSavingRef.current = false
+  }, [profile, selectedCustomer, selectedAsset, complaint, priority, jobType, mileage, customerProvidesParts, showNewUnit, newUnit])
+
+  // Check for existing drafts on page load
+  useEffect(() => {
+    if (!profile) return
+    fetch(`/api/work-orders/draft?user_id=${profile.id}&shop_id=${profile.shop_id}`)
+      .then(r => r.json())
+      .then((drafts: any[]) => {
+        if (drafts?.length > 0) {
+          const d = drafts[0]
+          try {
+            const parsed = d.internal_notes ? JSON.parse(d.internal_notes) : null
+            if (parsed) {
+              setDraftBanner({
+                id: d.id,
+                complaint: d.complaint || '',
+                customer: parsed.customer,
+                asset: parsed.asset,
+                priority: parsed.priority || 'normal',
+                jobType: parsed.jobType || 'repair',
+                mileage: parsed.mileage || '',
+                customerProvidesParts: parsed.customerProvidesParts || false,
+              })
+            }
+          } catch { /* ignore parse error */ }
+        }
+      })
+      .catch(() => {})
+  }, [profile])
+
+  // Auto-save every 30 seconds when customer + vehicle selected
+  useEffect(() => {
+    if (!selectedCustomer || !selectedAsset || step !== 'edit') return
+    const interval = setInterval(() => { saveDraft() }, 30000)
+    return () => clearInterval(interval)
+  }, [selectedCustomer, selectedAsset, saveDraft, step])
+
+  // Save draft on beforeunload (navigation away)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (selectedCustomer && selectedAsset && step === 'edit') {
+        saveDraft(true)
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [selectedCustomer, selectedAsset, saveDraft, step])
+
+  // Restore draft
+  function restoreDraft() {
+    if (!draftBanner) return
+    setSelectedCustomer(draftBanner.customer)
+    setSelectedAsset(draftBanner.asset)
+    setShowVehicleList(false)
+    setComplaint(draftBanner.complaint)
+    setPriority(draftBanner.priority)
+    setJobType(draftBanner.jobType)
+    setMileage(draftBanner.mileage)
+    setCustomerProvidesParts(draftBanner.customerProvidesParts)
+    setDraftId(draftBanner.id)
+    setDraftBanner(null)
+  }
+
+  // Discard draft
+  function discardDraft() {
+    if (!draftBanner || !profile) return
+    fetch(`/api/work-orders/draft?id=${draftBanner.id}&user_id=${profile.id}&shop_id=${profile.shop_id}`, { method: 'DELETE' }).catch(() => {})
+    setDraftBanner(null)
+  }
+
+  // Delete draft after successful WO creation
+  async function deleteDraftAfterCreate() {
+    if (!profile || !selectedAsset) return
+    try {
+      await fetch(`/api/work-orders/draft?user_id=${profile.id}&shop_id=${profile.shop_id}&asset_id=${selectedAsset.id}`, { method: 'DELETE' })
+    } catch {}
+  }
+
   const filteredCustomers = customers
 
   // Duplicate detection: >80% similarity check
@@ -217,6 +326,7 @@ export default function NewWorkOrderPage() {
       })
       if (!res.ok) { const e = await res.json(); setError(e.error || 'Failed'); setSubmitting(false); return }
       const wo = await res.json()
+      await deleteDraftAfterCreate()
       window.location.href = `/work-orders/${wo.id}`
     } catch { setError('Network error'); setSubmitting(false) }
   }
@@ -239,6 +349,23 @@ export default function NewWorkOrderPage() {
           <ChevronLeft size={16} /> Work Orders
         </a>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A', margin: '12px 0 28px' }}>New Work Order</h1>
+
+        {/* Draft recovery banner */}
+        {draftBanner && (
+          <div style={{ marginBottom: 16, padding: '14px 18px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#92400E' }}>You have an unsaved draft</div>
+              <div style={{ fontSize: 12, color: '#A16207', marginTop: 2 }}>
+                {draftBanner.customer?.company_name} — #{draftBanner.asset?.unit_number}
+                {draftBanner.complaint && ` — ${draftBanner.complaint.slice(0, 60)}${draftBanner.complaint.length > 60 ? '...' : ''}`}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button onClick={restoreDraft} style={{ padding: '8px 16px', background: '#D97706', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Continue</button>
+              <button onClick={discardDraft} style={{ padding: '8px 16px', background: '#fff', color: '#92400E', border: '1px solid #FDE68A', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Discard</button>
+            </div>
+          </div>
+        )}
 
         {/* Customer */}
         <div style={{ ...card, marginBottom: 16 }}>

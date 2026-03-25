@@ -21,6 +21,7 @@ export async function GET(req: Request) {
     .eq('shop_id', shopId)
     .is('deleted_at', null)
     .neq('status', 'void')
+    .not('so_number', 'like', 'DRAFT-%')
     .in('invoice_status', ['pending_accounting', 'accounting_approved', 'sent_to_customer', 'quality_check_failed', 'draft'])
     .order('updated_at', { ascending: false })
     .limit(200)

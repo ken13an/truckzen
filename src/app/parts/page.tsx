@@ -166,8 +166,8 @@ export default function PartsPage() {
       const res = await fetch(url)
       if (res.ok) {
         const json = await res.json()
-        if (Array.isArray(json)) { setVendorList(json); setVendorTotal(json.length) }
-        else { setVendorList(json.data || []); setVendorTotal(json.total || 0) }
+        setVendorList(json.data || [])
+        setVendorTotal(json.total || 0)
       }
     } catch {}
     setVendorLoading(false)
@@ -180,7 +180,7 @@ export default function PartsPage() {
     if (!user) return
     setHistoryLoading(true)
     try {
-      const params = new URLSearchParams({ shop_id: user.shop_id, page: String(historyPage), per_page: '50' })
+      const params = new URLSearchParams({ shop_id: user.shop_id, page: String(historyPage), per_page: '25' })
       if (historySearch) params.set('search', historySearch)
       const res = await fetch(`/api/part-history?${params}`)
       if (res.ok) { const json = await res.json(); setHistoryData(json.data || []); setHistoryTotal(json.total || 0) }
@@ -195,7 +195,7 @@ export default function PartsPage() {
     if (!user) return
     setPoLoading(true)
     try {
-      const res = await fetch(`/api/purchase-orders?shop_id=${user.shop_id}&page=${poPage}&per_page=50`)
+      const res = await fetch(`/api/purchase-orders?shop_id=${user.shop_id}&page=${poPage}&per_page=25`)
       if (res.ok) { const json = await res.json(); setPoData(json.data || []); setPoTotal(json.total || 0) }
     } catch {}
     setPoLoading(false)
@@ -548,7 +548,7 @@ export default function PartsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                      {['Vendor Name', 'Source', 'Phone', 'Email', 'Parts Linked'].map(h => (
+                      {['Name', 'Type', 'Phone', 'Email', 'City/State'].map(h => (
                         <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
@@ -558,15 +558,17 @@ export default function PartsPage() {
                       <tr key={v.id} style={{ borderBottom: '1px solid #F3F4F6' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                        <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{v.name || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{v.name || '-'}</td>
                         <td style={{ padding: '10px 12px', fontSize: 11 }}>
-                          <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: v.source === 'fullbay' ? 'rgba(29,111,232,0.1)' : 'rgba(255,255,255,0.06)', color: v.source === 'fullbay' ? BLUE : '#6B7280' }}>
-                            {v.source || 'manual'}
-                          </span>
+                          {v.vendor_type ? (
+                            <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: 'rgba(29,111,232,0.1)', color: BLUE, textTransform: 'capitalize' }}>
+                              {v.vendor_type.replace(/_/g, ' ')}
+                            </span>
+                          ) : <span style={{ color: '#9CA3AF' }}>-</span>}
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{v.phone || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{v.email || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: v.parts_count > 0 ? BLUE : '#9CA3AF', textAlign: 'center' }}>{v.parts_count}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{v.phone || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{v.email || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{[v.city, v.state].filter(Boolean).join(', ') || '-'}</td>
                       </tr>
                     ))}
                     {vendorList.length === 0 && (
@@ -604,21 +606,21 @@ export default function PartsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                      {['Part #', 'Description', 'PO #', 'Vendor', 'Qty', 'Cost', 'Date'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                      {['Date', 'PO #', 'Vendor', 'Description', 'Qty', 'Unit Cost', 'Total'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: h === 'Qty' || h === 'Unit Cost' || h === 'Total' ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {historyData.map((r: any) => (
                       <tr key={r.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{r.part_number || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: '#6B7280' }}>{r.po_number || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{r.vendor || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{r.date ? new Date(r.date).toLocaleDateString() : '-'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: '#6B7280' }}>{r.po_number || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{r.vendor || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || '-'}</td>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: '#1A1A1A', textAlign: 'right' }}>{r.quantity ?? 0}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280', textAlign: 'right' }}>{r.cost_price != null ? '$' + Number(r.cost_price).toFixed(2) : '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{r.date ? new Date(r.date).toLocaleDateString() : '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280', textAlign: 'right' }}>{r.cost_price != null ? '$' + Number(r.cost_price).toFixed(2) : '-'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: '#1A1A1A', textAlign: 'right' }}>{r.cost_price != null && r.quantity != null ? '$' + (Number(r.cost_price) * Number(r.quantity)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -626,7 +628,7 @@ export default function PartsPage() {
               </div>
             )}
           </div>
-          <Pagination currentPage={historyPage} totalPg={Math.ceil(historyTotal / 50) || 1} totalCount={historyTotal} onPrev={() => setHistoryPage(p => p - 1)} onNext={() => setHistoryPage(p => p + 1)} />
+          <Pagination currentPage={historyPage} totalPg={Math.ceil(historyTotal / 25) || 1} totalCount={historyTotal} onPrev={() => setHistoryPage(p => p - 1)} onNext={() => setHistoryPage(p => p + 1)} />
         </>
       )}
 
@@ -644,8 +646,8 @@ export default function PartsPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                      {['PO #', 'Vendor', 'Status', 'Lines', 'Total', 'Date', 'Source'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                      {['PO #', 'Vendor', 'Date', 'Status', 'Line Items', 'Total'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: h === 'Line Items' ? 'center' : h === 'Total' ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -654,8 +656,9 @@ export default function PartsPage() {
                       <tr key={po.id} style={{ borderBottom: '1px solid #F3F4F6' }}
                         onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{po.po_number || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{po.vendor_name || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{po.po_number || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{po.vendor_name || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{po.received_date ? new Date(po.received_date).toLocaleDateString() : po.created_at ? new Date(po.created_at).toLocaleDateString() : '-'}</td>
                         <td style={{ padding: '10px 12px' }}>
                           <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: po.status === 'paid' ? '#F0FDF4' : po.status === 'received' ? '#EFF6FF' : '#F3F4F6', color: po.status === 'paid' ? '#16A34A' : po.status === 'received' ? BLUE : '#6B7280' }}>
                             {po.status || 'draft'}
@@ -663,12 +666,6 @@ export default function PartsPage() {
                         </td>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280', textAlign: 'center' }}>{po.line_count}</td>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: '#1A1A1A', textAlign: 'right' }}>${(po.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{po.received_date ? new Date(po.received_date).toLocaleDateString() : po.created_at ? new Date(po.created_at).toLocaleDateString() : '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 11 }}>
-                          <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: po.source === 'fullbay' ? 'rgba(29,111,232,0.1)' : '#F3F4F6', color: po.source === 'fullbay' ? BLUE : '#6B7280' }}>
-                            {po.source || 'manual'}
-                          </span>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -676,7 +673,7 @@ export default function PartsPage() {
               </div>
             )}
           </div>
-          <Pagination currentPage={poPage} totalPg={Math.ceil(poTotal / 50) || 1} totalCount={poTotal} onPrev={() => setPoPage(p => p - 1)} onNext={() => setPoPage(p => p + 1)} />
+          <Pagination currentPage={poPage} totalPg={Math.ceil(poTotal / 25) || 1} totalCount={poTotal} onPrev={() => setPoPage(p => p - 1)} onNext={() => setPoPage(p => p + 1)} />
         </>
       )}
     </div>

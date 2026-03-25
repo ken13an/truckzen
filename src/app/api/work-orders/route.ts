@@ -40,6 +40,12 @@ export async function GET(req: Request) {
     .not('status', 'eq', 'void')
     .order('created_at', { ascending: false })
 
+  // Exclude autosave drafts from normal views
+  const includeDrafts = searchParams.get('include_drafts')
+  if (includeDrafts !== 'true') {
+    q = q.not('so_number', 'like', 'DRAFT-%')
+  }
+
   if (status && status !== 'all') q = q.eq('status', status)
   if (historical === 'false') q = q.or('is_historical.is.null,is_historical.eq.false')
   if (historical === 'true') q = q.eq('is_historical', true)
@@ -96,6 +102,7 @@ export async function POST(req: Request) {
       .eq('shop_id', shop_id)
       .is('deleted_at', null)
       .not('status', 'in', '("good_to_go","done","void")')
+      .not('so_number', 'like', 'DRAFT-%')
       .limit(1)
     if (activeWOs && activeWOs.length > 0) {
       return NextResponse.json({ error: `Active WO exists: ${activeWOs[0].so_number}`, wo_number: activeWOs[0].so_number, wo_id: activeWOs[0].id }, { status: 409 })
