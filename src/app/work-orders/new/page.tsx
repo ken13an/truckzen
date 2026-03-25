@@ -93,12 +93,15 @@ export default function NewWorkOrderPage() {
       .finally(() => setAssetsLoading(false))
   }, [selectedCustomer, profile])
 
-  // Load last mileage and unit_type when asset selected
+  // Load last mileage and ownership_type when asset selected
   useEffect(() => {
     if (!selectedAsset || !profile) { setLastMileage(null); setUnitType(null); return }
-    // Fetch unit_type
-    supabase.from('assets').select('unit_type').eq('id', selectedAsset.id).single()
-      .then(({ data }: any) => { if (data?.unit_type) setUnitType(data.unit_type) })
+    // Fetch ownership_type (determines estimate requirement)
+    fetch(`/api/assets/${selectedAsset.id}`).then(r => r.ok ? r.json() : null).then((data: any) => {
+      if (data?.is_owner_operator) setUnitType('owner_operator')
+      else if (data?.ownership_type) setUnitType(data.ownership_type)
+      else setUnitType('fleet_asset')
+    }).catch(() => {})
     // Check asset's current odometer
     fetch(`/api/assets/${selectedAsset.id}`).then(r => r.json()).then((data: any) => {
       if (data?.odometer) {
@@ -311,7 +314,7 @@ export default function NewWorkOrderPage() {
   }
 
   const estimateRequired = selectedAsset
-    ? ((unitType || 'company') === 'owner_operator' || (unitType || 'company') === 'outside') && !['diagnostic', 'full_inspection'].includes(jobType)
+    ? (unitType === 'owner_operator' || unitType === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(jobType)
     : false
 
   async function handleCreateClick() {
@@ -534,8 +537,8 @@ export default function NewWorkOrderPage() {
               </div>
             )}
             {selectedAsset && (() => {
-              const effectiveType = unitType || 'company'
-              const needsEstimate = (effectiveType === 'owner_operator' || effectiveType === 'outside') && !['diagnostic', 'full_inspection'].includes(jobType)
+              const effectiveType = unitType || 'fleet_asset'
+              const needsEstimate = (effectiveType === 'owner_operator' || effectiveType === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(jobType)
               const greenMsg = ['diagnostic', 'full_inspection'].includes(jobType)
                 ? `No estimate required — ${jobType === 'diagnostic' ? 'diagnostic' : 'inspection'} can start immediately`
                 : 'No estimate required — work can start immediately'

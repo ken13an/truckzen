@@ -602,7 +602,8 @@ export default function WorkOrderDetail() {
             : { background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.2)', color: AMBER })
         }}>
           <span>
-            {wo.estimate_approved ? 'Estimate approved — work can begin'
+            {wo.estimate_approved
+              ? `Estimate approved${wo.approval_method === 'in_person' ? ' in person' : wo.approval_method === 'printed_signed' ? ' (printed and signed)' : wo.approval_method === 'email' ? ' via email' : ''} — work can begin`
             : wo.estimate_status === 'sent' ? 'Estimate sent to customer — awaiting approval'
             : wo.estimate_status === 'declined' ? `Estimate declined${wo.estimate_declined_reason ? ` — ${wo.estimate_declined_reason}` : ''} — follow up required`
             : 'Estimate required — build and send before assigning work'}
@@ -1795,50 +1796,103 @@ export default function WorkOrderDetail() {
         </div>
       )}
 
-      {/* Approval Modal */}
-      {approvalModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 440, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <span style={{ fontSize: 16, fontWeight: 700 }}>Get Approval</span>
-              <button onClick={() => setApprovalModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
-            </div>
-            <div style={{ fontSize: 13, marginBottom: 16 }}>
-              <div style={{ marginBottom: 8 }}>Estimate total: <strong>{fmt(grandTotal)}</strong></div>
-              <div style={{ marginBottom: 8 }}>Customer: <strong>{customer.contact_name || customer.company_name || '—'}</strong></div>
-              <div>Email: <strong>{customer.email || 'No email on file'}</strong></div>
-            </div>
-            {customer.email && (
-              <button
-                onClick={async () => {
-                  logActivity(`Sent approval request via email to ${customer.email}`)
-                  setApprovalModal(false)
-                  alert('Approval request sent (logged)')
-                }}
-                style={{ ...btnStyle(BLUE, '#fff'), width: '100%', justifyContent: 'center', marginBottom: 8 }}
-              >
-                Send Approval Email
-              </button>
-            )}
-            <div style={{ background: '#F9FAFB', borderRadius: 8, padding: 20, textAlign: 'center', border: '1px dashed #D1D5DB', minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontSize: 13, marginBottom: 12 }}>
-              Signature capture area
-            </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setApprovalModal(false)} style={btnStyle('#fff', GRAY)}>Close</button>
-              <button
-                onClick={() => {
-                  logActivity('Customer approved estimate (in-person signature)')
-                  updateWoStatus('in_progress')
-                  setApprovalModal(false)
-                }}
-                style={btnStyle(GREEN, '#fff')}
-              >
-                Mark Approved
-              </button>
+      {/* Estimate Approval Modal — 3 paths */}
+      {approvalModal && (() => {
+        const hasContact = !!(customer?.email || customer?.phone)
+        const estimateId = wo.estimates?.[0]?.id || wo.estimate_id
+
+        async function approveEstimate(method: 'email' | 'in_person' | 'printed_signed') {
+          if (estimateId) {
+            await fetch(`/api/estimates/${estimateId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'approved', approval_method: method, approved_by: user?.id, approved_at: new Date().toISOString() }),
+            })
+          }
+          await fetch(`/api/work-orders/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved' }),
+          })
+          const methodLabel = method === 'email' ? 'via email' : method === 'in_person' ? 'in person' : '(printed and signed)'
+          logActivity(`Estimate approved ${methodLabel} by ${user?.full_name || 'service writer'}`)
+          try {
+            const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
+            const mgrs = await getUserIdsByRole(wo.shop_id, ['owner', 'gm', 'shop_manager', 'floor_manager'])
+            if (mgrs.length > 0) await createNotification({ shopId: wo.shop_id, recipientId: mgrs, type: 'estimate_approved', title: `Estimate approved — WO #${wo.so_number}`, body: `Ready to assign. Total: ${fmt(grandTotal)}`, link: `/work-orders/${id}`, relatedWoId: id })
+          } catch {}
+          setApprovalModal(false)
+          await loadData()
+        }
+
+        async function sendEstimateEmail() {
+          if (!estimateId) { alert('Build an estimate first'); return }
+          const res = await fetch(`/api/estimates/${estimateId}/send`, { method: 'POST' })
+          if (res.ok) {
+            logActivity(`Estimate sent to ${customer.email || customer.phone}`)
+            alert('Estimate sent to customer')
+          } else {
+            alert('Failed to send estimate')
+          }
+          setApprovalModal(false)
+          await loadData()
+        }
+
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(false)}>
+            <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 480, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <span style={{ fontSize: 16, fontWeight: 700 }}>Get Estimate Approval</span>
+                <button onClick={() => setApprovalModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 16, padding: '10px 14px', background: '#F9FAFB', borderRadius: 8 }}>
+                <div style={{ marginBottom: 4 }}>Estimate total: <strong style={{ color: GREEN }}>{fmt(grandTotal)}</strong></div>
+                <div>Customer: <strong>{customer?.contact_name || customer?.company_name || '—'}</strong></div>
+              </div>
+
+              {/* Path 1: Send to Customer */}
+              <div style={{ marginBottom: 12, padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Send to Customer</div>
+                {hasContact ? (
+                  <button onClick={sendEstimateEmail} style={{ ...btnStyle(BLUE, '#fff'), width: '100%', justifyContent: 'center' }}>
+                    Send via {customer?.email ? 'Email' : 'SMS'}
+                  </button>
+                ) : (
+                  <div>
+                    <div style={{ padding: '8px 10px', background: '#FFFBEB', border: '1px solid rgba(217,119,6,0.2)', borderRadius: 6, fontSize: 12, color: '#D97706', marginBottom: 8 }}>
+                      No email or phone on file — add contact info or approve in person
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Path 2: Approved In Person */}
+              <div style={{ marginBottom: 12, padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Approved In Person</div>
+                <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>Customer has reviewed and verbally approved this estimate</div>
+                <button onClick={() => { if (confirm('Confirm: Customer approved this estimate in person?')) approveEstimate('in_person') }} style={{ ...btnStyle('#fff', BLUE), width: '100%', justifyContent: 'center', border: `1px solid ${BLUE}` }}>
+                  Confirm In-Person Approval
+                </button>
+              </div>
+
+              {/* Path 3: Print & Sign */}
+              <div style={{ padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Print and Sign</div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {estimateId && (
+                    <a href={`/api/estimates/${estimateId}/pdf`} target="_blank" style={{ ...btnStyle('#fff', GRAY), flex: 1, justifyContent: 'center', textDecoration: 'none', textAlign: 'center', border: '1px solid #D1D5DB' }}>
+                      Print Estimate
+                    </a>
+                  )}
+                  <button onClick={() => { if (confirm('Confirm: Customer has signed the printed estimate?')) approveEstimate('printed_signed') }} style={{ ...btnStyle('#fff', BLUE), flex: 1, justifyContent: 'center', border: `1px solid ${BLUE}` }}>
+                    Mark Signed
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ADDITIONAL INFO (external_data) */}
       {wo.external_data && typeof wo.external_data === 'object' && Object.keys(wo.external_data).length > 0 && (
