@@ -31,6 +31,15 @@ function isTireJob(desc: string): boolean {
   return ['tire', 'tyre', 'flat', 'blowout', 'tire change', 'tire replacement', 'tire repair'].some(k => d.includes(k))
 }
 
+const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
+
+function isUnrecognizedJob(desc: string, skills: string[]): boolean {
+  if (!desc || desc.trim().length < 2) return true
+  if (skills && skills.length > 0) return false
+  const d = desc.toLowerCase()
+  return !KNOWN_REPAIR_WORDS.some(w => d.includes(w))
+}
+
 export default function NewWorkOrderPage() {
   const supabase = createClient()
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -610,12 +619,18 @@ export default function NewWorkOrderPage() {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-              {jobLines.map((line, i) => (
-                <div key={i} style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 12 }}>
+              {jobLines.map((line, i) => {
+                const unrecognized = isUnrecognizedJob(line.description, line.skills)
+                return (
+                <div key={i} style={{ border: unrecognized ? '1px solid #FCA5A5' : '1px solid #E5E7EB', borderLeft: unrecognized ? '4px solid #EF4444' : '1px solid #E5E7EB', borderRadius: 10, padding: 12, background: unrecognized ? '#FEF2F2' : '#fff' }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: line.isTire ? 10 : 0 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', minWidth: 40 }}>Job {i + 1}</span>
-                    <input type="text" value={line.description} onChange={e => setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: e.target.value, isTire: isTireJob(e.target.value), isDiagnostic: isDiagnosticJob(e.target.value), roughParts: getAutoRoughParts(e.target.value, l.tirePositions) } : l))} style={{ ...inp, flex: 1 }} />
-                    <button onClick={() => setJobLines(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: '1px solid #D1D5DB', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: '#EF4444', fontWeight: 600, flexShrink: 0, fontSize: 13 }}>×</button>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: unrecognized ? '#DC2626' : '#9CA3AF', minWidth: 40, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {unrecognized && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>}
+                      Job {i + 1}
+                    </span>
+                    {unrecognized && <span style={{ fontSize: 10, fontWeight: 600, color: '#DC2626', background: '#FEE2E2', padding: '1px 6px', borderRadius: 4 }}>Unrecognized</span>}
+                    <input type="text" value={line.description} onChange={e => setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: e.target.value, isTire: isTireJob(e.target.value), isDiagnostic: isDiagnosticJob(e.target.value), roughParts: getAutoRoughParts(e.target.value, l.tirePositions) } : l))} style={{ ...inp, flex: 1, borderColor: unrecognized ? '#FCA5A5' : '#D1D5DB' }} placeholder={unrecognized ? 'What did you mean? Type the correct description...' : ''} />
+                    <button onClick={() => setJobLines(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: `1px solid ${unrecognized ? '#FCA5A5' : '#D1D5DB'}`, borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: '#EF4444', fontWeight: 600, flexShrink: 0, fontSize: 13 }}>{unrecognized ? 'Remove' : '×'}</button>
                   </div>
 
                   {/* FIX 3: Tire position selector */}
@@ -667,7 +682,7 @@ export default function NewWorkOrderPage() {
                     </div>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
 
             <div style={{ display: 'flex', gap: 10 }}>
