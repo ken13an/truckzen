@@ -135,12 +135,12 @@ export default function Sidebar() {
         fetch(`/api/settings/role-permissions?shop_id=${data.shop_id}&role=${data.role}`).then(r => r.ok ? r.json() : []).catch(() => []),
         fetch(`/api/settings/user-overrides?user_id=${data.id}`).then(r => r.ok ? r.json() : []).catch(() => []),
         fetch(`/api/parts?shop_id=${data.shop_id}&per_page=1&status=active`).then(r => r.ok ? r.json() : { total: 0 }).catch(() => ({ total: 0 })),
-        fetch(`/api/service-orders?shop_id=${data.shop_id}&limit=1`).then(r => r.ok ? r.json() : []).catch(() => []),
+        Promise.resolve([]), // WO badge disabled — needs proper unread/pending logic
       ])
       if (Array.isArray(rpRes)) setRolePerms(Object.fromEntries(rpRes.map((r: any) => [r.module, r.allowed])))
       if (Array.isArray(uoRes)) setUserOverrides(Object.fromEntries(uoRes.map((r: any) => [r.module, r.allowed])))
       setLowStock(0) // Will be refined when low stock API param is added
-      setOpenJobs(Array.isArray(wosRes) ? wosRes.length : 0)
+      setOpenJobs(0) // Disabled — was showing false "1" count from limit=1 query
 
     }
     load()

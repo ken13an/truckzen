@@ -323,6 +323,7 @@ export default function NewWorkOrderPage() {
 
   async function handleCreateClick() {
     if (!complaint.trim()) return
+    if (complaint.trim().length < 3) { setError('Please describe the concern in more detail (at least 3 characters)'); return }
     if (!validateMileage()) return
 
     setStep('processing'); setError(''); setAiFailed(false); setDuplicateWarning('')
