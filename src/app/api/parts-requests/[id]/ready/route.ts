@@ -51,6 +51,12 @@ export async function POST(req: Request, { params }: P) {
         body: JSON.stringify({ user_ids: [wo.assigned_tech], title, body }),
       })
     } catch {}
+
+    // In-app notification
+    try {
+      const { createNotification } = await import('@/lib/createNotification')
+      await createNotification({ shopId: wo.shop_id, recipientId: wo.assigned_tech, type: 'parts_ready', title, body, link: `/work-orders/${soId}`, relatedWoId: soId })
+    } catch (err) { console.error('Notification failed:', err) }
   }
 
   return NextResponse.json(data)

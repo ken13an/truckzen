@@ -105,6 +105,20 @@ export async function PATCH(req: Request, { params }: Params) {
     logAction({ shop_id: data.shop_id, user_id: body.user_id || '', action: 'wo.status_changed', entity_type: 'service_order', entity_id: id, details: { status: update.status } }).catch(() => {})
   }
 
+  // Fire-and-forget in-app notifications on status change
+  if (update.status && data.shop_id) {
+    try {
+      const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
+      if (update.status === 'good_to_go') {
+        const mgrs = await getUserIdsByRole(data.shop_id, ['owner', 'gm', 'accounting_manager', 'accountant', 'office_admin'])
+        if (mgrs.length > 0) await createNotification({ shopId: data.shop_id, recipientId: mgrs, type: 'wo_ready', title: `WO #${data.so_number} ready for pickup`, body: update.status, link: `/work-orders/${id}`, relatedWoId: id })
+      }
+      if (update.status === 'in_progress' && data.assigned_tech) {
+        await createNotification({ shopId: data.shop_id, recipientId: data.assigned_tech, type: 'wo_started', title: `WO #${data.so_number} started`, body: 'Work order is now in progress', link: `/work-orders/${id}`, relatedWoId: id })
+      }
+    } catch (err) { console.error('Notification failed:', err) }
+  }
+
   // Fire-and-forget email notifications on status change
   if (update.status === 'in_progress' || update.status === 'good_to_go') {
     ;(async () => {

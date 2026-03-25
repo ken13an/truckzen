@@ -204,6 +204,15 @@ export default function PartDetailPage() {
             {/* Pricing section */}
             <div style={cardStyle}>
               <div style={sectionTitle}>Pricing</div>
+              {(() => {
+                const cost = part.average_cost ?? part.cost_price ?? 0
+                const sell = part.selling_price ?? part.sell_price ?? 0
+                return cost > 0 && sell > 0 && sell < cost ? (
+                  <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 12, color: '#D97706', marginBottom: 12, fontWeight: 600 }}>
+                    Sell price below cost — margin is negative
+                  </div>
+                ) : null
+              })()}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <Field label="Average Cost" value={editing ? undefined : fmt(part.average_cost ?? part.cost_price)}>
                   {editing && <input type="number" step="0.01" value={form.average_cost ?? form.cost_price ?? ''} onChange={e => setForm({ ...form, average_cost: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />}

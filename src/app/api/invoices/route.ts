@@ -129,5 +129,13 @@ export async function POST(req: Request) {
   // Fire and forget
   logAction({ shop_id: user.shop_id, user_id: user.id, action: 'invoice.created', entity_type: 'invoice', entity_id: inv.id, details: { invoice_number: invNum } }).catch(() => {})
 
+  // Notify accounting team
+  try {
+    const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
+    const acctUsers = await getUserIdsByRole(user.shop_id, ['owner', 'gm', 'accountant', 'accounting_manager', 'office_admin'])
+    const others = acctUsers.filter(uid => uid !== user.id)
+    if (others.length > 0) await createNotification({ shopId: user.shop_id, recipientId: others, type: 'invoice_created', title: `Invoice #${invNum} created`, body: `Total: $${total.toFixed(2)}`, link: `/invoices/${inv.id}` })
+  } catch (err) { console.error('Notification failed:', err) }
+
   return NextResponse.json(inv, { status: 201 })
 }
