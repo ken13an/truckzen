@@ -11,7 +11,7 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
-interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string; ownership_type?: string }
+interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string; ownership_type?: string; unit_type?: string }
 
 const FONT = "'Instrument Sans', sans-serif"
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20 }
@@ -65,7 +65,10 @@ export default function NewWorkOrderPage() {
   const [showNewUnit, setShowNewUnit] = useState(false)
   const [newUnit, setNewUnit] = useState({ number: '', vin: '', year: '', make: '', model: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
   const [error, setError] = useState('')
+  const [unitType, setUnitType] = useState<string | null>(null)
+  const [mileageError, setMileageError] = useState('')
 
   // Draft auto-save state
   const [draftId, setDraftId] = useState<string | null>(null)
@@ -90,9 +93,12 @@ export default function NewWorkOrderPage() {
       .finally(() => setAssetsLoading(false))
   }, [selectedCustomer, profile])
 
-  // Load last mileage when asset selected
+  // Load last mileage and unit_type when asset selected
   useEffect(() => {
-    if (!selectedAsset || !profile) { setLastMileage(null); return }
+    if (!selectedAsset || !profile) { setLastMileage(null); setUnitType(null); return }
+    // Fetch unit_type
+    supabase.from('assets').select('unit_type').eq('id', selectedAsset.id).single()
+      .then(({ data }: any) => { if (data?.unit_type) setUnitType(data.unit_type) })
     // Check asset's current odometer
     fetch(`/api/assets/${selectedAsset.id}`).then(r => r.json()).then((data: any) => {
       if (data?.odometer) {
@@ -253,6 +259,26 @@ export default function NewWorkOrderPage() {
     } catch {}
   }
 
+  async function handleSaveDraft() {
+    if (!profile) return
+    setSavingDraft(true); setError('')
+    try {
+      const res = await fetch('/api/work-orders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shop_id: profile.shop_id, user_id: profile.id,
+          asset_id: selectedAsset?.id || null, customer_id: selectedCustomer?.id || null,
+          complaint: complaint.trim() || null, priority, mileage: mileage ? parseInt(mileage) : null, job_type: jobType,
+          estimate_required: estimateRequired,
+          status: 'draft',
+        }),
+      })
+      if (!res.ok) { const e = await res.json(); setError(e.error || 'Failed to save draft'); setSavingDraft(false); return }
+      await deleteDraftAfterCreate()
+      window.location.href = '/work-orders'
+    } catch { setError('Connection error — please try again'); setSavingDraft(false) }
+  }
+
   const filteredCustomers = customers
 
   // Duplicate detection: >80% similarity check
@@ -273,11 +299,24 @@ export default function NewWorkOrderPage() {
     return ''
   }
 
+  function validateMileage(): boolean {
+    if (!mileage) { setMileageError('Current mileage is required'); return false }
+    const val = parseInt(mileage)
+    if (isNaN(val)) { setMileageError('Please enter a valid number'); return false }
+    if (val < 0) { setMileageError('Mileage cannot be negative'); return false }
+    if (val === 0) { setMileageError('Mileage cannot be 0 — enter the current odometer reading'); return false }
+    if (val > 9999999) { setMileageError('Please enter a valid mileage (max 9,999,999)'); return false }
+    setMileageError('')
+    return true
+  }
+
+  const estimateRequired = selectedAsset
+    ? ((unitType || 'company') === 'owner_operator' || (unitType || 'company') === 'outside') && !['diagnostic', 'full_inspection'].includes(jobType)
+    : false
+
   async function handleCreateClick() {
     if (!complaint.trim()) return
-    // Validate mileage required
-    if (!mileage || parseInt(mileage) <= 0) { setError('Current mileage is required'); return }
-    if (mileageWarning.includes('lower than last')) { /* allow but warning is shown */ }
+    if (!validateMileage()) return
 
     setStep('processing'); setError(''); setAiFailed(false); setDuplicateWarning('')
 
@@ -314,6 +353,7 @@ export default function NewWorkOrderPage() {
           shop_id: profile.shop_id, user_id: profile.id,
           asset_id: selectedAsset?.id || null, customer_id: selectedCustomer?.id || null,
           complaint: complaint.trim(), priority, mileage: parseInt(mileage) || null, job_type: jobType,
+          estimate_required: estimateRequired,
           job_lines: jobLines.filter(l => l.description.trim()).map(l => ({
             description: l.description, skills: l.skills,
             customer_provides_parts: customerProvidesParts,
@@ -448,13 +488,16 @@ export default function NewWorkOrderPage() {
         {selectedCustomer && (selectedAsset || showNewUnit) && step === 'edit' && (
           <div style={{ ...card, marginBottom: 16 }}>
             <span style={lbl}>Current Mileage *</span>
-            <input type="number" value={mileage} onChange={e => setMileage(e.target.value)} placeholder="Enter current odometer reading" style={inp} min={0} />
+            <input type="text" inputMode="numeric" value={mileage ? parseInt(mileage).toLocaleString() : ''} onChange={e => { const raw = e.target.value.replace(/[^0-9]/g, ''); if (raw.length <= 7) { setMileage(raw); setMileageError('') } }} placeholder="Enter current odometer reading" style={{ ...inp, borderColor: mileageError ? '#ef4444' : '#D1D5DB' }} />
             {lastMileage && lastMileage.value > 0 && (
               <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
                 Last recorded: {lastMileage.value.toLocaleString()} mi{lastMileage.date ? ` on ${new Date(lastMileage.date).toLocaleDateString()}` : ''}
               </div>
             )}
-            {mileageWarning && (
+            {mileageError && (
+              <div style={{ fontSize: 12, color: '#dc2626', marginTop: 6 }}>{mileageError}</div>
+            )}
+            {mileageWarning && !mileageError && (
               <div style={{ fontSize: 12, color: mileageWarning.includes('lower') ? '#DC2626' : '#D97706', marginTop: 6, padding: '6px 10px', background: mileageWarning.includes('lower') ? '#FEF2F2' : '#FFFBEB', borderRadius: 6, border: `1px solid ${mileageWarning.includes('lower') ? '#FECACA' : '#FDE68A'}` }}>
                 {mileageWarning}
               </div>
@@ -485,13 +528,27 @@ export default function NewWorkOrderPage() {
             </div>
 
             {/* Estimate requirement indicator */}
+            {!selectedAsset && (
+              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: '#f3f4f6', color: '#6b7280' }}>
+                Select a vehicle to determine estimate requirements
+              </div>
+            )}
             {selectedAsset && (() => {
-              const asset = selectedAsset as any
-              const ot = asset.is_owner_operator ? 'owner_operator' : (asset.ownership_type || 'fleet_asset')
-              const needsEstimate = (ot === 'owner_operator' || ot === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(jobType)
+              const effectiveType = unitType || 'company'
+              const needsEstimate = (effectiveType === 'owner_operator' || effectiveType === 'outside') && !['diagnostic', 'full_inspection'].includes(jobType)
+              const greenMsg = ['diagnostic', 'full_inspection'].includes(jobType)
+                ? `No estimate required — ${jobType === 'diagnostic' ? 'diagnostic' : 'inspection'} can start immediately`
+                : 'No estimate required — work can start immediately'
               return (
-                <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: needsEstimate ? 'rgba(217,119,6,0.08)' : 'rgba(22,163,74,0.08)', border: `1px solid ${needsEstimate ? 'rgba(217,119,6,0.2)' : 'rgba(22,163,74,0.2)'}`, color: needsEstimate ? '#D97706' : '#16A34A' }}>
-                  {needsEstimate ? 'Estimate required — customer must approve before work begins' : 'No estimate required — work can start immediately'}
+                <div style={{ marginTop: 10, borderRadius: 8, overflow: 'hidden' }}>
+                  <div style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: needsEstimate ? '#fffbeb' : '#f0fdf4', border: `1px solid ${needsEstimate ? 'rgba(217,119,6,0.2)' : 'rgba(22,163,74,0.2)'}`, borderRadius: 8, color: needsEstimate ? '#d97706' : '#16a34a' }}>
+                    {needsEstimate ? 'Estimate required — must be approved before work begins' : greenMsg}
+                  </div>
+                  {needsEstimate && (
+                    <div style={{ padding: '4px 12px 8px', fontSize: 11, color: '#92400e' }}>
+                      Service writer must build and send estimate after creating this work order
+                    </div>
+                  )}
                 </div>
               )
             })()}
@@ -615,11 +672,16 @@ export default function NewWorkOrderPage() {
         {/* Error */}
         {error && <div style={{ padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, color: '#DC2626', fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
-        {/* FIX 1: Single button — different label per step */}
-        {step === 'edit' && canCreate && (
-          <button onClick={handleCreateClick} style={{ ...btnP, width: '100%', padding: '16px 28px', fontSize: 16 }}>
-            Create Work Order
-          </button>
+        {/* Action buttons */}
+        {step === 'edit' && (
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <button onClick={handleSaveDraft} disabled={savingDraft || submitting} style={{ ...btnS, padding: '16px 28px', fontSize: 14, opacity: savingDraft ? 0.5 : 1 }}>
+              {savingDraft ? 'Saving...' : 'Save as Draft'}
+            </button>
+            <button onClick={handleCreateClick} disabled={!canCreate || savingDraft} style={{ ...btnP, flex: 1, padding: '16px 28px', fontSize: 16, opacity: canCreate && !savingDraft ? 1 : 0.5 }}>
+              Create Work Order
+            </button>
+          </div>
         )}
         {step === 'review' && jobLines.length > 0 && (
           <button onClick={handleConfirmCreate} disabled={submitting} style={{ ...btnP, width: '100%', padding: '16px 28px', fontSize: 16, opacity: submitting ? 0.5 : 1 }}>

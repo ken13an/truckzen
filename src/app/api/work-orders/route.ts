@@ -89,13 +89,14 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const s = db()
   const body = await req.json()
-  const { shop_id, user_id, asset_id, customer_id, complaint, priority, job_lines, mileage, job_type } = body
+  const { shop_id, user_id, asset_id, customer_id, complaint, priority, job_lines, mileage, job_type, estimate_required: bodyEstimateRequired } = body
+  const isDraftSave = body.status === 'draft'
 
   if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
-  if (!complaint?.trim()) return NextResponse.json({ error: 'Concern description required' }, { status: 400 })
+  if (!isDraftSave && !complaint?.trim()) return NextResponse.json({ error: 'Concern description required' }, { status: 400 })
 
-  // Duplicate WO prevention: check if unit already has an active WO
-  if (asset_id) {
+  // Duplicate WO prevention — skip for draft saves
+  if (asset_id && !isDraftSave) {
     const { data: activeWOs } = await s.from('service_orders')
       .select('id, so_number')
       .eq('asset_id', asset_id)
@@ -123,7 +124,7 @@ export async function POST(req: Request) {
   const { data: wo, error } = await insertServiceOrder(s, shop_id, {
     asset_id: asset_id || null,
     customer_id: customer_id || null,
-    complaint: complaint.trim(),
+    complaint: complaint?.trim() || '',
     source: 'walk_in',
     priority: priority || 'normal',
     status: 'draft',
@@ -134,15 +135,15 @@ export async function POST(req: Request) {
     odometer_in: mileage ? parseInt(mileage) : null,
     ownership_type: assetOwnership,
     job_type: job_type || 'repair',
-    estimate_required: (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(job_type || 'repair'),
+    estimate_required: bodyEstimateRequired != null ? bodyEstimateRequired : (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(job_type || 'repair'),
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Mileage saved on WO only — truck odometer updates when WO closes
 
-  // Create job lines
-  const lines = job_lines || [complaint.trim()]
+  // Create job lines — skip for draft saves
+  const lines = isDraftSave ? [] : (job_lines || [complaint.trim()])
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
     const lineText = typeof line === 'string' ? line : line.description
@@ -179,14 +180,14 @@ export async function POST(req: Request) {
   await s.from('wo_activity_log').insert({
     wo_id: wo.id,
     user_id: user_id || null,
-    action: `Created work order ${wo.so_number}`,
+    action: isDraftSave ? `Saved draft work order ${wo.so_number}` : `Created work order ${wo.so_number}`,
   })
 
   // Fire and forget
   logAction({ shop_id, user_id, action: 'wo.created', entity_type: 'service_order', entity_id: wo.id, details: { so_number: wo.so_number } }).catch(() => {})
 
-  // Notify service writers if estimate required
-  if (wo.estimate_required) {
+  // Notify service writers if estimate required — skip for draft saves
+  if (wo.estimate_required && !isDraftSave) {
     try {
       const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
       const writers = await getUserIdsByRole(shop_id, ['service_writer', 'service_advisor'])
