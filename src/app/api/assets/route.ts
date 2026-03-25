@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   const paginated = !!searchParams.get('page')
   let q = s
     .from('assets')
-    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, is_owner_operator, unit_type, source, customers(company_name)', paginated ? { count: 'exact' } : {})
+    .select('id, unit_number, year, make, model, vin, odometer, status, customer_id, ownership_type, is_owner_operator, unit_type, source, owner_name, driver_name, license_plate, asset_status, customers(company_name)', paginated ? { count: 'exact' } : {})
     .eq('shop_id', shopId)
     .is('deleted_at', null)
     .order('unit_number')
@@ -26,7 +26,9 @@ export async function GET(req: Request) {
   const customerId = searchParams.get('customer_id')
   if (customerId) q = q.eq('customer_id', customerId)
   if (status) q = q.eq('status', status)
-  if (search) q = q.or(`unit_number.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%,vin.ilike.%${search}%`)
+  const assetStatusParam = searchParams.get('asset_status')
+  if (assetStatusParam && assetStatusParam !== 'all') q = q.eq('asset_status', assetStatusParam)
+  if (search) q = q.or(`unit_number.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%,vin.ilike.%${search}%,owner_name.ilike.%${search}%,driver_name.ilike.%${search}%`)
 
   const ownerType = searchParams.get('ownership_type')
   const unitType = searchParams.get('unit_type')
@@ -43,7 +45,21 @@ export async function GET(req: Request) {
     const { data, error, count } = await (q as any)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     const total = count ?? 0
-    return NextResponse.json({ data: data || [], total, page, limit, totalPages: Math.ceil(total / limit) })
+
+    // Get counts for all ownership types (for tab badges)
+    let counts: Record<string, number> = {}
+    if (searchParams.get('include_counts') === 'true') {
+      const countBase = s.from('assets').select('ownership_type', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null)
+      const [c1, c2, c3, cAll] = await Promise.all([
+        (countBase as any).eq('ownership_type', 'fleet_asset'),
+        s.from('assets').select('ownership_type', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('ownership_type', 'owner_operator'),
+        s.from('assets').select('ownership_type', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('ownership_type', 'outside_customer'),
+        s.from('assets').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null),
+      ])
+      counts = { fleet_asset: c1.count || 0, owner_operator: c2.count || 0, outside_customer: c3.count || 0, all: cAll.count || 0 }
+    }
+
+    return NextResponse.json({ data: data || [], total, page, limit, totalPages: Math.ceil(total / limit), counts })
   }
 
   // Legacy: no pagination (for customer unit dropdowns etc.)
