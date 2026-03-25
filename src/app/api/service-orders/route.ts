@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyRole } from '@/lib/notify'
+import { insertServiceOrder } from '@/lib/generateWoNumber'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -134,30 +135,20 @@ export async function POST(req: Request) {
     }
   }
 
-  // Generate SO number
-  const { count } = await supabase.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id).is('deleted_at', null)
-  const year = new Date().getFullYear()
-  const soNum = `SO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
-
-  const { data: so, error } = await supabase
-    .from('service_orders')
-    .insert({
-      shop_id: shop_id,
-      so_number: soNum,
-      asset_id: asset_id,
-      customer_id: customer_id || null,
-      complaint: complaint.trim(),
-      cause: cause || null,
-      correction: correction || null,
-      source: source || 'walk_in',
-      priority: priority || 'normal',
-      team: team || null,
-      bay: bay || null,
-      status: 'draft',
-      advisor_id: user_id || null,
-    })
-    .select()
-    .single()
+  // Generate SO number + insert with retry on duplicate
+  const { data: so, error } = await insertServiceOrder(supabase, shop_id, {
+    asset_id: asset_id,
+    customer_id: customer_id || null,
+    complaint: complaint.trim(),
+    cause: cause || null,
+    correction: correction || null,
+    source: source || 'walk_in',
+    priority: priority || 'normal',
+    team: team || null,
+    bay: bay || null,
+    status: 'draft',
+    advisor_id: user_id || null,
+  })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -168,7 +159,7 @@ export async function POST(req: Request) {
     await notifyRole({
       shopId: shop_id,
       role: ['shop_manager', 'maintenance_manager'],
-      title: `New ${soNum} — Truck #${unitNum}`,
+      title: `New ${so.so_number} — Truck #${unitNum}`,
       body: complaint.trim().slice(0, 100),
       link: `/orders/${so.id}`,
     })

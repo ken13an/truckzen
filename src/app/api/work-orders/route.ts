@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { logAction } from '@/lib/services/auditLog'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { insertServiceOrder } from '@/lib/generateWoNumber'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -101,44 +102,33 @@ export async function POST(req: Request) {
     }
   }
 
-  // Generate WO number
-  const { count } = await s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id).is('deleted_at', null)
-  const year = new Date().getFullYear()
-  const woNum = `WO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
-
   // Snapshot ownership_type from asset
   let assetOwnership = 'fleet_asset'
   let assetUnitNumber = ''
   if (asset_id) {
     const { data: assetData } = await s.from('assets').select('ownership_type, unit_number, is_owner_operator').eq('id', asset_id).single()
     if (assetData?.ownership_type) assetOwnership = assetData.ownership_type
-    // If asset is flagged as owner operator, override ownership_type
     if (assetData?.is_owner_operator) assetOwnership = 'owner_operator'
     if (assetData?.unit_number) assetUnitNumber = assetData.unit_number
   }
 
-  const { data: wo, error } = await s
-    .from('service_orders')
-    .insert({
-      shop_id,
-      so_number: woNum,
-      asset_id: asset_id || null,
-      customer_id: customer_id || null,
-      complaint: complaint.trim(),
-      source: 'walk_in',
-      priority: priority || 'normal',
-      status: 'draft',
-      advisor_id: user_id || null,
-      service_writer_id: user_id || null,
-      created_by_user_id: user_id || null,
-      mileage_at_service: mileage ? parseInt(mileage) : null,
-      odometer_in: mileage ? parseInt(mileage) : null,
-      ownership_type: assetOwnership,
-      job_type: job_type || 'repair',
-      estimate_required: (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(job_type || 'repair'),
-    })
-    .select()
-    .single()
+  // Generate WO number + insert with retry on duplicate
+  const { data: wo, error } = await insertServiceOrder(s, shop_id, {
+    asset_id: asset_id || null,
+    customer_id: customer_id || null,
+    complaint: complaint.trim(),
+    source: 'walk_in',
+    priority: priority || 'normal',
+    status: 'draft',
+    advisor_id: user_id || null,
+    service_writer_id: user_id || null,
+    created_by_user_id: user_id || null,
+    mileage_at_service: mileage ? parseInt(mileage) : null,
+    odometer_in: mileage ? parseInt(mileage) : null,
+    ownership_type: assetOwnership,
+    job_type: job_type || 'repair',
+    estimate_required: (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(job_type || 'repair'),
+  })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -182,7 +172,7 @@ export async function POST(req: Request) {
   await s.from('wo_activity_log').insert({
     wo_id: wo.id,
     user_id: user_id || null,
-    action: `Created work order ${woNum}`,
+    action: `Created work order ${wo.so_number}`,
   })
 
   // Fire and forget
@@ -196,7 +186,7 @@ export async function POST(req: Request) {
       const unitNum = assetUnitNumber
       await createNotification({
         shopId: shop_id, recipientId: writers, type: 'estimate_required',
-        title: 'Estimate Required', body: `WO ${woNum} #${unitNum} — build and send estimate before work begins`,
+        title: 'Estimate Required', body: `WO ${wo.so_number} #${unitNum} — build and send estimate before work begins`,
         link: `/work-orders/${wo.id}`, relatedWoId: wo.id, relatedUnit: unitNum, priority: 'high',
       })
     } catch {}

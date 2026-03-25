@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getStaffEmails, getShopInfo } from '@/lib/services/email'
 import { checkinConfirmedEmail } from '@/lib/emails/checkinConfirmed'
 import { staffCheckinAlertEmail } from '@/lib/emails/staffCheckinAlert'
+import { insertServiceOrder } from '@/lib/generateWoNumber'
 import { sendPushToRole } from '@/lib/services/notifications'
 import { checkKioskLimit } from '@/lib/kioskRateLimit'
 
@@ -101,15 +102,9 @@ export async function POST(req: Request) {
     }
   }
 
-  const { count } = await s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id).is('deleted_at', null)
-  const woYear = new Date().getFullYear()
-  const woNum = `WO-${woYear}-${String((count ?? 0) + 1).padStart(4, '0')}`
-
-  // Create WO
+  // Create WO with atomic number generation + retry
   const portalToken = crypto.randomUUID()
-  const { data: wo, error: woErr } = await s.from('service_orders').insert({
-    shop_id,
-    so_number: woNum,
+  const { data: wo, error: woErr } = await insertServiceOrder(s, shop_id, {
     asset_id: finalUnitId || null,
     customer_id: finalCustomerId || null,
     complaint: concern_text.trim(),
@@ -119,7 +114,7 @@ export async function POST(req: Request) {
     portal_token: portalToken,
     auth_type: auth_type || 'estimate_first',
     auth_limit: auth_limit || null,
-  }).select().single()
+  })
 
   if (woErr) return NextResponse.json({ error: 'Failed to create WO: ' + woErr.message }, { status: 500 })
 
@@ -240,7 +235,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     wo_id: wo.id,
-    wo_number: woNum,
+    wo_number: wo.so_number,
     portal_token: portalToken,
     checkin_ref: checkinRef,
   }, { status: 201 })
