@@ -127,7 +127,7 @@ export async function POST(req: Request) {
     complaint: complaint?.trim() || '',
     source: 'walk_in',
     priority: priority || 'normal',
-    status: body.status === 'submitted' ? 'open' : 'draft',
+    status: body.status === 'submitted' ? 'waiting_approval' : 'draft',
     submitted_at: body.submitted_at || null,
     advisor_id: user_id || null,
     service_writer_id: user_id || null,
