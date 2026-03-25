@@ -7,6 +7,7 @@ import { ChevronLeft, Users, MessageSquare, Clock, DollarSign, MoreHorizontal, P
 import AITextInput from '@/components/ai-text-input'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
+import WOStepper from '@/components/work-orders/WOStepper'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -785,43 +786,7 @@ export default function WorkOrderDetail() {
       )}
 
       {/* PROGRESS PIPELINE */}
-      {!wo.is_historical && (() => {
-        const hasAssign = jobLines.some((l: any) => jobAssignments.some((ja: any) => ja.line_id === l.id))
-        const hasDiagnose = jobLines.every((l: any) => l.description?.trim())
-        const hasAuthorize = ['authorized', 'in_progress', 'done', 'good_to_go', 'invoiced', 'closed'].includes(wo.status)
-        const hasRepair = jobLines.length > 0 && jobLines.every((l: any) => l.line_status === 'completed' || l.status === 'completed')
-        const hasInvoice = ['invoiced', 'closed'].includes(wo.status) || wo.invoice_status === 'sent_to_customer'
-        const steps = [
-          { label: 'Assign', done: hasAssign },
-          { label: 'Diagnose', done: hasDiagnose },
-          { label: 'Authorize', done: hasAuthorize },
-          { label: 'Repair', done: hasRepair },
-          { label: 'Invoice', done: hasInvoice },
-        ]
-        const activeIdx = steps.findIndex(s => !s.done)
-        return (
-          <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, padding: '12px 20px' }}>
-            {steps.map((s, i) => (
-              <div key={s.label} style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace",
-                    background: s.done ? '#16A34A' : i === activeIdx ? BLUE : '#E5E7EB',
-                    color: s.done || i === activeIdx ? '#fff' : '#9CA3AF',
-                  }}>
-                    {s.done ? '\u2713' : i + 1}
-                  </div>
-                  <span style={{ fontSize: 9, fontWeight: 600, color: s.done ? '#16A34A' : i === activeIdx ? BLUE : '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.04em' }}>{s.label}</span>
-                </div>
-                {i < steps.length - 1 && (
-                  <div style={{ width: 40, height: 2, background: s.done ? '#16A34A' : '#E5E7EB', margin: '0 4px', marginBottom: 16 }} />
-                )}
-              </div>
-            ))}
-          </div>
-        )
-      })()}
+      {!wo.is_historical && <WOStepper wo={wo} asset={asset} jobLines={jobLines} jobAssignments={jobAssignments} />}
 
       {/* TAB BAR */}
       <div data-no-print style={{ display: 'flex', gap: 0, borderBottom: '1px solid #E5E7EB', marginBottom: 16, overflowX: 'auto' }}>
