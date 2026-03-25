@@ -202,3 +202,49 @@ export async function POST(req: Request) {
 
   return NextResponse.json(wo, { status: 201 })
 }
+
+export async function DELETE(req: Request) {
+  const s = db()
+  const body = await req.json()
+  const { ids, user_id } = body
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return NextResponse.json({ error: 'ids array required' }, { status: 400 })
+  }
+
+  // Check user role
+  if (user_id) {
+    const { data: user } = await s.from('users').select('role').eq('id', user_id).single()
+    if (!user || !['owner', 'gm', 'it_person'].includes(user.role)) {
+      return NextResponse.json({ error: 'Only owner, GM, or IT can bulk delete' }, { status: 403 })
+    }
+  }
+
+  // Get WOs to check status
+  const { data: wos } = await s.from('service_orders').select('id, status, so_number, shop_id').in('id', ids)
+  if (!wos) return NextResponse.json({ error: 'Failed to fetch work orders' }, { status: 500 })
+
+  const blocked = ['in_progress', 'completed', 'good_to_go', 'done', 'invoiced']
+  const deletable = wos.filter(w => !blocked.includes(w.status))
+  const skipped = wos.filter(w => blocked.includes(w.status))
+
+  // Soft delete allowed ones
+  const now = new Date().toISOString()
+  if (deletable.length > 0) {
+    await s.from('service_orders')
+      .update({ deleted_at: now, updated_at: now })
+      .in('id', deletable.map(w => w.id))
+  }
+
+  // Log
+  if (user_id && deletable.length > 0) {
+    const { logAction } = await import('@/lib/services/auditLog')
+    logAction({ shop_id: wos[0]?.shop_id || '', user_id, action: 'bulk_delete', entity_type: 'service_order', entity_id: ids.join(','), details: { count: deletable.length } }).catch(() => {})
+  }
+
+  return NextResponse.json({
+    deleted: deletable.length,
+    skipped: skipped.length,
+    errors: skipped.map(w => `${w.so_number} cannot be deleted (status: ${w.status})`),
+  })
+}

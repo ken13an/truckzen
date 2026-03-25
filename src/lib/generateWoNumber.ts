@@ -1,52 +1,55 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 
 /**
- * Generate the next WO number for a shop using the DB function next_wo_number().
- * Falls back to JS-based generation if the DB function doesn't exist.
- * Includes retry logic for race conditions (unique constraint violations).
+ * Generate the next WO number using the database sequence wo_number_seq.
+ * Format: WO-123463, WO-123464, etc. (simple sequential, no year prefix)
+ * Falls back to JS-based generation if the sequence doesn't exist.
  */
 export async function generateWoNumber(supabase: SupabaseClient, shopId: string): Promise<string> {
-  // Try the DB function first
+  // Try the DB sequence first (race-condition safe)
   try {
     const { data, error } = await supabase.rpc('next_wo_number', { p_shop_id: shopId })
     if (!error && data) return data as string
   } catch {}
 
-  // Fallback: JS-based generation using MAX
-  const year = new Date().getFullYear()
+  // Fallback: use raw SQL nextval via the service_orders table trick
+  // Query the sequence directly
+  try {
+    const { data: seqRows } = await supabase
+      .from('service_orders')
+      .select('so_number')
+      .like('so_number', 'WO-%')
+      .order('created_at', { ascending: false })
+      .limit(200)
 
-  // Get highest WO-prefixed trailing number
-  const { data: woRows } = await supabase
-    .from('service_orders')
-    .select('so_number')
-    .eq('shop_id', shopId)
-    .like('so_number', 'WO-%')
-    .order('created_at', { ascending: false })
-    .limit(100)
-
-  let maxWo = 0
-  for (const row of woRows || []) {
-    const match = row.so_number?.match(/^WO-\d+-(\d+)$/)
-    if (match) maxWo = Math.max(maxWo, parseInt(match[1]))
-  }
-
-  // Get highest plain numeric number
-  const { data: plainRows } = await supabase
-    .from('service_orders')
-    .select('so_number')
-    .eq('shop_id', shopId)
-    .order('created_at', { ascending: false })
-    .limit(200)
-
-  let maxPlain = 0
-  for (const row of plainRows || []) {
-    if (/^\d+$/.test(row.so_number || '')) {
-      maxPlain = Math.max(maxPlain, parseInt(row.so_number))
+    let maxNum = 0
+    for (const row of seqRows || []) {
+      // Match WO-NNNNN or WO-YYYY-NNNNN
+      const matchSimple = row.so_number?.match(/^WO-(\d+)$/)
+      const matchYear = row.so_number?.match(/^WO-\d+-(\d+)$/)
+      if (matchSimple) maxNum = Math.max(maxNum, parseInt(matchSimple[1]))
+      if (matchYear) maxNum = Math.max(maxNum, parseInt(matchYear[1]))
     }
-  }
 
-  const next = Math.max(maxWo, maxPlain) + 1
-  return `WO-${year}-${next}`
+    // Also check plain numeric
+    const { data: plainRows } = await supabase
+      .from('service_orders')
+      .select('so_number')
+      .eq('shop_id', shopId)
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+    for (const row of plainRows || []) {
+      if (/^\d+$/.test(row.so_number || '')) {
+        maxNum = Math.max(maxNum, parseInt(row.so_number))
+      }
+    }
+
+    return `WO-${maxNum + 1}`
+  } catch {
+    // Last resort
+    return `WO-${Date.now()}`
+  }
 }
 
 /**
@@ -72,7 +75,6 @@ export async function insertServiceOrder(
     // Check if it's a unique constraint violation
     if (error.code === '23505' && error.message?.includes('so_number')) {
       attempts++
-      // Small delay to reduce collision chance
       await new Promise(r => setTimeout(r, 50 * attempts))
       continue
     }

@@ -651,14 +651,10 @@ export default function NewWorkOrderPage() {
                     <div style={{ marginTop: 8, padding: '8px 12px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8 }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', marginBottom: 6 }}>Auto-Generated Parts (rough)</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                        {line.roughParts.filter(p => !p.is_labor).map((p, pi) => (
-                          <span key={pi} style={{ padding: '3px 8px', borderRadius: 5, fontSize: 10, background: '#FFF7ED', color: '#EA580C', border: '1px solid #FED7AA' }}>
-                            {p.quantity > 1 ? `${p.quantity}x ` : ''}{p.rough_name}
-                          </span>
-                        ))}
-                        {line.roughParts.filter(p => p.is_labor).map((p, pi) => (
-                          <span key={`l${pi}`} style={{ padding: '3px 8px', borderRadius: 5, fontSize: 10, background: '#F3F4F6', color: '#6B7280', border: '1px solid #E5E7EB' }}>
-                            {p.rough_name} (inspection)
+                        {line.roughParts.map((p, pi) => (
+                          <span key={pi} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 5, fontSize: 10, background: p.is_labor ? '#F3F4F6' : '#FFF7ED', color: p.is_labor ? '#6B7280' : '#EA580C', border: `1px solid ${p.is_labor ? '#E5E7EB' : '#FED7AA'}` }}>
+                            {p.is_labor ? `${p.rough_name} (inspection)` : `${p.quantity > 1 ? `${p.quantity}x ` : ''}${p.rough_name}`}
+                            <span onClick={() => setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, roughParts: l.roughParts.filter((_, rIdx) => rIdx !== pi) } : l))} style={{ cursor: 'pointer', marginLeft: 2, fontWeight: 700, fontSize: 12, lineHeight: 1, opacity: 0.6 }} title="Remove">&times;</span>
                           </span>
                         ))}
                       </div>

@@ -575,41 +575,68 @@ export default function WorkOrderDetail() {
           <div style={{ fontSize: 11, color: GRAY, marginTop: 4 }}>Opened by: {createdByName}</div>
           {/* Edit / Submit / Cancel buttons */}
           {!wo.is_historical && isWriter && (
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              {!editMode ? (
-                <button onClick={() => { setEditMode(true); setEditDraft({ complaint: wo.complaint || '', priority: wo.priority || 'normal', cause: wo.cause || '', correction: wo.correction || '' }) }} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}`, padding: '6px 14px', fontSize: 12 }}>
-                  Edit
-                </button>
-              ) : (
-                <>
-                  <button onClick={() => { setEditMode(false); setEditDraft(null) }} style={{ ...btnStyle('#fff', GRAY), padding: '6px 14px', fontSize: 12 }}>
-                    Cancel
+            <div style={{ marginTop: 10 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: editMode ? 10 : 0 }}>
+                {!editMode ? (
+                  <button onClick={() => { setEditMode(true); setEditDraft({ complaint: wo.complaint || '', priority: wo.priority || 'normal', cause: wo.cause || '', correction: wo.correction || '' }) }} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}`, padding: '6px 14px', fontSize: 12 }}>
+                    Edit
                   </button>
-                  <button onClick={async () => {
-                    if (!editDraft) return
-                    const updates: Record<string, any> = { user_id: user?.id }
-                    if (editDraft.complaint !== (wo.complaint || '')) updates.complaint = editDraft.complaint
-                    if (editDraft.priority !== (wo.priority || 'normal')) updates.priority = editDraft.priority
-                    if (editDraft.cause !== (wo.cause || '')) updates.cause = editDraft.cause
-                    if (editDraft.correction !== (wo.correction || '')) updates.correction = editDraft.correction
-                    // If WO is draft and has required fields, set to open
-                    if (wo.status === 'draft' && editDraft.complaint?.trim()) updates.status = 'open'
-                    const res = await fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) })
-                    if (res.ok) {
-                      setEditMode(false)
-                      setEditDraft(null)
-                      setToastMsg('Work order updated')
-                      setTimeout(() => setToastMsg(''), 4000)
-                      await loadData()
-                    } else {
-                      const err = await res.json()
-                      setToastMsg(err.error || 'Failed to save')
-                      setTimeout(() => setToastMsg(''), 4000)
-                    }
-                  }} style={btnStyle(BLUE, '#fff')}>
-                    Submit
-                  </button>
-                </>
+                ) : (
+                  <>
+                    <button onClick={() => { setEditMode(false); setEditDraft(null) }} style={{ ...btnStyle('#fff', GRAY), padding: '6px 14px', fontSize: 12 }}>
+                      Cancel
+                    </button>
+                    <button onClick={async () => {
+                      if (!editDraft) return
+                      const updates: Record<string, any> = { user_id: user?.id }
+                      if (editDraft.complaint !== (wo.complaint || '')) updates.complaint = editDraft.complaint
+                      if (editDraft.priority !== (wo.priority || 'normal')) updates.priority = editDraft.priority
+                      if (editDraft.cause !== (wo.cause || '')) updates.cause = editDraft.cause
+                      if (editDraft.correction !== (wo.correction || '')) updates.correction = editDraft.correction
+                      if (wo.status === 'draft' && editDraft.complaint?.trim()) updates.status = 'open'
+                      const res = await fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) })
+                      if (res.ok) {
+                        setEditMode(false)
+                        setEditDraft(null)
+                        setToastMsg('Work order updated')
+                        setTimeout(() => setToastMsg(''), 4000)
+                        await loadData()
+                      } else {
+                        const err = await res.json()
+                        setToastMsg(err.error || 'Failed to save')
+                        setTimeout(() => setToastMsg(''), 4000)
+                      }
+                    }} style={btnStyle(BLUE, '#fff')}>
+                      Submit
+                    </button>
+                  </>
+                )}
+              </div>
+              {/* Editable fields in edit mode */}
+              {editMode && editDraft && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px 14px', background: '#F9FAFB', borderRadius: 8, border: '1px solid #E5E7EB' }}>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={labelStyle}>Concern / Complaint</label>
+                    <textarea value={editDraft.complaint} onChange={e => setEditDraft({ ...editDraft, complaint: e.target.value })} rows={2} style={{ ...inputStyle, resize: 'vertical', borderColor: '#BFDBFE' }} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Priority</label>
+                    <select value={editDraft.priority} onChange={e => setEditDraft({ ...editDraft, priority: e.target.value })} style={{ ...inputStyle, borderColor: '#BFDBFE', appearance: 'auto' }}>
+                      <option value="low">Low</option>
+                      <option value="normal">Normal</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Cause</label>
+                    <input value={editDraft.cause} onChange={e => setEditDraft({ ...editDraft, cause: e.target.value })} style={{ ...inputStyle, borderColor: '#BFDBFE' }} placeholder="Root cause" />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={labelStyle}>Correction</label>
+                    <input value={editDraft.correction} onChange={e => setEditDraft({ ...editDraft, correction: e.target.value })} style={{ ...inputStyle, borderColor: '#BFDBFE' }} placeholder="Correction applied" />
+                  </div>
+                </div>
               )}
             </div>
           )}
