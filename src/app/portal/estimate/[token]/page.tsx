@@ -19,6 +19,8 @@ export default function EstimatePortalPage() {
   const [actionLoading, setActionLoading] = useState('')
   const [showDecline, setShowDecline] = useState(false)
   const [declineReason, setDeclineReason] = useState('')
+  const [showApproveNotes, setShowApproveNotes] = useState(false)
+  const [approveNotes, setApproveNotes] = useState('')
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function EstimatePortalPage() {
         }
         const data = await res.json()
         setEstimate(data)
-        if (data.status === 'approved' || data.status === 'declined') {
+        if (data.status === 'approved' || data.status === 'approved_with_notes' || data.status === 'declined') {
           setResponded(true)
           setResponseStatus(data.status)
         }
@@ -62,6 +64,23 @@ export default function EstimatePortalPage() {
       if (res.ok) {
         setResponded(true)
         setResponseStatus('approved')
+      }
+    } catch { /* ignore */ }
+    setActionLoading('')
+  }
+
+  async function handleApproveWithNotes() {
+    setActionLoading('approve_with_notes')
+    try {
+      const res = await fetch(`/api/estimates/${estimate.id}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve_with_notes', token, notes: approveNotes }),
+      })
+      if (res.ok) {
+        setResponded(true)
+        setResponseStatus('approved_with_notes')
+        setShowApproveNotes(false)
       }
     } catch { /* ignore */ }
     setActionLoading('')
@@ -121,23 +140,31 @@ export default function EstimatePortalPage() {
         </div>
 
         {/* Responded confirmation */}
-        {responded && (
-          <div style={{
-            background: responseStatus === 'approved' ? `${GREEN}15` : `${RED}15`,
-            border: `1px solid ${responseStatus === 'approved' ? GREEN : RED}40`,
-            borderRadius: 12, padding: 24, textAlign: 'center', marginBottom: 24,
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>{responseStatus === 'approved' ? '\u2713' : '\u2717'}</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: responseStatus === 'approved' ? GREEN : RED }}>
-              Estimate {responseStatus === 'approved' ? 'Approved' : 'Declined'}
+        {responded && (() => {
+          const isApproval = responseStatus === 'approved' || responseStatus === 'approved_with_notes'
+          const bgColor = isApproval ? GREEN : RED
+          return (
+            <div style={{
+              background: `${bgColor}15`,
+              border: `1px solid ${bgColor}40`,
+              borderRadius: 12, padding: 24, textAlign: 'center', marginBottom: 24,
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>{isApproval ? '\u2713' : '\u2717'}</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: bgColor }}>
+                {responseStatus === 'approved' ? 'Estimate Approved'
+                  : responseStatus === 'approved_with_notes' ? 'Approval with Notes Submitted'
+                  : 'Estimate Declined'}
+              </div>
+              <div style={{ fontSize: 13, color: MUTED, marginTop: 8 }}>
+                {responseStatus === 'approved'
+                  ? 'Thank you! The shop has been notified and will begin work on your vehicle.'
+                  : responseStatus === 'approved_with_notes'
+                  ? 'Thank you — your approval with notes has been submitted. The service team will review.'
+                  : 'The shop has been notified of your decision. They may follow up with you.'}
+              </div>
             </div>
-            <div style={{ fontSize: 13, color: MUTED, marginTop: 8 }}>
-              {responseStatus === 'approved'
-                ? 'Thank you! The shop has been notified and will begin work on your vehicle.'
-                : 'The shop has been notified of your decision. They may follow up with you.'}
-            </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Truck info */}
         {asset && (
@@ -234,41 +261,54 @@ export default function EstimatePortalPage() {
         )}
 
         {/* Action buttons */}
-        {!responded && estimate.status !== 'approved' && estimate.status !== 'declined' && (
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10, marginTop: 20, marginBottom: 20 }}>
+        {!responded && estimate.status !== 'approved' && estimate.status !== 'approved_with_notes' && estimate.status !== 'declined' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20, marginBottom: 20 }}>
             <button
               onClick={handleApprove}
               disabled={!!actionLoading}
               style={{
-                flex: 1, padding: '14px 24px', background: GREEN, color: '#fff', border: 'none',
+                width: '100%', padding: '14px 24px', background: GREEN, color: '#fff', border: 'none',
                 borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
                 opacity: actionLoading ? 0.6 : 1,
               }}
             >
               {actionLoading === 'approve' ? 'Approving...' : 'Approve Estimate'}
             </button>
-            {shop?.phone && (
-              <a
-                href={`tel:${shop.phone}`}
-                style={{
-                  flex: isMobile ? undefined : 0.6, padding: '14px 24px', background: 'transparent', color: BLUE,
-                  border: `1px solid ${BLUE}40`, borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none',
-                  textAlign: 'center', fontFamily: FONT,
-                }}
-              >
-                Call Shop
-              </a>
-            )}
             <button
-              onClick={() => setShowDecline(true)}
+              onClick={() => setShowApproveNotes(true)}
+              disabled={!!actionLoading}
               style={{
-                flex: isMobile ? undefined : 0.6, padding: '14px 24px', background: 'transparent', color: RED,
-                border: `1px solid ${RED}40`, borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                fontFamily: FONT,
+                width: '100%', padding: '14px 24px', background: 'transparent', color: BLUE,
+                border: `1px solid ${BLUE}40`, borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                fontFamily: FONT, opacity: actionLoading ? 0.6 : 1,
               }}
             >
-              Decline
+              Approve with Changes
             </button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowDecline(true)}
+                style={{
+                  flex: 1, padding: '14px 24px', background: 'transparent', color: RED,
+                  border: `1px solid ${RED}40`, borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: FONT,
+                }}
+              >
+                Decline Estimate
+              </button>
+              {shop?.phone && (
+                <a
+                  href={`tel:${shop.phone}`}
+                  style={{
+                    flex: 1, padding: '14px 24px', background: 'transparent', color: BLUE,
+                    border: `1px solid ${BLUE}40`, borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none',
+                    textAlign: 'center', fontFamily: FONT,
+                  }}
+                >
+                  Call Shop
+                </a>
+              )}
+            </div>
           </div>
         )}
 
@@ -314,6 +354,54 @@ export default function EstimatePortalPage() {
                   }}
                 >
                   {actionLoading === 'decline' ? 'Submitting...' : 'Decline Estimate'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Approve with Notes modal */}
+        {showApproveNotes && (
+          <div style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 16,
+          }}>
+            <div style={{ background: '#1c1c2e', border: `1px solid ${BORDER}`, borderRadius: 16, padding: isMobile ? 20 : 28, maxWidth: 440, width: '100%' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: WHITE, marginBottom: 4 }}>Approve with Changes</div>
+              <div style={{ fontSize: 13, color: MUTED, marginBottom: 16 }}>Tell us which jobs to include or exclude.</div>
+              <textarea
+                value={approveNotes}
+                onChange={e => setApproveNotes(e.target.value)}
+                placeholder="e.g., Do jobs 2, 3, 4 only — skip jobs 1 and 5"
+                rows={4}
+                style={{
+                  width: '100%', padding: 12, background: 'rgba(255,255,255,0.06)', border: `1px solid ${BORDER}`,
+                  borderRadius: 10, color: TEXT, fontSize: 14, fontFamily: FONT, resize: 'vertical',
+                  outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 10, marginTop: 16, flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => { setShowApproveNotes(false); setApproveNotes('') }}
+                  style={{
+                    padding: '12px 24px', background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`,
+                    borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+                    width: isMobile ? '100%' : undefined,
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleApproveWithNotes}
+                  disabled={actionLoading === 'approve_with_notes'}
+                  style={{
+                    padding: '12px 24px', background: BLUE, color: '#fff', border: 'none',
+                    borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+                    opacity: actionLoading === 'approve_with_notes' ? 0.6 : 1,
+                    width: isMobile ? '100%' : undefined,
+                  }}
+                >
+                  {actionLoading === 'approve_with_notes' ? 'Submitting...' : 'Submit Approval with Notes'}
                 </button>
               </div>
             </div>

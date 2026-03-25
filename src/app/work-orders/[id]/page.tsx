@@ -93,6 +93,13 @@ export default function WorkOrderDetail() {
   const [partsSubmitted, setPartsSubmitted] = useState(false)
   const [partsSubmitting, setPartsSubmitting] = useState(false)
   const [shopLaborRates, setShopLaborRates] = useState<any[]>([])
+  const [contactEmail, setContactEmail] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [approvalConfirmModal, setApprovalConfirmModal] = useState<{ method: string; notes: string } | null>(null)
+  const [printedReady, setPrintedReady] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [editDraft, setEditDraft] = useState<any>(null)
+  const [toastMsg, setToastMsg] = useState('')
 
   // DATA LOADING
   const loadData = useCallback(async () => {
@@ -114,6 +121,8 @@ export default function WorkOrderDetail() {
       setWoParts(woData.woParts || [])
       setMileage(woData.assets?.odometer?.toString() || '')
       setTeamAssign({ team: woData.team || '', bay: woData.bay || '', assigned_tech: woData.assigned_tech || '' })
+      setContactEmail(woData.customers?.email || '')
+      setContactPhone(woData.customers?.phone || '')
 
       if (usersRes) {
         const usersData = await usersRes.json()
@@ -564,6 +573,46 @@ export default function WorkOrderDetail() {
             </a>
           )}
           <div style={{ fontSize: 11, color: GRAY, marginTop: 4 }}>Opened by: {createdByName}</div>
+          {/* Edit / Submit / Cancel buttons */}
+          {!wo.is_historical && isWriter && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              {!editMode ? (
+                <button onClick={() => { setEditMode(true); setEditDraft({ complaint: wo.complaint || '', priority: wo.priority || 'normal', cause: wo.cause || '', correction: wo.correction || '' }) }} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}`, padding: '6px 14px', fontSize: 12 }}>
+                  Edit
+                </button>
+              ) : (
+                <>
+                  <button onClick={() => { setEditMode(false); setEditDraft(null) }} style={{ ...btnStyle('#fff', GRAY), padding: '6px 14px', fontSize: 12 }}>
+                    Cancel
+                  </button>
+                  <button onClick={async () => {
+                    if (!editDraft) return
+                    const updates: Record<string, any> = { user_id: user?.id }
+                    if (editDraft.complaint !== (wo.complaint || '')) updates.complaint = editDraft.complaint
+                    if (editDraft.priority !== (wo.priority || 'normal')) updates.priority = editDraft.priority
+                    if (editDraft.cause !== (wo.cause || '')) updates.cause = editDraft.cause
+                    if (editDraft.correction !== (wo.correction || '')) updates.correction = editDraft.correction
+                    // If WO is draft and has required fields, set to open
+                    if (wo.status === 'draft' && editDraft.complaint?.trim()) updates.status = 'open'
+                    const res = await fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) })
+                    if (res.ok) {
+                      setEditMode(false)
+                      setEditDraft(null)
+                      setToastMsg('Work order updated')
+                      setTimeout(() => setToastMsg(''), 4000)
+                      await loadData()
+                    } else {
+                      const err = await res.json()
+                      setToastMsg(err.error || 'Failed to save')
+                      setTimeout(() => setToastMsg(''), 4000)
+                    }
+                  }} style={btnStyle(BLUE, '#fff')}>
+                    Submit
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div style={{ textAlign: 'right', minWidth: 200 }}>
           {wo.assets ? (
@@ -589,28 +638,40 @@ export default function WorkOrderDetail() {
       </div>
 
       {/* ESTIMATE REQUIREMENT BANNER */}
-      {!wo.is_historical && wo.estimate_required && (
-        <div style={{
-          padding: '12px 16px', borderRadius: 8, marginBottom: 12, fontSize: 13, fontWeight: 700,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          ...(wo.estimate_approved
-            ? { background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)', color: GREEN }
-            : wo.estimate_status === 'sent'
-            ? { background: 'rgba(29,111,232,0.08)', border: '1px solid rgba(29,111,232,0.2)', color: BLUE }
-            : wo.estimate_status === 'declined'
-            ? { background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: RED }
-            : { background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.2)', color: AMBER })
-        }}>
-          <span>
-            {wo.estimate_approved
-              ? `Estimate approved${wo.approval_method === 'in_person' ? ' in person' : wo.approval_method === 'printed_signed' ? ' (printed and signed)' : wo.approval_method === 'email' ? ' via email' : ''} — work can begin`
-            : wo.estimate_status === 'sent' ? 'Estimate sent to customer — awaiting approval'
-            : wo.estimate_status === 'declined' ? `Estimate declined${wo.estimate_declined_reason ? ` — ${wo.estimate_declined_reason}` : ''} — follow up required`
-            : 'Estimate required — build and send before assigning work'}
-          </span>
-          {!wo.estimate_approved && <a href="#estimate" onClick={() => setTab(2)} style={{ fontSize: 12, fontWeight: 600, color: BLUE, textDecoration: 'none', marginLeft: 12 }}>Go to Estimate</a>}
-        </div>
-      )}
+      {!wo.is_historical && wo.estimate_required && (() => {
+        const estStatus = wo.estimate_status || 'draft'
+        const isApproved = wo.estimate_approved && estStatus !== 'approved_with_notes'
+        const isApprovedWithNotes = wo.estimate_approved && estStatus === 'approved_with_notes'
+        const isSent = estStatus === 'sent'
+        const isDeclined = estStatus === 'declined'
+        const bannerStyle = isApproved
+          ? { background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)', color: GREEN }
+          : isApprovedWithNotes
+          ? { background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.2)', color: AMBER }
+          : isSent
+          ? { background: 'rgba(29,111,232,0.08)', border: '1px solid rgba(29,111,232,0.2)', color: BLUE }
+          : isDeclined
+          ? { background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: RED }
+          : { background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.2)', color: AMBER }
+        const methodLabel = wo.approval_method === 'in_person' ? ' in person' : wo.approval_method === 'printed_signed' ? ' (printed and signed)' : wo.approval_method === 'email_portal' ? ' via customer portal' : wo.approval_method === 'email' ? ' via email' : ''
+        return (
+          <div style={{ padding: '12px 16px', borderRadius: 8, marginBottom: 12, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, ...bannerStyle }}>
+            <span>
+              {isApproved ? `Estimate approved${methodLabel} — work can begin`
+                : isApprovedWithNotes ? `Estimate approved with customer notes — review before starting`
+                : isSent ? 'Estimate sent to customer — awaiting approval'
+                : isDeclined ? `Estimate declined${wo.estimate_declined_reason ? ` — ${wo.estimate_declined_reason}` : ''} — follow up required`
+                : 'Estimate required — build and send before assigning work'}
+            </span>
+            {isApprovedWithNotes && wo.customer_estimate_notes && (
+              <div style={{ width: '100%', fontSize: 12, fontWeight: 400, marginTop: 4, padding: '6px 10px', background: 'rgba(217,119,6,0.06)', borderRadius: 6 }}>
+                Customer notes: &ldquo;{wo.customer_estimate_notes}&rdquo;
+              </div>
+            )}
+            {!wo.estimate_approved && <a href="#estimate" onClick={() => setTab(2)} style={{ fontSize: 12, fontWeight: 600, color: BLUE, textDecoration: 'none', marginLeft: 12 }}>Go to Estimate</a>}
+          </div>
+        )
+      })()}
 
       {/* WARRANTY BANNER — 3 scenarios */}
       {!wo.is_historical && (wo.warranty_status === 'not_checked' || wo.warranty_status === 'none' || !wo.warranty_status) && (() => {
@@ -728,8 +789,9 @@ export default function WorkOrderDetail() {
         <div data-no-print style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {[
             { icon: <Users size={16} />, label: 'Team', onClick: () => {
-              if (wo.estimate_required && !wo.estimate_approved) {
-                alert('Estimate must be approved before this WO can be assigned. Go to the Estimate tab to build and send the estimate.')
+              const bypassJobTypes = ['diagnostic', 'full_inspection']
+              if (wo.estimate_required && !wo.estimate_approved && !bypassJobTypes.includes(wo.job_type)) {
+                alert('Estimate must be approved before this work order can be assigned. Go to the Estimate tab to build and send the estimate.')
                 return
               }
               setShowTeamModal(true)
@@ -902,7 +964,14 @@ export default function WorkOrderDetail() {
                     <span style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>Unassigned</span>
                   )}
                   {!wo.is_historical && (
-                    <button onClick={() => openAssignModal(line.id, idx)} style={{ ...btnStyle('#fff', BLUE), padding: '4px 10px', fontSize: 11 }}>
+                    <button onClick={() => {
+                      const bypassJobTypes = ['diagnostic', 'full_inspection']
+                      if (wo.estimate_required && !wo.estimate_approved && !bypassJobTypes.includes(wo.job_type)) {
+                        alert('Estimate must be approved before this work order can be assigned. Go to the Estimate tab to build and send the estimate.')
+                        return
+                      }
+                      openAssignModal(line.id, idx)
+                    }} style={{ ...btnStyle('#fff', BLUE), padding: '4px 10px', fontSize: 11 }}>
                       <Users size={12} /> Assign
                     </button>
                   )}
@@ -1159,10 +1228,10 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* Get Approval */}
-          {!wo.is_historical && (
+          {/* Get Approval — only show when estimate required and NOT yet approved */}
+          {!wo.is_historical && wo.estimate_required && !wo.estimate_approved && (
             <div style={{ textAlign: 'right', marginTop: 8 }}>
-              <button onClick={() => setApprovalModal(true)} style={btnStyle(GREEN, '#fff')}>
+              <button onClick={() => setApprovalModal(true)} style={btnStyle(BLUE, '#fff')}>
                 <DollarSign size={14} /> Get Approval
               </button>
             </div>
@@ -1340,6 +1409,96 @@ export default function WorkOrderDetail() {
               Estimate not required for company trucks. You can still create one manually if needed.
             </div>
           )}
+
+          {/* Estimate approval status + contact fields (only when estimate required) */}
+          {wo.estimate_required && !wo.is_historical && (() => {
+            const estStatus = wo.estimate_status || 'draft'
+            const isApproved = wo.estimate_approved && estStatus !== 'approved_with_notes'
+            const isApprovedWithNotes = wo.estimate_approved && estStatus === 'approved_with_notes'
+            const isSent = estStatus === 'sent'
+            const isDeclined = estStatus === 'declined'
+
+            async function saveContact() {
+              if (!customer?.id) return
+              const updates: Record<string, any> = {}
+              if (contactEmail !== (customer.email || '')) updates.email = contactEmail
+              if (contactPhone !== (customer.phone || '')) updates.phone = contactPhone
+              if (Object.keys(updates).length > 0) {
+                await fetch(`/api/customers/${customer.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(updates),
+                })
+              }
+            }
+
+            return (
+              <div style={{ ...cardStyle, marginBottom: 12 }}>
+                {/* Status banner inside estimate tab */}
+                {isApproved && (
+                  <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)', color: GREEN, fontSize: 13, fontWeight: 700 }}>
+                    Estimate approved{wo.approval_method === 'in_person' ? ' in person' : wo.approval_method === 'printed_signed' ? ' (printed and signed)' : wo.approval_method === 'email_portal' ? ' via customer portal' : ''} — work can begin
+                  </div>
+                )}
+                {isApprovedWithNotes && (
+                  <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.2)', color: AMBER, fontSize: 13, fontWeight: 700 }}>
+                    Estimate approved with customer notes — review before starting
+                    {wo.customer_estimate_notes && <div style={{ fontWeight: 400, marginTop: 4 }}>&ldquo;{wo.customer_estimate_notes}&rdquo;</div>}
+                  </div>
+                )}
+                {isSent && !wo.estimate_approved && (
+                  <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: 'rgba(29,111,232,0.08)', border: '1px solid rgba(29,111,232,0.2)', color: BLUE, fontSize: 13, fontWeight: 700 }}>
+                    Estimate sent to customer — awaiting approval
+                  </div>
+                )}
+                {isDeclined && (
+                  <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 12, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: RED, fontSize: 13, fontWeight: 700 }}>
+                    Estimate declined{wo.estimate_declined_reason ? ` — ${wo.estimate_declined_reason}` : ''} — follow up required
+                  </div>
+                )}
+
+                {/* Contact fields — always visible */}
+                <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>Send Estimate To</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Email</label>
+                    <input
+                      value={contactEmail}
+                      onChange={e => setContactEmail(e.target.value)}
+                      onBlur={saveContact}
+                      placeholder="customer@email.com"
+                      style={{ ...inputStyle, fontSize: 12 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Phone</label>
+                    <input
+                      value={contactPhone}
+                      onChange={e => setContactPhone(e.target.value)}
+                      onBlur={saveContact}
+                      placeholder="+1 (555) 000-0000"
+                      style={{ ...inputStyle, fontSize: 12 }}
+                    />
+                  </div>
+                </div>
+
+                {/* Approval buttons — ONLY when not approved */}
+                {!wo.estimate_approved && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => setApprovalModal(true)}
+                      style={btnStyle(BLUE, '#fff')}
+                    >
+                      {estStatus === 'sent' ? 'Resend / Approve' : estStatus === 'declined' ? 'Resend Modified Estimate' : 'Send Estimate'}
+                    </button>
+                    <button onClick={() => setApprovalConfirmModal({ method: 'in_person', notes: '' })} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}` }}>
+                      Approve In Person
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Summary cards */}
           {(() => {
@@ -1798,39 +1957,68 @@ export default function WorkOrderDetail() {
 
       {/* Estimate Approval Modal — 3 paths */}
       {approvalModal && (() => {
-        const hasContact = !!(customer?.email || customer?.phone)
         const estimateId = wo.estimates?.[0]?.id || wo.estimate_id
+        const hasContact = !!(contactEmail || contactPhone)
 
-        async function approveEstimate(method: 'email' | 'in_person' | 'printed_signed') {
+        async function saveContactInfo() {
+          if (!customer?.id) return
+          const updates: Record<string, any> = {}
+          if (contactEmail !== (customer.email || '')) updates.email = contactEmail
+          if (contactPhone !== (customer.phone || '')) updates.phone = contactPhone
+          if (Object.keys(updates).length > 0) {
+            await fetch(`/api/customers/${customer.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updates),
+            })
+          }
+          // Also update estimate with contact info
           if (estimateId) {
             await fetch(`/api/estimates/${estimateId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'approved', approval_method: method, approved_by: user?.id, approved_at: new Date().toISOString() }),
+              body: JSON.stringify({ customer_email: contactEmail, customer_phone: contactPhone }),
+            })
+          }
+        }
+
+        async function approveEstimate(method: 'in_person' | 'printed_signed', notes?: string) {
+          if (estimateId) {
+            await fetch(`/api/estimates/${estimateId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'approved', approval_method: method, approved_by: user?.id, approved_at: new Date().toISOString(), customer_notes: notes || null }),
             })
           }
           await fetch(`/api/work-orders/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved' }),
+            body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved', approval_method: method }),
           })
-          const methodLabel = method === 'email' ? 'via email' : method === 'in_person' ? 'in person' : '(printed and signed)'
-          logActivity(`Estimate approved ${methodLabel} by ${user?.full_name || 'service writer'}`)
+          const methodLabel = method === 'in_person' ? 'in person' : '(printed and signed)'
+          logActivity(`Estimate approved ${methodLabel} by ${user?.full_name || 'service writer'}${notes ? ` — Notes: ${notes}` : ''}`)
           try {
             const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
             const mgrs = await getUserIdsByRole(wo.shop_id, ['owner', 'gm', 'shop_manager', 'floor_manager'])
             if (mgrs.length > 0) await createNotification({ shopId: wo.shop_id, recipientId: mgrs, type: 'estimate_approved', title: `Estimate approved — WO #${wo.so_number}`, body: `Ready to assign. Total: ${fmt(grandTotal)}`, link: `/work-orders/${id}`, relatedWoId: id })
           } catch {}
           setApprovalModal(false)
+          setApprovalConfirmModal(null)
+          setPrintedReady(false)
+          setToastMsg('Estimate approved — work order activated')
+          setTimeout(() => setToastMsg(''), 4000)
           await loadData()
         }
 
         async function sendEstimateEmail() {
           if (!estimateId) { alert('Build an estimate first'); return }
+          // Save contact info first
+          await saveContactInfo()
           const res = await fetch(`/api/estimates/${estimateId}/send`, { method: 'POST' })
           if (res.ok) {
-            logActivity(`Estimate sent to ${customer.email || customer.phone}`)
-            alert('Estimate sent to customer')
+            logActivity(`Estimate sent to ${contactEmail || contactPhone}`)
+            setToastMsg('Estimate sent to customer')
+            setTimeout(() => setToastMsg(''), 4000)
           } else {
             alert('Failed to send estimate')
           }
@@ -1839,8 +2027,8 @@ export default function WorkOrderDetail() {
         }
 
         return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(false)}>
-            <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 480, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(false)}>
+            <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <span style={{ fontSize: 16, fontWeight: 700 }}>Get Estimate Approval</span>
                 <button onClick={() => setApprovalModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
@@ -1850,28 +2038,57 @@ export default function WorkOrderDetail() {
                 <div>Customer: <strong>{customer?.contact_name || customer?.company_name || '—'}</strong></div>
               </div>
 
-              {/* Path 1: Send to Customer */}
-              <div style={{ marginBottom: 12, padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Send to Customer</div>
-                {hasContact ? (
-                  <button onClick={sendEstimateEmail} style={{ ...btnStyle(BLUE, '#fff'), width: '100%', justifyContent: 'center' }}>
-                    Send via {customer?.email ? 'Email' : 'SMS'}
-                  </button>
-                ) : (
+              {/* Contact fields — always visible, always editable */}
+              <div style={{ marginBottom: 16, padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>Send Estimate To</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
-                    <div style={{ padding: '8px 10px', background: '#FFFBEB', border: '1px solid rgba(217,119,6,0.2)', borderRadius: 6, fontSize: 12, color: '#D97706', marginBottom: 8 }}>
-                      No email or phone on file — add contact info or approve in person
-                    </div>
+                    <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Email</label>
+                    <input
+                      value={contactEmail}
+                      onChange={e => setContactEmail(e.target.value)}
+                      onBlur={saveContactInfo}
+                      placeholder="customer@email.com"
+                      style={{ ...inputStyle, fontSize: 12 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Phone</label>
+                    <input
+                      value={contactPhone}
+                      onChange={e => setContactPhone(e.target.value)}
+                      onBlur={saveContactInfo}
+                      placeholder="+1 (555) 000-0000"
+                      style={{ ...inputStyle, fontSize: 12 }}
+                    />
+                  </div>
+                </div>
+                {!hasContact && (
+                  <div style={{ padding: '6px 8px', background: '#FFFBEB', border: '1px solid rgba(217,119,6,0.2)', borderRadius: 6, fontSize: 11, color: '#D97706', marginTop: 8 }}>
+                    Add at least one contact method to send estimate
                   </div>
                 )}
               </div>
 
-              {/* Path 2: Approved In Person */}
+              {/* Path 1: Send Estimate */}
               <div style={{ marginBottom: 12, padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Approved In Person</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Send Estimate</div>
+                <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>Send estimate via email and/or SMS with approval link</div>
+                <button
+                  onClick={sendEstimateEmail}
+                  disabled={!hasContact}
+                  style={{ ...btnStyle(BLUE, '#fff'), width: '100%', justifyContent: 'center', opacity: hasContact ? 1 : 0.5, cursor: hasContact ? 'pointer' : 'not-allowed' }}
+                >
+                  Send Estimate{contactEmail && contactPhone ? ' (Email + SMS)' : contactEmail ? ' (Email)' : contactPhone ? ' (SMS)' : ''}
+                </button>
+              </div>
+
+              {/* Path 2: Approve In Person */}
+              <div style={{ marginBottom: 12, padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Approve In Person</div>
                 <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>Customer has reviewed and verbally approved this estimate</div>
-                <button onClick={() => { if (confirm('Confirm: Customer approved this estimate in person?')) approveEstimate('in_person') }} style={{ ...btnStyle('#fff', BLUE), width: '100%', justifyContent: 'center', border: `1px solid ${BLUE}` }}>
-                  Confirm In-Person Approval
+                <button onClick={() => setApprovalConfirmModal({ method: 'in_person', notes: '' })} style={{ ...btnStyle('#fff', BLUE), width: '100%', justifyContent: 'center', border: `1px solid ${BLUE}` }}>
+                  Approve In Person
                 </button>
               </div>
 
@@ -1879,17 +2096,61 @@ export default function WorkOrderDetail() {
               <div style={{ padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Print and Sign</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {estimateId && (
-                    <a href={`/api/estimates/${estimateId}/pdf`} target="_blank" style={{ ...btnStyle('#fff', GRAY), flex: 1, justifyContent: 'center', textDecoration: 'none', textAlign: 'center', border: '1px solid #D1D5DB' }}>
+                  {estimateId ? (
+                    <a
+                      href={`/api/estimates/${estimateId}/pdf`}
+                      target="_blank"
+                      onClick={() => setPrintedReady(true)}
+                      style={{ ...btnStyle('#fff', GRAY), flex: 1, justifyContent: 'center', textDecoration: 'none', textAlign: 'center', border: '1px solid #D1D5DB' }}
+                    >
                       Print Estimate
                     </a>
+                  ) : (
+                    <button disabled style={{ ...btnStyle('#fff', GRAY), flex: 1, justifyContent: 'center', border: '1px solid #D1D5DB', opacity: 0.5, cursor: 'not-allowed' }}>
+                      Build estimate first
+                    </button>
                   )}
-                  <button onClick={() => { if (confirm('Confirm: Customer has signed the printed estimate?')) approveEstimate('printed_signed') }} style={{ ...btnStyle('#fff', BLUE), flex: 1, justifyContent: 'center', border: `1px solid ${BLUE}` }}>
-                    Mark Signed
-                  </button>
+                  {printedReady ? (
+                    <button onClick={() => setApprovalConfirmModal({ method: 'printed_signed', notes: '' })} style={{ ...btnStyle(BLUE, '#fff'), flex: 1, justifyContent: 'center' }}>
+                      Mark as Signed &amp; Approved
+                    </button>
+                  ) : (
+                    <button disabled style={{ ...btnStyle('#fff', GRAY), flex: 1, justifyContent: 'center', border: '1px solid #D1D5DB', opacity: 0.5, cursor: 'not-allowed' }}>
+                      Print first →
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
+
+            {/* In-Person / Print Confirmation sub-modal */}
+            {approvalConfirmModal && (
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }} onClick={() => setApprovalConfirmModal(null)}>
+                <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
+                    {approvalConfirmModal.method === 'in_person' ? 'Confirm In-Person Approval' : 'Confirm Print & Sign Approval'}
+                  </div>
+                  <div style={{ fontSize: 13, color: GRAY, marginBottom: 16 }}>
+                    {approvalConfirmModal.method === 'in_person'
+                      ? 'Customer has reviewed and approved this estimate in person?'
+                      : 'Customer has signed the printed estimate?'}
+                  </div>
+                  <textarea
+                    value={approvalConfirmModal.notes}
+                    onChange={e => setApprovalConfirmModal({ ...approvalConfirmModal, notes: e.target.value })}
+                    placeholder="Add any notes from customer (optional)"
+                    rows={3}
+                    style={{ ...inputStyle, resize: 'vertical', marginBottom: 16 }}
+                  />
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                    <button onClick={() => setApprovalConfirmModal(null)} style={btnStyle('#fff', GRAY)}>Cancel</button>
+                    <button onClick={() => approveEstimate(approvalConfirmModal.method as 'in_person' | 'printed_signed', approvalConfirmModal.notes)} style={btnStyle(BLUE, '#fff')}>
+                      Confirm Approval
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )
       })()}
@@ -1921,6 +2182,13 @@ export default function WorkOrderDetail() {
       <div style={{ textAlign: 'center', padding: '24px 0', fontSize: 11, color: '#9CA3AF', borderTop: '1px solid #F3F4F6', marginTop: 24 }}>
         {shop.name || shop.dba || 'TruckZen'} {shop.phone ? ` | ${shop.phone}` : ''} {shop.email ? ` | ${shop.email}` : ''}
       </div>
+
+      {/* Toast notification */}
+      {toastMsg && (
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1A1A1A', color: '#fff', padding: '12px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 2000, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontFamily: FONT }}>
+          {toastMsg}
+        </div>
+      )}
     </div>
   )
 }

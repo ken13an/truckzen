@@ -64,6 +64,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (body.approval_method !== undefined) updates.approval_method = body.approval_method
   if (body.approved_by !== undefined) updates.approved_by = body.approved_by
   if (body.approved_at !== undefined) updates.approved_at = body.approved_at
+  if (body.customer_notes !== undefined) updates.customer_notes = body.customer_notes
+  if (body.decline_reason !== undefined) updates.decline_reason = body.decline_reason
 
   const { data: estimate, error } = await supabase
     .from('estimates')

@@ -10,7 +10,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { action, token, reason } = body
 
   if (!action || !token) return NextResponse.json({ error: 'action and token required' }, { status: 400 })
-  if (!['approve', 'decline'].includes(action)) return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+  if (!['approve', 'approve_with_notes', 'decline'].includes(action)) return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 
   const supabase = db()
 
@@ -30,17 +30,52 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   const now = new Date().toISOString()
+  const { notes: customerNotes } = body
 
   if (action === 'approve') {
     await supabase.from('estimates').update({
       status: 'approved',
       responded_at: now,
+      approval_method: 'email_portal',
       approved_by: estimate.customer_name || 'Customer',
       updated_at: now,
     }).eq('id', id)
 
     // Mark all lines as approved
     await supabase.from('estimate_lines').update({ is_approved: true }).eq('estimate_id', id)
+
+    // Update WO
+    if (estimate.repair_order_id) {
+      await supabase.from('service_orders').update({
+        estimate_approved: true,
+        estimate_status: 'approved',
+        approval_method: 'email_portal',
+        updated_at: now,
+      }).eq('id', estimate.repair_order_id)
+    }
+  } else if (action === 'approve_with_notes') {
+    await supabase.from('estimates').update({
+      status: 'approved_with_notes',
+      responded_at: now,
+      approval_method: 'email_portal',
+      approved_by: estimate.customer_name || 'Customer',
+      customer_notes: customerNotes || '',
+      updated_at: now,
+    }).eq('id', id)
+
+    // Mark all lines as approved (service writer will review notes and adjust)
+    await supabase.from('estimate_lines').update({ is_approved: true }).eq('estimate_id', id)
+
+    // Update WO with notes status
+    if (estimate.repair_order_id) {
+      await supabase.from('service_orders').update({
+        estimate_approved: true,
+        estimate_status: 'approved_with_notes',
+        approval_method: 'email_portal',
+        customer_estimate_notes: customerNotes || '',
+        updated_at: now,
+      }).eq('id', estimate.repair_order_id)
+    }
   } else {
     // Decline - save reason to notes
     const existingNotes = estimate.notes || ''
@@ -51,8 +86,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       status: 'declined',
       responded_at: now,
       notes: updatedNotes,
+      decline_reason: reason || null,
       updated_at: now,
     }).eq('id', id)
+
+    // Update WO
+    if (estimate.repair_order_id) {
+      await supabase.from('service_orders').update({
+        estimate_status: 'declined',
+        estimate_declined_reason: reason || null,
+        updated_at: now,
+      }).eq('id', estimate.repair_order_id)
+    }
   }
 
   // Fire-and-forget: email notification to service writers
@@ -62,8 +107,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const allEmails = [...new Set([...staffEmails, ...ownerEmails])].filter(Boolean)
 
   if (allEmails.length > 0) {
-    const statusText = action === 'approve' ? 'APPROVED' : 'DECLINED'
-    const statusColor = action === 'approve' ? '#16A34A' : '#DC2626'
+    const statusText = action === 'approve' ? 'APPROVED' : action === 'approve_with_notes' ? 'APPROVED WITH NOTES' : 'DECLINED'
+    const statusColor = action === 'decline' ? '#DC2626' : action === 'approve_with_notes' ? '#D97706' : '#16A34A'
     const emailHtml = `
       <div style="background:#0f0f1a;padding:32px;font-family:-apple-system,sans-serif">
         <div style="max-width:500px;margin:0 auto;background:#1a1a2e;border-radius:12px;overflow:hidden">
@@ -78,6 +123,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             </p>
             <p style="color:#b0b0c0;font-size:13px;margin:0 0 4px">Total: $${(estimate.total || 0).toFixed(2)}</p>
             ${reason ? `<p style="color:#b0b0c0;font-size:13px;margin:8px 0 0">Reason: ${reason}</p>` : ''}
+            ${action === 'approve_with_notes' && customerNotes ? `<p style="color:#D97706;font-size:13px;margin:8px 0 0;font-weight:700">Customer notes: ${customerNotes}</p>` : ''}
           </div>
         </div>
       </div>
@@ -86,13 +132,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   // Fire-and-forget: push notification (insert into notifications table if it exists)
+  const notifType = action === 'approve' || action === 'approve_with_notes' ? 'estimate_approved' : 'estimate_declined'
+  const notifTitle = action === 'approve_with_notes'
+    ? `Estimate ${estimate.estimate_number} approved WITH NOTES — review before starting`
+    : `Estimate ${estimate.estimate_number} ${action === 'approve' ? 'approved' : 'declined'}`
+  const notifBody = action === 'approve_with_notes'
+    ? `${estimate.customer_name || 'Customer'} approved with notes: ${customerNotes || '(no notes)'}`
+    : `${estimate.customer_name || 'Customer'} ${action === 'approve' ? 'approved' : 'declined'} estimate ${estimate.estimate_number}${reason ? ': ' + reason : ''}`
   supabase.from('notifications').insert({
     shop_id: estimate.shop_id,
-    type: action === 'approve' ? 'estimate_approved' : 'estimate_declined',
-    title: `Estimate ${estimate.estimate_number} ${action === 'approve' ? 'approved' : 'declined'}`,
-    body: `${estimate.customer_name || 'Customer'} ${action === 'approve' ? 'approved' : 'declined'} estimate ${estimate.estimate_number}${reason ? ': ' + reason : ''}`,
+    type: notifType,
+    title: notifTitle,
+    body: notifBody,
     data: { estimate_id: id },
   }).then(() => {})
 
-  return NextResponse.json({ success: true, status: action === 'approve' ? 'approved' : 'declined' })
+  const resultStatus = action === 'approve' ? 'approved' : action === 'approve_with_notes' ? 'approved_with_notes' : 'declined'
+  return NextResponse.json({ success: true, status: resultStatus })
 }

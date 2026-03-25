@@ -36,6 +36,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     updated_at: now,
   }).eq('id', id)
 
+  // Update WO estimate_status to 'sent'
+  if (estimate.repair_order_id) {
+    await supabase.from('service_orders').update({
+      estimate_status: 'sent',
+      updated_at: now,
+    }).eq('id', estimate.repair_order_id)
+  }
+
   const shop = await getShopInfo(estimate.shop_id)
   const portalLink = `${process.env.NEXT_PUBLIC_APP_URL}/portal/estimate/${estimate.approval_token}`
 
