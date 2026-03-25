@@ -147,29 +147,15 @@ export default function Sidebar() {
   }, [])
 
   // Auto-expand section containing active page — runs on every pathname change
+  // Preserves manually opened sections; only auto-opens the active one
   useEffect(() => {
-    const next: Record<string, boolean> = {}
     for (const dept of DEPARTMENTS) {
       const matchesDept = pathname === dept.dashboardHref || pathname?.startsWith(dept.dashboardHref + '/')
       const matchesItem = dept.items.some(item => pathname === item.href || pathname?.startsWith(item.href + '/'))
       if (matchesDept || matchesItem) {
-        next[dept.label] = true
+        setExpanded(prev => prev[dept.label] ? prev : { ...prev, [dept.label]: true })
       }
     }
-    setExpanded(prev => {
-      // Merge: keep manually opened sections, but always open the active section
-      const merged: Record<string, boolean> = {}
-      for (const key of Object.keys(prev)) {
-        // Close sections that are NOT the active section (auto-collapse)
-        // Keep open only if it's in the next set
-        if (next[key]) merged[key] = true
-      }
-      // Also add any newly active sections
-      for (const key of Object.keys(next)) {
-        merged[key] = true
-      }
-      return merged
-    })
   }, [pathname])
 
   if (!user) return null
