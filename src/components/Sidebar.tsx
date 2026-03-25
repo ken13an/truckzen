@@ -43,7 +43,7 @@ const DEPARTMENTS: DeptSection[] = [
   {
     label: 'Fleet', icon: Truck, color: '#22C55E', dashboardHref: '/fleet',
     items: [
-      { href: '/service-requests', label: 'Service Requests', icon: FileText },
+      { href: '/fleet/service-requests', label: 'Service Requests', icon: FileText },
       { href: '/customers', label: 'Customers', icon: Users2 },
     ],
   },
@@ -117,7 +117,7 @@ export default function Sidebar() {
   const [lowStock, setLowStock] = useState(0)
   const [openJobs, setOpenJobs] = useState(0)
   const [isPlatformOwner, setIsPlatformOwner] = useState(false)
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({ Service: true })
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [rolePerms, setRolePerms] = useState<Record<string, boolean>>({})
   const [userOverrides, setUserOverrides] = useState<Record<string, boolean>>({})
 
@@ -142,17 +142,35 @@ export default function Sidebar() {
       setLowStock(0) // Will be refined when low stock API param is added
       setOpenJobs(Array.isArray(wosRes) ? wosRes.length : 0)
 
-      // Auto-expand section containing active page
-      for (const dept of DEPARTMENTS) {
-        const matchesDept = pathname === dept.dashboardHref || pathname?.startsWith(dept.dashboardHref + '/')
-        const matchesItem = dept.items.some(item => pathname === item.href || pathname?.startsWith(item.href + '/'))
-        if (matchesDept || matchesItem) {
-          setExpanded(prev => ({ ...prev, [dept.label]: true }))
-        }
-      }
     }
     load()
   }, [])
+
+  // Auto-expand section containing active page — runs on every pathname change
+  useEffect(() => {
+    const next: Record<string, boolean> = {}
+    for (const dept of DEPARTMENTS) {
+      const matchesDept = pathname === dept.dashboardHref || pathname?.startsWith(dept.dashboardHref + '/')
+      const matchesItem = dept.items.some(item => pathname === item.href || pathname?.startsWith(item.href + '/'))
+      if (matchesDept || matchesItem) {
+        next[dept.label] = true
+      }
+    }
+    setExpanded(prev => {
+      // Merge: keep manually opened sections, but always open the active section
+      const merged: Record<string, boolean> = {}
+      for (const key of Object.keys(prev)) {
+        // Close sections that are NOT the active section (auto-collapse)
+        // Keep open only if it's in the next set
+        if (next[key]) merged[key] = true
+      }
+      // Also add any newly active sections
+      for (const key of Object.keys(next)) {
+        merged[key] = true
+      }
+      return merged
+    })
+  }, [pathname])
 
   if (!user) return null
 
