@@ -361,16 +361,26 @@ export default function NewWorkOrderPage() {
   }
 
   async function handleConfirmCreate() {
-    if (!profile || jobLines.length === 0) return
+    if (!profile) return
+    // Validation
+    if (!selectedCustomer) { setError('Please select a customer'); return }
+    if (!selectedAsset) { setError('Please select a vehicle'); return }
+    if (!complaint.trim()) { setError('Please describe the concern'); return }
+    const mileageNum = parseInt(mileage)
+    if (!mileageNum || mileageNum <= 0) { setError('Please enter current mileage'); return }
+    if (jobLines.length === 0) { setError('Please add at least one job line'); return }
+    if (jobLines.some(j => isUnrecognizedJob(j.description, j.skills))) { setError('Please fix or remove unrecognized job lines (shown in red)'); return }
     setSubmitting(true); setError('')
     try {
       const res = await fetch('/api/work-orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shop_id: profile.shop_id, user_id: profile.id,
-          asset_id: selectedAsset?.id || null, customer_id: selectedCustomer?.id || null,
-          complaint: complaint.trim(), priority, mileage: parseInt(mileage) || null, job_type: jobType,
+          asset_id: selectedAsset.id, customer_id: selectedCustomer.id,
+          complaint: complaint.trim(), priority, mileage: mileageNum, job_type: jobType,
           estimate_required: estimateRequired,
+          status: 'submitted',
+          submitted_at: new Date().toISOString(),
           job_lines: jobLines.filter(l => l.description.trim()).map(l => ({
             description: l.description, skills: l.skills,
             customer_provides_parts: customerProvidesParts,
@@ -702,13 +712,13 @@ export default function NewWorkOrderPage() {
               {savingDraft ? 'Saving...' : 'Save as Draft'}
             </button>
             <button onClick={handleCreateClick} disabled={!canCreate || savingDraft} style={{ ...btnP, flex: 1, padding: '16px 28px', fontSize: 16, opacity: canCreate && !savingDraft ? 1 : 0.5 }}>
-              Create Work Order
+              Submit Work Order
             </button>
           </div>
         )}
         {step === 'review' && jobLines.length > 0 && (
           <button onClick={handleConfirmCreate} disabled={submitting} style={{ ...btnP, width: '100%', padding: '16px 28px', fontSize: 16, opacity: submitting ? 0.5 : 1 }}>
-            {submitting ? 'Creating Work Order...' : 'Confirm & Create Work Order'}
+            {submitting ? 'Submitting Work Order...' : 'Confirm & Submit Work Order'}
           </button>
         )}
       </div>
