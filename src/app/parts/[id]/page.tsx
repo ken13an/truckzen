@@ -20,6 +20,11 @@ export default function PartDetailPage() {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
+  const [activeTab, setActiveTab] = useState<'exceptions' | 'history' | 'pos'>('exceptions')
+  const [tabData, setTabData] = useState<any[]>([])
+  const [tabLoading, setTabLoading] = useState(false)
+  const [poPage, setPoPage] = useState(1)
+  const [poTotal, setPoTotal] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -35,6 +40,23 @@ export default function PartDetailPage() {
     }
     load()
   }, [params.id])
+
+  // Load tab data when tab changes
+  useEffect(() => {
+    if (!part || !user) return
+    setTabLoading(true)
+    setTabData([])
+    if (activeTab === 'exceptions') {
+      fetch(`/api/parts/${params.id}/pricing-exceptions`).then(r => r.ok ? r.json() : []).then(d => { setTabData(Array.isArray(d) ? d : []); setTabLoading(false) }).catch(() => setTabLoading(false))
+    } else if (activeTab === 'history') {
+      fetch(`/api/parts/${params.id}/field-history`).then(r => r.ok ? r.json() : []).then(d => { setTabData(Array.isArray(d) ? d : []); setTabLoading(false) }).catch(() => setTabLoading(false))
+    } else if (activeTab === 'pos') {
+      fetch(`/api/part-history?shop_id=${user.shop_id}&search=${encodeURIComponent(part.part_number || '')}&per_page=25&page=${poPage}`)
+        .then(r => r.ok ? r.json() : { data: [], total: 0 })
+        .then(d => { setTabData(d.data || []); setPoTotal(d.total || 0); setTabLoading(false) })
+        .catch(() => setTabLoading(false))
+    }
+  }, [activeTab, part, user, poPage])
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
@@ -279,6 +301,116 @@ export default function PartDetailPage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Tabs section */}
+      <div style={{ marginTop: 24 }}>
+        <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 16 }}>
+          {[
+            { key: 'exceptions' as const, label: 'Pricing Exceptions' },
+            { key: 'history' as const, label: 'Field History' },
+            { key: 'pos' as const, label: 'Purchase Orders' },
+          ].map(t => (
+            <button key={t.key} onClick={() => { setActiveTab(t.key); if (t.key === 'pos') setPoPage(1) }} style={{
+              padding: '10px 18px', background: 'none', border: 'none',
+              borderBottom: activeTab === t.key ? `2px solid ${BLUE}` : '2px solid transparent',
+              color: activeTab === t.key ? BLUE : '#9CA3AF',
+              fontWeight: activeTab === t.key ? 700 : 500, fontSize: 13, cursor: 'pointer',
+              fontFamily: 'inherit', marginBottom: -2,
+            }}>{t.label}</button>
+          ))}
+        </div>
+
+        <div style={cardStyle}>
+          {tabLoading ? (
+            <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>Loading...</div>
+          ) : activeTab === 'exceptions' ? (
+            tabData.length === 0 ? (
+              <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No pricing exceptions</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    {['Customer', 'Price', 'Discount', 'Effective Date'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tabData.map((row: any) => (
+                    <tr key={row.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A' }}>{row.customer_name || row.customer_id || '--'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12 }}>{row.price != null ? fmt(row.price) : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.discount_pct ? `${row.discount_pct}%` : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.effective_date || row.created_at ? new Date(row.effective_date || row.created_at).toLocaleDateString() : '--'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          ) : activeTab === 'history' ? (
+            tabData.length === 0 ? (
+              <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No history records</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    {['Date', 'Field', 'Old Value', 'New Value', 'Changed By'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tabData.map((row: any) => (
+                    <tr key={row.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: '#1A1A1A' }}>{row.field_name || '--'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>{row.old_value ?? '--'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: '#1A1A1A' }}>{row.new_value ?? '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.changed_by_name || row.changed_by || '--'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          ) : (
+            /* Purchase Orders tab */
+            tabData.length === 0 ? (
+              <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No purchase orders</div>
+            ) : (
+              <>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      {['PO #', 'Vendor', 'Date', 'Qty', 'Unit Cost', 'Total'].map(h => (
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tabData.map((row: any) => (
+                      <tr key={row.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{row.po_number || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A' }}>{row.vendor || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.date ? new Date(row.date).toLocaleDateString() : '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12 }}>{row.quantity ?? '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280' }}>{row.cost_price != null ? fmt(row.cost_price) : '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600 }}>{row.cost_price != null && row.quantity != null ? fmt(row.cost_price * row.quantity) : '--'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {poTotal > 25 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8, padding: '12px 0', fontSize: 12 }}>
+                    <button disabled={poPage <= 1} onClick={() => setPoPage(p => p - 1)} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: poPage <= 1 ? '#D1D5DB' : '#374151', cursor: poPage <= 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>Previous</button>
+                    <span style={{ color: '#6B7280', lineHeight: '28px' }}>Page {poPage} of {Math.ceil(poTotal / 25)}</span>
+                    <button disabled={poPage >= Math.ceil(poTotal / 25)} onClick={() => setPoPage(p => p + 1)} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: poPage >= Math.ceil(poTotal / 25) ? '#D1D5DB' : '#374151', cursor: poPage >= Math.ceil(poTotal / 25) ? 'default' : 'pointer', fontFamily: 'inherit' }}>Next</button>
+                  </div>
+                )}
+              </>
+            )
+          )}
         </div>
       </div>
 
