@@ -279,6 +279,8 @@ export default function NewWorkOrderPage() {
     if (!profile) return
     setSavingDraft(true); setError('')
     try {
+      // Delete any auto-saved draft first — prevents duplicates
+      await deleteDraftAfterCreate()
       const res = await fetch('/api/work-orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -290,7 +292,6 @@ export default function NewWorkOrderPage() {
         }),
       })
       if (!res.ok) { const e = await res.json(); setError(e.error || 'Failed to save draft'); setSavingDraft(false); return }
-      await deleteDraftAfterCreate()
       window.location.href = '/work-orders'
     } catch { setError('Connection error — please try again'); setSavingDraft(false) }
   }
@@ -372,6 +373,8 @@ export default function NewWorkOrderPage() {
     if (jobLines.some(j => isUnrecognizedJob(j.description, j.skills))) { setError('Please fix or remove unrecognized job lines (shown in red)'); return }
     setSubmitting(true); setError('')
     try {
+      // Delete any auto-saved draft BEFORE creating the real WO — prevents duplicates
+      await deleteDraftAfterCreate()
       const res = await fetch('/api/work-orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -393,7 +396,6 @@ export default function NewWorkOrderPage() {
       })
       if (!res.ok) { const e = await res.json(); setError(e.error || 'Failed'); setSubmitting(false); return }
       const wo = await res.json()
-      await deleteDraftAfterCreate()
       window.location.href = `/work-orders/${wo.id}`
     } catch { setError('Network error'); setSubmitting(false) }
   }
