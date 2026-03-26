@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     if (!shop_id || !description) return NextResponse.json({ error: 'shop_id and description required' }, { status: 400 })
 
     let finalCustomerId = customer_id || null
-    let finalUnitId = unit_id || null
+    let finalAssetId = unit_id || null // UI sends assets.id as unit_id
     let companyName = ''
     let contactName = ''
     let phone = ''
@@ -64,31 +64,33 @@ export async function POST(req: Request) {
       if (c) { companyName = c.company_name || ''; contactName = c.contact_name || ''; phone = c.phone || '' }
     }
 
-    // Create new unit if needed
-    if (new_unit && !finalUnitId) {
-      const { data: u, error: uErr } = await s.from('units').insert({
+    // Create new asset if needed (UI fetches from assets table, so new units go there too)
+    if (new_unit && !finalAssetId) {
+      const { data: a, error: aErr } = await s.from('assets').insert({
         shop_id,
         customer_id: finalCustomerId,
         unit_number: new_unit.unit_number || null,
         year: new_unit.year ? parseInt(new_unit.year) : null,
         make: new_unit.make || null,
         model: new_unit.model || null,
-        vin: new_unit.vin || null,
-        unit_type: new_unit.unit_type || 'truck',
-        current_mileage: new_unit.mileage ? parseInt(new_unit.mileage) : null,
+        vin: new_unit.vin?.trim().toUpperCase() || null,
+        unit_type: new_unit.unit_type || 'tractor',
+        odometer: new_unit.mileage ? parseInt(new_unit.mileage) : 0,
+        ownership_type: 'outside_customer',
+        status: 'on_road',
       }).select().single()
-      if (uErr) return NextResponse.json({ error: 'Failed to create unit: ' + uErr.message }, { status: 500 })
-      finalUnitId = u.id
-      unitNumber = u.unit_number || ''
-    } else if (finalUnitId) {
-      const { data: u } = await s.from('units').select('unit_number').eq('id', finalUnitId).single()
-      if (u) unitNumber = u.unit_number || ''
+      if (aErr) return NextResponse.json({ error: 'Failed to create unit: ' + aErr.message }, { status: 500 })
+      finalAssetId = a.id
+      unitNumber = a.unit_number || ''
+    } else if (finalAssetId) {
+      const { data: a } = await s.from('assets').select('unit_number').eq('id', finalAssetId).single()
+      if (a) unitNumber = a.unit_number || ''
     }
 
     const { data: sr, error: srErr } = await s.from('service_requests').insert({
       shop_id,
       customer_id: finalCustomerId,
-      unit_id: finalUnitId,
+      asset_id: finalAssetId,
       unit_number: unitNumber,
       company_name: companyName,
       contact_name: contactName,

@@ -15,29 +15,69 @@ export async function GET(_req: Request, { params }: Params) {
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
 
-  const { data: wo, error } = await ctx.admin
+  // Stage 1: Verify WO exists with a simple query (no joins that can fail)
+  const { data: base, error: baseError } = await ctx.admin
     .from('service_orders')
-    .select(`
-      *,
-      assets(id, unit_number, year, make, model, vin, odometer, engine, ownership_type, is_owner_operator, owner_name, owner_phone, driver_name, driver_phone, lease_info, asset_status),
-      customers(id, company_name, contact_name, phone, email, address),
-      users!assigned_tech(id, full_name, role, team),
-      so_lines(id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price),
-      estimates(id, estimate_number, status, total, subtotal, tax_amount, customer_email, customer_phone, approval_method, approved_at, customer_notes, sent_at),
-      invoices(id, invoice_number, status, total, balance_due),
-      wo_notes(id, user_id, note_text, visible_to_customer, created_at),
-      wo_files(id, user_id, file_url, filename, caption, visible_to_customer, created_at),
-      wo_activity_log(id, user_id, action, created_at),
-      wo_shop_charges(id, description, amount, taxable, created_at)
-    `)
+    .select('*')
     .eq('id', id)
     .single()
 
-  if (error || !wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  if (!ctx.actor.is_platform_owner && wo.shop_id !== ctx.shopId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (baseError || !base) {
+    return NextResponse.json({ error: 'Work order not found', detail: baseError?.message || null }, { status: 404 })
+  }
+  if (!ctx.actor.is_platform_owner && base.shop_id !== ctx.shopId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
-  const { data: shop } = await ctx.admin.from('shops').select('tax_rate, tax_labor, state, county, name, labor_rate, default_labor_rate, dba, phone, email, address').eq('id', wo.shop_id).single()
-  const { data: woParts } = await ctx.admin.from('wo_parts').select('*').eq('wo_id', id).order('created_at')
+  // Stage 2: Fetch related data with individual queries (resilient to missing FKs)
+  const [
+    { data: asset },
+    { data: customer },
+    { data: assignedTech },
+    { data: soLines },
+    { data: estimates },
+    { data: invoices },
+    { data: woNotes },
+    { data: woFiles },
+    { data: activityLog },
+    { data: shopCharges },
+    { data: shop },
+    { data: woParts },
+  ] = await Promise.all([
+    base.asset_id
+      ? ctx.admin.from('assets').select('id, unit_number, year, make, model, vin, odometer, engine, ownership_type, is_owner_operator, owner_name, owner_phone, driver_name, driver_phone, lease_info, asset_status').eq('id', base.asset_id).single()
+      : Promise.resolve({ data: null }),
+    base.customer_id
+      ? ctx.admin.from('customers').select('id, company_name, contact_name, phone, email, address').eq('id', base.customer_id).single()
+      : Promise.resolve({ data: null }),
+    base.assigned_tech
+      ? ctx.admin.from('users').select('id, full_name, role, team').eq('id', base.assigned_tech).single()
+      : Promise.resolve({ data: null }),
+    ctx.admin.from('so_lines').select('id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price').eq('so_id', id),
+    ctx.admin.from('estimates').select('id, estimate_number, status, total, subtotal, tax_amount, customer_email, customer_phone, approval_method, approved_at, customer_notes, sent_at').eq('wo_id', id),
+    ctx.admin.from('invoices').select('id, invoice_number, status, total, balance_due').eq('wo_id', id),
+    ctx.admin.from('wo_notes').select('id, user_id, note_text, visible_to_customer, created_at').eq('wo_id', id),
+    ctx.admin.from('wo_files').select('id, user_id, file_url, filename, caption, visible_to_customer, created_at').eq('wo_id', id),
+    ctx.admin.from('wo_activity_log').select('id, user_id, action, created_at').eq('wo_id', id),
+    ctx.admin.from('wo_shop_charges').select('id, description, amount, taxable, created_at').eq('wo_id', id),
+    ctx.admin.from('shops').select('tax_rate, tax_labor, state, county, name, labor_rate, default_labor_rate, dba, phone, email, address').eq('id', base.shop_id).single(),
+    ctx.admin.from('wo_parts').select('*').eq('wo_id', id).order('created_at'),
+  ])
+
+  // Assemble WO object matching previous shape
+  const wo: any = {
+    ...base,
+    assets: asset || null,
+    customers: customer || null,
+    users: assignedTech || null,
+    so_lines: soLines || [],
+    estimates: estimates || [],
+    invoices: invoices || [],
+    wo_notes: woNotes || [],
+    wo_files: woFiles || [],
+    wo_activity_log: activityLog || [],
+    wo_shop_charges: shopCharges || [],
+  }
 
   let createdByName = null
   if (wo.created_by_user_id) {
@@ -201,10 +241,16 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params
   const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
-  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id')
+  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, status')
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  await ctx.admin.from('service_orders').update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id)
+  // Block voiding WOs that are actively in progress or already invoiced
+  const blockedStatuses = ['in_progress', 'completed', 'good_to_go', 'done', 'invoiced']
+  if (blockedStatuses.includes((wo as any).status)) {
+    return NextResponse.json({ error: `Cannot void a work order with status "${(wo as any).status}"` }, { status: 400 })
+  }
+
+  await ctx.admin.from('service_orders').update({ deleted_at: new Date().toISOString(), status: 'void', updated_at: new Date().toISOString() }).eq('id', id)
   logAction({ shop_id: (wo as any).shop_id, user_id: ctx.actor.id, action: 'soft_delete', entity_type: 'service_order', entity_id: id }).catch(() => {})
   return NextResponse.json({ ok: true })
 }

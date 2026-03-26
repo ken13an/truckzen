@@ -240,8 +240,8 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: 'ids array required' }, { status: 400 })
   }
 
-  // Get WOs to check status
-  const { data: wos } = await s.from('service_orders').select('id, status, so_number, shop_id').in('id', ids)
+  // Get WOs to check status — shop-scoped
+  const { data: wos } = await s.from('service_orders').select('id, status, so_number, shop_id').in('id', ids).eq('shop_id', shopId)
   if (!wos) return NextResponse.json({ error: 'Failed to fetch work orders' }, { status: 500 })
 
   const blocked = ['in_progress', 'completed', 'good_to_go', 'done', 'invoiced']

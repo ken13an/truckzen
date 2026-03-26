@@ -264,7 +264,7 @@ export default function WorkOrdersPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowDeleteModal(false)}>
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>Delete Work Orders</div>
-            <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>Are you sure you want to delete {selected.size} work order{selected.size !== 1 ? 's' : ''}? This cannot be undone.</div>
+            <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>Are you sure you want to delete {selected.size} work order{selected.size !== 1 ? 's' : ''}? They will be removed from the active list.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowDeleteModal(false)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
               <button onClick={handleBulkDelete} disabled={deleting} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.6 : 1 }}>{deleting ? 'Deleting...' : `Delete ${selected.size} WO${selected.size !== 1 ? 's' : ''}`}</button>

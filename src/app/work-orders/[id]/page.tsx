@@ -128,8 +128,14 @@ export default function WorkOrderDetail() {
       const u = await getCurrentUser(supabase)
       setUser(u)
 
-      const [woRes, usersRes, ratesRes] = await Promise.all([
-        fetch(`/api/work-orders/${id}`),
+      // Fetch WO with retry — handles transient failures after create redirect
+      let woRes = await fetch(`/api/work-orders/${id}`)
+      if (!woRes.ok) {
+        await new Promise(r => setTimeout(r, 600))
+        woRes = await fetch(`/api/work-orders/${id}`)
+      }
+
+      const [usersRes, ratesRes] = await Promise.all([
         fetch('/api/users') ,
         u?.shop_id ? fetch(`/api/settings/labor-rates?shop_id=${u.shop_id}`) : Promise.resolve(null),
       ])
@@ -974,9 +980,11 @@ export default function WorkOrderDetail() {
                   </button>
                 ))}
                 <div style={{ borderTop: '1px solid #E5E7EB', margin: '4px 0' }} />
-                <button onClick={() => { setShowMenu(false); setDeleteConfirm(true) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: RED }}>
-                  Void Work Order
-                </button>
+                {isWriter && (
+                  <button onClick={() => { setShowMenu(false); setDeleteConfirm(true) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: RED }}>
+                    Void Work Order
+                  </button>
+                )}
               </div>
             )}
           </div>

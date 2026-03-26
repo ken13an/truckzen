@@ -169,7 +169,7 @@ export default function NewServiceRequestPage() {
                   {[selectedCustomer.contact_name, selectedCustomer.phone].filter(Boolean).join(' - ') || 'No contact info'}
                 </div>
               </div>
-              <button type="button" style={S.secondaryBtn} onClick={() => { setSelectedCustomer(null); setCustomerSearch(''); setShowNewCustomer(false) }}>Change</button>
+              <button type="button" style={S.secondaryBtn} onClick={() => { setSelectedCustomer(null); setSelectedUnit(null); setUnits([]); setCustomerSearch(''); setShowNewCustomer(false) }}>Change</button>
             </div>
           ) : showNewCustomer ? (
             <div>
@@ -223,7 +223,7 @@ export default function NewServiceRequestPage() {
                   ))}
                 </div>
               )}
-              <button type="button" style={{ ...S.secondaryBtn, marginTop: 10 }} onClick={() => { setShowNewCustomer(true); setCustomerResults([]) }}>+ New Customer</button>
+              <button type="button" style={{ ...S.secondaryBtn, marginTop: 10 }} onClick={() => { setShowNewCustomer(true); setCustomerResults([]); setSelectedUnit(null); setUnits([]) }}>+ New Customer</button>
             </div>
           )}
         </div>
