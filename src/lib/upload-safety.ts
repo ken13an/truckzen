@@ -13,10 +13,6 @@ export const WO_FILE_MIMES = new Set([
   'text/csv', 'text/plain',
 ])
 
-// Mechanic photos: images only
-export const PHOTO_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'heic', 'heif'])
-export const PHOTO_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/heic', 'image/heif'])
-
 // Customer documents: images, PDFs, office docs
 export const DOC_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'zip'])
 export const DOC_MIMES = new Set([
@@ -26,7 +22,6 @@ export const DOC_MIMES = new Set([
 
 // Size limits
 export const MAX_WO_FILE_SIZE = 10 * 1024 * 1024   // 10MB
-export const MAX_PHOTO_SIZE = 10 * 1024 * 1024      // 10MB
 export const MAX_DOC_SIZE = 25 * 1024 * 1024         // 25MB
 
 /**

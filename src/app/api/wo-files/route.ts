@@ -3,7 +3,7 @@ import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
 import { getActorShopId } from '@/lib/server-auth'
 
 const SUPABASE_STORAGE_BASE = (process.env.NEXT_PUBLIC_SUPABASE_URL || '') + '/storage/v1/object/public/'
-const ALLOWED_BUCKETS = ['uploads', 'photos']
+const ALLOWED_BUCKETS = ['uploads']
 
 function isValidFileUrl(url: string, shopId: string): boolean {
   if (typeof url !== 'string' || !url.startsWith(SUPABASE_STORAGE_BASE)) return false

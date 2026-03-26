@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
-import { validateFile, sanitizeFilename, PHOTO_EXTENSIONS, PHOTO_MIMES, MAX_PHOTO_SIZE } from '@/lib/upload-safety'
 
 type Tab = 'jobs' | 'floor' | 'parts' | 'dvir'
 type View = 'list' | 'detail'
@@ -173,32 +172,6 @@ export default function TechMobilePage() {
     setSaving(false)
   }
 
-  async function uploadPhoto(soId: string) {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.capture = 'environment'
-    input.onchange = async () => {
-      const file = input.files?.[0]
-      if (!file) return
-      const err = validateFile(file, PHOTO_EXTENSIONS, PHOTO_MIMES, MAX_PHOTO_SIZE)
-      if (err) { flash(err); return }
-      const safeName = sanitizeFilename(file.name)
-      const ts = Date.now()
-      const path = `${user.shop_id}/so/${soId}/${ts}-${safeName}`
-      const { error } = await supabase.storage.from('photos').upload(path, file)
-      if (error) { flash('Upload failed'); return }
-      // Append photo URL to internal_notes
-      const { data: pub } = supabase.storage.from('photos').getPublicUrl(path)
-      const note = `\n[Photo ${new Date().toLocaleString()}]: ${pub.publicUrl}`
-      const { data: so } = await supabase.from('service_orders').select('internal_notes').eq('id', soId).single()
-      await supabase.from('service_orders').update({
-        internal_notes: (so?.internal_notes || '') + note,
-      }).eq('id', soId)
-      flash('Photo uploaded')
-    }
-    input.click()
-  }
 
   // ── MECHANIC JOB ACTIONS ─────────────────────────────────
   async function acceptJob(soId: string) {
@@ -455,11 +428,7 @@ export default function TechMobilePage() {
       </div>
 
       {/* Quick actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-        <button onClick={() => uploadPhoto(so.id)} style={S.tileBtn}>
-          <span style={{ fontSize: 12, fontWeight: 700 }}>Photo</span>
-          <span>Take Photo</span>
-        </button>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 16 }}>
         <button onClick={() => setShowParts(true)} style={S.tileBtn}>
           <span style={{ fontSize: 12, fontWeight: 700 }}>Parts</span>
           <span>Request Parts</span>

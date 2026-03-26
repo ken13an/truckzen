@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
-
-// DELETE /api/smart-import/trucks/undo/[batch_id] — undo a truck import batch
 export async function DELETE(req: Request, { params }: { params: Promise<{ batch_id: string }> }) {
-  const s = db()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
+  const s = createAdminSupabaseClient()
   const { batch_id } = await params
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
 
-  if (!batch_id || !shopId) return NextResponse.json({ error: 'batch_id and shop_id required' }, { status: 400 })
+  if (!batch_id) return NextResponse.json({ error: 'batch_id required' }, { status: 400 })
 
-  // Check undo is still available
   const { data: history } = await s.from('import_history')
     .select('id, undo_available_until')
     .eq('batch_id', batch_id)
@@ -25,13 +24,11 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ batch
     return NextResponse.json({ error: 'Undo window has expired (24 hours)' }, { status: 400 })
   }
 
-  // Delete all assets with this batch_id
   const { count } = await s.from('assets')
     .delete({ count: 'exact' })
     .eq('import_batch_id', batch_id)
     .eq('shop_id', shopId)
 
-  // Update history
   await s.from('import_history')
     .update({ status: 'undone' })
     .eq('batch_id', batch_id)

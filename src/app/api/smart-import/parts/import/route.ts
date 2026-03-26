@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+const MAX_ROWS = 10000
 
-// POST /api/smart-import/parts/import — bulk import parts with dedup
 export async function POST(req: Request) {
-  const s = db()
-  const { rows, shop_id, batch_id, user_id } = await req.json()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shop_id = getActorShopId(actor)
+  if (!shop_id) return jsonError('No shop context', 400)
 
-  if (!rows || !shop_id || !batch_id) return NextResponse.json({ error: 'rows, shop_id, batch_id required' }, { status: 400 })
+  const s = createAdminSupabaseClient()
+  const { rows, batch_id } = await req.json()
 
-  // Pre-fetch existing parts for matching
+  if (!rows || !batch_id) return NextResponse.json({ error: 'rows and batch_id required' }, { status: 400 })
+  if (!Array.isArray(rows) || rows.length > MAX_ROWS) return NextResponse.json({ error: `Too many rows (max ${MAX_ROWS})` }, { status: 400 })
+
   const { data: existing } = await s.from('parts').select('id, part_number, description, on_hand').eq('shop_id', shop_id)
   const existingParts = existing || []
 
@@ -32,7 +36,6 @@ export async function POST(req: Request) {
       const costPrice = parseFloat(String(row.cost_price || '0').replace(/[$,]/g, '')) || 0
       const sellPrice = parseFloat(String(row.sell_price || '0').replace(/[$,]/g, '')) || 0
 
-      // Match by part_number first, then description
       let match = null
       if (row.part_number?.trim()) {
         match = existingParts.find(p => p.part_number?.toLowerCase() === row.part_number.trim().toLowerCase())
@@ -42,7 +45,6 @@ export async function POST(req: Request) {
       }
 
       if (match) {
-        // Update: add quantity to existing stock
         const newQty = (match.on_hand || 0) + qty
         await s.from('parts').update({
           on_hand: newQty,
@@ -54,10 +56,9 @@ export async function POST(req: Request) {
         }).eq('id', match.id)
 
         updatedParts.push({ id: match.id, prev_qty: match.on_hand || 0, added_qty: qty })
-        match.on_hand = newQty // Update local cache
+        match.on_hand = newQty
         updated++
       } else {
-        // Insert new part
         const { data: newPart } = await s.from('parts').insert({
           shop_id,
           part_number: row.part_number?.trim() || null,
@@ -81,21 +82,18 @@ export async function POST(req: Request) {
     }
   }
 
-  // Save import history
-  if (user_id) {
-    await s.from('import_history').insert({
-      shop_id,
-      import_type: 'parts',
-      batch_id,
-      total_rows: rows.length,
-      imported_rows: created + updated,
-      skipped_rows: skipped,
-      status: 'completed',
-      error_report: skippedRows.length > 0 ? skippedRows : null,
-      imported_by: user_id,
-      undo_available_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    }).then(() => {})
-  }
+  await s.from('import_history').insert({
+    shop_id,
+    import_type: 'parts',
+    batch_id,
+    total_rows: rows.length,
+    imported_rows: created + updated,
+    skipped_rows: skipped,
+    status: 'completed',
+    error_report: skippedRows.length > 0 ? skippedRows : null,
+    imported_by: actor.id,
+    undo_available_until: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  })
 
   return NextResponse.json({ created, updated, skipped, errors: errors.slice(0, 50), batch_id, skipped_rows: skippedRows, updated_parts: updatedParts })
 }

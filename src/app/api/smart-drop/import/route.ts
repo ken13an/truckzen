@@ -36,6 +36,7 @@ export async function POST(req: Request) {
   const shopId = getActorShopId(actor)
 
   if (!type || !rows || !shopId) return NextResponse.json({ error: 'type, rows, and shop context required' }, { status: 400 })
+  if (rows.length > 10000) return NextResponse.json({ error: 'Too many rows (max 10,000)' }, { status: 400 })
 
   let imported = 0, updated = 0, skipped = 0
   const errors: string[] = []
