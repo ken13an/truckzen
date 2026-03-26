@@ -178,7 +178,8 @@ export default function CustomerProfilePage() {
     const err = validateFile(file, DOC_EXTENSIONS, DOC_MIMES, MAX_DOC_SIZE)
     if (err) { flash(err); return }
     const safeName = sanitizeFilename(file.name)
-    const path = `${id}/${Date.now()}_${safeName}`
+    const shopPrefix = user?.shop_id || 'unknown'
+    const path = `${shopPrefix}/${id}/${Date.now()}_${safeName}`
     const { error: upErr } = await supabase.storage.from('customer-docs').upload(path, file)
     if (upErr) { flash('Upload failed: ' + upErr.message); return }
 

@@ -248,7 +248,8 @@ export default function WorkOrderDetail() {
       const err = validateFile(file, WO_FILE_EXTENSIONS, WO_FILE_MIMES, MAX_WO_FILE_SIZE)
       if (err) { alert(err); continue }
       const safeName = sanitizeFilename(file.name)
-      const path = `wo-files/${id}/${Date.now()}-${safeName}`
+      const shopPrefix = wo?.shop_id || 'unknown'
+      const path = `${shopPrefix}/wo-files/${id}/${Date.now()}-${safeName}`
       const { error } = await supabase.storage.from('uploads').upload(path, file)
       if (error) { console.error('Upload error', error); continue }
       const { data: urlData } = supabase.storage.from('uploads').getPublicUrl(path)

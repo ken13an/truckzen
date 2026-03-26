@@ -12,6 +12,12 @@ function isValidFileUrl(url: string, shopId: string): boolean {
   if (!ALLOWED_BUCKETS.includes(bucket)) return false
   // Path must contain wo-files/ prefix (WO uploads use this convention)
   if (!afterBase.includes('wo-files/')) return false
+  // Path must start with bucket/shopId/ (shop-scoped uploads)
+  const afterBucket = afterBase.slice(bucket.length + 1)
+  if (shopId && !afterBucket.startsWith(shopId + '/')) {
+    // Also accept legacy paths without shop prefix (wo-files/woId/...)
+    if (!afterBucket.startsWith('wo-files/')) return false
+  }
   return true
 }
 
