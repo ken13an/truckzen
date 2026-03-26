@@ -69,6 +69,15 @@ export default function PartsWOView() {
     return res
   }
 
+  // Save to DB without reloading — prevents focus loss on text inputs
+  async function saveLineQuiet(lineId: string, data: Record<string, any>) {
+    await fetch(`/api/so-lines/${lineId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+  }
+
   function updateLocalLine(lineId: string, field: string, value: any) {
     setPartLines(prev => prev.map(l => l.id === lineId ? { ...l, [field]: value } : l))
   }
@@ -215,7 +224,7 @@ export default function PartsWOView() {
                     }}
                     onBlur={e => {
                       if (dropdownClicked.current) { dropdownClicked.current = false; return }
-                      if (e.target.value) patchLine(p.id, { real_name: e.target.value })
+                      if (e.target.value) saveLineQuiet(p.id, { real_name: e.target.value })
                       setTimeout(() => setSearchResults(prev => { const n = { ...prev }; delete n[p.id]; return n }), 200)
                     }}
                     placeholder="Type to search inventory..."
@@ -252,7 +261,7 @@ export default function PartsWOView() {
                     }}
                     onBlur={e => {
                       if (dropdownClicked.current) return
-                      patchLine(p.id, { part_number: e.target.value })
+                      saveLineQuiet(p.id, { part_number: e.target.value })
                       setTimeout(() => setSearchResults(prev => { const n = { ...prev }; delete n[p.id]; return n }), 200)
                     }}
                     placeholder="PN"
@@ -267,7 +276,7 @@ export default function PartsWOView() {
                     type="number"
                     value={p.quantity || 1}
                     onChange={e => updateLocalLine(p.id, 'quantity', parseInt(e.target.value) || 1)}
-                    onBlur={e => patchLine(p.id, { quantity: parseInt(e.target.value) || 1 })}
+                    onBlur={e => saveLineQuiet(p.id, { quantity: parseInt(e.target.value) || 1 })}
                     style={inputStyle}
                   />
                 </div>
@@ -280,7 +289,7 @@ export default function PartsWOView() {
                     step="0.01"
                     value={p.parts_cost_price ?? ''}
                     onChange={e => updateLocalLine(p.id, 'parts_cost_price', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    onBlur={e => patchLine(p.id, { parts_cost_price: parseFloat(e.target.value) || 0 })}
+                    onBlur={e => saveLineQuiet(p.id, { parts_cost_price: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     style={inputStyle}
                   />
@@ -294,7 +303,7 @@ export default function PartsWOView() {
                     step="0.01"
                     value={p.parts_sell_price ?? ''}
                     onChange={e => updateLocalLine(p.id, 'parts_sell_price', e.target.value === '' ? '' : parseFloat(e.target.value))}
-                    onBlur={e => patchLine(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: (parseFloat(e.target.value) || 0) * (p.quantity || 1) })}
+                    onBlur={e => saveLineQuiet(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: (parseFloat(e.target.value) || 0) * (p.quantity || 1) })}
                     placeholder="0.00"
                     style={inputStyle}
                   />
