@@ -43,7 +43,7 @@ export default function PartsWOView() {
     const lines = (woData.so_lines || []).filter((l: any) => l.line_type === 'part')
     setPartLines(lines)
     if (woData.shop_id) {
-      const ratesRes = await fetch(`/api/shops/${woData.shop_id}/labor-rates`)
+      const ratesRes = await fetch(`/api/settings/labor-rates?shop_id=${woData.shop_id}`)
       if (ratesRes.ok) {
         const ratesData = await ratesRes.json()
         setShopLaborRates(ratesData)

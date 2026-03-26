@@ -1429,7 +1429,7 @@ export default function WorkOrderDetail() {
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Parts ({partLines.length})</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {partLines.map((p: any) => {
-                  const isRough = !p.real_name
+                  const partsEditable = !p.parts_status || ['rough', 'sourced', 'ordered'].includes(p.parts_status)
                   const statusColors: Record<string, { label: string; bg: string; color: string }> = {
                     rough: { label: 'Rough', bg: '#F3F4F6', color: GRAY },
                     sourced: { label: 'Sourced', bg: '#EFF6FF', color: BLUE },
@@ -1439,12 +1439,13 @@ export default function WorkOrderDetail() {
                   }
                   const st = statusColors[p.parts_status || 'rough'] || statusColors.rough
                   return (
-                    <div key={p.id} style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 12, background: isRough ? '#FAFBFC' : '#fff' }}>
+                    <div key={p.id} style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 12, background: partsEditable ? '#FAFBFC' : '#fff' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <div>
-                          {isRough ? (
+                          {p.rough_name && (
                             <span style={{ fontSize: 12, color: GRAY }}>Suggested: <strong style={{ color: '#374151' }}>{p.rough_name || p.description}</strong></span>
-                          ) : (
+                          )}
+                          {!p.rough_name && p.real_name && (
                             <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A' }}>{p.real_name}{p.part_number ? ` (${p.part_number})` : ''}</span>
                           )}
                         </div>
@@ -1457,8 +1458,8 @@ export default function WorkOrderDetail() {
                         {wo.is_historical && <span style={pillStyle(st.bg, st.color)}>{st.label}</span>}
                       </div>
 
-                      {/* Editable fields for parts dept (rough state) */}
-                      {isRough && !wo.is_historical && !isMechanic && (
+                      {/* Editable fields for parts dept (rough/sourced state) */}
+                      {partsEditable && !wo.is_historical && !isMechanic && (
                         <div style={{ position: 'relative' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
                             <div style={{ position: 'relative' }}>
@@ -1497,8 +1498,8 @@ export default function WorkOrderDetail() {
                         </div>
                       )}
 
-                      {/* Read-only display for sourced parts */}
-                      {!isRough && !wo.is_historical && (
+                      {/* Read-only display for received/installed parts */}
+                      {!partsEditable && !wo.is_historical && (
                         <div style={{ display: 'flex', gap: 16, fontSize: 12, color: GRAY, marginTop: 4 }}>
                           {p.part_number && <span>Part #: {p.part_number}</span>}
                           <span>Qty: {p.quantity || 1}</span>
