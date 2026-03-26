@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
+import { validateFile, sanitizeFilename, DOC_EXTENSIONS, DOC_MIMES, MAX_DOC_SIZE } from '@/lib/upload-safety'
 
 type Tab = 'fleet' | 'work-orders' | 'contacts' | 'billing' | 'documents' | 'parts'
 
@@ -174,7 +175,10 @@ export default function CustomerProfilePage() {
 
   // -- Documents --
   async function uploadDocument(file: File) {
-    const path = `${id}/${Date.now()}_${file.name}`
+    const err = validateFile(file, DOC_EXTENSIONS, DOC_MIMES, MAX_DOC_SIZE)
+    if (err) { flash(err); return }
+    const safeName = sanitizeFilename(file.name)
+    const path = `${id}/${Date.now()}_${safeName}`
     const { error: upErr } = await supabase.storage.from('customer-docs').upload(path, file)
     if (upErr) { flash('Upload failed: ' + upErr.message); return }
 
@@ -182,7 +186,7 @@ export default function CustomerProfilePage() {
       .from('customer_documents')
       .insert({
         customer_id: id,
-        filename: file.name,
+        filename: safeName,
         storage_path: path,
         file_type: file.type || 'application/octet-stream',
         file_size: file.size,

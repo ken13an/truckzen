@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { validateFile, sanitizeFilename, PHOTO_EXTENSIONS, PHOTO_MIMES, MAX_PHOTO_SIZE } from '@/lib/upload-safety'
 
 type Tab = 'jobs' | 'floor' | 'parts' | 'dvir'
 type View = 'list' | 'detail'
@@ -180,8 +181,11 @@ export default function TechMobilePage() {
     input.onchange = async () => {
       const file = input.files?.[0]
       if (!file) return
+      const err = validateFile(file, PHOTO_EXTENSIONS, PHOTO_MIMES, MAX_PHOTO_SIZE)
+      if (err) { flash(err); return }
+      const safeName = sanitizeFilename(file.name)
       const ts = Date.now()
-      const path = `${user.shop_id}/so/${soId}/${ts}-${file.name}`
+      const path = `${user.shop_id}/so/${soId}/${ts}-${safeName}`
       const { error } = await supabase.storage.from('photos').upload(path, file)
       if (error) { flash('Upload failed'); return }
       // Append photo URL to internal_notes

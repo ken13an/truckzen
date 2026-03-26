@@ -8,6 +8,7 @@ import AITextInput from '@/components/ai-text-input'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import WOStepper from '@/components/work-orders/WOStepper'
+import { validateFile, sanitizeFilename, WO_FILE_EXTENSIONS, WO_FILE_MIMES, MAX_WO_FILE_SIZE } from '@/lib/upload-safety'
 import WOHeader from '@/components/work-orders/WOHeader'
 import JobsTab from '@/components/work-orders/JobsTab'
 import PartsTab from '@/components/work-orders/PartsTab'
@@ -244,14 +245,17 @@ export default function WorkOrderDetail() {
     if (!files || files.length === 0) return
     setUploading(true)
     for (const file of Array.from(files)) {
-      const path = `wo-files/${id}/${Date.now()}-${file.name}`
+      const err = validateFile(file, WO_FILE_EXTENSIONS, WO_FILE_MIMES, MAX_WO_FILE_SIZE)
+      if (err) { alert(err); continue }
+      const safeName = sanitizeFilename(file.name)
+      const path = `wo-files/${id}/${Date.now()}-${safeName}`
       const { error } = await supabase.storage.from('uploads').upload(path, file)
       if (error) { console.error('Upload error', error); continue }
       const { data: urlData } = supabase.storage.from('uploads').getPublicUrl(path)
       await fetch('/api/wo-files', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wo_id: id, file_url: urlData.publicUrl, filename: file.name }),
+        body: JSON.stringify({ wo_id: id, file_url: urlData.publicUrl, filename: safeName }),
       })
     }
     setUploading(false)
