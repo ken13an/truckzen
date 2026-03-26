@@ -44,7 +44,7 @@ const ROLE_PERMISSIONS: Record<string, Omit<TruckZenPermissions, 'isPlatformOwne
     canViewAllJobs: true,
     canViewOwnJobsOnly: false,
     canAccessPlatformAdmin: false,
-    canImpersonate: true,
+    canImpersonate: false,
   },
   gm: {
     canViewFinancials: true,
@@ -68,7 +68,7 @@ const ROLE_PERMISSIONS: Record<string, Omit<TruckZenPermissions, 'isPlatformOwne
     canViewAllJobs: true,
     canViewOwnJobsOnly: false,
     canAccessPlatformAdmin: true,
-    canImpersonate: true,
+    canImpersonate: false,
   },
   shop_manager: {
     canViewFinancials: true,
