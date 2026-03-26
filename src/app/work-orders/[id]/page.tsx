@@ -572,7 +572,7 @@ export default function WorkOrderDetail() {
 
   // Compute totals
   const laborTotal = jobLines.reduce((s: number, l: any) => s + (l.billed_hours || l.actual_hours || l.estimated_hours || 0) * laborRate, 0)
-  const partsLineTotal = partLines.reduce((s: number, l: any) => s + (l.total_price || 0), 0)
+  const partsLineTotal = partLines.reduce((s: number, l: any) => s + (l.total_price || (l.parts_sell_price || 0) * (l.quantity || 1)), 0)
   const woPartsTotal = woParts.reduce((s: number, p: any) => s + (p.quantity || 1) * (p.unit_cost || 0), 0)
   const chargesTotal = shopCharges.reduce((s: number, c: any) => s + (c.amount || 0), 0)
   const subtotal = laborTotal + partsLineTotal + woPartsTotal + chargesTotal
@@ -1641,6 +1641,75 @@ export default function WorkOrderDetail() {
               </tbody>
             </table>
           </div>
+
+          {/* Parts detail */}
+          {partLines.length > 0 && (
+            <div style={cardStyle}>
+              <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Parts</span>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part #</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Sell</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {partLines.map((p: any) => {
+                    const sell = p.parts_sell_price || 0
+                    const qty = p.quantity || 1
+                    const lineTotal = p.total_price || sell * qty
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
+                        <td style={{ padding: '6px 8px' }}>{p.real_name || p.rough_name || p.description || '—'}</td>
+                        <td style={{ padding: '6px 8px', color: GRAY }}>{p.part_number || '—'}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(sell)}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(lineTotal)}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right' }}>Parts Total</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(partsLineTotal)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* wo_parts (inline added parts) */}
+          {woParts.length > 0 && (
+            <div style={cardStyle}>
+              <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Additional Parts</span>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Unit Cost</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {woParts.map((p: any) => (
+                    <tr key={p.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>{p.quantity || 1}</td>
+                      <td style={{ padding: '6px 8px' }}>{p.description || '—'}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(p.unit_cost)}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt((p.quantity || 1) * (p.unit_cost || 0))}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={3} style={{ padding: '8px 8px', textAlign: 'right' }}>Additional Parts Total</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(woPartsTotal)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Shop Charges */}
           {shopCharges.length > 0 && (
