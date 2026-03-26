@@ -1295,11 +1295,11 @@ export default function WorkOrderDetail() {
 
                       {/* Editable fields for parts dept (rough state) */}
                       {isRough && !wo.is_historical && !isMechanic && (
-                        <div style={{ position: 'relative' }} key={`edit-${p.id}-${p.real_name || ''}-${p.parts_cost_price || 0}`}>
+                        <div style={{ position: 'relative' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
                             <div style={{ position: 'relative' }}>
                               <span style={labelStyle}>Real Name</span>
-                              <input defaultValue={p.real_name || ''} onChange={e => searchInventory(p.id, e.target.value)} onBlur={e => { if (partDropdownClicked.current) { partDropdownClicked.current = false; return } if (e.target.value) { patchLine(p.id, { real_name: e.target.value }) } setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="Type to search inventory..." style={inputStyle} />
+                              <input value={p.real_name || ''} onChange={e => { const v = e.target.value; const updated = wo.so_lines.map((l: any) => l.id === p.id ? { ...l, real_name: v } : l); setWo((prev: any) => ({ ...prev, so_lines: updated })); searchInventory(p.id, v) }} onBlur={e => { if (partDropdownClicked.current) { partDropdownClicked.current = false; return } if (e.target.value) { patchLine(p.id, { real_name: e.target.value }) } setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="Type to search inventory..." style={inputStyle} />
                               {/* Inventory search dropdown */}
                               {partSearchResults[p.id]?.length > 0 && (
                                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 160, overflowY: 'auto' }}>
@@ -1315,19 +1315,19 @@ export default function WorkOrderDetail() {
                             </div>
                             <div>
                               <span style={labelStyle}>Part #</span>
-                              <input defaultValue={p.part_number || ''} onChange={e => searchInventory(p.id, e.target.value)} onBlur={e => { if (partDropdownClicked.current) return; patchLine(p.id, { part_number: e.target.value }); setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="PN" style={inputStyle} />
+                              <input value={p.part_number || ''} onChange={e => { const v = e.target.value; const updated = wo.so_lines.map((l: any) => l.id === p.id ? { ...l, part_number: v } : l); setWo((prev: any) => ({ ...prev, so_lines: updated })); searchInventory(p.id, v) }} onBlur={e => { if (partDropdownClicked.current) return; patchLine(p.id, { part_number: e.target.value }); setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="PN" style={inputStyle} />
                             </div>
                             <div>
                               <span style={labelStyle}>Qty</span>
-                              <input type="number" defaultValue={p.quantity || 1} onBlur={e => patchLine(p.id, { quantity: parseInt(e.target.value) || 1 })} style={inputStyle} />
+                              <input type="number" value={p.quantity || 1} onChange={e => { const v = parseInt(e.target.value) || 1; const updated = wo.so_lines.map((l: any) => l.id === p.id ? { ...l, quantity: v } : l); setWo((prev: any) => ({ ...prev, so_lines: updated })) }} onBlur={e => patchLine(p.id, { quantity: parseInt(e.target.value) || 1 })} style={inputStyle} />
                             </div>
                             <div>
                               <span style={labelStyle}>Cost</span>
-                              <input type="number" step="0.01" defaultValue={p.parts_cost_price || ''} onBlur={e => patchLine(p.id, { parts_cost_price: parseFloat(e.target.value) || 0 })} placeholder="0.00" style={inputStyle} />
+                              <input type="number" step="0.01" value={p.parts_cost_price ?? ''} onChange={e => { const v = e.target.value === '' ? null : parseFloat(e.target.value); const updated = wo.so_lines.map((l: any) => l.id === p.id ? { ...l, parts_cost_price: v } : l); setWo((prev: any) => ({ ...prev, so_lines: updated })) }} onBlur={e => patchLine(p.id, { parts_cost_price: parseFloat(e.target.value) || 0 })} placeholder="0.00" style={inputStyle} />
                             </div>
                             <div>
                               <span style={labelStyle}>Sell</span>
-                              <input type="number" step="0.01" defaultValue={p.parts_sell_price || ''} onBlur={e => patchLine(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: parseFloat(e.target.value) * (p.quantity || 1) })} placeholder="0.00" style={inputStyle} />
+                              <input type="number" step="0.01" value={p.parts_sell_price ?? ''} onChange={e => { const v = e.target.value === '' ? null : parseFloat(e.target.value); const updated = wo.so_lines.map((l: any) => l.id === p.id ? { ...l, parts_sell_price: v } : l); setWo((prev: any) => ({ ...prev, so_lines: updated })) }} onBlur={e => patchLine(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: (parseFloat(e.target.value) || 0) * (p.quantity || 1) })} placeholder="0.00" style={inputStyle} />
                             </div>
                           </div>
                         </div>

@@ -1,26 +1,21 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
-import { ChevronLeft, Plus, X, Check, Clock, Truck, Package, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, Check, Clock, Truck, Package } from 'lucide-react'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
 
-interface LineItem {
-  part_number: string
-  description: string
-  quantity: number
-  unit_price: number | null
-  in_stock: boolean
-  ordered: boolean
-  eta: string | null
-  notes: string
+const statusOptions: Record<string, { label: string; color: string }> = {
+  rough: { label: 'Rough', color: MUTED },
+  sourced: { label: 'Sourced', color: BLUE },
+  ordered: { label: 'Ordered', color: AMBER },
+  received: { label: 'Received', color: GREEN },
+  installed: { label: 'Installed', color: '#059669' },
 }
-
-const emptyLine = (): LineItem => ({ part_number: '', description: '', quantity: 1, unit_price: null, in_stock: true, ordered: false, eta: null, notes: '' })
 
 export default function PartsWOView() {
   const params = useParams()
@@ -29,187 +24,102 @@ export default function PartsWOView() {
 
   const [user, setUser] = useState<any>(null)
   const [wo, setWo] = useState<any>(null)
-  const [partsRequest, setPartsRequest] = useState<any>(null)
-  const [lineItems, setLineItems] = useState<LineItem[]>([])
+  const [partLines, setPartLines] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
+  const [searchResults, setSearchResults] = useState<Record<string, any[]>>({})
+  const [shopLaborRates, setShopLaborRates] = useState<any[]>([])
+  const dropdownClicked = useRef(false)
+  const searchTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
-  const loadData = useCallback(async (profile: any) => {
-    // Fetch WO with customer + asset info
+  const loadData = useCallback(async () => {
     const woRes = await fetch(`/api/work-orders/${woId}`)
     if (!woRes.ok) { window.location.href = '/parts/queue'; return }
     const woData = await woRes.json()
     setWo(woData)
-
-    // Fetch parts request for this WO
-    const prRes = await fetch(`/api/parts-requests?shop_id=${profile.shop_id}&so_id=${woId}`)
-    if (prRes.ok) {
-      const prList = await prRes.json()
-      if (prList.length > 0) {
-        const pr = prList[0]
-        setPartsRequest(pr)
-        if (pr.line_items && Array.isArray(pr.line_items) && pr.line_items.length > 0) {
-          setLineItems(pr.line_items)
-        } else {
-          // Initialize from AI suggested parts on so_lines
-          const aiLines = (woData.so_lines || [])
-            .filter((l: any) => l.line_type === 'part')
-            .map((l: any) => ({
-              part_number: l.part_number || '',
-              description: l.rough_name || l.description || '',
-              quantity: l.quantity || 1,
-              unit_price: null,
-              in_stock: true,
-              ordered: false,
-              eta: null,
-              notes: '',
-            }))
-          setLineItems(aiLines.length > 0 ? aiLines : [emptyLine()])
-        }
-      } else {
-        // No parts request yet — create one
-        const createRes = await fetch('/api/mechanic/parts-request', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            shop_id: profile.shop_id,
-            so_id: woId,
-            user_id: profile.id,
-            part_name: 'Parts for WO',
-            quantity: 1,
-          }),
-        })
-        if (createRes.ok) {
-          const newPr = await createRes.json()
-          setPartsRequest(newPr)
-        }
-        // Initialize from AI parts
-        const aiLines = (woData.so_lines || [])
-          .filter((l: any) => l.line_type === 'part')
-          .map((l: any) => ({
-            part_number: l.part_number || '',
-            description: l.rough_name || l.description || '',
-            quantity: l.quantity || 1,
-            unit_price: null,
-            in_stock: true,
-            ordered: false,
-            eta: null,
-            notes: '',
-          }))
-        setLineItems(aiLines.length > 0 ? aiLines : [emptyLine()])
+    const lines = (woData.so_lines || []).filter((l: any) => l.line_type === 'part')
+    setPartLines(lines)
+    if (woData.shop_id) {
+      const ratesRes = await fetch(`/api/shops/${woData.shop_id}/labor-rates`)
+      if (ratesRes.ok) {
+        const ratesData = await ratesRes.json()
+        setShopLaborRates(ratesData)
       }
     }
-    setLoading(false)
   }, [woId])
 
   useEffect(() => {
     getCurrentUser(supabase).then(p => {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
-      loadData(p)
+      loadData().then(() => setLoading(false))
     })
   }, [])
 
-  // Part number lookup
-  async function lookupPart(index: number, partNumber: string) {
-    if (!partNumber || !wo) return
-    const customerId = wo.customer_id || wo.customers?.id
-    const res = await fetch(`/api/parts/lookup?part_number=${encodeURIComponent(partNumber)}&customer_id=${customerId || ''}`)
-    if (!res.ok) return
-    const data = await res.json()
-    if (data.found) {
-      setLineItems(prev => prev.map((l, i) => i === index ? {
-        ...l,
-        description: data.description || l.description,
-        unit_price: data.unit_price,
-        in_stock: data.in_stock,
-      } : l))
-    }
-  }
-
-  function updateLine(index: number, field: keyof LineItem, value: any) {
-    setLineItems(prev => {
-      const updated = prev.map((l, i) => i === index ? { ...l, [field]: value } : l)
-      // Auto-prompt when all parts become in-stock after a change
-      if (field === 'in_stock' && value === true && isSubmitted && !isReady) {
-        const allNowInStock = updated.every(l => l.in_stock)
-        if (allNowInStock) {
-          setTimeout(() => {
-            if (confirm('All parts are now in stock. Mark as Ready for pickup?')) {
-              markReady(false)
-            }
-          }, 100)
-        }
-      }
-      return updated
-    })
-  }
-
-  function addLine() { setLineItems(prev => [...prev, emptyLine()]) }
-  function removeLine(index: number) { setLineItems(prev => prev.filter((_, i) => i !== index)) }
-
-  // Save line items
-  async function saveLineItems() {
-    if (!partsRequest) return
-    setSaving(true)
-    await fetch(`/api/parts-requests/${partsRequest.id}/line-items`, {
+  async function patchLine(lineId: string, data: Record<string, any>) {
+    const res = await fetch(`/api/so-lines/${lineId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ line_items: lineItems, user_id: user?.id }),
+      body: JSON.stringify(data),
     })
-    setSaving(false)
-    flash('Saved')
+    if (res.ok) await loadData()
+    return res
   }
 
-  // Submit
-  async function submitParts() {
-    if (!partsRequest || !user) return
-    setSaving(true)
-    const res = await fetch(`/api/parts-requests/${partsRequest.id}/submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user.id, line_items: lineItems }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setPartsRequest(data)
-      flash('Submitted — supervisor and mechanic notified')
+  function updateLocalLine(lineId: string, field: string, value: any) {
+    setPartLines(prev => prev.map(l => l.id === lineId ? { ...l, [field]: value } : l))
+  }
+
+  function searchInventory(lineId: string, query: string) {
+    if (searchTimers.current[lineId]) clearTimeout(searchTimers.current[lineId])
+    if (!query || query.length < 2 || !wo?.shop_id) {
+      setSearchResults(prev => { const n = { ...prev }; delete n[lineId]; return n })
+      return
     }
-    setSaving(false)
+    searchTimers.current[lineId] = setTimeout(async () => {
+      const res = await fetch(`/api/parts/search?shop_id=${wo.shop_id}&q=${encodeURIComponent(query)}`)
+      if (res.ok) {
+        const results = await res.json()
+        setSearchResults(prev => ({ ...prev, [lineId]: results }))
+      }
+    }, 300)
   }
 
-  // Mark ready
-  async function markReady(partial: boolean = false) {
-    if (!partsRequest) return
-    setSaving(true)
-    const res = await fetch(`/api/parts-requests/${partsRequest.id}/ready`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ partial }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setPartsRequest(data)
-      flash(partial ? 'Marked partially ready' : 'Parts marked ready — mechanic notified')
+  async function autoFillFromInventory(lineId: string, invPart: any) {
+    let sellPrice = invPart.sell_price || 0
+    const costPrice = invPart.cost_price || invPart.average_cost || 0
+    const ownershipType = wo?.ownership_type || wo?.assets?.ownership_type
+    if (costPrice > 0 && ownershipType && shopLaborRates.length > 0) {
+      const rate = shopLaborRates.find((r: any) => r.ownership_type === ownershipType)
+      if (rate) {
+        if (rate.parts_pricing_mode === 'margin' && rate.parts_margin_pct > 0) {
+          sellPrice = costPrice / (1 - rate.parts_margin_pct / 100)
+        } else if (rate.parts_markup_pct > 0) {
+          sellPrice = costPrice * (1 + rate.parts_markup_pct / 100)
+        }
+      }
     }
-    setSaving(false)
+    await patchLine(lineId, {
+      real_name: invPart.description,
+      part_number: invPart.part_number,
+      parts_cost_price: costPrice,
+      parts_sell_price: Math.round(sellPrice * 100) / 100,
+      parts_status: 'sourced',
+    })
+    setSearchResults(prev => { const n = { ...prev }; delete n[lineId]; return n })
   }
 
-  const fmt = (n: number | null) => n != null ? '$' + Number(n).toFixed(2) : '--'
-  const status = partsRequest?.status || 'pending'
-  const isSubmitted = ['submitted', 'partial', 'ready', 'delivered'].includes(status)
-  const isReady = status === 'ready'
-  const hasOrderedItems = lineItems.some(l => !l.in_stock && l.ordered)
-  const hasInStockItems = lineItems.some(l => l.in_stock)
-  const allInStock = lineItems.every(l => l.in_stock)
-
+  const fmt = (n: number | null | undefined) => n != null ? '$' + Number(n).toFixed(2) : '--'
   const customer = wo?.customers || {}
   const asset = wo?.assets || {}
   const pricingTierLabel = customer.pricing_tier === 'ugl_company' ? 'UGL Company' : customer.pricing_tier === 'ugl_owner_operator' ? 'UGL Owner Op.' : 'Outside'
   const tierColor = customer.pricing_tier === 'ugl_company' ? BLUE : customer.pricing_tier === 'ugl_owner_operator' ? AMBER : MUTED
+
+  const allSourced = partLines.length > 0 && partLines.every((l: any) => l.parts_status !== 'rough' && l.real_name)
+  const sourcedCount = partLines.filter((l: any) => l.real_name).length
 
   if (loading) return <div style={{ background: '#060708', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
   if (!wo) return null
@@ -229,12 +139,6 @@ export default function PartsWOView() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <span style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: BLUE }}>WO #{wo.so_number}</span>
               <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: `${tierColor}20`, color: tierColor, textTransform: 'uppercase' }}>{pricingTierLabel}</span>
-              <span style={{
-                padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700,
-                background: isReady ? `${GREEN}20` : isSubmitted ? `${AMBER}20` : `${MUTED}20`,
-                color: isReady ? GREEN : isSubmitted ? AMBER : MUTED,
-                textTransform: 'uppercase',
-              }}>{status}</span>
             </div>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F4FF' }}>
               <Truck size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
@@ -249,127 +153,165 @@ export default function PartsWOView() {
         </div>
       </div>
 
-      {/* Ready banner */}
-      {isReady && (
-        <div style={{ background: `${GREEN}15`, border: `1px solid ${GREEN}40`, borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Check size={18} color={GREEN} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: GREEN }}>Parts Ready — waiting for mechanic pickup</span>
-          {partsRequest?.parts_ready_at && <span style={{ fontSize: 11, color: MUTED, marginLeft: 'auto', fontFamily: MONO }}>{new Date(partsRequest.parts_ready_at).toLocaleString()}</span>}
+      {/* Progress bar */}
+      {partLines.length > 0 && (
+        <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Package size={16} color={allSourced ? GREEN : AMBER} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: allSourced ? GREEN : AMBER, marginBottom: 4 }}>
+              {sourcedCount}/{partLines.length} parts sourced
+            </div>
+            <div style={{ width: '100%', height: 4, background: 'rgba(255,255,255,.08)', borderRadius: 2 }}>
+              <div style={{ width: `${(sourcedCount / partLines.length) * 100}%`, height: '100%', background: allSourced ? GREEN : AMBER, borderRadius: 2, transition: 'width .3s' }} />
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Submitted banner */}
-      {status === 'submitted' && (
-        <div style={{ background: `${AMBER}15`, border: `1px solid ${AMBER}40`, borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Clock size={18} color={AMBER} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: AMBER }}>Submitted — parts being prepared</span>
-          {partsRequest?.submitted_at && <span style={{ fontSize: 11, color: MUTED, marginLeft: 'auto', fontFamily: MONO }}>{new Date(partsRequest.submitted_at).toLocaleString()}</span>}
-        </div>
-      )}
-
-      {/* Line Items */}
+      {/* Part Lines from so_lines */}
       <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF' }}>Parts Line Items ({lineItems.length})</div>
-          <button onClick={addLine} style={{ display: 'flex', alignItems: 'center', gap: 4, background: `${BLUE}15`, color: BLUE, border: 'none', padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-            <Plus size={12} /> Add Part
-          </button>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 16 }}>
+          Parts ({partLines.length})
         </div>
 
-        {/* Column headers */}
-        <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr 60px 90px 140px 80px 1fr 32px', gap: 8, padding: '6px 0', fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, borderBottom: '1px solid rgba(255,255,255,.06)' }}>
-          <div>Part #</div><div>Description</div><div>Qty</div><div>Unit Price</div><div>Stock Status</div><div>ETA</div><div>Notes</div><div />
-        </div>
+        {partLines.length === 0 && (
+          <div style={{ padding: 30, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No part lines on this work order.</div>
+        )}
 
-        {/* Line rows */}
-        {lineItems.map((line, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '130px 1fr 60px 90px 140px 80px 1fr 32px', gap: 8, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.03)', alignItems: 'center' }}>
-            {/* Part Number */}
-            <input
-              value={line.part_number}
-              onChange={e => updateLine(i, 'part_number', e.target.value)}
-              onBlur={e => lookupPart(i, e.target.value)}
-              placeholder="Part #"
-              style={inputStyle}
-            />
-            {/* Description */}
-            <input value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} placeholder="Description" style={inputStyle} />
-            {/* Qty */}
-            <input type="number" min={1} value={line.quantity} onChange={e => updateLine(i, 'quantity', parseInt(e.target.value) || 1)} style={{ ...inputStyle, textAlign: 'center' }} />
-            {/* Price */}
-            <div style={{ fontFamily: MONO, fontSize: 12, color: line.unit_price != null ? '#F0F4FF' : '#48536A', fontWeight: 600, padding: '0 4px' }}>
-              {fmt(line.unit_price)}
+        {partLines.map((p: any) => {
+          const st = statusOptions[p.parts_status || 'rough'] || statusOptions.rough
+          return (
+            <div key={p.id} style={{ border: '1px solid rgba(255,255,255,.06)', borderRadius: 10, padding: 14, marginBottom: 10, background: p.parts_status === 'rough' || !p.real_name ? '#0A0C10' : '#0D0F12' }}>
+              {/* Top row: rough name + status */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ fontSize: 12, color: MUTED }}>
+                  Suggested: <strong style={{ color: '#9CA3B0' }}>{p.rough_name || p.description || '—'}</strong>
+                </div>
+                <select
+                  value={p.parts_status || 'rough'}
+                  onChange={async e => { await patchLine(p.id, { parts_status: e.target.value }) }}
+                  style={{
+                    fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`,
+                    padding: '3px 10px', borderRadius: 6, border: 'none', fontFamily: FONT, cursor: 'pointer',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {Object.entries(statusOptions).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Editable fields grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 60px 90px 90px', gap: 8 }}>
+                {/* Real Name with search dropdown */}
+                <div style={{ position: 'relative' }}>
+                  <span style={labelStyle}>Real Name</span>
+                  <input
+                    value={p.real_name || ''}
+                    onChange={e => {
+                      updateLocalLine(p.id, 'real_name', e.target.value)
+                      searchInventory(p.id, e.target.value)
+                    }}
+                    onBlur={e => {
+                      if (dropdownClicked.current) { dropdownClicked.current = false; return }
+                      if (e.target.value) patchLine(p.id, { real_name: e.target.value })
+                      setTimeout(() => setSearchResults(prev => { const n = { ...prev }; delete n[p.id]; return n }), 200)
+                    }}
+                    placeholder="Type to search inventory..."
+                    style={inputStyle}
+                  />
+                  {searchResults[p.id]?.length > 0 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1A1F2B', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.4)', maxHeight: 180, overflowY: 'auto' }}>
+                      {searchResults[p.id].map((inv: any) => (
+                        <div
+                          key={inv.id}
+                          onMouseDown={() => { dropdownClicked.current = true; autoFillFromInventory(p.id, inv) }}
+                          style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.06)', fontSize: 12 }}
+                          onMouseEnter={e => (e.currentTarget.style.background = '#242A38')}
+                          onMouseLeave={e => (e.currentTarget.style.background = '')}
+                        >
+                          <div style={{ fontWeight: 600, color: '#F0F4FF' }}>{inv.description}</div>
+                          <div style={{ fontSize: 10, color: MUTED }}>
+                            {inv.part_number || '—'} · Cost: {fmt(inv.cost_price)} · Sell: {fmt(inv.sell_price)} · {inv.on_hand || 0} in stock
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Part # */}
+                <div>
+                  <span style={labelStyle}>Part #</span>
+                  <input
+                    value={p.part_number || ''}
+                    onChange={e => {
+                      updateLocalLine(p.id, 'part_number', e.target.value)
+                      searchInventory(p.id, e.target.value)
+                    }}
+                    onBlur={e => {
+                      if (dropdownClicked.current) return
+                      patchLine(p.id, { part_number: e.target.value })
+                      setTimeout(() => setSearchResults(prev => { const n = { ...prev }; delete n[p.id]; return n }), 200)
+                    }}
+                    placeholder="PN"
+                    style={inputStyle}
+                  />
+                </div>
+
+                {/* Qty */}
+                <div>
+                  <span style={labelStyle}>Qty</span>
+                  <input
+                    type="number"
+                    value={p.quantity || 1}
+                    onChange={e => updateLocalLine(p.id, 'quantity', parseInt(e.target.value) || 1)}
+                    onBlur={e => patchLine(p.id, { quantity: parseInt(e.target.value) || 1 })}
+                    style={inputStyle}
+                  />
+                </div>
+
+                {/* Cost */}
+                <div>
+                  <span style={labelStyle}>Cost</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={p.parts_cost_price ?? ''}
+                    onChange={e => updateLocalLine(p.id, 'parts_cost_price', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    onBlur={e => patchLine(p.id, { parts_cost_price: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.00"
+                    style={inputStyle}
+                  />
+                </div>
+
+                {/* Sell */}
+                <div>
+                  <span style={labelStyle}>Sell</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={p.parts_sell_price ?? ''}
+                    onChange={e => updateLocalLine(p.id, 'parts_sell_price', e.target.value === '' ? '' : parseFloat(e.target.value))}
+                    onBlur={e => patchLine(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: (parseFloat(e.target.value) || 0) * (p.quantity || 1) })}
+                    placeholder="0.00"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
             </div>
-            {/* Stock status */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                <input type="checkbox" checked={line.in_stock} onChange={e => { updateLine(i, 'in_stock', e.target.checked); if (e.target.checked) updateLine(i, 'ordered', false) }} />
-                <span style={{ fontSize: 10, color: line.in_stock ? GREEN : RED, fontWeight: 600 }}>
-                  {line.in_stock ? 'In Stock' : 'Out'}
-                </span>
-              </label>
-              {!line.in_stock && (
-                <label style={{ display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={line.ordered} onChange={e => updateLine(i, 'ordered', e.target.checked)} />
-                  <span style={{ fontSize: 10, color: line.ordered ? AMBER : MUTED }}>Ordered</span>
-                </label>
-              )}
-            </div>
-            {/* ETA */}
-            {!line.in_stock && line.ordered ? (
-              <input type="date" value={line.eta || ''} onChange={e => updateLine(i, 'eta', e.target.value || null)} style={{ ...inputStyle, fontSize: 10, padding: '4px 6px' }} />
-            ) : <div />}
-            {/* Notes */}
-            <input value={line.notes} onChange={e => updateLine(i, 'notes', e.target.value)} placeholder="Notes" style={inputStyle} />
-            {/* Remove */}
-            <button onClick={() => removeLine(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#48536A', padding: 4 }}>
-              <X size={14} />
-            </button>
-          </div>
-        ))}
-
-        {lineItems.length === 0 && (
-          <div style={{ padding: 30, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No line items. Click "Add Part" to begin.</div>
-        )}
-      </div>
-
-      {/* Action buttons */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        {/* Save */}
-        <button onClick={saveLineItems} disabled={saving} style={{ padding: '10px 20px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, color: '#F0F4FF', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
-          Save Changes
-        </button>
-
-        {/* Submit */}
-        {!isSubmitted && (
-          <button onClick={submitParts} disabled={saving || lineItems.length === 0} style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
-            Submit — Notify Supervisor & Mechanic
-          </button>
-        )}
-
-        {/* Mark Ready */}
-        {isSubmitted && !isReady && allInStock && (
-          <button onClick={() => markReady(false)} disabled={saving} style={{ padding: '10px 20px', background: GREEN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
-            Mark Parts Ready for Pickup
-          </button>
-        )}
-
-        {/* Mark Partial Ready */}
-        {isSubmitted && !isReady && hasInStockItems && !allInStock && (
-          <button onClick={() => markReady(true)} disabled={saving} style={{ padding: '10px 20px', background: AMBER, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
-            Mark Available Parts Ready
-          </button>
-        )}
-
-        {/* Submitted indicator */}
-        {isSubmitted && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', fontSize: 12, color: MUTED }}>
-            <Check size={14} /> Submitted {partsRequest?.submitted_at && new Date(partsRequest.submitted_at).toLocaleString()}
-          </div>
-        )}
+          )
+        })}
       </div>
     </div>
   )
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 9, fontWeight: 700, color: '#48536A',
+  textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4,
+  fontFamily: "'IBM Plex Mono',monospace",
 }
 
 const inputStyle: React.CSSProperties = {
