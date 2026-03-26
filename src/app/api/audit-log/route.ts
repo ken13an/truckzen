@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 export async function GET(req: Request) {
-  const url = new URL(req.url)
-  const shop_id = url.searchParams.get('shop_id')
-  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
 
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
+  const url = new URL(req.url)
   const action = url.searchParams.get('action')
   const entity_type = url.searchParams.get('entity_type')
   const from = url.searchParams.get('from')
@@ -17,8 +16,8 @@ export async function GET(req: Request) {
   const user_id = url.searchParams.get('user_id')
   const limit = parseInt(url.searchParams.get('limit') || '100', 10)
 
-  const s = db()
-  let q = s.from('audit_log').select('*, users(full_name, email)').eq('shop_id', shop_id).order('created_at', { ascending: false }).limit(limit)
+  const s = createAdminSupabaseClient()
+  let q = s.from('audit_log').select('*, users(full_name, email)').eq('shop_id', shopId).order('created_at', { ascending: false }).limit(limit)
 
   if (action) q = q.eq('action', action)
   if (entity_type) q = q.eq('entity_type', entity_type)

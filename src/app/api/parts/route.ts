@@ -23,23 +23,19 @@ export async function GET(req: Request) {
   const page      = parseInt(searchParams.get('page') || '1')
   const perPage   = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)
 
-  // Get shop_id and user role
-  let shopId = searchParams.get('shop_id')
-  let userRole: string | null = null
-  try {
-    const supabase = await createServerSupabaseClient()
-    const user = await getCurrentUser(supabase)
-    if (user) {
-      if (!shopId) shopId = user.shop_id
-      userRole = user.role
-      if (!checkRateLimit(`${user.id}:parts`, 200, 60000)) {
-        return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
-      }
-    }
-  } catch {}
+  // Authenticate and derive shop_id from session
+  const supabase = await createServerSupabaseClient()
+  const user = await getCurrentUser(supabase)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const shopId = user.shop_id
+  const userRole = user.role
+
+  if (!checkRateLimit(`${user.id}:parts`, 200, 60000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
 
   if (!shopId) {
-    console.error('[Parts API] No shop_id available — returning empty')
     return NextResponse.json({ data: [], total: 0, page, per_page: perPage })
   }
 

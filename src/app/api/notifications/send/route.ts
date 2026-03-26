@@ -1,30 +1,35 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 export async function POST(req: Request) {
-  const s = db()
-  const { user_ids, role, shop_id, title, body, data } = await req.json()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
+  const s = createAdminSupabaseClient()
+  const { user_ids, role, title, body, data } = await req.json()
 
   if (!title || !body) {
     return NextResponse.json({ error: 'title and body required' }, { status: 400 })
   }
 
-  // Get push tokens - either by user IDs or by role+shop
+  // Get push tokens - scoped to actor's shop
   let tokens: string[] = []
 
   if (user_ids?.length) {
     const { data: users } = await s.from('users')
       .select('push_token')
       .in('id', user_ids)
+      .eq('shop_id', shopId)
       .is('deleted_at', null)
       .not('push_token', 'is', null)
     tokens = (users || []).map((u: any) => u.push_token).filter(Boolean)
-  } else if (role && shop_id) {
+  } else if (role) {
     const { data: users } = await s.from('users')
       .select('push_token')
-      .eq('shop_id', shop_id)
+      .eq('shop_id', shopId)
       .eq('role', role)
       .is('deleted_at', null)
       .not('push_token', 'is', null)

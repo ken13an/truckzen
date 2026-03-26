@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const userId = searchParams.get('user_id')
-  if (!userId) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
 
-  const { data: user } = await s.from('users').select('id, full_name, role, shop_id, team').eq('id', userId).single()
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
 
-  const shopId = user.shop_id
-  const role = user.role
+  const s = createAdminSupabaseClient()
+  const user = { id: actor.id, full_name: actor.full_name, role: actor.role, shop_id: shopId, team: actor.team }
+  const userId = actor.id
+  const role = actor.role
   const today = new Date().toISOString().split('T')[0]
 
   // Notifications — unread for this user

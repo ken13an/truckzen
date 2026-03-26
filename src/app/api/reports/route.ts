@@ -1,39 +1,32 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 export async function GET(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
   const type   = searchParams.get('type') || 'overview'
   const from   = searchParams.get('from') || new Date(Date.now() - 30*86400000).toISOString().split('T')[0]
   const to     = searchParams.get('to')   || new Date().toISOString().split('T')[0]
 
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
-
-  const supabase = db()
+  const supabase = createAdminSupabaseClient()
 
   switch (type) {
 
     case 'overview': {
-      // Use raw SQL via RPC or count queries to avoid 1000 row limit
       const pgFrom = from + 'T00:00:00'
       const pgTo = to + 'T23:59:59'
 
-      // WO stats — use service_orders.grand_total as revenue source (invoices table may be empty for historical data)
       const { count: soCount } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
         .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void').not('so_number', 'like', 'DRAFT-%').gte('created_at', pgFrom).lte('created_at', pgTo)
 
       const { count: soCompleted } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
         .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void').not('so_number', 'like', 'DRAFT-%').gte('created_at', pgFrom).lte('created_at', pgTo).in('status', ['done', 'good_to_go'])
 
-      // Revenue: sum grand_total from service_orders (works for both native + historical)
-      // Supabase JS can't do SUM, so fetch in batches or use a simpler approach
-      // Fetch grand_total only — lightweight, but still limited to 1000
-      // Use pagination to get accurate totals
       let revenue = 0
       let page = 0
       while (true) {
@@ -46,26 +39,23 @@ export async function GET(req: Request) {
         page++
       }
 
-      // Invoice-based revenue (for native TruckZen invoices)
       const { data: paidInvoices } = await supabase.from('invoices').select('total')
         .eq('shop_id', shopId).is('deleted_at', null).eq('status', 'paid').gte('created_at', pgFrom).lte('created_at', pgTo)
       const invoiceRevenue = (paidInvoices || []).reduce((s: number, i: any) => s + (i.total || 0), 0)
 
-      // Outstanding
       const { data: sentInvoices } = await supabase.from('invoices').select('balance_due')
         .eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent')
       const outstanding = (sentInvoices || []).reduce((s: number, i: any) => s + (i.balance_due || 0), 0)
 
-      // Inventory value
       const { data: parts } = await supabase.from('parts').select('on_hand, cost_price').eq('shop_id', shopId).is('deleted_at', null)
       const inv_value = (parts || []).reduce((s: number, p: any) => s + (p.on_hand || 0) * (p.cost_price || 0), 0)
 
       return NextResponse.json({
-        revenue: revenue || invoiceRevenue, // Use WO grand_totals (includes historical), fallback to invoice totals
+        revenue: revenue || invoiceRevenue,
         outstanding,
         so_count: soCount || 0,
         so_completed: soCompleted || 0,
-        avg_cycle_hours: 0, // TODO: compute from completed WOs with dates
+        avg_cycle_hours: 0,
         inventory_value: inv_value,
         period: { from, to },
       })

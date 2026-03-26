@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { getPermissions } from '@/lib/getPermissions'
 import JSZip from 'jszip'
 import { logAction } from '@/lib/services/auditLog'
-
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 const TABLE_MAP: Record<string, { table: string; fileName: string; select: string }> = {
   service_orders: { table: 'service_orders', fileName: 'work_orders', select: 'id, so_number, status, priority, complaint, cause, correction, source, is_historical, grand_total, labor_total, parts_total, tax_total, created_at, updated_at, completed_at, customer_id, asset_id, fullbay_id' },
@@ -53,13 +52,20 @@ async function fetchAll(s: any, table: string, select: string, shopId: string): 
 }
 
 export async function POST(req: Request) {
-  const s = db()
-  const { shop_id, user_id, user_role, tables, format = 'csv' } = await req.json()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
 
-  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
-  if (!['owner', 'gm', 'it_person'].includes(user_role || '')) {
-    return NextResponse.json({ error: 'Only shop owners can export data' }, { status: 403 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
+  const perms = getPermissions(actor)
+  if (!perms.canViewFinancials && !perms.canManageUsers) {
+    return jsonError('Only shop owners can export data', 403)
   }
+
+  const s = createAdminSupabaseClient()
+  const { tables, format = 'csv' } = await req.json()
+
   if (!tables?.length) return NextResponse.json({ error: 'No tables selected' }, { status: 400 })
 
   const zip = new JSZip()
@@ -71,7 +77,7 @@ export async function POST(req: Request) {
     if (!config) continue
 
     try {
-      const data = await fetchAll(s, config.table, config.select, shop_id)
+      const data = await fetchAll(s, config.table, config.select, shopId)
       counts[config.fileName] = data.length
 
       if (data.length === 0) continue
@@ -80,18 +86,17 @@ export async function POST(req: Request) {
       const content = format === 'json' ? toJSON(data) : toCSV(data, columns)
       zip.file(`${config.fileName}${ext}`, content)
     } catch (err: any) {
-      // Skip tables that don't exist or have errors
       counts[config.fileName] = -1
     }
   }
 
   // Log the export
   logAction({
-    shop_id,
-    user_id: user_id || '',
+    shop_id: shopId,
+    user_id: actor.id,
     action: 'data.exported',
     entity_type: 'shop',
-    entity_id: shop_id,
+    entity_id: shopId,
     details: { tables, format, counts },
   }).catch(() => {})
 
@@ -99,7 +104,7 @@ export async function POST(req: Request) {
   const zipBuffer = await zip.generateAsync({ type: 'uint8array' })
 
   // Get shop name for filename
-  const { data: shop } = await s.from('shops').select('name, dba').eq('id', shop_id).single()
+  const { data: shop } = await s.from('shops').select('name, dba').eq('id', shopId).single()
   const shopName = (shop?.dba || shop?.name || 'shop').replace(/[^a-zA-Z0-9]/g, '_')
   const date = new Date().toISOString().split('T')[0]
   const fileName = `truckzen_export_${shopName}_${date}.zip`

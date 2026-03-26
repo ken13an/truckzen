@@ -2,15 +2,21 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { checkRateLimit } from '@/lib/rateLimit'
 import { getCache, setCache, invalidateCache } from '@/lib/cache'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
 export async function GET(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
   const s = db()
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
   const search = searchParams.get('q')
   const page = parseInt(searchParams.get('page') || '1')
   const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)
@@ -18,9 +24,7 @@ export async function GET(req: Request) {
   const dateFrom = searchParams.get('date_from')
   const dateTo = searchParams.get('date_to')
 
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
-
-  if (!checkRateLimit(`${shopId}:customers`, 200, 60000)) {
+  if (!checkRateLimit(`${actor.id}:customers`, 200, 60000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
@@ -81,14 +85,19 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
   const s = db()
   const body = await req.json()
 
-  if (!body.shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!body.company_name) return NextResponse.json({ error: 'Company name required' }, { status: 400 })
 
   const { data, error } = await s.from('customers').insert({
-    shop_id: body.shop_id,
+    shop_id: shopId,
     company_name: body.company_name.trim(),
     contact_name: body.contact_name || null,
     phone: body.phone || null,
@@ -101,6 +110,6 @@ export async function POST(req: Request) {
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  invalidateCache(`customers:${body.shop_id}`)
+  invalidateCache(`customers:${shopId}`)
   return NextResponse.json(data, { status: 201 })
 }
