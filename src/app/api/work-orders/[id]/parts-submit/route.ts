@@ -23,15 +23,10 @@ export async function POST(req: Request, { params }: Params) {
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
   if (action === 'submit_all') {
-    // Validate: all part lines must have real_name
+    // Update all parts to received (rough parts are accepted — parts dept fills names after)
     const { data: partLines } = await s.from('so_lines')
       .select('id, real_name, rough_name, parts_status, quantity')
       .eq('so_id', id).eq('line_type', 'part')
-
-    const incomplete = (partLines || []).filter(p => !p.real_name && p.rough_name)
-    if (incomplete.length > 0) {
-      return NextResponse.json({ error: `${incomplete.length} part(s) still need real names`, incomplete: incomplete.length }, { status: 400 })
-    }
 
     // Update all sourced parts to received
     await s.from('so_lines').update({ parts_status: 'received' })
