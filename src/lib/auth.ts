@@ -14,6 +14,7 @@ export interface UserProfile {
   can_create_so: boolean
   can_impersonate: boolean
   impersonate_role: string | null
+  is_platform_owner?: boolean
 }
 
 export async function getCurrentUser(supabase: SupabaseClient): Promise<UserProfile | null> {
@@ -22,7 +23,7 @@ export async function getCurrentUser(supabase: SupabaseClient): Promise<UserProf
 
   const { data: profile, error } = await supabase
     .from('users')
-    .select('id, shop_id, full_name, email, role, team, language, telegram_id, active, can_create_so, can_impersonate, impersonate_role')
+    .select('id, shop_id, full_name, email, role, team, language, telegram_id, active, can_create_so, can_impersonate, impersonate_role, is_platform_owner')
     .eq('id', user.id)
     .single()
 

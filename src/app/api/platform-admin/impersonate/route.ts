@@ -1,94 +1,80 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
 
 // POST /api/platform-admin/impersonate — start or stop shop impersonation
+// Safer implementation: do not mutate the canonical users.shop_id.
 export async function POST(req: Request) {
-  const s = db()
-  const { user_id, shop_id, action } = await req.json()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  if (!actor.is_platform_owner) return jsonError('Access denied', 403)
 
-  if (!user_id) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
-
-  const { data: caller } = await s.from('users')
-    .select('id, is_platform_owner, shop_id, full_name')
-    .eq('id', user_id)
-    .single()
-
-  if (!caller?.is_platform_owner) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  const s = createAdminSupabaseClient()
+  const body = await req.json().catch(() => null)
+  const action = body?.action
 
   if (action === 'start') {
-    if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+    const shopId = typeof body?.shop_id === 'string' ? body.shop_id : ''
+    if (!shopId) return jsonError('shop_id required', 400)
 
-    // Get shop info
-    const { data: shop } = await s.from('shops').select('id, name').eq('id', shop_id).single()
-    if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 })
+    const { data: shop, error: shopError } = await s
+      .from('shops')
+      .select('id, name')
+      .eq('id', shopId)
+      .single()
 
-    // Set Ken's shop_id to the target shop temporarily
-    // We store his original shop_id in metadata so we can restore it
-    const originalShopId = caller.shop_id
+    if (shopError || !shop) return jsonError('Shop not found', 404)
 
-    await s.from('users').update({
-      shop_id: shop_id,
-      impersonate_role: 'owner',
-    }).eq('id', user_id)
+    const metadata = {
+      ...(actor as any),
+      platform_impersonation: {
+        active: true,
+        target_shop_id: shop.id,
+        target_shop_name: shop.name,
+        started_at: new Date().toISOString(),
+      },
+    }
 
-    // Log impersonation start
+    const { error: authError } = await s.auth.admin.updateUserById(actor.id, {
+      app_metadata: metadata,
+    })
+    if (authError) return jsonError(authError.message, 500)
+
     await s.from('platform_activity_log').insert({
       action_type: 'impersonation_started',
-      description: `${caller.full_name} entered ${shop.name} as Owner`,
-      shop_id,
-      performed_by: user_id,
-      metadata: { original_shop_id: originalShopId },
+      description: `${actor.full_name || actor.email || actor.id} entered ${shop.name} as Owner`,
+      shop_id: shop.id,
+      performed_by: actor.id,
+      metadata: { original_shop_id: actor.shop_id, target_shop_id: shop.id },
     })
 
-    return NextResponse.json({ ok: true, shop_name: shop.name, original_shop_id: originalShopId })
+    return NextResponse.json({ ok: true, shop_name: shop.name, original_shop_id: actor.shop_id, target_shop_id: shop.id })
   }
 
   if (action === 'stop') {
-    const originalShopId = req.headers.get('x-original-shop-id')
+    const { data: authUser, error: authUserError } = await s.auth.admin.getUserById(actor.id)
+    if (authUserError) return jsonError(authUserError.message, 500)
 
-    // Find the most recent impersonation_started log to get original shop_id
-    let restoreShopId = originalShopId
-    if (!restoreShopId) {
-      const { data: lastLog } = await s.from('platform_activity_log')
-        .select('metadata, shop_id')
-        .eq('performed_by', user_id)
-        .eq('action_type', 'impersonation_started')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
+    const currentMeta = authUser.user?.app_metadata || {}
+    const targetShopId = currentMeta?.platform_impersonation?.target_shop_id || null
+    const targetShopName = currentMeta?.platform_impersonation?.target_shop_name || 'Unknown'
 
-      restoreShopId = lastLog?.metadata?.original_shop_id || null
-    }
+    const nextMetadata = { ...currentMeta }
+    delete (nextMetadata as any).platform_impersonation
 
-    if (!restoreShopId) return NextResponse.json({ error: 'Cannot determine original shop' }, { status: 400 })
+    const { error: clearError } = await s.auth.admin.updateUserById(actor.id, {
+      app_metadata: nextMetadata,
+    })
+    if (clearError) return jsonError(clearError.message, 500)
 
-    // Get current shop name for logging
-    const { data: currentUser } = await s.from('users').select('shop_id').eq('id', user_id).single()
-    let shopName = 'Unknown'
-    if (currentUser?.shop_id) {
-      const { data: sh } = await s.from('shops').select('name').eq('id', currentUser.shop_id).single()
-      shopName = sh?.name || 'Unknown'
-    }
-
-    await s.from('users').update({
-      shop_id: restoreShopId,
-      impersonate_role: null,
-    }).eq('id', user_id)
-
-    // Log impersonation end
     await s.from('platform_activity_log').insert({
       action_type: 'impersonation_ended',
-      description: `${caller.full_name} exited ${shopName}`,
-      shop_id: currentUser?.shop_id || null,
-      performed_by: user_id,
+      description: `${actor.full_name || actor.email || actor.id} exited ${targetShopName}`,
+      shop_id: targetShopId,
+      performed_by: actor.id,
     })
 
     return NextResponse.json({ ok: true })
   }
 
-  return NextResponse.json({ error: 'Invalid action (start/stop)' }, { status: 400 })
+  return jsonError('Invalid action (start/stop)', 400)
 }

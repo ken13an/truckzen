@@ -11,7 +11,9 @@
     "migrate:fleetio": "node migration-scripts/migrate-fleetio.js",
     "migrate:fullbay": "node migration-scripts/migrate-fullbay.js",
     "migrate:all": "npm run migrate:monday && npm run migrate:fleetio && npm run migrate:fullbay",
-    "setup:webhook": "node telegram-bot/setup-webhook.js"
+    "setup:webhook": "node telegram-bot/setup-webhook.js",
+    "typecheck": "tsc --noEmit",
+    "lint:strict": "next lint --max-warnings=0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",

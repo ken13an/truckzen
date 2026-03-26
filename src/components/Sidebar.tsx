@@ -125,10 +125,10 @@ export default function Sidebar() {
     async function load() {
       const { data: { user: au } } = await supabase.auth.getUser()
       if (!au) return
-      const { data } = await supabase.from('users').select('id, shop_id, full_name, role, team, is_platform_owner').eq('id', au.id).single()
+      const { data } = await supabase.from('users').select('id, shop_id, full_name, role, team, is_platform_owner, impersonate_role').eq('id', au.id).single()
       if (!data) return
       setUser(data)
-      if (data.is_platform_owner) setIsPlatformOwner(true)
+      if (data.is_platform_owner && !data.impersonate_role) setIsPlatformOwner(true)
 
       // Fetch permissions and counts via API routes (service role key bypasses RLS)
       const [rpRes, uoRes, partsRes, wosRes] = await Promise.all([
@@ -160,9 +160,10 @@ export default function Sidebar() {
 
   if (!user) return null
 
-  const visible = getSidebarItems(user.role, rolePerms, userOverrides)
+  const effectiveRole = user.impersonate_role || user.role
+  const visible = getSidebarItems(effectiveRole, rolePerms, userOverrides)
   const visibleHrefs = new Set<string>(visible.map(i => i.href))
-  const deptAccess = getDeptAccess(user.role, rolePerms, userOverrides)
+  const deptAccess = getDeptAccess(effectiveRole, rolePerms, userOverrides)
   // Collect all nav hrefs for longest-match comparison
   const allHrefs: string[] = []
   for (const dept of DEPARTMENTS) {
@@ -238,7 +239,7 @@ export default function Sidebar() {
 
       <nav style={{ flex: 1, padding: '6px 0', overflowY: 'auto', overflowX: 'hidden' }}>
         {/* Smart Drop — standalone */}
-        {SMART_DROP_ROLES.includes(user.role) && (
+        {SMART_DROP_ROLES.includes(effectiveRole) && (
           <div style={{ marginBottom: 4 }}>
             {renderNavItem({ href: '/smart-drop', label: 'Smart Drop', icon: Upload })}
           </div>
@@ -250,8 +251,8 @@ export default function Sidebar() {
         {DEPARTMENTS.filter(dept => deptAccess.includes(dept.label)).map(dept => {
           const DeptIcon = dept.icon
           const isExpanded = expanded[dept.label]
-          const deptItems = dept.items.filter(item => visibleHrefs.has(item.href) || UNLIMITED_ROLES.includes(user.role) || (dept.label === 'Maintenance' && deptAccess.includes('Maintenance')))
-          if (deptItems.length === 0 && !UNLIMITED_ROLES.includes(user.role)) return null
+          const deptItems = dept.items.filter(item => visibleHrefs.has(item.href) || UNLIMITED_ROLES.includes(effectiveRole) || (dept.label === 'Maintenance' && deptAccess.includes('Maintenance')))
+          if (deptItems.length === 0 && !UNLIMITED_ROLES.includes(effectiveRole)) return null
 
           const hasDeptActive = isActive(dept.dashboardHref) || dept.items.some(item => isActive(item.href))
 
@@ -291,9 +292,9 @@ export default function Sidebar() {
       {/* Bottom: Settings + Sign Out */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
         {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
-        {TRASH_ROLES.includes(user.role) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
-        {hasAccess(user.role, 'settings', rolePerms, userOverrides) && renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
-        {PERMISSIONS_ROLES.includes(user.role) && renderNavItem({ href: '/settings/permissions', label: 'Permissions', icon: Lock })}
+        {TRASH_ROLES.includes(effectiveRole) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
+        {hasAccess(effectiveRole, 'settings', rolePerms, userOverrides) && renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
+        {PERMISSIONS_ROLES.includes(effectiveRole) && renderNavItem({ href: '/settings/permissions', label: 'Permissions', icon: Lock })}
         <a href="#" onClick={async (e) => { e.preventDefault(); try { await fetch('/api/auth/session', { method: 'DELETE' }) } catch {}; await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,.08)'}

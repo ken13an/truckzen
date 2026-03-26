@@ -1,41 +1,56 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient, getActorShopId } from '@/lib/server-auth'
+import { requireAuthenticatedUser, requireRole } from '@/lib/route-guards'
 import { logAction } from '@/lib/services/auditLog'
 
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+const SETTINGS_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'office_admin'] as const
 
-export async function GET(req: Request) {
-  const url = new URL(req.url)
-  const shop_id = url.searchParams.get('shop_id')
-  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+export async function GET() {
+  const { actor, error } = await requireAuthenticatedUser()
+  if (error || !actor) return error
+  const roleError = requireRole(actor, SETTINGS_ROLES)
+  if (roleError) return roleError
 
-  const s = db()
-  const { data, error } = await s.from('shops').select('*').eq('id', shop_id).single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'shop context required' }, { status: 400 })
+
+  const s = createAdminSupabaseClient()
+  const { data, error: dbError } = await s.from('shops').select('*').eq('id', shopId).single()
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
 
   return NextResponse.json(data)
 }
 
 export async function PATCH(req: Request) {
-  const body = await req.json()
-  const { shop_id, retention_policy } = body
-  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const { actor, error } = await requireAuthenticatedUser()
+  if (error || !actor) return error
+  const roleError = requireRole(actor, SETTINGS_ROLES)
+  if (roleError) return roleError
 
-  const s = db()
-  const updates: Record<string, any> = {}
-  if (retention_policy !== undefined) updates.retention_policy = retention_policy
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'shop context required' }, { status: 400 })
+
+  const body = await req.json().catch(() => null)
+  const retentionPolicy = body?.retention_policy
+  const updates: Record<string, unknown> = {}
+  if (retentionPolicy !== undefined) updates.retention_policy = retentionPolicy
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
   }
 
-  const { error } = await s.from('shops').update(updates).eq('id', shop_id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const s = createAdminSupabaseClient()
+  const { error: dbError } = await s.from('shops').update(updates).eq('id', shopId)
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
 
-  // Fire and forget
-  logAction({ shop_id, user_id: '', action: 'settings.updated', entity_type: 'shop', entity_id: shop_id }).catch(() => {})
+  logAction({
+    shop_id: shopId,
+    user_id: actor.id,
+    action: 'settings.updated',
+    entity_type: 'shop',
+    entity_id: shopId,
+    details: updates as Record<string, unknown>,
+  }).catch(() => {})
 
   return NextResponse.json({ ok: true })
 }

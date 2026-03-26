@@ -1,53 +1,55 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
 
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+async function recalcTotals(admin: any, soId: string) {
+  const { data: allLines } = await admin.from('so_lines').select('line_type, quantity, total_price, unit_price, parts_sell_price').eq('so_id', soId)
+  const calcLineTotal = (l: any) => l.total_price ?? ((l.line_type === 'part' ? (l.parts_sell_price || l.unit_price || 0) : (l.unit_price || 0)) * (l.quantity || 1))
+  const laborTotal = (allLines || []).filter((l: any) => l.line_type === 'labor').reduce((sum: number, l: any) => sum + calcLineTotal(l), 0)
+  const partsTotal = (allLines || []).filter((l: any) => l.line_type === 'part').reduce((sum: number, l: any) => sum + calcLineTotal(l), 0)
+  const grandTotal = laborTotal + partsTotal
+  await admin.from('service_orders').update({ labor_total: laborTotal, parts_total: partsTotal, grand_total: grandTotal }).eq('id', soId)
+  return grandTotal
 }
 
 type P = { params: Promise<{ id: string }> }
 
 export async function PATCH(req: Request, { params }: P) {
   const { id } = await params
-  const s = db()
-  const body = await req.json()
+  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager', 'accountant', 'accounting_manager'])
+  if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
+  const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, service_order_id, quantity, unit_price, parts_sell_price, line_type')
+  if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  const body = await req.json()
   const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'total_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name']
   const update: Record<string, any> = {}
-  for (const f of allowedFields) {
-    if (body[f] !== undefined) update[f] = body[f]
-  }
-
-  // Auto-calculate total_price if qty and price are set
-  if (update.quantity !== undefined && update.unit_price !== undefined) {
-    update.total_price = parseFloat(update.quantity) * parseFloat(update.unit_price)
-  }
-
+  for (const f of allowedFields) if (body[f] !== undefined) update[f] = body[f]
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 })
 
-  const { data, error } = await s.from('so_lines').update(update).eq('id', id).select().single()
+  const quantity = update.quantity ?? (line as any).quantity ?? 1
+  const unitPrice = update.unit_price ?? (line as any).unit_price ?? 0
+  const sellPrice = update.parts_sell_price ?? (line as any).parts_sell_price ?? unitPrice
+  if (update.quantity !== undefined || update.unit_price !== undefined || update.parts_sell_price !== undefined || update.total_price !== undefined) {
+    update.total_price = (update.total_price !== undefined ? Number(update.total_price) : Number((line as any).line_type === 'part' ? sellPrice : unitPrice) * Number(quantity || 1))
+  }
+
+  const { data, error } = await ctx.admin.from('so_lines').update(update).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Recalculate grand total
-  const { data: allLines } = await s.from('so_lines').select('total_price').eq('so_id', data.so_id)
-  const grandTotal = (allLines || []).reduce((sum: number, l: any) => sum + (l.total_price || 0), 0)
-  await s.from('service_orders').update({ grand_total: grandTotal }).eq('id', data.so_id)
-
+  const soId = (data as any).so_id || (data as any).service_order_id
+  const grandTotal = soId ? await recalcTotals(ctx.admin, soId) : null
   return NextResponse.json({ ...data, updated_grand_total: grandTotal })
 }
 
 export async function DELETE(_req: Request, { params }: P) {
   const { id } = await params
-  const s = db()
+  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'])
+  if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
+  const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, service_order_id')
+  if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const { data: line } = await s.from('so_lines').select('so_id').eq('id', id).single()
-  await s.from('so_lines').delete().eq('id', id)
-
-  if (line?.so_id) {
-    const { data: allLines } = await s.from('so_lines').select('total_price').eq('so_id', line.so_id)
-    const grandTotal = (allLines || []).reduce((sum: number, l: any) => sum + (l.total_price || 0), 0)
-    await s.from('service_orders').update({ grand_total: grandTotal }).eq('id', line.so_id)
-  }
-
+  await ctx.admin.from('so_lines').delete().eq('id', id)
+  const soId = (line as any).so_id || (line as any).service_order_id
+  if (soId) await recalcTotals(ctx.admin, soId)
   return NextResponse.json({ success: true })
 }

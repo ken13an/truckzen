@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { logAIUsage, checkAILimit } from '@/lib/ai-usage'
-
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
 
 const PROMPTS: Record<string, string> = {
   kiosk: `You are a professional truck service writer at a heavy-duty repair shop. A customer/driver is describing their truck problem at a check-in kiosk. They may type in any language. Generate a clean, professional concern description in English. If the input is not English, also provide the concern in the original language. Return ONLY valid JSON: {"concern": "...", "concern_native": null or "..."}`,
-
   service_writer: `You are a professional heavy truck service writer. A service writer is creating a work order and typing notes about a customer's concern. Clean up the text into a professional, technically accurate concern description using proper trucking terminology. If input is not English, translate to English and keep the original. Return ONLY valid JSON: {"concern": "...", "concern_native": null or "..."}`,
-
   mechanic: `You are an expert heavy truck diagnostic technician. A mechanic is describing what they found wrong and what needs to be fixed. They may type in any language. Generate:
 1. Professional cause statement (what failed and why)
 2. Professional correction procedure (step by step repair)
@@ -16,36 +12,35 @@ const PROMPTS: Record<string, string> = {
 4. Estimated labor hours (range)
 Use proper trucking terminology (Cummins, Detroit, PACCAR, Allison, Eaton Fuller, etc.). If input is not English, also provide cause and correction in the original language. Return ONLY valid JSON:
 {"cause": "...", "correction": "...", "parts": ["..."], "labor_hours": 0.0, "cause_native": null or "...", "correction_native": null or "..."}`,
-
   supervisor: `You are a professional truck shop floor supervisor. Format the following note into a clear, professional update for the work order record. If input is not English, translate to English and keep original. Return ONLY valid JSON: {"note": "...", "note_native": null or "..."}`,
 }
 
-// Simple in-memory rate limiter
 const rateLimits = new Map<string, { count: number; resetAt: number }>()
 
 export async function POST(req: Request) {
-  const body = await req.json()
-  const { text, context = 'service_writer', language = 'en', truck_info, shop_id, user_id } = body
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  if (!actor.shop_id) return jsonError('No shop context', 400)
 
-  if (!text || typeof text !== 'string' || text.trim().length === 0) {
-    return NextResponse.json({ error: 'Text is required' }, { status: 400 })
-  }
-  if (text.length > 2000) {
-    return NextResponse.json({ error: 'Text too long (max 2000 characters)' }, { status: 400 })
-  }
+  const body = await req.json().catch(() => null)
+  const text = typeof body?.text === 'string' ? body.text : ''
+  const context = typeof body?.context === 'string' ? body.context : 'service_writer'
+  const language = typeof body?.language === 'string' ? body.language : 'en'
+  const truck_info = body?.truck_info
 
-  // Basic prompt injection check
+  if (!text.trim()) return jsonError('Text is required', 400)
+  if (text.length > 2000) return jsonError('Text too long (max 2000 characters)', 400)
+
   const lower = text.toLowerCase()
   if (lower.includes('ignore previous') || lower.includes('system prompt') || lower.includes('you are now')) {
-    return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
+    return jsonError('Invalid input', 400)
   }
 
-  // Rate limit: 30 calls per user per minute
-  const rateLimitKey = user_id || req.headers.get('x-forwarded-for') || 'anonymous'
   const now = Date.now()
+  const rateLimitKey = actor.id
   const limit = rateLimits.get(rateLimitKey)
   if (limit && limit.resetAt > now && limit.count >= 30) {
-    return NextResponse.json({ error: 'Too many AI requests. Please wait a minute.' }, { status: 429 })
+    return jsonError('Too many AI requests. Please wait a minute.', 429)
   }
   if (!limit || limit.resetAt <= now) {
     rateLimits.set(rateLimitKey, { count: 1, resetAt: now + 60000 })
@@ -54,14 +49,11 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
+  if (!apiKey) return jsonError('AI not configured', 500)
 
-  // Check AI limit
-  if (shop_id) {
-    const s = db()
-    const limitCheck = await checkAILimit(s, shop_id)
-    if (!limitCheck.allowed) return NextResponse.json({ error: 'AI monthly limit reached' }, { status: 429 })
-  }
+  const s = createAdminSupabaseClient()
+  const limitCheck = await checkAILimit(s, actor.shop_id)
+  if (!limitCheck.allowed) return jsonError('AI monthly limit reached', 429)
 
   const systemPrompt = PROMPTS[context] || PROMPTS.service_writer
   let userMessage = text.trim()
@@ -86,13 +78,11 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       console.error('[AI Service Writer] API error:', res.status)
-      return NextResponse.json({ error: 'AI service temporarily unavailable' }, { status: 502 })
+      return jsonError('AI service temporarily unavailable', 502)
     }
 
     const data = await res.json()
     const rawText = data.content?.[0]?.text || ''
-
-    // Parse JSON from response (strip markdown fences if present)
     const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
@@ -100,17 +90,18 @@ export async function POST(req: Request) {
     }
 
     const result = JSON.parse(jsonMatch[0])
-    const tokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
-
-    // Log usage
-    if (shop_id) {
-      const s = db()
-      logAIUsage(s, { shopId: shop_id, userId: user_id, feature: 'service_writer', tokensIn: data.usage?.input_tokens || 0, tokensOut: data.usage?.output_tokens || 0, model: 'claude-sonnet-4' })
-    }
+    await logAIUsage(s, {
+      shopId: actor.shop_id,
+      userId: actor.id,
+      feature: ['service_writer', 'other', 'wo_creation', 'parts_suggest', 'ai_review'].includes(context) ? (context as any) : 'service_writer',
+      tokensIn: data.usage?.input_tokens || 0,
+      tokensOut: data.usage?.output_tokens || 0,
+      model: 'claude-sonnet-4',
+    })
 
     return NextResponse.json(result)
   } catch (err) {
     console.error('[AI Service Writer] Error:', err)
-    return NextResponse.json({ error: 'AI request failed' }, { status: 500 })
+    return jsonError('AI request failed', 500)
   }
 }

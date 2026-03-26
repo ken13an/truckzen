@@ -8,6 +8,10 @@ import AITextInput from '@/components/ai-text-input'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import WOStepper from '@/components/work-orders/WOStepper'
+import WOHeader from '@/components/work-orders/WOHeader'
+import JobsTab from '@/components/work-orders/JobsTab'
+import PartsTab from '@/components/work-orders/PartsTab'
+import EstimateTab from '@/components/work-orders/EstimateTab'
 import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
@@ -122,7 +126,7 @@ export default function WorkOrderDetail() {
 
       const [woRes, usersRes, ratesRes] = await Promise.all([
         fetch(`/api/work-orders/${id}`),
-        u?.shop_id ? fetch(`/api/users?shop_id=${u.shop_id}`) : Promise.resolve(null),
+        fetch('/api/users') ,
         u?.shop_id ? fetch(`/api/settings/labor-rates?shop_id=${u.shop_id}`) : Promise.resolve(null),
       ])
 
@@ -161,8 +165,7 @@ export default function WorkOrderDetail() {
   }
 
   const logActivity = (action: string) => {
-    if (!user?.id) return
-    fetch('/api/wo-activity', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wo_id: id, user_id: user.id, action }) }).catch(() => {})
+    fetch('/api/wo-activity', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wo_id: id, action }) }).catch(() => {})
   }
 
   const openAssignModal = (lineId: string, idx: number) => {
@@ -197,7 +200,7 @@ export default function WorkOrderDetail() {
     await fetch('/api/wo-job-assignments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ line_id: assignModal.lineId, assignments: assignList, wo_id: id, user_id: user?.id }),
+      body: JSON.stringify({ line_id: assignModal.lineId, assignments: assignList, wo_id: id }),
     })
     setAssignModal(null)
     await loadData()
@@ -207,7 +210,7 @@ export default function WorkOrderDetail() {
     await fetch(`/api/work-orders/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...teamAssign, user_id: user?.id }),
+      body: JSON.stringify({ ...teamAssign }),
     })
     setShowTeamModal(false)
     await loadData()
@@ -229,7 +232,7 @@ export default function WorkOrderDetail() {
     await fetch('/api/wo-notes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wo_id: id, user_id: user?.id, note_text: noteText, visible_to_customer: noteVisible }),
+      body: JSON.stringify({ wo_id: id, note_text: noteText, visible_to_customer: noteVisible }),
     })
     setNoteText('')
     setNoteVisible(false)
@@ -248,7 +251,7 @@ export default function WorkOrderDetail() {
       await fetch('/api/wo-files', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wo_id: id, user_id: user?.id, file_url: urlData.publicUrl, filename: file.name }),
+        body: JSON.stringify({ wo_id: id, file_url: urlData.publicUrl, filename: file.name }),
       })
     }
     setUploading(false)
@@ -257,7 +260,7 @@ export default function WorkOrderDetail() {
 
   const deleteWO = async () => {
     if (deleteText !== 'DELETE') return
-    await fetch(`/api/work-orders/${id}?user_id=${user?.id}`, { method: 'DELETE' })
+    await fetch(`/api/work-orders/${id}`, { method: 'DELETE' })
     window.location.href = '/work-orders'
   }
 
@@ -294,7 +297,7 @@ export default function WorkOrderDetail() {
   async function toggleApproval(lineId: string, needsApproval: boolean) {
     await fetch(`/api/work-orders/${id}/approval`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'toggle_approval', user_id: user?.id, line_id: lineId, needs_approval: needsApproval }),
+      body: JSON.stringify({ action: 'toggle_approval', line_id: lineId, needs_approval: needsApproval }),
     })
     await loadData()
   }
@@ -302,7 +305,7 @@ export default function WorkOrderDetail() {
   async function approveJob(lineId: string) {
     await fetch(`/api/work-orders/${id}/approval`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'approve_job', user_id: user?.id, line_id: lineId, notes: approvalNotes }),
+      body: JSON.stringify({ action: 'approve_job', line_id: lineId, notes: approvalNotes }),
     })
     setApprovalNotes('')
     await loadData()
@@ -311,7 +314,7 @@ export default function WorkOrderDetail() {
   async function declineJob(lineId: string) {
     await fetch(`/api/work-orders/${id}/approval`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'decline_job', user_id: user?.id, line_id: lineId, notes: approvalNotes }),
+      body: JSON.stringify({ action: 'decline_job', line_id: lineId, notes: approvalNotes }),
     })
     setApprovalNotes('')
     await loadData()
@@ -320,23 +323,22 @@ export default function WorkOrderDetail() {
   async function warrantyDecision(decision: string) {
     await fetch(`/api/work-orders/${id}/approval`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'warranty_decision', user_id: user?.id, decision, notes: warrantyNotes }),
+      body: JSON.stringify({ action: 'warranty_decision', decision, notes: warrantyNotes }),
     })
     setWarrantyNotes('')
     await loadData()
   }
 
   async function searchInventory(lineId: string, query: string) {
-    if (!query || query.length < 2 || !wo?.shop_id) { setPartSearchResults(prev => { const n = {...prev}; delete n[lineId]; return n }); return }
-    const res = await fetch(`/api/parts/search?shop_id=${wo.shop_id}&q=${encodeURIComponent(query)}`)
+    if (!query || query.length < 2) { setPartSearchResults(prev => { const n = {...prev}; delete n[lineId]; return n }); return }
+    const res = await fetch(`/api/parts/search?q=${encodeURIComponent(query)}`)
     if (res.ok) {
       const results = await res.json()
       setPartSearchResults(prev => ({ ...prev, [lineId]: results }))
     }
   }
 
-  async function autoFillFromInventory(lineId: string, invPart: any) {
-    // Calculate sell price based on customer type and shop markup settings
+  function applyInventoryPart(lineId: string, invPart: any) {
     let sellPrice = invPart.sell_price || 0
     const costPrice = invPart.cost_price || invPart.average_cost || 0
     const ownershipType = wo?.ownership_type || wo?.assets?.ownership_type
@@ -350,7 +352,27 @@ export default function WorkOrderDetail() {
         }
       }
     }
-    await patchLine(lineId, { real_name: invPart.description, part_number: invPart.part_number, parts_cost_price: costPrice, parts_sell_price: Math.round(sellPrice * 100) / 100, parts_status: 'sourced' })
+    const roundedSell = Math.round(sellPrice * 100) / 100
+    const currentLine = (wo?.so_lines || []).find((l: any) => l.id === lineId)
+    const qty = currentLine?.quantity || 1
+    const nextValues = {
+      real_name: invPart.description,
+      part_number: invPart.part_number,
+      parts_cost_price: costPrice,
+      parts_sell_price: roundedSell,
+      total_price: roundedSell * qty,
+      parts_status: 'sourced',
+    }
+    setWo((prev: any) => ({
+      ...prev,
+      so_lines: (prev?.so_lines || []).map((l: any) => l.id === lineId ? { ...l, ...nextValues } : l),
+    }))
+    return nextValues
+  }
+
+  async function autoFillFromInventory(lineId: string, invPart: any) {
+    const nextValues = applyInventoryPart(lineId, invPart)
+    await patchLine(lineId, nextValues)
     setPartSearchResults(prev => { const n = {...prev}; delete n[lineId]; return n })
     await loadData()
   }
@@ -360,7 +382,7 @@ export default function WorkOrderDetail() {
     setPartsSubmitting(true)
     const res = await fetch(`/api/work-orders/${id}/parts-submit`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user.id, action: 'submit_all' }),
+      body: JSON.stringify({ action: 'submit_all' }),
     })
     setPartsSubmitting(false)
     if (res.ok) { setPartsSubmitted(true); await loadData() }
@@ -371,7 +393,7 @@ export default function WorkOrderDetail() {
     if (!user) return
     await fetch(`/api/work-orders/${id}/parts-submit`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: user.id, action: 'save_progress' }),
+      body: JSON.stringify({ action: 'save_progress' }),
     })
   }
 
@@ -386,7 +408,7 @@ export default function WorkOrderDetail() {
     setInvoiceLoading(true)
     const res = await fetch(`/api/work-orders/${id}/invoice`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, user_id: user?.id, ...extra }),
+      body: JSON.stringify({ action, ...extra }),
     })
     setInvoiceLoading(false)
     if (res.ok) { await loadData() }
@@ -394,7 +416,7 @@ export default function WorkOrderDetail() {
   }
 
   // Role detection for department views
-  const userRole = user?.role || ''
+  const userRole = user?.impersonate_role || user?.role || ''
   const isMechanic = ['technician', 'lead_tech', 'maintenance_technician'].includes(userRole)
   const isPartsRole = ['parts_manager'].includes(userRole)
   const isAccounting = ['accountant'].includes(userRole)
@@ -404,7 +426,6 @@ export default function WorkOrderDetail() {
 
   const addJobLine = async () => {
     if (!newJobText.trim()) return
-    // Check for unrecognized job text
     if (isUnrecognizedJob(newJobText)) {
       setJobWarning('Unrecognized job description — what did you mean? Use terms like: oil change, brake repair, pm service, tire replacement...')
       return
@@ -412,66 +433,45 @@ export default function WorkOrderDetail() {
     setJobWarning('')
     setAddingJob(true)
 
-    // Collect job descriptions that will be created
-    const createdDescriptions: string[] = []
+    const createdLines: { id?: string; description: string }[] = []
+    let candidateLines: any[] = [{ description: newJobText }]
 
-    if (useAI) {
-      try {
-        const res = await fetch('/api/ai/expand-complaint', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ complaint: newJobText, asset: wo?.assets }),
-        })
-        if (res.ok) {
-          const data = await res.json()
-          const lines = data.lines || [{ description: newJobText }]
-          for (const line of lines) {
-            await fetch('/api/so-lines', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ so_id: id, line_type: 'labor', description: line.description, estimated_hours: line.estimated_hours || 0, line_status: 'unassigned' }),
-            })
-            createdDescriptions.push(line.description)
-          }
-        }
-      } catch {
-        await fetch('/api/so-lines', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ so_id: id, line_type: 'labor', description: newJobText, line_status: 'unassigned' }),
-        })
-        createdDescriptions.push(newJobText)
-      }
-    } else {
-      await fetch('/api/so-lines', {
+    try {
+      const res = await fetch('/api/ai/expand-complaint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ so_id: id, line_type: 'labor', description: newJobText, line_status: 'unassigned' }),
+        body: JSON.stringify({ complaint: newJobText, asset: wo?.assets }),
       })
-      createdDescriptions.push(newJobText)
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.lines) && data.lines.length > 0) candidateLines = data.lines
+      }
+    } catch {}
+
+    for (const line of candidateLines) {
+      const res = await fetch('/api/so-lines', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ so_id: id, line_type: 'labor', description: line.description, estimated_hours: line.estimated_hours || 0, line_status: 'unassigned' }),
+      })
+      const created = res.ok ? await res.json().catch(() => null) : null
+      createdLines.push({ id: created?.id, description: line.description })
     }
 
-    // Generate and create rough parts for each job description
-    for (const desc of createdDescriptions) {
-      if (!isDiagnosticJob(desc)) {
-        const roughParts = getAutoRoughParts(desc)
+    for (const line of createdLines) {
+      if (!isDiagnosticJob(line.description)) {
+        const roughParts = getAutoRoughParts(line.description)
         for (const rp of roughParts) {
           if (!rp.is_labor) {
             await fetch('/api/so-lines', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                so_id: id,
-                line_type: 'part',
-                description: rp.rough_name,
-                rough_name: rp.rough_name,
-                quantity: rp.quantity || 1,
-                parts_status: 'rough',
-              }),
+              body: JSON.stringify({ so_id: id, line_type: 'part', description: rp.rough_name, rough_name: rp.rough_name, quantity: rp.quantity || 1, parts_status: 'rough' }),
             })
           }
         }
       }
+      if (line.id) await fetchAiSuggestions(line.id, line.description)
     }
 
     setNewJobText('')
@@ -498,7 +498,7 @@ export default function WorkOrderDetail() {
     await fetch('/api/wo-parts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wo_id: id, line_id: lineId, part_number: form.pn, description: form.desc, quantity: form.qty || '1', unit_cost: form.cost || '0', user_id: user?.id }),
+      body: JSON.stringify({ wo_id: id, line_id: lineId, part_number: form.pn, description: form.desc, quantity: form.qty || '1', unit_cost: form.cost || '0' }),
     })
     setNewPartForms(prev => ({ ...prev, [lineId]: { desc: '', pn: '', qty: '', cost: '' } }))
     await loadData()
@@ -508,7 +508,7 @@ export default function WorkOrderDetail() {
     await fetch('/api/wo-parts', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: partId, status, wo_id: id, user_id: user?.id }),
+      body: JSON.stringify({ id: partId, status, wo_id: id }),
     })
     await loadData()
   }
@@ -523,7 +523,7 @@ export default function WorkOrderDetail() {
     await fetch(`/api/work-orders/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, user_id: user?.id }),
+      body: JSON.stringify({ status }),
     })
     setShowMenu(false)
     await loadData()
@@ -576,7 +576,8 @@ export default function WorkOrderDetail() {
   const woPartsTotal = woParts.reduce((s: number, p: any) => s + (p.quantity || 1) * (p.unit_cost || 0), 0)
   const chargesTotal = shopCharges.reduce((s: number, c: any) => s + (c.amount || 0), 0)
   const subtotal = laborTotal + partsLineTotal + woPartsTotal + chargesTotal
-  const taxAmt = taxRate > 0 ? (woPartsTotal + (shop.tax_labor ? laborTotal : 0)) * (taxRate / 100) : 0
+  const taxablePartsTotal = partsLineTotal + woPartsTotal
+  const taxAmt = taxRate > 0 ? (taxablePartsTotal + (shop.tax_labor ? laborTotal : 0)) * (taxRate / 100) : 0
   const grandTotal = subtotal + taxAmt
 
   const fmt = (n: number) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -598,6 +599,7 @@ export default function WorkOrderDetail() {
         </div>
       )}
 
+      <WOHeader>
       {/* HEADER */}
       <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderBottom: '2px solid #E5E7EB' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
@@ -637,7 +639,7 @@ export default function WorkOrderDetail() {
                     </button>
                     <button onClick={async () => {
                       if (!editDraft) return
-                      const updates: Record<string, any> = { user_id: user?.id }
+                      const updates: Record<string, any> = {}
                       if (editDraft.complaint !== (wo.complaint || '')) updates.complaint = editDraft.complaint
                       if (editDraft.priority !== (wo.priority || 'normal')) updates.priority = editDraft.priority
                       if (editDraft.cause !== (wo.cause || '')) updates.cause = editDraft.cause
@@ -712,6 +714,8 @@ export default function WorkOrderDetail() {
           )}
         </div>
       </div>
+
+      </WOHeader>
 
       {/* OWNER & DRIVER INFO */}
       {wo.assets && (asset.owner_name || asset.driver_name) && (
@@ -899,14 +903,14 @@ export default function WorkOrderDetail() {
                 try {
                   const res = await fetch(`/api/work-orders/${id}/quality-check`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'check', user_id: user?.id }),
+                    body: JSON.stringify({ action: 'check' }),
                   })
                   const data = await res.json()
                   if (data.passed) {
                     if (confirm('Quality check passed! Send to accounting for review?')) {
                       const res2 = await fetch(`/api/work-orders/${id}/quality-check`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'send_to_accounting', user_id: user?.id }),
+                        body: JSON.stringify({ action: 'send_to_accounting' }),
                       })
                       if (res2.ok) await loadData()
                     }
@@ -929,7 +933,7 @@ export default function WorkOrderDetail() {
               onChange={e => setMileage(e.target.value)}
               onBlur={() => {
                 if (asset.id && mileage !== (asset.odometer?.toString() || '')) {
-                  fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: user?.id }) }).catch(() => {})
+                  fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }).catch(() => {})
                 }
               }}
               style={{ ...inputStyle, width: 100 }}
@@ -954,6 +958,7 @@ export default function WorkOrderDetail() {
 
       {/* ========== TAB 0: OVERVIEW ========== */}
       {tab === 0 && (
+        <JobsTab>
         <div>
           {jobLines.map((line: any, idx: number) => {
             const st = LINE_STATUS[line.line_status] || LINE_STATUS.unassigned
@@ -1318,10 +1323,12 @@ export default function WorkOrderDetail() {
             </div>
           )}
         </div>
+        </JobsTab>
       )}
 
       {/* ========== TAB 1: PARTS & MATERIALS ========== */}
       {tab === 1 && (
+        <PartsTab>
         <div>
           {/* Rough → Real Parts Flow (from so_lines) */}
           {partLines.length > 0 && (
@@ -1479,10 +1486,12 @@ export default function WorkOrderDetail() {
             </div>
           )}
         </div>
+        </PartsTab>
       )}
 
       {/* ========== TAB 2: ESTIMATE & BILLING ========== */}
       {tab === 2 && (
+        <EstimateTab>
         <div>
           {/* Estimate requirement notice */}
           {!wo.estimate_required && !wo.is_historical && (
@@ -1572,7 +1581,7 @@ export default function WorkOrderDetail() {
                     >
                       {estStatus === 'sent' ? 'Resend / Approve' : estStatus === 'declined' ? 'Resend Modified Estimate' : 'Send Estimate'}
                     </button>
-                    <button onClick={() => setApprovalConfirmModal({ method: 'in_person', notes: '' })} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}` }}>
+                    <button onClick={() => { setApprovalModal(true); setApprovalConfirmModal({ method: 'in_person', notes: '' }) }} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}` }}>
                       Approve In Person
                     </button>
                   </div>
@@ -1775,6 +1784,7 @@ export default function WorkOrderDetail() {
             </div>
           </div>
         </div>
+        </EstimateTab>
       )}
 
       {/* ========== TAB 3: FILES & NOTES ========== */}

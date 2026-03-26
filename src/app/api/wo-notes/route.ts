@@ -1,44 +1,29 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
 
 export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const woId = searchParams.get('wo_id')
+  const ctx = await requireRouteContext()
+  if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
+  const woId = new URL(req.url).searchParams.get('wo_id')
   if (!woId) return NextResponse.json({ error: 'wo_id required' }, { status: 400 })
-
-  const { data, error } = await s.from('wo_notes').select('*').eq('wo_id', woId).order('created_at', { ascending: false }).limit(200)
+  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, woId, 'id')
+  if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const { data, error } = await ctx.admin.from('wo_notes').select('*').eq('wo_id', woId).order('created_at', { ascending: false }).limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  return NextResponse.json(data || [])
 }
 
 export async function POST(req: Request) {
-  const s = db()
-  const body = await req.json()
-  const { wo_id, user_id, note_text, visible_to_customer } = body
-
-  if (!wo_id || !note_text)
-    return NextResponse.json({ error: 'wo_id and note_text required' }, { status: 400 })
-
-  const { data, error } = await s.from('wo_notes').insert({
-    wo_id,
-    user_id: user_id || null,
-    note_text: note_text.trim(),
-    visible_to_customer: visible_to_customer ?? false,
-  }).select().single()
-
+  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager', 'accountant', 'accounting_manager'])
+  if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
+  const body = await req.json().catch(() => null)
+  const woId = body?.wo_id
+  const noteText = typeof body?.note_text === 'string' ? body.note_text.trim() : ''
+  if (!woId || !noteText) return NextResponse.json({ error: 'wo_id and note_text required' }, { status: 400 })
+  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, woId, 'id')
+  if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const { data, error } = await ctx.admin.from('wo_notes').insert({ wo_id: woId, user_id: ctx.actor.id, note_text: noteText, visible_to_customer: !!body?.visible_to_customer }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Log to activity
-  await s.from('wo_activity_log').insert({
-    wo_id,
-    user_id: user_id || null,
-    action: 'Added a note',
-  })
-
+  await ctx.admin.from('wo_activity_log').insert({ wo_id: woId, user_id: ctx.actor.id, action: 'Added a note' })
   return NextResponse.json(data, { status: 201 })
 }

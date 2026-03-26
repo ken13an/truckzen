@@ -1,24 +1,23 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+export async function GET() {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  if (!actor.shop_id) return jsonError('No shop context', 400)
 
-export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
-
-  const { data } = await s.from('so_time_entries')
+  const s = createAdminSupabaseClient()
+  const { data, error } = await s.from('so_time_entries')
     .select(`id, clocked_in_at, user_id,
       users(full_name, team),
       so_lines(description),
       service_orders(so_number)`)
-    .eq('shop_id', shopId)
+    .eq('shop_id', actor.shop_id)
     .is('clocked_out_at', null)
     .is('deleted_at', null)
     .order('clocked_in_at', { ascending: true })
+
+  if (error) return jsonError(error.message, 500)
 
   const active = (data || []).map((e: any) => ({
     id: e.id,

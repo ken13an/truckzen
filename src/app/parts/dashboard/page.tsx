@@ -23,21 +23,24 @@ export default function PartsDashboard() {
     const shopId = profile.shop_id
     const today = new Date().toISOString().split('T')[0]
 
-    const [soLinesRes, lowRes, fulfilledRes] = await Promise.all([
-      fetch(`/api/so-lines?shop_id=${shopId}&line_type=part&parts_status=rough,sourced,ordered&limit=30`),
+    const [partsReqRes, soLinesRes, lowRes, fulfilledRes] = await Promise.all([
+      fetch('/api/parts-requests?status=active'),
+      fetch(`/api/so-lines?line_type=part&parts_status=rough,sourced,ordered&limit=30`),
       fetch(`/api/parts?shop_id=${shopId}&per_page=20&low_stock=true`),
-      fetch(`/api/so-lines?shop_id=${shopId}&line_type=part&parts_status=received&updated_since=${today}&limit=500`),
+      fetch(`/api/so-lines?line_type=part&parts_status=received&updated_since=${today}&limit=500`),
     ])
 
+    const partsReqJson = partsReqRes.ok ? await partsReqRes.json() : []
     const soLinesJson  = soLinesRes.ok  ? await soLinesRes.json()  : []
     const lowJson      = lowRes.ok      ? await lowRes.json()       : { data: [] }
     const fulfilledArr = fulfilledRes.ok ? await fulfilledRes.json() : []
 
+    const requests  = Array.isArray(partsReqJson) ? partsReqJson : []
     const parts     = Array.isArray(soLinesJson) ? soLinesJson : []
     const low       = (lowJson.data || []) as any[]
     const fulfilled = Array.isArray(fulfilledArr) ? fulfilledArr.length : 0
 
-    const pendingList = parts.filter((p: any) => p.service_orders)
+    const pendingList = requests.length > 0 ? requests : parts.filter((p: any) => p.service_orders)
     setPendingParts(pendingList)
     setLowStock(low)
     setStats({ pending: pendingList.length, warrantyParts: 0, lowStockCount: low.length, fulfilledToday: fulfilled })

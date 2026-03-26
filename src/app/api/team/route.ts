@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
 
 const ROLE_DEPARTMENT: Record<string, string> = {
   service_writer: 'service',
@@ -28,44 +24,41 @@ const ROLE_DEPARTMENT: Record<string, string> = {
 }
 
 export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  if (!actor.shop_id) return jsonError('No shop context', 400)
 
+  const s = createAdminSupabaseClient()
+  const { searchParams } = new URL(req.url)
   const department = searchParams.get('department') || ''
   const role = searchParams.get('role') || ''
   const status = searchParams.get('status') || ''
   const search = searchParams.get('search') || ''
-  const page = parseInt(searchParams.get('page') || '1', 10)
-  const limit = parseInt(searchParams.get('limit') || '25', 10)
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '25', 10)))
 
-  // Fetch all users for the shop (we need all for department counts)
   const { data: allUsers, error } = await s.from('users')
     .select('id, full_name, email, role, team, active, created_at, deleted_at, skills, department')
-    .eq('shop_id', shopId)
+    .eq('shop_id', actor.shop_id)
     .is('deleted_at', null)
     .or('is_autobot.is.null,is_autobot.eq.false')
     .order('full_name')
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return jsonError(error.message, 500)
   if (!allUsers) return NextResponse.json({ members: [], total: 0, page: 1, pages: 0, department_counts: {} })
 
-  // Enrich with last_sign_in_at from auth
   const { data: { users: authUsers } } = await s.auth.admin.listUsers({ perPage: 1000 })
   const authMap: Record<string, string | null> = {}
-  for (const au of authUsers || []) { authMap[au.id] = au.last_sign_in_at || null }
+  for (const au of authUsers || []) authMap[au.id] = au.last_sign_in_at || null
 
-  // Assign department based on role if not set
-  const enriched = allUsers.map(u => ({
+  const enriched = allUsers.map((u: any) => ({
     ...u,
     last_sign_in_at: authMap[u.id] || null,
     department: u.department || ROLE_DEPARTMENT[u.role] || 'other',
   }))
 
-  // Compute department counts (before search/status filter, but we apply search for accuracy)
   const afterSearch = search
-    ? enriched.filter(u => {
+    ? enriched.filter((u: any) => {
         const q = search.toLowerCase()
         return u.full_name?.toLowerCase().includes(q) ||
                u.email?.toLowerCase().includes(q) ||
@@ -74,7 +67,7 @@ export async function GET(req: Request) {
     : enriched
 
   const afterStatus = status
-    ? afterSearch.filter(u => {
+    ? afterSearch.filter((u: any) => {
         if (status === 'active') return u.active && u.last_sign_in_at
         if (status === 'pending') return u.active && !u.last_sign_in_at
         if (status === 'inactive') return !u.active
@@ -82,34 +75,19 @@ export async function GET(req: Request) {
       })
     : afterSearch
 
-  // Department counts (after search + status filters, before department filter)
   const deptCounts: Record<string, number> = {}
   for (const u of afterStatus) {
     const d = u.department
     deptCounts[d] = (deptCounts[d] || 0) + 1
   }
 
-  // Apply department filter
-  const afterDept = department
-    ? afterStatus.filter(u => u.department === department)
-    : afterStatus
+  const afterDept = department ? afterStatus.filter((u: any) => u.department === department) : afterStatus
+  const filtered = role ? afterDept.filter((u: any) => u.role === role) : afterDept
 
-  // Apply role filter
-  const filtered = role
-    ? afterDept.filter(u => u.role === role)
-    : afterDept
-
-  // Paginate
   const total = filtered.length
   const pages = Math.ceil(total / limit)
   const offset = (page - 1) * limit
   const members = filtered.slice(offset, offset + limit)
 
-  return NextResponse.json({
-    members,
-    total,
-    page,
-    pages,
-    department_counts: deptCounts,
-  })
+  return NextResponse.json({ members, total, page, pages, department_counts: deptCounts })
 }

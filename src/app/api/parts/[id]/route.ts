@@ -55,7 +55,7 @@ export async function PATCH(req: Request, { params }: P) {
 
   invalidateCache(`parts:${user.shop_id}`)
   if (update.on_hand !== undefined && update.on_hand !== current.on_hand) {
-    await log('parts.quantity_changed', user.shop_id, user.id, { table:'parts', recordId:id, oldData:{ on_hand: current.on_hand }, newData:{ on_hand: update.on_hand } })
+    await log('parts.quantity_changed', user.shop_id || '', user.id, { table:'parts', recordId:id, oldData:{ on_hand: current.on_hand }, newData:{ on_hand: update.on_hand } })
   }
   return NextResponse.json(data)
 }
@@ -71,6 +71,6 @@ export async function DELETE(_req: Request, { params }: P) {
   const { data: part } = await supabase.from('parts').select('description').eq('id', id).single()
   await supabase.from('parts').update({ active: false, deleted_at: new Date().toISOString() }).eq('id', id).eq('shop_id', user.shop_id)
   invalidateCache(`parts:${user.shop_id}`)
-  await log('parts.removed', user.shop_id, user.id, { table:'parts', recordId:id, oldData: part })
+  await log('parts.removed', user.shop_id || '', user.id, { table:'parts', recordId:id, oldData: part })
   return NextResponse.json({ success: true })
 }
