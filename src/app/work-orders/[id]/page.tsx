@@ -1295,7 +1295,7 @@ export default function WorkOrderDetail() {
 
                       {/* Editable fields for parts dept (rough state) */}
                       {isRough && !wo.is_historical && !isMechanic && (
-                        <div style={{ position: 'relative' }}>
+                        <div style={{ position: 'relative' }} key={`edit-${p.id}-${p.real_name || ''}-${p.parts_cost_price || 0}`}>
                           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
                             <div style={{ position: 'relative' }}>
                               <span style={labelStyle}>Real Name</span>
