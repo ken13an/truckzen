@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { getPermissions } from '@/lib/getPermissions'
 import { LayoutDashboard, Store, FileText, Users, Activity, Shield, LogOut, ChevronLeft, DollarSign, Cpu, Bot, ClipboardCheck } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -28,13 +29,9 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
       const u = await getCurrentUser(supabase)
       if (!u) { window.location.href = '/login'; return }
 
-      const { data: profile } = await supabase.from('users')
-        .select('is_platform_owner, full_name')
-        .eq('id', u.id)
-        .single()
-
-      if (!profile?.is_platform_owner) {
-        window.location.href = '/dashboard'
+      const perms = getPermissions(u)
+      if (!perms.canAccessPlatformAdmin) {
+        window.location.href = '/403'
         return
       }
 

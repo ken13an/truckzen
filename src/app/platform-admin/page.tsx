@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { getPermissions } from '@/lib/getPermissions'
 import { Store, Wrench, FileText, DollarSign } from 'lucide-react'
 
 export default function PlatformOverview() {
@@ -13,7 +14,9 @@ export default function PlatformOverview() {
   useEffect(() => {
     async function load() {
       const u = await getCurrentUser(supabase)
-      if (!u) return
+      if (!u) { window.location.href = '/login'; return }
+      const perms = getPermissions(u)
+      if (!perms.canAccessPlatformAdmin) { window.location.href = '/403'; return }
       setUser(u)
 
       const res = await fetch(`/api/platform-admin/stats?user_id=${u.id}`)

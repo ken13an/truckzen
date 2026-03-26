@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems, hasAccess } from '@/lib/permissions'
+import { getPermissions } from '@/lib/getPermissions'
 import Logo, { LogoIcon } from '@/components/Logo'
 import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock, Banknote } from 'lucide-react'
 
@@ -128,7 +129,8 @@ export default function Sidebar() {
       const { data } = await supabase.from('users').select('id, shop_id, full_name, role, team, is_platform_owner, impersonate_role').eq('id', au.id).single()
       if (!data) return
       setUser(data)
-      if (data.is_platform_owner && !data.impersonate_role) setIsPlatformOwner(true)
+      const perms = getPermissions(data)
+      if (perms.canAccessPlatformAdmin && !data.impersonate_role) setIsPlatformOwner(true)
 
       // Fetch permissions and counts via API routes (service role key bypasses RLS)
       const [rpRes, uoRes, partsRes, wosRes] = await Promise.all([

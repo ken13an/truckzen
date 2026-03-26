@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { getPermissions } from '@/lib/getPermissions'
 
 // POST /api/platform-admin/impersonate — start or stop shop impersonation
 // Safer implementation: do not mutate the canonical users.shop_id.
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
-  if (!actor.is_platform_owner) return jsonError('Access denied', 403)
+  const perms = getPermissions(actor)
+  if (!perms.canImpersonate) return jsonError('Access denied', 403)
 
   const s = createAdminSupabaseClient()
   const body = await req.json().catch(() => null)
