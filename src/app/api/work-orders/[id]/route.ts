@@ -3,6 +3,9 @@ import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { workStartedEmail } from '@/lib/emails/workStarted'
 import { truckReadyEmail } from '@/lib/emails/truckReady'
 import { logAction } from '@/lib/services/auditLog'
+import { deriveWOAutomation, deriveLineAutomation } from '@/lib/wo-automation'
+import { deriveWOETC } from '@/lib/wo-etc'
+import { deriveWOAlerts, alertDedupKey } from '@/lib/wo-alerts'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
 
 type Params = { params: Promise<{ id: string }> }
@@ -67,14 +70,28 @@ export async function GET(_req: Request, { params }: Params) {
     jobAssignments = ja || []
   }
 
-  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, jobAssignments, woParts: woParts || [] })
+  // Fetch time entries for ETC
+  const { data: timeEntries } = await ctx.admin.from('so_time_entries')
+    .select('id, user_id, so_line_id, duration_minutes, clocked_in_at, clocked_out_at')
+    .eq('service_order_id', id)
+    .is('deleted_at', null)
+
+  // Derive automation visibility
+  const automation = deriveWOAutomation(wo)
+  const lineAutomation: Record<string, any> = {}
+  for (const line of wo.so_lines || []) {
+    lineAutomation[line.id] = deriveLineAutomation(line)
+  }
+  const etc = deriveWOETC(wo, timeEntries || [])
+
+  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, jobAssignments, woParts: woParts || [], automation, lineAutomation, etc })
 }
 
 export async function PATCH(req: Request, { params }: Params) {
   const { id } = await params
   const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager', 'accountant', 'accounting_manager'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
-  const { data: existing } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, so_number, assigned_tech, customer_id, asset_id, portal_token')
+  const { data: existing } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, so_number, status, invoice_status, assigned_tech, customer_id, asset_id, portal_token, is_historical')
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const body = await req.json()
@@ -83,8 +100,26 @@ export async function PATCH(req: Request, { params }: Params) {
   for (const f of allowedFields) if (body[f] !== undefined) update[f] = body[f]
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 })
 
+  // Guard WO status transitions (skip for historical/imported WOs)
+  if (update.status && !(existing as any).is_historical) {
+    const VALID_WO_TRANSITIONS: Record<string, string[]> = {
+      draft: ['in_progress', 'waiting_approval', 'void'],
+      waiting_approval: ['in_progress', 'draft', 'void'],
+      in_progress: ['waiting_parts', 'done', 'completed', 'void'],
+      waiting_parts: ['in_progress', 'void'],
+      completed: ['good_to_go', 'in_progress', 'void'],
+      done: ['good_to_go', 'in_progress', 'void'],
+      good_to_go: ['void'],
+    }
+    const currentStatus = (existing as any).status || 'draft'
+    const allowed = VALID_WO_TRANSITIONS[currentStatus]
+    if (allowed && !allowed.includes(update.status)) {
+      return NextResponse.json({ error: `Cannot transition from "${currentStatus}" to "${update.status}"` }, { status: 400 })
+    }
+  }
+
   update.updated_at = new Date().toISOString()
-  if (update.status === 'good_to_go' && body._old_status !== 'good_to_go') update.completed_at = new Date().toISOString()
+  if (update.status === 'good_to_go' && (existing as any).status !== 'good_to_go') update.completed_at = new Date().toISOString()
 
   const { data, error } = await ctx.admin.from('service_orders').update(update).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -104,6 +139,25 @@ export async function PATCH(req: Request, { params }: Params) {
       }
       if (update.status === 'in_progress' && data.assigned_tech) {
         await createNotification({ shopId: data.shop_id, recipientId: data.assigned_tech, type: 'wo_started', title: `WO #${data.so_number} started`, body: 'Work order is now in progress', link: `/work-orders/${id}`, relatedWoId: id })
+      }
+
+      // Workflow automation alerts (deduped by type+WO)
+      const postAutomation = deriveWOAutomation(data)
+      const alerts = deriveWOAlerts(postAutomation, data)
+      for (const alert of alerts) {
+        const dedupLink = alertDedupKey(id, alert.type)
+        // Check for existing notification with same link+type to avoid duplicates
+        const { data: existing_notif } = await ctx.admin.from('notifications')
+          .select('id').eq('shop_id', data.shop_id).eq('type', alert.type).eq('link', dedupLink).eq('read', false).limit(1)
+        if (existing_notif && existing_notif.length > 0) continue // already alerted
+        const recipients = await getUserIdsByRole(data.shop_id, alert.targetRoles)
+        if (recipients.length > 0) {
+          await createNotification({
+            shopId: data.shop_id, recipientId: recipients, type: alert.type,
+            title: alert.title, body: alert.body, link: `/work-orders/${id}`,
+            relatedWoId: id, priority: alert.priority,
+          })
+        }
       }
     } catch {}
   }

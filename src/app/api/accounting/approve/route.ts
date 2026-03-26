@@ -3,25 +3,36 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getStaffEmails, getShopInfo } from '@/lib/services/email'
 import { sendPushToUser, sendPushToRole } from '@/lib/services/notifications'
 import { sendPaymentNotifications } from '@/lib/notifications/sendPaymentNotifications'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
+const ACCOUNTING_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
+
 export async function POST(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const actorShopId = getActorShopId(actor)
+  if (!actorShopId) return jsonError('No shop context', 400)
+  if (!ACCOUNTING_ROLES.includes(actor.role)) return jsonError('Access denied', 403)
+  const user_id = actor.id
+
   const s = db()
   const body = await req.json()
-  const { wo_id, action, user_id, notes } = body
+  const { wo_id, action, notes } = body
 
   if (!wo_id || !action || !['approve', 'return'].includes(action)) {
     return NextResponse.json({ error: 'wo_id and action (approve|return) required' }, { status: 400 })
   }
 
-  // Fetch WO
+  // Fetch WO (scoped to actor's shop)
   const { data: wo, error: woErr } = await s
     .from('service_orders')
     .select('id, so_number, shop_id, customer_id, asset_id, service_writer_id, invoice_status, so_lines(id, line_type, description, quantity, unit_price, total_price)')
     .eq('id', wo_id)
+    .eq('shop_id', actorShopId)
     .single()
 
   if (woErr || !wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })

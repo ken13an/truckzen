@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPushToRole } from '@/lib/services/notifications'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -9,10 +10,16 @@ function db() {
 type Params = { params: Promise<{ id: string }> }
 
 export async function POST(req: Request, { params }: Params) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const actorShopId = getActorShopId(actor)
+  if (!actorShopId) return jsonError('No shop context', 400)
+  const user_id = actor.id
+
   const { id } = await params
   const s = db()
   const body = await req.json()
-  const { action, user_id } = body
+  const { action } = body
 
   if (!action || !['check', 'send_to_accounting'].includes(action)) {
     return NextResponse.json({ error: 'action must be check or send_to_accounting' }, { status: 400 })

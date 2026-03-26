@@ -73,6 +73,9 @@ export default function FloorManagerDashboardPage() {
   const [approveType, setApproveType] = useState<'in_stock' | 'ordered'>('in_stock')
   const [selectedMechanic, setSelectedMechanic] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+  const [exceptionFilter, setExceptionFilter] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
   const [secondsAgo, setSecondsAgo] = useState(0)
   const [activeTechs, setActiveTechs] = useState<any[]>([])
@@ -199,15 +202,19 @@ export default function FloorManagerDashboardPage() {
     } catch { /* silent */ }
   }
 
-  // -- Assign mechanic --
+  // -- Assign mechanic (via canonical wo_job_assignments) --
   const handleAssign = async () => {
     if (!assignModal || !selectedMechanic) return
     setActionLoading(true)
     try {
-      const res = await fetch('/api/floor-manager/jobs', {
-        method: 'PATCH',
+      const res = await fetch('/api/wo-job-assignments', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: assignModal.id, assigned_to: selectedMechanic }),
+        body: JSON.stringify({
+          line_id: assignModal.id,
+          wo_id: assignModal.wo_id,
+          assignments: [{ user_id: selectedMechanic, name: mechanics.find((m: any) => m.id === selectedMechanic)?.full_name || '', percentage: 100 }],
+        }),
       })
       if (res.ok && user) {
         await fetchData(user.shop_id)
@@ -265,7 +272,14 @@ export default function FloorManagerDashboardPage() {
   }, {})
 
   // -- Jobs per column --
-  const jobsByStatus = (status: string) => jobs.filter(j => j.status === status)
+  const jobsByStatus = (status: string) => {
+    let filtered = jobs.filter(j => j.status === status)
+    if (exceptionFilter === 'unassigned') filtered = filtered.filter(j => !j.mechanic_name && !j.assigned_to)
+    else if (exceptionFilter === 'waiting_parts') filtered = filtered.filter(j => j.wo_status === 'waiting_parts')
+    else if (exceptionFilter === 'waiting_estimate') filtered = filtered.filter(j => j.wo_estimate_required && !j.wo_estimate_approved)
+    else if (exceptionFilter === 'ready_for_invoice') filtered = filtered.filter(j => j.status === 'completed' && !j.wo_invoice_status)
+    return filtered
+  }
 
   // -- Filtered parts requests --
   const filteredParts = partsFilter === 'all'
@@ -407,6 +421,48 @@ export default function FloorManagerDashboardPage() {
             </div>
           )}
 
+          {/* Exception summary */}
+          {(() => {
+            const exceptions: Record<string, number> = {}
+            for (const j of jobs) {
+              if (j.automation?.blocked_by) {
+                const key = j.automation.owner || 'unknown'
+                exceptions[key] = (exceptions[key] || 0) + 1
+              }
+            }
+            const unassigned = jobs.filter(j => j.status === 'pending' && !j.mechanic_name).length
+            const waitingParts = jobs.filter(j => j.wo_status === 'waiting_parts').length
+            const waitingEstimate = jobs.filter(j => j.wo_estimate_required && !j.wo_estimate_approved).length
+            const overdueCount = jobs.filter(j => j.status === 'in_progress' && j.estimated_hours && j.estimated_hours > 0).length // rough proxy
+            const needsInvoice = jobs.filter(j => j.status === 'completed' && !j.wo_invoice_status).length
+            const badges = [
+              unassigned > 0 && { label: `${unassigned} Unassigned`, color: RED, key: 'unassigned' },
+              waitingParts > 0 && { label: `${waitingParts} Waiting Parts`, color: AMBER, key: 'waiting_parts' },
+              waitingEstimate > 0 && { label: `${waitingEstimate} Waiting Estimate`, color: AMBER, key: 'waiting_estimate' },
+              needsInvoice > 0 && { label: `${needsInvoice} Ready for Invoice`, color: GREEN, key: 'ready_for_invoice' },
+            ].filter(Boolean) as { label: string; color: string; key: string }[]
+            if (badges.length === 0 && !exceptionFilter) return null
+            return (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                {badges.map(b => (
+                  <span key={b.key} onClick={() => setExceptionFilter(exceptionFilter === b.key ? null : b.key)}
+                    style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      background: exceptionFilter === b.key ? b.color : `${b.color}18`,
+                      color: exceptionFilter === b.key ? '#fff' : b.color,
+                      border: `1px solid ${exceptionFilter === b.key ? b.color : b.color + '30'}`,
+                    }}>
+                    {b.label}
+                  </span>
+                ))}
+                {exceptionFilter && (
+                  <span onClick={() => setExceptionFilter(null)} style={{ fontSize: 11, color: DIM, cursor: 'pointer', padding: '4px 8px' }}>
+                    Clear filter
+                  </span>
+                )}
+              </div>
+            )
+          })()}
+
           {/* Kanban columns */}
           <div className="fm-kanban-row" style={{ display: 'flex', gap: 12, flex: 1, overflow: 'hidden' }}>
             {KANBAN_COLUMNS.map(col => {
@@ -463,6 +519,16 @@ export default function FloorManagerDashboardPage() {
                           onClick={() => {
                             setAssignModal(job)
                             setSelectedMechanic(job.assigned_to || '')
+                            setSuggestions([])
+                            const desc = job.description || ''
+                            if (desc) {
+                              setSuggestionsLoading(true)
+                              fetch(`/api/mechanic-skills?type=suggest&job_description=${encodeURIComponent(desc)}`)
+                                .then(r => r.ok ? r.json() : [])
+                                .then(data => setSuggestions(Array.isArray(data) ? data.slice(0, 4) : []))
+                                .catch(() => setSuggestions([]))
+                                .finally(() => setSuggestionsLoading(false))
+                            }
                           }}
                           style={{
                             background: CARD_BG, border: `1px solid ${CARD_BORDER}`,
@@ -506,6 +572,21 @@ export default function FloorManagerDashboardPage() {
                             </p>
                           )}
 
+                          {/* Automation badges */}
+                          {job.automation && (
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
+                              {job.automation.blocked_by && (
+                                <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: `${AMBER}18`, color: AMBER }}>{job.automation.blocked_by}</span>
+                              )}
+                              {job.wo_estimate_required && !job.wo_estimate_approved && (
+                                <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: `${AMBER}18`, color: AMBER }}>Estimate needed</span>
+                              )}
+                              {job.wo_status === 'waiting_parts' && (
+                                <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: `${AMBER}18`, color: AMBER }}>Waiting parts</span>
+                              )}
+                            </div>
+                          )}
+
                           {/* Bottom row */}
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
                             <span style={{
@@ -533,6 +614,19 @@ export default function FloorManagerDashboardPage() {
                                 </span>
                               )}
                             </div>
+                          </div>
+                          {/* ETC + Next action */}
+                          <div style={{ marginTop: 4, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                            {job.estimated_hours > 0 && (
+                              <span style={{ fontSize: 10, fontWeight: 600, color: (job.actual_hours || 0) > job.estimated_hours ? RED : DIM }}>
+                                {job.actual_hours ? `${job.actual_hours}h / ${job.estimated_hours}h` : `Est: ${job.estimated_hours}h`}
+                              </span>
+                            )}
+                            {job.automation?.next_action && job.automation.next_action !== 'Complete' && (
+                              <span style={{ fontSize: 10, color: DIM, fontStyle: 'italic' }}>
+                                {job.automation.next_action}
+                              </span>
+                            )}
                           </div>
                         </div>
                       )
@@ -752,9 +846,43 @@ export default function FloorManagerDashboardPage() {
                 </div>
               </div>
 
+              {/* Mechanic suggestions */}
+              {(suggestions.length > 0 || suggestionsLoading) && (
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Suggested</label>
+                  {suggestionsLoading ? (
+                    <div style={{ fontSize: 11, color: DIM, padding: '6px 0' }}>Loading...</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {suggestions.filter(s => s.user_id !== assignModal?.assigned_to).map(s => (
+                        <div key={s.user_id} onClick={() => setSelectedMechanic(s.user_id)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8,
+                            border: `1px solid ${selectedMechanic === s.user_id ? BLUE : CARD_BORDER}`,
+                            background: selectedMechanic === s.user_id ? 'rgba(29,111,232,0.08)' : 'rgba(255,255,255,0.03)', cursor: 'pointer' }}
+                          onMouseEnter={e => { if (selectedMechanic !== s.user_id) (e.currentTarget.style.background = 'rgba(255,255,255,0.06)') }}
+                          onMouseLeave={e => { if (selectedMechanic !== s.user_id) (e.currentTarget.style.background = 'rgba(255,255,255,0.03)') }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{s.name}</div>
+                            <div style={{ fontSize: 10, color: DIM }}>
+                              {s.matchingSkills?.length > 0 ? s.matchingSkills.map((sk: any) => sk.skill).join(', ') : s.status === 'on_job' ? 'Clocked in' : 'Available'}
+                              {s.jobsInQueue > 0 ? ` · ${s.jobsInQueue} jobs` : ' · Free'}
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                            background: s.score >= 50 ? `${GREEN}22` : s.score >= 20 ? `${AMBER}22` : 'rgba(255,255,255,0.06)',
+                            color: s.score >= 50 ? GREEN : s.score >= 20 ? AMBER : DIM }}>
+                            {s.score >= 50 ? 'Strong' : s.score >= 20 ? 'Fair' : 'Low'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Mechanic dropdown */}
               <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-                Select Mechanic
+                {suggestions.length > 0 ? 'Or select manually' : 'Select Mechanic'}
               </label>
               <select
                 value={selectedMechanic}

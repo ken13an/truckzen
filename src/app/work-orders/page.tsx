@@ -144,7 +144,7 @@ export default function WorkOrdersPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F4F5F7', fontFamily: "'Instrument Sans', sans-serif", padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: '#F4F5F7', fontFamily: "'Instrument Sans', sans-serif", padding: 'clamp(12px, 3vw, 24px)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A' }}>Work Orders</div>
@@ -204,7 +204,8 @@ export default function WorkOrdersPage() {
             {search || statusFilter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : viewFilter === 'active' ? 'No active work orders. Create your first work order or view historical records.' : 'No work orders found'}
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
                 {canBulkDelete && <th style={{ padding: '8px 6px 8px 12px', width: 32 }}><input type="checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={toggleAll} style={{ cursor: 'pointer', accentColor: '#1D6FE8' }} /></th>}
@@ -232,7 +233,11 @@ export default function WorkOrdersPage() {
                       {o.ownership_type && o.ownership_type !== 'fleet_asset' && <div style={{ marginTop: 2 }}><OwnershipTypeBadge type={o.ownership_type} size="sm" /></div>}
                     </td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.complaint || '—'}</td>
-                    <td style={{ padding: '10px 12px' }}><span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: st.bg, color: st.color }}>{st.label}</span></td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: st.bg, color: st.color }}>{st.label}</span>
+                      {o.automation?.is_overdue && <span style={{ marginLeft: 4, padding: '1px 5px', borderRadius: 3, background: '#FEF2F2', color: '#DC2626', fontSize: 8, fontWeight: 700, textTransform: 'uppercase' }}>Overdue</span>}
+                      {o.automation?.exception && <div style={{ fontSize: 9, color: '#D97706', marginTop: 2 }}>{o.automation.next_action}</div>}
+                    </td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: '#374151' }}>{(o.users as any)?.full_name || '—'}</td>
                     <td style={{ padding: '10px 12px', fontSize: 12, fontFamily: 'monospace', fontWeight: 600, color: '#1A1A1A' }}>{fmt(o.grand_total)}</td>
                   </tr>
@@ -240,6 +245,7 @@ export default function WorkOrdersPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
       {/* Pagination */}

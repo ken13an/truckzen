@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 type P = { params: Promise<{ id: string }> }
 
 export async function POST(req: Request, { params }: P) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const user_id = actor.id
+
   const { id } = await params
   const s = db()
-  const { user_id, line_items } = await req.json()
+  const { line_items } = await req.json()
 
   const now = new Date().toISOString()
   const update: Record<string, any> = {
     status: 'submitted',
     submitted_at: now,
-    submitted_by: user_id || null,
+    submitted_by: user_id,
     updated_at: now,
   }
   if (line_items) update.line_items = line_items

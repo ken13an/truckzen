@@ -67,11 +67,11 @@ export async function POST(req: Request) {
     }
     totalHours = Math.round(totalHours * 100) / 100
 
-    // b. Count completed job_assignments
+    // b. Count completed wo_job_assignments (canonical source)
     const { count: completedJobs } = await s
-      .from('job_assignments')
+      .from('wo_job_assignments')
       .select('id', { count: 'exact', head: true })
-      .eq('assigned_to_user_id', mech.id)
+      .eq('user_id', mech.id)
       .eq('status', 'completed')
       .gte('updated_at', startISO)
       .lte('updated_at', endISO)

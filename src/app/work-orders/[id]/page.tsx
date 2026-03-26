@@ -71,10 +71,13 @@ export default function WorkOrderDetail() {
   const [mechanics, setMechanics] = useState<any[]>([])
   const [jobAssignments, setJobAssignments] = useState<any[]>([])
   const [woParts, setWoParts] = useState<any[]>([])
+  const [extraTimeRequests, setExtraTimeRequests] = useState<any[]>([])
   const [showMenu, setShowMenu] = useState(false)
   const [showTeamModal, setShowTeamModal] = useState(false)
   const [teamAssign, setTeamAssign] = useState<{ team?: string; bay?: string; assigned_tech?: string }>({})
   const [assignModal, setAssignModal] = useState<{ lineId: string; idx: number } | null>(null)
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [assignList, setAssignList] = useState<{ user_id: string; name: string; percentage: number }[]>([])
   const [hoursModal, setHoursModal] = useState<any | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -140,6 +143,10 @@ export default function WorkOrderDetail() {
       setTeamAssign({ team: woData.team || '', bay: woData.bay || '', assigned_tech: woData.assigned_tech || '' })
       setContactEmail(woData.customers?.email || '')
       setContactPhone(woData.customers?.phone || '')
+      // Fetch extra-time requests for this WO
+      fetch(`/api/mechanic-requests?status=pending`).then(r => r.ok ? r.json() : []).then(reqs => {
+        setExtraTimeRequests((reqs || []).filter((r: any) => r.so_id === id && r.request_type === 'labor_extension'))
+      }).catch(() => {})
 
       if (usersRes) {
         const usersData = await usersRes.json()
@@ -177,6 +184,18 @@ export default function WorkOrderDetail() {
     }))
     setAssignList(existing.length > 0 ? existing : [])
     setAssignModal({ lineId, idx })
+    // Fetch mechanic suggestions for this job line
+    setSuggestions([])
+    const line = jobLines.find((l: any) => l.id === lineId)
+    const desc = line?.description || wo?.complaint || ''
+    if (desc) {
+      setSuggestionsLoading(true)
+      fetch(`/api/mechanic-skills?type=suggest&job_description=${encodeURIComponent(desc)}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => setSuggestions(Array.isArray(data) ? data.slice(0, 5) : []))
+        .catch(() => setSuggestions([]))
+        .finally(() => setSuggestionsLoading(false))
+    }
   }
 
   const addMechToList = (uid: string) => {
@@ -590,7 +609,7 @@ export default function WorkOrderDetail() {
 
   // RENDER
   return (
-    <div style={{ fontFamily: FONT, color: '#1A1A1A', background: '#fff', minHeight: '100vh', maxWidth: 960, margin: '0 auto', padding: '16px 20px' }}>
+    <div style={{ fontFamily: FONT, color: '#1A1A1A', background: '#fff', minHeight: '100vh', maxWidth: 960, margin: '0 auto', padding: 'clamp(10px, 3vw, 20px)' }}>
 
       {/* BACK BUTTON */}
       <a href="/work-orders" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#ECEEF2', color: '#1A1A1A', borderRadius: 100, padding: '6px 14px 6px 8px', fontSize: 13, fontWeight: 700, textDecoration: 'none', marginBottom: 16, fontFamily: FONT }}>
@@ -844,6 +863,67 @@ export default function WorkOrderDetail() {
 
       {/* PROGRESS PIPELINE */}
       {!wo.is_historical && <WOStepper wo={wo} asset={asset} jobLines={jobLines} jobAssignments={jobAssignments} />}
+
+      {/* AUTOMATION VISIBILITY */}
+      {wo.automation && wo.automation.stage !== 'closed' && wo.automation.stage !== 'void' && !wo.is_historical && (
+        <div style={{
+          ...cardStyle,
+          display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+          background: wo.automation.is_overdue ? '#FEF2F2' : wo.automation.blocked_by ? '#FFFBEB' : '#F0FDF4',
+          border: `1px solid ${wo.automation.is_overdue ? '#FECACA' : wo.automation.blocked_by ? '#FDE68A' : '#BBF7D0'}`,
+        }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: wo.automation.is_overdue ? '#DC2626' : wo.automation.blocked_by ? '#D97706' : '#16A34A', marginBottom: 2 }}>
+              {wo.automation.is_overdue ? 'Overdue' : wo.automation.blocked_by ? 'Blocked' : 'On Track'}
+              {wo.automation.exception && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: 'rgba(0,0,0,0.06)', textTransform: 'uppercase' }}>{wo.automation.exception.replace(/_/g, ' ')}</span>}
+            </div>
+            <div style={{ fontSize: 12, color: '#374151' }}><strong>Next:</strong> {wo.automation.next_action}</div>
+            {wo.automation.blocked_by && <div style={{ fontSize: 11, color: '#D97706', marginTop: 2 }}>{wo.automation.blocked_by}</div>}
+          </div>
+          <div style={{ textAlign: 'right', fontSize: 11, color: GRAY }}>
+            <div>Owner: <strong style={{ color: '#1A1A1A' }}>{wo.automation.owner.replace(/_/g, ' ')}</strong></div>
+            {wo.etc && wo.etc.confidence !== 'none' && (
+              <div style={{ marginTop: 2, fontWeight: 600, color: wo.etc.remaining_hours === 0 ? RED : '#374151' }}>
+                ETC: {wo.etc.etc_label}
+                <span style={{ marginLeft: 4, fontSize: 9, fontWeight: 400, opacity: 0.7 }}>({wo.etc.confidence})</span>
+              </div>
+            )}
+            {wo.automation.stage_age_hours != null && <div>{wo.automation.stage_age_hours}h in stage</div>}
+            {wo.automation.total_age_hours != null && <div>{wo.automation.total_age_hours}h total</div>}
+          </div>
+        </div>
+      )}
+
+      {/* EXTRA TIME REQUESTS */}
+      {extraTimeRequests.length > 0 && (
+        <div style={{ ...cardStyle, background: '#FFFBEB', border: '1px solid #FDE68A' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#D97706', marginBottom: 8 }}>
+            Extra Time Request{extraTimeRequests.length > 1 ? 's' : ''} ({extraTimeRequests.length})
+          </div>
+          {extraTimeRequests.map((req: any) => (
+            <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #FDE68A' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>
+                  {req.users?.full_name || 'Mechanic'} — {req.hours_requested ? `+${req.hours_requested}h` : 'Extra time'}
+                </div>
+                <div style={{ fontSize: 11, color: GRAY }}>{req.description}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={async () => {
+                  await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'respond', request_id: req.id, status: 'approved' }) })
+                  setExtraTimeRequests(prev => prev.filter(r => r.id !== req.id))
+                }} style={{ ...btnStyle(GREEN, '#fff'), padding: '4px 12px', fontSize: 11 }}>Approve</button>
+                <button onClick={async () => {
+                  await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'respond', request_id: req.id, status: 'denied' }) })
+                  setExtraTimeRequests(prev => prev.filter(r => r.id !== req.id))
+                }} style={{ ...btnStyle(RED, '#fff'), padding: '4px 12px', fontSize: 11 }}>Deny</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* TAB BAR */}
       <div data-no-print style={{ display: 'flex', gap: 0, borderBottom: '1px solid #E5E7EB', marginBottom: 16, overflowX: 'auto' }}>
@@ -2015,9 +2095,40 @@ export default function WorkOrderDetail() {
               <button onClick={() => setAssignModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
             </div>
 
+            {/* Suggested mechanics */}
+            {(suggestions.length > 0 || suggestionsLoading) && (
+              <div style={{ marginBottom: 12 }}>
+                <span style={labelStyle}>Suggested</span>
+                {suggestionsLoading ? (
+                  <div style={{ fontSize: 11, color: GRAY, padding: '6px 0' }}>Loading suggestions...</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {suggestions.filter(s => !assignList.some(a => a.user_id === s.user_id)).map(s => (
+                      <div key={s.user_id} onClick={() => addMechToList(s.user_id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, border: '1px solid #E5E7EB', cursor: 'pointer', background: '#FAFBFC' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#EFF6FF')}
+                        onMouseLeave={e => (e.currentTarget.style.background = '#FAFBFC')}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>{s.name}</div>
+                          <div style={{ fontSize: 10, color: GRAY }}>
+                            {s.matchingSkills?.length > 0
+                              ? s.matchingSkills.map((sk: any) => `${sk.skill}${sk.certified ? ' ✓' : ''}`).join(', ')
+                              : s.status === 'on_job' ? 'Clocked in' : 'Available'}
+                            {s.jobsInQueue > 0 ? ` · ${s.jobsInQueue} active job${s.jobsInQueue > 1 ? 's' : ''}` : ' · No active jobs'}
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: s.score >= 50 ? GREEN : s.score >= 20 ? AMBER : GRAY, background: s.score >= 50 ? '#F0FDF4' : s.score >= 20 ? '#FFFBEB' : '#F3F4F6', padding: '2px 6px', borderRadius: 4 }}>
+                          {s.score >= 50 ? 'Strong' : s.score >= 20 ? 'Fair' : 'Low'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Add mechanic dropdown */}
             <div style={{ marginBottom: 12 }}>
-              <span style={labelStyle}>Add Mechanic</span>
+              <span style={labelStyle}>{suggestions.length > 0 ? 'Or select manually' : 'Add Mechanic'}</span>
               <select onChange={e => { addMechToList(e.target.value); e.target.value = '' }} style={inputStyle} defaultValue="">
                 <option value="" disabled>Select mechanic...</option>
                 {mechanics.filter(m => !assignList.some(a => a.user_id === m.id)).map(m => (

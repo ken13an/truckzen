@@ -310,6 +310,47 @@ export default function TechMobilePage() {
           </div>
         </div>
       )}
+
+      {/* Extra time request modal */}
+      {showActionRequest && selected && (
+        <div style={S.modal}>
+          <div style={S.modalCard}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Request Extra Time</div>
+            <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 12 }}>{(selected.assets as any)?.unit_number} — {selected.so_number}</div>
+            <div style={{ fontSize: 12, color: '#DDE3EE', marginBottom: 8 }}>How much extra time do you need?</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              {['0.5', '1', '2', '4'].map(h => (
+                <button key={h} onClick={() => setActionHours(h)}
+                  style={{ ...S.actionBtn, flex: 1, padding: '10px 8px', background: actionHours === h ? '#1D6FE8' : '#1A1D23', color: actionHours === h ? '#fff' : '#7C8BA0', fontWeight: 700 }}>
+                  {h}h
+                </button>
+              ))}
+            </div>
+            <textarea value={actionDesc} onChange={e => setActionDesc(e.target.value)}
+              placeholder="Why do you need more time? (required)"
+              style={{ ...S.input, height: 80, resize: 'none' }} />
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <button onClick={() => setShowActionRequest(false)} style={{ ...S.actionBtn, background: '#1A1D23', color: '#7C8BA0', flex: 1 }}>Cancel</button>
+              <button disabled={saving || !actionDesc.trim() || !actionHours} onClick={async () => {
+                setSaving(true)
+                await fetch('/api/mechanic-requests', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'create', so_id: selected.id,
+                    request_type: 'labor_extension',
+                    description: actionDesc.trim(),
+                    hours_requested: parseFloat(actionHours) || null,
+                  }),
+                })
+                setSaving(false); setShowActionRequest(false); flash('Extra time request sent')
+              }}
+                style={{ ...S.actionBtn, flex: 1, opacity: saving || !actionDesc.trim() || !actionHours ? 0.5 : 1 }}>
+                Send Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 
@@ -428,10 +469,14 @@ export default function TechMobilePage() {
       </div>
 
       {/* Quick actions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
         <button onClick={() => setShowParts(true)} style={S.tileBtn}>
           <span style={{ fontSize: 12, fontWeight: 700 }}>Parts</span>
           <span>Request Parts</span>
+        </button>
+        <button onClick={() => { setActionType('labor_extension'); setActionDesc(''); setActionHours(''); setShowActionRequest(true) }} style={S.tileBtn}>
+          <span style={{ fontSize: 12, fontWeight: 700 }}>Time</span>
+          <span>Request Extra Time</span>
         </button>
       </div>
 

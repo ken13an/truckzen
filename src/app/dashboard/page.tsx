@@ -101,7 +101,7 @@ export default function DashboardPage() {
   const card: React.CSSProperties = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }
 
   return (
-    <div style={{ background: '#F9FAFB', minHeight: '100vh', fontFamily: FONT, padding: '24px 28px' }}>
+    <div style={{ background: '#F9FAFB', minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(statCards.length, 4)}, 1fr)`, gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
         {statCards.map(c => (
           <div key={c.label} style={{ ...card, borderLeft: `3px solid ${c.color}` }}>
             <div style={{ fontSize: 11, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>{c.label}</div>
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Main content: Action Items + Notifications */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 24 }}>
         {/* Action Items */}
         <div style={card}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Action Items</div>

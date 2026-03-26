@@ -44,14 +44,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // Mark all lines as approved
     await supabase.from('estimate_lines').update({ is_approved: true }).eq('estimate_id', id)
 
-    // Update WO
+    // Update WO + auto-transition from waiting_approval to in_progress
     if (estimate.repair_order_id) {
-      await supabase.from('service_orders').update({
+      const { data: wo } = await supabase.from('service_orders').select('status').eq('id', estimate.repair_order_id).single()
+      const woUpdate: Record<string, any> = {
         estimate_approved: true,
         estimate_status: 'approved',
         approval_method: 'email_portal',
         updated_at: now,
-      }).eq('id', estimate.repair_order_id)
+      }
+      if (wo?.status === 'waiting_approval') woUpdate.status = 'in_progress'
+      await supabase.from('service_orders').update(woUpdate).eq('id', estimate.repair_order_id)
     }
   } else if (action === 'approve_with_notes') {
     await supabase.from('estimates').update({
@@ -66,15 +69,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // Mark all lines as approved (service writer will review notes and adjust)
     await supabase.from('estimate_lines').update({ is_approved: true }).eq('estimate_id', id)
 
-    // Update WO with notes status
+    // Update WO with notes status + auto-transition from waiting_approval to in_progress
     if (estimate.repair_order_id) {
-      await supabase.from('service_orders').update({
+      const { data: wo2 } = await supabase.from('service_orders').select('status').eq('id', estimate.repair_order_id).single()
+      const woUpdate2: Record<string, any> = {
         estimate_approved: true,
         estimate_status: 'approved_with_notes',
         approval_method: 'email_portal',
         customer_estimate_notes: customerNotes || '',
         updated_at: now,
-      }).eq('id', estimate.repair_order_id)
+      }
+      if (wo2?.status === 'waiting_approval') woUpdate2.status = 'in_progress'
+      await supabase.from('service_orders').update(woUpdate2).eq('id', estimate.repair_order_id)
     }
   } else {
     // Decline - save reason to notes

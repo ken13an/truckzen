@@ -4,20 +4,40 @@
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 type Params = { params: Promise<{ id: string }> }
 
 export async function POST(req: Request, { params }: Params) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const actorShopId = getActorShopId(actor)
+  if (!actorShopId) return jsonError('No shop context', 400)
+  const user_id = actor.id
+
   const { id } = await params
   const s = db()
-  const { action, user_id, ...data } = await req.json()
+  const { action, ...data } = await req.json()
 
-  if (!action || !user_id) return NextResponse.json({ error: 'action and user_id required' }, { status: 400 })
+  if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
 
   const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id').eq('id', id).single()
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
+
+  // Guard invoice status transitions
+  const VALID_INVOICE_TRANSITIONS: Record<string, string[]> = {
+    submit_to_accounting: [null, '', 'draft', 'quality_check_failed'].map(v => v ?? ''),
+    approve_invoicing: ['accounting_review', 'accounting_approved'],
+    mark_paid: ['sent', 'sent_to_customer'],
+    close_wo: ['paid'],
+  }
+  const currentInvoiceStatus = wo.invoice_status || ''
+  const allowedFrom = VALID_INVOICE_TRANSITIONS[action]
+  if (allowedFrom && !allowedFrom.includes(currentInvoiceStatus)) {
+    return NextResponse.json({ error: `Cannot "${action}" when invoice_status is "${currentInvoiceStatus || 'none'}"` }, { status: 400 })
+  }
 
   // Submit to accounting (direct — no quality check step)
   if (action === 'submit_to_accounting') {

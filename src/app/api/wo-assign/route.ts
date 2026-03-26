@@ -1,17 +1,30 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
+const ASSIGN_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer', 'office_admin']
+
 export async function POST(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  if (!ASSIGN_ROLES.includes(actor.role)) return jsonError('Access denied', 403)
+
   const s = db()
   const body = await req.json()
-  const { line_id, tech_id, user_id, wo_id } = body
+  const { line_id, tech_id, wo_id } = body
 
   if (!line_id || !wo_id)
     return NextResponse.json({ error: 'line_id and wo_id required' }, { status: 400 })
+
+  // Verify WO belongs to actor's shop
+  const { data: wo } = await s.from('service_orders').select('id').eq('id', wo_id).eq('shop_id', shopId).single()
+  if (!wo) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
 
   // Update the so_line assignment
   const newStatus = tech_id ? 'in_progress' : 'unassigned'
@@ -35,7 +48,7 @@ export async function POST(req: Request) {
 
   await s.from('wo_activity_log').insert({
     wo_id,
-    user_id: user_id || null,
+    user_id: actor.id,
     action: actionText,
   })
 

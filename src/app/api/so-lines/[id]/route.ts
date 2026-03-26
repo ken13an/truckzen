@@ -26,6 +26,22 @@ export async function PATCH(req: Request, { params }: P) {
   for (const f of allowedFields) if (body[f] !== undefined) update[f] = body[f]
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 })
 
+  // Validate line_status enum
+  if (update.line_status !== undefined) {
+    const VALID_LINE_STATUSES = ['unassigned', 'pending_review', 'approved', 'in_progress', 'completed']
+    if (!VALID_LINE_STATUSES.includes(update.line_status)) {
+      return NextResponse.json({ error: `Invalid line_status "${update.line_status}"` }, { status: 400 })
+    }
+  }
+
+  // Validate parts_status enum
+  if (update.parts_status !== undefined) {
+    const VALID_PARTS_STATUSES = ['rough', 'sourced', 'ordered', 'received', 'installed']
+    if (!VALID_PARTS_STATUSES.includes(update.parts_status)) {
+      return NextResponse.json({ error: `Invalid parts_status "${update.parts_status}"` }, { status: 400 })
+    }
+  }
+
   const quantity = update.quantity ?? (line as any).quantity ?? 1
   const unitPrice = update.unit_price ?? (line as any).unit_price ?? 0
   const sellPrice = update.parts_sell_price ?? (line as any).parts_sell_price ?? unitPrice

@@ -7,6 +7,7 @@ import RoleSwitcher from '@/components/RoleSwitcher'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { Menu, X } from 'lucide-react'
 
 const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password', '/tech', '/offline', '/403', '/mechanic', '/floor-manager', '/platform-admin', '/register']
 
@@ -15,14 +16,24 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [shopImpersonation, setShopImpersonation] = useState<{ shopName: string; originalShopId: string } | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   useKeyboardShortcuts()
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Close drawer on navigation
+  useEffect(() => { setDrawerOpen(false) }, [pathname])
 
   useEffect(() => {
     getCurrentUser(supabase).then(async (p: any) => {
       if (!p) return
       setUser(p)
-
-      // Check if platform owner is impersonating a shop
       const origShopId = localStorage.getItem('tz_original_shop_id')
       if (origShopId && origShopId !== p.shop_id) {
         const { data: shop } = await supabase.from('shops').select('name').eq('id', p.shop_id).single()
@@ -37,15 +48,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
-  // Determine effective role (impersonation or actual)
   const effectiveRole = user?.impersonate_role || user?.role
   const isImpersonating = !!user?.impersonate_role
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#060708' }}>
-      <Sidebar/>
+      {/* Desktop sidebar */}
+      {!isMobile && <Sidebar />}
+
+      {/* Mobile drawer overlay */}
+      {isMobile && drawerOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9998, display: 'flex' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} onClick={() => setDrawerOpen(false)} />
+          <div style={{ position: 'relative', zIndex: 1, width: 260, maxWidth: '80vw' }}>
+            <Sidebar />
+            <button onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', top: 12, right: -44, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer', color: '#fff' }}>
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        {/* Shop impersonation banner (platform owner viewing a shop) */}
+        {/* Shop impersonation banner */}
         {shopImpersonation && (
           <div style={{ background: 'rgba(232,105,42,.12)', borderBottom: '1px solid rgba(232,105,42,.25)', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontSize: 12, color: '#E8692A', fontWeight: 600 }}>
             <span>You are viewing <strong>{shopImpersonation.shopName}</strong> as Owner</span>
@@ -75,13 +100,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
         {/* Top bar */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
-          {user?.can_impersonate && (
-            <RoleSwitcher userId={user.id} actualRole={user.role} impersonateRole={user.impersonate_role} />
-          )}
-          {user && <NotificationBell userId={user.id} />}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+          {isMobile ? (
+            <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 6 }}>
+              <Menu size={22} />
+            </button>
+          ) : <div />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {user?.can_impersonate && (
+              <RoleSwitcher userId={user.id} actualRole={user.role} impersonateRole={user.impersonate_role} />
+            )}
+            {user && <NotificationBell userId={user.id} />}
+          </div>
         </div>
-        <main style={{ flex: 1, overflowX: 'hidden' }}>
+        <main style={{ flex: 1, overflowX: 'hidden', paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {children}
         </main>
       </div>

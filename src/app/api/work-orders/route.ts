@@ -3,18 +3,23 @@ import { createClient } from '@supabase/supabase-js'
 import { logAction } from '@/lib/services/auditLog'
 import { checkRateLimit } from '@/lib/rateLimit'
 import { insertServiceOrder } from '@/lib/generateWoNumber'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { deriveWOAutomation } from '@/lib/wo-automation'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
 export async function GET(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
   const s = db()
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
-  if (!checkRateLimit(`${shopId}:work-orders`, 200, 60000)) {
+  if (!checkRateLimit(`${actor.id}:work-orders`, 200, 60000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
@@ -30,7 +35,9 @@ export async function GET(req: Request) {
     .from('service_orders')
     .select(`
       id, so_number, status, priority, complaint, bay, team, source, is_historical,
-      grand_total, created_at, updated_at, assigned_tech, ownership_type,
+      grand_total, created_at, updated_at, submitted_at, assigned_tech, ownership_type,
+      estimate_required, estimate_approved, estimate_status, estimate_sent_at, estimate_approved_at,
+      invoice_status, invoiced_at, promised_date, repair_completed_at, parts_completed_at,
       assets(id, unit_number, year, make, model, ownership_type),
       customers(id, company_name),
       users!assigned_tech(id, full_name)
@@ -77,8 +84,13 @@ export async function GET(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const total = count ?? 0
+  // Add lightweight automation to each WO in list
+  const enriched = (data || []).map((wo: any) => ({
+    ...wo,
+    automation: deriveWOAutomation(wo),
+  }))
   return NextResponse.json({
-    data: data || [],
+    data: enriched,
     total,
     page,
     limit,
@@ -87,12 +99,16 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shop_id = getActorShopId(actor)
+  if (!shop_id) return jsonError('No shop context', 400)
+  const user_id = actor.id
+
   const s = db()
   const body = await req.json()
-  const { shop_id, user_id, asset_id, customer_id, complaint, priority, job_lines, mileage, job_type, estimate_required: bodyEstimateRequired } = body
+  const { asset_id, customer_id, complaint, priority, job_lines, mileage, job_type, estimate_required: bodyEstimateRequired } = body
   const isDraftSave = body.status === 'draft'
-
-  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!isDraftSave && !complaint?.trim()) return NextResponse.json({ error: 'Concern description required' }, { status: 400 })
 
   // Duplicate WO prevention — skip for draft saves
@@ -207,20 +223,21 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
+  if (!['owner', 'gm', 'it_person'].includes(actor.role)) {
+    return NextResponse.json({ error: 'Only owner, GM, or IT can bulk delete' }, { status: 403 })
+  }
+
   const s = db()
   const body = await req.json()
-  const { ids, user_id } = body
+  const { ids } = body
 
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
     return NextResponse.json({ error: 'ids array required' }, { status: 400 })
-  }
-
-  // Check user role
-  if (user_id) {
-    const { data: user } = await s.from('users').select('role').eq('id', user_id).single()
-    if (!user || !['owner', 'gm', 'it_person'].includes(user.role)) {
-      return NextResponse.json({ error: 'Only owner, GM, or IT can bulk delete' }, { status: 403 })
-    }
   }
 
   // Get WOs to check status
@@ -240,9 +257,9 @@ export async function DELETE(req: Request) {
   }
 
   // Log
-  if (user_id && deletable.length > 0) {
+  if (deletable.length > 0) {
     const { logAction } = await import('@/lib/services/auditLog')
-    logAction({ shop_id: wos[0]?.shop_id || '', user_id, action: 'bulk_delete', entity_type: 'service_order', entity_id: ids.join(','), details: { count: deletable.length } }).catch(() => {})
+    logAction({ shop_id: shopId, user_id: actor.id, action: 'bulk_delete', entity_type: 'service_order', entity_id: ids.join(','), details: { count: deletable.length } }).catch(() => {})
   }
 
   return NextResponse.json({

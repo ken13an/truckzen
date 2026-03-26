@@ -11,17 +11,24 @@ export async function POST(req: Request, { params }: P) {
   const { token } = await params
   const s = db()
 
-  const { data: wo } = await s.from('service_orders').select('id, so_number, shop_id, customer_id, created_by_user_id, grand_total').eq('portal_token', token).single()
+  const { data: wo } = await s.from('service_orders').select('id, so_number, shop_id, customer_id, created_by_user_id, grand_total, status').eq('portal_token', token).single()
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const now = new Date().toISOString()
-  await s.from('service_orders').update({
+  const woUpdate: Record<string, any> = {
     estimate_status: 'approved',
     estimate_approved: true,
     estimate_approved_date: now,
     approved_at: now,
     approved_by: 'customer_portal',
-  }).eq('id', wo.id)
+  }
+
+  // Auto-transition: if WO is waiting for approval, move to in_progress
+  if (wo.status === 'waiting_approval') {
+    woUpdate.status = 'in_progress'
+  }
+
+  await s.from('service_orders').update(woUpdate).eq('id', wo.id)
 
   // Approve all pending lines
   await s.from('so_lines').update({ customer_approved: true, approved_at: now }).eq('so_id', wo.id).is('customer_approved', null)

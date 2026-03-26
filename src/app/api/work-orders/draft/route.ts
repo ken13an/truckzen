@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
 /**
- * GET /api/work-orders/draft?user_id=X&shop_id=Y
- * Returns autosave drafts for the current user
+ * GET /api/work-orders/draft
+ * Returns autosave drafts for the authenticated user
  */
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const userId = searchParams.get('user_id')
-  const shopId = searchParams.get('shop_id')
-  if (!userId || !shopId) return NextResponse.json({ error: 'user_id and shop_id required' }, { status: 400 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  const userId = actor.id
 
   const s = db()
   const { data, error } = await s
@@ -35,11 +37,15 @@ export async function GET(req: Request) {
  * Upsert an autosave draft. One draft per user+asset combo.
  */
 export async function POST(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shop_id = getActorShopId(actor)
+  if (!shop_id) return jsonError('No shop context', 400)
+  const user_id = actor.id
+
   const s = db()
   const body = await req.json()
-  const { shop_id, user_id, customer_id, asset_id, complaint, priority, job_type, mileage, draft_data } = body
-
-  if (!shop_id || !user_id) return NextResponse.json({ error: 'shop_id and user_id required' }, { status: 400 })
+  const { customer_id, asset_id, complaint, priority, job_type, mileage, draft_data } = body
   if (!customer_id || !asset_id) return NextResponse.json({ error: 'customer and vehicle required' }, { status: 400 })
 
   // Check for existing draft for this user + asset

@@ -30,9 +30,9 @@ export async function POST(req: Request) {
 
     // Check if they have active job assignments
     const { data: activeJobs } = await s
-      .from('job_assignments')
+      .from('wo_job_assignments')
       .select('id')
-      .eq('assigned_to_user_id', entry.user_id)
+      .eq('user_id', entry.user_id)
       .in('status', ['accepted', 'in_progress'])
       .limit(1)
 
