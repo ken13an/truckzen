@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 export async function GET(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
   const page = parseInt(searchParams.get('page') || '1')
   const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)
@@ -46,11 +50,15 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shop_id = getActorShopId(actor)
+  if (!shop_id) return jsonError('No shop context', 400)
+
   const s = db()
   const body = await req.json()
-  const { shop_id, vendor_id, vendor_name, lines, notes, so_id, created_by } = body
+  const { vendor_id, vendor_name, lines, notes, so_id } = body
 
-  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!lines?.length) return NextResponse.json({ error: 'At least one line item required' }, { status: 400 })
 
   const { count } = await s.from('purchase_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shop_id)
@@ -66,7 +74,7 @@ export async function POST(req: Request) {
     status: 'draft',
     total,
     notes: notes || null,
-    created_by: created_by || null,
+    created_by: actor.id,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

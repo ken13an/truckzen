@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { decodeVIN } from '@/lib/integrations/nhtsa'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
 export async function GET(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
   const s = db()
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
   const search = searchParams.get('search') || searchParams.get('q')
   const status = searchParams.get('status')
@@ -69,11 +73,15 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shop_id = getActorShopId(actor)
+  if (!shop_id) return jsonError('No shop context', 400)
+
   const s = db()
   const body = await req.json()
-  let { shop_id, unit_number, vin, year, make, model, engine, odometer, customer_id, status: assetStatus, ownership_type, unit_type } = body
+  let { unit_number, vin, year, make, model, engine, odometer, customer_id, status: assetStatus, ownership_type, unit_type } = body
 
-  if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
   if (!unit_number) return NextResponse.json({ error: 'Unit number required' }, { status: 400 })
 
   // Auto-decode VIN

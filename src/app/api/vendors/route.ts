@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getCache, setCache, invalidateCache } from '@/lib/cache'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 export async function GET(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
   const page = parseInt(searchParams.get('page') || '1')
   const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)

@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  const search = searchParams.get('q')
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
 
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const { searchParams } = new URL(req.url)
+  const search = searchParams.get('q')
 
   const supabase = db()
 
@@ -28,14 +31,17 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const supabase = db()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
 
+  const supabase = db()
   const body = await req.json()
   if (!body.full_name) return NextResponse.json({ error: 'full_name required' }, { status: 400 })
-  if (!body.shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
   const { data, error } = await supabase.from('drivers').insert({
-    shop_id:        body.shop_id,
+    shop_id:        shopId,
     full_name:      body.full_name.trim(),
     phone:          body.phone         || null,
     email:          body.email?.toLowerCase() || null,
