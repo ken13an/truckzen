@@ -8,6 +8,15 @@ import AITextInput from '@/components/ai-text-input'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import WOStepper from '@/components/work-orders/WOStepper'
+import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
+
+const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
+
+function isUnrecognizedJob(desc: string): boolean {
+  if (!desc || desc.trim().length < 2) return false
+  const d = desc.toLowerCase()
+  return !KNOWN_REPAIR_WORDS.some(w => d.includes(w))
+}
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -77,6 +86,7 @@ export default function WorkOrderDetail() {
   const [showAiPanel, setShowAiPanel] = useState<string | null>(null)
   const [useAI, setUseAI] = useState(false)
   const [addingJob, setAddingJob] = useState(false)
+  const [jobWarning, setJobWarning] = useState('')
   const [newChargeDesc, setNewChargeDesc] = useState('')
   const [newChargeAmt, setNewChargeAmt] = useState('')
   const [newPartForms, setNewPartForms] = useState<Record<string, { desc: string; pn: string; qty: string; cost: string }>>({})
@@ -394,7 +404,17 @@ export default function WorkOrderDetail() {
 
   const addJobLine = async () => {
     if (!newJobText.trim()) return
+    // Check for unrecognized job text
+    if (isUnrecognizedJob(newJobText)) {
+      setJobWarning('Unrecognized job description — what did you mean? Use terms like: oil change, brake repair, pm service, tire replacement...')
+      return
+    }
+    setJobWarning('')
     setAddingJob(true)
+
+    // Collect job descriptions that will be created
+    const createdDescriptions: string[] = []
+
     if (useAI) {
       try {
         const res = await fetch('/api/ai/expand-complaint', {
@@ -411,6 +431,7 @@ export default function WorkOrderDetail() {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ so_id: id, line_type: 'labor', description: line.description, estimated_hours: line.estimated_hours || 0, line_status: 'unassigned' }),
             })
+            createdDescriptions.push(line.description)
           }
         }
       } catch {
@@ -419,6 +440,7 @@ export default function WorkOrderDetail() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ so_id: id, line_type: 'labor', description: newJobText, line_status: 'unassigned' }),
         })
+        createdDescriptions.push(newJobText)
       }
     } else {
       await fetch('/api/so-lines', {
@@ -426,7 +448,32 @@ export default function WorkOrderDetail() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ so_id: id, line_type: 'labor', description: newJobText, line_status: 'unassigned' }),
       })
+      createdDescriptions.push(newJobText)
     }
+
+    // Generate and create rough parts for each job description
+    for (const desc of createdDescriptions) {
+      if (!isDiagnosticJob(desc)) {
+        const roughParts = getAutoRoughParts(desc)
+        for (const rp of roughParts) {
+          if (!rp.is_labor) {
+            await fetch('/api/so-lines', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                so_id: id,
+                line_type: 'part',
+                description: rp.rough_name,
+                rough_name: rp.rough_name,
+                quantity: rp.quantity || 1,
+                parts_status: 'rough',
+              }),
+            })
+          }
+        }
+      }
+    }
+
     setNewJobText('')
     setUseAI(false)
     setAddingJob(false)
@@ -1202,20 +1249,37 @@ export default function WorkOrderDetail() {
 
           {/* Add Job Line */}
           {!wo.is_historical && (
-            <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <button onClick={() => setUseAI(!useAI)} style={{ ...pillStyle(useAI ? '#EFF6FF' : '#F3F4F6', useAI ? BLUE : GRAY), cursor: 'pointer', border: 'none', fontFamily: FONT }}>
-                <Mic size={11} /> AI {useAI ? 'ON' : 'OFF'}
-              </button>
-              <input
-                value={newJobText}
-                onChange={e => setNewJobText(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && addJobLine()}
-                placeholder="Describe the job concern..."
-                style={{ ...inputStyle, flex: 1, minWidth: 200 }}
-              />
-              <button onClick={addJobLine} disabled={addingJob || !newJobText.trim()} style={{ ...btnStyle(BLUE, '#fff'), opacity: addingJob || !newJobText.trim() ? 0.5 : 1 }}>
-                <Plus size={14} /> {addingJob ? 'Adding...' : 'Add Job Line'}
-              </button>
+            <div>
+              <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', borderColor: (newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText)) ? '#FCA5A5' : undefined }}>
+                <button onClick={() => setUseAI(!useAI)} style={{ ...pillStyle(useAI ? '#EFF6FF' : '#F3F4F6', useAI ? BLUE : GRAY), cursor: 'pointer', border: 'none', fontFamily: FONT }}>
+                  <Mic size={11} /> AI {useAI ? 'ON' : 'OFF'}
+                </button>
+                <input
+                  value={newJobText}
+                  onChange={e => { setNewJobText(e.target.value); setJobWarning('') }}
+                  onKeyDown={e => e.key === 'Enter' && addJobLine()}
+                  placeholder={newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText) ? 'What did you mean? Use repair terms like: oil change, brake, pm service...' : 'Describe the job concern...'}
+                  style={{ ...inputStyle, flex: 1, minWidth: 200, borderColor: (newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText)) ? '#FCA5A5' : undefined }}
+                />
+                <button onClick={addJobLine} disabled={addingJob || !newJobText.trim()} style={{ ...btnStyle(BLUE, '#fff'), opacity: addingJob || !newJobText.trim() ? 0.5 : 1 }}>
+                  <Plus size={14} /> {addingJob ? 'Adding...' : 'Add Job Line'}
+                </button>
+              </div>
+              {newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText) && (
+                <div style={{ fontSize: 11, color: RED, fontWeight: 600, marginTop: 4, padding: '0 4px' }}>
+                  Unrecognized job — use repair terms like: oil change, brake repair, pm service, tire replacement, alternator, etc.
+                </div>
+              )}
+              {jobWarning && (
+                <div style={{ fontSize: 11, color: RED, fontWeight: 600, marginTop: 4, padding: '4px 8px', background: '#FEF2F2', borderRadius: 6, border: '1px solid #FCA5A5' }}>
+                  {jobWarning}
+                </div>
+              )}
+              {newJobText.trim().length >= 2 && !isUnrecognizedJob(newJobText) && !isDiagnosticJob(newJobText) && getAutoRoughParts(newJobText).filter(p => !p.is_labor).length > 0 && (
+                <div style={{ fontSize: 11, color: BLUE, marginTop: 4, padding: '0 4px' }}>
+                  Will suggest parts: {getAutoRoughParts(newJobText).filter(p => !p.is_labor).map(p => p.rough_name).join(', ')}
+                </div>
+              )}
             </div>
           )}
 
