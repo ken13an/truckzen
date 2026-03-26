@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'office_admin'])
+  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer', 'office_admin'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { line_id, assignments, wo_id } = await req.json().catch(() => ({}))
   if (!line_id || !Array.isArray(assignments)) return NextResponse.json({ error: 'line_id and assignments[] required' }, { status: 400 })
@@ -51,6 +51,15 @@ export async function POST(req: Request) {
       try {
         const { createNotification } = await import('@/lib/createNotification')
         const unitNum = (wo as any).assets?.unit_number || ''
+        // Dedup: dismiss existing unread job_assigned notifications for this WO before creating new ones
+        for (const r of rows) {
+          await ctx.admin.from('notifications')
+            .update({ is_dismissed: true })
+            .eq('user_id', r.user_id)
+            .eq('type', 'job_assigned')
+            .eq('related_wo_id', targetWoId)
+            .eq('is_dismissed', false)
+        }
         await createNotification({ shopId: (wo as any).shop_id, recipientId: rows.map((r: any) => r.user_id), type: 'job_assigned', title: 'New Job Assigned', body: `You've been assigned to ${(wo as any).so_number} #${unitNum}`, link: `/work-orders/${targetWoId}`, relatedWoId: targetWoId, relatedUnit: unitNum })
       } catch {}
     }
@@ -64,7 +73,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'office_admin'])
+  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer', 'office_admin'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const id = new URL(req.url).searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })

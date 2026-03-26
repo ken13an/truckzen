@@ -23,7 +23,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  // Real-time subscription
+  // Real-time subscription for new notifications
   useEffect(() => {
     if (!userId) return
     const channel = supabase.channel(`bell-notifs:${userId}`)
@@ -35,26 +35,37 @@ export default function NotificationBell({ userId }: { userId: string }) {
   }, [userId])
 
   async function loadNotifications() {
-    const { data } = await supabase.from('notifications')
-      .select('id, title, body, link, read, type, priority, created_at')
-      .eq('user_id', userId)
-      .eq('is_dismissed', false)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    setNotifications(data || [])
+    const res = await fetch('/api/notifications?limit=20')
+    if (res.ok) {
+      const json = await res.json()
+      setNotifications(json.notifications || [])
+    }
   }
 
   async function markRead(id: string) {
-    await supabase.from('notifications').update({ read: true }).eq('id', id)
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action: 'mark_read' }),
+    })
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
   }
 
+  async function dismiss(id: string) {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action: 'dismiss' }),
+    })
+    setNotifications(prev => prev.filter(n => n.id !== id))
+  }
+
   async function markAllRead() {
-    const unread = notifications.filter(n => !n.read).map(n => n.id)
-    if (!unread.length) return
-    for (const id of unread) {
-      await supabase.from('notifications').update({ read: true }).eq('id', id)
-    }
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'all', action: 'mark_read' }),
+    })
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
   }
 
@@ -97,17 +108,25 @@ export default function NotificationBell({ userId }: { userId: string }) {
             <div style={{ padding: 24, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No notifications</div>
           ) : (
             notifications.map(n => (
-              <a key={n.id} href={n.link || '#'} onClick={() => markRead(n.id)} style={{
-                display: 'block', padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,.03)', textDecoration: 'none',
+              <div key={n.id} style={{
+                display: 'flex', alignItems: 'flex-start', padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,.03)',
                 background: n.read ? 'transparent' : 'rgba(29,111,232,.04)',
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ fontSize: 12, fontWeight: n.read ? 400 : 600, color: n.read ? '#7C8BA0' : '#F0F4FF', lineHeight: 1.4 }}>{n.title}</div>
-                  <span style={{ fontSize: 10, color: '#48536A', whiteSpace: 'nowrap', marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
-                </div>
-                {n.body && <div style={{ fontSize: 11, color: '#48536A', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
-                {!n.read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#1D6FE8', marginTop: 4 }} />}
-              </a>
+                <a href={n.link || '#'} onClick={() => markRead(n.id)} style={{
+                  flex: 1, textDecoration: 'none', minWidth: 0,
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ fontSize: 12, fontWeight: n.read ? 400 : 600, color: n.read ? '#7C8BA0' : '#F0F4FF', lineHeight: 1.4 }}>{n.title}</div>
+                    <span style={{ fontSize: 10, color: '#48536A', whiteSpace: 'nowrap', marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
+                  </div>
+                  {n.body && <div style={{ fontSize: 11, color: '#48536A', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
+                  {!n.read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#1D6FE8', marginTop: 4 }} />}
+                </a>
+                <button onClick={e => { e.stopPropagation(); dismiss(n.id) }} style={{
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#48536A', fontSize: 14,
+                  padding: '2px 4px', marginLeft: 4, flexShrink: 0, lineHeight: 1,
+                }} title="Dismiss">&times;</button>
+              </div>
             ))
           )}
           <a href="/dashboard" style={{ display: 'block', padding: '10px 16px', textAlign: 'center', fontSize: 11, color: '#4D9EFF', textDecoration: 'none', borderTop: '1px solid #1A1D23', fontWeight: 600 }}>

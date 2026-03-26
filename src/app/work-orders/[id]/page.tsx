@@ -223,11 +223,16 @@ export default function WorkOrderDetail() {
 
   const saveAssignments = async () => {
     if (!assignModal) return
-    await fetch('/api/wo-job-assignments', {
+    const res = await fetch('/api/wo-job-assignments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ line_id: assignModal.lineId, assignments: assignList, wo_id: id }),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Assignment failed' }))
+      alert(err.error || 'Failed to save assignment')
+      return
+    }
     setAssignModal(null)
     await loadData()
   }
