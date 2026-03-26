@@ -12,7 +12,7 @@ export async function PATCH(req: Request, { params }: P) {
   const s = db()
   const body = await req.json()
 
-  const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'total_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate']
+  const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'total_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name']
   const update: Record<string, any> = {}
   for (const f of allowedFields) {
     if (body[f] !== undefined) update[f] = body[f]
