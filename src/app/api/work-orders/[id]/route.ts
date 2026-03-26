@@ -239,18 +239,15 @@ export async function PATCH(req: Request, { params }: Params) {
 
 export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'])
+  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'service_writer'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
-  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, status')
+  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, status, so_number')
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Block voiding WOs that are actively in progress or already invoiced
-  const blockedStatuses = ['in_progress', 'completed', 'good_to_go', 'done', 'invoiced']
-  if (blockedStatuses.includes((wo as any).status)) {
-    return NextResponse.json({ error: `Cannot void a work order with status "${(wo as any).status}"` }, { status: 400 })
-  }
-
-  await ctx.admin.from('service_orders').update({ deleted_at: new Date().toISOString(), status: 'void', updated_at: new Date().toISOString() }).eq('id', id)
-  logAction({ shop_id: (wo as any).shop_id, user_id: ctx.actor.id, action: 'soft_delete', entity_type: 'service_order', entity_id: id }).catch(() => {})
+  // Void is allowed from any status — soft delete + status change, preserves all records
+  const now = new Date().toISOString()
+  await ctx.admin.from('service_orders').update({ deleted_at: now, status: 'void', updated_at: now }).eq('id', id)
+  await ctx.admin.from('wo_activity_log').insert({ wo_id: id, user_id: ctx.actor.id, action: `Voided work order (was: ${(wo as any).status})` })
+  logAction({ shop_id: (wo as any).shop_id, user_id: ctx.actor.id, action: 'wo.voided', entity_type: 'service_order', entity_id: id, details: { so_number: (wo as any).so_number, previous_status: (wo as any).status } }).catch(() => {})
   return NextResponse.json({ ok: true })
 }

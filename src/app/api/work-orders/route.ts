@@ -228,8 +228,8 @@ export async function DELETE(req: Request) {
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
 
-  if (!['owner', 'gm', 'it_person'].includes(actor.role)) {
-    return NextResponse.json({ error: 'Only owner, GM, or IT can bulk delete' }, { status: 403 })
+  if (!['owner', 'gm', 'it_person', 'service_writer'].includes(actor.role)) {
+    return NextResponse.json({ error: 'Only owner, GM, IT, or service writer can void work orders' }, { status: 403 })
   }
 
   const s = db()
@@ -240,31 +240,27 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: 'ids array required' }, { status: 400 })
   }
 
-  // Get WOs to check status — shop-scoped
+  // Get WOs — shop-scoped. Void is allowed from any status.
   const { data: wos } = await s.from('service_orders').select('id, status, so_number, shop_id').in('id', ids).eq('shop_id', shopId)
   if (!wos) return NextResponse.json({ error: 'Failed to fetch work orders' }, { status: 500 })
 
-  const blocked = ['in_progress', 'completed', 'good_to_go', 'done', 'invoiced']
-  const deletable = wos.filter(w => !blocked.includes(w.status))
-  const skipped = wos.filter(w => blocked.includes(w.status))
-
-  // Soft delete allowed ones
+  // Soft void all selected WOs
   const now = new Date().toISOString()
-  if (deletable.length > 0) {
+  if (wos.length > 0) {
     await s.from('service_orders')
-      .update({ deleted_at: now, updated_at: now })
-      .in('id', deletable.map(w => w.id))
+      .update({ deleted_at: now, status: 'void', updated_at: now })
+      .in('id', wos.map(w => w.id))
   }
 
   // Log
-  if (deletable.length > 0) {
+  if (wos.length > 0) {
     const { logAction } = await import('@/lib/services/auditLog')
-    logAction({ shop_id: shopId, user_id: actor.id, action: 'bulk_delete', entity_type: 'service_order', entity_id: ids.join(','), details: { count: deletable.length } }).catch(() => {})
+    logAction({ shop_id: shopId, user_id: actor.id, action: 'bulk_void', entity_type: 'service_order', entity_id: ids.join(','), details: { count: wos.length, previous_statuses: wos.map(w => `${w.so_number}:${w.status}`) } }).catch(() => {})
   }
 
   return NextResponse.json({
-    deleted: deletable.length,
-    skipped: skipped.length,
-    errors: skipped.map(w => `${w.so_number} cannot be deleted (status: ${w.status})`),
+    voided: wos.length,
+    skipped: 0,
+    errors: [],
   })
 }

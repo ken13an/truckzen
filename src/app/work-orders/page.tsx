@@ -118,8 +118,7 @@ export default function WorkOrdersPage() {
     return list
   }, [orders, dateRange, dateFrom, dateTo])
   const fmt = (n: number) => n ? `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—'
-  const canBulkDelete = user && ['owner', 'gm', 'it_person'].includes(user.role)
-  const blockedStatuses = ['in_progress', 'completed', 'good_to_go', 'done', 'invoiced']
+  const canBulkVoid = user && ['owner', 'gm', 'it_person', 'service_writer'].includes(user.role)
 
   const toggleSelect = (id: string) => {
     setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -134,7 +133,7 @@ export default function WorkOrdersPage() {
     const res = await fetch('/api/work-orders', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: Array.from(selected), user_id: user.id }) })
     if (res.ok) {
       const data = await res.json()
-      setToastMsg(`${data.deleted} work order${data.deleted !== 1 ? 's' : ''} deleted${data.skipped > 0 ? `, ${data.skipped} skipped (in progress/completed)` : ''}`)
+      setToastMsg(`${data.voided} work order${data.voided !== 1 ? 's' : ''} voided`)
       setTimeout(() => setToastMsg(''), 5000)
       setSelected(new Set())
       setShowDeleteModal(false)
@@ -184,14 +183,13 @@ export default function WorkOrdersPage() {
         theme="light"
       />
 
-      {/* Bulk delete bar */}
-      {canBulkDelete && selected.size > 0 && (
+      {/* Bulk void bar */}
+      {canBulkVoid && selected.size > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, marginBottom: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#DC2626' }}>{selected.size} selected</span>
-          {(() => { const blocked = Array.from(selected).filter(id => { const o = filtered.find(f => f.id === id); return o && blockedStatuses.includes(o.status) }); return blocked.length > 0 ? <span style={{ fontSize: 11, color: '#991B1B' }}>{blocked.length} cannot be deleted (in progress/completed)</span> : null })()}
           <div style={{ flex: 1 }} />
           <button onClick={() => setSelected(new Set())} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
-          <button onClick={() => setShowDeleteModal(true)} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: '#DC2626', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Delete Selected ({selected.size})</button>
+          <button onClick={() => setShowDeleteModal(true)} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: '#DC2626', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Void Selected ({selected.size})</button>
         </div>
       )}
 
@@ -208,7 +206,7 @@ export default function WorkOrdersPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                {canBulkDelete && <th style={{ padding: '8px 6px 8px 12px', width: 32 }}><input type="checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={toggleAll} style={{ cursor: 'pointer', accentColor: '#1D6FE8' }} /></th>}
+                {canBulkVoid && <th style={{ padding: '8px 6px 8px 12px', width: 32 }}><input type="checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={toggleAll} style={{ cursor: 'pointer', accentColor: '#1D6FE8' }} /></th>}
                 {['WO #', 'Date', 'Customer', 'Unit', 'Work Description', 'Status', 'Tech', 'Total'].map(h => (
                   <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                 ))}
@@ -221,7 +219,7 @@ export default function WorkOrdersPage() {
                 return (
                   <tr key={o.id} style={{ borderBottom: '1px solid #F3F4F6', cursor: 'pointer', opacity: isHist ? 0.7 : 1, background: selected.has(o.id) ? '#EFF6FF' : '' }} onClick={() => window.location.href = `/work-orders/${o.id}`}
                     onMouseEnter={e => { if (!selected.has(o.id)) e.currentTarget.style.background = '#F9FAFB' }} onMouseLeave={e => { if (!selected.has(o.id)) e.currentTarget.style.background = '' }}>
-                    {canBulkDelete && <td style={{ padding: '10px 6px 10px 12px', width: 32 }} onClick={e => e.stopPropagation()}><input type="checkbox" checked={selected.has(o.id)} onChange={() => toggleSelect(o.id)} style={{ cursor: 'pointer', accentColor: '#1D6FE8' }} /></td>}
+                    {canBulkVoid && <td style={{ padding: '10px 6px 10px 12px', width: 32 }} onClick={e => e.stopPropagation()}><input type="checkbox" checked={selected.has(o.id)} onChange={() => toggleSelect(o.id)} style={{ cursor: 'pointer', accentColor: '#1D6FE8' }} /></td>}
                     <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: '#1D6FE8', whiteSpace: 'nowrap' }}>
                       {o.so_number || '—'}
                       {isHist && <span style={{ marginLeft: 4, padding: '1px 5px', borderRadius: 3, background: 'rgba(124,139,160,0.1)', color: '#7C8BA0', fontSize: 8, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical</span>}
@@ -263,11 +261,11 @@ export default function WorkOrdersPage() {
       {showDeleteModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowDeleteModal(false)}>
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>Delete Work Orders</div>
-            <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>Are you sure you want to delete {selected.size} work order{selected.size !== 1 ? 's' : ''}? They will be removed from the active list.</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>Void Work Orders</div>
+            <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>Are you sure you want to void {selected.size} work order{selected.size !== 1 ? 's' : ''}? They will be removed from the active list but preserved in records.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowDeleteModal(false)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleBulkDelete} disabled={deleting} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.6 : 1 }}>{deleting ? 'Deleting...' : `Delete ${selected.size} WO${selected.size !== 1 ? 's' : ''}`}</button>
+              <button onClick={handleBulkDelete} disabled={deleting} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.6 : 1 }}>{deleting ? 'Voiding...' : `Void ${selected.size} WO${selected.size !== 1 ? 's' : ''}`}</button>
             </div>
           </div>
         </div>
