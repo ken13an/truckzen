@@ -5,6 +5,7 @@ import { checkRateLimit } from '@/lib/rateLimit'
 import { insertServiceOrder } from '@/lib/generateWoNumber'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { deriveWOAutomation } from '@/lib/wo-automation'
+import { getDefaultLaborHours } from '@/lib/labor-hours'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -168,7 +169,9 @@ export async function POST(req: Request) {
     const lineText = typeof line === 'string' ? line : line.description
     const lineSkills = typeof line === 'string' ? [] : (line.skills || [])
     if (!lineText?.trim()) continue
-    const lineEstimatedHours = typeof line === 'object' && line.estimated_hours ? parseFloat(line.estimated_hours) : 1.0
+    // Labor hours: use explicit value from frontend, else fallback lookup, else null (mechanic uses Request Hours)
+    const explicitHours = typeof line === 'object' && line.estimated_hours ? parseFloat(line.estimated_hours) : null
+    const lineEstimatedHours = explicitHours || getDefaultLaborHours(lineText.trim())
     await s.from('so_lines').insert({
       so_id: wo.id,
       line_type: 'labor',
