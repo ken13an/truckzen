@@ -70,11 +70,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
   },
 
   technician: {
-    dashboard: false, floor: true, orders: false, invoices: false, customers: false,
-    parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
+    dashboard: false, floor: false, orders: false, invoices: false, customers: false,
+    parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: false, reports: false,
     time_tracking: true, settings: false,
-    import: false, admin_permissions: false, tech_mobile: true, dvir: true,
+    import: false, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false,
   },
 
@@ -97,11 +97,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
   },
 
   maintenance_technician: {
-    dashboard: false, floor: true, orders: false, invoices: false, customers: false,
-    parts: true, fleet: false, drivers: false, maintenance: true, tires: true,
-    parts_lifecycle: true, compliance: false, accounting: false, reports: false,
+    dashboard: false, floor: false, orders: false, invoices: false, customers: false,
+    parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
+    parts_lifecycle: false, compliance: false, accounting: false, reports: false,
     time_tracking: true, settings: false,
-    import: false, admin_permissions: false, tech_mobile: true, dvir: true,
+    import: false, admin_permissions: false, tech_mobile: false, dvir: false,
     billing: false, integrations: false, audit_log: false,
   },
 
@@ -173,9 +173,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
 export const ROLE_REDIRECT: Record<string, string> = {
   owner: '/dashboard', gm: '/dashboard', it_person: '/dashboard',
   shop_manager: '/dashboard', service_manager: '/dashboard', service_writer: '/dashboard',
-  technician: '/dashboard', lead_tech: '/dashboard', parts_manager: '/dashboard', fleet_manager: '/dashboard',
+  technician: '/mechanic/dashboard', lead_tech: '/mechanic/dashboard', parts_manager: '/dashboard', fleet_manager: '/dashboard',
   floor_manager: '/dashboard', accounting_manager: '/dashboard',
-  maintenance_manager: '/dashboard', maintenance_technician: '/dashboard',
+  maintenance_manager: '/dashboard', maintenance_technician: '/mechanic/dashboard',
   accountant: '/dashboard', office_admin: '/dashboard', dispatcher: '/dashboard',
   driver: '/dvir', customer: '/portal',
 }

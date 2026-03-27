@@ -31,6 +31,12 @@ export default function DashboardPage() {
   useEffect(() => {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
+      // Mechanic roles must use their dedicated workspace, not the main dashboard
+      const MECHANIC_ROLES = ['mechanic', 'technician', 'lead_tech', 'maintenance_technician']
+      if (MECHANIC_ROLES.includes(p.impersonate_role || p.role)) {
+        window.location.href = '/mechanic/dashboard'
+        return
+      }
       setUser(p)
       const shopRes = await fetch(`/api/settings?shop_id=${p.shop_id}`)
       if (shopRes.ok) setShop(await shopRes.json())
