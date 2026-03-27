@@ -54,8 +54,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
   }
 
-  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id').eq('id', so_id).single()
+  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status').eq('id', so_id).single()
   if (!so || so.shop_id !== ctx.shopId) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
+
+  // Lock: cannot add part lines after invoice submitted to accounting
+  if (line_type === 'part' && so.invoice_status && ['accounting_review', 'sent', 'paid', 'closed'].includes(so.invoice_status)) {
+    return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
+  }
 
   const qty = parseFloat(quantity) || 1
   const price = parseFloat(unit_price) || 0

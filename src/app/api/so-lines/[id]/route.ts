@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
 
+const LOCKED_INVOICE_STATUSES = ['accounting_review', 'sent', 'paid', 'closed']
+
 async function recalcTotals(admin: any, soId: string) {
   const { data: allLines } = await admin.from('so_lines').select('line_type, quantity, total_price, unit_price, parts_sell_price').eq('so_id', soId)
   const calcLineTotal = (l: any) => l.total_price ?? ((l.line_type === 'part' ? (l.parts_sell_price || l.unit_price || 0) : (l.unit_price || 0)) * (l.quantity || 1))
@@ -19,6 +21,17 @@ export async function PATCH(req: Request, { params }: P) {
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, service_order_id, quantity, unit_price, parts_sell_price, line_type')
   if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Lock part-type lines after invoice submitted to accounting
+  if ((line as any).line_type === 'part') {
+    const soId = (line as any).so_id || (line as any).service_order_id
+    if (soId) {
+      const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soId).single()
+      if (wo?.invoice_status && LOCKED_INVOICE_STATUSES.includes(wo.invoice_status)) {
+        return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
+      }
+    }
+  }
 
   const body = await req.json()
   const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'total_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name']
@@ -61,8 +74,19 @@ export async function DELETE(_req: Request, { params }: P) {
   const { id } = await params
   const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
-  const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, service_order_id')
+  const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, service_order_id, line_type')
   if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Lock part-type lines after invoice submitted to accounting
+  if ((line as any).line_type === 'part') {
+    const soId = (line as any).so_id || (line as any).service_order_id
+    if (soId) {
+      const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soId).single()
+      if (wo?.invoice_status && LOCKED_INVOICE_STATUSES.includes(wo.invoice_status)) {
+        return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
+      }
+    }
+  }
 
   await ctx.admin.from('so_lines').delete().eq('id', id)
   const soId = (line as any).so_id || (line as any).service_order_id
