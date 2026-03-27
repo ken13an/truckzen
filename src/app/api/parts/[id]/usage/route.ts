@@ -1,20 +1,26 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+
+function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 type P = { params: Promise<{ id: string }> }
 
 export async function GET(_req: Request, { params }: P) {
   const { id } = await params;
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getAuthenticatedUserProfile()
+  if (!user) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(user)
+  if (!shopId) return jsonError('No shop context', 400)
+
+  const s = db()
 
   // Get part info
-  const { data: part } = await supabase.from('parts').select('description, part_number').eq('id', id).eq('shop_id', user.shop_id).single()
+  const { data: part } = await s.from('parts').select('description, part_number').eq('id', id).eq('shop_id', shopId).single()
   if (!part) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Find all SO lines where this part was used (by part number or description match)
-  const { data: usages } = await supabase
+  const { data: usages } = await s
     .from('so_lines')
     .select(`
       id, quantity, unit_price, total_price, created_at,
@@ -24,7 +30,7 @@ export async function GET(_req: Request, { params }: P) {
         customers(company_name)
       )
     `)
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .eq('line_type', 'part')
     .or(`part_number.eq.${part.part_number},description.ilike.%${part.description.slice(0,30)}%`)
     .order('created_at', { ascending: false })

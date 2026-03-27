@@ -1,21 +1,25 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { log } from '@/lib/security'
 import { invalidateCache } from '@/lib/cache'
+
+function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 type P = { params: Promise<{ id: string }> }
 
 export async function GET(_req: Request, { params }: P) {
   const { id } = await params;
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getAuthenticatedUserProfile()
+  if (!user) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(user)
+  if (!shopId) return jsonError('No shop context', 400)
 
-  const { data, error } = await supabase
+  const { data, error } = await db()
     .from('parts')
     .select('*')
     .eq('id', id)
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .single()
 
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -24,15 +28,17 @@ export async function GET(_req: Request, { params }: P) {
 
 export async function PATCH(req: Request, { params }: P) {
   const { id } = await params;
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getAuthenticatedUserProfile()
+  if (!user) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(user)
+  if (!shopId) return jsonError('No shop context', 400)
 
   const allowed = ['owner','gm','it_person','shop_manager','parts_manager','office_admin']
-  if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  if (!user.is_platform_owner && !allowed.includes(user.role)) return jsonError('Access denied', 403)
 
   const body = await req.json()
-  const { data: current } = await supabase.from('parts').select('*').eq('id', id).eq('shop_id', user.shop_id).single()
+  const s = db()
+  const { data: current } = await s.from('parts').select('*').eq('id', id).eq('shop_id', shopId).single()
   if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const updateable = [
@@ -50,27 +56,29 @@ export async function PATCH(req: Request, { params }: P) {
 
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
 
-  const { data, error } = await supabase.from('parts').update(update).eq('id', id).select().single()
+  const { data, error } = await s.from('parts').update(update).eq('id', id).eq('shop_id', shopId).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  invalidateCache(`parts:${user.shop_id}`)
+  invalidateCache(`parts:${shopId}`)
   if (update.on_hand !== undefined && update.on_hand !== current.on_hand) {
-    await log('parts.quantity_changed', user.shop_id || '', user.id, { table:'parts', recordId:id, oldData:{ on_hand: current.on_hand }, newData:{ on_hand: update.on_hand } })
+    await log('parts.quantity_changed', shopId, user.id, { table:'parts', recordId:id, oldData:{ on_hand: current.on_hand }, newData:{ on_hand: update.on_hand } })
   }
   return NextResponse.json(data)
 }
 
 export async function DELETE(_req: Request, { params }: P) {
   const { id } = await params;
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getAuthenticatedUserProfile()
+  if (!user) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(user)
+  if (!shopId) return jsonError('No shop context', 400)
 
-  if (!['owner','gm','it_person'].includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  if (!user.is_platform_owner && !['owner','gm','it_person'].includes(user.role)) return jsonError('Access denied', 403)
 
-  const { data: part } = await supabase.from('parts').select('description').eq('id', id).single()
-  await supabase.from('parts').update({ active: false, deleted_at: new Date().toISOString() }).eq('id', id).eq('shop_id', user.shop_id)
-  invalidateCache(`parts:${user.shop_id}`)
-  await log('parts.removed', user.shop_id || '', user.id, { table:'parts', recordId:id, oldData: part })
+  const s = db()
+  const { data: part } = await s.from('parts').select('description').eq('id', id).eq('shop_id', shopId).single()
+  await s.from('parts').update({ active: false, deleted_at: new Date().toISOString() }).eq('id', id).eq('shop_id', shopId)
+  invalidateCache(`parts:${shopId}`)
+  await log('parts.removed', shopId, user.id, { table:'parts', recordId:id, oldData: part })
   return NextResponse.json({ success: true })
 }

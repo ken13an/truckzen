@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+
+function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 export async function GET(req: Request) {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getAuthenticatedUserProfile()
+  if (!user) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(user)
+  if (!shopId) return jsonError('No shop context', 400)
 
   const { searchParams } = new URL(req.url)
   const partNumber = searchParams.get('part_number')
@@ -12,11 +16,13 @@ export async function GET(req: Request) {
 
   if (!partNumber) return NextResponse.json({ error: 'part_number required' }, { status: 400 })
 
+  const s = db()
+
   // Look up part
-  const { data: part } = await supabase
+  const { data: part } = await s
     .from('parts')
     .select('id, part_number, description, on_hand, sell_price, price_ugl_company, price_ugl_owner_operator, price_outside, bin_location')
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .is('deleted_at', null)
     .ilike('part_number', partNumber)
     .limit(1)
@@ -27,7 +33,7 @@ export async function GET(req: Request) {
   // Get customer pricing tier if customer_id provided
   let pricingTier = 'outside'
   if (customerId) {
-    const { data: cust } = await supabase
+    const { data: cust } = await s
       .from('customers')
       .select('pricing_tier')
       .eq('id', customerId)

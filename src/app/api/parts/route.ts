@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { log } from '@/lib/security'
 import { checkRateLimit } from '@/lib/rateLimit'
 import { getCache, setCache, invalidateCache } from '@/lib/cache'
@@ -23,12 +23,11 @@ export async function GET(req: Request) {
   const page      = parseInt(searchParams.get('page') || '1')
   const perPage   = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)
 
-  // Authenticate and derive shop_id from session
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Authenticate and derive shop_id from session (supports impersonation)
+  const user = await getAuthenticatedUserProfile()
+  if (!user) return jsonError('Unauthorized', 401)
 
-  const shopId = user.shop_id
+  const shopId = getActorShopId(user)
   const userRole = user.role
 
   if (!checkRateLimit(`${user.id}:parts`, 200, 60000)) {
@@ -97,12 +96,11 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getAuthenticatedUserProfile()
+  if (!user) return jsonError('Unauthorized', 401)
 
   const allowed = ['owner','gm','it_person','shop_manager','parts_manager','office_admin']
-  if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  if (!user.is_platform_owner && !allowed.includes(user.role)) return jsonError('Access denied', 403)
 
   const body = await req.json()
   const { part_number, description, category, on_hand, reorder_point, cost_price, sell_price, vendor, bin_location, core_charge, warranty_months,
@@ -112,8 +110,11 @@ export async function POST(req: Request) {
 
   if (!description) return NextResponse.json({ error: 'Description required' }, { status: 400 })
 
-  const { data, error } = await supabase.from('parts').insert({
-    shop_id: user.shop_id,
+  const shopId = getActorShopId(user)
+  if (!shopId) return jsonError('No shop context', 400)
+
+  const { data, error } = await db().from('parts').insert({
+    shop_id: shopId,
     part_number:     part_number?.trim() || null,
     description:     description.trim(),
     category:        category || 'Other',
@@ -151,7 +152,7 @@ export async function POST(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  invalidateCache(`parts:${user.shop_id}`)
-  await log('parts.added', user.shop_id, user.id, { table: 'parts', recordId: data.id, newData: { description, part_number } })
+  invalidateCache(`parts:${shopId}`)
+  await log('parts.added', shopId, user.id, { table: 'parts', recordId: data.id, newData: { description, part_number } })
   return NextResponse.json(data, { status: 201 })
 }
