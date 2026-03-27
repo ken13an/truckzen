@@ -23,7 +23,9 @@ export async function GET(req: Request) {
     const { data: wo } = await s.from('service_orders')
       .select('id, so_number, status, customers(company_name), assets(unit_number, unit_type)')
       .eq('id', a.so_lines.so_id)
+      .not('status', 'in', '("void","good_to_go")')
       .single()
+    if (!wo) continue // skip voided/closed WOs
     jobs.push({ ...a, wo, line: a.so_lines })
   }
 

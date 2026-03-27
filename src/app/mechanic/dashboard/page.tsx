@@ -221,9 +221,8 @@ export default function MechanicDashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: user.id,
-          assignment_id: requestModal.id,
-          work_order_id: requestModal.wo?.id || requestModal.line?.so_id,
+          so_id: requestModal.wo?.id || requestModal.line?.so_id,
+          so_line_id: requestModal.line_id || requestModal.line?.id,
           part_name: requestForm.part_name,
           quantity: parseInt(requestForm.quantity) || 1,
           notes: requestForm.notes,
@@ -419,80 +418,51 @@ export default function MechanicDashboardPage() {
                             {job.wo.assets.unit_type ? `${job.wo.assets.unit_type} — ` : ''}{job.wo.assets.unit_number}
                           </span>
                         )}
-                        {job.line?.estimated_hours && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: DIM }}>
-                            <Clock size={12} /> {job.line.estimated_hours}h
+                        {job.line?.estimated_hours ? (
+                          <span style={{
+                            display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700,
+                            color: BLUE, background: 'rgba(29,111,232,0.1)', padding: '2px 8px', borderRadius: 6,
+                          }}>
+                            <Clock size={12} /> Book: {job.line.estimated_hours}h
                           </span>
-                        )}
+                        ) : job.status !== 'completed' ? (
+                          <span style={{
+                            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600,
+                            color: AMBER, background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: 6,
+                          }}>
+                            <Clock size={12} /> No book hours set
+                          </span>
+                        ) : null}
                       </div>
 
                       {/* Action buttons */}
+                      {(() => {
+                        const hasHours = job.line?.estimated_hours > 0
+                        const noHoursMsg = () => alert('Cannot proceed — book/expected hours have not been set for this job. Ask your service writer or supervisor.')
+                        return (
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {job.status === 'pending' && (
-                          <>
-                            <button
-                              disabled={actionLoading === job.id + 'accept'}
-                              onClick={() => handleJobAction(job.id, 'accept')}
-                              style={{
-                                flex: 1, minWidth: 100, padding: '9px 16px', borderRadius: 10, border: 'none',
-                                background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
-                                cursor: 'pointer', fontFamily: FONT, opacity: actionLoading === job.id + 'accept' ? 0.6 : 1,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                              }}
-                            >
-                              <CheckCircle2 size={15} /> Accept
-                            </button>
-                            <button
-                              disabled={actionLoading === job.id + 'decline'}
-                              onClick={() => { setDeclineModal(job.id); setDeclineReason('') }}
-                              style={{
-                                flex: 1, minWidth: 100, padding: '9px 16px', borderRadius: 10, border: 'none',
-                                background: RED, color: '#fff', fontWeight: 700, fontSize: 13,
-                                cursor: 'pointer', fontFamily: FONT, opacity: actionLoading === job.id + 'decline' ? 0.6 : 1,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                              }}
-                            >
-                              <XCircle size={15} /> Decline
-                            </button>
-                          </>
-                        )}
-                        {job.status === 'accepted' && (
-                          <button
-                            disabled={actionLoading === job.id + 'start'}
-                            onClick={() => handleJobAction(job.id, 'start')}
-                            style={{
-                              flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
-                              background: BLUE, color: '#fff', fontWeight: 700, fontSize: 13,
-                              cursor: 'pointer', fontFamily: FONT, opacity: actionLoading === job.id + 'start' ? 0.6 : 1,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                            }}
-                          >
-                            <Wrench size={15} /> Start Work
-                          </button>
-                        )}
-                        {/* Clock In button for active jobs */}
-                        {(job.status === 'accepted' || job.status === 'in_progress') && !activeClock && (
+                        {job.status === 'in_progress' && !activeClock && (
                           <button
                             disabled={clockLoading === (job.line_id || job.id)}
-                            onClick={() => handleClockIn(job)}
+                            onClick={() => hasHours ? handleClockIn(job) : noHoursMsg()}
                             style={{
                               flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
-                              background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
+                              background: hasHours ? GREEN : 'rgba(255,255,255,0.08)', color: hasHours ? '#fff' : DIM, fontWeight: 700, fontSize: 13,
                               cursor: 'pointer', fontFamily: FONT, opacity: clockLoading === (job.line_id || job.id) ? 0.6 : 1,
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                             }}
                           >
-                            <Play size={14} fill="#fff" /> Clock In
+                            <Play size={14} fill={hasHours ? '#fff' : DIM} /> Clock In
                           </button>
                         )}
-                        {(job.status === 'accepted' || job.status === 'in_progress') && (
+                        {job.status === 'in_progress' && (
                           <>
                             <button
                               disabled={actionLoading === job.id + 'complete'}
-                              onClick={() => setCompleteModal(job)}
+                              onClick={() => hasHours ? setCompleteModal(job) : noHoursMsg()}
                               style={{
                                 flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
-                                background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
+                                background: hasHours ? GREEN : 'rgba(255,255,255,0.08)', color: hasHours ? '#fff' : DIM, fontWeight: 700, fontSize: 13,
                                 cursor: 'pointer', fontFamily: FONT, opacity: actionLoading === job.id + 'complete' ? 0.6 : 1,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                               }}
@@ -519,6 +489,8 @@ export default function MechanicDashboardPage() {
                           </div>
                         )}
                       </div>
+                        )
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -729,7 +701,7 @@ export default function MechanicDashboardPage() {
                 >
                   {activeJobs.map((j: any) => (
                     <option key={j.id} value={j.id}>
-                      {j.wo_number || j.so_number || 'WO'} — {j.description || 'No description'}
+                      {j.wo?.so_number || 'WO'} — {j.line?.description || 'Job'}
                     </option>
                   ))}
                 </select>
