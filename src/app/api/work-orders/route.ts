@@ -168,12 +168,14 @@ export async function POST(req: Request) {
     const lineText = typeof line === 'string' ? line : line.description
     const lineSkills = typeof line === 'string' ? [] : (line.skills || [])
     if (!lineText?.trim()) continue
+    const lineEstimatedHours = typeof line === 'object' && line.estimated_hours ? parseFloat(line.estimated_hours) : 1.0
     await s.from('so_lines').insert({
       so_id: wo.id,
       line_type: 'labor',
       description: lineText.trim(),
       quantity: 0,
       unit_price: 0,
+      estimated_hours: lineEstimatedHours,
       line_status: 'unassigned',
       required_skills: lineSkills,
       tire_position: line.tire_position || null,

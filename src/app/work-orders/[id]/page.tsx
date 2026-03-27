@@ -255,11 +255,16 @@ export default function WorkOrderDetail() {
 
   const saveHours = async () => {
     if (!hoursModal) return
-    await patchLine(hoursModal.id, {
+    const res = await patchLine(hoursModal.id, {
       estimated_hours: parseFloat(hoursModal.estimated_hours) || 0,
       actual_hours: parseFloat(hoursModal.actual_hours) || 0,
       billed_hours: parseFloat(hoursModal.billed_hours) || 0,
     })
+    if (!res || !res.ok) {
+      const err = res ? await res.json().catch(() => ({})) : {}
+      alert(err.error || 'Failed to save hours — check your permissions')
+      return
+    }
     setHoursModal(null)
   }
 

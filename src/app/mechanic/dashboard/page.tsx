@@ -441,34 +441,61 @@ export default function MechanicDashboardPage() {
                         const noHoursMsg = () => alert('Cannot proceed — book/expected hours have not been set for this job. Ask your service writer or supervisor.')
                         return (
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {job.status === 'in_progress' && !activeClock && (
+                        {job.status === 'in_progress' && !activeClock && hasHours && (
                           <button
                             disabled={clockLoading === (job.line_id || job.id)}
-                            onClick={() => hasHours ? handleClockIn(job) : noHoursMsg()}
+                            onClick={() => handleClockIn(job)}
                             style={{
                               flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
-                              background: hasHours ? GREEN : 'rgba(255,255,255,0.08)', color: hasHours ? '#fff' : DIM, fontWeight: 700, fontSize: 13,
+                              background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
                               cursor: 'pointer', fontFamily: FONT, opacity: clockLoading === (job.line_id || job.id) ? 0.6 : 1,
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                             }}
                           >
-                            <Play size={14} fill={hasHours ? '#fff' : DIM} /> Clock In
+                            <Play size={14} fill="#fff" /> Clock In
+                          </button>
+                        )}
+                        {job.status === 'in_progress' && !hasHours && (
+                          <button
+                            disabled={actionLoading === job.id + 'request-hours'}
+                            onClick={async () => {
+                              setActionLoading(job.id + 'request-hours')
+                              try {
+                                const res = await fetch('/api/mechanic/request-hours', {
+                                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ assignment_id: job.id, wo_number: job.wo?.so_number, job_description: job.line?.description }),
+                                })
+                                if (res.ok) alert('Hours requested — your supervisor has been notified.')
+                                else alert('Could not send request. Try again.')
+                              } catch { alert('Could not send request.') }
+                              setActionLoading(null)
+                            }}
+                            style={{
+                              flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
+                              background: AMBER, color: '#fff', fontWeight: 700, fontSize: 13,
+                              cursor: 'pointer', fontFamily: FONT,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            }}
+                          >
+                            <Clock size={14} /> Request Hours
                           </button>
                         )}
                         {job.status === 'in_progress' && (
                           <>
+                            {hasHours && (
                             <button
                               disabled={actionLoading === job.id + 'complete'}
-                              onClick={() => hasHours ? setCompleteModal(job) : noHoursMsg()}
+                              onClick={() => setCompleteModal(job)}
                               style={{
                                 flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
-                                background: hasHours ? GREEN : 'rgba(255,255,255,0.08)', color: hasHours ? '#fff' : DIM, fontWeight: 700, fontSize: 13,
+                                background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
                                 cursor: 'pointer', fontFamily: FONT, opacity: actionLoading === job.id + 'complete' ? 0.6 : 1,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                               }}
                             >
                               <CheckCircle2 size={15} /> Mark Complete
                             </button>
+                            )}
                             <button
                               onClick={() => { setRequestModal(job); setRequestForm({ part_name: '', quantity: '1', notes: '' }) }}
                               style={{
