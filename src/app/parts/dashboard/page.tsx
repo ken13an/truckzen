@@ -17,33 +17,36 @@ export default function PartsDashboard() {
   const [loading, setLoading] = useState(true)
   const [pendingParts, setPendingParts] = useState<any[]>([])
   const [lowStock, setLowStock] = useState<any[]>([])
-  const [stats, setStats] = useState({ pending: 0, warrantyParts: 0, lowStockCount: 0, fulfilledToday: 0 })
+  const [stats, setStats] = useState({ pending: 0, onOrder: 0, lowStockCount: 0, fulfilledToday: 0 })
 
   const loadData = useCallback(async (profile: any) => {
     const shopId = profile.shop_id
     const today = new Date().toISOString().split('T')[0]
 
-    const [partsReqRes, soLinesRes, lowRes, fulfilledRes] = await Promise.all([
+    const [partsReqRes, soLinesRes, lowRes, fulfilledRes, orderedRes] = await Promise.all([
       fetch('/api/parts-requests?status=active'),
       fetch(`/api/so-lines?line_type=part&parts_status=rough,sourced,ordered&limit=30`),
       fetch(`/api/parts?shop_id=${shopId}&per_page=20&low_stock=true`),
       fetch(`/api/so-lines?line_type=part&parts_status=received&updated_since=${today}&limit=500`),
+      fetch(`/api/so-lines?line_type=part&parts_status=ordered&limit=500`),
     ])
 
     const partsReqJson = partsReqRes.ok ? await partsReqRes.json() : []
     const soLinesJson  = soLinesRes.ok  ? await soLinesRes.json()  : []
     const lowJson      = lowRes.ok      ? await lowRes.json()       : { data: [] }
     const fulfilledArr = fulfilledRes.ok ? await fulfilledRes.json() : []
+    const orderedArr   = orderedRes.ok   ? await orderedRes.json()   : []
 
     const requests  = Array.isArray(partsReqJson) ? partsReqJson : []
     const parts     = Array.isArray(soLinesJson) ? soLinesJson : []
     const low       = (lowJson.data || []) as any[]
     const fulfilled = Array.isArray(fulfilledArr) ? fulfilledArr.length : 0
+    const ordered   = Array.isArray(orderedArr) ? orderedArr.length : 0
 
     const pendingList = requests.length > 0 ? requests : parts.filter((p: any) => p.service_orders)
     setPendingParts(pendingList)
     setLowStock(low)
-    setStats({ pending: pendingList.length, warrantyParts: 0, lowStockCount: low.length, fulfilledToday: fulfilled })
+    setStats({ pending: pendingList.length, onOrder: ordered, lowStockCount: low.length, fulfilledToday: fulfilled })
   }, [])
 
   useEffect(() => { getCurrentUser(supabase).then(async (p: any) => { if (!p) { window.location.href = '/login'; return }; setUser(p); await loadData(p); setLoading(false) }) }, [])
@@ -60,7 +63,7 @@ export default function PartsDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
           { label: 'Parts Requests', value: stats.pending, color: AMBER },
-          { label: 'Warranty Parts', value: stats.warrantyParts, color: RED },
+          { label: 'On Order', value: stats.onOrder, color: AMBER },
           { label: 'Low Stock Alerts', value: stats.lowStockCount, color: RED },
           { label: 'Fulfilled Today', value: stats.fulfilledToday, color: GREEN },
         ].map(s => (

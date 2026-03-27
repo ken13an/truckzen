@@ -180,17 +180,35 @@ export async function POST(req: Request) {
       customer_provides_parts: line.customer_provides_parts || false,
     })
 
-    // Auto-insert rough parts for this job line
+    // Auto-insert rough parts for this job line — check inventory first
     const roughParts = line.rough_parts || []
     for (const rp of roughParts) {
+      const partName = rp.rough_name || rp.description || ''
+      if (!partName) continue
+
+      // Try to match against shop inventory
+      const { data: invMatch } = await s.from('parts')
+        .select('id, description, part_number, cost_price, sell_price, on_hand')
+        .eq('shop_id', shop_id)
+        .is('deleted_at', null)
+        .ilike('description', `%${partName}%`)
+        .gt('on_hand', 0)
+        .limit(1)
+
+      const inv = invMatch?.[0]
+
       await s.from('so_lines').insert({
         so_id: wo.id,
         line_type: 'part',
-        description: rp.rough_name || rp.description || '',
-        rough_name: rp.rough_name || rp.description || '',
+        description: inv ? inv.description : partName,
+        rough_name: partName,
+        real_name: inv ? inv.description : null,
+        part_number: inv ? inv.part_number : null,
         quantity: rp.quantity || 1,
-        unit_price: 0,
-        parts_status: 'rough',
+        unit_price: inv ? (inv.sell_price || 0) : 0,
+        parts_cost_price: inv ? (inv.cost_price || 0) : null,
+        parts_sell_price: inv ? (inv.sell_price || 0) : null,
+        parts_status: inv ? 'sourced' : 'rough',
       })
     }
   }
