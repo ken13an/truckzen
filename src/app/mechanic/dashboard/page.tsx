@@ -40,14 +40,15 @@ const LANGUAGES = [
 ]
 
 function StatusPill({ status }: { status: string }) {
-  const c = STATUS_COLORS[status] || { bg: 'rgba(255,255,255,0.08)', text: DIM }
+  const label = status || 'pending'
+  const c = STATUS_COLORS[label] || { bg: 'rgba(255,255,255,0.08)', text: DIM }
   return (
     <span style={{
       display: 'inline-block', padding: '3px 10px', borderRadius: 999,
       background: c.bg, color: c.text, fontSize: 12, fontWeight: 600,
       textTransform: 'capitalize', whiteSpace: 'nowrap',
     }}>
-      {status.replace(/_/g, ' ')}
+      {label.replace(/_/g, ' ')}
     </span>
   )
 }
@@ -160,7 +161,16 @@ export default function MechanicDashboardPage() {
       ])
       if (jobsRes.ok) {
         const d = await jobsRes.json()
-        setJobs(Array.isArray(d) ? d : d.data || [])
+        const raw = Array.isArray(d) ? d : d.data || []
+        // Derive display status from so_lines.line_status (canonical truth)
+        // wo_job_assignments has no status column — line_status is the source
+        setJobs(raw.map((j: any) => ({
+          ...j,
+          status: j.status || (
+            j.line?.line_status === 'completed' ? 'completed' :
+            j.line?.line_status === 'in_progress' ? 'in_progress' : 'pending'
+          ),
+        })))
       }
       if (partsRes.ok) {
         const d = await partsRes.json()
