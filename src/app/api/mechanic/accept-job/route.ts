@@ -49,6 +49,19 @@ export async function POST(req: Request) {
       }
       await s.from('so_lines').update(lineUpdate).eq('id', lineId)
     }
+    // Auto clock-out any active timer for this mechanic on this WO
+    if (woId) {
+      const { data: activeTimers } = await s.from('so_time_entries')
+        .select('id, clocked_in_at')
+        .eq('user_id', actor.id)
+        .eq('so_id', woId)
+        .is('clocked_out_at', null)
+      for (const timer of activeTimers || []) {
+        const durationMin = Math.round((Date.now() - new Date(timer.clocked_in_at).getTime()) / 60000)
+        await s.from('so_time_entries').update({ clocked_out_at: now, duration_minutes: durationMin }).eq('id', timer.id)
+      }
+    }
+
     if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic completed job: ${lineDesc}` })
 
     // Check if all jobs on this WO are now complete
@@ -74,6 +87,26 @@ export async function POST(req: Request) {
             await sendPaymentNotifications(woId, wo?.shop_id)
           } else {
             await makeCompletionCalls(woId, wo?.shop_id)
+          }
+
+          // Notify accounting / service writer that WO is ready for invoice review
+          if (wo?.shop_id) {
+            const { data: woInfo } = await s.from('service_orders').select('so_number, assets(unit_number)').eq('id', woId).single()
+            const soNum = (woInfo as any)?.so_number || ''
+            const unitNum = (woInfo as any)?.assets?.unit_number || ''
+            const { data: targets } = await s.from('users')
+              .select('id')
+              .eq('shop_id', wo.shop_id)
+              .in('role', ['accountant', 'accounting_manager', 'service_writer', 'office_admin'])
+              .or('is_autobot.is.null,is_autobot.eq.false')
+            for (const t of targets || []) {
+              await s.from('notifications').insert({
+                shop_id: wo.shop_id, user_id: t.id, type: 'wo_ready_for_invoice',
+                title: `WO Ready for Invoice: ${soNum}`,
+                message: `All jobs complete on WO #${soNum}${unitNum ? ` — Unit #${unitNum}` : ''}. Ready for invoice review.`,
+                link: `/work-orders/${woId}`,
+              })
+            }
           }
         }
       } catch (err) {
