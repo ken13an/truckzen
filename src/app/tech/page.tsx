@@ -1,13 +1,20 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
 type Tab = 'jobs' | 'floor' | 'parts' | 'dvir'
 type View = 'list' | 'detail'
 
-export default function TechMobilePage() {
+export default function TechMobilePageWrapper() {
+  return <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>}><TechMobilePage /></Suspense>
+}
+
+function TechMobilePage() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const deepLinkWo = searchParams.get('wo')
   const [user, setUser] = useState<any>(null)
   const [tab, setTab] = useState<Tab>('jobs')
   const [view, setView] = useState<View>('list')
@@ -92,6 +99,13 @@ export default function TechMobilePage() {
       setLoading(false)
     })
   }, [])
+
+  // Deep-link: auto-open a specific WO from notification link (/tech?wo=xxx)
+  useEffect(() => {
+    if (!deepLinkWo || !jobs.length) return
+    const match = jobs.find((j: any) => j.id === deepLinkWo)
+    if (match) { setSelected(match); setView('detail'); setTab('jobs') }
+  }, [deepLinkWo, jobs])
 
   // Elapsed timer
   useEffect(() => {
