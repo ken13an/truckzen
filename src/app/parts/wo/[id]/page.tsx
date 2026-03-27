@@ -129,6 +129,8 @@ export default function PartsWOView() {
 
   const allSourced = partLines.length > 0 && partLines.every((l: any) => l.parts_status !== 'rough' && l.real_name)
   const sourcedCount = partLines.filter((l: any) => l.real_name).length
+  // Parts locked once invoice submitted to accounting
+  const partsLocked = !!wo?.invoice_status && !['', 'draft', 'quality_check_failed'].includes(wo.invoice_status)
 
   if (loading) return <div style={{ background: '#060708', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
   if (!wo) return null
@@ -177,6 +179,13 @@ export default function PartsWOView() {
         </div>
       )}
 
+      {/* Parts locked banner */}
+      {partsLocked && (
+        <div style={{ background: 'rgba(124,139,160,.06)', border: '1px solid rgba(124,139,160,.2)', borderRadius: 10, padding: '10px 16px', marginBottom: 12, fontSize: 12, color: MUTED, fontWeight: 600, textAlign: 'center' }}>
+          Parts locked — invoice submitted to accounting ({wo.invoice_status?.replace(/_/g, ' ')})
+        </div>
+      )}
+
       {/* Part Lines from so_lines */}
       <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 16 }}>
@@ -196,23 +205,27 @@ export default function PartsWOView() {
                 <div style={{ fontSize: 12, color: MUTED }}>
                   Suggested: <strong style={{ color: '#9CA3B0' }}>{p.rough_name || p.description || '—'}</strong>
                 </div>
-                <select
-                  value={p.parts_status || 'rough'}
-                  onChange={async e => { await patchLine(p.id, { parts_status: e.target.value }) }}
-                  style={{
-                    fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`,
-                    padding: '3px 10px', borderRadius: 6, border: 'none', fontFamily: FONT, cursor: 'pointer',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {Object.entries(statusOptions).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label}</option>
-                  ))}
-                </select>
+                {partsLocked ? (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`, padding: '3px 10px', borderRadius: 6, textTransform: 'uppercase' }}>{st.label}</span>
+                ) : (
+                  <select
+                    value={p.parts_status || 'rough'}
+                    onChange={async e => { await patchLine(p.id, { parts_status: e.target.value }) }}
+                    style={{
+                      fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`,
+                      padding: '3px 10px', borderRadius: 6, border: 'none', fontFamily: FONT, cursor: 'pointer',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {Object.entries(statusOptions).map(([k, v]) => (
+                      <option key={k} value={k}>{v.label}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
-              {/* Editable fields grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 60px 90px 90px', gap: 8 }}>
+              {/* Editable fields grid — locked after invoice submission */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 60px 90px 90px', gap: 8, opacity: partsLocked ? 0.7 : 1, pointerEvents: partsLocked ? 'none' : 'auto' }}>
                 {/* Real Name with search dropdown */}
                 <div style={{ position: 'relative' }}>
                   <span style={labelStyle}>Real Name</span>

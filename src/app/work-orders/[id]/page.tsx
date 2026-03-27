@@ -598,6 +598,8 @@ export default function WorkOrderDetail() {
   const customer = wo.customers || {}
   const jobLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'labor')
   const partLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
+  // Parts locked once invoice submitted to accounting (accounting_review, sent, paid, closed)
+  const partsLocked = !!wo.invoice_status && !['', 'draft', 'quality_check_failed'].includes(wo.invoice_status)
   const shopCharges = wo.wo_shop_charges || []
   const notes = wo.wo_notes || []
   const files = wo.wo_files || []
@@ -1440,7 +1442,7 @@ export default function WorkOrderDetail() {
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Parts ({partLines.length})</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {partLines.map((p: any) => {
-                  const partsEditable = !p.parts_status || ['rough', 'sourced', 'ordered'].includes(p.parts_status)
+                  const partsEditable = !partsLocked && (!p.parts_status || ['rough', 'sourced', 'ordered'].includes(p.parts_status))
                   const statusColors: Record<string, { label: string; bg: string; color: string }> = {
                     rough: { label: 'Rough', bg: '#F3F4F6', color: GRAY },
                     sourced: { label: 'Sourced', bg: '#EFF6FF', color: BLUE },
@@ -1464,13 +1466,13 @@ export default function WorkOrderDetail() {
                             </span>
                           )}
                         </div>
-                        {!wo.is_historical && (
+                        {!wo.is_historical && !partsLocked && (
                           <select value={p.parts_status || 'rough'} onChange={async e => { await patchLine(p.id, { parts_status: e.target.value }); await loadData() }}
                             style={{ ...pillStyle(st.bg, st.color), border: 'none', fontFamily: FONT, cursor: 'pointer', padding: '3px 10px', fontSize: 10 }}>
                             {Object.entries(statusColors).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                           </select>
                         )}
-                        {wo.is_historical && <span style={pillStyle(st.bg, st.color)}>{st.label}</span>}
+                        {(wo.is_historical || partsLocked) && <span style={pillStyle(st.bg, st.color)}>{st.label}</span>}
                       </div>
 
                       {/* Editable fields for parts dept (rough/sourced state) */}
@@ -1531,7 +1533,7 @@ export default function WorkOrderDetail() {
           )}
 
           {/* Request Part (mechanic) */}
-          {!wo.is_historical && (
+          {!wo.is_historical && !partsLocked && (
             <div style={{ ...cardStyle, marginTop: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Request a Part</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
@@ -1556,7 +1558,7 @@ export default function WorkOrderDetail() {
           )}
 
           {/* Parts Submit / Save buttons */}
-          {!wo.is_historical && partLines.length > 0 && !isMechanic && (() => {
+          {!wo.is_historical && !partsLocked && partLines.length > 0 && !isMechanic && (() => {
             const allFilled = partLines.every((p: any) => p.real_name || !p.rough_name)
             const someFilled = partLines.some((p: any) => p.real_name)
             const filledCount = partLines.filter((p: any) => p.real_name).length
