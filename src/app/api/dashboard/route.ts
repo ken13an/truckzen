@@ -133,14 +133,9 @@ export async function GET(req: Request) {
     const revenue = (revToday.data || []).reduce((sum: number, i: any) => sum + (i.amount_paid || 0), 0)
     stats = { open_wos: openWos.count || 0, revenue_today: revenue, active_mechanics: activeMechs.count || 0, pending_estimates: pendEst.count || 0 }
 
-    // All-shop notifications for admins
-    const { data: allNotifs } = await s.from('notifications').select('id, title, body, link, type, priority, created_at')
-      .eq('shop_id', shopId).eq('is_read', false).eq('is_dismissed', false)
-      .order('created_at', { ascending: false }).limit(20)
-
     return NextResponse.json({
       role, user: { id: user.id, full_name: user.full_name, role: user.role },
-      notifications: allNotifs || [],
+      notifications: [],
       stats, actionItems, teamStatus,
       recentActivity: activity || [],
     })

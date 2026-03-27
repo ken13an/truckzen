@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
 
 export async function GET(req: Request) {
   const actor = await getAuthenticatedUserProfile()
@@ -38,36 +38,21 @@ export async function PATCH(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
 
   const s = createAdminSupabaseClient()
-  const shopId = getActorShopId(actor)
   const { id, action } = await req.json()
 
-  // Admin roles see all shop notifications on their dashboard, so they need
-  // to dismiss/mark-read notifications belonging to any user in their shop.
-  const isAdmin = actor.is_platform_owner || ['owner', 'gm', 'it_person', 'office_admin'].includes(actor.role)
-
+  // Notifications are person-dedicated — always scoped to current user only
   if (action === 'mark_read') {
     if (id === 'all') {
-      // Mark all: admin marks all shop notifications, non-admin marks own only
-      const q = s.from('notifications').update({ is_read: true }).eq('is_read', false)
-      const { error } = isAdmin && shopId
-        ? await q.eq('shop_id', shopId)
-        : await q.eq('user_id', actor.id)
+      const { error } = await s.from('notifications').update({ is_read: true }).eq('user_id', actor.id).eq('is_read', false)
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     } else {
-      // Single: admin can mark any in their shop, non-admin only own
-      const q = s.from('notifications').update({ is_read: true }).eq('id', id)
-      const { error } = isAdmin && shopId
-        ? await q.eq('shop_id', shopId)
-        : await q.eq('user_id', actor.id)
+      const { error } = await s.from('notifications').update({ is_read: true }).eq('id', id).eq('user_id', actor.id)
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     }
   }
 
   if (action === 'dismiss') {
-    const q = s.from('notifications').update({ is_dismissed: true }).eq('id', id)
-    const { error } = isAdmin && shopId
-      ? await q.eq('shop_id', shopId)
-      : await q.eq('user_id', actor.id)
+    const { error } = await s.from('notifications').update({ is_dismissed: true }).eq('id', id).eq('user_id', actor.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

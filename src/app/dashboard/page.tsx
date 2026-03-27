@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
-import { Check, Bell, ChevronRight, X } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -57,27 +57,12 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [user])
 
-  async function markRead(notifId: string, link?: string) {
-    setData((d: any) => d ? { ...d, notifications: d.notifications.filter((n: any) => n.id !== notifId) } : d)
-    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notifId, action: 'mark_read' }) })
-    if (link) window.location.href = link
-  }
-
-  async function dismissNotif(notifId: string) {
-    setData((d: any) => d ? { ...d, notifications: d.notifications.filter((n: any) => n.id !== notifId) } : d)
-    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notifId, action: 'dismiss' }) })
-  }
-
-  async function markAllRead() {
-    if (!user) return
-    setData((d: any) => d ? { ...d, notifications: [] } : d)
-    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'all', action: 'mark_read' }) })
-  }
+  // Notifications are handled by the NotificationBell component (per-user only).
+  // The dashboard does not display or manage notifications directly.
 
   if (loading || !data) return <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading dashboard...</div>
 
   const stats = data.stats || {}
-  const notifications = data.notifications || []
   const actionItems = data.actionItems || []
   const teamStatus = data.teamStatus
   const recentActivity = data.recentActivity || []
@@ -122,9 +107,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Main content: Action Items + Notifications */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 24 }}>
-        {/* Action Items */}
+      {/* Action Items */}
+      <div style={{ marginBottom: 24 }}>
         <div style={card}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Action Items</div>
           {actionItems.length === 0 ? (
@@ -143,33 +127,6 @@ export default function DashboardPage() {
               <a href={item.link} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: BLUE, color: '#fff', borderRadius: 6, fontSize: 11, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', height: 'fit-content' }}>
                 {item.action || 'View'} <ChevronRight size={12} />
               </a>
-            </div>
-          ))}
-        </div>
-
-        {/* Notifications */}
-        <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Bell size={14} color={GRAY} />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Notifications</span>
-              {notifications.length > 0 && <span style={{ background: RED, color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 100 }}>{notifications.length}</span>}
-            </div>
-            {notifications.length > 0 && (
-              <button onClick={markAllRead} style={{ fontSize: 11, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: FONT }}>Mark all read</button>
-            )}
-          </div>
-          {notifications.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 20, color: GRAY, fontSize: 12 }}>No new notifications</div>
-          ) : notifications.map((n: any) => (
-            <div key={n.id} style={{ display: 'flex', gap: 8, padding: '8px 0', borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => markRead(n.id, n.link)}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: BLUE, marginTop: 5, flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, color: '#111827' }}>{n.title}</div>
-                <div style={{ fontSize: 11, color: GRAY, marginTop: 1 }}>{n.body?.slice(0, 80)}</div>
-                <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2 }}>{timeAgo(n.created_at)}</div>
-              </div>
-              <button onClick={e => { e.stopPropagation(); dismissNotif(n.id) }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D1D5DB', padding: 2 }}><X size={14} /></button>
             </div>
           ))}
         </div>
