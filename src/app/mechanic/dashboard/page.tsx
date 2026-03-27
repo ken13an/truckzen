@@ -105,15 +105,15 @@ export default function MechanicDashboardPage() {
 
   const handleClockIn = async (job: any) => {
     if (!user) return
-    setClockLoading(job.so_line_id || job.id)
+    setClockLoading(job.line_id || job.id)
     try {
       const res = await fetch('/api/mechanic/clock-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          so_line_id: job.so_line_id || job.id,
+          so_line_id: job.line_id || job.line?.id,
           user_id: user.id,
-          service_order_id: job.work_order_id || job.wo_id,
+          service_order_id: job.wo?.id || job.line?.so_id,
           shop_id: user.shop_id,
         }),
       })
@@ -122,9 +122,9 @@ export default function MechanicDashboardPage() {
         setActiveClock({
           id: entry.id,
           clocked_in_at: entry.clocked_in_at,
-          so_line_id: job.so_line_id || job.id,
-          job_description: job.description || '',
-          wo_number: job.wo_number || job.so_number || '',
+          so_line_id: job.line_id || job.line?.id,
+          job_description: job.line?.description || '',
+          wo_number: job.wo?.so_number || '',
         })
       } else {
         const err = await res.json().catch(() => ({}))
@@ -212,7 +212,7 @@ export default function MechanicDashboardPage() {
         body: JSON.stringify({
           user_id: user.id,
           assignment_id: requestModal.id,
-          work_order_id: requestModal.work_order_id,
+          work_order_id: requestModal.wo?.id || requestModal.line?.so_id,
           part_name: requestForm.part_name,
           quantity: parseInt(requestForm.quantity) || 1,
           notes: requestForm.notes,
@@ -381,36 +381,36 @@ export default function MechanicDashboardPage() {
                       {/* Top row */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <a href={`/work-orders/${job.work_order_id || job.wo_id}`} style={{ color: BLUE, textDecoration: 'none', fontWeight: 700, fontSize: 14 }}>
-                            {job.wo_number || job.so_number || 'WO'}
-                          </a>
-                          {job.customer_name && (
-                            <span style={{ color: DIM, fontSize: 12 }}>{job.customer_name}</span>
+                          <span style={{ color: BLUE, fontWeight: 700, fontSize: 14 }}>
+                            {job.wo?.so_number || 'WO'}
+                          </span>
+                          {job.wo?.customers?.company_name && (
+                            <span style={{ color: DIM, fontSize: 12 }}>{job.wo.customers.company_name}</span>
                           )}
                         </div>
                         <StatusPill status={job.status} />
                       </div>
 
                       {/* Description */}
-                      {job.description && (
+                      {job.line?.description && (
                         <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: TEXT, lineHeight: 1.4 }}>
-                          {job.description}
+                          {job.line.description}
                         </p>
                       )}
 
                       {/* Badges row */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-                        {job.unit_type && (
+                        {job.wo?.assets?.unit_number && (
                           <span style={{
                             padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600,
                             background: 'rgba(255,255,255,0.06)', color: DIM,
                           }}>
-                            {job.unit_type}
+                            {job.wo.assets.unit_type ? `${job.wo.assets.unit_type} — ` : ''}{job.wo.assets.unit_number}
                           </span>
                         )}
-                        {job.expected_hours && (
+                        {job.line?.estimated_hours && (
                           <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: DIM }}>
-                            <Clock size={12} /> {job.expected_hours}h
+                            <Clock size={12} /> {job.line.estimated_hours}h
                           </span>
                         )}
                       </div>
@@ -462,12 +462,12 @@ export default function MechanicDashboardPage() {
                         {/* Clock In button for active jobs */}
                         {(job.status === 'accepted' || job.status === 'in_progress') && !activeClock && (
                           <button
-                            disabled={clockLoading === (job.so_line_id || job.id)}
+                            disabled={clockLoading === (job.line_id || job.id)}
                             onClick={() => handleClockIn(job)}
                             style={{
                               flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
                               background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
-                              cursor: 'pointer', fontFamily: FONT, opacity: clockLoading === (job.so_line_id || job.id) ? 0.6 : 1,
+                              cursor: 'pointer', fontFamily: FONT, opacity: clockLoading === (job.line_id || job.id) ? 0.6 : 1,
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                             }}
                           >

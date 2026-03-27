@@ -138,11 +138,11 @@ export const ROLE_CONFIGS: Record<RoleKey, RoleConfig> = {
     redirectTo: '/mechanic/dashboard',
     sidebar: [], // standalone page, no sidebar
     permissions: {
-      dashboard: false, floor: true, orders: false, invoices: false, customers: false,
-      parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
+      dashboard: false, floor: false, orders: false, invoices: false, customers: false,
+      parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
       parts_lifecycle: false, compliance: false, accounting: false, reports: false,
       time_tracking: true, settings: false, kiosk_admin: false,
-      import: false, admin_permissions: false, tech_mobile: true, dvir: true,
+      import: false, admin_permissions: false, tech_mobile: false, dvir: false,
       billing: false, integrations: false, audit_log: false, smart_drop: false,
     },
   },
@@ -152,11 +152,11 @@ export const ROLE_CONFIGS: Record<RoleKey, RoleConfig> = {
     redirectTo: '/mechanic/dashboard',
     sidebar: [], // standalone page, no sidebar
     permissions: {
-      dashboard: false, floor: true, orders: false, invoices: false, customers: false,
-      parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
+      dashboard: false, floor: false, orders: false, invoices: false, customers: false,
+      parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
       parts_lifecycle: false, compliance: false, accounting: false, reports: false,
       time_tracking: true, settings: false, kiosk_admin: false,
-      import: false, admin_permissions: false, tech_mobile: true, dvir: true,
+      import: false, admin_permissions: false, tech_mobile: false, dvir: false,
       billing: false, integrations: false, audit_log: false, smart_drop: false,
     },
   },
@@ -211,11 +211,11 @@ export const ROLE_CONFIGS: Record<RoleKey, RoleConfig> = {
     redirectTo: '/mechanic/dashboard',
     sidebar: [], // standalone page, no sidebar
     permissions: {
-      dashboard: false, floor: true, orders: false, invoices: false, customers: false,
-      parts: true, fleet: false, drivers: false, maintenance: true, tires: true,
-      parts_lifecycle: true, compliance: false, accounting: false, reports: false,
+      dashboard: false, floor: false, orders: false, invoices: false, customers: false,
+      parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
+      parts_lifecycle: false, compliance: false, accounting: false, reports: false,
       time_tracking: true, settings: false, kiosk_admin: false,
-      import: false, admin_permissions: false, tech_mobile: true, dvir: true,
+      import: false, admin_permissions: false, tech_mobile: false, dvir: false,
       billing: false, integrations: false, audit_log: false, smart_drop: false,
     },
   },

@@ -85,6 +85,12 @@ function TechMobilePage() {
   useEffect(() => {
     getCurrentUser(supabase).then(async (p: any) => {
       if (!p) { window.location.href = '/login'; return }
+      // Mechanic roles must use /mechanic/dashboard, not /tech
+      const MECHANIC_ROLES = ['mechanic', 'technician', 'lead_tech', 'maintenance_technician']
+      if (MECHANIC_ROLES.includes(p.impersonate_role || p.role)) {
+        window.location.href = '/mechanic/dashboard'
+        return
+      }
       setUser(p)
       await loadJobs(p)
       await loadFloor(p)

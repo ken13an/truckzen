@@ -128,9 +128,9 @@ export default function WorkOrderDetail() {
       const u = await getCurrentUser(supabase)
       setUser(u)
 
-      // Mechanic roles use the dedicated /tech workspace, not the full WO editor
+      // Mechanic roles use the dedicated mechanic dashboard, not the full WO editor
       if (u && ['technician', 'lead_tech', 'maintenance_technician'].includes(u.impersonate_role || u.role)) {
-        window.location.href = `/tech?wo=${id}`
+        window.location.href = '/mechanic/dashboard'
         return
       }
 

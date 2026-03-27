@@ -117,7 +117,7 @@ export async function POST(req: Request) {
           userId: reqData.mechanic_id,
           title: `Request ${newStatus}: ${reqData.service_orders?.so_number} — ${reqData.request_type.replace(/_/g, ' ')}`,
           body: body?.response_note || (newStatus === 'approved' ? 'Your request has been approved' : 'Your request was denied'),
-          link: '/tech',
+          link: '/mechanic/dashboard',
         })
       }
     } catch {}
