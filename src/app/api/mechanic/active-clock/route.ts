@@ -11,9 +11,8 @@ export async function GET(req: Request) {
   if (!userId) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
 
   const { data } = await s.from('so_time_entries')
-    .select(`id, clocked_in_at, so_line_id, so_id,
-      so_lines(description),
-      service_orders(so_number)`)
+    .select(`id, clocked_in_at, so_id,
+      service_orders(so_number, complaint)`)
     .eq('user_id', userId)
     .is('clocked_out_at', null)
     .limit(1)
@@ -24,9 +23,8 @@ export async function GET(req: Request) {
   return NextResponse.json({
     id: data.id,
     clocked_in_at: data.clocked_in_at,
-    so_line_id: data.so_line_id,
     service_order_id: data.so_id,
-    job_description: (data.so_lines as any)?.description || '',
+    job_description: (data.service_orders as any)?.complaint?.slice(0, 60) || '',
     wo_number: (data.service_orders as any)?.so_number || '',
   })
 }

@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
   // Get the entry
   const { data: entry } = await s.from('so_time_entries')
-    .select('id, clocked_in_at, so_line_id')
+    .select('id, clocked_in_at, so_id')
     .eq('id', time_entry_id)
     .is('clocked_out_at', null)
     .single()
@@ -42,10 +42,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Get total hours on this job line
+  // Get total hours on this WO
   const { data: totals } = await s.from('so_time_entries')
     .select('duration_minutes')
-    .eq('so_line_id', entry.so_line_id)
+    .eq('so_id', entry.so_id)
+    .eq('user_id', user_id || '')
     .is('deleted_at', null)
     .not('duration_minutes', 'is', null)
 

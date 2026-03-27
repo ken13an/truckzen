@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
   // Check mechanic isn't already clocked into another job
   const { data: active } = await s.from('so_time_entries')
-    .select('id, so_line_id')
+    .select('id, so_id')
     .eq('user_id', user_id)
     .is('clocked_out_at', null)
     .is('deleted_at', null)
@@ -46,7 +46,6 @@ export async function POST(req: Request) {
     .insert({
       shop_id: sId,
       user_id,
-      so_line_id,
       so_id: soId,
       clocked_in_at: now,
       clocked_out_at: null,
