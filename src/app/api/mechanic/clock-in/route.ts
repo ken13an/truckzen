@@ -32,11 +32,11 @@ export async function POST(req: Request) {
   let sId = shop_id
   if (!soId || !sId) {
     const { data: line } = await s.from('so_lines')
-      .select('service_order_id, service_orders(shop_id)')
+      .select('so_id, service_orders(shop_id)')
       .eq('id', so_line_id)
       .single()
     if (line) {
-      soId = soId || line.service_order_id
+      soId = soId || line.so_id
       sId = sId || (line.service_orders as any)?.shop_id
     }
   }
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       shop_id: sId,
       user_id,
       so_line_id,
-      service_order_id: soId,
+      so_id: soId,
       clocked_in_at: now,
       clocked_out_at: null,
       duration_minutes: null,

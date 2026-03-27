@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   if (!userId) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
 
   const { data } = await s.from('so_time_entries')
-    .select(`id, clocked_in_at, so_line_id, service_order_id,
+    .select(`id, clocked_in_at, so_line_id, so_id,
       so_lines(description),
       service_orders(so_number)`)
     .eq('user_id', userId)
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     id: data.id,
     clocked_in_at: data.clocked_in_at,
     so_line_id: data.so_line_id,
-    service_order_id: data.service_order_id,
+    service_order_id: data.so_id,
     job_description: (data.so_lines as any)?.description || '',
     wo_number: (data.service_orders as any)?.so_number || '',
   })

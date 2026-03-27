@@ -68,6 +68,7 @@ export default function MechanicDashboardPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [declineModal, setDeclineModal] = useState<string | null>(null) // assignment ID
   const [declineReason, setDeclineReason] = useState('')
+  const [completeModal, setCompleteModal] = useState<any | null>(null) // job to confirm completion
   const [activeClock, setActiveClock] = useState<any>(null) // { id, clocked_in_at, so_line_id, job_description, wo_number }
   const [elapsedSec, setElapsedSec] = useState(0)
   const [clockLoading, setClockLoading] = useState<string | null>(null)
@@ -488,7 +489,7 @@ export default function MechanicDashboardPage() {
                           <>
                             <button
                               disabled={actionLoading === job.id + 'complete'}
-                              onClick={() => handleJobAction(job.id, 'complete')}
+                              onClick={() => setCompleteModal(job)}
                               style={{
                                 flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
                                 background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
@@ -823,6 +824,34 @@ export default function MechanicDashboardPage() {
               <button onClick={() => handleJobAction(declineModal, 'decline', declineReason)} disabled={!!actionLoading}
                 style={{ padding: '8px 16px', background: RED, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                 Confirm Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Complete Confirmation Modal */}
+      {completeModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setCompleteModal(null) }}>
+          <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Complete Job?</div>
+            <div style={{ fontSize: 13, color: DIM, marginBottom: 8 }}>
+              Are you sure you want to mark this job as complete?
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: BLUE }}>{completeModal.wo?.so_number || 'WO'}</div>
+              {completeModal.line?.description && (
+                <div style={{ fontSize: 13, color: TEXT, marginTop: 4 }}>{completeModal.line.description}</div>
+              )}
+              {completeModal.wo?.customers?.company_name && (
+                <div style={{ fontSize: 12, color: DIM, marginTop: 4 }}>{completeModal.wo.customers.company_name}</div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setCompleteModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={async () => { await handleJobAction(completeModal.id, 'complete'); setCompleteModal(null) }} disabled={!!actionLoading}
+                style={{ padding: '8px 16px', background: GREEN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                Confirm Complete
               </button>
             </div>
           </div>
