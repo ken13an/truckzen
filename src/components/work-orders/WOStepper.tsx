@@ -38,7 +38,8 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
     const jobsWithParts = jobLines.filter((l: any) => l.parts_status && l.parts_status !== 'pending').length
     const jobsAssigned = jobLines.filter((l: any) => jobAssignments.some((ja: any) => ja.line_id === l.id)).length
     const totalJobs = jobLines.length || 1
-    const hasPartsAssign = totalJobs > 0 && jobsWithParts >= totalJobs && jobsAssigned >= totalJobs
+    const hasAssign = totalJobs > 0 && jobsAssigned >= totalJobs
+    const hasParts = totalJobs > 0 && jobsWithParts >= totalJobs
 
     const jobsComplete = jobLines.filter((l: any) => l.line_status === 'completed' || l.completed_at).length
     const hasRepair = totalJobs > 0 && jobsComplete >= totalJobs
@@ -48,8 +49,9 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
     const steps = [
       { label: 'Submit', done: hasSubmit, active: !hasSubmit, skip: false, duration: formatDuration(wo.created_at, wo.submitted_at), progress: null as string | null },
       { label: 'Estimate', done: hasEstimate, active: hasSubmit && !hasEstimate, skip: skipEstimate, duration: skipEstimate ? null : formatDuration(wo.submitted_at, wo.estimate_approved_at), progress: estimatePending ? 'Pending' : null },
-      { label: 'Parts + Assign', done: hasPartsAssign, active: hasEstimate && !hasPartsAssign, skip: false, duration: formatDuration(wo.estimate_approved_at || wo.submitted_at, wo.parts_completed_at), progress: totalJobs > 0 ? `${jobsWithParts}/${totalJobs} parts, ${jobsAssigned}/${totalJobs} assigned` : null },
-      { label: 'Repair', done: hasRepair, active: hasPartsAssign && !hasRepair, skip: false, duration: formatDuration(wo.assigned_at || wo.parts_completed_at, wo.repair_completed_at), progress: totalJobs > 0 ? `${jobsComplete}/${totalJobs} complete` : null },
+      { label: 'Assign', done: hasAssign, active: hasEstimate && !hasAssign, skip: false, duration: formatDuration(wo.estimate_approved_at || wo.submitted_at, wo.assigned_at), progress: totalJobs > 0 ? `${jobsAssigned}/${totalJobs} assigned` : null },
+      { label: 'Parts', done: hasParts, active: hasEstimate && !hasParts, skip: false, duration: formatDuration(wo.estimate_approved_at || wo.submitted_at, wo.parts_completed_at), progress: totalJobs > 0 ? `${jobsWithParts}/${totalJobs} ready` : null },
+      { label: 'Repair', done: hasRepair, active: hasAssign && hasParts && !hasRepair, skip: false, duration: formatDuration(wo.parts_completed_at || wo.assigned_at, wo.repair_completed_at), progress: totalJobs > 0 ? `${jobsComplete}/${totalJobs} complete` : null },
       { label: 'Invoice', done: hasInvoice, active: hasRepair && !hasInvoice, skip: false, duration: formatDuration(wo.repair_completed_at, wo.invoiced_at), progress: null },
     ]
 
@@ -60,7 +62,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 0 }}>
           {steps.map((s, i) => (
             <div key={s.label} style={{ display: 'flex', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 70 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 58 }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace",
@@ -78,7 +80,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
                 )}
               </div>
               {i < steps.length - 1 && (
-                <div style={{ width: 30, height: 2, background: s.done ? GREEN : '#E5E7EB', margin: '13px 2px 0', flexShrink: 0 }} />
+                <div style={{ width: 20, height: 2, background: s.done ? GREEN : '#E5E7EB', margin: '13px 2px 0', flexShrink: 0 }} />
               )}
             </div>
           ))}
