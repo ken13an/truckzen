@@ -57,20 +57,21 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [user])
 
-  async function markRead(notifId: string) {
-    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notifId, action: 'mark_read', user_id: user?.id }) })
+  async function markRead(notifId: string, link?: string) {
     setData((d: any) => d ? { ...d, notifications: d.notifications.filter((n: any) => n.id !== notifId) } : d)
+    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notifId, action: 'mark_read' }) })
+    if (link) window.location.href = link
   }
 
   async function dismissNotif(notifId: string) {
-    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notifId, action: 'dismiss', user_id: user?.id }) })
     setData((d: any) => d ? { ...d, notifications: d.notifications.filter((n: any) => n.id !== notifId) } : d)
+    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: notifId, action: 'dismiss' }) })
   }
 
   async function markAllRead() {
     if (!user) return
-    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'all', action: 'mark_read', user_id: user.id }) })
     setData((d: any) => d ? { ...d, notifications: [] } : d)
+    await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'all', action: 'mark_read' }) })
   }
 
   if (loading || !data) return <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading dashboard...</div>
@@ -161,7 +162,7 @@ export default function DashboardPage() {
           {notifications.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 20, color: GRAY, fontSize: 12 }}>No new notifications</div>
           ) : notifications.map((n: any) => (
-            <div key={n.id} style={{ display: 'flex', gap: 8, padding: '8px 0', borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => { markRead(n.id); if (n.link) window.location.href = n.link }}>
+            <div key={n.id} style={{ display: 'flex', gap: 8, padding: '8px 0', borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }} onClick={() => markRead(n.id, n.link)}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: BLUE, marginTop: 5, flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 12, color: '#111827' }}>{n.title}</div>
