@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
   await ctx.admin.from('wo_job_assignments').delete().eq('line_id', line_id)
   if (assignments.length > 0) {
-    const rows = assignments.filter((a: any) => a.user_id).map((a: any) => ({ line_id, user_id: a.user_id, percentage: a.percentage || 100, status: 'assigned' }))
+    const rows = assignments.filter((a: any) => a.user_id).map((a: any) => ({ line_id, user_id: a.user_id, percentage: a.percentage || 100 }))
     if (rows.length > 0) {
       const { error } = await ctx.admin.from('wo_job_assignments').insert(rows)
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })

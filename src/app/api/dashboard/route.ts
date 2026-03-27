@@ -95,8 +95,8 @@ export async function GET(req: Request) {
   // ---- MECHANIC ----
   if (['technician', 'lead_tech', 'maintenance_technician'].includes(role)) {
     const [myJobs, completedToday, partsReady] = await Promise.all([
-      s.from('wo_job_assignments').select('*', { count: 'exact', head: true }).eq('user_id', userId).in('status', ['assigned', 'in_progress']),
-      s.from('wo_job_assignments').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'completed').gte('updated_at', today),
+      s.from('wo_job_assignments').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+      s.from('so_lines').select('*', { count: 'exact', head: true }).eq('assigned_to', userId).eq('line_status', 'completed').gte('updated_at', today),
       s.from('wo_parts').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).eq('status', 'ready'),
     ])
     stats = { my_active_jobs: myJobs.count || 0, jobs_completed_today: completedToday.count || 0, parts_ready_for_pickup: partsReady.count || 0 }

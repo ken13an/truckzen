@@ -16,25 +16,29 @@ export async function POST(req: Request) {
 
   const now = new Date().toISOString()
 
-  // Canonical source: wo_job_assignments
-  const { data: assign } = await s.from('wo_job_assignments')
-    .select('line_id, so_lines(so_id, description)')
-    .eq('id', assignment_id)
-    .single()
-  const lineId = assign?.line_id
-  const woId = (assign?.so_lines as any)?.so_id
+  // Get assignment and resolve line/WO via separate query (no PostgREST join)
+  const { data: assign } = await s.from('wo_job_assignments').select('line_id').eq('id', assignment_id).single()
+  if (!assign) return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
+  const lineId = assign.line_id
+  let woId: string | null = null
+  let lineDesc = ''
+  if (lineId) {
+    const { data: line } = await s.from('so_lines').select('so_id, description').eq('id', lineId).single()
+    woId = line?.so_id || null
+    lineDesc = line?.description?.slice(0, 50) || ''
+  }
 
   if (action === 'accept') {
-    await s.from('wo_job_assignments').update({ status: 'accepted', updated_at: now }).eq('id', assignment_id)
+    await s.from('wo_job_assignments').update({ updated_at: now }).eq('id', assignment_id)
     if (lineId) await s.from('so_lines').update({ line_status: 'in_progress' }).eq('id', lineId)
-    if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic accepted job: ${(assign?.so_lines as any)?.description?.slice(0, 50) || ''}` })
+    if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic accepted job: ${lineDesc}` })
   } else if (action === 'decline') {
-    await s.from('wo_job_assignments').update({ status: 'declined', updated_at: now }).eq('id', assignment_id)
+    await s.from('wo_job_assignments').delete().eq('id', assignment_id)
     if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic declined job${reason ? ': ' + reason : ''}` })
   } else if (action === 'complete') {
-    await s.from('wo_job_assignments').update({ status: 'completed', updated_at: now }).eq('id', assignment_id)
+    await s.from('wo_job_assignments').update({ updated_at: now }).eq('id', assignment_id)
     if (lineId) await s.from('so_lines').update({ line_status: 'completed' }).eq('id', lineId)
-    if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic completed job: ${(assign?.so_lines as any)?.description?.slice(0, 50) || ''}` })
+    if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic completed job: ${lineDesc}` })
 
     // Check if all jobs on this WO are now complete
     if (woId) {
@@ -66,7 +70,7 @@ export async function POST(req: Request) {
       }
     }
   } else if (action === 'start') {
-    await s.from('wo_job_assignments').update({ status: 'in_progress', updated_at: now }).eq('id', assignment_id)
+    await s.from('wo_job_assignments').update({ updated_at: now }).eq('id', assignment_id)
     if (lineId) await s.from('so_lines').update({ line_status: 'in_progress' }).eq('id', lineId)
     if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: 'Mechanic started work on job' })
   }

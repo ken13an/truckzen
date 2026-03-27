@@ -81,9 +81,9 @@ export async function PATCH(req: Request) {
   const { id, status, assignment_id } = await req.json()
   if (!id || !status) return NextResponse.json({ error: 'id and status required' }, { status: 400 })
 
-  // Update job_assignments if exists
+  // Update assignment timestamp if exists
   if (assignment_id) {
-    await s.from('wo_job_assignments').update({ status, updated_at: new Date().toISOString() }).eq('id', assignment_id)
+    await s.from('wo_job_assignments').update({ updated_at: new Date().toISOString() }).eq('id', assignment_id)
   }
   // Also update so_lines line_status
   const lineStatusMap: Record<string, string> = { pending: 'unassigned', accepted: 'in_progress', in_progress: 'in_progress', completed: 'completed' }
