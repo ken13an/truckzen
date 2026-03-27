@@ -188,7 +188,7 @@ export async function PATCH(req: Request, { params }: Params) {
         const dedupLink = alertDedupKey(id, alert.type)
         // Check for existing notification with same link+type to avoid duplicates
         const { data: existing_notif } = await ctx.admin.from('notifications')
-          .select('id').eq('shop_id', data.shop_id).eq('type', alert.type).eq('link', dedupLink).eq('read', false).limit(1)
+          .select('id').eq('shop_id', data.shop_id).eq('type', alert.type).eq('link', dedupLink).eq('is_read', false).limit(1)
         if (existing_notif && existing_notif.length > 0) continue // already alerted
         const recipients = await getUserIdsByRole(data.shop_id, alert.targetRoles)
         if (recipients.length > 0) {

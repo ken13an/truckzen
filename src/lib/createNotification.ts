@@ -35,7 +35,6 @@ export async function createNotification(params: CreateNotificationParams): Prom
       related_wo_id: params.relatedWoId || null,
       related_unit: params.relatedUnit || null,
       priority: params.priority || 'normal',
-      read: false,
       is_read: false,
       is_dismissed: false,
     }))

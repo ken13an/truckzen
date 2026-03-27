@@ -16,7 +16,7 @@ export async function GET(req: Request) {
 
   // Notifications — unread for this user
   const { data: notifications } = await s.from('notifications').select('id, title, body, link, type, priority, created_at')
-    .eq('user_id', userId).eq('read', false).eq('is_dismissed', false)
+    .eq('user_id', userId).eq('is_read', false).eq('is_dismissed', false)
     .order('created_at', { ascending: false }).limit(20)
 
   // Recent activity — last 10 from wo_activity_log
@@ -135,7 +135,7 @@ export async function GET(req: Request) {
 
     // All-shop notifications for admins
     const { data: allNotifs } = await s.from('notifications').select('id, title, body, link, type, priority, created_at')
-      .eq('shop_id', shopId).eq('read', false).eq('is_dismissed', false)
+      .eq('shop_id', shopId).eq('is_read', false).eq('is_dismissed', false)
       .order('created_at', { ascending: false }).limit(20)
 
     return NextResponse.json({
