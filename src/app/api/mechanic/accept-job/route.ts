@@ -22,10 +22,14 @@ export async function POST(req: Request) {
   const lineId = assign.line_id
   let woId: string | null = null
   let lineDesc = ''
+  let lineEstimatedHours: number | null = null
+  let lineBilledHours: number | null = null
   if (lineId) {
-    const { data: line } = await s.from('so_lines').select('so_id, description').eq('id', lineId).single()
+    const { data: line } = await s.from('so_lines').select('so_id, description, estimated_hours, billed_hours').eq('id', lineId).single()
     woId = line?.so_id || null
     lineDesc = line?.description?.slice(0, 50) || ''
+    lineEstimatedHours = line?.estimated_hours ?? null
+    lineBilledHours = line?.billed_hours ?? null
   }
 
   if (action === 'accept') {
@@ -37,7 +41,14 @@ export async function POST(req: Request) {
     if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic declined job${reason ? ': ' + reason : ''}` })
   } else if (action === 'complete') {
     await s.from('wo_job_assignments').update({ updated_at: now }).eq('id', assignment_id)
-    if (lineId) await s.from('so_lines').update({ line_status: 'completed' }).eq('id', lineId)
+    if (lineId) {
+      // Auto-populate billed_hours from estimated_hours (book hours) if not already set
+      const lineUpdate: Record<string, any> = { line_status: 'completed' }
+      if (lineBilledHours == null && lineEstimatedHours != null && lineEstimatedHours > 0) {
+        lineUpdate.billed_hours = lineEstimatedHours
+      }
+      await s.from('so_lines').update(lineUpdate).eq('id', lineId)
+    }
     if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic completed job: ${lineDesc}` })
 
     // Check if all jobs on this WO are now complete
