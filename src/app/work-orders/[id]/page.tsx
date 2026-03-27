@@ -1453,11 +1453,15 @@ export default function WorkOrderDetail() {
                     <div key={p.id} style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 12, background: partsEditable ? '#FAFBFC' : '#fff' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <div>
-                          {p.rough_name && (
-                            <span style={{ fontSize: 12, color: GRAY }}>Suggested: <strong style={{ color: '#374151' }}>{p.rough_name || p.description}</strong></span>
-                          )}
-                          {!p.rough_name && p.real_name && (
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A' }}>{p.real_name}{p.part_number ? ` (${p.part_number})` : ''}</span>
+                          {p.real_name ? (
+                            <>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A' }}>{p.real_name}{p.part_number ? ` (${p.part_number})` : ''}</span>
+                              {p.rough_name && <span style={{ fontSize: 11, color: GRAY, marginLeft: 8 }}>was: {p.rough_name}</span>}
+                            </>
+                          ) : (
+                            <span style={{ fontSize: 12, color: GRAY }}>
+                              {p.rough_name ? <>Suggested: <strong style={{ color: '#374151' }}>{p.rough_name}</strong></> : (p.description || '—')}
+                            </span>
                           )}
                         </div>
                         {!wo.is_historical && (
@@ -1511,10 +1515,11 @@ export default function WorkOrderDetail() {
 
                       {/* Read-only display for received/installed parts */}
                       {!partsEditable && !wo.is_historical && (
-                        <div style={{ display: 'flex', gap: 16, fontSize: 12, color: GRAY, marginTop: 4 }}>
+                        <div style={{ display: 'flex', gap: 16, fontSize: 12, color: GRAY, marginTop: 4, flexWrap: 'wrap' }}>
                           {p.part_number && <span>Part #: {p.part_number}</span>}
                           <span>Qty: {p.quantity || 1}</span>
-                          {canSeePrices && p.parts_sell_price && <span>Sell: {fmt(p.parts_sell_price)}</span>}
+                          {canSeePrices && p.parts_cost_price != null && <span>Cost: {fmt(p.parts_cost_price)}</span>}
+                          {canSeePrices && p.parts_sell_price != null && <span>Sell: {fmt(p.parts_sell_price)}</span>}
                           {p.tire_position && <span>Position: {p.tire_position}</span>}
                         </div>
                       )}
