@@ -50,7 +50,7 @@ const PART_STATUS: Record<string, { label: string; bg: string; color: string }> 
   installed: { label: 'Installed', bg: '#F0FDF4', color: GREEN },
 }
 
-const TABS = ['Jobs', 'Parts', 'Estimate', 'Files & Notes', 'Activity']
+const TABS = ['Jobs', 'Parts', 'Estimate', 'Files & Notes', 'Activity', 'Invoice']
 
 const pillStyle = (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: bg, color })
 const inputStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 13, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', width: '100%' }
@@ -2039,8 +2039,177 @@ export default function WorkOrderDetail() {
         </div>
       )}
 
-      {/* ========== INVOICE WORKFLOW ========== */}
-      {!wo.is_historical && (
+      {/* ========== TAB 5: INVOICE ========== */}
+      {tab === 5 && !wo.is_historical && (
+        <div>
+          {/* Invoice Status Stepper */}
+          <div style={cardStyle}>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Invoice Status</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, padding: '8px 0' }}>
+              {['draft', 'accounting_review', 'sent', 'paid', 'closed'].map((stage, i, arr) => {
+                const labels: Record<string, string> = { draft: 'Draft', accounting_review: 'Accounting Review', sent: 'Sent', paid: 'Paid', closed: 'Closed' }
+                const currentIdx = arr.indexOf(wo.invoice_status || 'draft')
+                const isDone = i < currentIdx
+                const isCurrent = i === currentIdx
+                return (
+                  <div key={stage} style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 60 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace", background: isDone ? GREEN : isCurrent ? BLUE : '#E5E7EB', color: isDone || isCurrent ? '#fff' : '#9CA3AF' }}>
+                        {isDone ? '\u2713' : i + 1}
+                      </div>
+                      <span style={{ fontSize: 9, fontWeight: 600, color: isDone ? GREEN : isCurrent ? BLUE : '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.03em', textAlign: 'center', lineHeight: 1.2 }}>{labels[stage]}</span>
+                    </div>
+                    {i < arr.length - 1 && <div style={{ width: 20, height: 2, background: isDone ? GREEN : '#E5E7EB', margin: '13px 2px 0', flexShrink: 0 }} />}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Invoice Labor Lines — editable billed hours for accounting/writer roles */}
+          <div style={cardStyle}>
+            <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Labor</span>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                  <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Job</th>
+                  <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Book Hours</th>
+                  <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Billed Hours</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Rate</th>
+                  <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobLines.map((line: any, idx: number) => {
+                  const hrs = line.billed_hours || line.actual_hours || line.estimated_hours || 0
+                  return (
+                    <tr key={line.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <td style={{ padding: '6px 8px' }}>Job {idx + 1}: {line.description?.slice(0, 40)}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center', color: GRAY }}>{line.estimated_hours || '—'}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                        {canEditPrices ? (
+                          <input type="number" step="0.25" defaultValue={line.billed_hours || ''} onBlur={async e => { const v = parseFloat(e.target.value) || 0; if (v !== (line.billed_hours || 0)) { await patchLine(line.id, { billed_hours: v }); } }} placeholder={String(line.estimated_hours || 0)} style={{ width: 60, textAlign: 'center', padding: '2px 4px', border: '1px solid #E5E7EB', borderRadius: 4, fontSize: 12, fontFamily: 'inherit' }} />
+                        ) : (
+                          <span>{line.billed_hours || hrs}</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(laborRate)}/hr</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(hrs * laborRate)}</td>
+                    </tr>
+                  )
+                })}
+                <tr style={{ fontWeight: 700 }}>
+                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right' }}>Labor Total</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(laborTotal)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Invoice Part Lines */}
+          {partLines.length > 0 && (
+            <div style={cardStyle}>
+              <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Parts</span>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part #</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Cost</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Sell</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {partLines.map((p: any) => {
+                    const sell = p.parts_sell_price || p.unit_price || 0
+                    const cost = p.parts_cost_price || 0
+                    const qty = p.quantity || 1
+                    const lineTotal = p.total_price || sell * qty
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
+                        <td style={{ padding: '6px 8px' }}>
+                          {p.real_name || p.rough_name || p.description || '—'}
+                          {p.real_name && p.rough_name && p.real_name !== p.rough_name && (
+                            <span style={{ fontSize: 10, color: GRAY, marginLeft: 6 }}>was: {p.rough_name}</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '6px 8px', color: GRAY }}>{p.part_number || '—'}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', color: GRAY }}>{canSeePrices ? fmt(cost) : '—'}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right' }}>{canSeePrices ? fmt(sell) : '—'}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(lineTotal)}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={5} style={{ padding: '8px 8px', textAlign: 'right' }}>Parts Total</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(partsLineTotal)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Invoice Totals */}
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span>Labor</span><span style={{ fontWeight: 600 }}>{fmt(laborTotal)}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span>Parts</span><span style={{ fontWeight: 600 }}>{fmt(partsLineTotal + woPartsTotal)}</span></div>
+              {shopCharges.length > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}><span>Shop Charges</span><span style={{ fontWeight: 600 }}>{fmt(shopCharges.reduce((s: number, c: any) => s + (c.amount || 0), 0))}</span></div>}
+              {taxAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: GRAY }}><span>Tax ({taxRate}%{shop.tax_labor ? ' incl. labor' : ' parts only'})</span><span>{fmt(taxAmt)}</span></div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 800, paddingTop: 8, borderTop: '2px solid #E5E7EB' }}>
+                <span>Invoice Total</span>
+                <span style={{ color: GREEN }}>{fmt(grandTotal)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Invoice Actions */}
+          <div style={cardStyle}>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em' }}>Actions</div>
+            {wo.invoice_status === 'draft' && (
+              <div>
+                <button onClick={checkInvoiceReadiness} disabled={invoiceLoading} style={btnStyle(BLUE, '#fff')}>
+                  {invoiceLoading ? 'Checking...' : 'Check Readiness & Submit'}
+                </button>
+                {invoiceChecks.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    {invoiceChecks.map((c: any, i: number) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12 }}>
+                        <span style={{ color: c.passed ? GREEN : RED, fontWeight: 700 }}>{c.passed ? '\u2713' : '\u2717'}</span>
+                        <span style={{ color: c.passed ? '#374151' : RED }}>{c.label}</span>
+                        <span style={{ color: GRAY, fontSize: 11 }}>({c.detail})</span>
+                      </div>
+                    ))}
+                    {invoiceChecks.every((c: any) => c.passed) && (
+                      <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), marginTop: 8 }}>
+                        Submit to Accounting
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {wo.invoice_status === 'accounting_review' && canEditPrices && (
+              <button onClick={() => invoiceAction('approve_invoicing')} disabled={invoiceLoading} style={btnStyle(BLUE, '#fff')}>Approve & Send Invoice</button>
+            )}
+            {wo.invoice_status === 'sent' && canEditPrices && (
+              <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={btnStyle(GREEN, '#fff')}>Mark as Paid</button>
+            )}
+            {wo.invoice_status === 'paid' && (
+              <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={btnStyle(GRAY, '#fff')}>Close Work Order</button>
+            )}
+            {wo.invoice_status === 'closed' && (
+              <div style={{ textAlign: 'center', color: GREEN, fontWeight: 700, padding: 12 }}>Work Order Closed</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========== INVOICE WORKFLOW (compact — shown on other tabs) ========== */}
+      {!wo.is_historical && tab !== 5 && (
         <div style={{ ...cardStyle, marginTop: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Invoice Workflow</div>
 
