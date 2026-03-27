@@ -106,8 +106,23 @@ export async function GET(_req: Request, { params }: Params) {
   const lineIds = (wo.so_lines || []).map((l: any) => l.id)
   let jobAssignments: any[] = []
   if (lineIds.length > 0) {
-    const { data: ja } = await ctx.admin.from('wo_job_assignments').select('*, users(id, full_name, team)').in('line_id', lineIds).order('created_at')
-    jobAssignments = ja || []
+    const { data: ja, error: jaErr } = await ctx.admin.from('wo_job_assignments').select('*').in('line_id', lineIds).order('created_at')
+    if (jaErr) {
+      // Table may not exist yet — return empty rather than failing
+      jobAssignments = []
+    } else {
+      // Resolve user names separately (avoids FK join requirement)
+      const assignUserIds = [...new Set((ja || []).map((a: any) => a.user_id).filter(Boolean))]
+      let assignUserMap: Record<string, { full_name: string; team: string | null }> = {}
+      if (assignUserIds.length > 0) {
+        const { data: aUsers } = await ctx.admin.from('users').select('id, full_name, team').in('id', assignUserIds)
+        if (aUsers) assignUserMap = Object.fromEntries(aUsers.map((u: any) => [u.id, { full_name: u.full_name, team: u.team }]))
+      }
+      jobAssignments = (ja || []).map((a: any) => ({
+        ...a,
+        users: assignUserMap[a.user_id] ? { id: a.user_id, full_name: assignUserMap[a.user_id].full_name, team: assignUserMap[a.user_id].team } : null,
+      }))
+    }
   }
 
   // Fetch time entries for ETC

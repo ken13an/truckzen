@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
 
+async function resolveAssignmentUsers(admin: any, assignments: any[]) {
+  const userIds = [...new Set(assignments.map((a: any) => a.user_id).filter(Boolean))]
+  if (userIds.length === 0) return assignments
+  const { data: users } = await admin.from('users').select('id, full_name, team').in('id', userIds)
+  const map: Record<string, any> = {}
+  if (users) for (const u of users) map[u.id] = { id: u.id, full_name: u.full_name, team: u.team }
+  return assignments.map((a: any) => ({ ...a, users: map[a.user_id] || null }))
+}
+
 export async function GET(req: Request) {
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -14,8 +23,9 @@ export async function GET(req: Request) {
     if (!targetWoId) return NextResponse.json([])
     const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, targetWoId, 'id')
     if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    const { data } = await ctx.admin.from('wo_job_assignments').select('*, users(id, full_name, team)').eq('line_id', lineId).order('created_at').limit(100)
-    return NextResponse.json(data || [])
+    const { data, error } = await ctx.admin.from('wo_job_assignments').select('*').eq('line_id', lineId).order('created_at').limit(100)
+    if (error) return NextResponse.json([])
+    return NextResponse.json(await resolveAssignmentUsers(ctx.admin, data || []))
   }
 
   if (woId) {
@@ -24,8 +34,9 @@ export async function GET(req: Request) {
     const { data: lines } = await ctx.admin.from('so_lines').select('id').eq('so_id', woId)
     if (!lines || lines.length === 0) return NextResponse.json([])
     const lineIds = lines.map((l: any) => l.id)
-    const { data } = await ctx.admin.from('wo_job_assignments').select('*, users(id, full_name, team)').in('line_id', lineIds).order('created_at').limit(500)
-    return NextResponse.json(data || [])
+    const { data, error } = await ctx.admin.from('wo_job_assignments').select('*').in('line_id', lineIds).order('created_at').limit(500)
+    if (error) return NextResponse.json([])
+    return NextResponse.json(await resolveAssignmentUsers(ctx.admin, data || []))
   }
 
   return NextResponse.json({ error: 'line_id or wo_id required' }, { status: 400 })
