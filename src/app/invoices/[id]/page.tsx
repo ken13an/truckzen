@@ -144,20 +144,51 @@ export default function InvoiceDetailPage() {
       const soId = invoice.service_orders?.id
       if (!soId) { alert('No service order linked'); setSaving(false); return }
 
-      // Delete existing lines and re-insert
-      await supabase.from('so_lines').delete().eq('service_order_id', soId)
+      const originalLines: any[] = invoice.so_lines || []
+      const originalIds = new Set(originalLines.map((l: any) => l.id))
+      const editedIds = new Set(editingLines.filter(l => l.id).map(l => l.id))
 
-      const toInsert = editingLines.map(l => ({
-        service_order_id: soId,
-        line_type: l.line_type,
-        description: l.description,
-        part_number: l.part_number || null,
-        quantity: l.quantity,
-        unit_price: l.unit_price,
-        total_price: l.total_price,
-      }))
-      if (toInsert.length > 0) {
-        await supabase.from('so_lines').insert(toInsert)
+      // PATCH existing lines — only update invoice-editable fields
+      for (const line of editingLines) {
+        if (line.id && originalIds.has(line.id)) {
+          await fetch(`/api/so-lines/${line.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              description: line.description,
+              part_number: line.part_number || null,
+              quantity: line.quantity,
+              unit_price: line.unit_price,
+              total_price: line.total_price,
+            }),
+          })
+        }
+      }
+
+      // INSERT new lines (those with _tempId, no existing id)
+      for (const line of editingLines) {
+        if (line._tempId && !line.id) {
+          await fetch('/api/so-lines', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              so_id: soId,
+              line_type: line.line_type,
+              description: line.description,
+              part_number: line.part_number || null,
+              quantity: line.quantity,
+              unit_price: line.unit_price,
+              total_price: line.total_price,
+            }),
+          })
+        }
+      }
+
+      // DELETE removed lines (existed in original but not in editing)
+      for (const origId of originalIds) {
+        if (!editedIds.has(origId)) {
+          await fetch(`/api/so-lines/${origId}`, { method: 'DELETE' })
+        }
       }
 
       // Recalculate totals
@@ -300,13 +331,13 @@ export default function InvoiceDetailPage() {
           const globalIdx = lines.indexOf(l)
           return (
             <tr key={l.id || l._tempId || localIdx}>
-              <td style={S.td}>{editableCell(globalIdx, 'description', l.description)}</td>
+              <td style={S.td}>{editableCell(globalIdx, 'description', l.real_name || l.description)}</td>
               <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#48536A' }}>{l.part_number || '—'}</td>
               <td style={{ ...S.td, fontFamily:'monospace', textAlign:'center' }}>{editableCell(globalIdx, 'quantity', l.quantity, 'number')}</td>
               <td style={{ ...S.td, fontFamily:'monospace', color:'#7C8BA0' }}>
-                {isDraft ? editableCell(globalIdx, 'unit_price', l.unit_price, 'number') : '$' + (l.unit_price||0).toFixed(2)}
+                {isDraft ? editableCell(globalIdx, 'unit_price', l.parts_sell_price || l.unit_price || 0, 'number') : '$' + (l.parts_sell_price || l.unit_price || 0).toFixed(2)}
               </td>
-              <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color: color }}>${(l.total_price||0).toFixed(2)}</td>
+              <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color: color }}>${(l.total_price || (l.parts_sell_price || l.unit_price || 0) * (l.quantity || 1)).toFixed(2)}</td>
               {isDraft && (
                 <td style={{ ...S.td, textAlign:'center' }}>
                   <button
