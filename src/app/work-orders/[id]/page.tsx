@@ -14,6 +14,7 @@ import JobsTab from '@/components/work-orders/JobsTab'
 import PartsTab from '@/components/work-orders/PartsTab'
 import EstimateTab from '@/components/work-orders/EstimateTab'
 import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
+import { getDefaultLaborHours } from '@/lib/labor-hours'
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
 
@@ -504,10 +505,13 @@ export default function WorkOrderDetail() {
     } catch {}
 
     for (const line of candidateLines) {
+      // Use fallback labor hours (same logic as WO creation) — AI hours override if present
+      const fallbackHours = getDefaultLaborHours(line.description)
+      const estimatedHours = line.estimated_hours || fallbackHours || null
       const res = await fetch('/api/so-lines', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ so_id: id, line_type: 'labor', description: line.description, estimated_hours: line.estimated_hours || 0, line_status: 'unassigned' }),
+        body: JSON.stringify({ so_id: id, line_type: 'labor', description: line.description, estimated_hours: estimatedHours, line_status: 'unassigned' }),
       })
       const created = res.ok ? await res.json().catch(() => null) : null
       createdLines.push({ id: created?.id, description: line.description })
@@ -517,13 +521,41 @@ export default function WorkOrderDetail() {
       if (!isDiagnosticJob(line.description)) {
         const roughParts = getAutoRoughParts(line.description)
         for (const rp of roughParts) {
-          if (!rp.is_labor) {
-            await fetch('/api/so-lines', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ so_id: id, line_type: 'part', description: rp.rough_name, rough_name: rp.rough_name, quantity: rp.quantity || 1, parts_status: 'rough' }),
-            })
+          if (rp.is_labor) continue
+          const partName = rp.rough_name || ''
+          if (!partName) continue
+
+          // Try inventory match (same logic as WO creation)
+          let invMatch: any = null
+          try {
+            const searchRes = await fetch(`/api/parts/search?q=${encodeURIComponent(partName)}`)
+            if (searchRes.ok) {
+              const results = await searchRes.json()
+              invMatch = results.find((r: any) => r.on_hand > 0) || null
+            }
+          } catch {}
+
+          const partPayload: Record<string, any> = {
+            so_id: id, line_type: 'part',
+            description: invMatch ? invMatch.description : partName,
+            rough_name: partName,
+            quantity: rp.quantity || 1,
+            parts_status: invMatch ? 'sourced' : 'rough',
           }
+          if (invMatch) {
+            partPayload.real_name = invMatch.description
+            partPayload.part_number = invMatch.part_number
+            const cost = invMatch.cost_price || 0
+            let sell = invMatch.sell_price || 0
+            if (sell <= 0 && cost > 0) sell = cost * 1.3 // 30% default markup
+            partPayload.unit_price = Math.round(sell * 100) / 100
+          }
+
+          await fetch('/api/so-lines', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(partPayload),
+          })
         }
       }
       if (line.id) await fetchAiSuggestions(line.id, line.description)
