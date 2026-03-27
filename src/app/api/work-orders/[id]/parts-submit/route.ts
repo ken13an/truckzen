@@ -21,9 +21,11 @@ export async function POST(req: Request, { params }: Params) {
 
   const { action } = await req.json()
   if (action === 'submit_all') {
+    // Only mark rough/sourced parts as received — ordered parts stay ordered
+    // until they physically arrive and are marked received individually
     await ctx.admin.from('so_lines').update({ parts_status: 'received' })
       .eq('so_id', id).eq('line_type', 'part')
-      .in('parts_status', ['rough', 'sourced', 'ordered'])
+      .in('parts_status', ['rough', 'sourced'])
 
     await ctx.admin.from('wo_activity_log').insert({
       wo_id: id, user_id: ctx.actor.id,

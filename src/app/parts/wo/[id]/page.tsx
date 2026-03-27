@@ -111,7 +111,11 @@ export default function PartsWOView() {
         }
       }
     }
-    await patchLine(lineId, {
+    // Fallback: if sell is still 0 but cost exists, apply 30% default markup
+    if (sellPrice <= 0 && costPrice > 0) {
+      sellPrice = costPrice * 1.3
+    }
+    const res = await patchLine(lineId, {
       real_name: invPart.description,
       part_number: invPart.part_number,
       parts_cost_price: costPrice,
@@ -119,6 +123,9 @@ export default function PartsWOView() {
       parts_status: 'sourced',
     })
     setSearchResults(prev => { const n = { ...prev }; delete n[lineId]; return n })
+    if (!res || !res.ok) {
+      alert('Failed to save part — check your permissions and try again')
+    }
   }
 
   const fmt = (n: number | null | undefined) => n != null ? '$' + Number(n).toFixed(2) : '--'

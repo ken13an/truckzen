@@ -398,6 +398,10 @@ export default function WorkOrderDetail() {
         }
       }
     }
+    // Fallback: if sell is still 0 but cost exists, apply 30% default markup
+    if (sellPrice <= 0 && costPrice > 0) {
+      sellPrice = costPrice * 1.3
+    }
     const roundedSell = Math.round(sellPrice * 100) / 100
     const currentLine = (wo?.so_lines || []).find((l: any) => l.id === lineId)
     const qty = currentLine?.quantity || 1
@@ -418,9 +422,14 @@ export default function WorkOrderDetail() {
 
   async function autoFillFromInventory(lineId: string, invPart: any) {
     const nextValues = applyInventoryPart(lineId, invPart)
-    await patchLine(lineId, nextValues)
+    const res = await patchLine(lineId, nextValues)
     setPartSearchResults(prev => { const n = {...prev}; delete n[lineId]; return n })
-    await loadData()
+    if (!res || !res.ok) {
+      // PATCH failed — keep optimistic state, show error, don't reload stale data
+      const err = res ? await res.json().catch(() => ({})) : {}
+      alert(err.error || 'Failed to save part — check your permissions and try again')
+    }
+    // patchLine already calls loadData on success — no second loadData needed
   }
 
   async function submitParts() {
