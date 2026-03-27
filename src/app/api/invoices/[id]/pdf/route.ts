@@ -19,7 +19,7 @@ export async function GET(_req: Request, { params }: P) {
       service_orders(so_number, complaint, cause, correction,
         assets(unit_number, year, make, model, odometer),
         users!assigned_tech(full_name),
-        so_lines(line_type, description, part_number, quantity, unit_price, total_price)
+        so_lines(line_type, description, real_name, rough_name, part_number, quantity, unit_price, total_price, parts_sell_price, billed_hours, estimated_hours, actual_hours)
       ),
       customers(company_name, contact_name, phone, email, address, city, state, zip),
       shops(name, dba, phone, email, address, city, state, zip)
@@ -167,11 +167,14 @@ export async function GET(_req: Request, { params }: P) {
         y -= 14
         break
       }
-      const desc = (l.description || '').substring(0, 55)
+      const desc = (l.real_name || l.description || '').substring(0, 55)
+      const price = l.line_type === 'part' ? (l.parts_sell_price || l.unit_price || 0) : (l.unit_price || 0)
+      const qty = l.line_type === 'labor' ? (l.billed_hours || l.actual_hours || l.estimated_hours || l.quantity || 0) : (l.quantity || 0)
+      const lineTotal = l.total_price || price * qty
       drawText(desc, colX.desc, y, { size: 9 })
-      drawText(String(l.quantity || 0), colX.qty, y, { size: 9 })
-      drawText('$' + (l.unit_price || 0).toFixed(2), colX.rate, y, { size: 9 })
-      drawText('$' + (l.total_price || 0).toFixed(2), colX.amount, y, { size: 9 })
+      drawText(String(qty), colX.qty, y, { size: 9 })
+      drawText('$' + price.toFixed(2), colX.rate, y, { size: 9 })
+      drawText('$' + lineTotal.toFixed(2), colX.amount, y, { size: 9 })
       y -= 14
     }
     y -= 4

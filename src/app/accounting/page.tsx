@@ -169,7 +169,7 @@ export default function AccountingPage() {
     const laborLines = reviewLines.filter((l: any) => l.line_type === 'labor')
     const partLines = reviewLines.filter((l: any) => l.line_type === 'part')
     const laborTotal = laborLines.reduce((s: number, l: any) => s + (l.billed_hours || l.actual_hours || l.estimated_hours || 0) * laborRate, 0)
-    const partsTotal = partLines.reduce((s: number, l: any) => s + (l.total_price || 0), 0)
+    const partsTotal = partLines.reduce((s: number, l: any) => s + (l.total_price || (l.parts_sell_price || l.unit_price || 0) * (l.quantity || 1)), 0)
     const subtotal = laborTotal + partsTotal
     const taxAmt = taxRate > 0 ? (partsTotal + (reviewShop?.tax_labor ? laborTotal : 0)) * (taxRate / 100) : 0
     const total = subtotal + taxAmt
@@ -227,18 +227,26 @@ export default function AccountingPage() {
         <div style={{ ...S.card, marginBottom: 12 }}>
           <div style={{ ...S.label, marginBottom: 10 }}>Parts</div>
           {partLines.length === 0 && <div style={{ color: '#9D9DA1', fontSize: 13 }}>No part lines</div>}
-          {partLines.map((line: any) => (
+          {partLines.map((line: any) => {
+            const partName = line.real_name || line.description || line.rough_name || '—'
+            const sellPrice = line.parts_sell_price || line.unit_price || 0
+            const qty = line.quantity || 1
+            const lineTotal = line.total_price || sellPrice * qty
+            return (
             <div key={line.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{line.description}</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{partName}</div>
                 {line.part_number && <div style={{ fontSize: 11, color: '#9D9DA1' }}>PN: {line.part_number}</div>}
+                {line.real_name && line.rough_name && line.real_name !== line.rough_name && (
+                  <div style={{ fontSize: 10, color: '#6B7280', fontStyle: 'italic' }}>was: {line.rough_name}</div>
+                )}
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{fmt(line.total_price || 0)}</div>
-                <div style={{ fontSize: 11, color: '#9D9DA1' }}>{line.quantity || 1} x {fmt(line.unit_price || 0)}</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{fmt(lineTotal)}</div>
+                <div style={{ fontSize: 11, color: '#9D9DA1' }}>{qty} x {fmt(sellPrice)}</div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
 
         {/* Totals */}
