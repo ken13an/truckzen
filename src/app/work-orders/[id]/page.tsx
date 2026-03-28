@@ -1511,7 +1511,7 @@ export default function WorkOrderDetail() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {partLines.map((p: any) => {
-                  const partsEditable = !partsLocked && (!p.parts_status || ['rough', 'sourced', 'ordered'].includes(p.parts_status))
+                  const partsEditable = !partsLocked && p.parts_status !== 'canceled'
                   const isConfirmed = p.parts_status && !['rough'].includes(p.parts_status)
                   const statusColors: Record<string, { label: string; bg: string; color: string }> = {
                     rough: { label: 'Requested', bg: '#FEF3C7', color: '#D97706' },
