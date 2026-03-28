@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
-const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'office_admin', 'accountant', 'accounting_manager']
+const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager']
 
 export default function AccountingLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()

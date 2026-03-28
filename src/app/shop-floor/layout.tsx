@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
-const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'dispatcher']
+const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer']
 
 export default function ShopFloorLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()

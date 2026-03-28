@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { ChevronRight } from 'lucide-react'
 
-const MAINTENANCE_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'maintenance_manager', 'fleet_manager']
+const MAINTENANCE_ROLES = ['owner', 'gm', 'it_person', 'maintenance_manager']
 
 const BREADCRUMB_MAP: Record<string, string> = {
   '/maintenance': 'Dashboard',

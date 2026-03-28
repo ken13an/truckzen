@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 
-const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'fleet_manager', 'maintenance_manager', 'dispatcher']
+const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'fleet_manager', 'dispatcher']
 
 export default function FleetLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
