@@ -5,14 +5,12 @@ import { ROLE_LABEL, ROLE_COLOR } from '@/lib/permissions'
 const IMPERSONATE_ROLES = [
   { key: 'owner', label: 'Owner', team: null },
   { key: 'service_writer', label: 'Service Writer', team: null },
-  { key: 'technician', label: 'Mechanic — Team A', team: 'A' },
-  { key: 'technician', label: 'Mechanic — Team B', team: 'B' },
-  { key: 'technician', label: 'Mechanic — Team C', team: 'C' },
-  { key: 'technician', label: 'Mechanic — Team D', team: 'D' },
   { key: 'shop_manager', label: 'Floor Supervisor', team: null },
   { key: 'parts_manager', label: 'Parts Department', team: null },
   { key: 'accountant', label: 'Accounting', team: null },
   { key: 'fleet_manager', label: 'Fleet Manager', team: null },
+  { key: 'maintenance_manager', label: 'Maintenance Manager', team: null },
+  { key: 'office_admin', label: 'Office Admin', team: null },
 ]
 
 export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
