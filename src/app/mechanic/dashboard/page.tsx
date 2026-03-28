@@ -266,7 +266,7 @@ export default function MechanicDashboardPage() {
 
   if (!user) return null
 
-  const isAlsoAdmin = ['owner', 'gm', 'it_person', 'shop_manager', 'office_admin'].includes(user.role)
+  const isImpersonating = !!user.impersonate_role
 
   const filteredJobs = filter === 'all' ? jobs : jobs.filter(j => j.status === filter)
 
@@ -294,10 +294,13 @@ export default function MechanicDashboardPage() {
           <Logo size="sm" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13 }}>
-          {isAlsoAdmin && (
-            <a href="/dashboard" style={{ color: BLUE, textDecoration: 'none', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-              Back to main app <ChevronRight size={14} />
-            </a>
+          {isImpersonating && (
+            <button onClick={async () => {
+              await fetch('/api/impersonate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'reset' }) })
+              window.location.href = '/dashboard'
+            }} style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 8, padding: '4px 12px', color: '#F59E0B', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 4 }}>
+              Exit Impersonation
+            </button>
           )}
           <span style={{ color: DIM }}>{user.full_name}</span>
         </div>
