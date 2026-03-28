@@ -178,11 +178,11 @@ export const ROLE_CONFIGS: Record<RoleKey, RoleConfig> = {
   fleet_manager: {
     label: 'Fleet Manager',
     redirectTo: '/fleet',
-    sidebar: sidebar('dashboard', 'fleet', 'drivers', 'maintenance', 'reports'),
+    sidebar: sidebar('fleet', 'drivers', 'compliance', 'reports'),
     permissions: {
-      dashboard: true, floor: false, orders: false, invoices: false, customers: false,
-      parts: false, fleet: true, drivers: true, maintenance: true, tires: true,
-      parts_lifecycle: true, compliance: true, accounting: false, reports: true,
+      dashboard: false, floor: false, orders: false, invoices: false, customers: false,
+      parts: false, fleet: true, drivers: true, maintenance: false, tires: false,
+      parts_lifecycle: false, compliance: true, accounting: false, reports: true,
       time_tracking: false, settings: false, kiosk_admin: false,
       import: false, admin_permissions: false, tech_mobile: false, dvir: true,
       billing: false, integrations: false, audit_log: false, smart_drop: false,

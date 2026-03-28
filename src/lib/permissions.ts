@@ -106,9 +106,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
   },
 
   fleet_manager: {
-    dashboard: true, floor: false, orders: false, invoices: false, customers: false,
-    parts: false, fleet: true, drivers: true, maintenance: true, tires: true,
-    parts_lifecycle: true, compliance: true, accounting: false, reports: true,
+    dashboard: false, floor: false, orders: false, invoices: false, customers: false,
+    parts: false, fleet: true, drivers: true, maintenance: false, tires: false,
+    parts_lifecycle: false, compliance: true, accounting: false, reports: true,
     time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: true,
     billing: false, integrations: false, audit_log: false,
