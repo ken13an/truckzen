@@ -193,12 +193,12 @@ export const ROLE_CONFIGS: Record<RoleKey, RoleConfig> = {
     label: 'Maint. Manager',
     redirectTo: '/maintenance',
     sidebar: sidebar(
-      'dashboard', 'shop_floor', 'parts', 'fleet', 'maintenance',
+      'fleet', 'maintenance',
       'compliance', 'reports', 'time_tracking',
     ),
     permissions: {
-      dashboard: true, floor: true, orders: false, invoices: false, customers: false,
-      parts: true, fleet: true, drivers: false, maintenance: true, tires: true,
+      dashboard: false, floor: false, orders: false, invoices: false, customers: false,
+      parts: false, fleet: true, drivers: false, maintenance: true, tires: true,
       parts_lifecycle: true, compliance: true, accounting: false, reports: true,
       time_tracking: true, settings: false, kiosk_admin: false,
       import: false, admin_permissions: false, tech_mobile: false, dvir: true,
