@@ -1078,20 +1078,7 @@ export default function WorkOrderDetail() {
               {qcLoading ? 'Checking...' : 'Send to Accounting'}
             </button>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <label style={{ ...labelStyle, marginBottom: 0 }}>Mileage</label>
-            <input
-              value={mileage}
-              onChange={e => setMileage(e.target.value)}
-              onBlur={() => {
-                if (asset.id && mileage !== (asset.odometer?.toString() || '')) {
-                  fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }).catch(() => {})
-                }
-              }}
-              style={{ ...inputStyle, width: 100 }}
-              placeholder="0"
-            />
-          </div>
+          {/* Mileage captured at WO creation — shown in header, not editable here */}
         </div>
       )}
 
