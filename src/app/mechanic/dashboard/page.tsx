@@ -185,7 +185,8 @@ export default function MechanicDashboardPage() {
     async function load() {
       const profile = await getCurrentUser(supabase)
       if (!profile) { window.location.href = '/login'; return }
-      if (!MECHANIC_ROLES.includes(profile.role)) { window.location.href = '/dashboard'; return }
+      const effectiveRole = profile.impersonate_role || profile.role
+      if (!MECHANIC_ROLES.includes(effectiveRole)) { window.location.href = '/dashboard'; return }
       setUser(profile)
       setLanguage(profile.language || 'en')
       await Promise.all([fetchData(profile.id), fetchActiveClock(profile.id)])
