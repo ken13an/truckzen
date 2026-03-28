@@ -118,7 +118,8 @@ export default function WorkOrdersPage() {
     return list
   }, [orders, dateRange, dateFrom, dateTo])
   const fmt = (n: number) => n ? `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—'
-  const canBulkVoid = user && ['owner', 'gm', 'it_person', 'service_writer'].includes(user.role)
+  const effectiveRole = user?.impersonate_role || user?.role || ''
+  const canBulkVoid = user && ['owner', 'gm', 'it_person', 'service_writer'].includes(effectiveRole)
 
   const toggleSelect = (id: string) => {
     setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
