@@ -85,6 +85,24 @@ export default function FleetPage() {
   return (
     <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
       {/* Header */}
+      {/* Fleet workspace navigation */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        {[
+          { href: '/fleet', label: 'Trucks', active: true },
+          { href: '/fleet/service-requests', label: 'Service Requests' },
+          { href: '/fleet/compliance', label: 'Compliance' },
+          { href: '/fleet/new', label: '+ Add Vehicle' },
+        ].map(link => (
+          <a key={link.href} href={link.href} style={{
+            padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+            textDecoration: 'none', fontFamily: 'inherit',
+            background: link.active ? 'rgba(29,111,232,.1)' : 'rgba(255,255,255,.04)',
+            color: link.active ? '#4D9EFF' : '#7C8BA0',
+            border: link.active ? '1px solid rgba(29,111,232,.2)' : '1px solid rgba(255,255,255,.06)',
+          }}>{link.label}</a>
+        ))}
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Trucks</div>
