@@ -40,7 +40,14 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
   gm:    Object.fromEntries(MODULES.map(m => [m.key, true])),
   it_person: Object.fromEntries(MODULES.map(m => [m.key, true])),
 
-  shop_manager: Object.fromEntries(MODULES.map(m => [m.key, !['billing', 'admin_permissions', 'integrations', 'audit_log'].includes(m.key)])), // includes smart_drop via MODULES
+  shop_manager: {
+    dashboard: false, floor: true, orders: true, invoices: false, customers: true,
+    parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
+    parts_lifecycle: false, compliance: false, accounting: false, reports: false,
+    time_tracking: true, settings: false,
+    import: false, admin_permissions: false, tech_mobile: false, dvir: false,
+    billing: false, integrations: false, audit_log: false, kiosk_admin: false, smart_drop: false,
+  },
 
   service_manager: {
     dashboard: true, floor: true, orders: true, invoices: true, customers: true,
@@ -133,8 +140,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
   },
 
   service_writer: {
-    dashboard: true, floor: true, orders: true, invoices: false, customers: true,
-    parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
+    dashboard: false, floor: true, orders: true, invoices: false, customers: true,
+    parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: false, reports: false,
     time_tracking: false, settings: false,
     import: false, admin_permissions: false, tech_mobile: false, dvir: false,

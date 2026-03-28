@@ -112,20 +112,25 @@ export const ROLE_CONFIGS: Record<RoleKey, RoleConfig> = {
     label: 'Shop Manager',
     redirectTo: '/floor-manager/dashboard',
     sidebar: sidebar(
-      'dashboard', 'kiosk', 'work_orders', 'customers', 'fleet', 'drivers',
-      'shop_floor', 'invoices', 'parts', 'maintenance', 'reports',
-      'time_tracking', 'smart_drop', 'settings',
+      'work_orders', 'customers', 'shop_floor', 'time_tracking',
     ),
-    permissions: allExcept(['billing', 'admin_permissions', 'integrations', 'audit_log']),
+    permissions: {
+      dashboard: false, floor: true, orders: true, invoices: false, customers: true,
+      parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
+      parts_lifecycle: false, compliance: false, accounting: false, reports: false,
+      time_tracking: true, settings: false, kiosk_admin: false,
+      import: false, admin_permissions: false, tech_mobile: false, dvir: false,
+      billing: false, integrations: false, audit_log: false, smart_drop: false,
+    },
   },
 
   service_writer: {
     label: 'Service Writer',
     redirectTo: '/work-orders',
-    sidebar: sidebar('dashboard', 'shop_floor', 'work_orders', 'customers', 'parts', 'smart_drop'),
+    sidebar: sidebar('shop_floor', 'work_orders', 'customers', 'smart_drop'),
     permissions: {
-      dashboard: true, floor: true, orders: true, invoices: false, customers: true,
-      parts: true, fleet: false, drivers: false, maintenance: false, tires: false,
+      dashboard: false, floor: true, orders: true, invoices: false, customers: true,
+      parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
       parts_lifecycle: false, compliance: false, accounting: false, reports: false,
       time_tracking: false, settings: false, kiosk_admin: false,
       import: false, admin_permissions: false, tech_mobile: false, dvir: false,
