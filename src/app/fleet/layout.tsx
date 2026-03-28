@@ -13,7 +13,7 @@ export default function FleetLayout({ children }: { children: React.ReactNode })
     getCurrentUser(supabase).then(p => {
       if (!p) { window.location.href = '/login'; return }
       const role = p.impersonate_role || p.role
-      if (ALLOWED_ROLES.includes(role) || p.is_platform_owner) { setAllowed(true) }
+      if (ALLOWED_ROLES.includes(role) || (!p.impersonate_role && p.is_platform_owner)) { setAllowed(true) }
       else { setAllowed(false); window.location.href = '/dashboard' }
     })
   }, [])

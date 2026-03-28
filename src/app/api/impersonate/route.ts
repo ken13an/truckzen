@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
 import { getPermissions } from '@/lib/getPermissions'
 
-const ALLOWED_IMPERSONATION_ROLES = new Set(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'maintenance_manager'])
+const ALLOWED_IMPERSONATION_ROLES = new Set([
+  'owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin',
+  'maintenance_manager', 'fleet_manager', 'parts_manager', 'accountant', 'dispatcher', 'technician',
+])
 
 // POST /api/impersonate — set or clear impersonation role for the authenticated user
 export async function POST(req: Request) {

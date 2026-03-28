@@ -46,7 +46,7 @@ export default function MaintenanceLayout({ children }: { children: React.ReactN
     getCurrentUser(supabase).then(p => {
       if (!p) { window.location.href = '/login'; return }
       const effectiveRole = p.impersonate_role || p.role
-      if (MAINTENANCE_ROLES.includes(effectiveRole) || p.is_platform_owner) {
+      if (MAINTENANCE_ROLES.includes(effectiveRole) || (!p.impersonate_role && p.is_platform_owner)) {
         setAllowed(true)
       } else {
         setAllowed(false)
