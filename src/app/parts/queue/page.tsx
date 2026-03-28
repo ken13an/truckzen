@@ -69,7 +69,8 @@ export default function PartsQueuePage() {
   // Categorize WOs by so_lines
   const needsParts = wos.filter(wo => {
     const parts = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
-    return parts.some((l: any) => l.parts_status === 'rough' || (!l.real_name && l.rough_name))
+    // Show WOs that have parts still needing attention: rough (unsourced), sourced (needs review/submit)
+    return parts.some((l: any) => l.parts_status === 'rough' || l.parts_status === 'sourced' || (!l.real_name && l.rough_name))
   })
   const onOrder = wos.filter(wo => {
     const parts = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
