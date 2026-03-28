@@ -1,6 +1,11 @@
 'use client'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { getCurrentUser } from '@/lib/auth'
 import { ChevronRight } from 'lucide-react'
+
+const MAINTENANCE_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'maintenance_manager', 'fleet_manager']
 
 const BREADCRUMB_MAP: Record<string, string> = {
   '/maintenance': 'Dashboard',
@@ -34,6 +39,24 @@ const BREADCRUMB_MAP: Record<string, string> = {
 
 export default function MaintenanceLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const supabase = createClient()
+  const [allowed, setAllowed] = useState<boolean | null>(null) // null = loading
+
+  useEffect(() => {
+    getCurrentUser(supabase).then(p => {
+      if (!p) { window.location.href = '/login'; return }
+      const effectiveRole = p.impersonate_role || p.role
+      if (MAINTENANCE_ROLES.includes(effectiveRole) || p.is_platform_owner) {
+        setAllowed(true)
+      } else {
+        setAllowed(false)
+        window.location.href = '/dashboard'
+      }
+    })
+  }, [])
+
+  if (allowed === null) return <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0', fontFamily: "'Instrument Sans',sans-serif" }}>Loading...</div>
+  if (!allowed) return null
 
   // Build breadcrumbs
   const crumbs: { label: string; href?: string }[] = [{ label: 'Maintenance', href: '/maintenance' }]
