@@ -228,9 +228,9 @@ export const ROLE_CONFIGS: Record<RoleKey, RoleConfig> = {
   accountant: {
     label: 'Accounting',
     redirectTo: '/accounting',
-    sidebar: sidebar('dashboard', 'invoices', 'accounting', 'reports', 'smart_drop'),
+    sidebar: sidebar('invoices', 'accounting', 'reports', 'smart_drop'),
     permissions: {
-      dashboard: true, floor: false, orders: false, invoices: true, customers: false,
+      dashboard: false, floor: false, orders: false, invoices: true, customers: false,
       parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
       parts_lifecycle: false, compliance: false, accounting: true, reports: true,
       time_tracking: false, settings: false, kiosk_admin: false,

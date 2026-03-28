@@ -122,7 +122,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Record<string, boolean>> =
   },
 
   accountant: {
-    dashboard: true, floor: false, orders: false, invoices: true, customers: false,
+    dashboard: false, floor: false, orders: false, invoices: true, customers: false,
     parts: false, fleet: false, drivers: false, maintenance: false, tires: false,
     parts_lifecycle: false, compliance: false, accounting: true, reports: true,
     time_tracking: false, settings: false,
