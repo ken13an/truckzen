@@ -33,6 +33,16 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // Role → landing page map (must match dashboard DEPT_REDIRECTS)
+  const ROLE_LANDINGS: Record<string, string> = {
+    technician: '/mechanic/dashboard', lead_tech: '/mechanic/dashboard', maintenance_technician: '/mechanic/dashboard',
+    fleet_manager: '/fleet', dispatcher: '/fleet',
+    maintenance_manager: '/maintenance',
+    parts_manager: '/parts',
+    accountant: '/accounting',
+    shop_manager: '/shop-floor', service_writer: '/work-orders',
+  }
+
   async function switchRole(role: string | null) {
     setSwitching(true)
     await fetch('/api/impersonate', {
@@ -40,10 +50,10 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: userId, role: role || 'reset' }),
     })
-    setCurrent(role === actualRole ? null : role)
-    setOpen(false)
-    setSwitching(false)
-    window.location.reload()
+    // Navigate directly to the new role's landing — no cascade of redirects
+    const effectiveRole = role === actualRole ? null : role
+    const landing = effectiveRole ? (ROLE_LANDINGS[effectiveRole] || '/dashboard') : '/dashboard'
+    window.location.href = landing
   }
 
   const displayRole = current || actualRole
