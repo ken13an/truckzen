@@ -412,7 +412,7 @@ export default function WorkOrderDetail() {
       parts_cost_price: costPrice,
       parts_sell_price: roundedSell,
       total_price: roundedSell * qty,
-      parts_status: 'sourced',
+      // Stay rough — Parts dept must confirm. Auto-fill is suggestion only.
     }
     setWo((prev: any) => ({
       ...prev,
@@ -540,7 +540,7 @@ export default function WorkOrderDetail() {
             description: invMatch ? invMatch.description : partName,
             rough_name: partName,
             quantity: rp.quantity || 1,
-            parts_status: invMatch ? 'sourced' : 'rough',
+            parts_status: 'rough', // always rough — Parts dept must confirm
           }
           if (invMatch) {
             partPayload.real_name = invMatch.description
@@ -1489,28 +1489,23 @@ export default function WorkOrderDetail() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {partLines.map((p: any) => {
                   const partsEditable = !partsLocked && (!p.parts_status || ['rough', 'sourced', 'ordered'].includes(p.parts_status))
+                  const isConfirmed = p.parts_status && !['rough'].includes(p.parts_status)
                   const statusColors: Record<string, { label: string; bg: string; color: string }> = {
-                    rough: { label: 'Rough', bg: '#F3F4F6', color: GRAY },
-                    sourced: { label: 'Sourced', bg: '#EFF6FF', color: BLUE },
+                    rough: { label: 'Requested', bg: '#FEF3C7', color: '#D97706' },
+                    sourced: { label: 'Confirmed', bg: '#EFF6FF', color: BLUE },
                     ordered: { label: 'Ordered', bg: '#FFFBEB', color: AMBER },
                     received: { label: 'Received', bg: '#F0FDF4', color: GREEN },
+                    ready_for_job: { label: 'Ready', bg: '#ECFDF5', color: GREEN },
                     installed: { label: 'Installed', bg: '#ECFDF5', color: '#059669' },
+                    canceled: { label: 'Canceled', bg: '#FEF2F2', color: '#DC2626' },
                   }
                   const st = statusColors[p.parts_status || 'rough'] || statusColors.rough
                   return (
-                    <div key={p.id} style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: 12, background: partsEditable ? '#FAFBFC' : '#fff' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <div>
-                          {p.real_name ? (
-                            <>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A' }}>{p.real_name}{p.part_number ? ` (${p.part_number})` : ''}</span>
-                              {p.rough_name && <span style={{ fontSize: 11, color: GRAY, marginLeft: 8 }}>was: {p.rough_name}</span>}
-                            </>
-                          ) : (
-                            <span style={{ fontSize: 12, color: GRAY }}>
-                              {p.rough_name ? <>Suggested: <strong style={{ color: '#374151' }}>{p.rough_name}</strong></> : (p.description || '—')}
-                            </span>
-                          )}
+                    <div key={p.id} style={{ border: `1px solid ${isConfirmed ? '#D1FAE5' : '#FDE68A'}`, borderRadius: 10, padding: 12, background: isConfirmed ? '#fff' : '#FFFBEB08' }}>
+                      {/* Request layer — always visible */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <div style={{ fontSize: 11, color: '#D97706' }}>
+                          Request: <strong style={{ color: '#92400E' }}>{p.rough_name || p.description || '—'}</strong>
                         </div>
                         {!wo.is_historical && !partsLocked && (
                           <select value={p.parts_status || 'rough'} onChange={async e => { await patchLine(p.id, { parts_status: e.target.value }); await loadData() }}
@@ -1521,12 +1516,20 @@ export default function WorkOrderDetail() {
                         {(wo.is_historical || partsLocked) && <span style={pillStyle(st.bg, st.color)}>{st.label}</span>}
                       </div>
 
+                      {/* Confirmed layer — shown when real_name exists */}
+                      {p.real_name && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, padding: '4px 0' }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A1A' }}>{p.real_name}{p.part_number ? ` (${p.part_number})` : ''}</span>
+                          {!isConfirmed && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, background: '#FEF3C7', color: '#D97706', fontWeight: 600 }}>Auto-matched — needs Parts confirmation</span>}
+                        </div>
+                      )}
+
                       {/* Editable fields for parts dept (rough/sourced state) */}
                       {partsEditable && !wo.is_historical && !isMechanic && (
                         <div style={{ position: 'relative' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
                             <div style={{ position: 'relative' }}>
-                              <span style={labelStyle}>Real Name</span>
+                              <span style={labelStyle}>Confirmed Part</span>
                               <input value={p.real_name || ''} onChange={e => { const v = e.target.value; const updated = wo.so_lines.map((l: any) => l.id === p.id ? { ...l, real_name: v } : l); setWo((prev: any) => ({ ...prev, so_lines: updated })); searchInventory(p.id, v) }} onBlur={e => { if (partDropdownClicked.current) { partDropdownClicked.current = false; return } if (e.target.value) { patchLine(p.id, { real_name: e.target.value }) } setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="Type to search inventory..." style={inputStyle} />
                               {/* Inventory search dropdown */}
                               {partSearchResults[p.id]?.length > 0 && (

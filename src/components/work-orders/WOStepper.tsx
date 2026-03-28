@@ -41,7 +41,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
 
     // Parts step: check part-type lines (not labor lines) for received/installed
     const partLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
-    const partsReceived = partLines.filter((l: any) => l.parts_status === 'received' || l.parts_status === 'installed').length
+    const partsReceived = partLines.filter((l: any) => ['received', 'ready_for_job', 'installed'].includes(l.parts_status)).length
     const noParts = partLines.length === 0
     const hasParts = noParts || partsReceived >= partLines.length
 

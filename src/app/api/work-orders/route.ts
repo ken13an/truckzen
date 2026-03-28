@@ -213,7 +213,7 @@ export async function POST(req: Request) {
         unit_price: inv ? (inv.sell_price || 0) : 0,
         parts_cost_price: inv ? (inv.cost_price || 0) : null,
         parts_sell_price: inv ? (inv.sell_price || 0) : null,
-        parts_status: inv ? 'sourced' : 'rough',
+        parts_status: 'rough', // always rough — Parts dept must confirm
       })
     }
   }

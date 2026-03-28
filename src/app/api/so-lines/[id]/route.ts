@@ -49,7 +49,7 @@ export async function PATCH(req: Request, { params }: P) {
 
   // Validate parts_status enum
   if (update.parts_status !== undefined) {
-    const VALID_PARTS_STATUSES = ['rough', 'sourced', 'ordered', 'received', 'installed']
+    const VALID_PARTS_STATUSES = ['rough', 'sourced', 'ordered', 'received', 'ready_for_job', 'installed', 'canceled']
     if (!VALID_PARTS_STATUSES.includes(update.parts_status)) {
       return NextResponse.json({ error: `Invalid parts_status "${update.parts_status}"` }, { status: 400 })
     }
