@@ -35,24 +35,26 @@ export default function MaintenanceInvoicesPage() {
   const [flagNotes, setFlagNotes] = useState('')
 
   const loadData = useCallback(async (shopId: string) => {
-    // Fetch WOs with assets — scoped to shop
+    // Fetch ONLY TruckZen-native WOs (exclude Fullbay/historical imports)
+    // Scoped to shop, with invoice activity, non-draft
     const { data } = await supabase
       .from('service_orders')
       .select(`
         id, so_number, status, invoice_status, complaint, grand_total, labor_total, parts_total,
-        created_at, closed_at,
+        created_at, closed_at, is_historical,
         assets(id, unit_number, make, model, year, ownership_type),
         customers(id, company_name)
       `)
       .eq('shop_id', shopId)
+      .eq('is_historical', false)
       .is('deleted_at', null)
       .not('invoice_status', 'is', null)
       .not('invoice_status', 'eq', 'draft')
       .order('created_at', { ascending: false })
-      .limit(200)
+      .limit(100)
 
-    // Client-side filter: ONLY maintained units (fleet_asset / owner_operator)
-    // This is the definitive scope guard — not relying on PostgREST nested filters
+    // Client-side scope guard: ONLY maintained unit types (fleet_asset / owner_operator)
+    // Excludes outside_customer and any WO without a valid asset
     const scoped = (data || []).filter((w: any) => {
       const asset = w.assets as any
       if (!asset || !asset.ownership_type) return false
