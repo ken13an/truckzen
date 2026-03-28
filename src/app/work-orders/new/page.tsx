@@ -89,8 +89,8 @@ export default function NewWorkOrderPage() {
       if (!p) { window.location.href = '/login'; return }
       // Only service-operational roles can create work orders
       const effectiveRole = p.impersonate_role || p.role
-      const SERVICE_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin']
-      if (!SERVICE_ROLES.includes(effectiveRole)) { window.location.href = '/dashboard'; return }
+      const WO_CREATE_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin']
+      if (!WO_CREATE_ROLES.includes(effectiveRole)) { window.location.href = '/dashboard'; return }
       setProfile(p)
       const partsRes = await fetch(`/api/parts?shop_id=${p.shop_id}&per_page=50`)
       const partsData = await partsRes.json()
