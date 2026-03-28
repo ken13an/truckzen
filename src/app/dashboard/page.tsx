@@ -31,10 +31,18 @@ export default function DashboardPage() {
   useEffect(() => {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
-      // Mechanic roles must use their dedicated workspace, not the main dashboard
-      const MECHANIC_ROLES = ['mechanic', 'technician', 'lead_tech', 'maintenance_technician']
-      if (MECHANIC_ROLES.includes(p.impersonate_role || p.role)) {
-        window.location.href = '/mechanic/dashboard'
+      // If impersonating a department role, redirect to that department's landing
+      const effectiveRole = p.impersonate_role || p.role
+      const DEPT_REDIRECTS: Record<string, string> = {
+        technician: '/mechanic/dashboard', lead_tech: '/mechanic/dashboard', maintenance_technician: '/mechanic/dashboard',
+        fleet_manager: '/fleet', dispatcher: '/fleet',
+        maintenance_manager: '/maintenance',
+        parts_manager: '/parts',
+        accountant: '/accounting',
+        shop_manager: '/shop-floor', service_writer: '/work-orders',
+      }
+      if (DEPT_REDIRECTS[effectiveRole]) {
+        window.location.href = DEPT_REDIRECTS[effectiveRole]
         return
       }
       setUser(p)
