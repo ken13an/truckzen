@@ -39,11 +39,12 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
     const totalJobs = jobLines.length || 1
     const hasAssign = totalJobs > 0 && jobsAssigned >= totalJobs
 
-    // Parts step: check part-type lines (not labor lines) for received/installed
-    const partLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
-    const partsReceived = partLines.filter((l: any) => ['received', 'ready_for_job', 'installed'].includes(l.parts_status)).length
-    const noParts = partLines.length === 0
-    const hasParts = noParts || partsReceived >= partLines.length
+    // Parts step: check part-type lines — canceled parts are resolved, not blockers
+    const allPartLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
+    const activePartLines = allPartLines.filter((l: any) => l.parts_status !== 'canceled')
+    const partsReceived = activePartLines.filter((l: any) => ['received', 'ready_for_job', 'installed'].includes(l.parts_status)).length
+    const noParts = activePartLines.length === 0
+    const hasParts = noParts || partsReceived >= activePartLines.length
 
     const jobsComplete = jobLines.filter((l: any) => l.line_status === 'completed' || l.completed_at).length
     const hasRepair = totalJobs > 0 && jobsComplete >= totalJobs
@@ -54,7 +55,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
       { label: 'Submit', done: hasSubmit, active: !hasSubmit, skip: false, duration: formatDuration(wo.created_at, wo.submitted_at), progress: null as string | null },
       { label: 'Estimate', done: hasEstimate, active: hasSubmit && !hasEstimate, skip: skipEstimate, duration: skipEstimate ? null : formatDuration(wo.submitted_at, wo.estimate_approved_at), progress: estimatePending ? 'Pending' : null },
       { label: 'Assign', done: hasAssign, active: hasEstimate && !hasAssign, skip: false, duration: formatDuration(wo.estimate_approved_at || wo.submitted_at, wo.assigned_at), progress: totalJobs > 0 ? `${jobsAssigned}/${totalJobs} assigned` : null },
-      { label: 'Parts', done: hasParts, active: hasEstimate && !hasParts, skip: noParts, duration: noParts ? null : formatDuration(wo.estimate_approved_at || wo.submitted_at, wo.parts_completed_at), progress: noParts ? null : `${partsReceived}/${partLines.length} received` },
+      { label: 'Parts', done: hasParts, active: hasEstimate && !hasParts, skip: noParts, duration: noParts ? null : formatDuration(wo.estimate_approved_at || wo.submitted_at, wo.parts_completed_at), progress: noParts ? null : `${partsReceived}/${activePartLines.length} received` },
       { label: 'Repair', done: hasRepair, active: hasAssign && hasParts && !hasRepair, skip: false, duration: formatDuration(wo.parts_completed_at || wo.assigned_at, wo.repair_completed_at), progress: totalJobs > 0 ? `${jobsComplete}/${totalJobs} complete` : null },
       { label: 'Invoice', done: hasInvoice, active: hasRepair && !hasInvoice, skip: false, duration: formatDuration(wo.repair_completed_at, wo.invoiced_at), progress: null },
     ]

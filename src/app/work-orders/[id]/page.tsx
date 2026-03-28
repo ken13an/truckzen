@@ -1608,11 +1608,12 @@ export default function WorkOrderDetail() {
 
           {/* Parts Submit / Save buttons */}
           {!wo.is_historical && !partsLocked && partLines.length > 0 && !isMechanic && (() => {
-            const allFilled = partLines.every((p: any) => p.real_name || !p.rough_name)
-            const someFilled = partLines.some((p: any) => p.real_name)
-            const filledCount = partLines.filter((p: any) => p.real_name).length
-            const roughCount = partLines.filter((p: any) => p.rough_name && !p.real_name).length
-            const allReceived = partLines.every((p: any) => p.parts_status === 'received' || p.parts_status === 'installed')
+            const activeParts = partLines.filter((p: any) => p.parts_status !== 'canceled')
+            const allFilled = activeParts.every((p: any) => p.real_name || !p.rough_name)
+            const someFilled = activeParts.some((p: any) => p.real_name)
+            const filledCount = activeParts.filter((p: any) => p.real_name).length
+            const roughCount = activeParts.filter((p: any) => p.rough_name && !p.real_name).length
+            const allReceived = activeParts.every((p: any) => ['received', 'ready_for_job', 'installed'].includes(p.parts_status))
 
             if (partsSubmitted || allReceived) {
               return <div style={{ ...cardStyle, marginTop: 12, textAlign: 'center', color: GREEN, fontSize: 13, fontWeight: 700, padding: 14, background: 'rgba(22,163,74,0.04)', border: '1px solid rgba(22,163,74,0.15)' }}>Parts Submitted — Mechanic Notified</div>
@@ -1620,7 +1621,7 @@ export default function WorkOrderDetail() {
 
             return (
               <div style={{ ...cardStyle, marginTop: 12 }}>
-                {roughCount > 0 && <div style={{ fontSize: 12, color: AMBER, marginBottom: 8 }}>{filledCount} of {partLines.length} parts complete — fill remaining to submit</div>}
+                {roughCount > 0 && <div style={{ fontSize: 12, color: AMBER, marginBottom: 8 }}>{filledCount} of {activeParts.length} parts confirmed — fill remaining to submit</div>}
                 <div style={{ display: 'flex', gap: 8 }}>
                   {someFilled && <button onClick={savePartsProgress} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}`, flex: 1, justifyContent: 'center' }}>Save Progress</button>}
                   <button onClick={submitParts} disabled={!allFilled || partsSubmitting} style={{ ...btnStyle(allFilled ? '#1D6FE8' : '#E5E7EB', allFilled ? '#fff' : GRAY), flex: 2, justifyContent: 'center', opacity: allFilled ? 1 : 0.5 }}>

@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: Params) {
   if (action === 'submit_to_accounting') {
     const { data: lines } = await s.from('so_lines').select('id, line_status, parts_status, real_name, rough_name, customer_provides_parts, line_type').eq('so_id', id)
     const jobs = (lines || []).filter(l => l.line_type === 'labor')
-    const parts = (lines || []).filter(l => l.rough_name || l.real_name)
+    const parts = (lines || []).filter(l => (l.rough_name || l.real_name) && l.parts_status !== 'canceled')
 
     const issues: string[] = []
     const incompleteJobs = jobs.filter(j => j.line_status !== 'completed')
@@ -116,11 +116,11 @@ export async function GET(req: Request, { params }: Params) {
 
   const { data: lines } = await s.from('so_lines').select('id, line_type, line_status, parts_status, real_name, rough_name, customer_provides_parts, description').eq('so_id', id)
   const jobs = (lines || []).filter(l => l.line_type === 'labor')
-  const parts = (lines || []).filter(l => l.rough_name || l.real_name)
+  const parts = (lines || []).filter(l => (l.rough_name || l.real_name) && l.parts_status !== 'canceled')
 
   const checks = [
     { label: 'All jobs completed', passed: jobs.every(j => j.line_status === 'completed'), detail: `${jobs.filter(j => j.line_status === 'completed').length} of ${jobs.length} done` },
-    { label: 'All parts received', passed: parts.filter(p => !p.customer_provides_parts).every(p => !p.parts_status || ['received', 'installed'].includes(p.parts_status)), detail: `${parts.filter(p => ['received', 'installed'].includes(p.parts_status || '')).length} of ${parts.length} received` },
+    { label: 'All parts received', passed: parts.filter(p => !p.customer_provides_parts).every(p => !p.parts_status || ['received', 'ready_for_job', 'installed'].includes(p.parts_status)), detail: `${parts.filter(p => ['received', 'ready_for_job', 'installed'].includes(p.parts_status || '')).length} of ${parts.length} received` },
     { label: 'All parts have real names', passed: parts.filter(p => !p.customer_provides_parts).every(p => p.real_name || !p.rough_name), detail: `${parts.filter(p => p.real_name).length} of ${parts.filter(p => p.rough_name).length} sourced` },
   ]
 
