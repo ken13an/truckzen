@@ -19,7 +19,7 @@ export async function PATCH(req: Request, { params }: P) {
   const { id } = await params
   const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager', 'accountant', 'accounting_manager'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
-  const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, service_order_id, quantity, unit_price, parts_sell_price, line_type')
+  const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, quantity, unit_price, parts_sell_price, line_type')
   if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Lock part-type lines after invoice submitted to accounting
@@ -74,7 +74,7 @@ export async function DELETE(_req: Request, { params }: P) {
   const { id } = await params
   const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
-  const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, service_order_id, line_type')
+  const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, line_type')
   if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Lock part-type lines after invoice submitted to accounting

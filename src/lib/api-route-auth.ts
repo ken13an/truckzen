@@ -34,7 +34,7 @@ export async function getWorkOrderForActor(admin: ReturnType<typeof createAdminS
   return { data, error }
 }
 
-export async function getSoLineForActor(admin: ReturnType<typeof createAdminSupabaseClient>, actor: AuthenticatedUser, lineId: string, select = 'id, so_id, service_order_id, line_type') {
+export async function getSoLineForActor(admin: ReturnType<typeof createAdminSupabaseClient>, actor: AuthenticatedUser, lineId: string, select = 'id, so_id, line_type') {
   const { data, error } = await admin
     .from('so_lines')
     .select(select)
