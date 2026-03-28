@@ -13,9 +13,10 @@ const TABS = ['Pending Review', 'Approved', 'All']
 const INVOICE_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   draft:                { label: 'Draft',            bg: '#F3F4F6', color: GRAY },
   quality_check_failed: { label: 'QC Failed',        bg: '#FEF2F2', color: RED },
-  pending_accounting:   { label: 'Pending Review',   bg: '#FFFBEB', color: AMBER },
-  accounting_approved:  { label: 'Approved',          bg: '#F0FDF4', color: GREEN },
-  sent_to_customer:     { label: 'Sent to Customer', bg: '#EFF6FF', color: BLUE },
+  accounting_review:    { label: 'Pending Review',   bg: '#FFFBEB', color: AMBER },
+  sent:                 { label: 'Sent',             bg: '#EFF6FF', color: BLUE },
+  paid:                 { label: 'Paid',             bg: '#F0FDF4', color: GREEN },
+  closed:               { label: 'Closed',           bg: '#F3F4F6', color: GRAY },
 }
 
 export default function AccountingPage() {
@@ -109,8 +110,8 @@ export default function AccountingPage() {
 
   const filteredWos = useMemo(() => {
     let list = wos.filter(wo => {
-      if (tab === 0) return wo.invoice_status === 'pending_accounting'
-      if (tab === 1) return wo.invoice_status === 'accounting_approved' || wo.invoice_status === 'sent_to_customer'
+      if (tab === 0) return wo.invoice_status === 'accounting_review'
+      if (tab === 1) return ['sent', 'paid', 'closed'].includes(wo.invoice_status)
       return true
     })
     if (acctSearch.trim()) {
@@ -271,7 +272,7 @@ export default function AccountingPage() {
         </div>
 
         {/* Action Buttons */}
-        {reviewWo.invoice_status === 'pending_accounting' && (
+        {reviewWo.invoice_status === 'accounting_review' && (
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button onClick={handleApprove} disabled={actionLoading} style={{ ...S.btn(GREEN, '#fff'), opacity: actionLoading ? 0.5 : 1 }}>
               {actionLoading ? 'Processing...' : 'Approve & Send to Customer'}
@@ -318,7 +319,7 @@ export default function AccountingPage() {
             fontSize: 13, cursor: 'pointer', fontFamily: FONT,
           }}>
             {t}
-            {i === 0 && (() => { const c = wos.filter(w => w.invoice_status === 'pending_accounting').length; return c > 0 ? ` (${c})` : '' })()}
+            {i === 0 && (() => { const c = wos.filter(w => w.invoice_status === 'accounting_review').length; return c > 0 ? ` (${c})` : '' })()}
           </button>
         ))}
       </div>
@@ -364,7 +365,7 @@ export default function AccountingPage() {
                 <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 2 }}>{fmtDate(wo.updated_at || wo.created_at)}</div>
               </div>
             </div>
-            {wo.invoice_status === 'pending_accounting' && (
+            {wo.invoice_status === 'accounting_review' && (
               <div style={{ marginTop: 10 }}>
                 <button style={{ ...S.btn(BLUE, '#fff'), fontSize: 12, padding: '6px 14px' }}>Review</button>
               </div>

@@ -2174,12 +2174,15 @@ export default function WorkOrderDetail() {
           <div style={cardStyle}>
             <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em' }}>Actions</div>
             {wo.invoice_status === 'draft' && (
-              <div>
-                <button onClick={checkInvoiceReadiness} disabled={invoiceLoading} style={btnStyle(BLUE, '#fff')}>
-                  {invoiceLoading ? 'Checking...' : 'Check Readiness & Submit'}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={btnStyle(GREEN, '#fff')}>
+                  {invoiceLoading ? 'Submitting...' : 'Submit to Accounting'}
+                </button>
+                <button onClick={checkInvoiceReadiness} disabled={invoiceLoading} style={{ ...btnStyle('#fff', GRAY), border: `1px solid #D1D5DB` }}>
+                  {invoiceLoading ? 'Checking...' : 'Check Readiness'}
                 </button>
                 {invoiceChecks.length > 0 && (
-                  <div style={{ marginTop: 10 }}>
+                  <div style={{ width: '100%', marginTop: 8 }}>
                     {invoiceChecks.map((c: any, i: number) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12 }}>
                         <span style={{ color: c.passed ? GREEN : RED, fontWeight: 700 }}>{c.passed ? '\u2713' : '\u2717'}</span>
@@ -2187,11 +2190,6 @@ export default function WorkOrderDetail() {
                         <span style={{ color: GRAY, fontSize: 11 }}>({c.detail})</span>
                       </div>
                     ))}
-                    {invoiceChecks.every((c: any) => c.passed) && (
-                      <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), marginTop: 8 }}>
-                        Submit to Accounting
-                      </button>
-                    )}
                   </div>
                 )}
               </div>

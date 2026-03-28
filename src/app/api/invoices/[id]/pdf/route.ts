@@ -169,7 +169,7 @@ export async function GET(_req: Request, { params }: P) {
       }
       const desc = (l.real_name || l.description || '').substring(0, 55)
       const price = l.line_type === 'part' ? (l.parts_sell_price || l.unit_price || 0) : (l.unit_price || 0)
-      const qty = l.line_type === 'labor' ? (l.billed_hours || l.actual_hours || l.estimated_hours || l.quantity || 0) : (l.quantity || 0)
+      const qty = l.line_type === 'labor' ? (l.billed_hours || l.quantity || 0) : (l.quantity || 0) // customer-facing: billed hours only
       const lineTotal = l.total_price || price * qty
       drawText(desc, colX.desc, y, { size: 9 })
       drawText(String(qty), colX.qty, y, { size: 9 })
