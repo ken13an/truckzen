@@ -45,6 +45,7 @@ const DEPARTMENTS: DeptSection[] = [
     label: 'Fleet', icon: Truck, color: '#22C55E', dashboardHref: '/fleet',
     items: [
       { href: '/fleet/service-requests', label: 'Service Requests', icon: FileText },
+      { href: '/fleet/compliance', label: 'Compliance', icon: ShieldCheck },
       { href: '/customers', label: 'Customers', icon: Users2 },
     ],
   },
@@ -254,7 +255,7 @@ export default function Sidebar() {
         {DEPARTMENTS.filter(dept => deptAccess.includes(dept.label)).map(dept => {
           const DeptIcon = dept.icon
           const isExpanded = expanded[dept.label]
-          const deptItems = dept.items.filter(item => visibleHrefs.has(item.href) || UNLIMITED_ROLES.includes(effectiveRole) || (dept.label === 'Maintenance' && deptAccess.includes('Maintenance')))
+          const deptItems = dept.items.filter(item => visibleHrefs.has(item.href) || UNLIMITED_ROLES.includes(effectiveRole) || (dept.label === 'Maintenance' && deptAccess.includes('Maintenance')) || (dept.label === 'Fleet' && deptAccess.includes('Fleet')))
           if (deptItems.length === 0 && !UNLIMITED_ROLES.includes(effectiveRole)) return null
 
           const hasDeptActive = isActive(dept.dashboardHref) || dept.items.some(item => isActive(item.href))
