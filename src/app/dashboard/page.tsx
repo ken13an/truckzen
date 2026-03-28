@@ -46,10 +46,12 @@ export default function DashboardPage() {
         return
       }
       setUser(p)
-      const shopRes = await fetch(`/api/settings?shop_id=${p.shop_id}`)
+      setLoading(false) // render shell immediately — data loads in parallel
+      const [shopRes] = await Promise.all([
+        fetch(`/api/settings?shop_id=${p.shop_id}`),
+        loadDashboard(p),
+      ])
       if (shopRes.ok) setShop(await shopRes.json())
-      await loadDashboard(p)
-      setLoading(false)
     })
   }, [])
 
@@ -74,13 +76,13 @@ export default function DashboardPage() {
   // Notifications are handled by the NotificationBell component (per-user only).
   // The dashboard does not display or manage notifications directly.
 
-  if (loading || !data) return <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading dashboard...</div>
+  if (loading) return <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading...</div>
 
-  const stats = data.stats || {}
-  const actionItems = data.actionItems || []
-  const teamStatus = data.teamStatus
-  const recentActivity = data.recentActivity || []
-  const role = data.role || user?.role || ''
+  const stats = data?.stats || {}
+  const actionItems = data?.actionItems || []
+  const teamStatus = data?.teamStatus
+  const recentActivity = data?.recentActivity || []
+  const role = data?.role || user?.role || ''
   const now = new Date()
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
 
