@@ -2243,27 +2243,9 @@ export default function WorkOrderDetail() {
 
           {/* Stage-specific actions */}
           {wo.invoice_status === 'draft' && (
-            <div>
-              <button onClick={checkInvoiceReadiness} disabled={invoiceLoading} style={btnStyle(BLUE, '#fff')}>
-                {invoiceLoading ? 'Checking...' : 'Check Readiness'}
-              </button>
-              {invoiceChecks.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  {invoiceChecks.map((c: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12 }}>
-                      <span style={{ color: c.passed ? GREEN : RED, fontWeight: 700 }}>{c.passed ? '\u2713' : '\u2717'}</span>
-                      <span style={{ color: c.passed ? '#374151' : RED }}>{c.label}</span>
-                      <span style={{ color: GRAY, fontSize: 11 }}>({c.detail})</span>
-                    </div>
-                  ))}
-                  {invoiceChecks.every((c: any) => c.passed) && (
-                    <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), marginTop: 8 }}>
-                      Submit to Accounting
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={btnStyle(GREEN, '#fff')}>
+              {invoiceLoading ? 'Submitting...' : 'Submit to Accounting'}
+            </button>
           )}
 
           {wo.invoice_status === 'accounting_review' && canEditPrices && (

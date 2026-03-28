@@ -22,7 +22,7 @@ export async function sendInvoiceEmail(data: any) {
   const fmt = (n: number) => '$' + Number(n || 0).toFixed(2)
   const lines = data.lines || []
   const laborLines = lines.filter((l: any) => l.line_type === 'labor')
-  const partLines = lines.filter((l: any) => l.line_type === 'part')
+  const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
   const so = data.serviceOrder || {}
 
   const lineRow = (desc: string, qty: string, rate: string, total: string) =>

@@ -150,6 +150,7 @@ export async function GET(_req: Request, { params }: P) {
 
   for (const group of groups) {
     const groupLines = lines.filter((l: any) => {
+      if (l.parts_status === 'canceled') return false // exclude canceled parts from customer invoice
       if (group.type === 'other') return !['labor', 'part'].includes(l.line_type)
       return l.line_type === group.type
     })
