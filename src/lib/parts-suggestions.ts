@@ -177,6 +177,18 @@ const JOB_AUTO_PARTS: Record<string, RoughPart[]> = {
   'water pump': [{ rough_name: 'Water Pump', quantity: 1, is_labor: false }, { rough_name: 'Water Pump Gasket', quantity: 1, is_labor: false }],
   'radiator': [{ rough_name: 'Radiator', quantity: 1, is_labor: false }],
   'windshield': [{ rough_name: 'Windshield', quantity: 1, is_labor: false }, { rough_name: 'Windshield Seal', quantity: 1, is_labor: false }],
+  'air filter': [{ rough_name: 'Air Filter', quantity: 1, is_labor: false }],
+  'fuel filter': [{ rough_name: 'Fuel Filter', quantity: 1, is_labor: false }],
+  'fuel pump': [{ rough_name: 'Fuel Pump', quantity: 1, is_labor: false }],
+  'wiper': [{ rough_name: 'Wiper Blade', quantity: 2, is_labor: false }],
+  'headlight': [{ rough_name: 'Headlight Bulb', quantity: 1, is_labor: false }],
+  'hub seal': [{ rough_name: 'Hub Seal', quantity: 1, is_labor: false }, { rough_name: 'Hub Oil', quantity: 1, is_labor: false }],
+  'wheel bearing': [{ rough_name: 'Wheel Bearing', quantity: 1, is_labor: false }],
+  'king pin': [{ rough_name: 'King Pin Kit', quantity: 1, is_labor: false }],
+  'belt': [{ rough_name: 'Serpentine Belt', quantity: 1, is_labor: false }],
+  'thermostat': [{ rough_name: 'Thermostat', quantity: 1, is_labor: false }, { rough_name: 'Coolant', quantity: 1, is_labor: false }],
+  'dpf': [{ rough_name: 'DPF Filter', quantity: 1, is_labor: false }],
+  'egr': [{ rough_name: 'EGR Valve', quantity: 1, is_labor: false }],
 }
 
 export function isDiagnosticJob(desc: string): boolean {
@@ -207,8 +219,8 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
   // PM Service
   if (['pm service', 'pm ', 'preventive maintenance', 'preventative maintenance'].some(k => lower.includes(k))) return PM_PARTS
 
-  // Oil change only
-  if (lower.includes('oil change') && !lower.includes('pm')) return OIL_CHANGE_PARTS
+  // Oil change / oil filter replacement
+  if ((lower.includes('oil change') || lower.includes('oil filter')) && !lower.includes('pm')) return OIL_CHANGE_PARTS
 
   // Brake adjustment — labor only, no parts
   if (lower.includes('brake adjustment') || lower.includes('brake adjust')) return []
