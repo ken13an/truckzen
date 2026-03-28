@@ -59,6 +59,7 @@ const DEPARTMENTS: DeptSection[] = [
       { href: '/maintenance/vendors', label: 'Vendors', icon: Building2 },
       { href: '/maintenance/parts', label: 'Parts', icon: Package },
       { href: '/maintenance/purchase-orders', label: 'Purchase Orders', icon: ShoppingCart },
+      { href: '/maintenance/invoices', label: 'Invoices', icon: Receipt },
       { href: '/maintenance/expenses', label: 'Expenses', icon: Receipt },
       { href: '/maintenance/equipment', label: 'Equipment', icon: Cog },
       { href: '/maintenance/meters', label: 'Meters', icon: Gauge },

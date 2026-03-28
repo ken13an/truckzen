@@ -12,6 +12,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/maintenance/vendors': 'Vendors',
   '/maintenance/parts': 'Parts',
   '/maintenance/purchase-orders': 'Purchase Orders',
+  '/maintenance/invoices': 'Invoices',
   '/maintenance/expenses': 'Expenses',
   '/maintenance/equipment': 'Equipment',
   '/maintenance/meters': 'Meters',
