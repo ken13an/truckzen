@@ -1482,10 +1482,33 @@ export default function WorkOrderDetail() {
       {tab === 1 && (
         <PartsTab>
         <div>
-          {/* Rough → Real Parts Flow (from so_lines) */}
+          {/* Parts workspace */}
+          {partLines.length === 0 && !partsLocked && !wo.is_historical && !isMechanic && (
+            <div style={{ ...cardStyle, textAlign: 'center', padding: 30 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: GRAY }}>No parts on this work order</div>
+              <button onClick={() => {
+                const name = prompt('Part name or description:')
+                if (!name?.trim()) return
+                fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) }).then(() => loadData())
+              }} style={{ ...btnStyle(BLUE, '#fff'), padding: '8px 20px' }}>
+                + Add Part
+              </button>
+            </div>
+          )}
           {partLines.length > 0 && (
             <div style={cardStyle}>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Parts ({partLines.length})</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>Parts ({partLines.length})</div>
+                {!partsLocked && !wo.is_historical && !isMechanic && (
+                  <button onClick={() => {
+                    const name = prompt('Part name or description:')
+                    if (!name?.trim()) return
+                    fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) }).then(() => loadData())
+                  }} style={{ ...btnStyle(BLUE, '#fff'), padding: '5px 12px', fontSize: 11 }}>
+                    + Add Part
+                  </button>
+                )}
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {partLines.map((p: any) => {
                   const partsEditable = !partsLocked && (!p.parts_status || ['rough', 'sourced', 'ordered'].includes(p.parts_status))
@@ -1561,6 +1584,15 @@ export default function WorkOrderDetail() {
                               <input type="number" step="0.01" value={p.parts_sell_price ?? ''} onChange={e => { const v = e.target.value === '' ? null : parseFloat(e.target.value); const updated = wo.so_lines.map((l: any) => l.id === p.id ? { ...l, parts_sell_price: v } : l); setWo((prev: any) => ({ ...prev, so_lines: updated })) }} onBlur={e => patchLine(p.id, { parts_sell_price: parseFloat(e.target.value) || 0, total_price: (parseFloat(e.target.value) || 0) * (p.quantity || 1) })} placeholder="0.00" style={inputStyle} />
                             </div>
                           </div>
+                        </div>
+                      )}
+
+                      {/* Delete button for editable parts */}
+                      {partsEditable && !wo.is_historical && !isMechanic && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                          <button onClick={async () => { if (!confirm('Delete this part line?')) return; await fetch(`/api/so-lines/${p.id}`, { method: 'DELETE' }); await loadData() }} style={{ background: 'none', border: `1px solid ${RED}33`, borderRadius: 6, color: RED, fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '4px 10px', fontFamily: FONT }}>
+                            Delete Part
+                          </button>
                         </div>
                       )}
 
