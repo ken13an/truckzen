@@ -98,7 +98,7 @@ const DEPT_MODULES: Record<string, string[]> = {
   Parts:       ['parts'],
   Fleet:       ['fleet', 'customers'],
   Maintenance: ['maintenance'],
-  Accounting:  ['accounting', 'invoices', 'reports'],
+  Accounting:  ['accounting', 'invoices'],
 }
 
 function getDeptAccess(
