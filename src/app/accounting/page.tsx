@@ -307,7 +307,15 @@ export default function AccountingPage() {
   // Main list view
   return (
     <div style={S.page}>
-      <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 20 }}>Accounting</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 26, fontWeight: 800 }}>Invoice Review Queue</div>
+          <div style={{ fontSize: 12, color: '#9D9DA1', marginTop: 4 }}>Work orders ready for accounting review — approve to generate invoice</div>
+        </div>
+        <a href="/invoices" style={{ padding: '8px 16px', borderRadius: 8, background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.2)', color: BLUE, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>
+          View Sent Invoices →
+        </a>
+      </div>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: 20 }}>

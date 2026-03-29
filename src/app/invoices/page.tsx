@@ -74,11 +74,14 @@ export default function InvoicesPage() {
     <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Invoices</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Sent Invoices</div>
           <div style={{ fontSize: 12, color: '#7C8BA0' }}>
-            {total.toLocaleString()} invoices{summary.sent ? ` · ${summary.sent} pending` : ''}{summary.paid ? ` · ${summary.paid} paid` : ''}
+            {total.toLocaleString()} invoices{summary.sent ? ` · ${summary.sent} pending payment` : ''}{summary.paid ? ` · ${summary.paid} paid` : ''}
           </div>
         </div>
+        <a href="/accounting" style={{ padding: '8px 16px', borderRadius: 8, background: 'rgba(217,119,6,.08)', border: '1px solid rgba(217,119,6,.2)', color: '#D97706', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>
+          ← Review Queue
+        </a>
       </div>
 
       <FilterBar
