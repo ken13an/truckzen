@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPaymentNotifications } from '@/lib/notifications/sendPaymentNotifications'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { calcInvoiceTotals } from '@/lib/invoice-calc'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -44,27 +45,7 @@ export async function POST(req: Request) {
     const taxRate = shop?.tax_rate || 0
     const laborRate = shop?.labor_rate || shop?.default_labor_rate || 125
 
-    // Labor: billed_hours only (customer-facing truth)
-    const laborTotal = lines
-      .filter((l: any) => l.line_type === 'labor')
-      .reduce((sum: number, l: any) => {
-        const hrs = l.billed_hours || 0
-        return sum + (hrs * laborRate)
-      }, 0)
-
-    // Parts: only active (non-canceled), use confirmed pricing
-    const partsTotal = lines
-      .filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
-      .reduce((sum: number, l: any) => {
-        const sell = l.parts_sell_price || l.unit_price || 0
-        const qty = l.quantity || 1
-        return sum + (l.total_price || sell * qty)
-      }, 0)
-
-    const subtotal = laborTotal + partsTotal
-    const taxableAmount = partsTotal + (shop?.tax_labor ? laborTotal : 0)
-    const taxAmount = taxableAmount * (taxRate / 100)
-    const total = subtotal + taxAmount
+    const { laborTotal, partsTotal, subtotal, taxAmount, grandTotal: total } = calcInvoiceTotals(lines, laborRate, taxRate, !!shop?.tax_labor)
 
     // Update WO totals
     await s.from('service_orders').update({

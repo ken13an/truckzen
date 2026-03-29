@@ -15,6 +15,7 @@ import PartsTab from '@/components/work-orders/PartsTab'
 import EstimateTab from '@/components/work-orders/EstimateTab'
 import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
+import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
 
@@ -659,15 +660,15 @@ export default function WorkOrderDetail() {
   const vinDisplay = asset.vin ? asset.vin.slice(-6).toUpperCase() : '—'
   const createdByName = wo.createdByName || 'Unknown'
 
-  // Compute totals
-  const laborTotal = jobLines.reduce((s: number, l: any) => s + (l.billed_hours || l.actual_hours || l.estimated_hours || 0) * laborRate, 0)
-  const partsLineTotal = partLines.reduce((s: number, l: any) => s + (l.total_price || (l.parts_sell_price || 0) * (l.quantity || 1)), 0)
+  // Compute totals — operational (internal display, fallback chain for hours)
   const woPartsTotal = woParts.reduce((s: number, p: any) => s + (p.quantity || 1) * (p.unit_cost || 0), 0)
-  const chargesTotal = shopCharges.reduce((s: number, c: any) => s + (c.amount || 0), 0)
-  const subtotal = laborTotal + partsLineTotal + woPartsTotal + chargesTotal
-  const taxablePartsTotal = partsLineTotal + woPartsTotal
-  const taxAmt = taxRate > 0 ? (taxablePartsTotal + (shop.tax_labor ? laborTotal : 0)) * (taxRate / 100) : 0
-  const grandTotal = subtotal + taxAmt
+  const opTotals = calcWoOperationalTotals(wo.so_lines || [], laborRate, taxRate, !!shop.tax_labor, shopCharges)
+  const laborTotal = opTotals.laborTotal
+  const partsLineTotal = opTotals.partsTotal
+  const chargesTotal = opTotals.chargesTotal
+  const subtotal = opTotals.subtotal + woPartsTotal
+  const taxAmt = opTotals.taxAmount
+  const grandTotal = opTotals.grandTotal + woPartsTotal
 
   const fmt = (n: number) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return d } }

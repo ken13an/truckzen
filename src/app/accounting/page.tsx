@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { PageFooter } from '@/components/ui/PageControls'
 import FilterBar from '@/components/FilterBar'
+import { calcInvoiceTotals } from '@/lib/invoice-calc'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -169,8 +170,8 @@ export default function AccountingPage() {
     const taxRate = reviewShop?.tax_rate || 0
     const laborLines = reviewLines.filter((l: any) => l.line_type === 'labor')
     const partLines = reviewLines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
-    const laborTotal = laborLines.reduce((s: number, l: any) => s + (l.billed_hours || 0) * laborRate, 0)
-    const partsTotal = partLines.reduce((s: number, l: any) => s + (l.total_price || (l.parts_sell_price || l.unit_price || 0) * (l.quantity || 1)), 0)
+    const invCalc = calcInvoiceTotals(reviewLines, laborRate, taxRate, !!reviewShop?.tax_labor)
+    const { laborTotal, partsTotal } = invCalc
 
     const saveLine = async (lineId: string, data: Record<string, any>) => {
       const res = await fetch(`/api/so-lines/${lineId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
@@ -184,9 +185,7 @@ export default function AccountingPage() {
         }
       } else { alert('Failed to save') }
     }
-    const subtotal = laborTotal + partsTotal
-    const taxAmt = taxRate > 0 ? (partsTotal + (reviewShop?.tax_labor ? laborTotal : 0)) * (taxRate / 100) : 0
-    const total = subtotal + taxAmt
+    const { subtotal, taxAmount: taxAmt, grandTotal: total } = invCalc
 
     return (
       <div style={S.page}>
