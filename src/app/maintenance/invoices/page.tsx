@@ -8,14 +8,14 @@ const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
 
-type Tab = 'unpaid' | 'paid'
+type Tab = 'unpaid' | 'paid' | 'closed'
 
 const STATUS_DISPLAY: Record<string, { label: string; color: string }> = {
   draft: { label: 'Draft', color: MUTED },
-  accounting_review: { label: 'Accounting Review', color: BLUE },
-  sent: { label: 'Sent', color: BLUE },
+  accounting_review: { label: 'Under Review', color: AMBER },
+  sent: { label: 'Sent — Awaiting Payment', color: BLUE },
   paid: { label: 'Paid', color: GREEN },
-  closed: { label: 'Closed', color: GREEN },
+  closed: { label: 'Closed', color: MUTED },
 }
 
 const MAINTAINED_TYPES = new Set(['fleet_asset', 'owner_operator'])
@@ -35,30 +35,30 @@ export default function MaintenanceInvoicesPage() {
   const [flagNotes, setFlagNotes] = useState('')
 
   const loadData = useCallback(async (shopId: string) => {
-    // Fetch ONLY TruckZen-native WOs (exclude Fullbay/historical imports)
-    // Scoped to shop, with invoice activity, non-draft
-    const { data } = await supabase
-      .from('service_orders')
-      .select(`
+    // Fetch WOs + invoice records for real totals
+    const [woRes, invRes] = await Promise.all([
+      supabase.from('service_orders').select(`
         id, so_number, status, invoice_status, complaint, grand_total, labor_total, parts_total,
         created_at, closed_at, is_historical,
         assets(id, unit_number, make, model, year, ownership_type),
         customers(id, company_name)
-      `)
-      .eq('shop_id', shopId)
-      .eq('is_historical', false)
-      .is('deleted_at', null)
-      .not('invoice_status', 'is', null)
-      .not('invoice_status', 'eq', 'draft')
-      .order('created_at', { ascending: false })
-      .limit(100)
+      `).eq('shop_id', shopId).eq('is_historical', false).is('deleted_at', null)
+        .not('invoice_status', 'is', null).not('invoice_status', 'eq', 'draft')
+        .order('created_at', { ascending: false }).limit(100),
+      supabase.from('invoices').select('id, so_id, total, balance_due, amount_paid, status')
+        .eq('shop_id', shopId).is('deleted_at', null),
+    ])
 
-    // Client-side scope guard: ONLY maintained unit types (fleet_asset / owner_operator)
-    // Excludes outside_customer and any WO without a valid asset
-    const scoped = (data || []).filter((w: any) => {
+    const invoiceMap: Record<string, any> = {}
+    for (const inv of invRes.data || []) { if (inv.so_id) invoiceMap[inv.so_id] = inv }
+
+    // Scope to maintained units + merge invoice totals
+    const scoped = (woRes.data || []).filter((w: any) => {
       const asset = w.assets as any
-      if (!asset || !asset.ownership_type) return false
-      return MAINTAINED_TYPES.has(asset.ownership_type)
+      return asset && MAINTAINED_TYPES.has(asset.ownership_type)
+    }).map((w: any) => {
+      const inv = invoiceMap[w.id]
+      return { ...w, invoice_total: inv?.total ?? null, invoice_balance: inv?.balance_due ?? null, invoice_paid: inv?.amount_paid ?? null }
     })
 
     setWos(scoped)
@@ -105,9 +105,10 @@ export default function MaintenanceInvoicesPage() {
 
   const fmt = (n: number | null | undefined) => n != null ? '$' + Number(n).toFixed(2) : '$0.00'
 
-  const unpaid = wos.filter(w => !['paid', 'closed'].includes(w.invoice_status))
-  const paid = wos.filter(w => ['paid', 'closed'].includes(w.invoice_status))
-  const display = tab === 'unpaid' ? unpaid : paid
+  const unpaid = wos.filter(w => ['accounting_review', 'sent'].includes(w.invoice_status))
+  const paid = wos.filter(w => w.invoice_status === 'paid')
+  const closed = wos.filter(w => w.invoice_status === 'closed')
+  const display = tab === 'unpaid' ? unpaid : tab === 'paid' ? paid : closed
 
   if (loading) return <div style={{ background: '#060708', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
 
@@ -137,11 +138,12 @@ export default function MaintenanceInvoicesPage() {
       <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>Invoices for fleet and owner-operator units only</div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
           { label: 'Unpaid', value: String(unpaid.length), color: AMBER },
           { label: 'Paid', value: String(paid.length), color: GREEN },
-          { label: 'Outstanding', value: fmt(unpaid.reduce((s, w) => s + (w.grand_total || 0), 0)), color: RED },
+          { label: 'Closed', value: String(closed.length), color: MUTED },
+          { label: 'Outstanding', value: fmt(unpaid.reduce((s, w) => s + (w.invoice_total ?? w.grand_total ?? 0), 0)), color: RED },
         ].map(s => (
           <div key={s.label} style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px' }}>
             <div style={{ fontSize: 9, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 4 }}>{s.label}</div>
@@ -152,14 +154,14 @@ export default function MaintenanceInvoicesPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid rgba(255,255,255,.06)' }}>
-        {(['unpaid', 'paid'] as Tab[]).map(t => (
+        {([['unpaid', `Unpaid (${unpaid.length})`], ['paid', `Paid (${paid.length})`], ['closed', `Closed (${closed.length})`]] as [Tab, string][]).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '10px 20px', background: 'none', border: 'none',
             color: tab === t ? BLUE : MUTED, fontFamily: FONT, fontSize: 13, fontWeight: 700,
             cursor: 'pointer', borderBottom: tab === t ? `2px solid ${BLUE}` : '2px solid transparent',
             textTransform: 'uppercase', letterSpacing: '.04em',
           }}>
-            {t === 'unpaid' ? `Unpaid (${unpaid.length})` : `Paid (${paid.length})`}
+            {label}
           </button>
         ))}
       </div>
@@ -168,7 +170,7 @@ export default function MaintenanceInvoicesPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {display.length === 0 && (
           <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 40, textAlign: 'center', color: '#48536A', fontSize: 13 }}>
-            {tab === 'unpaid' ? 'No unpaid invoices for maintained units' : 'No paid invoices yet'}
+            {tab === 'unpaid' ? 'No unpaid invoices for maintained units' : tab === 'paid' ? 'No paid invoices yet' : 'No closed invoices'}
           </div>
         )}
 
@@ -198,7 +200,7 @@ export default function MaintenanceInvoicesPage() {
                   {lastAction === 'approve' ? 'Approved' : lastAction === 'payment_sent' ? 'Payment Sent' : 'Issue Flagged'}
                 </span>}
                 <span style={{ fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>{st.label}</span>
-                <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 14, minWidth: 80, textAlign: 'right', color: tab === 'paid' ? GREEN : '#F0F4FF' }}>{fmt(w.grand_total)}</span>
+                <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 14, minWidth: 80, textAlign: 'right', color: tab === 'paid' ? GREEN : '#F0F4FF' }}>{fmt(w.invoice_total ?? w.grand_total)}</span>
               </div>
 
               {/* Expanded detail */}
@@ -247,7 +249,7 @@ export default function MaintenanceInvoicesPage() {
                         )}
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 14, fontWeight: 700, borderTop: '1px solid rgba(255,255,255,.08)' }}>
-                          <span>Total</span><span style={{ color: GREEN }}>{fmt(w.grand_total)}</span>
+                          <span>Total</span><span style={{ color: GREEN }}>{fmt(w.invoice_total ?? w.grand_total)}</span>
                         </div>
 
                         {/* Actions */}
