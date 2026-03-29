@@ -168,9 +168,22 @@ export default function AccountingPage() {
     const laborRate = reviewShop?.labor_rate || reviewShop?.default_labor_rate || 125
     const taxRate = reviewShop?.tax_rate || 0
     const laborLines = reviewLines.filter((l: any) => l.line_type === 'labor')
-    const partLines = reviewLines.filter((l: any) => l.line_type === 'part')
-    const laborTotal = laborLines.reduce((s: number, l: any) => s + (l.billed_hours || l.actual_hours || l.estimated_hours || 0) * laborRate, 0)
+    const partLines = reviewLines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
+    const laborTotal = laborLines.reduce((s: number, l: any) => s + (l.billed_hours || 0) * laborRate, 0)
     const partsTotal = partLines.reduce((s: number, l: any) => s + (l.total_price || (l.parts_sell_price || l.unit_price || 0) * (l.quantity || 1)), 0)
+
+    const saveLine = async (lineId: string, data: Record<string, any>) => {
+      const res = await fetch(`/api/so-lines/${lineId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+      if (res.ok) {
+        // Refresh review data
+        const refreshRes = await fetch(`/api/work-orders/${reviewWo.id}`)
+        if (refreshRes.ok) {
+          const d = await refreshRes.json()
+          setReviewWo(d)
+          setReviewLines(d.so_lines || [])
+        }
+      } else { alert('Failed to save') }
+    }
     const subtotal = laborTotal + partsTotal
     const taxAmt = taxRate > 0 ? (partsTotal + (reviewShop?.tax_labor ? laborTotal : 0)) * (taxRate / 100) : 0
     const total = subtotal + taxAmt
@@ -203,20 +216,25 @@ export default function AccountingPage() {
           <div style={{ ...S.label, marginBottom: 10 }}>Labor / Jobs</div>
           {laborLines.length === 0 && <div style={{ color: '#9D9DA1', fontSize: 13 }}>No labor lines</div>}
           {laborLines.map((line: any) => {
-            const lineAssignments = reviewAssignments.filter((a: any) => a.line_id === line.id)
-            const hours = line.billed_hours || line.actual_hours || line.estimated_hours || 0
+            const hours = line.billed_hours || 0
             return (
               <div key={line.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{line.description}</div>
-                    <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 2 }}>
-                      {lineAssignments.map((a: any) => (a.users as any)?.full_name || 'Unknown').join(', ') || 'Unassigned'}
-                    </div>
+                    {line.estimated_hours > 0 && <div style={{ fontSize: 10, color: '#6B7280', marginTop: 2 }}>Book: {line.estimated_hours}h</div>}
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{fmt(hours * laborRate)}</div>
-                    <div style={{ fontSize: 11, color: '#9D9DA1' }}>{hours.toFixed(1)} hrs @ {fmt(laborRate)}/hr</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 10, color: '#6B7280' }}>Billed Hours</div>
+                      <input type="number" step="0.25" defaultValue={hours || ''} placeholder={String(line.estimated_hours || 0)}
+                        onBlur={e => { const v = parseFloat(e.target.value) || 0; if (v !== hours) saveLine(line.id, { billed_hours: v }) }}
+                        style={{ width: 60, textAlign: 'center', padding: '3px 6px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 4, background: 'rgba(255,255,255,.04)', color: '#DDE3EE', fontSize: 13, fontFamily: 'inherit' }} />
+                    </div>
+                    <div style={{ textAlign: 'right', minWidth: 70 }}>
+                      <div style={{ fontSize: 10, color: '#6B7280' }}>@ {fmt(laborRate)}/hr</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#DDE3EE' }}>{fmt(hours * laborRate)}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -235,16 +253,27 @@ export default function AccountingPage() {
             const lineTotal = line.total_price || sellPrice * qty
             return (
             <div key={line.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{partName}</div>
                 {line.part_number && <div style={{ fontSize: 11, color: '#9D9DA1' }}>PN: {line.part_number}</div>}
-                {line.real_name && line.rough_name && line.real_name !== line.rough_name && (
-                  <div style={{ fontSize: 10, color: '#6B7280', fontStyle: 'italic' }}>was: {line.rough_name}</div>
-                )}
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{fmt(lineTotal)}</div>
-                <div style={{ fontSize: 11, color: '#9D9DA1' }}>{qty} x {fmt(sellPrice)}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, color: '#6B7280' }}>Qty</div>
+                  <input type="number" defaultValue={qty} min={1}
+                    onBlur={e => { const v = parseInt(e.target.value) || 1; if (v !== qty) saveLine(line.id, { quantity: v, total_price: (sellPrice * v) }) }}
+                    style={{ width: 40, textAlign: 'center', padding: '3px 4px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 4, background: 'rgba(255,255,255,.04)', color: '#DDE3EE', fontSize: 12, fontFamily: 'inherit' }} />
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, color: '#6B7280' }}>Sell $</div>
+                  <input type="number" step="0.01" defaultValue={sellPrice || ''}
+                    onBlur={e => { const v = parseFloat(e.target.value) || 0; if (v !== sellPrice) saveLine(line.id, { parts_sell_price: v, total_price: v * qty }) }}
+                    style={{ width: 65, textAlign: 'right', padding: '3px 4px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 4, background: 'rgba(255,255,255,.04)', color: '#DDE3EE', fontSize: 12, fontFamily: 'inherit' }} />
+                </div>
+                <div style={{ textAlign: 'right', minWidth: 60 }}>
+                  <div style={{ fontSize: 10, color: '#6B7280' }}>Total</div>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>{fmt(lineTotal)}</div>
+                </div>
               </div>
             </div>
           )})}
