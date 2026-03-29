@@ -137,7 +137,8 @@ export default function PartsWOView() {
   const allSourced = partLines.length > 0 && partLines.every((l: any) => l.parts_status !== 'rough' && l.real_name)
   const sourcedCount = partLines.filter((l: any) => l.real_name).length
   // Parts locked once invoice submitted to accounting
-  const partsLocked = !!wo?.invoice_status && !['', 'draft', 'quality_check_failed'].includes(wo.invoice_status)
+  // Parts locked after invoice sent (not during accounting_review — accounting can still edit)
+  const partsLocked = !!wo?.invoice_status && ['sent', 'paid', 'closed'].includes(wo.invoice_status)
 
   if (loading) return <div style={{ background: '#060708', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
   if (!wo) return null

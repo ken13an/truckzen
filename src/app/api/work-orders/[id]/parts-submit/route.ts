@@ -14,9 +14,9 @@ export async function POST(req: Request, { params }: Params) {
   const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, so_number, shop_id, asset_id, assigned_tech, created_by_user_id, advisor_id, invoice_status, assets(unit_number)')
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
-  // Lock: cannot submit parts after invoice submitted to accounting
-  if ((wo as any).invoice_status && ['accounting_review', 'sent', 'paid', 'closed'].includes((wo as any).invoice_status)) {
-    return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
+  // Lock: cannot submit parts after invoice sent to customer
+  if ((wo as any).invoice_status && ['sent', 'paid', 'closed'].includes((wo as any).invoice_status)) {
+    return NextResponse.json({ error: 'Part lines are locked — invoice has been sent' }, { status: 403 })
   }
 
   const { action } = await req.json()

@@ -106,6 +106,20 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ ok: true })
   }
 
+  // Reopen locked invoice for review (owner/gm/it only)
+  if (action === 'reopen') {
+    const reopenRoles = ['owner', 'gm', 'it_person']
+    if (!reopenRoles.includes(actor.role) && !actor.is_platform_owner) {
+      return NextResponse.json({ error: 'Only owner/admin can reopen invoices' }, { status: 403 })
+    }
+    if (!['sent', 'paid', 'closed'].includes(currentInvoiceStatus)) {
+      return NextResponse.json({ error: 'Invoice is not in a locked state' }, { status: 400 })
+    }
+    await s.from('service_orders').update({ invoice_status: 'accounting_review', updated_at: new Date().toISOString() }).eq('id', id)
+    await s.from('wo_activity_log').insert({ wo_id: id, user_id: user_id, action: `Invoice reopened for review (was ${currentInvoiceStatus})` })
+    return NextResponse.json({ ok: true })
+  }
+
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 }
 

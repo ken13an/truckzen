@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
 
-const LOCKED_INVOICE_STATUSES = ['accounting_review', 'sent', 'paid', 'closed']
+import { isInvoiceHardLocked } from '@/lib/invoice-lock'
 
 async function recalcTotals(admin: any, soId: string) {
   const { data: allLines } = await admin.from('so_lines').select('line_type, quantity, total_price, unit_price, parts_sell_price').eq('so_id', soId)
@@ -27,7 +27,7 @@ export async function PATCH(req: Request, { params }: P) {
     const soId = (line as any).so_id || (line as any).service_order_id
     if (soId) {
       const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soId).single()
-      if (wo?.invoice_status && LOCKED_INVOICE_STATUSES.includes(wo.invoice_status)) {
+      if (isInvoiceHardLocked(wo?.invoice_status)) {
         return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
       }
     }
@@ -82,7 +82,7 @@ export async function DELETE(_req: Request, { params }: P) {
     const soId = (line as any).so_id || (line as any).service_order_id
     if (soId) {
       const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soId).single()
-      if (wo?.invoice_status && LOCKED_INVOICE_STATUSES.includes(wo.invoice_status)) {
+      if (isInvoiceHardLocked(wo?.invoice_status)) {
         return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
       }
     }

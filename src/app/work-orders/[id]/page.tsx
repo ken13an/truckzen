@@ -16,6 +16,7 @@ import EstimateTab from '@/components/work-orders/EstimateTab'
 import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
+import { isInvoiceHardLocked } from '@/lib/invoice-lock'
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
 
@@ -645,8 +646,8 @@ export default function WorkOrderDetail() {
   const customer = wo.customers || {}
   const jobLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'labor')
   const partLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
-  // Parts locked once invoice submitted to accounting (accounting_review, sent, paid, closed)
-  const partsLocked = !!wo.invoice_status && !['', 'draft', 'quality_check_failed'].includes(wo.invoice_status)
+  // Parts locked after invoice sent to customer (sent, paid, closed) — NOT during accounting_review
+  const partsLocked = isInvoiceHardLocked(wo.invoice_status)
   const shopCharges = wo.wo_shop_charges || []
   const notes = wo.wo_notes || []
   const files = wo.wo_files || []
@@ -2225,6 +2226,14 @@ export default function WorkOrderDetail() {
             )}
             {wo.invoice_status === 'closed' && (
               <div style={{ textAlign: 'center', color: GREEN, fontWeight: 700, padding: 12 }}>Work Order Closed</div>
+            )}
+            {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ['owner', 'gm', 'it_person'].includes(userRole) && (
+              <button onClick={async () => {
+                if (!confirm('Reopen this invoice for accounting review? This will allow edits again.')) return
+                await invoiceAction('reopen')
+              }} disabled={invoiceLoading} style={{ ...btnStyle('transparent', AMBER), border: `1px solid ${AMBER}33`, marginTop: 8 }}>
+                Reopen for Review
+              </button>
             )}
           </div>
         </div>
