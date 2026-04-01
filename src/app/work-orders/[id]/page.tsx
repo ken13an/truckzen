@@ -2063,26 +2063,19 @@ export default function WorkOrderDetail() {
         <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', padding: 'clamp(12px, 3vw, 24px)' }}>
 
           {/* ── Invoice Title Bar ── */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20, paddingBottom: 16, borderBottom: '2px solid #E2E8F0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <DollarSign size={22} color={BLUE} />
-              <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Invoice</span>
-              {(() => {
-                const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-                  draft: { label: 'Draft', bg: '#F3F4F6', color: '#6B7280' },
-                  accounting_review: { label: 'Under Review', bg: '#FFFBEB', color: '#D97706' },
-                  sent: { label: 'Sent to Customer', bg: '#EFF6FF', color: '#1D6FE8' },
-                  paid: { label: 'Paid', bg: '#DCFCE7', color: '#15803D' },
-                  closed: { label: 'Closed', bg: '#F3F4F6', color: '#6B7280' },
-                }
-                const s = statusMap[wo.invoice_status] || statusMap.draft
-                return <span style={{ padding: '4px 14px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: s.bg, color: s.color, textTransform: 'uppercase', letterSpacing: '.04em' }}>{s.label}</span>
-              })()}
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: GRAY, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>Amount Due</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: GREEN, letterSpacing: '-0.02em' }}>{fmt(grandTotal)}</div>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid #E2E8F0' }}>
+            <span style={{ fontSize: 20, fontWeight: 800, color: '#1E293B', letterSpacing: '-0.02em' }}>Invoice</span>
+            {(() => {
+              const statusMap: Record<string, { label: string; bg: string; color: string }> = {
+                draft: { label: 'Draft', bg: '#F3F4F6', color: '#6B7280' },
+                accounting_review: { label: 'Under Review', bg: '#FFFBEB', color: '#D97706' },
+                sent: { label: 'Sent to Customer', bg: '#EFF6FF', color: '#1D6FE8' },
+                paid: { label: 'Paid', bg: '#DCFCE7', color: '#15803D' },
+                closed: { label: 'Closed', bg: '#F3F4F6', color: '#6B7280' },
+              }
+              const s = statusMap[wo.invoice_status] || statusMap.draft
+              return <span style={{ padding: '3px 12px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: s.bg, color: s.color, textTransform: 'uppercase', letterSpacing: '.04em' }}>{s.label}</span>
+            })()}
           </div>
 
           {/* ── Invoice Info: From / Bill To / Details ── */}
@@ -2157,13 +2150,9 @@ export default function WorkOrderDetail() {
                   return (
                     <div key={line.id} style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
                       {/* A. Job Header */}
-                      <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAFBFC' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em' }}>Job {idx + 1}</span>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{line.description?.slice(0, 60) || `Job ${idx + 1}`}</span>
-                        </div>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{fmt(jobTotal)}</span>
+                      <div style={{ padding: '10px 20px', borderBottom: '1px solid #E5E7EB', background: '#FAFBFC', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em' }}>Job {idx + 1}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{line.description?.slice(0, 60) || `Job ${idx + 1}`}</span>
                       </div>
 
                       <div style={{ padding: '0 20px' }}>
@@ -2171,7 +2160,7 @@ export default function WorkOrderDetail() {
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
                             <tr>
-                              <th style={{ textAlign: 'left', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Labor</th>
+                              <th style={{ textAlign: 'left', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Labor</th>
                               <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Est. Hrs</th>
                               <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Billed</th>
                               <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Rate</th>
@@ -2200,8 +2189,8 @@ export default function WorkOrderDetail() {
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 4 }}>
                             <thead>
                               <tr>
-                                <th style={{ textAlign: 'center', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GREEN, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 36 }}>Qty</th>
-                                <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GREEN, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Parts</th>
+                                <th style={{ textAlign: 'center', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 36 }}>Qty</th>
+                                <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Parts</th>
                                 <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Part #</th>
                                 <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 60 }}>Cost</th>
                                 <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 60 }}>Sell</th>
@@ -2237,11 +2226,11 @@ export default function WorkOrderDetail() {
                       </div>
 
                       {/* D. Job Financial Recap */}
-                      <div style={{ padding: '10px 20px', borderTop: '1px solid #E5E7EB', background: '#FAFBFC' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 24, fontSize: 12 }}>
-                          <span style={{ color: GRAY }}>Labor: <span style={{ color: '#374151', fontWeight: 600 }}>{fmt(jobLaborAmt)}</span></span>
-                          {jobParts.length > 0 && <span style={{ color: GRAY }}>Parts: <span style={{ color: '#374151', fontWeight: 600 }}>{fmt(jobPartsTotal)}</span></span>}
-                          <span style={{ color: '#1E293B', fontWeight: 700, fontSize: 13 }}>Job Total: {fmt(jobTotal)}</span>
+                      <div style={{ padding: '8px 20px', borderTop: '1px solid #F3F4F6' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 20, fontSize: 11, color: GRAY }}>
+                          <span>Labor: {fmt(jobLaborAmt)}</span>
+                          {jobParts.length > 0 && <span>Parts: {fmt(jobPartsTotal)}</span>}
+                          <span style={{ color: '#374151', fontWeight: 600 }}>Job Total: {fmt(jobTotal)}</span>
                         </div>
                       </div>
                     </div>
@@ -2251,13 +2240,9 @@ export default function WorkOrderDetail() {
                 {/* Orphan Parts — parts not linked to any specific job */}
                 {orphanParts.length > 0 && (
                   <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
-                    <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAFBFC' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Additional Parts</span>
-                        <span style={{ fontSize: 11, color: GRAY }}>({orphanParts.length} {orphanParts.length === 1 ? 'item' : 'items'})</span>
-                      </div>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{fmt(orphanParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0))}</span>
+                    <div style={{ padding: '10px 20px', borderBottom: '1px solid #E5E7EB', background: '#FAFBFC', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Additional Parts</span>
+                      <span style={{ fontSize: 11, color: GRAY }}>({orphanParts.length} {orphanParts.length === 1 ? 'item' : 'items'})</span>
                     </div>
                     <div style={{ padding: '0 20px' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -2337,113 +2322,99 @@ export default function WorkOrderDetail() {
                   <span>Tax</span><span>Exempt</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0 6px', borderTop: '2px solid #1D6FE8', marginTop: 10 }}>
-                <span style={{ fontSize: 16, fontWeight: 800, color: '#1E293B' }}>Invoice Total</span>
-                <span style={{ fontSize: 22, fontWeight: 800, color: GREEN }}>{fmt(grandTotal)}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px', borderTop: '1px solid #CBD5E1', marginTop: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#1E293B' }}>Invoice Total</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: GREEN }}>{fmt(grandTotal)}</span>
               </div>
             </div>
           </div>
 
           {/* ── Payment Instructions ── */}
-          <div style={{ background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #BFDBFE', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.04em' }}>Payment Instructions</span>
-              <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>Payable to: {SHOP_PAYMENT_INFO.companyName}</span>
+          <div style={{ background: '#FAFBFC', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '10px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '.04em' }}>Payment Instructions</span>
+              <span style={{ fontSize: 11, color: GRAY }}>Payable to: {SHOP_PAYMENT_INFO.companyName}</span>
             </div>
-            <div style={{ padding: '16px 20px' }}>
-              <div style={{ fontSize: 12, color: '#374151', fontWeight: 600, marginBottom: 12 }}>Bank: {SHOP_PAYMENT_INFO.bank}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-                {/* ACH */}
-                <div style={{ background: '#fff', borderRadius: 8, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>ACH Payment</div>
-                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+            <div style={{ padding: '12px 20px' }}>
+              <div style={{ fontSize: 11, color: GRAY, marginBottom: 10 }}>Bank: {SHOP_PAYMENT_INFO.bank}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>ACH Payment</div>
+                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6 }}>
                     <div>Account: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.ach.account}</span></div>
                     <div>Routing: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.ach.routing}</span></div>
                   </div>
                 </div>
-                {/* Wire */}
-                <div style={{ background: '#fff', borderRadius: 8, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Wire Transfer</div>
-                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Wire Transfer</div>
+                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6 }}>
                     <div>Account: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.wire.account}</span></div>
                     <div>Routing: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.wire.routing}</span></div>
                   </div>
                 </div>
-                {/* Zelle */}
-                <div style={{ background: '#fff', borderRadius: 8, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Zelle</div>
-                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Zelle</div>
+                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6 }}>
                     {SHOP_PAYMENT_INFO.zelle.map((z, i) => <div key={i}>{z}</div>)}
                   </div>
                 </div>
-                {/* Mail */}
-                <div style={{ background: '#fff', borderRadius: 8, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Mail Check To</div>
-                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Mail Check To</div>
+                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6 }}>
                     <div style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.mailTo.name}</div>
                     <div>{SHOP_PAYMENT_INFO.mailTo.address}</div>
                     <div>{SHOP_PAYMENT_INFO.mailTo.city}, {SHOP_PAYMENT_INFO.mailTo.state} {SHOP_PAYMENT_INFO.mailTo.zip}</div>
                   </div>
                 </div>
               </div>
-              <div style={{ marginTop: 14, padding: '10px 14px', background: '#EFF6FF', borderRadius: 8, border: '1px solid #BFDBFE' }}>
-                <div style={{ fontSize: 12, color: '#1E40AF', fontWeight: 600 }}>
-                  Please include {wo.invoices?.[0]?.invoice_number ? `invoice #${wo.invoices[0].invoice_number}` : `WO-${wo.so_number}`} with your payment.
-                </div>
-                <div style={{ fontSize: 11, color: GRAY, marginTop: 4 }}>Also accepted: Cash, Check, Credit/Debit Card</div>
+              <div style={{ marginTop: 10, fontSize: 11, color: GRAY }}>
+                Please include {wo.invoices?.[0]?.invoice_number ? `invoice #${wo.invoices[0].invoice_number}` : `WO-${wo.so_number}`} with your payment. Also accepted: Cash, Check, Credit/Debit Card.
               </div>
             </div>
           </div>
 
           {/* ── Actions & Documents ── */}
           <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Actions</span>
-            </div>
-            <div style={{ padding: '16px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                {/* Primary action */}
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {wo.invoice_status === 'draft' && (
-                    <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14, borderRadius: 10 }}>
-                      {invoiceLoading ? 'Submitting...' : 'Send to Accounting'}
-                    </button>
-                  )}
-                  {wo.invoice_status === 'accounting_review' && canEditPrices && (
-                    <>
-                      <button onClick={() => invoiceAction('approve_invoicing')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14, borderRadius: 10 }}>Approve & Send</button>
-                      <a href="/accounting" style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, borderRadius: 10 }}>Edit Invoice</a>
-                    </>
-                  )}
-                  {wo.invoice_status === 'accounting_review' && !canEditPrices && (
-                    <span style={{ fontSize: 13, color: AMBER, fontWeight: 600 }}>Awaiting accounting approval</span>
-                  )}
-                  {wo.invoice_status === 'sent' && canEditPrices && (
-                    <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14, borderRadius: 10 }}>Record Payment</button>
-                  )}
-                  {wo.invoice_status === 'paid' && (
-                    <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, '#fff'), padding: '10px 20px', borderRadius: 10 }}>Close Work Order</button>
-                  )}
-                  {wo.invoice_status === 'closed' && (
-                    <span style={{ color: GREEN, fontWeight: 700, fontSize: 14 }}>Work Order Closed</span>
-                  )}
-                </div>
-                {/* Document actions */}
-                {wo.invoices?.[0]?.id && (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <a href={`/api/invoices/${wo.invoices[0].id}/pdf`} target="_blank" rel="noopener" style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>PDF</a>
-                    <a href={`/invoices/${wo.invoices[0].id}`} target="_blank" rel="noopener" onClick={e => { e.preventDefault(); const w = window.open(`/invoices/${wo.invoices[0].id}`, '_blank'); if (w) setTimeout(() => w.print(), 1500) }} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, textDecoration: 'none', cursor: 'pointer', fontFamily: FONT }}>Print</a>
-                    <a href={`/invoices/${wo.invoices[0].id}`} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>View</a>
-                  </div>
+            <div style={{ padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {wo.invoice_status === 'draft' && (
+                  <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>
+                    {invoiceLoading ? 'Submitting...' : 'Send to Accounting'}
+                  </button>
+                )}
+                {wo.invoice_status === 'accounting_review' && canEditPrices && (
+                  <>
+                    <button onClick={() => invoiceAction('approve_invoicing')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Approve & Send</button>
+                    <a href="/accounting" style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, borderRadius: 8 }}>Edit Invoice</a>
+                  </>
+                )}
+                {wo.invoice_status === 'accounting_review' && !canEditPrices && (
+                  <span style={{ fontSize: 12, color: AMBER, fontWeight: 600 }}>Awaiting accounting approval</span>
+                )}
+                {wo.invoice_status === 'sent' && canEditPrices && (
+                  <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Record Payment</button>
+                )}
+                {wo.invoice_status === 'paid' && (
+                  <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, '#fff'), padding: '8px 18px', fontSize: 13, borderRadius: 8 }}>Close Work Order</button>
+                )}
+                {wo.invoice_status === 'closed' && (
+                  <span style={{ color: '#374151', fontWeight: 600, fontSize: 13 }}>Work Order Closed</span>
+                )}
+                {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ['owner', 'gm', 'it_person'].includes(userRole) && (
+                  <button onClick={async () => {
+                    if (!confirm('Reopen this invoice for accounting review? This will allow edits again.')) return
+                    await invoiceAction('reopen')
+                  }} disabled={invoiceLoading} style={{ ...btnStyle('transparent', AMBER), border: `1px solid ${AMBER}33`, padding: '6px 14px', fontSize: 12, borderRadius: 8 }}>
+                    Reopen
+                  </button>
                 )}
               </div>
-              {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ['owner', 'gm', 'it_person'].includes(userRole) && (
-                <button onClick={async () => {
-                  if (!confirm('Reopen this invoice for accounting review? This will allow edits again.')) return
-                  await invoiceAction('reopen')
-                }} disabled={invoiceLoading} style={{ ...btnStyle('transparent', AMBER), border: `1px solid ${AMBER}33`, marginTop: 12, borderRadius: 10 }}>
-                  Reopen for Review
-                </button>
+              {wo.invoices?.[0]?.id && (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <a href={`/api/invoices/${wo.invoices[0].id}/pdf`} target="_blank" rel="noopener" style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>PDF</a>
+                  <a href={`/invoices/${wo.invoices[0].id}`} target="_blank" rel="noopener" onClick={e => { e.preventDefault(); const w = window.open(`/invoices/${wo.invoices[0].id}`, '_blank'); if (w) setTimeout(() => w.print(), 1500) }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 11, fontWeight: 600, textDecoration: 'none', cursor: 'pointer', fontFamily: FONT }}>Print</a>
+                  <a href={`/invoices/${wo.invoices[0].id}`} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>View</a>
+                </div>
               )}
             </div>
           </div>
