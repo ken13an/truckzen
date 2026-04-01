@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { SHOP_PAYMENT_INFO, SHOP_MAIL_ADDRESS } from '@/lib/payment-info'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -269,19 +270,19 @@ export async function GET(_req: Request, { params }: P) {
     drawText('PAYMENT INSTRUCTIONS', leftMargin, y, { font: fontBold, size: 9, color: blue })
     y -= 14
     const payLines = [
-      'Company: UGL Truck Center Inc',
-      'Bank: Chase Bank',
+      `Company: ${SHOP_PAYMENT_INFO.companyName}`,
+      `Bank: ${SHOP_PAYMENT_INFO.bank}`,
       '',
       'ACH Payment:',
-      'Account: 583509081  |  Routing: 071000013',
+      `Account: ${SHOP_PAYMENT_INFO.ach.account}  |  Routing: ${SHOP_PAYMENT_INFO.ach.routing}`,
       '',
       'Wire Transfer:',
-      'Account: 583509081  |  Routing: 021000021',
+      `Account: ${SHOP_PAYMENT_INFO.wire.account}  |  Routing: ${SHOP_PAYMENT_INFO.wire.routing}`,
       '',
-      'Zelle: accounting.truckcenter@yahoo.com',
+      `Zelle: ${SHOP_PAYMENT_INFO.zelle[0]}`,
       '',
       'Mail Payment To:',
-      'UGL Truck Center Inc, 325 State Rte 31, Montgomery, IL 60538',
+      SHOP_MAIL_ADDRESS,
     ]
     for (const pl of payLines) {
       if (!pl) { y -= 6; continue }

@@ -17,6 +17,7 @@ import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
 import { isInvoiceHardLocked } from '@/lib/invoice-lock'
+import { SHOP_PAYMENT_INFO, SHOP_MAIL_ADDRESS } from '@/lib/payment-info'
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
 
@@ -2059,190 +2060,328 @@ export default function WorkOrderDetail() {
 
       {/* ========== TAB 5: INVOICE ========== */}
       {tab === 5 && !wo.is_historical && (
-        <div>
-          {/* Invoice workspace header */}
-          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px 20px', marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', padding: 'clamp(12px, 3vw, 24px)' }}>
+
+          {/* ── Invoice Title Bar ── */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20, paddingBottom: 16, borderBottom: '2px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <DollarSign size={22} color={BLUE} />
+              <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Invoice</span>
+              {(() => {
+                const statusMap: Record<string, { label: string; bg: string; color: string }> = {
+                  draft: { label: 'Draft', bg: '#F3F4F6', color: '#6B7280' },
+                  accounting_review: { label: 'Under Review', bg: '#FFFBEB', color: '#D97706' },
+                  sent: { label: 'Sent to Customer', bg: '#EFF6FF', color: '#1D6FE8' },
+                  paid: { label: 'Paid', bg: '#DCFCE7', color: '#15803D' },
+                  closed: { label: 'Closed', bg: '#F3F4F6', color: '#6B7280' },
+                }
+                const s = statusMap[wo.invoice_status] || statusMap.draft
+                return <span style={{ padding: '4px 14px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: s.bg, color: s.color, textTransform: 'uppercase', letterSpacing: '.04em' }}>{s.label}</span>
+              })()}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 11, color: GRAY, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>Amount Due</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: GREEN, letterSpacing: '-0.02em' }}>{fmt(grandTotal)}</div>
+            </div>
+          </div>
+
+          {/* ── Invoice Info: From / Bill To / Details ── */}
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 20 }}>
+              {/* From */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                  <span style={{ fontSize: 18, fontWeight: 800 }}>Invoice</span>
-                  {(() => {
-                    const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-                      draft: { label: 'Draft', bg: '#F3F4F6', color: '#6B7280' },
-                      accounting_review: { label: 'Under Review', bg: '#FFFBEB', color: '#D97706' },
-                      sent: { label: 'Sent to Customer', bg: '#EFF6FF', color: '#1D6FE8' },
-                      paid: { label: 'Paid', bg: '#F0FDF4', color: '#16A34A' },
-                      closed: { label: 'Closed', bg: '#F3F4F6', color: '#6B7280' },
-                    }
-                    const s = statusMap[wo.invoice_status] || statusMap.draft
-                    return <span style={{ padding: '3px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: s.bg, color: s.color, textTransform: 'uppercase', letterSpacing: '.03em' }}>{s.label}</span>
-                  })()}
+                <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>From</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{SHOP_PAYMENT_INFO.companyName}</div>
+                <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                  {SHOP_PAYMENT_INFO.mailTo.address}<br />
+                  {SHOP_PAYMENT_INFO.mailTo.city}, {SHOP_PAYMENT_INFO.mailTo.state} {SHOP_PAYMENT_INFO.mailTo.zip}
                 </div>
-                <div style={{ fontSize: 12, color: GRAY }}>
-                  {customer?.company_name || '—'} · Unit #{asset?.unit_number || '—'} · WO-{wo.so_number}
+                {shop.phone && <div style={{ fontSize: 12, color: '#374151', marginTop: 2 }}>{shop.phone}</div>}
+                {shop.email && <div style={{ fontSize: 12, color: '#374151' }}>{shop.email}</div>}
+              </div>
+              {/* Bill To */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Bill To</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{customer?.company_name || '—'}</div>
+                {(contactEmail || customer?.email) && (
+                  <div style={{ fontSize: 12, color: '#374151', marginTop: 2 }}>{contactEmail || customer.email}</div>
+                )}
+                {(contactPhone || customer?.phone) && (
+                  <div style={{ fontSize: 12, color: '#374151' }}>{contactPhone || customer.phone}</div>
+                )}
+              </div>
+              {/* Invoice Details */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Details</div>
+                <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.8 }}>
+                  <div><span style={{ color: GRAY }}>WO #:</span> <span style={{ fontWeight: 600 }}>{wo.so_number}</span></div>
+                  {wo.invoices?.[0]?.invoice_number && (
+                    <div><span style={{ color: GRAY }}>Invoice #:</span> <span style={{ fontWeight: 600 }}>{wo.invoices[0].invoice_number}</span></div>
+                  )}
+                  <div><span style={{ color: GRAY }}>Date:</span> <span style={{ fontWeight: 600 }}>{wo.created_at ? fmtDate(wo.created_at) : '—'}</span></div>
+                  <div><span style={{ color: GRAY }}>Writer:</span> <span style={{ fontWeight: 600 }}>{createdByName}</span></div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontSize: 12, color: GRAY }}>Total</span>
-                <span style={{ fontSize: 24, fontWeight: 800, color: GREEN }}>{fmt(grandTotal)}</span>
+              {/* Unit Info */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Unit</div>
+                <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.8 }}>
+                  <div style={{ fontWeight: 600 }}>#{asset?.unit_number || '—'}</div>
+                  {(asset?.year || asset?.make || asset?.model) && (
+                    <div>{[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
+                  )}
+                  {asset?.vin && <div style={{ color: GRAY, fontSize: 11 }}>VIN: ...{vinDisplay}</div>}
+                </div>
               </div>
             </div>
-            {['sent', 'paid', 'closed'].includes(wo.invoice_status) && (
-              <div style={{ marginTop: 8, fontSize: 11, color: '#D97706', fontWeight: 600, borderTop: '1px solid #E2E8F0', paddingTop: 8 }}>Editing locked — invoice has been sent to customer</div>
-            )}
           </div>
 
-          {/* Invoice Labor Lines */}
-          <div style={{ ...cardStyle, padding: '16px 20px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#1D6FE8', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 10 }}>Labor</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                  <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Job</th>
-                  <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Book Hours</th>
-                  <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Billed Hours</th>
-                  <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Rate</th>
-                  <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobLines.map((line: any, idx: number) => {
-                  const hrs = line.billed_hours || line.actual_hours || line.estimated_hours || 0
-                  return (
-                    <tr key={line.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                      <td style={{ padding: '6px 8px' }}>Job {idx + 1}: {line.description?.slice(0, 40)}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center', color: GRAY }}>{line.estimated_hours || '—'}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                        {canEditPrices ? (
-                          <input type="number" step="0.25" defaultValue={line.billed_hours || ''} onBlur={async e => { const v = parseFloat(e.target.value) || 0; if (v !== (line.billed_hours || 0)) { await patchLine(line.id, { billed_hours: v }); } }} placeholder={String(line.estimated_hours || 0)} style={{ width: 60, textAlign: 'center', padding: '2px 4px', border: '1px solid #E5E7EB', borderRadius: 4, fontSize: 12, fontFamily: 'inherit' }} />
-                        ) : (
-                          <span>{line.billed_hours || hrs}</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(laborRate)}/hr</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(hrs * laborRate)}</td>
-                    </tr>
-                  )
-                })}
-                <tr style={{ fontWeight: 700 }}>
-                  <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right' }}>Labor Total</td>
-                  <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(laborTotal)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Invoice Part Lines */}
-          {partLines.length > 0 && (
-            <div style={{ ...cardStyle, padding: '16px 20px' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#16A34A', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 10 }}>Parts</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
-                    <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part</th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part #</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Cost</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Sell</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {partLines.map((p: any) => {
-                    const sell = p.parts_sell_price || p.unit_price || 0
-                    const cost = p.parts_cost_price || 0
-                    const qty = p.quantity || 1
-                    const lineTotal = sell * qty
-                    const isZero = lineTotal === 0 && sell === 0
-                    return (
-                      <tr key={p.id} style={{ borderBottom: '1px solid #F3F4F6', opacity: isZero ? 0.45 : 1 }}>
-                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
-                        <td style={{ padding: '6px 8px' }}>
-                          <span>{p.real_name || p.rough_name || p.description || '—'}</span>
-                          {p.real_name && p.rough_name && p.real_name !== p.rough_name && (
-                            <div style={{ fontSize: 9, color: '#B0B0B0', marginTop: 1 }}>Originally: {p.rough_name}</div>
-                          )}
-                        </td>
-                        <td style={{ padding: '6px 8px', color: GRAY, fontSize: 11 }}>{p.part_number || '—'}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: GRAY, fontSize: 11 }}>{canSeePrices ? fmt(cost) : '—'}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', fontSize: 12 }}>{canSeePrices ? fmt(sell) : '—'}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, fontSize: 13 }}>{fmt(lineTotal)}</td>
-                      </tr>
-                    )
-                  })}
-                  <tr style={{ fontWeight: 700 }}>
-                    <td colSpan={5} style={{ padding: '8px 8px', textAlign: 'right' }}>Parts Total</td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(partsLineTotal)}</td>
-                  </tr>
-                </tbody>
-              </table>
+          {['sent', 'paid', 'closed'].includes(wo.invoice_status) && (
+            <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '8px 14px', marginBottom: 16, fontSize: 12, color: '#92400E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 14 }}>&#128274;</span> Editing locked — invoice has been sent to customer
             </div>
           )}
 
-          {/* Invoice Totals */}
-          <div style={{ ...cardStyle, padding: '16px 20px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 10 }}>Invoice Summary</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: '#374151' }}><span>Labor</span><span style={{ fontWeight: 600 }}>{fmt(laborTotal)}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: '#374151' }}><span>Parts</span><span style={{ fontWeight: 600 }}>{fmt(partsLineTotal + woPartsTotal)}</span></div>
-            {shopCharges.length > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: '#374151' }}><span>Shop Charges</span><span style={{ fontWeight: 600 }}>{fmt(shopCharges.reduce((s: number, c: any) => s + (c.amount || 0), 0))}</span></div>}
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, borderTop: '1px solid #E5E7EB', marginTop: 4 }}><span style={{ color: GRAY }}>Subtotal</span><span style={{ fontWeight: 600 }}>{fmt(laborTotal + partsLineTotal + woPartsTotal + shopCharges.reduce((s: number, c: any) => s + (c.amount || 0), 0))}</span></div>
-            {taxAmt > 0 ? (
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: GRAY }}><span>Tax ({taxRate}%{shop.tax_labor ? ' incl. labor' : ' parts only'})</span><span>{fmt(taxAmt)}</span></div>
-            ) : (
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12, color: '#B0B0B0' }}><span>Tax</span><span>Exempt</span></div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0 4px', fontSize: 18, fontWeight: 800, borderTop: '2px solid #1D6FE8', marginTop: 6 }}>
-              <span>Invoice Total</span>
-              <span style={{ color: GREEN }}>{fmt(grandTotal)}</span>
+          {/* ── Labor Section ── */}
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Labor</span>
+                <span style={{ fontSize: 11, color: GRAY }}>({jobLines.length} {jobLines.length === 1 ? 'line' : 'lines'})</span>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{fmt(laborTotal)}</span>
+            </div>
+            <div style={{ padding: '0 20px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Description</th>
+                    <th style={{ textAlign: 'center', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Est. Hrs</th>
+                    <th style={{ textAlign: 'center', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 90 }}>Billed Hrs</th>
+                    <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Rate</th>
+                    <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 90 }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {jobLines.map((line: any, idx: number) => {
+                    const hrs = line.billed_hours || line.actual_hours || line.estimated_hours || 0
+                    return (
+                      <tr key={line.id} style={{ borderBottom: idx < jobLines.length - 1 ? '1px solid #F8F9FA' : 'none' }}>
+                        <td style={{ padding: '10px 8px', color: '#1E293B', fontWeight: 500 }}>{line.description?.slice(0, 50) || `Job ${idx + 1}`}</td>
+                        <td style={{ padding: '10px 8px', textAlign: 'center', color: GRAY, fontSize: 11 }}>{line.estimated_hours || '—'}</td>
+                        <td style={{ padding: '10px 8px', textAlign: 'center' }}>
+                          {canEditPrices ? (
+                            <input type="number" step="0.25" defaultValue={line.billed_hours || ''} onBlur={async e => { const v = parseFloat(e.target.value) || 0; if (v !== (line.billed_hours || 0)) { await patchLine(line.id, { billed_hours: v }); } }} placeholder={String(line.estimated_hours || 0)} style={{ width: 64, textAlign: 'center', padding: '4px 6px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', background: '#FAFBFC' }} />
+                          ) : (
+                            <span style={{ fontWeight: 600 }}>{line.billed_hours || hrs}</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 8px', textAlign: 'right', color: GRAY }}>{fmt(laborRate)}/hr</td>
+                        <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{fmt(hrs * laborRate)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Invoice Actions + Documents */}
-          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '16px 20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-              {/* Primary action */}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {wo.invoice_status === 'draft' && (
-                  <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14 }}>
-                    {invoiceLoading ? 'Submitting...' : 'Send to Accounting'}
-                  </button>
-                )}
-                {wo.invoice_status === 'accounting_review' && canEditPrices && (
-                  <>
-                    <button onClick={() => invoiceAction('approve_invoicing')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14 }}>Approve & Send</button>
-                    <a href="/accounting" style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}>Edit Invoice</a>
-                  </>
-                )}
-                {wo.invoice_status === 'accounting_review' && !canEditPrices && (
-                  <span style={{ fontSize: 13, color: AMBER, fontWeight: 600 }}>Awaiting accounting approval</span>
-                )}
-                {wo.invoice_status === 'sent' && canEditPrices && (
-                  <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14 }}>Record Payment</button>
-                )}
-                {wo.invoice_status === 'paid' && (
-                  <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, '#fff'), padding: '10px 20px' }}>Close Work Order</button>
-                )}
-                {wo.invoice_status === 'closed' && (
-                  <span style={{ color: GREEN, fontWeight: 700, fontSize: 14 }}>Work Order Closed</span>
-                )}
+          {/* ── Parts Section ── */}
+          {partLines.length > 0 && (
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Parts</span>
+                  <span style={{ fontSize: 11, color: GRAY }}>({partLines.length} {partLines.length === 1 ? 'item' : 'items'})</span>
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{fmt(partsLineTotal)}</span>
               </div>
-              {/* Document actions */}
-              {wo.invoices?.[0]?.id && (
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <a href={`/api/invoices/${wo.invoices[0].id}/pdf`} target="_blank" rel="noopener" style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>PDF</a>
-                  <a href={`/invoices/${wo.invoices[0].id}`} target="_blank" rel="noopener" onClick={e => { e.preventDefault(); const w = window.open(`/invoices/${wo.invoices[0].id}`, '_blank'); if (w) setTimeout(() => w.print(), 1500) }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 11, fontWeight: 600, textDecoration: 'none', cursor: 'pointer', fontFamily: FONT }}>Print</a>
-                  <a href={`/invoices/${wo.invoices[0].id}`} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>View</a>
+              <div style={{ padding: '0 20px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'center', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 40 }}>Qty</th>
+                      <th style={{ textAlign: 'left', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Part</th>
+                      <th style={{ textAlign: 'left', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 90 }}>Part #</th>
+                      <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Cost</th>
+                      <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Sell</th>
+                      <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {partLines.map((p: any, idx: number) => {
+                      const sell = p.parts_sell_price || p.unit_price || 0
+                      const cost = p.parts_cost_price || 0
+                      const qty = p.quantity || 1
+                      const lineTotal = sell * qty
+                      const isZero = lineTotal === 0 && sell === 0
+                      return (
+                        <tr key={p.id} style={{ borderBottom: idx < partLines.length - 1 ? '1px solid #F8F9FA' : 'none', opacity: isZero ? 0.45 : 1 }}>
+                          <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 600 }}>{qty}</td>
+                          <td style={{ padding: '10px 8px' }}>
+                            <span style={{ color: '#1E293B', fontWeight: 500 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
+                            {p.real_name && p.rough_name && p.real_name !== p.rough_name && (
+                              <div style={{ fontSize: 9, color: '#B0B0B0', marginTop: 2 }}>Originally: {p.rough_name}</div>
+                            )}
+                          </td>
+                          <td style={{ padding: '10px 8px', color: GRAY, fontSize: 11 }}>{p.part_number || '—'}</td>
+                          <td style={{ padding: '10px 8px', textAlign: 'right', color: GRAY, fontSize: 11 }}>{canSeePrices ? fmt(cost) : '—'}</td>
+                          <td style={{ padding: '10px 8px', textAlign: 'right' }}>{canSeePrices ? fmt(sell) : '—'}</td>
+                          <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{fmt(lineTotal)}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── Summary & Totals ── */}
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Summary</span>
+            </div>
+            <div style={{ padding: '16px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
+                <span>Labor ({jobLines.length} {jobLines.length === 1 ? 'job' : 'jobs'})</span>
+                <span style={{ fontWeight: 600 }}>{fmt(laborTotal)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
+                <span>Parts ({partLines.length} {partLines.length === 1 ? 'item' : 'items'})</span>
+                <span style={{ fontWeight: 600 }}>{fmt(partsLineTotal + woPartsTotal)}</span>
+              </div>
+              {shopCharges.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
+                  <span>Shop Charges</span>
+                  <span style={{ fontWeight: 600 }}>{fmt(shopCharges.reduce((s: number, c: any) => s + (c.amount || 0), 0))}</span>
                 </div>
               )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, borderTop: '1px solid #E5E7EB', marginTop: 6 }}>
+                <span style={{ color: GRAY }}>Subtotal</span>
+                <span style={{ fontWeight: 600 }}>{fmt(subtotal)}</span>
+              </div>
+              {taxAmt > 0 ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: GRAY }}>
+                  <span>Tax ({taxRate}%{shop.tax_labor ? ' incl. labor' : ' parts only'})</span>
+                  <span>{fmt(taxAmt)}</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12, color: '#B0B0B0' }}>
+                  <span>Tax</span><span>Exempt</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0 6px', borderTop: '2px solid #1D6FE8', marginTop: 10 }}>
+                <span style={{ fontSize: 16, fontWeight: 800, color: '#1E293B' }}>Invoice Total</span>
+                <span style={{ fontSize: 22, fontWeight: 800, color: GREEN }}>{fmt(grandTotal)}</span>
+              </div>
             </div>
-            {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ['owner', 'gm', 'it_person'].includes(userRole) && (
-              <button onClick={async () => {
-                if (!confirm('Reopen this invoice for accounting review? This will allow edits again.')) return
-                await invoiceAction('reopen')
-              }} disabled={invoiceLoading} style={{ ...btnStyle('transparent', AMBER), border: `1px solid ${AMBER}33`, marginTop: 8 }}>
-                Reopen for Review
-              </button>
-            )}
+          </div>
+
+          {/* ── Payment Instructions ── */}
+          <div style={{ background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #BFDBFE', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.04em' }}>Payment Instructions</span>
+              <span style={{ fontSize: 12, color: '#374151', fontWeight: 600 }}>Payable to: {SHOP_PAYMENT_INFO.companyName}</span>
+            </div>
+            <div style={{ padding: '16px 20px' }}>
+              <div style={{ fontSize: 12, color: '#374151', fontWeight: 600, marginBottom: 12 }}>Bank: {SHOP_PAYMENT_INFO.bank}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                {/* ACH */}
+                <div style={{ background: '#fff', borderRadius: 8, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>ACH Payment</div>
+                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                    <div>Account: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.ach.account}</span></div>
+                    <div>Routing: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.ach.routing}</span></div>
+                  </div>
+                </div>
+                {/* Wire */}
+                <div style={{ background: '#fff', borderRadius: 8, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Wire Transfer</div>
+                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                    <div>Account: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.wire.account}</span></div>
+                    <div>Routing: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.wire.routing}</span></div>
+                  </div>
+                </div>
+                {/* Zelle */}
+                <div style={{ background: '#fff', borderRadius: 8, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Zelle</div>
+                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                    {SHOP_PAYMENT_INFO.zelle.map((z, i) => <div key={i}>{z}</div>)}
+                  </div>
+                </div>
+                {/* Mail */}
+                <div style={{ background: '#fff', borderRadius: 8, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Mail Check To</div>
+                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                    <div style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.mailTo.name}</div>
+                    <div>{SHOP_PAYMENT_INFO.mailTo.address}</div>
+                    <div>{SHOP_PAYMENT_INFO.mailTo.city}, {SHOP_PAYMENT_INFO.mailTo.state} {SHOP_PAYMENT_INFO.mailTo.zip}</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginTop: 14, padding: '10px 14px', background: '#EFF6FF', borderRadius: 8, border: '1px solid #BFDBFE' }}>
+                <div style={{ fontSize: 12, color: '#1E40AF', fontWeight: 600 }}>
+                  Please include {wo.invoices?.[0]?.invoice_number ? `invoice #${wo.invoices[0].invoice_number}` : `WO-${wo.so_number}`} with your payment.
+                </div>
+                <div style={{ fontSize: 11, color: GRAY, marginTop: 4 }}>Also accepted: Cash, Check, Credit/Debit Card</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Actions & Documents ── */}
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Actions</span>
+            </div>
+            <div style={{ padding: '16px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                {/* Primary action */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {wo.invoice_status === 'draft' && (
+                    <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14, borderRadius: 10 }}>
+                      {invoiceLoading ? 'Submitting...' : 'Send to Accounting'}
+                    </button>
+                  )}
+                  {wo.invoice_status === 'accounting_review' && canEditPrices && (
+                    <>
+                      <button onClick={() => invoiceAction('approve_invoicing')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14, borderRadius: 10 }}>Approve & Send</button>
+                      <a href="/accounting" style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, borderRadius: 10 }}>Edit Invoice</a>
+                    </>
+                  )}
+                  {wo.invoice_status === 'accounting_review' && !canEditPrices && (
+                    <span style={{ fontSize: 13, color: AMBER, fontWeight: 600 }}>Awaiting accounting approval</span>
+                  )}
+                  {wo.invoice_status === 'sent' && canEditPrices && (
+                    <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '10px 24px', fontSize: 14, borderRadius: 10 }}>Record Payment</button>
+                  )}
+                  {wo.invoice_status === 'paid' && (
+                    <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, '#fff'), padding: '10px 20px', borderRadius: 10 }}>Close Work Order</button>
+                  )}
+                  {wo.invoice_status === 'closed' && (
+                    <span style={{ color: GREEN, fontWeight: 700, fontSize: 14 }}>Work Order Closed</span>
+                  )}
+                </div>
+                {/* Document actions */}
+                {wo.invoices?.[0]?.id && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <a href={`/api/invoices/${wo.invoices[0].id}/pdf`} target="_blank" rel="noopener" style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>PDF</a>
+                    <a href={`/invoices/${wo.invoices[0].id}`} target="_blank" rel="noopener" onClick={e => { e.preventDefault(); const w = window.open(`/invoices/${wo.invoices[0].id}`, '_blank'); if (w) setTimeout(() => w.print(), 1500) }} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, textDecoration: 'none', cursor: 'pointer', fontFamily: FONT }}>Print</a>
+                    <a href={`/invoices/${wo.invoices[0].id}`} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>View</a>
+                  </div>
+                )}
+              </div>
+              {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ['owner', 'gm', 'it_person'].includes(userRole) && (
+                <button onClick={async () => {
+                  if (!confirm('Reopen this invoice for accounting review? This will allow edits again.')) return
+                  await invoiceAction('reopen')
+                }} disabled={invoiceLoading} style={{ ...btnStyle('transparent', AMBER), border: `1px solid ${AMBER}33`, marginTop: 12, borderRadius: 10 }}>
+                  Reopen for Review
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
