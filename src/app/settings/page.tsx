@@ -10,6 +10,7 @@ const SECTIONS = [
   { key: 'tax', label: 'Tax & Location' },
   { key: 'notifications', label: 'Notifications' },
   { key: 'integrations', label: 'Integrations' },
+  { key: 'payment_info', label: 'Payment Information' },
   { key: 'billing', label: 'Billing' },
   { key: 'labor_rates', label: 'Labor Rates' },
   { key: 'shop', label: 'Shop Information' },
@@ -633,6 +634,81 @@ export default function SettingsPage() {
             )}
           </div>
         )}
+      </div>
+    )
+  }
+
+  // Payment Information
+  if (activeSection === 'payment_info') {
+    const pf = editShop
+    const payField = (label: string, key: string, placeholder?: string) => (
+      <div style={{ marginBottom: 10 }}>
+        <label style={S.label}>{label}</label>
+        <input style={S.input} value={pf[key] || ''} onChange={e => setEditShop({ ...editShop, [key]: e.target.value })} placeholder={placeholder || ''} />
+      </div>
+    )
+    const savePayment = async () => {
+      setSaving(true)
+      const fields: Record<string, string> = {}
+      for (const k of ['payment_payee_name','payment_bank_name','payment_ach_account','payment_ach_routing','payment_wire_account','payment_wire_routing','payment_zelle_email_1','payment_zelle_email_2','payment_mail_payee','payment_mail_address','payment_mail_address_2','payment_mail_city','payment_mail_state','payment_mail_zip','payment_note']) {
+        fields[k] = editShop[k] || ''
+      }
+      const res = await fetch('/api/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields) })
+      if (res.ok) { setShop({ ...shop, ...fields }); alert('Payment settings saved') }
+      else { const err = await res.json(); alert(err.error || 'Save failed') }
+      setSaving(false)
+    }
+    return (
+      <div style={S.page}>
+        {backBar}
+        <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Payment Information</div>
+        <div style={S.card}>
+          <div style={{ padding: 20 }}>
+            <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 16 }}>This information appears on invoices, PDFs, and emails sent to customers.</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Company & Bank</div>
+                {payField('Payee Name', 'payment_payee_name', 'Company name for invoices')}
+                {payField('Bank Name', 'payment_bank_name', 'e.g. Chase Bank')}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>ACH Payment</div>
+                {payField('Account Number', 'payment_ach_account')}
+                {payField('Routing Number', 'payment_ach_routing')}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Wire Transfer</div>
+                {payField('Account Number', 'payment_wire_account')}
+                {payField('Routing Number', 'payment_wire_routing')}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Zelle</div>
+                {payField('Email 1', 'payment_zelle_email_1', 'Primary Zelle email')}
+                {payField('Email 2 (optional)', 'payment_zelle_email_2', 'Secondary Zelle email')}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Mail Check To</div>
+                {payField('Payee Name', 'payment_mail_payee', 'Name on check')}
+                {payField('Address', 'payment_mail_address')}
+                {payField('Address Line 2 (optional)', 'payment_mail_address_2')}
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8 }}>
+                  <div>{payField('City', 'payment_mail_city')}</div>
+                  <div>{payField('State', 'payment_mail_state')}</div>
+                  <div>{payField('ZIP', 'payment_mail_zip')}</div>
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Reference Note</div>
+                {payField('Payment Note (optional)', 'payment_note', 'e.g. Include invoice # with payment')}
+              </div>
+            </div>
+            <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
+              <button onClick={savePayment} disabled={saving} style={{ padding: '10px 24px', background: '#16A34A', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                {saving ? 'Saving...' : 'Save Payment Settings'}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

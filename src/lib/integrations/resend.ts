@@ -1,6 +1,5 @@
 // lib/integrations/resend.ts
 import { Resend } from 'resend'
-import { SHOP_PAYMENT_INFO } from '@/lib/payment-info'
 
 
 function getResend() {
@@ -100,25 +99,17 @@ export async function sendInvoiceEmail(data: any) {
       </div>
     </div>
 
-    ${!isPaid ? `
+    ${!isPaid && data.shop.payment_payee_name ? `
     <!-- Payment Instructions -->
     <div style="background:#f0f7ff;border:1px solid #BFDBFE;border-radius:8px;padding:16px 20px;margin-bottom:20px">
       <div style="font-size:13px;font-weight:700;color:#1D6FE8;margin-bottom:10px">Payment Instructions</div>
       <div style="font-size:12px;color:#374151;line-height:1.8">
-        <strong>Company:</strong> ${SHOP_PAYMENT_INFO.companyName}<br>
-        <strong>Bank:</strong> ${SHOP_PAYMENT_INFO.bank}<br><br>
-        <strong>ACH Payment:</strong><br>
-        Account: ${SHOP_PAYMENT_INFO.ach.account}<br>
-        Routing: ${SHOP_PAYMENT_INFO.ach.routing}<br><br>
-        <strong>Wire Transfer:</strong><br>
-        Account: ${SHOP_PAYMENT_INFO.wire.account}<br>
-        Routing: ${SHOP_PAYMENT_INFO.wire.routing}<br><br>
-        <strong>Zelle:</strong><br>
-        ${SHOP_PAYMENT_INFO.zelle.join('<br>')}<br><br>
-        <strong>Mail Payment To:</strong><br>
-        ${SHOP_PAYMENT_INFO.mailTo.name}<br>
-        ${SHOP_PAYMENT_INFO.mailTo.address}<br>
-        ${SHOP_PAYMENT_INFO.mailTo.city}, ${SHOP_PAYMENT_INFO.mailTo.state} ${SHOP_PAYMENT_INFO.mailTo.zip}
+        <strong>Company:</strong> ${data.shop.payment_payee_name}<br>
+        ${data.shop.payment_bank_name ? `<strong>Bank:</strong> ${data.shop.payment_bank_name}<br><br>` : ''}
+        ${data.shop.payment_ach_account ? `<strong>ACH Payment:</strong><br>Account: ${data.shop.payment_ach_account}<br>Routing: ${data.shop.payment_ach_routing || ''}<br><br>` : ''}
+        ${data.shop.payment_wire_account ? `<strong>Wire Transfer:</strong><br>Account: ${data.shop.payment_wire_account}<br>Routing: ${data.shop.payment_wire_routing || ''}<br><br>` : ''}
+        ${data.shop.payment_zelle_email_1 ? `<strong>Zelle:</strong><br>${data.shop.payment_zelle_email_1}${data.shop.payment_zelle_email_2 ? '<br>' + data.shop.payment_zelle_email_2 : ''}<br><br>` : ''}
+        ${data.shop.payment_mail_payee ? `<strong>Mail Payment To:</strong><br>${data.shop.payment_mail_payee}<br>${data.shop.payment_mail_address || ''}<br>${[data.shop.payment_mail_city, data.shop.payment_mail_state].filter(Boolean).join(', ')} ${data.shop.payment_mail_zip || ''}` : ''}
       </div>
       <div style="margin-top:12px;font-size:11px;color:#6B7280">Please include invoice number <strong>${data.invoice.invoice_number}</strong> with your payment.</div>
     </div>

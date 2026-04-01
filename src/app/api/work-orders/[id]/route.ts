@@ -60,7 +60,7 @@ export async function GET(_req: Request, { params }: Params) {
     ctx.admin.from('wo_files').select('id, user_id, file_url, filename, caption, visible_to_customer, created_at').eq('wo_id', id),
     ctx.admin.from('wo_activity_log').select('id, user_id, action, created_at').eq('wo_id', id),
     ctx.admin.from('wo_shop_charges').select('id, description, amount, taxable, created_at').eq('wo_id', id),
-    ctx.admin.from('shops').select('tax_rate, tax_labor, state, county, name, labor_rate, default_labor_rate, dba, phone, email, address').eq('id', base.shop_id).single(),
+    ctx.admin.from('shops').select('tax_rate, tax_labor, state, county, name, labor_rate, default_labor_rate, dba, phone, email, address, payment_payee_name, payment_bank_name, payment_ach_account, payment_ach_routing, payment_wire_account, payment_wire_routing, payment_zelle_email_1, payment_zelle_email_2, payment_mail_payee, payment_mail_address, payment_mail_address_2, payment_mail_city, payment_mail_state, payment_mail_zip, payment_note').eq('id', base.shop_id).single(),
     ctx.admin.from('wo_parts').select('*').eq('wo_id', id).order('created_at'),
   ])
 

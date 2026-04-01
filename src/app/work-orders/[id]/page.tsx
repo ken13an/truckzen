@@ -17,7 +17,6 @@ import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
 import { isInvoiceHardLocked } from '@/lib/invoice-lock'
-import { SHOP_PAYMENT_INFO, SHOP_MAIL_ADDRESS } from '@/lib/payment-info'
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
 
@@ -2084,11 +2083,14 @@ export default function WorkOrderDetail() {
               {/* From */}
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>From</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{SHOP_PAYMENT_INFO.companyName}</div>
-                <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
-                  {SHOP_PAYMENT_INFO.mailTo.address}<br />
-                  {SHOP_PAYMENT_INFO.mailTo.city}, {SHOP_PAYMENT_INFO.mailTo.state} {SHOP_PAYMENT_INFO.mailTo.zip}
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{shop.payment_payee_name || shop.dba || shop.name || '—'}</div>
+                {(shop.payment_mail_address || shop.address) && (
+                  <div style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
+                    {shop.payment_mail_address || shop.address}
+                    {(shop.payment_mail_city || shop.payment_mail_state || shop.payment_mail_zip) && <br />}
+                    {[shop.payment_mail_city, shop.payment_mail_state].filter(Boolean).join(', ')} {shop.payment_mail_zip || ''}
+                  </div>
+                )}
                 {shop.phone && <div style={{ fontSize: 12, color: '#374151', marginTop: 2 }}>{shop.phone}</div>}
                 {shop.email && <div style={{ fontSize: 12, color: '#374151' }}>{shop.email}</div>}
               </div>
@@ -2161,8 +2163,7 @@ export default function WorkOrderDetail() {
                           <thead>
                             <tr>
                               <th style={{ textAlign: 'left', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Labor</th>
-                              <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Est. Hrs</th>
-                              <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Billed</th>
+                              <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Hours</th>
                               <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Rate</th>
                               <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Amount</th>
                             </tr>
@@ -2170,7 +2171,6 @@ export default function WorkOrderDetail() {
                           <tbody>
                             <tr>
                               <td style={{ padding: '8px 8px', color: '#374151', fontWeight: 500 }}>{line.description?.slice(0, 50) || `Job ${idx + 1}`}</td>
-                              <td style={{ padding: '8px 8px', textAlign: 'center', color: GRAY, fontSize: 11 }}>{line.estimated_hours || '—'}</td>
                               <td style={{ padding: '8px 8px', textAlign: 'center' }}>
                                 {canEditPrices ? (
                                   <input type="number" step="0.25" defaultValue={line.billed_hours || ''} onBlur={async e => { const v = parseFloat(e.target.value) || 0; if (v !== (line.billed_hours || 0)) { await patchLine(line.id, { billed_hours: v }); } }} placeholder={String(line.estimated_hours || 0)} style={{ width: 60, textAlign: 'center', padding: '4px 6px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', background: '#FAFBFC' }} />
@@ -2330,48 +2330,59 @@ export default function WorkOrderDetail() {
           </div>
 
           {/* ── Payment Instructions ── */}
+          {shop.payment_payee_name && (
           <div style={{ background: '#FAFBFC', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
             <div style={{ padding: '10px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '.04em' }}>Payment Instructions</span>
-              <span style={{ fontSize: 11, color: GRAY }}>Payable to: {SHOP_PAYMENT_INFO.companyName}</span>
+              <span style={{ fontSize: 11, color: GRAY }}>Payable to: {shop.payment_payee_name}</span>
             </div>
             <div style={{ padding: '12px 20px' }}>
-              <div style={{ fontSize: 11, color: GRAY, marginBottom: 10 }}>Bank: {SHOP_PAYMENT_INFO.bank}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
+              {shop.payment_bank_name && <div style={{ fontSize: 11, color: GRAY, marginBottom: 10 }}>Bank: {shop.payment_bank_name}</div>}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 10 }}>
+                {shop.payment_ach_account && (
+                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>ACH Payment</div>
                   <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6 }}>
-                    <div>Account: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.ach.account}</span></div>
-                    <div>Routing: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.ach.routing}</span></div>
+                    <div>Account: <span style={{ fontWeight: 600 }}>{shop.payment_ach_account}</span></div>
+                    {shop.payment_ach_routing && <div>Routing: <span style={{ fontWeight: 600 }}>{shop.payment_ach_routing}</span></div>}
                   </div>
                 </div>
-                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
+                )}
+                {shop.payment_wire_account && (
+                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Wire Transfer</div>
                   <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6 }}>
-                    <div>Account: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.wire.account}</span></div>
-                    <div>Routing: <span style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.wire.routing}</span></div>
+                    <div>Account: <span style={{ fontWeight: 600 }}>{shop.payment_wire_account}</span></div>
+                    {shop.payment_wire_routing && <div>Routing: <span style={{ fontWeight: 600 }}>{shop.payment_wire_routing}</span></div>}
                   </div>
                 </div>
-                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
+                )}
+                {(shop.payment_zelle_email_1 || shop.payment_zelle_email_2) && (
+                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Zelle</div>
-                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6 }}>
-                    {SHOP_PAYMENT_INFO.zelle.map((z, i) => <div key={i}>{z}</div>)}
+                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6, overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                    {shop.payment_zelle_email_1 && <div>{shop.payment_zelle_email_1}</div>}
+                    {shop.payment_zelle_email_2 && <div>{shop.payment_zelle_email_2}</div>}
                   </div>
                 </div>
-                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB' }}>
+                )}
+                {shop.payment_mail_payee && (
+                <div style={{ background: '#fff', borderRadius: 6, padding: '10px 12px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Mail Check To</div>
-                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6 }}>
-                    <div style={{ fontWeight: 600 }}>{SHOP_PAYMENT_INFO.mailTo.name}</div>
-                    <div>{SHOP_PAYMENT_INFO.mailTo.address}</div>
-                    <div>{SHOP_PAYMENT_INFO.mailTo.city}, {SHOP_PAYMENT_INFO.mailTo.state} {SHOP_PAYMENT_INFO.mailTo.zip}</div>
+                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.6, overflowWrap: 'break-word' }}>
+                    <div style={{ fontWeight: 600 }}>{shop.payment_mail_payee}</div>
+                    {shop.payment_mail_address && <div>{shop.payment_mail_address}</div>}
+                    {(shop.payment_mail_city || shop.payment_mail_state || shop.payment_mail_zip) && <div>{[shop.payment_mail_city, shop.payment_mail_state].filter(Boolean).join(', ')} {shop.payment_mail_zip || ''}</div>}
                   </div>
                 </div>
+                )}
               </div>
               <div style={{ marginTop: 10, fontSize: 11, color: GRAY }}>
                 Please include {wo.invoices?.[0]?.invoice_number ? `invoice #${wo.invoices[0].invoice_number}` : `WO-${wo.so_number}`} with your payment. Also accepted: Cash, Check, Credit/Debit Card.
               </div>
             </div>
           </div>
+          )}
 
           {/* ── Actions & Documents ── */}
           <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>

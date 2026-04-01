@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
-import { SHOP_PAYMENT_INFO, SHOP_MAIL_ADDRESS } from '@/lib/payment-info'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -23,7 +22,7 @@ export async function GET(_req: Request, { params }: P) {
         so_lines(line_type, description, real_name, rough_name, part_number, quantity, unit_price, total_price, parts_sell_price, billed_hours, estimated_hours, actual_hours, parts_status, related_labor_line_id)
       ),
       customers(company_name, contact_name, phone, email, address, city, state, zip, payment_terms),
-      shops(name, dba, phone, email, address, city, state, zip, logo_url)
+      shops(name, dba, phone, email, address, city, state, zip, logo_url, payment_payee_name, payment_bank_name, payment_ach_account, payment_ach_routing, payment_wire_account, payment_wire_routing, payment_zelle_email_1, payment_zelle_email_2, payment_mail_payee, payment_mail_address, payment_mail_address_2, payment_mail_city, payment_mail_state, payment_mail_zip, payment_note)
     `)
     .eq('id', id)
     .single()
@@ -262,27 +261,21 @@ export async function GET(_req: Request, { params }: P) {
     drawText('Payment due by ' + inv.due_date, leftMargin, y, { size: 9, color: gray })
   }
 
-  // Payment instructions (same as email)
-  if ((inv.balance_due || 0) > 0) {
+  // Payment instructions — read from DB-backed shop settings
+  if ((inv.balance_due || 0) > 0 && shop?.payment_payee_name) {
     y -= 18
     drawLine(leftMargin, y + 4, rightEdge, blue)
     y -= 4
     drawText('PAYMENT INSTRUCTIONS', leftMargin, y, { font: fontBold, size: 9, color: blue })
     y -= 14
-    const payLines = [
-      `Company: ${SHOP_PAYMENT_INFO.companyName}`,
-      `Bank: ${SHOP_PAYMENT_INFO.bank}`,
+    const payLines: string[] = [
+      `Company: ${shop.payment_payee_name}`,
+      ...(shop.payment_bank_name ? [`Bank: ${shop.payment_bank_name}`] : []),
       '',
-      'ACH Payment:',
-      `Account: ${SHOP_PAYMENT_INFO.ach.account}  |  Routing: ${SHOP_PAYMENT_INFO.ach.routing}`,
-      '',
-      'Wire Transfer:',
-      `Account: ${SHOP_PAYMENT_INFO.wire.account}  |  Routing: ${SHOP_PAYMENT_INFO.wire.routing}`,
-      '',
-      `Zelle: ${SHOP_PAYMENT_INFO.zelle[0]}`,
-      '',
-      'Mail Payment To:',
-      SHOP_MAIL_ADDRESS,
+      ...(shop.payment_ach_account ? ['ACH Payment:', `Account: ${shop.payment_ach_account}  |  Routing: ${shop.payment_ach_routing || ''}`, ''] : []),
+      ...(shop.payment_wire_account ? ['Wire Transfer:', `Account: ${shop.payment_wire_account}  |  Routing: ${shop.payment_wire_routing || ''}`, ''] : []),
+      ...(shop.payment_zelle_email_1 ? [`Zelle: ${shop.payment_zelle_email_1}`, ''] : []),
+      ...(shop.payment_mail_payee ? ['Mail Payment To:', [shop.payment_mail_payee, shop.payment_mail_address, [shop.payment_mail_city, shop.payment_mail_state].filter(Boolean).join(', ') + ' ' + (shop.payment_mail_zip || '')].filter(Boolean).join(', ')] : []),
     ]
     for (const pl of payLines) {
       if (!pl) { y -= 6; continue }
