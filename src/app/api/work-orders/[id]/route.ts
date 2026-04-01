@@ -53,9 +53,9 @@ export async function GET(_req: Request, { params }: Params) {
     base.assigned_tech
       ? ctx.admin.from('users').select('id, full_name, role, team').eq('id', base.assigned_tech).single()
       : Promise.resolve({ data: null }),
-    ctx.admin.from('so_lines').select('id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price').eq('so_id', id),
+    ctx.admin.from('so_lines').select('id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price, related_labor_line_id').eq('so_id', id),
     ctx.admin.from('estimates').select('id, estimate_number, status, total, subtotal, tax_amount, customer_email, customer_phone, approval_method, approved_at, customer_notes, sent_at').eq('wo_id', id),
-    ctx.admin.from('invoices').select('id, invoice_number, status, total, balance_due').eq('wo_id', id),
+    ctx.admin.from('invoices').select('id, invoice_number, status, total, balance_due, amount_paid, due_date').eq('wo_id', id),
     ctx.admin.from('wo_notes').select('id, user_id, note_text, visible_to_customer, created_at').eq('wo_id', id),
     ctx.admin.from('wo_files').select('id, user_id, file_url, filename, caption, visible_to_customer, created_at').eq('wo_id', id),
     ctx.admin.from('wo_activity_log').select('id, user_id, action, created_at').eq('wo_id', id),
@@ -139,7 +139,14 @@ export async function GET(_req: Request, { params }: Params) {
   }
   const etc = deriveWOETC(wo, timeEntries || [])
 
-  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, jobAssignments, woParts: woParts || [], automation, lineAutomation, etc })
+  // Resolve service writer name
+  let service_writer_name = null
+  if (wo.service_writer_id) {
+    const { data: sw } = await ctx.admin.from('users').select('full_name').eq('id', wo.service_writer_id).single()
+    service_writer_name = sw?.full_name || null
+  }
+
+  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, service_writer_name, jobAssignments, woParts: woParts || [], automation, lineAutomation, etc })
 }
 
 export async function PATCH(req: Request, { params }: Params) {

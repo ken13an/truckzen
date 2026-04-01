@@ -23,7 +23,7 @@ export async function POST(req: Request, { params }: Params) {
 
   if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
 
-  const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id').eq('id', id).single()
+  const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id, so_number').eq('id', id).single()
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
   // Guard invoice status transitions
@@ -56,6 +56,25 @@ export async function POST(req: Request, { params }: Params) {
 
     await s.from('service_orders').update({ invoice_status: 'accounting_review' }).eq('id', id)
     await s.from('wo_activity_log').insert({ wo_id: id, user_id, action: 'Submitted to accounting' })
+
+    // Notify accounting team — bell + queue
+    try {
+      const { createNotification } = await import('@/lib/createNotification')
+      const { getUserIdsByRole } = await import('@/lib/createNotification')
+      const acctUsers = await getUserIdsByRole(wo.shop_id, ['owner', 'gm', 'accountant', 'accounting_manager', 'office_admin'])
+      if (acctUsers.length > 0) {
+        await createNotification({
+          shopId: wo.shop_id,
+          recipientId: acctUsers,
+          type: 'invoice_submitted',
+          title: 'Invoice Ready for Review',
+          body: `WO-${wo.so_number || id.slice(0, 6)} submitted to accounting`,
+          link: `/accounting`,
+          relatedWoId: id,
+        })
+      }
+    } catch {}
+
     return NextResponse.json({ ok: true })
   }
 
@@ -95,8 +114,11 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ ok: true })
   }
 
-  // Update line prices (accounting)
+  // Update line prices (accounting) — only during accounting_review
   if (action === 'update_line') {
+    if (['sent', 'paid', 'closed'].includes(currentInvoiceStatus)) {
+      return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
+    }
     const { line_id, ...updates } = data
     if (!line_id) return NextResponse.json({ error: 'line_id required' }, { status: 400 })
     const allowed = ['labor_rate', 'labor_hours', 'parts_sell_price', 'parts_cost_price', 'parts_quantity', 'misc_charge', 'misc_description', 'discount_amount', 'tax_rate', 'line_total']

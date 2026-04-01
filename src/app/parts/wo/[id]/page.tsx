@@ -124,7 +124,8 @@ export default function PartsWOView() {
     })
     setSearchResults(prev => { const n = { ...prev }; delete n[lineId]; return n })
     if (!res || !res.ok) {
-      alert('Failed to save part — check your permissions and try again')
+      const err = res ? await res.json().catch(() => ({})) : {}
+      alert(err.error || 'Failed to save part')
     }
   }
 
@@ -213,22 +214,12 @@ export default function PartsWOView() {
                 <div style={{ fontSize: 12, color: MUTED }}>
                   Suggested: <strong style={{ color: '#9CA3B0' }}>{p.rough_name || p.description || '—'}</strong>
                 </div>
-                {partsLocked ? (
-                  <span style={{ fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`, padding: '3px 10px', borderRadius: 6, textTransform: 'uppercase' }}>{st.label}</span>
-                ) : (
-                  <select
-                    value={p.parts_status || 'rough'}
-                    onChange={async e => { await patchLine(p.id, { parts_status: e.target.value }) }}
-                    style={{
-                      fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`,
-                      padding: '3px 10px', borderRadius: 6, border: 'none', fontFamily: FONT, cursor: 'pointer',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {Object.entries(statusOptions).map(([k, v]) => (
-                      <option key={k} value={k}>{v.label}</option>
-                    ))}
-                  </select>
+                <span style={{ fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`, padding: '3px 10px', borderRadius: 6, textTransform: 'uppercase' }}>{st.label}</span>
+                {!partsLocked && p.parts_status !== 'canceled' && !['ready_for_job', 'installed', 'received'].includes(p.parts_status) && (
+                  <div style={{ display: 'flex', gap: 4, marginLeft: 6 }}>
+                    <button onClick={async () => { await patchLine(p.id, { parts_status: 'ready_for_job' }) }} style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${GREEN}44`, background: `${GREEN}0A`, color: GREEN, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Ready</button>
+                    <button onClick={async () => { await patchLine(p.id, { parts_status: 'ordered' }) }} style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${AMBER}44`, background: `${AMBER}0A`, color: AMBER, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Ordered</button>
+                  </div>
                 )}
               </div>
 

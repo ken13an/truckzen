@@ -4,12 +4,24 @@ import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
 import { isInvoiceHardLocked } from '@/lib/invoice-lock'
 
 async function recalcTotals(admin: any, soId: string) {
-  const { data: allLines } = await admin.from('so_lines').select('line_type, quantity, total_price, unit_price, parts_sell_price').eq('so_id', soId)
-  const calcLineTotal = (l: any) => l.total_price ?? ((l.line_type === 'part' ? (l.parts_sell_price || l.unit_price || 0) : (l.unit_price || 0)) * (l.quantity || 1))
-  const laborTotal = (allLines || []).filter((l: any) => l.line_type === 'labor').reduce((sum: number, l: any) => sum + calcLineTotal(l), 0)
-  const partsTotal = (allLines || []).filter((l: any) => l.line_type === 'part').reduce((sum: number, l: any) => sum + calcLineTotal(l), 0)
-  const grandTotal = laborTotal + partsTotal
-  await admin.from('service_orders').update({ labor_total: laborTotal, parts_total: partsTotal, grand_total: grandTotal }).eq('id', soId)
+  const { data: allLines } = await admin.from('so_lines').select('line_type, quantity, unit_price, parts_sell_price, parts_status, billed_hours, actual_hours, estimated_hours').eq('so_id', soId)
+  const { data: shop } = await admin.from('service_orders').select('shop_id, shops(labor_rate, default_labor_rate, tax_rate, tax_labor)').eq('id', soId).single()
+  const shopData = (shop?.shops as any) || {}
+  const laborRate = shopData.labor_rate || shopData.default_labor_rate || 125
+  const taxRate = parseFloat(shopData.tax_rate) || 0
+  const taxLabor = !!shopData.tax_labor
+  const laborTotal = (allLines || []).filter((l: any) => l.line_type === 'labor').reduce((sum: number, l: any) => {
+    const hrs = l.billed_hours || l.actual_hours || l.estimated_hours || 0
+    return sum + (hrs * laborRate)
+  }, 0)
+  const partsTotal = (allLines || []).filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled').reduce((sum: number, l: any) => {
+    const sell = l.parts_sell_price || l.unit_price || 0
+    return sum + (sell * (l.quantity || 1))
+  }, 0)
+  const taxableAmount = partsTotal + (taxLabor ? laborTotal : 0)
+  const taxAmount = taxRate > 0 ? taxableAmount * (taxRate / 100) : 0
+  const grandTotal = Math.round((laborTotal + partsTotal + taxAmount) * 100) / 100
+  await admin.from('service_orders').update({ labor_total: Math.round(laborTotal * 100) / 100, parts_total: Math.round(partsTotal * 100) / 100, grand_total: grandTotal }).eq('id', soId)
   return grandTotal
 }
 
@@ -22,19 +34,18 @@ export async function PATCH(req: Request, { params }: P) {
   const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, quantity, unit_price, parts_sell_price, line_type')
   if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Lock part-type lines after invoice submitted to accounting
-  if ((line as any).line_type === 'part') {
-    const soId = (line as any).so_id || (line as any).service_order_id
-    if (soId) {
-      const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soId).single()
-      if (isInvoiceHardLocked(wo?.invoice_status)) {
-        return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
-      }
+  // Lock ALL lines after invoice sent/paid/closed
+  const soId = (line as any).so_id || (line as any).service_order_id
+  if (soId) {
+    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soId).single()
+    if (isInvoiceHardLocked(wo?.invoice_status)) {
+      return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
     }
   }
 
   const body = await req.json()
-  const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'total_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name']
+  // total_price is a generated column — never write it directly
+  const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name']
   const update: Record<string, any> = {}
   for (const f of allowedFields) if (body[f] !== undefined) update[f] = body[f]
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 })
@@ -55,18 +66,32 @@ export async function PATCH(req: Request, { params }: P) {
     }
   }
 
-  const quantity = update.quantity ?? (line as any).quantity ?? 1
-  const unitPrice = update.unit_price ?? (line as any).unit_price ?? 0
-  const sellPrice = update.parts_sell_price ?? (line as any).parts_sell_price ?? unitPrice
-  if (update.quantity !== undefined || update.unit_price !== undefined || update.parts_sell_price !== undefined || update.total_price !== undefined) {
-    update.total_price = (update.total_price !== undefined ? Number(update.total_price) : Number((line as any).line_type === 'part' ? sellPrice : unitPrice) * Number(quantity || 1))
-  }
-
   const { data, error } = await ctx.admin.from('so_lines').update(update).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const soId = (data as any).so_id || (data as any).service_order_id
-  const grandTotal = soId ? await recalcTotals(ctx.admin, soId) : null
+  const recalcSoId = (data as any).so_id || soId
+  const grandTotal = recalcSoId ? await recalcTotals(ctx.admin, recalcSoId) : null
+
+  // Notify mechanic when part marked Ready
+  if (update.parts_status === 'ready_for_job' && recalcSoId) {
+    try {
+      const { data: wo } = await ctx.admin.from('service_orders').select('id, so_number, shop_id, assigned_tech, asset_id, assets(unit_number)').eq('id', recalcSoId).single()
+      if (wo?.assigned_tech && wo.shop_id) {
+        const { createNotification } = await import('@/lib/createNotification')
+        const unitNum = (wo.assets as any)?.unit_number || ''
+        await createNotification({
+          shopId: wo.shop_id,
+          recipientId: wo.assigned_tech,
+          type: 'parts_ready',
+          title: 'Part Ready',
+          body: `A part is ready for WO #${wo.so_number || ''}${unitNum ? ` — Unit #${unitNum}` : ''}`,
+          link: `/work-orders/${recalcSoId}`,
+          relatedWoId: recalcSoId,
+        })
+      }
+    } catch {}
+  }
+
   return NextResponse.json({ ...data, updated_grand_total: grandTotal })
 }
 
@@ -77,19 +102,16 @@ export async function DELETE(_req: Request, { params }: P) {
   const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, line_type')
   if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Lock part-type lines after invoice submitted to accounting
-  if ((line as any).line_type === 'part') {
-    const soId = (line as any).so_id || (line as any).service_order_id
-    if (soId) {
-      const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soId).single()
-      if (isInvoiceHardLocked(wo?.invoice_status)) {
-        return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
-      }
+  // Lock ALL lines after invoice sent/paid/closed
+  const soIdDel = (line as any).so_id || (line as any).service_order_id
+  if (soIdDel) {
+    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soIdDel).single()
+    if (isInvoiceHardLocked(wo?.invoice_status)) {
+      return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
     }
   }
 
   await ctx.admin.from('so_lines').delete().eq('id', id)
-  const soId = (line as any).so_id || (line as any).service_order_id
-  if (soId) await recalcTotals(ctx.admin, soId)
+  if (soIdDel) await recalcTotals(ctx.admin, soIdDel)
   return NextResponse.json({ success: true })
 }

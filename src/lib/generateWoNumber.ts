@@ -64,9 +64,18 @@ export async function insertServiceOrder(
   let attempts = 0
   while (attempts < 5) {
     const woNum = await generateWoNumber(supabase, shopId)
+    // Phase 1 lane defaults: all live TruckZen WOs are shop_internal
+    const statusFamilyMap: Record<string, string> = { draft: 'draft', waiting_approval: 'waiting', in_progress: 'active', done: 'done', void: 'void' }
+    const insertFields = {
+      ...fields,
+      shop_id: shopId,
+      so_number: woNum,
+      workorder_lane: fields.workorder_lane || 'shop_internal',
+      status_family: fields.status_family || statusFamilyMap[fields.status as string] || 'draft',
+    }
     const { data, error } = await supabase
       .from('service_orders')
-      .insert({ ...fields, shop_id: shopId, so_number: woNum })
+      .insert(insertFields)
       .select()
       .single()
 

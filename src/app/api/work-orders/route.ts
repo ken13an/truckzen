@@ -6,6 +6,7 @@ import { insertServiceOrder } from '@/lib/generateWoNumber'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { deriveWOAutomation } from '@/lib/wo-automation'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
+import { isDiagnosticJob } from '@/lib/parts-suggestions'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -55,7 +56,11 @@ export async function GET(req: Request) {
   }
 
   if (status && status !== 'all') q = q.eq('status', status)
-  if (historical === 'false') q = q.or('is_historical.is.null,is_historical.eq.false')
+  if (historical === 'false') {
+    q = q.or('is_historical.is.null,is_historical.eq.false')
+    // Exclude closed/completed WOs from Active view
+    q = q.not('status', 'in', '("good_to_go","done","void")')
+  }
   if (historical === 'true') q = q.eq('is_historical', true)
 
   const warrantyFilter = searchParams.get('warranty_status')
@@ -172,7 +177,7 @@ export async function POST(req: Request) {
     // Labor hours: use explicit value from frontend, else fallback lookup, else null (mechanic uses Request Hours)
     const explicitHours = typeof line === 'object' && line.estimated_hours ? parseFloat(line.estimated_hours) : null
     const lineEstimatedHours = explicitHours || getDefaultLaborHours(lineText.trim())
-    await s.from('so_lines').insert({
+    const { data: laborLine } = await s.from('so_lines').insert({
       so_id: wo.id,
       line_type: 'labor',
       description: lineText.trim(),
@@ -183,10 +188,12 @@ export async function POST(req: Request) {
       required_skills: lineSkills,
       tire_position: line.tire_position || null,
       customer_provides_parts: line.customer_provides_parts || false,
-    })
+    }).select('id').single()
+    const laborLineId = laborLine?.id || null
 
     // Auto-insert rough parts for this job line — check inventory first
     const roughParts = line.rough_parts || []
+    let partsCreated = 0
     for (const rp of roughParts) {
       const partName = rp.rough_name || rp.description || ''
       if (!partName) continue
@@ -213,7 +220,18 @@ export async function POST(req: Request) {
         unit_price: inv ? (inv.sell_price || 0) : 0,
         parts_cost_price: inv ? (inv.cost_price || 0) : null,
         parts_sell_price: inv ? (inv.sell_price || 0) : null,
-        parts_status: 'rough', // always rough — Parts dept must confirm
+        parts_status: 'rough',
+        related_labor_line_id: laborLineId,
+      })
+      partsCreated++
+    }
+
+    // Simple parts rule: if non-diagnostic job has no auto-parts, create rough placeholder
+    if (partsCreated === 0 && !isDiagnosticJob(lineText.trim())) {
+      const roughName = lineText.trim().replace(/^(replace|install|swap|new)\s+/i, '').trim() || lineText.trim()
+      await s.from('so_lines').insert({
+        so_id: wo.id, line_type: 'part', description: roughName, rough_name: roughName,
+        quantity: 1, unit_price: 0, parts_status: 'rough', related_labor_line_id: laborLineId,
       })
     }
   }

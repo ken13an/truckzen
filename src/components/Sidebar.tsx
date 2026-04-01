@@ -52,40 +52,36 @@ const DEPARTMENTS: DeptSection[] = [
   {
     label: 'Maintenance', icon: Wrench, color: '#F59E0B', dashboardHref: '/maintenance',
     items: [
-      { href: '/maintenance/repairs', label: 'Road Repairs', icon: Truck },
-      { href: '/maintenance/drivers', label: 'Drivers', icon: Users2 },
-      { href: '/maintenance/pm', label: 'PM Schedules', icon: CalendarClock },
-      { href: '/maintenance/inspections', label: 'Inspections', icon: ClipboardCheck },
-      { href: '/maintenance/fuel', label: 'Fuel', icon: Fuel },
-      { href: '/maintenance/vendors', label: 'Vendors', icon: Building2 },
-      { href: '/maintenance/parts', label: 'Parts', icon: Package },
-      { href: '/maintenance/purchase-orders', label: 'Purchase Orders', icon: ShoppingCart },
+      // Group 1: Billing — highest visibility
       { href: '/maintenance/invoices', label: 'Invoices', icon: Receipt },
       { href: '/maintenance/expenses', label: 'Expenses', icon: Receipt },
-      { href: '/maintenance/equipment', label: 'Equipment', icon: Cog },
-      { href: '/maintenance/meters', label: 'Meters', icon: Gauge },
-      { href: '/maintenance/reports', label: 'Reports', icon: BarChart3 },
+      { href: '/maintenance/purchase-orders', label: 'Purchase Orders', icon: ShoppingCart },
+      // Group 2: Work / Service
       { href: '/maintenance/service-requests', label: 'Service Requests', icon: FileText },
+      { href: '/maintenance/repairs', label: 'Road Repairs', icon: Truck },
+      { href: '/maintenance/pm', label: 'PM Schedules', icon: CalendarClock },
+      { href: '/maintenance/inspections', label: 'Inspections', icon: ClipboardCheck },
+      // Group 3: Approvals / Warranty
       { href: '/maintenance/warranty-review', label: 'Warranty Review', icon: ShieldCheck },
-      { href: '/maintenance/issues', label: 'Issues', icon: AlertTriangle },
-      { href: '/maintenance/faults', label: 'Faults', icon: Zap },
-      { href: '/maintenance/recalls', label: 'Recalls', icon: Bell },
-      { href: '/maintenance/service-reminders', label: 'Service Reminders', icon: AlarmClock },
-      { href: '/maintenance/vehicle-renewals', label: 'Vehicle Renewals', icon: FileCheck },
-      { href: '/maintenance/contact-renewals', label: 'Contact Renewals', icon: UserCheck },
-      { href: '/maintenance/service-programs', label: 'Service Programs', icon: Repeat },
-      { href: '/maintenance/shop-network', label: 'Shop Network', icon: Globe },
-      { href: '/maintenance/places', label: 'Places', icon: MapPin },
-      { href: '/maintenance/documents', label: 'Documents', icon: FileText },
       { href: '/maintenance/warranties', label: 'Warranties', icon: Shield },
+      { href: '/maintenance/recalls', label: 'Recalls', icon: Bell },
+      // Group 4: Units / Companies
+      { href: '/maintenance/equipment', label: 'Equipment', icon: Cog },
+      { href: '/maintenance/drivers', label: 'Drivers', icon: Users2 },
+      { href: '/maintenance/vendors', label: 'Vendors', icon: Building2 },
+      { href: '/maintenance/fuel', label: 'Fuel', icon: Fuel },
+      // Group 5: Records
+      { href: '/maintenance/reports', label: 'Reports', icon: BarChart3 },
+      { href: '/maintenance/documents', label: 'Documents', icon: FileText },
+      { href: '/maintenance/activity', label: 'Activity', icon: MessageSquare },
       { href: '/maintenance/map', label: 'Fleet Map', icon: Map },
-      { href: '/maintenance/activity', label: 'Activity Feed', icon: MessageSquare },
     ],
   },
   {
     label: 'Accounting', icon: Calculator, color: '#8B5CF6', dashboardHref: '/accounting/dashboard',
     items: [
-      { href: '/invoices', label: 'Invoices', icon: FileText },
+      { href: '/invoices', label: 'Sent Invoices', icon: FileText },
+      { href: '/accounting/history', label: 'Imported History', icon: FileText },
       { href: '/reports', label: 'Reports', icon: BarChart3 },
       { href: '/accounting/payroll', label: 'Payroll', icon: Banknote },
     ],
@@ -151,16 +147,22 @@ export default function Sidebar() {
   }, [])
 
   // Auto-expand section containing active page — runs on every pathname change
-  // Preserves manually opened sections; only auto-opens the active one
+  // Also auto-expand Accounting for accountant roles
   useEffect(() => {
     for (const dept of DEPARTMENTS) {
-      const matchesDept = pathname === dept.dashboardHref || pathname?.startsWith(dept.dashboardHref + '/')
+      const deptBase = dept.dashboardHref.replace(/\/dashboard$/, '') // e.g. '/accounting'
+      const matchesDept = pathname === dept.dashboardHref || pathname?.startsWith(dept.dashboardHref + '/') || pathname === deptBase || pathname?.startsWith(deptBase + '/')
       const matchesItem = dept.items.some(item => pathname === item.href || pathname?.startsWith(item.href + '/'))
       if (matchesDept || matchesItem) {
         setExpanded(prev => prev[dept.label] ? prev : { ...prev, [dept.label]: true })
       }
     }
-  }, [pathname])
+    // Auto-expand Accounting for accountant/accounting_manager roles
+    const role = user?.impersonate_role || user?.role
+    if (role && ['accountant', 'accounting_manager'].includes(role)) {
+      setExpanded(prev => prev['Accounting'] ? prev : { ...prev, Accounting: true })
+    }
+  }, [pathname, user])
 
   if (!user) return null
 

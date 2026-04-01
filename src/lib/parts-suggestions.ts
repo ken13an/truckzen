@@ -141,8 +141,13 @@ export interface RoughPart {
 const DIAGNOSTIC_KEYWORDS = [
   'coolant leak', 'check engine', 'oil leak', 'noise', 'rattle', 'vibration',
   'overheating', 'won\'t start', 'wont start', 'no start', 'going to left',
-  'going to right', 'pulling', 'electrical issue', 'air leak', 'diagnostic',
-  'inspect', 'test drive', 'scan', 'hard to start',
+  'going to right', 'pulling', 'electrical issue', 'air leak',
+  'diagnostic', 'diagnostics', 'diagnosis',
+  'inspect', 'inspection',
+  'test drive', 'testing', 'scan',
+  'check ', 'checking', 'verify', 'verifying',
+  'troubleshoot', 'troubleshooting',
+  'hard to start',
 ]
 
 const PM_PARTS: RoughPart[] = [

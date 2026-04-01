@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 800,
-        system: 'You are a heavy-truck service writer. Split a customer complaint into clean job lines. Return ONLY valid JSON object: {"lines":[{"description":"...","estimated_hours":0}]} Keep lines concise and repair-focused. Do not invent parts. Diagnostic/inspection lines are allowed when appropriate.',
+        system: 'You are a heavy-truck service writer. Split a customer complaint into clean job lines. Return ONLY valid JSON object: {"lines":[{"description":"...","estimated_hours":0}]} Keep lines concise and repair-focused. Do not invent parts. IMPORTANT: If the complaint says replace/replacement, keep the job as a replacement — do NOT rewrite it as inspection or service. Preserve the original repair intent exactly. Diagnostic lines are only for truly unclear complaints.',
         messages: [{
           role: 'user',
           content: `Truck: ${asset?.year || ''} ${asset?.make || ''} ${asset?.model || ''} ${asset?.engine || ''}\nComplaint: ${complaint}`

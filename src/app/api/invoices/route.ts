@@ -19,6 +19,7 @@ export async function GET(req: Request) {
   const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 50)
   const dateFrom = searchParams.get('date_from')
   const dateTo = searchParams.get('date_to')
+  const historical = searchParams.get('historical')
 
   // Shared filter builder
   function applyFilters(q: any) {
@@ -26,6 +27,8 @@ export async function GET(req: Request) {
     if (search) q = q.or(`invoice_number.ilike.%${search}%`)
     if (dateFrom) q = q.gte('created_at', dateFrom)
     if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59')
+    if (historical === 'false') q = q.or('is_historical.is.null,is_historical.eq.false')
+    if (historical === 'true') q = q.eq('is_historical', true)
     return q
   }
 
@@ -50,7 +53,7 @@ export async function GET(req: Request) {
   const to = from + perPage - 1
   let q = supabase
     .from('invoices')
-    .select('id, invoice_number, status, subtotal, tax_amount, total, balance_due, amount_paid, due_date, paid_at, created_at, customers(company_name), service_orders(so_number, assets(unit_number))')
+    .select('id, invoice_number, status, subtotal, tax_amount, total, balance_due, amount_paid, due_date, paid_at, created_at, is_historical, source, customers(company_name), service_orders(so_number, is_historical, assets(unit_number))')
     .eq('shop_id', user.shop_id)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })

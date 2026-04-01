@@ -14,10 +14,11 @@ export async function POST(req: Request) {
   const { assignment_id, wo_number, job_description } = await req.json()
   if (!assignment_id) return NextResponse.json({ error: 'assignment_id required' }, { status: 400 })
 
-  // Verify assignment belongs to this mechanic
+  // Verify assignment belongs to this mechanic + get WO ID
   const s = db()
-  const { data: assign } = await s.from('wo_job_assignments').select('id, line_id').eq('id', assignment_id).eq('user_id', actor.id).single()
+  const { data: assign } = await s.from('wo_job_assignments').select('id, line_id, so_lines(so_id)').eq('id', assignment_id).eq('user_id', actor.id).single()
   if (!assign) return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
+  const woId = (assign.so_lines as any)?.so_id
 
   try {
     await notifyRole({
@@ -25,13 +26,13 @@ export async function POST(req: Request) {
       role: ['shop_manager', 'service_writer', 'owner', 'gm'],
       title: `Hours needed: ${wo_number || 'WO'}`,
       body: `${actor.full_name || 'Mechanic'} needs book/expected hours set for: ${job_description || 'job'}. Mechanic cannot start work without hours.`,
-      link: assign.line_id ? `/work-orders/${assignment_id}` : undefined,
+      link: woId ? `/work-orders/${woId}` : undefined,
     })
   } catch {}
 
   try {
     await s.from('wo_activity_log').insert({
-      wo_id: null, user_id: actor.id,
+      wo_id: woId || null, user_id: actor.id,
       action: `Mechanic requested hours for ${wo_number || 'WO'}: ${job_description || 'job'}`,
     })
   } catch {}

@@ -2,12 +2,24 @@ import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
 
 async function recalcTotals(admin: any, soId: string) {
-  const { data: lines } = await admin.from('so_lines').select('line_type, quantity, total_price, unit_price, parts_sell_price').eq('so_id', soId)
-  const calcLineTotal = (l: any) => l.total_price ?? ((l.line_type === 'part' ? (l.parts_sell_price || l.unit_price || 0) : (l.unit_price || 0)) * (l.quantity || 1))
-  const laborTotal = (lines || []).filter((l: any) => l.line_type === 'labor').reduce((sum: number, l: any) => sum + calcLineTotal(l), 0)
-  const partsTotal = (lines || []).filter((l: any) => l.line_type === 'part').reduce((sum: number, l: any) => sum + calcLineTotal(l), 0)
-  const grandTotal = laborTotal + partsTotal
-  await admin.from('service_orders').update({ labor_total: laborTotal, parts_total: partsTotal, grand_total: grandTotal }).eq('id', soId)
+  const { data: lines } = await admin.from('so_lines').select('line_type, quantity, unit_price, parts_sell_price, parts_status, billed_hours, actual_hours, estimated_hours').eq('so_id', soId)
+  const { data: shop } = await admin.from('service_orders').select('shop_id, shops(labor_rate, default_labor_rate, tax_rate, tax_labor)').eq('id', soId).single()
+  const shopData = (shop?.shops as any) || {}
+  const laborRate = shopData.labor_rate || shopData.default_labor_rate || 125
+  const taxRate = parseFloat(shopData.tax_rate) || 0
+  const taxLabor = !!shopData.tax_labor
+  const laborTotal = (lines || []).filter((l: any) => l.line_type === 'labor').reduce((sum: number, l: any) => {
+    const hrs = l.billed_hours || l.actual_hours || l.estimated_hours || 0
+    return sum + (hrs * laborRate)
+  }, 0)
+  const partsTotal = (lines || []).filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled').reduce((sum: number, l: any) => {
+    const sell = l.parts_sell_price || l.unit_price || 0
+    return sum + (sell * (l.quantity || 1))
+  }, 0)
+  const taxableAmount = partsTotal + (taxLabor ? laborTotal : 0)
+  const taxAmount = taxRate > 0 ? taxableAmount * (taxRate / 100) : 0
+  const grandTotal = Math.round((laborTotal + partsTotal + taxAmount) * 100) / 100
+  await admin.from('service_orders').update({ labor_total: Math.round(laborTotal * 100) / 100, parts_total: Math.round(partsTotal * 100) / 100, grand_total: grandTotal }).eq('id', soId)
 }
 
 export async function GET(req: Request) {
@@ -48,7 +60,7 @@ export async function POST(req: Request) {
   const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager'])
   if (ctx.error || !ctx.shopId || !ctx.admin) return ctx.error!
   const body = await req.json()
-  const { so_id, line_type, description, part_number, quantity, unit_price, estimated_hours, line_status, rough_name, parts_status } = body
+  const { so_id, line_type, description, part_number, quantity, unit_price, estimated_hours, line_status, rough_name, parts_status, related_labor_line_id } = body
 
   if (!so_id || !line_type || !description) {
     return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
@@ -57,14 +69,13 @@ export async function POST(req: Request) {
   const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status').eq('id', so_id).single()
   if (!so || so.shop_id !== ctx.shopId) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
 
-  // Lock: cannot add part lines after invoice sent to customer
-  if (line_type === 'part' && so.invoice_status && ['sent', 'paid', 'closed'].includes(so.invoice_status)) {
-    return NextResponse.json({ error: 'Part lines are locked — invoice has been submitted to accounting' }, { status: 403 })
+  // Lock: cannot add lines after invoice sent to customer
+  if (so.invoice_status && ['sent', 'paid', 'closed'].includes(so.invoice_status)) {
+    return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
   }
 
   const qty = parseFloat(quantity) || 1
   const price = parseFloat(unit_price) || 0
-  const totalPrice = price * qty
 
   const { data, error } = await ctx.admin.from('so_lines').insert({
     so_id,
@@ -73,11 +84,11 @@ export async function POST(req: Request) {
     part_number: part_number?.trim() || null,
     quantity: qty,
     unit_price: price,
-    total_price: totalPrice,
     estimated_hours: estimated_hours ?? null,
     line_status: line_status || null,
     rough_name: rough_name?.trim() || null,
     parts_status: parts_status || null,
+    related_labor_line_id: related_labor_line_id || null,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

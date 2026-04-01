@@ -191,24 +191,92 @@ export default function AccountingPage() {
       <div style={S.page}>
         <button onClick={() => setReviewWo(null)} style={{ background: 'none', border: 'none', color: '#9D9DA1', fontSize: 13, cursor: 'pointer', marginBottom: 20, fontFamily: FONT }}>&larr; Back to Accounting</button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <span style={{ fontSize: 24, fontWeight: 800 }}>WO-{reviewWo.so_number || reviewWo.wo_number || reviewWo.id?.slice(0, 6)}</span>
-          {(() => { const st = INVOICE_STATUS_MAP[reviewWo.invoice_status] || INVOICE_STATUS_MAP.draft; return <span style={S.pill(st.bg, st.color)}>{st.label}</span> })()}
+        {/* Invoice header + status + actions */}
+        <div style={{ ...S.card, marginBottom: 16, padding: '16px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 22, fontWeight: 800 }}>WO-{reviewWo.so_number || reviewWo.id?.slice(0, 6)}</span>
+              {reviewWo.invoices?.[0]?.invoice_number && <span style={{ fontSize: 13, color: '#9D9DA1' }}>{reviewWo.invoices[0].invoice_number}</span>}
+              {(() => { const st = INVOICE_STATUS_MAP[reviewWo.invoice_status] || INVOICE_STATUS_MAP.draft; return <span style={S.pill(st.bg, st.color)}>{st.label}</span> })()}
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {reviewWo.invoices?.[0]?.id && (
+                <>
+                  <a href={`/invoices/${reviewWo.invoices[0].id}`} target="_blank" rel="noopener" style={{ ...S.btn(BLUE, '#fff'), textDecoration: 'none', fontSize: 12, padding: '6px 14px' }}>Preview Invoice</a>
+                  <a href={`/api/invoices/${reviewWo.invoices[0].id}/pdf`} target="_blank" rel="noopener" style={{ ...S.btn('transparent', '#9D9DA1', true), textDecoration: 'none', fontSize: 12, padding: '6px 14px' }}>Download PDF</a>
+                </>
+              )}
+            </div>
+          </div>
+          {/* Summary strip */}
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', fontSize: 13 }}>
+            <div><span style={{ color: '#9D9DA1' }}>Total: </span><strong style={{ fontSize: 16 }}>{fmt(total)}</strong></div>
+            {reviewWo.invoices?.[0] && (reviewWo.invoices[0].amount_paid || 0) > 0 && (
+              <div><span style={{ color: '#9D9DA1' }}>Paid: </span><strong style={{ color: GREEN }}>{fmt(reviewWo.invoices[0].amount_paid)}</strong></div>
+            )}
+            {reviewWo.invoices?.[0] && (
+              <div><span style={{ color: '#9D9DA1' }}>Balance: </span><strong style={{ color: (reviewWo.invoices[0].balance_due ?? total) > 0 ? RED : GREEN }}>{fmt(reviewWo.invoices[0].balance_due ?? total)}</strong></div>
+            )}
+            {(reviewWo.invoices?.[0]?.due_date || (reviewWo.customers as any)?.payment_terms) && (
+              <div style={{ color: '#9D9DA1' }}>
+                {reviewWo.invoices?.[0]?.due_date && <>Due: {reviewWo.invoices[0].due_date}</>}
+                {(reviewWo.customers as any)?.payment_terms && <> · {(reviewWo.customers as any).payment_terms}</>}
+              </div>
+            )}
+          </div>
+          {/* Editable vs locked warning */}
+          {['sent', 'paid', 'closed'].includes(reviewWo.invoice_status) && (
+            <div style={{ marginTop: 8, fontSize: 11, color: AMBER, fontWeight: 600 }}>Invoice has been sent to customer — editing locked</div>
+          )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+        {/* Bill To + Remit To + Vehicle + Details */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
           <div style={S.card}>
-            <div style={S.label}>Customer</div>
+            <div style={S.label}>Bill To</div>
             <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>{(reviewWo.customers as any)?.company_name || 'N/A'}</div>
+            {(reviewWo.customers as any)?.contact_name && <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 2 }}>{(reviewWo.customers as any).contact_name}</div>}
+            {(reviewWo.customers as any)?.address && <div style={{ fontSize: 10, color: '#9D9DA1' }}>{(reviewWo.customers as any).address}</div>}
+            {(reviewWo.customers as any)?.phone && <div style={{ fontSize: 10, color: '#9D9DA1' }}>{(reviewWo.customers as any).phone}</div>}
           </div>
           <div style={S.card}>
-            <div style={S.label}>Unit</div>
+            <div style={S.label}>Remit Payment To</div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 4 }}>{reviewShop?.dba || reviewShop?.name || 'Shop'}</div>
+            {reviewShop?.address && <div style={{ fontSize: 10, color: '#9D9DA1', marginTop: 2 }}>{reviewShop.address}</div>}
+            {[reviewShop?.city, reviewShop?.state, reviewShop?.zip].filter(Boolean).join(', ') && <div style={{ fontSize: 10, color: '#9D9DA1' }}>{[reviewShop.city, reviewShop.state, reviewShop.zip].filter(Boolean).join(', ')}</div>}
+            {reviewShop?.phone && <div style={{ fontSize: 10, color: '#9D9DA1' }}>{reviewShop.phone}</div>}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+          <div style={S.card}>
+            <div style={S.label}>Vehicle</div>
             <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>
               {(reviewWo.assets as any)?.unit_number ? `#${(reviewWo.assets as any).unit_number}` : 'N/A'}
               {' '}{[(reviewWo.assets as any)?.year, (reviewWo.assets as any)?.make, (reviewWo.assets as any)?.model].filter(Boolean).join(' ')}
             </div>
+            {(reviewWo.assets as any)?.vin && <div style={{ fontSize: 10, color: '#9D9DA1', marginTop: 2 }}>VIN: {(reviewWo.assets as any).vin}</div>}
+            {(reviewWo.mileage_at_service || (reviewWo.assets as any)?.odometer) && <div style={{ fontSize: 10, color: '#9D9DA1' }}>Mileage: {Number(reviewWo.mileage_at_service || (reviewWo.assets as any)?.odometer).toLocaleString()}</div>}
+          </div>
+          <div style={S.card}>
+            <div style={S.label}>Details</div>
+            <div style={{ fontSize: 11, color: '#EDEDF0', marginTop: 4, lineHeight: 1.6 }}>
+              {reviewWo.invoices?.[0]?.invoice_number && <div>Invoice: <strong>{reviewWo.invoices[0].invoice_number}</strong></div>}
+              {reviewWo.invoices?.[0]?.due_date && <div>Due: {reviewWo.invoices[0].due_date}</div>}
+              {(reviewWo.customers as any)?.payment_terms && <div>Terms: {(reviewWo.customers as any).payment_terms}</div>}
+              {reviewWo.service_writer_name && <div>Service Writer: {reviewWo.service_writer_name}</div>}
+              {reviewWo.createdByName && <div>Created By: {reviewWo.createdByName}</div>}
+            </div>
           </div>
         </div>
+
+        {/* Complaint / work context */}
+        {(reviewWo.complaint || reviewWo.cause || reviewWo.correction) && (
+          <div style={{ ...S.card, marginBottom: 12, fontSize: 12 }}>
+            {reviewWo.complaint && <div style={{ marginBottom: 4 }}><span style={{ color: '#9D9DA1' }}>Complaint:</span> {reviewWo.complaint}</div>}
+            {reviewWo.cause && <div style={{ marginBottom: 4 }}><span style={{ color: '#9D9DA1' }}>Cause:</span> {reviewWo.cause}</div>}
+            {reviewWo.correction && <div><span style={{ color: '#9D9DA1' }}>Correction:</span> {reviewWo.correction}</div>}
+          </div>
+        )}
 
         {/* Labor Lines */}
         <div style={{ ...S.card, marginBottom: 12 }}>
@@ -260,13 +328,13 @@ export default function AccountingPage() {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 10, color: '#6B7280' }}>Qty</div>
                   <input type="number" defaultValue={qty} min={1}
-                    onBlur={e => { const v = parseInt(e.target.value) || 1; if (v !== qty) saveLine(line.id, { quantity: v, total_price: (sellPrice * v) }) }}
+                    onBlur={e => { const v = parseInt(e.target.value) || 1; if (v !== qty) saveLine(line.id, { quantity: v }) }}
                     style={{ width: 40, textAlign: 'center', padding: '3px 4px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 4, background: 'rgba(255,255,255,.04)', color: '#DDE3EE', fontSize: 12, fontFamily: 'inherit' }} />
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 10, color: '#6B7280' }}>Sell $</div>
                   <input type="number" step="0.01" defaultValue={sellPrice || ''}
-                    onBlur={e => { const v = parseFloat(e.target.value) || 0; if (v !== sellPrice) saveLine(line.id, { parts_sell_price: v, total_price: v * qty }) }}
+                    onBlur={e => { const v = parseFloat(e.target.value) || 0; if (v !== sellPrice) saveLine(line.id, { parts_sell_price: v }) }}
                     style={{ width: 65, textAlign: 'right', padding: '3px 4px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 4, background: 'rgba(255,255,255,.04)', color: '#DDE3EE', fontSize: 12, fontFamily: 'inherit' }} />
                 </div>
                 <div style={{ textAlign: 'right', minWidth: 60 }}>
@@ -278,25 +346,51 @@ export default function AccountingPage() {
           )})}
         </div>
 
-        {/* Totals */}
+        {/* Totals — accounting-grade */}
         <div style={{ ...S.card, marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
-            <span style={{ color: '#9D9DA1' }}>Labor</span><span>{fmt(laborTotal)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
-            <span style={{ color: '#9D9DA1' }}>Parts</span><span>{fmt(partsTotal)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, borderTop: '1px solid rgba(255,255,255,.08)' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>Invoice Summary</div>
+          {[
+            { label: 'Labor', value: laborTotal },
+            { label: 'Parts', value: partsTotal },
+            ...(invCalc.chargesTotal > 0 ? [{ label: 'Shop Charges', value: invCalc.chargesTotal }] : []),
+          ].map(r => (
+            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 13 }}>
+              <span style={{ color: '#9D9DA1' }}>{r.label}</span><span>{fmt(r.value)}</span>
+            </div>
+          ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, borderTop: '1px solid rgba(255,255,255,.08)', marginTop: 4 }}>
             <span style={{ color: '#9D9DA1' }}>Subtotal</span><span>{fmt(subtotal)}</span>
           </div>
-          {taxAmt > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
-              <span style={{ color: '#9D9DA1' }}>Tax ({taxRate}%)</span><span>{fmt(taxAmt)}</span>
+          {taxAmt > 0 ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 13 }}>
+              <span style={{ color: '#9D9DA1' }}>Tax ({taxRate}%{reviewShop?.tax_labor ? ' incl. labor' : ' parts only'})</span><span>{fmt(taxAmt)}</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 12, color: '#6B7280' }}>
+              <span>Tax</span><span>Exempt</span>
             </div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 16, fontWeight: 800, borderTop: '1px solid rgba(255,255,255,.12)' }}>
-            <span>Total</span><span>{fmt(total)}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 16, fontWeight: 800, borderTop: '1px solid rgba(255,255,255,.12)', marginTop: 4 }}>
+            <span>Invoice Total</span><span>{fmt(total)}</span>
           </div>
+          {/* Payments & Balance — always show for sent/paid */}
+          {(() => {
+            const inv = reviewWo.invoices?.[0]
+            const paid = inv?.amount_paid || 0
+            const balance = inv?.balance_due ?? total
+            return (
+              <>
+                {paid > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontSize: 13, color: GREEN }}>
+                    <span>Payments & Credits</span><span>-{fmt(paid)}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 14, fontWeight: 700, color: balance > 0 ? '#EDEDF0' : GREEN, borderTop: paid > 0 ? '1px solid rgba(255,255,255,.08)' : 'none' }}>
+                  <span>Balance Due</span><span>{fmt(Math.max(0, balance))}</span>
+                </div>
+              </>
+            )
+          })()}
         </div>
 
         {/* Action Buttons */}

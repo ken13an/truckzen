@@ -1,52 +1,64 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { logAction } from '@/lib/services/auditLog'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 export async function POST(req: Request) {
-  const s = db()
-  const { so_line_id, user_id, service_order_id, shop_id } = await req.json()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
 
-  if (!so_line_id || !user_id) {
-    return NextResponse.json({ error: 'so_line_id and user_id required' }, { status: 400 })
+  const s = db()
+  const { so_line_id } = await req.json()
+  if (!so_line_id) return NextResponse.json({ error: 'so_line_id required' }, { status: 400 })
+
+  // 1. Resolve so_line → service_order and verify shop scope
+  const { data: line } = await s.from('so_lines')
+    .select('id, so_id, service_orders(shop_id)')
+    .eq('id', so_line_id)
+    .single()
+
+  if (!line) return NextResponse.json({ error: 'Job line not found' }, { status: 404 })
+
+  const woShopId = (line.service_orders as any)?.shop_id
+  if (woShopId !== shopId) {
+    return NextResponse.json({ error: 'Job does not belong to your shop' }, { status: 403 })
   }
 
-  // Check mechanic isn't already clocked into another job
+  // 2. Verify mechanic is assigned to this line
+  const { data: assignment } = await s.from('wo_job_assignments')
+    .select('id')
+    .eq('user_id', actor.id)
+    .eq('line_id', so_line_id)
+    .limit(1)
+    .single()
+
+  if (!assignment) {
+    return NextResponse.json({ error: 'You are not assigned to this job' }, { status: 403 })
+  }
+
+  // 3. Check mechanic isn't already clocked into another job
   const { data: active } = await s.from('so_time_entries')
     .select('id, so_id')
-    .eq('user_id', user_id)
+    .eq('user_id', actor.id)
     .is('clocked_out_at', null)
-    .is('deleted_at', null)
     .limit(1)
 
   if (active && active.length > 0) {
-    return NextResponse.json({
-      error: 'Already clocked into another job. Clock out first.',
-      active_entry: active[0],
-    }, { status: 409 })
+    return NextResponse.json({ error: 'Already clocked into another job. Clock out first.', active_entry: active[0] }, { status: 409 })
   }
 
-  // Determine service_order_id and shop_id if not provided
-  let soId = service_order_id
-  let sId = shop_id
-  if (!soId || !sId) {
-    const { data: line } = await s.from('so_lines')
-      .select('so_id, service_orders(shop_id)')
-      .eq('id', so_line_id)
-      .single()
-    if (line) {
-      soId = soId || line.so_id
-      sId = sId || (line.service_orders as any)?.shop_id
-    }
-  }
-
+  // 4. Insert time entry
   const now = new Date().toISOString()
   const { data: entry, error } = await s.from('so_time_entries')
     .insert({
-      shop_id: sId,
-      user_id,
-      so_id: soId,
+      shop_id: shopId,
+      user_id: actor.id,
+      so_id: line.so_id,
+      so_line_id,
       clocked_in_at: now,
       clocked_out_at: null,
       duration_minutes: null,
@@ -54,13 +66,8 @@ export async function POST(req: Request) {
     .select('id, clocked_in_at')
     .single()
 
-  if (error) {
-    console.error('[Clock In] Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Fire and forget
-  logAction({ shop_id: sId, user_id, action: 'time.clock_in', entity_type: 'time_entry', entity_id: entry.id }).catch(() => {})
-
+  logAction({ shop_id: shopId, user_id: actor.id, action: 'time.clock_in', entity_type: 'time_entry', entity_id: entry.id }).catch(() => {})
   return NextResponse.json(entry)
 }

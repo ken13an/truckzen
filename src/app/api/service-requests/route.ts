@@ -131,6 +131,8 @@ export async function POST(req: Request) {
         priority: 'normal',
         status: 'draft',
         advisor_id: user_id || null,
+        workorder_lane: 'shop_internal',
+        status_family: 'draft',
       }).select().single()
 
       if (soErr) return NextResponse.json({ error: soErr.message }, { status: 500 })

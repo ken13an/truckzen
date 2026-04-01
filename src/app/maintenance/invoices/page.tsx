@@ -2,7 +2,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
-import { ChevronRight, ChevronDown, CheckCircle2, AlertTriangle, Send } from 'lucide-react'
+import { ChevronRight, ChevronDown, Send } from 'lucide-react'
+import { calcWoOperationalTotals } from '@/lib/invoice-calc'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -35,31 +36,26 @@ export default function MaintenanceInvoicesPage() {
   const [flagNotes, setFlagNotes] = useState('')
 
   const loadData = useCallback(async (shopId: string) => {
-    // Fetch WOs + invoice records for real totals
-    const [woRes, invRes] = await Promise.all([
-      supabase.from('service_orders').select(`
-        id, so_number, status, invoice_status, complaint, grand_total, labor_total, parts_total,
-        created_at, closed_at, is_historical,
-        assets(id, unit_number, make, model, year, ownership_type),
-        customers(id, company_name)
-      `).eq('shop_id', shopId).eq('is_historical', false).is('deleted_at', null)
-        .not('invoice_status', 'is', null).not('invoice_status', 'eq', 'draft')
-        .order('created_at', { ascending: false }).limit(100),
-      supabase.from('invoices').select('id, so_id, total, balance_due, amount_paid, status')
-        .eq('shop_id', shopId).is('deleted_at', null),
-    ])
+    // Fetch WOs — use grand_total as the canonical preview total (repaired by 26I/26J)
+    const { data: woData } = await supabase.from('service_orders').select(`
+      id, so_number, status, invoice_status, complaint, grand_total, labor_total, parts_total,
+      created_at, closed_at, is_historical,
+      assets(id, unit_number, make, model, year, ownership_type),
+      customers(id, company_name)
+    `).eq('shop_id', shopId).eq('is_historical', false).is('deleted_at', null)
+      .not('invoice_status', 'is', null).not('invoice_status', 'eq', 'draft')
+      .order('created_at', { ascending: false }).limit(100)
 
-    const invoiceMap: Record<string, any> = {}
-    for (const inv of invRes.data || []) { if (inv.so_id) invoiceMap[inv.so_id] = inv }
-
-    // Scope to maintained units + merge invoice totals
-    const scoped = (woRes.data || []).filter((w: any) => {
+    // Scope to maintained units — use grand_total as the single preview total source
+    const scoped = (woData || []).filter((w: any) => {
       const asset = w.assets as any
       return asset && MAINTAINED_TYPES.has(asset.ownership_type)
-    }).map((w: any) => {
-      const inv = invoiceMap[w.id]
-      return { ...w, invoice_total: inv?.total ?? null, invoice_balance: inv?.balance_due ?? null, invoice_paid: inv?.amount_paid ?? null }
-    })
+    }).map((w: any) => ({
+      ...w,
+      invoice_total: w.grand_total ?? 0,
+      invoice_balance: w.grand_total ?? 0,
+      invoice_paid: null,
+    }))
 
     setWos(scoped)
   }, [supabase])
@@ -211,8 +207,14 @@ export default function MaintenanceInvoicesPage() {
                   ) : detail ? (() => {
                     const lines = detail.so_lines || []
                     const laborLines = lines.filter((l: any) => l.line_type === 'labor')
-                    const partLines = lines.filter((l: any) => l.line_type === 'part')
-                    const laborRate = detail.shop?.labor_rate || detail.shop?.default_labor_rate || 125
+                    const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
+                    const defaultRate = detail.shop?.labor_rate || detail.shop?.default_labor_rate || 125
+                    const taxRate = detail.shop?.tax_rate || 0
+                    const taxLabor = !!detail.shop?.tax_labor
+
+                    // Use calcWoOperationalTotals — same function as WO Invoice tab
+                    const inv = calcWoOperationalTotals(lines, defaultRate, taxRate, taxLabor)
+
                     return (
                       <>
                         {detail.complaint && <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>Complaint: <span style={{ color: '#DDE3EE' }}>{detail.complaint}</span></div>}
@@ -222,13 +224,15 @@ export default function MaintenanceInvoicesPage() {
                             <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>Labor</div>
                             {laborLines.map((l: any) => {
                               const hrs = l.billed_hours || l.actual_hours || l.estimated_hours || 0
+                              const rate = (l.unit_price && l.unit_price > 0) ? l.unit_price : defaultRate
                               return (
                                 <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12, borderBottom: '1px solid rgba(255,255,255,.03)' }}>
                                   <span>{l.description?.slice(0, 50)}</span>
-                                  <span style={{ fontFamily: MONO, color: MUTED }}>{hrs}h x {fmt(laborRate)} = <strong style={{ color: '#DDE3EE' }}>{fmt(hrs * laborRate)}</strong></span>
+                                  <span style={{ fontFamily: MONO, color: MUTED }}>{hrs}h x {fmt(rate)} = <strong style={{ color: '#DDE3EE' }}>{fmt(hrs * rate)}</strong></span>
                                 </div>
                               )
                             })}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 0', fontSize: 12, fontWeight: 600, color: '#DDE3EE' }}>Labor: {fmt(inv.laborTotal)}</div>
                           </div>
                         )}
 
@@ -241,40 +245,37 @@ export default function MaintenanceInvoicesPage() {
                               return (
                                 <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12, borderBottom: '1px solid rgba(255,255,255,.03)' }}>
                                   <span>{l.real_name || l.description || '—'} {l.part_number ? `(${l.part_number})` : ''}</span>
-                                  <span style={{ fontFamily: MONO, color: MUTED }}>{qty} x {fmt(sell)} = <strong style={{ color: '#DDE3EE' }}>{fmt(l.total_price || sell * qty)}</strong></span>
+                                  <span style={{ fontFamily: MONO, color: MUTED }}>{qty} x {fmt(sell)} = <strong style={{ color: '#DDE3EE' }}>{fmt(sell * qty)}</strong></span>
                                 </div>
                               )
                             })}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 0', fontSize: 12, fontWeight: 600, color: '#DDE3EE' }}>Parts: {fmt(inv.partsTotal)}</div>
                           </div>
                         )}
 
+                        {inv.taxAmount > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12, color: MUTED }}>
+                            <span>Tax ({taxRate}%{taxLabor ? ' incl. labor' : ' parts only'})</span>
+                            <span>{fmt(inv.taxAmount)}</span>
+                          </div>
+                        )}
+
+                        {/* Total — computed from calcInvoiceTotals, same as WO Invoice tab */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 14, fontWeight: 700, borderTop: '1px solid rgba(255,255,255,.08)' }}>
-                          <span>Total</span><span style={{ color: GREEN }}>{fmt(w.invoice_total ?? w.grand_total)}</span>
+                          <span>Invoice Total</span><span style={{ color: GREEN }}>{fmt(inv.grandTotal)}</span>
                         </div>
 
-                        {/* Actions */}
+                        {/* Maintenance actions — view/payment only, no accounting approval */}
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,.06)' }}>
                           {tab === 'unpaid' && !lastAction && (
-                            <>
-                              <button disabled={!!actionLoading} onClick={() => doAction(w.id, 'approve')}
-                                style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6, opacity: actionLoading ? 0.6 : 1 }}>
-                                <CheckCircle2 size={14} /> Approve Invoice
-                              </button>
-                              <button disabled={!!actionLoading} onClick={() => setFlagModal(w.id)}
-                                style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${RED}33`, background: 'transparent', color: RED, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <AlertTriangle size={14} /> Flag Issue
-                              </button>
-                              <button disabled={!!actionLoading} onClick={() => doAction(w.id, 'payment_sent')}
-                                style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${BLUE}33`, background: 'transparent', color: BLUE, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6, opacity: actionLoading ? 0.6 : 1 }}>
-                                <Send size={14} /> Payment Sent
-                              </button>
-                            </>
+                            <button disabled={!!actionLoading} onClick={() => doAction(w.id, 'payment_sent')}
+                              style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${BLUE}33`, background: 'transparent', color: BLUE, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6, opacity: actionLoading ? 0.6 : 1 }}>
+                              <Send size={14} /> Mark Payment Sent
+                            </button>
                           )}
                           {lastAction && (
-                            <div style={{ fontSize: 12, fontWeight: 600, color: lastAction === 'flag_issue' ? RED : GREEN, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              {lastAction === 'approve' && <><CheckCircle2 size={14} /> Invoice approved — accounting notified</>}
-                              {lastAction === 'payment_sent' && <><Send size={14} /> Payment sent — accounting notified</>}
-                              {lastAction === 'flag_issue' && <><AlertTriangle size={14} /> Issue flagged — accounting notified</>}
+                            <div style={{ fontSize: 12, fontWeight: 600, color: GREEN, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <Send size={14} /> Payment sent
                             </div>
                           )}
                           <a href={`/work-orders/${w.id}`} target="_blank" rel="noopener" style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'transparent', color: MUTED, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>

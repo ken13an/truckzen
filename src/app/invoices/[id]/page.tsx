@@ -356,6 +356,8 @@ export default function InvoiceDetailPage() {
 
   return (
     <div style={S.page}>
+      {/* Print-safe styles */}
+      <style>{`@media print { body { background: #fff !important; color: #000 !important; } nav, aside, [data-sidebar], [data-appshell-nav], button, a[href="/invoices"] { display: none !important; } .print-hide { display: none !important; } * { color-adjust: exact; -webkit-print-color-adjust: exact; } }`}</style>
       {/* Record Payment Modal */}
       {showPaidModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
@@ -568,6 +570,9 @@ export default function InvoiceDetailPage() {
               <a href={`/api/invoices/${params.id}/pdf`} target="_blank" style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
                 Download PDF
               </a>
+              <button onClick={() => window.print()} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', width:'100%', cursor:'pointer' }}>
+                Print Invoice
+              </button>
               {so?.id && (
                 <a href={`/work-orders/${so.id}`} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
                   View Work Order

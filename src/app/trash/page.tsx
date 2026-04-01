@@ -43,6 +43,9 @@ export default function TrashPage() {
   const [activeTab, setActiveTab] = useState(0)
   const [confirmDelete, setConfirmDelete] = useState<TrashItem | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const perPage = 25
 
   useEffect(() => {
     async function load() {
@@ -138,6 +141,27 @@ export default function TrashPage() {
         ))}
       </div>
 
+      {/* Bulk actions */}
+      {selected.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, padding: '10px 16px', background: CARD, borderRadius: 10, border: `1px solid ${BORDER}` }}>
+          <span style={{ fontSize: 12, color: WHITE, fontWeight: 600 }}>{selected.size} selected</span>
+          <button onClick={async () => {
+            if (!confirm(`Permanently delete ${selected.size} items? This cannot be undone.`)) return
+            setActionLoading('bulk')
+            for (const key of selected) {
+              const [table, id] = key.split('::')
+              await fetch(`/api/trash?table=${table}&id=${id}&shop_id=${user.shop_id}&user_id=${user.id}`, { method: 'DELETE' })
+            }
+            setItems(prev => prev.filter(i => !selected.has(`${i.table}::${i.id}`)))
+            setSelected(new Set())
+            setActionLoading(null)
+          }} disabled={actionLoading === 'bulk'} style={{ background: RED, color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+            {actionLoading === 'bulk' ? 'Deleting...' : `Delete ${selected.size} Forever`}
+          </button>
+          <button onClick={() => setSelected(new Set())} style={{ background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`, padding: '6px 14px', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>Clear</button>
+        </div>
+      )}
+
       {/* Table */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60, color: MUTED }}>Loading...</div>
@@ -149,7 +173,8 @@ export default function TrashPage() {
       ) : (
         <div style={{ background: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, overflow: 'hidden' }}>
           {/* Table header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 120px 180px 100px 160px', gap: 12, padding: '12px 20px', borderBottom: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 120px 180px 100px 160px', gap: 12, padding: '12px 20px', borderBottom: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO }}>
+            <div><input type="checkbox" checked={filtered.slice((page - 1) * perPage, page * perPage).every(i => selected.has(`${i.table}::${i.id}`))} onChange={e => { const pageItems = filtered.slice((page - 1) * perPage, page * perPage); const newSel = new Set(selected); if (e.target.checked) pageItems.forEach(i => newSel.add(`${i.table}::${i.id}`)); else pageItems.forEach(i => newSel.delete(`${i.table}::${i.id}`)); setSelected(newSel) }} /></div>
             <div>Item</div>
             <div>Type</div>
             <div>Deleted At</div>
@@ -158,15 +183,16 @@ export default function TrashPage() {
           </div>
 
           {/* Rows */}
-          {filtered.map(item => (
+          {filtered.slice((page - 1) * perPage, page * perPage).map(item => (
             <div
               key={`${item.table}-${item.id}`}
               style={{
-                display: 'grid', gridTemplateColumns: '1.5fr 120px 180px 100px 160px', gap: 12,
+                display: 'grid', gridTemplateColumns: '32px 1.5fr 120px 180px 100px 160px', gap: 12,
                 padding: '12px 20px', borderBottom: `1px solid ${BORDER}`,
                 alignItems: 'center', fontSize: 13,
               }}
             >
+              <div><input type="checkbox" checked={selected.has(`${item.table}::${item.id}`)} onChange={e => { const key = `${item.table}::${item.id}`; const newSel = new Set(selected); if (e.target.checked) newSel.add(key); else newSel.delete(key); setSelected(newSel) }} /></div>
               <div>
                 <div style={{ color: WHITE, fontWeight: 600 }}>{item.name}</div>
                 {item.details?.description && <div style={{ color: MUTED, fontSize: 11, marginTop: 2 }}>{item.details.description}</div>}
@@ -218,6 +244,17 @@ export default function TrashPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > perPage && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', marginTop: 12, fontSize: 12, color: MUTED }}>
+          <span>{filtered.length} items · page {page} of {Math.ceil(filtered.length / perPage)}</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${BORDER}`, background: 'transparent', color: page <= 1 ? MUTED : WHITE, cursor: page <= 1 ? 'default' : 'pointer', fontSize: 11, fontWeight: 600 }}>Prev</button>
+            <button disabled={page >= Math.ceil(filtered.length / perPage)} onClick={() => setPage(p => p + 1)} style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${BORDER}`, background: 'transparent', color: page >= Math.ceil(filtered.length / perPage) ? MUTED : WHITE, cursor: page >= Math.ceil(filtered.length / perPage) ? 'default' : 'pointer', fontSize: 11, fontWeight: 600 }}>Next</button>
+          </div>
         </div>
       )}
 

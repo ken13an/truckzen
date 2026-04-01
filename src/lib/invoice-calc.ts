@@ -39,7 +39,7 @@ export function calcInvoiceTotals(
   const partsTotal = partLines.reduce((sum: number, l: any) => {
     const sell = l.parts_sell_price || l.unit_price || 0
     const qty = l.quantity || 1
-    return sum + (l.total_price || sell * qty)
+    return sum + (sell * qty)
   }, 0)
 
   // Shop charges
@@ -83,7 +83,7 @@ export function calcWoOperationalTotals(
   const partsTotal = partLines.reduce((sum: number, l: any) => {
     const sell = l.parts_sell_price || l.unit_price || 0
     const qty = l.quantity || 1
-    return sum + (l.total_price || sell * qty)
+    return sum + (sell * qty)
   }, 0)
 
   const chargesTotal = (shopCharges || []).reduce((sum: number, c: any) => sum + (c.amount || 0), 0)

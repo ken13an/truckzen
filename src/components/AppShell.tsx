@@ -42,7 +42,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  const isFullScreen = FULL_SCREEN.some(r => pathname?.startsWith(r))
+  const isFullScreen = pathname === '/' || FULL_SCREEN.some(r => pathname?.startsWith(r))
+
+  // Redirect authenticated users from public homepage to dashboard
+  if (pathname === '/' && user) {
+    window.location.href = '/dashboard'
+    return null
+  }
 
   if (isFullScreen) {
     return <>{children}</>

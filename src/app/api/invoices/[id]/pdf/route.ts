@@ -16,13 +16,13 @@ export async function GET(_req: Request, { params }: P) {
     .from('invoices')
     .select(`
       *,
-      service_orders(so_number, complaint, cause, correction,
-        assets(unit_number, year, make, model, odometer),
+      service_orders(so_number, complaint, cause, correction, mileage_at_service, service_writer_id, accounting_approved_by,
+        assets(unit_number, year, make, model, odometer, vin),
         users!assigned_tech(full_name),
-        so_lines(line_type, description, real_name, rough_name, part_number, quantity, unit_price, total_price, parts_sell_price, billed_hours, estimated_hours, actual_hours)
+        so_lines(line_type, description, real_name, rough_name, part_number, quantity, unit_price, total_price, parts_sell_price, billed_hours, estimated_hours, actual_hours, parts_status, related_labor_line_id)
       ),
-      customers(company_name, contact_name, phone, email, address, city, state, zip),
-      shops(name, dba, phone, email, address, city, state, zip)
+      customers(company_name, contact_name, phone, email, address, city, state, zip, payment_terms),
+      shops(name, dba, phone, email, address, city, state, zip, logo_url)
     `)
     .eq('id', id)
     .single()
@@ -90,11 +90,16 @@ export async function GET(_req: Request, { params }: P) {
 
   // Invoice details block (right side)
   let ry = 714
+  const statusLabel = inv.status === 'paid' ? 'PAID' : inv.status === 'sent' ? 'SENT' : inv.status === 'draft' ? 'DRAFT' : ''
+  if (statusLabel) drawText(statusLabel, rightEdge - fontBold.widthOfTextAtSize(statusLabel, 10), 726, { font: fontBold, size: 10, color: inv.status === 'paid' ? rgb(0.09, 0.72, 0.44) : gray })
+
   const detailLabels = [
     { label: 'Invoice #:', value: inv.invoice_number || '' },
     { label: 'Date:', value: inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '' },
     { label: 'Due Date:', value: inv.due_date || '' },
-    { label: 'SO #:', value: so?.so_number || '' },
+    { label: 'Terms:', value: cust?.payment_terms || 'Due on receipt' },
+    { label: 'WO #:', value: so?.so_number || '' },
+    ...(asset?.unit_number ? [{ label: 'Unit #:', value: asset.unit_number }] : []),
   ]
   for (const d of detailLabels) {
     const labelWidth = fontBold.widthOfTextAtSize(d.label, 9)
@@ -123,7 +128,9 @@ export async function GET(_req: Request, { params }: P) {
     let vy = y + 38
     if (vehicleStr) { drawText(vehicleStr, rightEdge - 200, vy, { size: 9 }); vy -= 13 }
     if (asset.unit_number) { drawText('Unit #' + asset.unit_number, rightEdge - 200, vy, { size: 9, color: gray }); vy -= 13 }
-    if (asset.odometer) { drawText('Odometer: ' + Number(asset.odometer).toLocaleString(), rightEdge - 200, vy, { size: 9, color: gray }) }
+    if (asset.vin) { drawText('VIN: ' + asset.vin, rightEdge - 200, vy, { size: 8, color: gray }); vy -= 12 }
+    const mileage = so?.mileage_at_service || asset.odometer
+    if (mileage) { drawText('Mileage: ' + Number(mileage).toLocaleString(), rightEdge - 200, vy, { size: 9, color: gray }) }
   }
 
   // Line items table
@@ -140,6 +147,24 @@ export async function GET(_req: Request, { params }: P) {
   y -= 6
   drawLine(leftMargin, y, rightEdge)
   y -= 14
+
+  // Work context (complaint/cause/correction)
+  if (so?.complaint) {
+    drawText('Complaint:', leftMargin, y, { font: fontBold, size: 8, color: gray })
+    drawText(so.complaint.substring(0, 80), leftMargin + 55, y, { size: 8, color: black })
+    y -= 12
+  }
+  if (so?.cause) {
+    drawText('Cause:', leftMargin, y, { font: fontBold, size: 8, color: gray })
+    drawText(so.cause.substring(0, 80), leftMargin + 55, y, { size: 8, color: black })
+    y -= 12
+  }
+  if (so?.correction) {
+    drawText('Correction:', leftMargin, y, { font: fontBold, size: 8, color: gray })
+    drawText(so.correction.substring(0, 80), leftMargin + 55, y, { size: 8, color: black })
+    y -= 12
+  }
+  if (so?.complaint || so?.cause || so?.correction) y -= 6
 
   // Render lines grouped by type
   const groups = [
@@ -160,22 +185,28 @@ export async function GET(_req: Request, { params }: P) {
     drawText(group.label, colX.desc, y, { font: fontBold, size: 8, color: gray })
     y -= 14
 
+    let groupTotal = 0
     for (const l of groupLines) {
       if (y < 80) {
-        // Add a new page if running out of space
-        // For simplicity, just stop - most invoices fit one page
         drawText('... continued', colX.desc, y, { size: 8, color: gray })
         y -= 14
         break
       }
       const desc = (l.real_name || l.description || '').substring(0, 55)
       const price = l.line_type === 'part' ? (l.parts_sell_price || l.unit_price || 0) : (l.unit_price || 0)
-      const qty = l.line_type === 'labor' ? (l.billed_hours || l.quantity || 0) : (l.quantity || 0) // customer-facing: billed hours only
-      const lineTotal = l.total_price || price * qty
+      const qty = l.line_type === 'labor' ? (l.billed_hours ?? 0) : (l.quantity || 0)
+      const lineTotal = price * qty
+      groupTotal += lineTotal
       drawText(desc, colX.desc, y, { size: 9 })
       drawText(String(qty), colX.qty, y, { size: 9 })
       drawText('$' + price.toFixed(2), colX.rate, y, { size: 9 })
       drawText('$' + lineTotal.toFixed(2), colX.amount, y, { size: 9 })
+      y -= 14
+    }
+    // Group subtotal
+    if (groupLines.length > 1) {
+      drawText(group.label + ' Subtotal:', colX.rate - 30, y, { font: fontBold, size: 8, color: gray })
+      drawText('$' + groupTotal.toFixed(2), colX.amount, y, { font: fontBold, size: 9 })
       y -= 14
     }
     y -= 4
@@ -228,6 +259,38 @@ export async function GET(_req: Request, { params }: P) {
   if (inv.due_date) {
     y -= 6
     drawText('Payment due by ' + inv.due_date, leftMargin, y, { size: 9, color: gray })
+  }
+
+  // Payment instructions (same as email)
+  if ((inv.balance_due || 0) > 0) {
+    y -= 18
+    drawLine(leftMargin, y + 4, rightEdge, blue)
+    y -= 4
+    drawText('PAYMENT INSTRUCTIONS', leftMargin, y, { font: fontBold, size: 9, color: blue })
+    y -= 14
+    const payLines = [
+      'Company: UGL Truck Center Inc',
+      'Bank: Chase Bank',
+      '',
+      'ACH Payment:',
+      'Account: 583509081  |  Routing: 071000013',
+      '',
+      'Wire Transfer:',
+      'Account: 583509081  |  Routing: 021000021',
+      '',
+      'Zelle: accounting.truckcenter@yahoo.com',
+      '',
+      'Mail Payment To:',
+      'UGL Truck Center Inc, 325 State Rte 31, Montgomery, IL 60538',
+    ]
+    for (const pl of payLines) {
+      if (!pl) { y -= 6; continue }
+      if (y < 40) break
+      drawText(pl, leftMargin, y, { size: 8, color: gray })
+      y -= 11
+    }
+    y -= 4
+    drawText(`Please include invoice number ${inv.invoice_number || ''} with your payment.`, leftMargin, y, { size: 8, color: gray })
   }
 
   const pdfBytes = await pdf.save()

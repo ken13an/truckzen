@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPaymentNotifications } from '@/lib/notifications/sendPaymentNotifications'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
-import { calcInvoiceTotals } from '@/lib/invoice-calc'
+import { calcWoOperationalTotals } from '@/lib/invoice-calc'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -45,7 +45,15 @@ export async function POST(req: Request) {
     const taxRate = shop?.tax_rate || 0
     const laborRate = shop?.labor_rate || shop?.default_labor_rate || 125
 
-    const { laborTotal, partsTotal, subtotal, taxAmount, grandTotal: total } = calcInvoiceTotals(lines, laborRate, taxRate, !!shop?.tax_labor)
+    const { laborTotal, partsTotal, subtotal, taxAmount, grandTotal: total } = calcWoOperationalTotals(lines, laborRate, taxRate, !!shop?.tax_labor)
+
+    // Snapshot labor rate onto labor lines so email/PDF read correct unit_price
+    // total_price is a generated column — do NOT write it directly
+    for (const l of lines) {
+      if (l.line_type === 'labor' && (l.unit_price || 0) !== laborRate) {
+        await s.from('so_lines').update({ unit_price: laborRate }).eq('id', l.id)
+      }
+    }
 
     // Update WO totals
     await s.from('service_orders').update({

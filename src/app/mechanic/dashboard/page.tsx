@@ -24,6 +24,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   pending:    { bg: 'rgba(245,158,11,0.15)', text: AMBER },
   accepted:   { bg: 'rgba(29,111,232,0.15)', text: BLUE },
   in_progress:{ bg: 'rgba(29,111,232,0.15)', text: BLUE },
+  active:     { bg: 'rgba(34,197,94,0.15)',  text: GREEN },
   completed:  { bg: 'rgba(34,197,94,0.15)',  text: GREEN },
   declined:   { bg: 'rgba(239,68,68,0.15)',  text: RED },
   requested:  { bg: 'rgba(245,158,11,0.15)', text: AMBER },
@@ -69,9 +70,19 @@ export default function MechanicDashboardPage() {
   const [declineModal, setDeclineModal] = useState<string | null>(null) // assignment ID
   const [declineReason, setDeclineReason] = useState('')
   const [completeModal, setCompleteModal] = useState<any | null>(null) // job to confirm completion
+  const [moreTimeModal, setMoreTimeModal] = useState<any | null>(null) // job for More Time request
+  const [moreTimeAmount, setMoreTimeAmount] = useState<string>('60') // minutes
   const [activeClock, setActiveClock] = useState<any>(null) // { id, clocked_in_at, so_line_id, job_description, wo_number }
   const [elapsedSec, setElapsedSec] = useState(0)
   const [clockLoading, setClockLoading] = useState<string | null>(null)
+  const [woPartsMap, setWoPartsMap] = useState<Record<string, any[]>>({}) // WO ID → part lines with status
+  const [workedMinutesMap, setWorkedMinutesMap] = useState<Record<string, number>>({}) // so_line_id → total worked minutes
+  const [clockedWos, setClockedWos] = useState<Set<string>>(new Set()) // WO IDs mechanic has previously clocked into
+  const [clockedLines, setClockedLines] = useState<Set<string>>(new Set()) // so_line_ids mechanic has previously clocked into
+  const [workPunch, setWorkPunch] = useState<any>(null) // active work punch { id, punch_in_at }
+  const [punchLoading, setPunchLoading] = useState(false)
+  const [overrideModal, setOverrideModal] = useState(false)
+  const [overrideReason, setOverrideReason] = useState('')
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Timer logic
@@ -97,13 +108,51 @@ export default function MechanicDashboardPage() {
 
   const fetchActiveClock = useCallback(async (userId: string) => {
     try {
-      const res = await fetch(`/api/mechanic/active-clock?user_id=${userId}`)
-      if (res.ok) {
-        const data = await res.json()
-        setActiveClock(data)
+      const [clockRes, punchRes] = await Promise.all([
+        fetch('/api/mechanic/active-clock'),
+        fetch('/api/mechanic/work-punch'),
+      ])
+      if (clockRes.ok) setActiveClock(await clockRes.json())
+      if (punchRes.ok) {
+        const p = await punchRes.json()
+        setWorkPunch(p.activePunch || null)
       }
     } catch { /* silent */ }
   }, [])
+
+  const handleWorkPunch = async (action: 'punch_in' | 'punch_out', override?: string) => {
+    if (!user) return
+    setPunchLoading(true)
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 })).catch(() => null)
+      const payload = { action, lat: pos?.coords.latitude, lng: pos?.coords.longitude, accuracy: pos?.coords.accuracy, override_reason: override }
+      let res: Response | null = null
+      try {
+        res = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      } catch {
+        // Offline: queue punch event locally
+        const queue = JSON.parse(localStorage.getItem('tz_punch_queue') || '[]')
+        queue.push({ ...payload, queued_at: new Date().toISOString() })
+        localStorage.setItem('tz_punch_queue', JSON.stringify(queue))
+        if (action === 'punch_in') setWorkPunch({ id: 'queued', punch_in_at: new Date().toISOString(), queued: true })
+        else setWorkPunch(null)
+        alert('Network unavailable — punch queued. Will sync when online.')
+        setPunchLoading(false)
+        return
+      }
+      if (res.ok) {
+        const data = await res.json()
+        if (action === 'punch_in') setWorkPunch(data.punch || { id: 'active', punch_in_at: new Date().toISOString() })
+        else { setWorkPunch(null); setActiveClock(null) }
+        setOverrideModal(false); setOverrideReason('')
+      } else {
+        const err = await res.json().catch(() => ({}))
+        if (err.outsideGeofence) setOverrideModal(true)
+        else alert(err.error || 'Punch failed')
+      }
+    } catch { alert('Could not get location. Enable GPS and try again.') }
+    setPunchLoading(false)
+  }
 
   const handleClockIn = async (job: any) => {
     if (!user) return
@@ -112,12 +161,7 @@ export default function MechanicDashboardPage() {
       const res = await fetch('/api/mechanic/clock-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          so_line_id: job.line_id || job.line?.id,
-          user_id: user.id,
-          service_order_id: job.wo?.id || job.line?.so_id,
-          shop_id: user.shop_id,
-        }),
+        body: JSON.stringify({ so_line_id: job.line_id || job.line?.id }),
       })
       if (res.ok) {
         const entry = await res.json()
@@ -125,7 +169,8 @@ export default function MechanicDashboardPage() {
           id: entry.id,
           clocked_in_at: entry.clocked_in_at,
           so_line_id: job.line_id || job.line?.id,
-          job_description: job.line?.description || '',
+          service_order_id: job.wo?.id || job.line?.so_id,
+          job_description: job.line?.description?.slice(0, 60) || '',
           wo_number: job.wo?.so_number || '',
         })
       } else {
@@ -143,12 +188,22 @@ export default function MechanicDashboardPage() {
       const res = await fetch('/api/mechanic/clock-out', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ time_entry_id: activeClock.id, user_id: user?.id }),
+        body: JSON.stringify({ time_entry_id: activeClock.id }),
       })
       if (res.ok) {
         const data = await res.json()
+        const lineId = activeClock.so_line_id
+        const woId = activeClock.service_order_id
         setActiveClock(null)
-        alert(`Clocked out. Session: ${data.duration_minutes} min. Total on job: ${data.total_hours_on_job} hrs`)
+        // Update worked time map immediately so job card shows correct Worked total
+        if (lineId || woId) {
+          const key = lineId || woId
+          setWorkedMinutesMap(prev => ({ ...prev, [key]: (data.total_minutes_on_job || 0) }))
+        }
+        // Mark this line as clocked (for Resume vs Start)
+        if (lineId) setClockedLines(prev => new Set([...prev, lineId]))
+        const totalHrs = data.total_hours_on_job || 0
+        alert(`Job paused. Total worked: ${totalHrs} hrs. You can resume anytime.`)
       }
     } catch { alert('Clock out failed') }
     setClockLoading(null)
@@ -164,14 +219,41 @@ export default function MechanicDashboardPage() {
         const d = await jobsRes.json()
         const raw = Array.isArray(d) ? d : d.data || []
         // Derive display status from so_lines.line_status (canonical truth)
-        // wo_job_assignments has no status column — line_status is the source
-        setJobs(raw.map((j: any) => ({
+        const mapped = raw.map((j: any) => ({
           ...j,
           status: j.status || (
             j.line?.line_status === 'completed' ? 'completed' :
             j.line?.line_status === 'in_progress' ? 'in_progress' : 'pending'
           ),
-        })))
+        }))
+        setJobs(mapped)
+        // Check for ready parts + prior clock history on each WO
+        const woIds = [...new Set(mapped.map((j: any) => j.wo?.id).filter(Boolean))] as string[]
+        if (woIds.length > 0) {
+          try {
+            // Use so-lines API for parts (client supabase may be blocked by RLS)
+            // Fetch part lines per WO + time entries for worked time
+            const partsPromises = woIds.map(woId => fetch(`/api/so-lines?so_id=${woId}`).then(r => r.ok ? r.json() : []))
+            const allLines = await Promise.all(partsPromises)
+            const partsMap: Record<string, any[]> = {}
+            woIds.forEach((woId, idx) => {
+              const lines = Array.isArray(allLines[idx]) ? allLines[idx] : []
+              partsMap[woId] = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
+            })
+            setWoPartsMap(partsMap)
+
+            // Get worked time per job line + clock history (via API — client supabase blocked by RLS)
+            try {
+              const wtRes = await fetch(`/api/mechanic/worked-time?user_id=${userId}&so_ids=${woIds.join(',')}`)
+              if (wtRes.ok) {
+                const wt = await wtRes.json()
+                setClockedWos(new Set(wt.clockedSoIds || []))
+                setClockedLines(new Set(wt.clockedLineIds || []))
+                setWorkedMinutesMap(wt.worked || {})
+              }
+            } catch {}
+          } catch {}
+        }
       }
       if (partsRes.ok) {
         const d = await partsRes.json()
@@ -190,6 +272,23 @@ export default function MechanicDashboardPage() {
       setUser(profile)
       setLanguage(profile.language || 'en')
       await Promise.all([fetchData(profile.id), fetchActiveClock(profile.id)])
+      // Replay queued offline punch events — keep failed items for retry
+      try {
+        const queue: any[] = JSON.parse(localStorage.getItem('tz_punch_queue') || '[]')
+        if (queue.length > 0) {
+          const failed: any[] = []
+          for (const evt of queue) {
+            try {
+              const r = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(evt) })
+              if (!r.ok && r.status >= 500) failed.push(evt) // server error → retry later
+              // 4xx = client error (duplicate, already punched) → don't retry
+            } catch { failed.push(evt) } // network error → retry later
+          }
+          if (failed.length > 0) localStorage.setItem('tz_punch_queue', JSON.stringify(failed))
+          else localStorage.removeItem('tz_punch_queue')
+          await fetchActiveClock(profile.id)
+        }
+      } catch {}
       setLoading(false)
       interval = setInterval(() => fetchData(profile.id), 15000)
     }
@@ -325,6 +424,50 @@ export default function MechanicDashboardPage() {
       </nav>
 
       <div style={{ padding: '16px 20px', maxWidth: 720, margin: '0 auto' }}>
+        {/* ========== WORK PUNCH BANNER ========== */}
+        {!workPunch && (
+          <div style={{ background: 'rgba(239,68,68,0.08)', border: `1px solid ${RED}44`, borderRadius: 14, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: RED }}>Not Punched In</div>
+              <div style={{ fontSize: 11, color: DIM, marginTop: 2 }}>Punch in to start your shift before working on jobs</div>
+            </div>
+            <button onClick={() => handleWorkPunch('punch_in')} disabled={punchLoading}
+              style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT, opacity: punchLoading ? 0.5 : 1 }}>
+              {punchLoading ? 'Locating...' : 'Punch In'}
+            </button>
+          </div>
+        )}
+        {workPunch && (
+          <div style={{ background: 'rgba(29,111,232,0.08)', border: `1px solid ${BLUE}44`, borderRadius: 14, padding: '10px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: BLUE }}>
+              On Shift since {new Date(workPunch.punch_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {workPunch.inside_geofence === false && <span style={{ color: AMBER, marginLeft: 8, fontSize: 10 }}>(off-site)</span>}
+            </div>
+            <button onClick={() => handleWorkPunch('punch_out')} disabled={punchLoading}
+              style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${RED}44`, background: 'transparent', color: RED, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>
+              Punch Out
+            </button>
+          </div>
+        )}
+
+        {/* Override geofence modal */}
+        {overrideModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+            onClick={e => { if (e.target === e.currentTarget) setOverrideModal(false) }}>
+            <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: AMBER }}>Outside Shop Area</div>
+              <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>You appear to be outside the shop geofence. Provide a reason to punch in for manager review.</div>
+              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#DDE3EE', fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={() => setOverrideModal(false)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+                <button disabled={!overrideReason.trim() || punchLoading} onClick={() => handleWorkPunch('punch_in', overrideReason.trim())} style={{ padding: '8px 16px', background: AMBER, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                  {punchLoading ? 'Punching...' : 'Override & Punch In'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ========== ACTIVE CLOCK BANNER ========== */}
         {activeClock && (
           <div style={{
@@ -333,7 +476,7 @@ export default function MechanicDashboardPage() {
           }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: GREEN, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-                Clocked In — Active
+                Active — Pause to switch jobs
               </div>
               <div style={{ fontSize: 36, fontWeight: 700, fontFamily: "'Bebas Neue', monospace, sans-serif", color: GREEN, letterSpacing: 2 }}>
                 {formatTimer(elapsedSec)}
@@ -341,6 +484,15 @@ export default function MechanicDashboardPage() {
               <div style={{ fontSize: 12, color: DIM, marginTop: 2 }}>
                 {activeClock.wo_number} — {activeClock.job_description}
               </div>
+              {(() => {
+                const lineId = activeClock.so_line_id
+                const woId = activeClock.service_order_id || activeClock.so_id
+                const priorMins = lineId ? (workedMinutesMap[lineId] || 0) : woId ? (workedMinutesMap[woId] || 0) : 0
+                const totalMins = priorMins + Math.floor(elapsedSec / 60)
+                return <div style={{ fontSize: 12, color: GREEN, marginTop: 4, fontWeight: 600 }}>
+                  Total on job: {+(totalMins / 60).toFixed(1)}h{priorMins > 0 ? ` (${+(priorMins / 60).toFixed(1)}h prior + this session)` : ''}
+                </div>
+              })()}
             </div>
             <button
               onClick={handleClockOut}
@@ -352,7 +504,7 @@ export default function MechanicDashboardPage() {
                 opacity: clockLoading === 'clock-out' ? 0.6 : 1,
               }}
             >
-              <Square size={14} fill="#fff" /> Clock Out
+              <Square size={14} fill="#fff" /> Pause
             </button>
           </div>
         )}
@@ -402,7 +554,17 @@ export default function MechanicDashboardPage() {
                             <span style={{ color: DIM, fontSize: 12 }}>{job.wo.customers.company_name}</span>
                           )}
                         </div>
-                        <StatusPill status={job.status} />
+                        {(() => {
+                          const lineId = job.line_id || job.line?.id
+                          const isActive = activeClock && (activeClock.so_line_id === lineId)
+                          const isPaused = !isActive && lineId && clockedLines.has(lineId) && job.status !== 'completed'
+                          const isAssigned = !isActive && !isPaused && job.status === 'in_progress'
+                          if (job.status === 'completed') return <StatusPill status="completed" />
+                          if (isActive) return <StatusPill status="active" />
+                          if (isPaused) return <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 12, fontWeight: 600 }}>Paused</span>
+                          if (isAssigned) return <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 999, background: 'rgba(29,111,232,0.1)', color: BLUE, fontSize: 12, fontWeight: 600 }}>Assigned</span>
+                          return <StatusPill status={job.status} />
+                        })()}
                       </div>
 
                       {/* Description */}
@@ -422,22 +584,89 @@ export default function MechanicDashboardPage() {
                             {job.wo.assets.unit_type ? `${job.wo.assets.unit_type} — ` : ''}{job.wo.assets.unit_number}
                           </span>
                         )}
-                        {job.line?.estimated_hours ? (
-                          <span style={{
-                            display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700,
-                            color: BLUE, background: 'rgba(29,111,232,0.1)', padding: '2px 8px', borderRadius: 6,
-                          }}>
-                            <Clock size={12} /> Book: {job.line.estimated_hours}h
-                          </span>
-                        ) : job.status !== 'completed' ? (
-                          <span style={{
-                            display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600,
-                            color: AMBER, background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: 6,
-                          }}>
-                            <Clock size={12} /> No book hours set
-                          </span>
-                        ) : null}
+                        {(() => {
+                          const bookHrs = job.line?.estimated_hours || 0
+                          const lineId = job.line_id || job.line?.id
+                          const workedMins = lineId ? (workedMinutesMap[lineId] || 0) : job.wo?.id ? (workedMinutesMap[job.wo.id] || 0) : 0
+                          const workedHrs = +(workedMins / 60).toFixed(1)
+                          const leftHrs = bookHrs > 0 ? Math.max(0, +(bookHrs - workedHrs).toFixed(1)) : null
+                          return (
+                            <>
+                              {bookHrs > 0 ? (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 700, color: BLUE, background: 'rgba(29,111,232,0.1)', padding: '2px 8px', borderRadius: 6 }}>
+                                  Book: {bookHrs}h
+                                </span>
+                              ) : job.status !== 'completed' ? (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: AMBER, background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: 6 }}>
+                                  <Clock size={12} /> No book hours
+                                </span>
+                              ) : null}
+                              {workedHrs > 0 && (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: workedHrs > bookHrs && bookHrs > 0 ? RED : GREEN, background: workedHrs > bookHrs && bookHrs > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', padding: '2px 8px', borderRadius: 6 }}>
+                                  Worked: {workedHrs}h
+                                </span>
+                              )}
+                              {leftHrs !== null && leftHrs >= 0 && workedHrs > 0 && (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: leftHrs === 0 ? RED : DIM, background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 6 }}>
+                                  Left: {leftHrs}h
+                                </span>
+                              )}
+                            </>
+                          )
+                        })()}
                       </div>
+
+                      {/* Paused summary text */}
+                      {(() => {
+                        const lineId = job.line_id || job.line?.id
+                        const isActive = activeClock && (activeClock.so_line_id === lineId)
+                        const isPaused = !isActive && lineId && clockedLines.has(lineId) && job.status !== 'completed'
+                        if (!isPaused) return null
+                        const workedMins = lineId ? (workedMinutesMap[lineId] || 0) : 0
+                        const bookHrs = job.line?.estimated_hours || 0
+                        const bookMins = bookHrs * 60
+                        const leftMins = bookMins > 0 ? Math.max(0, Math.round(bookMins - workedMins)) : null
+                        const fmtMins = (m: number) => m >= 60 ? `${+(m / 60).toFixed(1)}h` : `${m} min`
+                        return (
+                          <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(245,158,11,0.06)', border: `1px solid ${AMBER}22`, marginBottom: 8, fontSize: 12, color: AMBER }}>
+                            <div style={{ fontWeight: 600 }}>Job paused at {fmtMins(workedMins)}</div>
+                            {leftMins !== null && <div style={{ color: DIM, marginTop: 2 }}>{leftMins > 0 ? `${fmtMins(leftMins)} left to finish` : 'Book time reached'}</div>}
+                          </div>
+                        )
+                      })()}
+
+                      {/* Per-job parts — linked by related_labor_line_id, keyword fallback for legacy */}
+                      {job.wo?.id && (woPartsMap[job.wo.id] || []).length > 0 && job.status !== 'completed' && (() => {
+                        const allParts = woPartsMap[job.wo.id] || []
+                        const lineId = job.line_id || job.line?.id
+                        // True linkage first: parts with related_labor_line_id matching this job line
+                        let matched = lineId ? allParts.filter((p: any) => p.related_labor_line_id === lineId) : []
+                        // Keyword fallback for legacy parts without linkage
+                        if (matched.length === 0) {
+                          const jobDesc = (job.line?.description || '').toLowerCase()
+                          const jobWords = jobDesc.split(/\s+/).filter((w: string) => w.length > 2 && !['the','and','for','with','from'].includes(w))
+                          matched = allParts.filter((p: any) => {
+                            if (p.related_labor_line_id) return false // already linked to another line
+                            const partText = ((p.rough_name || '') + ' ' + (p.real_name || '') + ' ' + (p.description || '')).toLowerCase()
+                            return jobWords.some((w: string) => partText.includes(w))
+                          })
+                        }
+                        if (matched.length === 0) return null
+                        return (
+                          <div style={{ marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.06)` }}>
+                            {matched.map((p: any) => {
+                              const stColor = p.parts_status === 'ready_for_job' ? GREEN : p.parts_status === 'received' ? BLUE : p.parts_status === 'ordered' ? AMBER : DIM
+                              const stLabel = p.parts_status === 'ready_for_job' ? 'Ready for Pickup' : p.parts_status === 'received' ? 'Preparing' : p.parts_status === 'ordered' ? 'Ordered' : p.parts_status === 'installed' ? 'Installed' : 'Pending'
+                              return (
+                                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11 }}>
+                                  <span style={{ color: DIM }}>{p.real_name || p.rough_name || p.description || '—'}</span>
+                                  <span style={{ color: stColor, fontWeight: 600, fontSize: 10 }}>{stLabel}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )
+                      })()}
 
                       {/* Action buttons */}
                       {(() => {
@@ -445,7 +674,13 @@ export default function MechanicDashboardPage() {
                         const noHoursMsg = () => alert('Cannot proceed — book/expected hours have not been set for this job. Ask your service writer or supervisor.')
                         return (
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {job.status === 'in_progress' && !activeClock && hasHours && (
+                        {job.status === 'in_progress' && !activeClock && hasHours && !workPunch && (
+                          <button onClick={() => alert('Punch in to your shift first before starting a job.')}
+                            style={{ flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: `1px solid ${DIM}`, background: 'transparent', color: DIM, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: 0.5 }}>
+                            <Play size={14} /> Punch in first
+                          </button>
+                        )}
+                        {job.status === 'in_progress' && !activeClock && hasHours && workPunch && (
                           <button
                             disabled={clockLoading === (job.line_id || job.id)}
                             onClick={() => handleClockIn(job)}
@@ -456,8 +691,12 @@ export default function MechanicDashboardPage() {
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                             }}
                           >
-                            <Play size={14} fill="#fff" /> Clock In
+                            <Play size={14} fill="#fff" /> {clockedLines.has(job.line_id || job.line?.id) ? 'Resume' : 'Start'}
                           </button>
+                        )}
+                        {job.status === 'in_progress' && activeClock && hasHours && (
+                          <button onClick={() => alert('Pause or complete your current job before starting another one.')} style={{ flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: `1px solid ${DIM}`, background: 'transparent', color: DIM, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: 0.5 }}>
+                            <Play size={14} /> Pause current job first</button>
                         )}
                         {job.status === 'in_progress' && !hasHours && (
                           <button
@@ -503,15 +742,29 @@ export default function MechanicDashboardPage() {
                             <button
                               onClick={() => { setRequestModal(job); setRequestForm({ part_name: '', quantity: '1', notes: '' }) }}
                               style={{
-                                flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10,
+                                flex: 1, minWidth: 100, padding: '9px 14px', borderRadius: 10,
                                 border: `1px solid ${BLUE}`, background: 'transparent',
-                                color: BLUE, fontWeight: 700, fontSize: 13,
+                                color: BLUE, fontWeight: 700, fontSize: 12,
                                 cursor: 'pointer', fontFamily: FONT,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                               }}
                             >
-                              <Package size={15} /> Request Parts
+                              <Package size={14} /> Request Parts
                             </button>
+                            {hasHours && (
+                            <button
+                              onClick={() => { setMoreTimeModal(job); setMoreTimeAmount('60') }}
+                              style={{
+                                flex: 1, minWidth: 100, padding: '9px 14px', borderRadius: 10,
+                                border: `1px solid ${AMBER}`, background: 'transparent',
+                                color: AMBER, fontWeight: 700, fontSize: 12,
+                                cursor: 'pointer', fontFamily: FONT,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                              }}
+                            >
+                              <Clock size={14} /> More Time
+                            </button>
+                            )}
                           </>
                         )}
                         {job.status === 'completed' && (
@@ -832,6 +1085,47 @@ export default function MechanicDashboardPage() {
           </div>
         </div>
       )}
+      {/* More Time Request Modal */}
+      {moreTimeModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setMoreTimeModal(null) }}>
+          <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Request More Time</div>
+            <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>
+              {moreTimeModal.wo?.so_number} — {moreTimeModal.line?.description?.slice(0, 40)}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {[{ label: '30 min', val: '30' }, { label: '1 hr', val: '60' }, { label: '2 hr', val: '120' }].map(opt => (
+                <button key={opt.val} onClick={() => setMoreTimeAmount(opt.val)} style={{
+                  flex: 1, padding: '10px 8px', borderRadius: 8, border: moreTimeAmount === opt.val ? `2px solid ${AMBER}` : '1px solid rgba(255,255,255,0.1)',
+                  background: moreTimeAmount === opt.val ? `${AMBER}15` : 'transparent', color: moreTimeAmount === opt.val ? AMBER : DIM,
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+                }}>{opt.label}</button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setMoreTimeModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button disabled={actionLoading === 'more-time'} onClick={async () => {
+                setActionLoading('more-time')
+                const mins = parseInt(moreTimeAmount) || 60
+                const label = mins >= 60 ? `${mins / 60} hr` : `${mins} min`
+                try {
+                  const res = await fetch('/api/mechanic/request-hours', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ assignment_id: moreTimeModal.id, wo_number: moreTimeModal.wo?.so_number, job_description: `${moreTimeModal.line?.description || 'job'} — requesting ${label} more` }),
+                  })
+                  if (res.ok) { alert(`Requested ${label} more — supervisor notified.`); setMoreTimeModal(null) }
+                  else alert('Could not send request.')
+                } catch { alert('Could not send request.') }
+                setActionLoading(null)
+              }} style={{ padding: '8px 16px', background: AMBER, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                {actionLoading === 'more-time' ? 'Sending...' : 'Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Complete Confirmation Modal */}
       {completeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
