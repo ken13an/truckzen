@@ -2142,102 +2142,166 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* ── Labor Section ── */}
-          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE }} />
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Labor</span>
-                <span style={{ fontSize: 11, color: GRAY }}>({jobLines.length} {jobLines.length === 1 ? 'line' : 'lines'})</span>
-              </div>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{fmt(laborTotal)}</span>
-            </div>
-            <div style={{ padding: '0 20px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr>
-                    <th style={{ textAlign: 'left', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Description</th>
-                    <th style={{ textAlign: 'center', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Est. Hrs</th>
-                    <th style={{ textAlign: 'center', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 90 }}>Billed Hrs</th>
-                    <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Rate</th>
-                    <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 90 }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jobLines.map((line: any, idx: number) => {
-                    const hrs = line.billed_hours || line.actual_hours || line.estimated_hours || 0
-                    return (
-                      <tr key={line.id} style={{ borderBottom: idx < jobLines.length - 1 ? '1px solid #F8F9FA' : 'none' }}>
-                        <td style={{ padding: '10px 8px', color: '#1E293B', fontWeight: 500 }}>{line.description?.slice(0, 50) || `Job ${idx + 1}`}</td>
-                        <td style={{ padding: '10px 8px', textAlign: 'center', color: GRAY, fontSize: 11 }}>{line.estimated_hours || '—'}</td>
-                        <td style={{ padding: '10px 8px', textAlign: 'center' }}>
-                          {canEditPrices ? (
-                            <input type="number" step="0.25" defaultValue={line.billed_hours || ''} onBlur={async e => { const v = parseFloat(e.target.value) || 0; if (v !== (line.billed_hours || 0)) { await patchLine(line.id, { billed_hours: v }); } }} placeholder={String(line.estimated_hours || 0)} style={{ width: 64, textAlign: 'center', padding: '4px 6px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', background: '#FAFBFC' }} />
-                          ) : (
-                            <span style={{ fontWeight: 600 }}>{line.billed_hours || hrs}</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '10px 8px', textAlign: 'right', color: GRAY }}>{fmt(laborRate)}/hr</td>
-                        <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{fmt(hrs * laborRate)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {/* ── Job-Grouped Invoice Body ── */}
+          {(() => {
+            const orphanParts = partLines.filter((p: any) => !p.related_labor_line_id || !jobLines.some((j: any) => j.id === p.related_labor_line_id))
+            return (
+              <>
+                {jobLines.map((line: any, idx: number) => {
+                  const hrs = line.billed_hours || line.actual_hours || line.estimated_hours || 0
+                  const jobLaborAmt = hrs * laborRate
+                  const jobParts = partLines.filter((p: any) => p.related_labor_line_id === line.id)
+                  const jobPartsTotal = jobParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0)
+                  const jobTotal = jobLaborAmt + jobPartsTotal
 
-          {/* ── Parts Section ── */}
-          {partLines.length > 0 && (
-            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
-              <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Parts</span>
-                  <span style={{ fontSize: 11, color: GRAY }}>({partLines.length} {partLines.length === 1 ? 'item' : 'items'})</span>
-                </div>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{fmt(partsLineTotal)}</span>
-              </div>
-              <div style={{ padding: '0 20px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'center', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 40 }}>Qty</th>
-                      <th style={{ textAlign: 'left', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Part</th>
-                      <th style={{ textAlign: 'left', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 90 }}>Part #</th>
-                      <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Cost</th>
-                      <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Sell</th>
-                      <th style={{ textAlign: 'right', padding: '10px 8px 8px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {partLines.map((p: any, idx: number) => {
-                      const sell = p.parts_sell_price || p.unit_price || 0
-                      const cost = p.parts_cost_price || 0
-                      const qty = p.quantity || 1
-                      const lineTotal = sell * qty
-                      const isZero = lineTotal === 0 && sell === 0
-                      return (
-                        <tr key={p.id} style={{ borderBottom: idx < partLines.length - 1 ? '1px solid #F8F9FA' : 'none', opacity: isZero ? 0.45 : 1 }}>
-                          <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 600 }}>{qty}</td>
-                          <td style={{ padding: '10px 8px' }}>
-                            <span style={{ color: '#1E293B', fontWeight: 500 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
-                            {p.real_name && p.rough_name && p.real_name !== p.rough_name && (
-                              <div style={{ fontSize: 9, color: '#B0B0B0', marginTop: 2 }}>Originally: {p.rough_name}</div>
-                            )}
-                          </td>
-                          <td style={{ padding: '10px 8px', color: GRAY, fontSize: 11 }}>{p.part_number || '—'}</td>
-                          <td style={{ padding: '10px 8px', textAlign: 'right', color: GRAY, fontSize: 11 }}>{canSeePrices ? fmt(cost) : '—'}</td>
-                          <td style={{ padding: '10px 8px', textAlign: 'right' }}>{canSeePrices ? fmt(sell) : '—'}</td>
-                          <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{fmt(lineTotal)}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                  return (
+                    <div key={line.id} style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+                      {/* A. Job Header */}
+                      <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAFBFC' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE }} />
+                          <span style={{ fontSize: 11, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em' }}>Job {idx + 1}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{line.description?.slice(0, 60) || `Job ${idx + 1}`}</span>
+                        </div>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{fmt(jobTotal)}</span>
+                      </div>
+
+                      <div style={{ padding: '0 20px' }}>
+                        {/* B. Labor Detail */}
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr>
+                              <th style={{ textAlign: 'left', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Labor</th>
+                              <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Est. Hrs</th>
+                              <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Billed</th>
+                              <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 70 }}>Rate</th>
+                              <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td style={{ padding: '8px 8px', color: '#374151', fontWeight: 500 }}>{line.description?.slice(0, 50) || `Job ${idx + 1}`}</td>
+                              <td style={{ padding: '8px 8px', textAlign: 'center', color: GRAY, fontSize: 11 }}>{line.estimated_hours || '—'}</td>
+                              <td style={{ padding: '8px 8px', textAlign: 'center' }}>
+                                {canEditPrices ? (
+                                  <input type="number" step="0.25" defaultValue={line.billed_hours || ''} onBlur={async e => { const v = parseFloat(e.target.value) || 0; if (v !== (line.billed_hours || 0)) { await patchLine(line.id, { billed_hours: v }); } }} placeholder={String(line.estimated_hours || 0)} style={{ width: 60, textAlign: 'center', padding: '4px 6px', border: '1px solid #E5E7EB', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', background: '#FAFBFC' }} />
+                                ) : (
+                                  <span style={{ fontWeight: 600 }}>{line.billed_hours || hrs}</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '8px 8px', textAlign: 'right', color: GRAY }}>{fmt(laborRate)}/hr</td>
+                              <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{fmt(jobLaborAmt)}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        {/* C. Parts for this Job */}
+                        {jobParts.length > 0 && (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 4 }}>
+                            <thead>
+                              <tr>
+                                <th style={{ textAlign: 'center', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GREEN, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 36 }}>Qty</th>
+                                <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GREEN, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Parts</th>
+                                <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Part #</th>
+                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 60 }}>Cost</th>
+                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 60 }}>Sell</th>
+                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {jobParts.map((p: any, pi: number) => {
+                                const sell = p.parts_sell_price || p.unit_price || 0
+                                const cost = p.parts_cost_price || 0
+                                const qty = p.quantity || 1
+                                const lineTotal = sell * qty
+                                const isZero = lineTotal === 0 && sell === 0
+                                return (
+                                  <tr key={p.id} style={{ borderBottom: pi < jobParts.length - 1 ? '1px solid #F8F9FA' : 'none', opacity: isZero ? 0.45 : 1 }}>
+                                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600 }}>{qty}</td>
+                                    <td style={{ padding: '6px 8px' }}>
+                                      <span style={{ color: '#1E293B', fontWeight: 500 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
+                                      {p.real_name && p.rough_name && p.real_name !== p.rough_name && (
+                                        <div style={{ fontSize: 9, color: '#B0B0B0', marginTop: 1 }}>Originally: {p.rough_name}</div>
+                                      )}
+                                    </td>
+                                    <td style={{ padding: '6px 8px', color: GRAY, fontSize: 11 }}>{p.part_number || '—'}</td>
+                                    <td style={{ padding: '6px 8px', textAlign: 'right', color: GRAY, fontSize: 11 }}>{canSeePrices ? fmt(cost) : '—'}</td>
+                                    <td style={{ padding: '6px 8px', textAlign: 'right' }}>{canSeePrices ? fmt(sell) : '—'}</td>
+                                    <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{fmt(lineTotal)}</td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+
+                      {/* D. Job Financial Recap */}
+                      <div style={{ padding: '10px 20px', borderTop: '1px solid #E5E7EB', background: '#FAFBFC' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 24, fontSize: 12 }}>
+                          <span style={{ color: GRAY }}>Labor: <span style={{ color: '#374151', fontWeight: 600 }}>{fmt(jobLaborAmt)}</span></span>
+                          {jobParts.length > 0 && <span style={{ color: GRAY }}>Parts: <span style={{ color: '#374151', fontWeight: 600 }}>{fmt(jobPartsTotal)}</span></span>}
+                          <span style={{ color: '#1E293B', fontWeight: 700, fontSize: 13 }}>Job Total: {fmt(jobTotal)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {/* Orphan Parts — parts not linked to any specific job */}
+                {orphanParts.length > 0 && (
+                  <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+                    <div style={{ padding: '12px 20px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FAFBFC' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '.04em' }}>Additional Parts</span>
+                        <span style={{ fontSize: 11, color: GRAY }}>({orphanParts.length} {orphanParts.length === 1 ? 'item' : 'items'})</span>
+                      </div>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{fmt(orphanParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0))}</span>
+                    </div>
+                    <div style={{ padding: '0 20px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr>
+                            <th style={{ textAlign: 'center', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 36 }}>Qty</th>
+                            <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6' }}>Part</th>
+                            <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Part #</th>
+                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 60 }}>Cost</th>
+                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 60 }}>Sell</th>
+                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #F3F4F6', width: 80 }}>Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orphanParts.map((p: any, pi: number) => {
+                            const sell = p.parts_sell_price || p.unit_price || 0
+                            const cost = p.parts_cost_price || 0
+                            const qty = p.quantity || 1
+                            const lineTotal = sell * qty
+                            const isZero = lineTotal === 0 && sell === 0
+                            return (
+                              <tr key={p.id} style={{ borderBottom: pi < orphanParts.length - 1 ? '1px solid #F8F9FA' : 'none', opacity: isZero ? 0.45 : 1 }}>
+                                <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600 }}>{qty}</td>
+                                <td style={{ padding: '6px 8px' }}>
+                                  <span style={{ color: '#1E293B', fontWeight: 500 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
+                                  {p.real_name && p.rough_name && p.real_name !== p.rough_name && (
+                                    <div style={{ fontSize: 9, color: '#B0B0B0', marginTop: 1 }}>Originally: {p.rough_name}</div>
+                                  )}
+                                </td>
+                                <td style={{ padding: '6px 8px', color: GRAY, fontSize: 11 }}>{p.part_number || '—'}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right', color: GRAY, fontSize: 11 }}>{canSeePrices ? fmt(cost) : '—'}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right' }}>{canSeePrices ? fmt(sell) : '—'}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{fmt(lineTotal)}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
+            )
+          })()}
 
           {/* ── Summary & Totals ── */}
           <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
