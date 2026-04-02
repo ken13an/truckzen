@@ -147,7 +147,7 @@ export default function MechanicDashboardPage() {
         setOverrideModal(false); setOverrideReason('')
       } else {
         const err = await res.json().catch(() => ({}))
-        if (err.outsideGeofence) setOverrideModal(true)
+        if (err.outsideGeofence && !err.blocked) setOverrideModal(true)
         else alert(err.error || 'Punch failed')
       }
     } catch { alert('Could not get location. Enable GPS and try again.') }

@@ -61,8 +61,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Already punched in', activePunchId: existing[0].id }, { status: 409 })
     }
 
-    if (!insideGeofence && !override_reason) {
-      return NextResponse.json({ error: 'Outside shop geofence. Provide override reason to punch in.', outsideGeofence: true }, { status: 403 })
+    if (!insideGeofence) {
+      const effectiveRole = actor.impersonate_role || actor.role || ''
+      const canSelfOverride = ['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer', 'office_admin'].includes(effectiveRole)
+
+      if (!canSelfOverride) {
+        // Technicians/mechanics cannot self-override geofence — must be at the shop
+        return NextResponse.json({ error: 'You must be at the shop to punch in. Contact your supervisor if you need assistance.', outsideGeofence: true, blocked: true }, { status: 403 })
+      }
+
+      if (!override_reason || override_reason.trim().length < 10) {
+        return NextResponse.json({ error: 'Override reason must be at least 10 characters.', outsideGeofence: true }, { status: 403 })
+      }
     }
 
     const { data: punch, error } = await s.from('work_punches').insert({
