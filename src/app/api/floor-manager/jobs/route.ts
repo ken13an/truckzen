@@ -22,6 +22,7 @@ export async function GET(req: Request) {
         assets(unit_number, unit_type, ownership_type)
       )`)
     .eq('service_orders.shop_id', shopId)
+    .is('service_orders.deleted_at', null)
     .in('line_type', ['labor', 'job'])
     .not('service_orders.status', 'in', '("good_to_go","done","void")')
     .or('service_orders.is_historical.is.null,service_orders.is_historical.eq.false')
