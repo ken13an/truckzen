@@ -42,6 +42,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
+  // Session refresh on foreground resume — prevents stale 401 after mobile background
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        // Session refreshed — no action needed, Supabase SDK handles cookies
+      }
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+      }
+    })
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        // App returned to foreground — trigger session refresh
+        supabase.auth.getSession().catch(() => {})
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [])
+
   const isFullScreen = pathname === '/' || FULL_SCREEN.some(r => pathname?.startsWith(r))
 
   // Redirect authenticated users from public homepage to dashboard

@@ -23,6 +23,17 @@ export function useAuth() {
 
   useEffect(() => { refresh() }, [refresh])
 
+  // Re-validate session on foreground resume
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession().then(() => refresh()).catch(() => {})
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [supabase, refresh])
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
     setUser(null)

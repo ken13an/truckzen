@@ -286,7 +286,7 @@ export default function QuickViewPage() {
 
         {/* Add Time Modal */}
         {timeModal && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 'max(60px, env(safe-area-inset-top, 60px))', zIndex: 1000 }}
             onClick={() => { setTimeModal(null); setTimeValue('') }}>
             <div style={{ background: '#1E1E2E', border: `1px solid ${CARD_BORDER}`, borderRadius: 12, padding: 20, width: 320, maxWidth: '90vw' }}
               onClick={e => e.stopPropagation()}>

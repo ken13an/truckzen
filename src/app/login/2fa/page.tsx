@@ -65,7 +65,7 @@ export default function TwoFactorPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ width: 380, padding: 32, background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16 }}>
+      <div style={{ width: '100%', maxWidth: 380, padding: 'clamp(20px, 4vw, 32px)', background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, boxSizing: 'border-box' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <Logo size="md" style={{ marginBottom: 20 }} />
           <div style={{ fontSize: 18, fontWeight: 700, color: '#F0F4FF', marginBottom: 6 }}>Two-Factor Authentication</div>
