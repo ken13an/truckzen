@@ -18,6 +18,15 @@ const DIM = '#71717A'
 
 type Filter = 'unassigned' | 'assigned' | 'waiting_parts' | 'in_progress'
 
+// One shared assignment truth helper
+function isJobAssigned(j: any): boolean {
+  return !!(j.mechanic_name || j.assigned_to)
+}
+function assignedDisplay(j: any): string {
+  if (j.mechanic_name) return `${j.mechanic_name}${j.mechanic_team ? ` (${j.mechanic_team})` : ''}`
+  return 'Unassigned'
+}
+
 export default function QuickViewPage() {
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -27,7 +36,8 @@ export default function QuickViewPage() {
   const [filter, setFilter] = useState<Filter>('unassigned')
   const [search, setSearch] = useState('')
   const [assigning, setAssigning] = useState<string | null>(null)
-  const [assignDropdown, setAssignDropdown] = useState<string | null>(null)
+  const [assignPanel, setAssignPanel] = useState<string | null>(null)
+  const [mechSearch, setMechSearch] = useState('')
   const [timeModal, setTimeModal] = useState<any | null>(null)
   const [timeValue, setTimeValue] = useState('')
   const [timeSaving, setTimeSaving] = useState(false)
@@ -62,12 +72,12 @@ export default function QuickViewPage() {
         assignments: userId ? [{ user_id: userId, name: userName, percentage: 100 }] : [],
       }),
     })
-    setAssignDropdown(null)
+    setAssignPanel(null)
+    setMechSearch('')
     await loadData()
     setAssigning(null)
   }
 
-  // Add Time — uses existing PATCH /api/so-lines/[id] with estimated_hours
   const saveTime = async () => {
     if (!timeModal || !timeValue) return
     setTimeSaving(true)
@@ -84,6 +94,7 @@ export default function QuickViewPage() {
     setTimeSaving(false)
   }
 
+  // All filtering uses the same isJobAssigned helper
   const filtered = jobs.filter(j => {
     if (j.status === 'completed') return false
     if (search) {
@@ -93,18 +104,17 @@ export default function QuickViewPage() {
           !(j.customer || '').toLowerCase().includes(q) &&
           !(j.description || '').toLowerCase().includes(q)) return false
     }
-    const isAssigned = !!(j.mechanic_name || j.assigned_to)
     switch (filter) {
-      case 'unassigned': return !isAssigned
-      case 'assigned': return isAssigned
+      case 'unassigned': return !isJobAssigned(j)
+      case 'assigned': return isJobAssigned(j)
       case 'waiting_parts': return ['rough', 'ordered'].includes(j.parts_status || '')
       case 'in_progress': return j.status === 'in_progress'
     }
   })
 
   const counts = {
-    unassigned: jobs.filter(j => !(j.mechanic_name || j.assigned_to) && j.status !== 'completed').length,
-    assigned: jobs.filter(j => !!(j.mechanic_name || j.assigned_to) && j.status !== 'completed').length,
+    unassigned: jobs.filter(j => !isJobAssigned(j) && j.status !== 'completed').length,
+    assigned: jobs.filter(j => isJobAssigned(j) && j.status !== 'completed').length,
     waiting_parts: jobs.filter(j => j.status !== 'completed' && ['rough', 'ordered'].includes(j.parts_status || '')).length,
     in_progress: jobs.filter(j => j.status === 'in_progress').length,
   }
@@ -172,8 +182,13 @@ export default function QuickViewPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {filtered.map(j => {
               const ps = j.parts_status
-              const isOpen = assignDropdown === j.id
-              const hasAssignment = !!(j.mechanic_name || j.assigned_to)
+              const assigned = isJobAssigned(j)
+              const panelOpen = assignPanel === j.id
+              const filteredMechs = mechanics.filter(m => {
+                if (!mechSearch) return true
+                return m.full_name?.toLowerCase().includes(mechSearch.toLowerCase()) || m.team?.toLowerCase().includes(mechSearch.toLowerCase())
+              })
+
               return (
                 <div key={j.id} style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: 10, padding: '12px 14px' }}>
 
@@ -182,10 +197,10 @@ export default function QuickViewPage() {
                     <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>{j.wo_number}</span>
                     <span style={{
                       padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-                      background: hasAssignment ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                      color: hasAssignment ? GREEN : RED,
+                      background: assigned ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                      color: assigned ? GREEN : RED,
                     }}>
-                      {hasAssignment ? 'Assigned' : 'Unassigned'}
+                      {assigned ? 'Assigned' : 'Unassigned'}
                     </span>
                   </div>
 
@@ -195,8 +210,8 @@ export default function QuickViewPage() {
                   </div>
 
                   {/* 3. Current mechanic */}
-                  <div style={{ fontSize: 11, fontWeight: 600, color: hasAssignment ? BLUE : RED, marginBottom: 6 }}>
-                    {j.mechanic_name ? `${j.mechanic_name}${j.mechanic_team ? ` (${j.mechanic_team})` : ''}` : 'Unassigned'}
+                  <div style={{ fontSize: 11, fontWeight: 600, color: assigned ? BLUE : RED, marginBottom: 6 }}>
+                    {assignedDisplay(j)}
                   </div>
 
                   {/* 4. Core info: Unit · Parts · Hours */}
@@ -209,64 +224,60 @@ export default function QuickViewPage() {
                   {/* 5. Customer */}
                   {j.customer && <div style={{ fontSize: 10, color: DIM, marginBottom: 6 }}>{j.customer}</div>}
 
-                  {/* 6. Quick assign chips */}
-                  {(() => {
-                    const quickPicks = mechanics.filter(m => m.id !== (j.assigned_to || '')).slice(0, 3)
-                    return (
-                      <div style={{ marginTop: 6 }}>
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
-                          {quickPicks.map(m => (
-                            <button key={m.id}
-                              onClick={() => assignMechanic(j.id, j.wo_id, m.id, m.full_name)}
-                              disabled={assigning === j.id}
-                              style={{ padding: '4px 10px', borderRadius: 6, border: 'none', fontSize: 10, fontWeight: 600, cursor: 'pointer', background: 'rgba(34,197,94,0.15)', color: GREEN }}>
-                              {m.full_name?.split(' ')[0]}{m.team ? ` (${m.team})` : ''}
-                            </button>
-                          ))}
-                          <button
-                            onClick={() => setAssignDropdown(isOpen ? null : j.id)}
-                            disabled={assigning === j.id}
-                            style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${CARD_BORDER}`, fontSize: 10, fontWeight: 600, cursor: 'pointer', background: 'transparent', color: DIM }}>
-                            {isOpen ? 'Close' : 'More'}
-                          </button>
-                          {hasAssignment && (
-                            <button
-                              onClick={() => assignMechanic(j.id, j.wo_id, '', '')}
-                              disabled={assigning === j.id}
-                              style={{ padding: '4px 10px', borderRadius: 6, border: 'none', fontSize: 10, fontWeight: 600, cursor: 'pointer', background: 'rgba(239,68,68,0.1)', color: RED }}>
-                              Unassign
-                            </button>
-                          )}
-                        </div>
+                  {/* 6. Action row */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                    <button
+                      onClick={() => { setAssignPanel(panelOpen ? null : j.id); setMechSearch('') }}
+                      disabled={assigning === j.id}
+                      style={{ ...btnBase, background: assigned ? 'rgba(29,111,232,0.15)' : 'rgba(34,197,94,0.2)', color: assigned ? BLUE : GREEN }}
+                    >
+                      {assigning === j.id ? '...' : assigned ? 'Reassign' : 'Assign'}
+                    </button>
+                    {assigned && (
+                      <button
+                        onClick={() => assignMechanic(j.id, j.wo_id, '', '')}
+                        disabled={assigning === j.id}
+                        style={{ ...btnBase, background: 'rgba(239,68,68,0.1)', color: RED }}
+                      >
+                        Unassign
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { setTimeModal(j); setTimeValue(String(j.estimated_hours || '')) }}
+                      style={{ ...btnBase, background: 'rgba(245,158,11,0.12)', color: AMBER }}
+                    >
+                      Add Time
+                    </button>
+                    <a href={`/work-orders/${j.wo_id}`} style={{ ...btnBase, border: `1px solid ${CARD_BORDER}`, color: DIM, background: 'transparent', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                      Open WO
+                    </a>
+                  </div>
 
-                        {/* Full mechanic list */}
-                        {isOpen && (
-                          <div style={{ background: '#1E1E2E', border: `1px solid ${CARD_BORDER}`, borderRadius: 8, padding: 6, maxHeight: 160, overflowY: 'auto', marginBottom: 6 }}>
-                            {mechanics.map(m => (
-                              <button key={m.id} onClick={() => assignMechanic(j.id, j.wo_id, m.id, m.full_name)}
-                                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 11, marginBottom: 1,
-                                  background: j.assigned_to === m.id ? 'rgba(29,111,232,0.2)' : 'transparent',
-                                  color: j.assigned_to === m.id ? BLUE : TEXT, fontWeight: j.assigned_to === m.id ? 700 : 400 }}>
-                                {m.full_name}{m.team ? ` (${m.team})` : ''}
-                              </button>
-                            ))}
-                          </div>
+                  {/* Searchable assign panel */}
+                  {panelOpen && (
+                    <div style={{ marginTop: 8, background: '#1E1E2E', border: `1px solid ${CARD_BORDER}`, borderRadius: 8, padding: 8 }}>
+                      <input
+                        value={mechSearch} onChange={e => setMechSearch(e.target.value)}
+                        placeholder="Search mechanic..."
+                        autoFocus
+                        style={{ width: '100%', padding: '6px 10px', borderRadius: 6, border: `1px solid ${CARD_BORDER}`, background: CARD_BG, color: TEXT, fontSize: 11, outline: 'none', boxSizing: 'border-box', marginBottom: 6 }}
+                      />
+                      <div style={{ maxHeight: 140, overflowY: 'auto' }}>
+                        {filteredMechs.length === 0 ? (
+                          <div style={{ padding: '8px 10px', color: DIM, fontSize: 11 }}>No mechanics found</div>
+                        ) : (
+                          filteredMechs.map(m => (
+                            <button key={m.id} onClick={() => assignMechanic(j.id, j.wo_id, m.id, m.full_name)}
+                              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 11, marginBottom: 1,
+                                background: j.assigned_to === m.id ? 'rgba(29,111,232,0.2)' : 'transparent',
+                                color: j.assigned_to === m.id ? BLUE : TEXT, fontWeight: j.assigned_to === m.id ? 700 : 400 }}>
+                              {m.full_name}{m.team ? ` (${m.team})` : ''}
+                            </button>
+                          ))
                         )}
-
-                        {/* Secondary actions */}
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button
-                            onClick={() => { setTimeModal(j); setTimeValue(String(j.estimated_hours || '')) }}
-                            style={{ ...btnBase, background: 'rgba(245,158,11,0.12)', color: AMBER }}>
-                            Add Time
-                          </button>
-                          <a href={`/work-orders/${j.wo_id}`} style={{ ...btnBase, border: `1px solid ${CARD_BORDER}`, color: DIM, background: 'transparent', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-                            Open WO
-                          </a>
-                        </div>
                       </div>
-                    )
-                  })()}
+                    </div>
+                  )}
                 </div>
               )
             })}
