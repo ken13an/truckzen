@@ -130,11 +130,15 @@ export default function ShopFloorPage() {
             {view === 'monitor' && <span style={{ fontSize: 10, background: '#22C55E', color: '#000', padding: '3px 8px', borderRadius: 10, fontFamily: "'Instrument Sans'", fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: '#000', animation: 'pulse 2s infinite' }} />LIVE</span>}
           </div>
         </div>
-        {/* View tabs */}
-        <div style={{ display: 'flex', gap: 4, background: '#0D0F12', borderRadius: 8, padding: 3 }}>
-          {(['table', 'kanban', 'monitor'] as const).map(v => (
-            <button key={v} onClick={() => setView(v)} style={{ padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: view === v ? '#1A1D23' : 'transparent', color: view === v ? '#F0F4FF' : '#48536A', textTransform: 'capitalize' }}>{v}</button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* View tabs */}
+          <div style={{ display: 'flex', gap: 4, background: '#0D0F12', borderRadius: 8, padding: 3 }}>
+            {(['table', 'kanban', 'monitor'] as const).map(v => (
+              <button key={v} onClick={() => setView(v)} style={{ padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: view === v ? '#1A1D23' : 'transparent', color: view === v ? '#F0F4FF' : '#48536A', textTransform: 'capitalize' }}>{v}</button>
+            ))}
+          </div>
+          {/* Quick View shortcut */}
+          <a href="/floor-manager/quick-view" style={{ padding: '7px 14px', borderRadius: 6, background: 'rgba(29,111,232,0.12)', border: '1px solid rgba(29,111,232,0.3)', color: '#1D6FE8', fontSize: 12, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>Quick View</a>
         </div>
       </div>
 

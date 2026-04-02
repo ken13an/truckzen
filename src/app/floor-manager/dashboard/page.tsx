@@ -324,39 +324,41 @@ export default function FloorManagerDashboardPage() {
 
       {/* ===== HEADER ===== */}
       <header style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 20px', borderBottom: `1px solid ${CARD_BORDER}`, background: HEADER_BG,
+        padding: '12px 20px', borderBottom: `1px solid ${CARD_BORDER}`, background: HEADER_BG,
         flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Logo size="sm" />
-          <span style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>Floor Manager</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3 }}>
-            {tabLabels.map((label, i) => (
-              <button key={i} onClick={() => setTab(i)} style={{
-                padding: '6px 14px', borderRadius: 6, border: 'none',
-                background: tab === i ? BLUE : 'transparent',
-                color: tab === i ? '#fff' : DIM,
-                fontFamily: FONT, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
-              }}>
-                {tabIcons[i]} {label}
-              </button>
-            ))}
+        {/* Row 1: Title + Mode Switcher + Refresh */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Logo size="sm" />
+            <span style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>Floor Manager</span>
+            <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: 2, marginLeft: 2 }}>
+              <a href="/shop-floor" style={{ padding: '5px 12px', borderRadius: 5, fontSize: 11, fontWeight: 600, background: 'transparent', color: DIM, textDecoration: 'none', cursor: 'pointer' }}>Shop Floor</a>
+              <a href="/floor-manager/quick-view" style={{ padding: '5px 12px', borderRadius: 5, fontSize: 11, fontWeight: 600, background: 'transparent', color: DIM, textDecoration: 'none', cursor: 'pointer' }}>Quick View</a>
+            </div>
           </div>
-          {/* Refresh */}
           <button onClick={handleRefresh} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-            borderRadius: 8, border: `1px solid ${CARD_BORDER}`, background: 'transparent',
+            display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px',
+            borderRadius: 6, border: `1px solid ${CARD_BORDER}`, background: 'transparent',
             color: DIM, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-            transition: 'border-color 0.15s',
           }}>
             <RefreshCw size={13} />
             <span>{secondsAgo}s ago</span>
           </button>
+        </div>
+        {/* Row 2: Dashboard Tabs */}
+        <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3, width: 'fit-content' }}>
+          {tabLabels.map((label, i) => (
+            <button key={i} onClick={() => setTab(i)} style={{
+              padding: '6px 14px', borderRadius: 6, border: 'none',
+              background: tab === i ? BLUE : 'transparent',
+              color: tab === i ? '#fff' : DIM,
+              fontFamily: FONT, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
+            }}>
+              {tabIcons[i]} {label}
+            </button>
+          ))}
         </div>
       </header>
 
