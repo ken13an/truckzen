@@ -443,9 +443,12 @@ export default function MechanicDashboardPage() {
               On Shift since {new Date(workPunch.punch_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               {workPunch.inside_geofence === false && <span style={{ color: AMBER, marginLeft: 8, fontSize: 10 }}>(off-site)</span>}
             </div>
-            <button onClick={() => handleWorkPunch('punch_out')} disabled={punchLoading}
-              style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${RED}44`, background: 'transparent', color: RED, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>
-              Punch Out
+            <button onClick={() => {
+              if (!confirm('End your shift? This will punch you out and stop any active job timers.')) return
+              handleWorkPunch('punch_out')
+            }} disabled={punchLoading}
+              style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${RED}22`, background: 'transparent', color: RED, fontWeight: 600, fontSize: 11, cursor: 'pointer', fontFamily: FONT, opacity: 0.7 }}>
+              End Shift
             </button>
           </div>
         )}
