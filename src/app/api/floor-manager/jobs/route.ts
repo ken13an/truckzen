@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   // Get all job lines with assignments, WO info, customer, unit
   const { data: lines } = await s.from('so_lines')
     .select(`id, description, line_status, estimated_hours, actual_hours, required_skills, line_type, assigned_to, parts_status,
-      service_orders!inner(id, so_number, status, shop_id, customer_id, asset_id,
+      service_orders!inner(id, so_number, status, shop_id, customer_id, asset_id, is_historical,
         estimate_required, estimate_approved, estimate_status, invoice_status,
         customers(company_name),
         assets(unit_number, unit_type, ownership_type)
@@ -25,12 +25,14 @@ export async function GET(req: Request) {
     .is('service_orders.deleted_at', null)
     .in('line_type', ['labor', 'job'])
     .not('service_orders.status', 'in', '("good_to_go","done","void")')
-    .or('service_orders.is_historical.is.null,service_orders.is_historical.eq.false')
     .order('created_at', { ascending: false })
     .limit(200)
 
+  // Filter out historical WOs in JS (Supabase .or() on nested relations is unreliable)
+  const activeLines = (lines || []).filter((l: any) => !l.service_orders?.is_historical)
+
   // Get assignments from canonical source: wo_job_assignments
-  const lineIds = (lines || []).map((l: any) => l.id)
+  const lineIds = activeLines.map((l: any) => l.id)
   let woAssignments: any[] = []
   if (lineIds.length > 0) {
     const { data: wja } = await s.from('wo_job_assignments')
@@ -40,7 +42,7 @@ export async function GET(req: Request) {
   }
 
   // Build response
-  const jobs = (lines || []).map((line: any) => {
+  const jobs = activeLines.map((line: any) => {
     const wo = line.service_orders
     const wja = woAssignments.find((a: any) => a.line_id === line.id)
     const mechanic = wja?.users || null
