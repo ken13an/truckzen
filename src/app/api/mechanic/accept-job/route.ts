@@ -40,15 +40,18 @@ export async function POST(req: Request) {
     await s.from('wo_job_assignments').delete().eq('id', assignment_id)
     if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic declined job${reason ? ': ' + reason : ''}` })
   } else if (action === 'complete') {
-    // Guard: mechanic must have at least one time entry for this job before completing
-    if (woId && lineId) {
-      const { data: timeEntries } = await s.from('so_time_entries')
+    // Guard: mechanic must have an ACTIVE RUNNING job timer for this WO before completing
+    // Shift punch is NOT enough — must be clocked into this specific job
+    // Paused/stopped/historical entries do NOT qualify
+    if (woId) {
+      const { data: activeTimer } = await s.from('so_time_entries')
         .select('id')
         .eq('user_id', actor.id)
         .eq('so_id', woId)
+        .is('clocked_out_at', null)
         .limit(1)
-      if (!timeEntries || timeEntries.length === 0) {
-        return NextResponse.json({ error: 'You must clock into this job before marking it complete.' }, { status: 400 })
+      if (!activeTimer || activeTimer.length === 0) {
+        return NextResponse.json({ error: 'You must start/resume the job timer before marking it complete. Clock into this job first.' }, { status: 400 })
       }
     }
 
