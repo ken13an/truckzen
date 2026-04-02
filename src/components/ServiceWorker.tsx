@@ -21,9 +21,13 @@ export function InstallPrompt() {
 
   useEffect(() => {
     // Check if running inside native shell or already installed
+    // Detection methods (strongest first):
+    const uaShell = navigator.userAgent.includes('TruckZenNativeShell')
+    const windowFlag = !!(window as any).__TRUCKZEN_NATIVE_SHELL__
     const shellParam = new URLSearchParams(window.location.search).get('shell') === 'native'
-    if (shellParam) localStorage.setItem('tz_native_shell', '1')
-    const isNativeShell = shellParam || localStorage.getItem('tz_native_shell') === '1'
+    const lsFlag = localStorage.getItem('tz_native_shell') === '1'
+    if (shellParam || uaShell || windowFlag) localStorage.setItem('tz_native_shell', '1')
+    const isNativeShell = uaShell || windowFlag || shellParam || lsFlag
     const standalone = window.matchMedia('(display-mode: standalone)').matches
       || (navigator as any).standalone === true
       || isNativeShell
