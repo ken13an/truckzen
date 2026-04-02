@@ -20,9 +20,13 @@ export function InstallPrompt() {
   const [isStandalone, setIsStandalone] = useState(false)
 
   useEffect(() => {
-    // Check if already installed
+    // Check if running inside native shell or already installed
+    const shellParam = new URLSearchParams(window.location.search).get('shell') === 'native'
+    if (shellParam) localStorage.setItem('tz_native_shell', '1')
+    const isNativeShell = shellParam || localStorage.getItem('tz_native_shell') === '1'
     const standalone = window.matchMedia('(display-mode: standalone)').matches
       || (navigator as any).standalone === true
+      || isNativeShell
     setIsStandalone(standalone)
     if (standalone) return
 
