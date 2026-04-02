@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 export async function GET(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  const userId = actor.id
+
   const s = db()
   const { searchParams } = new URL(req.url)
-  const userId = searchParams.get('user_id')
   const soIds = searchParams.get('so_ids') // comma-separated WO IDs
 
-  if (!userId || !soIds) return NextResponse.json({ error: 'user_id and so_ids required' }, { status: 400 })
+  if (!soIds) return NextResponse.json({ error: 'so_ids required' }, { status: 400 })
 
   const woIds = soIds.split(',').filter(Boolean)
   if (woIds.length === 0) return NextResponse.json({ entries: [], worked: {} })
@@ -17,6 +23,7 @@ export async function GET(req: Request) {
   const { data: entries } = await s.from('so_time_entries')
     .select('so_id, so_line_id, duration_minutes, clocked_in_at, clocked_out_at')
     .eq('user_id', userId)
+    .eq('shop_id', shopId)
     .in('so_id', woIds)
     .limit(500)
 

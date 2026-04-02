@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -8,6 +8,8 @@ export async function GET(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const userId = actor.id
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
 
   const s = db()
 
@@ -23,6 +25,7 @@ export async function GET(req: Request) {
     const { data: wo } = await s.from('service_orders')
       .select('id, so_number, status, customers(company_name), assets(unit_number, unit_type)')
       .eq('id', a.so_lines.so_id)
+      .eq('shop_id', shopId)
       .not('status', 'in', '("void","good_to_go")')
       .single()
     if (!wo) continue // skip voided/closed WOs

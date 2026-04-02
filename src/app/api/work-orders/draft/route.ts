@@ -103,13 +103,15 @@ export async function POST(req: Request) {
  * Delete a specific draft by ID, or all drafts for a user+asset
  */
 export async function DELETE(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  const userId = actor.id
+
   const { searchParams } = new URL(req.url)
   const draftId = searchParams.get('id')
-  const userId = searchParams.get('user_id')
-  const shopId = searchParams.get('shop_id')
   const assetId = searchParams.get('asset_id')
-
-  if (!userId || !shopId) return NextResponse.json({ error: 'user_id and shop_id required' }, { status: 400 })
 
   const s = db()
 
@@ -119,6 +121,7 @@ export async function DELETE(req: Request) {
       .from('service_orders')
       .delete()
       .eq('id', draftId)
+      .eq('shop_id', shopId)
       .eq('created_by_user_id', userId)
       .like('so_number', 'DRAFT-%')
   } else if (assetId) {
