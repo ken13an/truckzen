@@ -93,17 +93,18 @@ export default function QuickViewPage() {
           !(j.customer || '').toLowerCase().includes(q) &&
           !(j.description || '').toLowerCase().includes(q)) return false
     }
+    const isAssigned = !!(j.mechanic_name || j.assigned_to)
     switch (filter) {
-      case 'unassigned': return !j.mechanic_name
-      case 'assigned': return !!j.mechanic_name
+      case 'unassigned': return !isAssigned
+      case 'assigned': return isAssigned
       case 'waiting_parts': return ['rough', 'ordered'].includes(j.parts_status || '')
       case 'in_progress': return j.status === 'in_progress'
     }
   })
 
   const counts = {
-    unassigned: jobs.filter(j => !j.mechanic_name && j.status !== 'completed').length,
-    assigned: jobs.filter(j => !!j.mechanic_name && j.status !== 'completed').length,
+    unassigned: jobs.filter(j => !(j.mechanic_name || j.assigned_to) && j.status !== 'completed').length,
+    assigned: jobs.filter(j => !!(j.mechanic_name || j.assigned_to) && j.status !== 'completed').length,
     waiting_parts: jobs.filter(j => j.status !== 'completed' && ['rough', 'ordered'].includes(j.parts_status || '')).length,
     in_progress: jobs.filter(j => j.status === 'in_progress').length,
   }
@@ -172,6 +173,7 @@ export default function QuickViewPage() {
             {filtered.map(j => {
               const ps = j.parts_status
               const isOpen = assignDropdown === j.id
+              const hasAssignment = !!(j.mechanic_name || j.assigned_to)
               return (
                 <div key={j.id} style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: 10, padding: '12px 14px' }}>
 
@@ -180,10 +182,10 @@ export default function QuickViewPage() {
                     <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>{j.wo_number}</span>
                     <span style={{
                       padding: '2px 8px', borderRadius: 999, fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-                      background: j.mechanic_name ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
-                      color: j.mechanic_name ? GREEN : RED,
+                      background: hasAssignment ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+                      color: hasAssignment ? GREEN : RED,
                     }}>
-                      {j.mechanic_name ? 'Assigned' : 'Unassigned'}
+                      {hasAssignment ? 'Assigned' : 'Unassigned'}
                     </span>
                   </div>
 
@@ -193,7 +195,7 @@ export default function QuickViewPage() {
                   </div>
 
                   {/* 3. Current mechanic */}
-                  <div style={{ fontSize: 11, fontWeight: 600, color: j.mechanic_name ? BLUE : RED, marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: hasAssignment ? BLUE : RED, marginBottom: 6 }}>
                     {j.mechanic_name ? `${j.mechanic_name}${j.mechanic_team ? ` (${j.mechanic_team})` : ''}` : 'Unassigned'}
                   </div>
 
@@ -209,7 +211,7 @@ export default function QuickViewPage() {
 
                   {/* 6. Quick assign chips */}
                   {(() => {
-                    const quickPicks = mechanics.filter(m => m.id !== j.assigned_to).slice(0, 3)
+                    const quickPicks = mechanics.filter(m => m.id !== (j.assigned_to || '')).slice(0, 3)
                     return (
                       <div style={{ marginTop: 6 }}>
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
@@ -227,7 +229,7 @@ export default function QuickViewPage() {
                             style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${CARD_BORDER}`, fontSize: 10, fontWeight: 600, cursor: 'pointer', background: 'transparent', color: DIM }}>
                             {isOpen ? 'Close' : 'More'}
                           </button>
-                          {j.mechanic_name && (
+                          {hasAssignment && (
                             <button
                               onClick={() => assignMechanic(j.id, j.wo_id, '', '')}
                               disabled={assigning === j.id}

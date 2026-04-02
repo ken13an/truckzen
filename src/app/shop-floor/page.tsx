@@ -47,7 +47,7 @@ export default function ShopFloorPage() {
   const loadJobs = useCallback(async (profile: any) => {
     const res = await fetch(`/api/service-orders?shop_id=${profile.shop_id}&limit=100&historical=false`)
     const data = res.ok ? await res.json() : []
-    const filtered = (data || []).filter((j: any) => j.status !== 'good_to_go')
+    const filtered = (data || []).filter((j: any) => !['good_to_go', 'done', 'void'].includes(j.status))
     setJobs(filtered)
   }, [])
 
