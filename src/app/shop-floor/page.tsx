@@ -109,6 +109,18 @@ export default function ShopFloorPage() {
     return true
   })
 
+  // Mechanic display: WO-level assigned_tech join first, fallback to so_lines.assigned_to lookup
+  const getMechName = (j: any): string | null => {
+    if ((j.users as any)?.full_name) return (j.users as any).full_name
+    const lines = j.so_lines || []
+    const assignedLine = lines.find((l: any) => l.assigned_to)
+    if (assignedLine) {
+      const mech = mechanics.find((m: any) => m.id === assignedLine.assigned_to)
+      if (mech) return mech.full_name
+    }
+    return null
+  }
+
   // Stats
   const stats = {
     active: jobs.filter(j => j.status === 'in_progress').length,
@@ -173,7 +185,7 @@ export default function ShopFloorPage() {
               const elapsed = clock ? Math.floor((Date.now() - new Date(clock.clock_in).getTime()) / 60000) : 0
               const statusColor = isWorking ? (elapsed > 360 ? '#F59E0B' : '#22C55E') : '#48536A'
               const statusLabel = isWorking ? (elapsed > 360 ? 'Finishing Soon' : 'Working') : 'Off'
-              const assignedCount = jobs.filter(j => j.assigned_tech === m.id).length
+              const assignedCount = jobs.filter(j => j.assigned_tech === m.id || (j.so_lines || []).some((l: any) => l.assigned_to === m.id)).length
 
               return (
                 <div key={m.id} style={{ background: '#0D0F12', border: `1px solid ${isWorking ? statusColor + '40' : '#1A1D23'}`, borderRadius: 10, padding: '10px 14px', minWidth: 140, flexShrink: 0 }}>
@@ -260,7 +272,7 @@ export default function ShopFloorPage() {
                         <td style={S.td}><span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: STATUS_COLOR[j.status] || '#7C8BA0', background: `${STATUS_COLOR[j.status] || '#7C8BA0'}15` }}>{j.status?.replace(/_/g, ' ')}</span></td>
                         <td style={S.td}>{partsStatusMap[j.id] ? <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: partsStatusMap[j.id] === 'ready' ? '#22C55E' : partsStatusMap[j.id] === 'submitted' || partsStatusMap[j.id] === 'partial' ? '#F59E0B' : '#7C8BA0', background: `${partsStatusMap[j.id] === 'ready' ? '#22C55E' : partsStatusMap[j.id] === 'submitted' || partsStatusMap[j.id] === 'partial' ? '#F59E0B' : '#7C8BA0'}15` }}>{partsStatusMap[j.id] === 'ready' ? 'Parts Ready' : partsStatusMap[j.id] === 'partial' ? 'Partial' : partsStatusMap[j.id] === 'submitted' ? 'Preparing' : partsStatusMap[j.id]}</span> : <span style={{ color: '#48536A', fontSize: 9 }}>—</span>}</td>
                         <td style={S.td}><span style={{ color: PRIORITY_COLOR[j.priority] || '#7C8BA0', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' }}>{j.priority}</span></td>
-                        <td style={S.td}>{(j.users as any)?.full_name || <span style={{ color: '#48536A' }}>Unassigned</span>}</td>
+                        <td style={S.td}>{getMechName(j) || <span style={{ color: '#48536A' }}>Unassigned</span>}</td>
                         <td style={{ ...S.td, color: '#48536A', fontSize: 10 }}>{timeAgo(j.updated_at || j.created_at)}</td>
                       </tr>
                     ))}
@@ -286,7 +298,7 @@ export default function ShopFloorPage() {
                     <span style={{ fontSize: 10, color: '#48536A', marginLeft: 'auto' }}>{groupJobs.length}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {groupJobs.map(j => <KanbanCard key={j.id} job={j} />)}
+                    {groupJobs.map(j => <KanbanCard key={j.id} job={j} mechanics={mechanics} />)}
                   </div>
                 </div>
               )
@@ -302,7 +314,7 @@ export default function ShopFloorPage() {
                     <span style={{ fontSize: 10, color: '#48536A', marginLeft: 'auto' }}>{teamJobs.length}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {teamJobs.map(j => <KanbanCard key={j.id} job={j} />)}
+                    {teamJobs.map(j => <KanbanCard key={j.id} job={j} mechanics={mechanics} />)}
                   </div>
                 </div>
               )
@@ -323,7 +335,7 @@ export default function ShopFloorPage() {
               <div style={{ fontSize: 14, color: '#DDE3EE', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#7C8BA0' }}>
                 <span>{j.team ? `Team ${j.team}` : '—'}{j.bay ? ` · ${j.bay}` : ''}</span>
-                <span>{(j.users as any)?.full_name || 'Unassigned'}</span>
+                <span>{getMechName(j) || 'Unassigned'}</span>
               </div>
             </div>
           ))}
@@ -335,7 +347,12 @@ export default function ShopFloorPage() {
   )
 }
 
-function KanbanCard({ job: j }: { job: any }) {
+function KanbanCard({ job: j, mechanics }: { job: any; mechanics: any[] }) {
+  const mechName = (j.users as any)?.full_name || (() => {
+    const line = (j.so_lines || []).find((l: any) => l.assigned_to)
+    if (line) { const m = mechanics.find((mc: any) => mc.id === line.assigned_to); if (m) return m.full_name }
+    return null
+  })()
   return (
     <div onClick={() => window.location.href = `/work-orders/${j.id}`}
       style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || '#7C8BA0'}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
@@ -346,7 +363,7 @@ function KanbanCard({ job: j }: { job: any }) {
       <div style={{ fontSize: 12, color: '#DDE3EE', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
       {j.complaint && <div style={{ fontSize: 11, color: '#7C8BA0', lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: '#48536A' }}>
-        <span>{(j.users as any)?.full_name || 'Unassigned'}</span>
+        <span>{mechName || 'Unassigned'}</span>
         <span>{j.team ? `Team ${j.team}` : ''}{j.bay ? ` · ${j.bay}` : ''}</span>
       </div>
     </div>

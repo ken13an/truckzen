@@ -78,6 +78,15 @@ export async function POST(req: Request) {
     await ctx.admin.from('so_lines').update({ assigned_to: null, line_status: 'unassigned' }).eq('id', line_id)
   }
 
+  // Mirror line-level assignment to WO-level assigned_tech for display/reporting consistency
+  // Canonical truth remains: wo_job_assignments + so_lines.assigned_to
+  // WO assigned_tech is a derived mirror only
+  try {
+    const { data: woLines } = await ctx.admin.from('so_lines').select('assigned_to').eq('so_id', targetWoId).in('line_type', ['labor', 'job']).not('assigned_to', 'is', null)
+    const primaryTech = woLines?.[0]?.assigned_to || null
+    await ctx.admin.from('service_orders').update({ assigned_tech: primaryTech }).eq('id', targetWoId)
+  } catch {} // non-blocking — display mirror only
+
   const names = assignments.map((a: any) => `${a.name || 'Mechanic'} (${a.percentage || 100}%)`).join(', ')
   await ctx.admin.from('wo_activity_log').insert({ wo_id: targetWoId, user_id: ctx.actor.id, action: assignments.length > 0 ? `Assigned mechanics: ${names}` : 'Unassigned all mechanics' })
   return NextResponse.json({ ok: true })
