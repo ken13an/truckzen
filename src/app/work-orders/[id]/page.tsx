@@ -673,21 +673,34 @@ export default function WorkOrderDetail() {
   const techMap: Record<string, string> = wo.techMap || {}
   const userMap: Record<string, string> = wo.userMap || {}
   const shop = wo.shop || {}
-  const laborRate = shop.labor_rate || shop.default_labor_rate || 125
-  const taxRate = shop.tax_rate || 0
+  // For imported historical WOs, do NOT apply current shop labor rate — use imported line prices only
+  const isImportedHistory = !!wo.is_historical
+  const laborRate = isImportedHistory ? 0 : (shop.labor_rate || shop.default_labor_rate || 125)
+  const taxRate = isImportedHistory ? 0 : (shop.tax_rate || 0)
   const woStatus = WO_STATUS[wo.status] || { label: wo.status, bg: '#F3F4F6', color: GRAY }
   const vinDisplay = asset.vin ? asset.vin.slice(-6).toUpperCase() : '—'
   const createdByName = wo.createdByName || 'Unknown'
 
-  // Compute totals — operational (internal display, fallback chain for hours)
+  // Compute totals — for imported history, use stored totals instead of recalculating
   const woPartsTotal = woParts.reduce((s: number, p: any) => s + (p.quantity || 1) * (p.unit_cost || 0), 0)
-  const opTotals = calcWoOperationalTotals(wo.so_lines || [], laborRate, taxRate, !!shop.tax_labor, shopCharges)
-  const laborTotal = opTotals.laborTotal
-  const partsLineTotal = opTotals.partsTotal
-  const chargesTotal = opTotals.chargesTotal
-  const subtotal = opTotals.subtotal + woPartsTotal
-  const taxAmt = opTotals.taxAmount
-  const grandTotal = opTotals.grandTotal + woPartsTotal
+  let laborTotal: number, partsLineTotal: number, chargesTotal: number, subtotal: number, taxAmt: number, grandTotal: number
+  if (isImportedHistory) {
+    // Use imported source totals — do not recalculate with current shop rates
+    laborTotal = wo.labor_total || 0
+    partsLineTotal = wo.parts_total || 0
+    chargesTotal = 0
+    subtotal = laborTotal + partsLineTotal
+    taxAmt = 0
+    grandTotal = wo.grand_total || subtotal
+  } else {
+    const opTotals = calcWoOperationalTotals(wo.so_lines || [], laborRate, taxRate, !!shop.tax_labor, shopCharges)
+    laborTotal = opTotals.laborTotal
+    partsLineTotal = opTotals.partsTotal
+    chargesTotal = opTotals.chargesTotal
+    subtotal = opTotals.subtotal + woPartsTotal
+    taxAmt = opTotals.taxAmount
+    grandTotal = opTotals.grandTotal + woPartsTotal
+  }
 
   const fmt = (n: number) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return d } }
@@ -1830,8 +1843,8 @@ export default function WorkOrderDetail() {
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.estimated_hours || 0}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.actual_hours || 0}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.billed_hours || 0}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(laborRate)}/hr</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(hrs * laborRate)}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{isImportedHistory ? (line.unit_price ? fmt(line.unit_price) : '—') : `${fmt(laborRate)}/hr`}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{isImportedHistory ? fmt(line.total_price || 0) : fmt(hrs * laborRate)}</td>
                     </tr>
                   )
                 })}
@@ -2182,8 +2195,8 @@ export default function WorkOrderDetail() {
                                   <span style={{ fontWeight: 600 }}>{line.billed_hours || hrs}</span>
                                 )}
                               </td>
-                              <td style={{ padding: '8px 8px', textAlign: 'right', color: GRAY }}>{fmt(laborRate)}/hr</td>
-                              <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{fmt(jobLaborAmt)}</td>
+                              <td style={{ padding: '8px 8px', textAlign: 'right', color: GRAY }}>{isImportedHistory ? (line.unit_price ? fmt(line.unit_price) : '—') : `${fmt(laborRate)}/hr`}</td>
+                              <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{isImportedHistory ? fmt(line.total_price || 0) : fmt(jobLaborAmt)}</td>
                             </tr>
                           </tbody>
                         </table>
