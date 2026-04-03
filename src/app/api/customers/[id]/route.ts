@@ -8,17 +8,28 @@ export async function GET(req: Request, { params }: P) {
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const requestedShopId = new URL(req.url).searchParams.get('shop_id')
+  const shopScope = ctx.actor.is_platform_owner && requestedShopId ? requestedShopId : ctx.shopId
+
+  // Fetch customer + assets + kiosk_checkins (small datasets)
   let q = ctx.admin.from('customers').select(`
     *,
     assets(id, unit_number, year, make, model, vin, odometer, status, unit_type, ownership_type),
-    service_orders(id, so_number, status, priority, complaint, grand_total, labor_total, parts_total, created_at, completed_at),
     kiosk_checkins(id, unit_number, company_name, contact_name, complaint_en, checkin_ref, status, created_at)
   `).eq('id', id)
-  if (ctx.actor.is_platform_owner && requestedShopId) q = q.eq('shop_id', requestedShopId)
-  else if (ctx.shopId) q = q.eq('shop_id', ctx.shopId)
+  if (shopScope) q = q.eq('shop_id', shopScope)
   const { data, error } = await q.single()
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(data)
+
+  // Fetch service_orders separately with limit to prevent timeout on large history
+  const { data: serviceOrders } = await ctx.admin.from('service_orders')
+    .select('id, so_number, status, priority, complaint, grand_total, labor_total, parts_total, created_at, completed_at, is_historical')
+    .eq('customer_id', id)
+    .is('deleted_at', null)
+    .neq('is_historical', true)
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  return NextResponse.json({ ...data, service_orders: serviceOrders || [] })
 }
 
 export async function PATCH(req: Request, { params }: P) {
