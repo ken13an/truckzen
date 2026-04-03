@@ -23,8 +23,8 @@ export default function AccountingDashboard() {
     const shopId = profile.shop_id
 
     const [doneRes, gtagRes, outstRes, paidRes, pendingRes] = await Promise.all([
-      fetch(`/api/service-orders?shop_id=${shopId}&status=done&limit=30`),
-      fetch(`/api/service-orders?shop_id=${shopId}&status=good_to_go&limit=30`),
+      fetch(`/api/service-orders?shop_id=${shopId}&status=done&limit=30&historical=false`),
+      fetch(`/api/service-orders?shop_id=${shopId}&status=good_to_go&limit=30&historical=false`),
       fetch(`/api/invoices?status=sent`),
       fetch(`/api/invoices?status=paid&per_page=50`),
       fetch(`/api/accounting?shop_id=${shopId}`),

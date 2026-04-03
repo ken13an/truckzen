@@ -22,6 +22,8 @@ export async function GET(req: Request) {
     .is('deleted_at', null)
     .neq('status', 'void')
     .not('so_number', 'like', 'DRAFT-%')
+    .or('is_historical.is.null,is_historical.eq.false')
+    .neq('source', 'fullbay')
     .in('invoice_status', ['accounting_review', 'sent', 'paid', 'closed', 'quality_check_failed', 'draft'])
     .order('updated_at', { ascending: false })
     .limit(200)

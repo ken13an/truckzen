@@ -18,6 +18,7 @@ export default function ReportsPage() {
   const [dateTo, setDateTo] = useState('')
   const [dateLabel, setDateLabel] = useState('')
   const [loading, setLoading] = useState(true)
+  const [sourceMode, setSourceMode] = useState<'live' | 'fullbay' | 'combined'>('live')
 
   // Data
   const [overview, setOverview] = useState<any>(null)
@@ -40,7 +41,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     if (user && dateFrom && dateTo) loadData()
-  }, [user, dateFrom, dateTo, tab])
+  }, [user, dateFrom, dateTo, tab, sourceMode])
 
   function handleDateChange(from: string, to: string, label: string) {
     setDateFrom(from)
@@ -50,7 +51,7 @@ export default function ReportsPage() {
 
   async function loadData() {
     setLoading(true)
-    const base = `/api/reports?shop_id=${user.shop_id}&from=${dateFrom}&to=${dateTo}`
+    const base = `/api/reports?shop_id=${user.shop_id}&from=${dateFrom}&to=${dateTo}&source_mode=${sourceMode}`
 
     // Always load overview
     const ovRes = await fetch(`${base}&type=overview`)
@@ -60,7 +61,7 @@ export default function ReportsPage() {
     const days = (new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / 86400000
     const prevTo = new Date(new Date(dateFrom).getTime() - 86400000).toISOString().split('T')[0]
     const prevFrom = new Date(new Date(dateFrom).getTime() - days * 86400000).toISOString().split('T')[0]
-    const prevRes = await fetch(`/api/reports?shop_id=${user.shop_id}&from=${prevFrom}&to=${prevTo}&type=overview`)
+    const prevRes = await fetch(`/api/reports?shop_id=${user.shop_id}&from=${prevFrom}&to=${prevTo}&type=overview&source_mode=${sourceMode}`)
     if (prevRes.ok) setPrevOverview(await prevRes.json())
 
     // Tab-specific data
@@ -110,6 +111,17 @@ export default function ReportsPage() {
       <div style={{ marginBottom: 20 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 12px' }}>Reports</h1>
         <DateRangePicker onChange={handleDateChange} defaultPreset="this_month" />
+      </div>
+
+      {/* Source Mode */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+        {([['live', 'TruckZen Live'], ['fullbay', 'Fullbay History'], ['combined', 'Combined']] as const).map(([key, label]) => (
+          <button key={key} onClick={() => setSourceMode(key as any)} style={{
+            padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, border: 'none',
+            background: sourceMode === key ? '#1E293B' : '#F3F4F6',
+            color: sourceMode === key ? '#fff' : '#374151',
+          }}>{label}</button>
+        ))}
       </div>
 
       {/* Tabs */}

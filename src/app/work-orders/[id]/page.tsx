@@ -1966,7 +1966,8 @@ export default function WorkOrderDetail() {
       {/* ========== TAB 3: FILES & NOTES ========== */}
       {tab === 3 && (
         <div>
-          {/* Note input */}
+          {/* Note input — hidden for historical/imported records */}
+          {!wo.is_historical && (
           <div style={cardStyle}>
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Add Note</span>
             <AITextInput
@@ -1991,6 +1992,7 @@ export default function WorkOrderDetail() {
               </button>
             </div>
           </div>
+          )}
 
           {/* Notes list */}
           {notes.length > 0 && (
@@ -2009,7 +2011,8 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* File upload */}
+          {/* File upload — hidden for historical/imported records */}
+          {!wo.is_historical && (
           <div style={cardStyle}>
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Files</span>
             <input ref={fileRef} type="file" multiple style={{ display: 'none' }} onChange={e => uploadFiles(e.target.files)} />
@@ -2017,6 +2020,7 @@ export default function WorkOrderDetail() {
               <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload Files'}
             </button>
           </div>
+          )}
 
           {/* Files list */}
           {files.length > 0 && (

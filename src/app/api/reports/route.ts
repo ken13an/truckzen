@@ -12,8 +12,26 @@ export async function GET(req: Request) {
   const type   = searchParams.get('type') || 'overview'
   const from   = searchParams.get('from') || new Date(Date.now() - 30*86400000).toISOString().split('T')[0]
   const to     = searchParams.get('to')   || new Date().toISOString().split('T')[0]
+  const sourceMode = searchParams.get('source_mode') || 'live' // 'live' | 'fullbay' | 'combined'
 
   const supabase = createAdminSupabaseClient()
+
+  // Source mode filter helpers — applied to service_orders and invoices queries
+  function applySOSourceFilter(q: any) {
+    if (sourceMode === 'live') return q.or('is_historical.is.null,is_historical.eq.false').neq('source', 'fullbay')
+    if (sourceMode === 'fullbay') return q.eq('is_historical', true).eq('source', 'fullbay')
+    return q // combined — no filter
+  }
+  function applyInvoiceSourceFilter(q: any) {
+    if (sourceMode === 'live') return q.neq('source', 'fullbay')
+    if (sourceMode === 'fullbay') return q.eq('source', 'fullbay')
+    return q // combined
+  }
+  function applyPartsSourceFilter(q: any) {
+    if (sourceMode === 'live') return q.neq('source', 'fullbay')
+    if (sourceMode === 'fullbay') return q.eq('source', 'fullbay')
+    return q // combined
+  }
 
   switch (type) {
 
@@ -21,33 +39,45 @@ export async function GET(req: Request) {
       const pgFrom = from + 'T00:00:00'
       const pgTo = to + 'T23:59:59'
 
-      const { count: soCount } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
+      let soQ = supabase.from('service_orders').select('*', { count: 'exact', head: true })
         .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void').not('so_number', 'like', 'DRAFT-%').gte('created_at', pgFrom).lte('created_at', pgTo)
+      soQ = applySOSourceFilter(soQ)
+      const { count: soCount } = await soQ
 
-      const { count: soCompleted } = await supabase.from('service_orders').select('*', { count: 'exact', head: true })
+      let soCompQ = supabase.from('service_orders').select('*', { count: 'exact', head: true })
         .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void').not('so_number', 'like', 'DRAFT-%').gte('created_at', pgFrom).lte('created_at', pgTo).in('status', ['done', 'good_to_go'])
+      soCompQ = applySOSourceFilter(soCompQ)
+      const { count: soCompleted } = await soCompQ
 
       let revenue = 0
       let page = 0
       while (true) {
-        const { data: batch } = await supabase.from('service_orders').select('grand_total')
+        let revQ = supabase.from('service_orders').select('grand_total')
           .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void').not('so_number', 'like', 'DRAFT-%').gte('created_at', pgFrom).lte('created_at', pgTo)
           .range(page * 1000, (page + 1) * 1000 - 1)
+        revQ = applySOSourceFilter(revQ)
+        const { data: batch } = await revQ
         if (!batch || batch.length === 0) break
         revenue += batch.reduce((s: number, r: any) => s + (r.grand_total || 0), 0)
         if (batch.length < 1000) break
         page++
       }
 
-      const { data: paidInvoices } = await supabase.from('invoices').select('total')
+      let paidQ = supabase.from('invoices').select('total')
         .eq('shop_id', shopId).is('deleted_at', null).eq('status', 'paid').gte('created_at', pgFrom).lte('created_at', pgTo)
+      paidQ = applyInvoiceSourceFilter(paidQ)
+      const { data: paidInvoices } = await paidQ
       const invoiceRevenue = (paidInvoices || []).reduce((s: number, i: any) => s + (i.total || 0), 0)
 
-      const { data: sentInvoices } = await supabase.from('invoices').select('balance_due')
+      let sentQ = supabase.from('invoices').select('balance_due')
         .eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent')
+      sentQ = applyInvoiceSourceFilter(sentQ)
+      const { data: sentInvoices } = await sentQ
       const outstanding = (sentInvoices || []).reduce((s: number, i: any) => s + (i.balance_due || 0), 0)
 
-      const { data: parts } = await supabase.from('parts').select('on_hand, cost_price').eq('shop_id', shopId).is('deleted_at', null)
+      let partsQ = supabase.from('parts').select('on_hand, cost_price').eq('shop_id', shopId).is('deleted_at', null)
+      partsQ = applyPartsSourceFilter(partsQ)
+      const { data: parts } = await partsQ
       const inv_value = (parts || []).reduce((s: number, p: any) => s + (p.on_hand || 0) * (p.cost_price || 0), 0)
 
       return NextResponse.json({
@@ -62,7 +92,7 @@ export async function GET(req: Request) {
     }
 
     case 'revenue_by_day': {
-      const { data: invs } = await supabase
+      let revDayQ = supabase
         .from('invoices')
         .select('total, paid_at')
         .eq('shop_id', shopId)
@@ -70,6 +100,8 @@ export async function GET(req: Request) {
         .eq('status', 'paid')
         .gte('paid_at', from)
         .lte('paid_at', to + 'T23:59:59')
+      revDayQ = applyInvoiceSourceFilter(revDayQ)
+      const { data: invs } = await revDayQ
 
       const byDay: Record<string, number> = {}
       for (const inv of invs || []) {
@@ -120,12 +152,14 @@ export async function GET(req: Request) {
     }
 
     case 'top_customers': {
-      const { data: sos } = await supabase
+      let custQ = supabase
         .from('service_orders')
         .select('grand_total, customers!inner(id, company_name)')
         .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
+      custQ = applySOSourceFilter(custQ)
+      const { data: sos } = await custQ
 
       const byCust: Record<string, { name: string; revenue: number; wos: number }> = {}
       for (const so of sos || []) {
@@ -146,13 +180,15 @@ export async function GET(req: Request) {
         .gte('clock_in', from)
         .lte('clock_in', to + 'T23:59:59')
 
-      const { data: sosByTech } = await supabase
+      let laborSOQ = supabase
         .from('service_orders')
         .select('assigned_tech, status')
         .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
         .not('assigned_tech', 'is', null)
+      laborSOQ = applySOSourceFilter(laborSOQ)
+      const { data: sosByTech } = await laborSOQ
 
       const byMech: Record<string, { name: string; hours: number; wos_completed: number; wos_total: number }> = {}
       for (const te of timeEntries || []) {
@@ -171,12 +207,14 @@ export async function GET(req: Request) {
     }
 
     case 'trucks': {
-      const { data: sos } = await supabase
+      let truckQ = supabase
         .from('service_orders')
         .select('grand_total, created_at, assets!inner(id, unit_number, customers(company_name))')
         .eq('shop_id', shopId).is('deleted_at', null).neq('status', 'void')
         .gte('created_at', from)
         .lte('created_at', to + 'T23:59:59')
+      truckQ = applySOSourceFilter(truckQ)
+      const { data: sos } = await truckQ
 
       const byUnit: Record<string, { unit_number: string; company: string; visits: number; spend: number; last_service: string }> = {}
       for (const so of sos || []) {
@@ -191,13 +229,15 @@ export async function GET(req: Request) {
     }
 
     case 'low_stock': {
-      const { data: parts } = await supabase
+      let lsQ = supabase
         .from('parts')
         .select('part_number, description, on_hand, reorder_point, cost_price')
         .eq('shop_id', shopId)
         .is('deleted_at', null)
         .order('on_hand', { ascending: true })
         .limit(20)
+      lsQ = applyPartsSourceFilter(lsQ)
+      const { data: parts } = await lsQ
 
       return NextResponse.json((parts || []).filter((p: any) => p.on_hand <= (p.reorder_point || 2)))
     }
