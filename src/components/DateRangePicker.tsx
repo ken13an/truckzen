@@ -65,8 +65,10 @@ function calcRange(key: string): { from: string; to: string } {
 }
 
 function formatLabel(from: string, to: string): string {
+  if (!from || !to) return '—'
   const f = new Date(from + 'T00:00:00')
   const t = new Date(to + 'T00:00:00')
+  if (isNaN(f.getTime()) || isNaN(t.getTime())) return '—'
   const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
   const fStr = f.toLocaleDateString('en-US', opts)
   const tStr = t.toLocaleDateString('en-US', { ...opts, year: 'numeric' })

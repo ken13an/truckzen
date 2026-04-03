@@ -27,8 +27,10 @@ export async function GET(req: Request) {
   let q = ctx.admin.from('service_orders').select(selectFields).eq('shop_id', ctx.shopId).is('deleted_at', null).not('status', 'eq', 'void').order('created_at', { ascending: false }).range(offset, offset + limit - 1)
 
   if (excludeHistorical) {
-    q = (q as any).or('is_historical.is.null,is_historical.eq.false')
-    countQ = (countQ as any).or('is_historical.is.null,is_historical.eq.false')
+    q = q.neq('is_historical', true)
+    countQ = countQ.neq('is_historical', true)
+    q = q.neq('source', 'fullbay')
+    countQ = countQ.neq('source', 'fullbay')
   }
   if (excludeStatuses) {
     for (const s of excludeStatuses.split(',').map(s => s.trim())) {
