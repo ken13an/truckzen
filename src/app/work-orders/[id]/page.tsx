@@ -1843,7 +1843,7 @@ export default function WorkOrderDetail() {
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.estimated_hours || 0}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.actual_hours || 0}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.billed_hours || 0}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{isImportedHistory ? '—' : `${fmt(laborRate)}/hr`}</td>
+                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{isImportedHistory ? (line.labor_rate ? `${fmt(line.labor_rate)}/hr` : '—') : `${fmt(laborRate)}/hr`}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{isImportedHistory ? fmt(line.unit_price || 0) : fmt(hrs * laborRate)}</td>
                     </tr>
                   )
@@ -2195,7 +2195,7 @@ export default function WorkOrderDetail() {
                                   <span style={{ fontWeight: 600 }}>{line.billed_hours || hrs}</span>
                                 )}
                               </td>
-                              <td style={{ padding: '8px 8px', textAlign: 'right', color: GRAY }}>{isImportedHistory ? '—' : `${fmt(laborRate)}/hr`}</td>
+                              <td style={{ padding: '8px 8px', textAlign: 'right', color: GRAY }}>{isImportedHistory ? (line.labor_rate ? `${fmt(line.labor_rate)}/hr` : '—') : `${fmt(laborRate)}/hr`}</td>
                               <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700, color: '#1E293B' }}>{isImportedHistory ? fmt(line.unit_price || 0) : fmt(jobLaborAmt)}</td>
                             </tr>
                           </tbody>
