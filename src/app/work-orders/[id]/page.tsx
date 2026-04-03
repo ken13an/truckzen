@@ -1474,6 +1474,12 @@ export default function WorkOrderDetail() {
         <PartsTab>
         <div>
           {/* Parts workspace */}
+          {partLines.length === 0 && wo.is_historical && (
+            <div style={{ ...cardStyle, textAlign: 'center', padding: 30 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: GRAY }}>No parts recorded</div>
+              <div style={{ fontSize: 12, color: GRAY }}>This imported historical work order has no part line items.</div>
+            </div>
+          )}
           {partLines.length === 0 && !partsLocked && !wo.is_historical && !isMechanic && (
             <div style={{ ...cardStyle, textAlign: 'center', padding: 30 }}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: GRAY }}>No parts on this work order</div>
@@ -2452,6 +2458,42 @@ export default function WorkOrderDetail() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ========== TAB 5: IMPORTED HISTORICAL INVOICE (read-only) ========== */}
+      {tab === 5 && wo.is_historical && (
+        <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', padding: 'clamp(12px, 3vw, 24px)' }}>
+          <div style={{ marginBottom: 16 }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#1E293B' }}>Invoice (Imported History)</span>
+          </div>
+          {wo.invoices?.[0] ? (
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '16px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
+                <span>Invoice #</span><span style={{ fontWeight: 600 }}>{wo.invoices[0].invoice_number || '—'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
+                <span>Status</span><span style={{ fontWeight: 600 }}>{wo.invoices[0].status || '—'}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
+                <span>Labor</span><span style={{ fontWeight: 600 }}>{fmt(wo.labor_total || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
+                <span>Parts</span><span style={{ fontWeight: 600 }}>{fmt(wo.parts_total || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px', borderTop: '1px solid #CBD5E1', marginTop: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#1E293B' }}>Total</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: GREEN }}>{fmt(wo.invoices[0].total || wo.grand_total || 0)}</span>
+              </div>
+              {wo.invoices[0].balance_due > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: AMBER }}>
+                  <span>Balance Due</span><span style={{ fontWeight: 600 }}>{fmt(wo.invoices[0].balance_due)}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ color: GRAY, fontSize: 13, padding: 20, textAlign: 'center' }}>No invoice record available for this imported work order.</div>
+          )}
         </div>
       )}
 
