@@ -2412,7 +2412,13 @@ export default function WorkOrderDetail() {
                 )}
                 {wo.invoice_status === 'accounting_review' && canEditPrices && (
                   <>
-                    <button onClick={() => invoiceAction('approve_invoicing')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Approve & Send</button>
+                    <button onClick={async () => {
+                      setInvoiceLoading(true)
+                      const res = await fetch('/api/accounting/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wo_id: wo.id, action: 'approve' }) })
+                      setInvoiceLoading(false)
+                      if (res.ok) await loadData()
+                      else { const err = await res.json(); alert(err.error || 'Approve failed') }
+                    }} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Approve & Send</button>
                     <a href={wo.invoices?.[0]?.id ? `/invoices/${wo.invoices[0].id}` : `/work-orders/${wo.id}`} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, borderRadius: 8 }}>Edit Invoice</a>
                   </>
                 )}
