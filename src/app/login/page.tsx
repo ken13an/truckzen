@@ -43,11 +43,20 @@ export default function LoginPage() {
 
   // ── REDIRECT BASED ON ROLE ───────────────────────────────
   async function redirectByRole(userId: string) {
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('role, shop_id, is_platform_owner')
-      .eq('id', userId)
-      .single()
+    let profile: any = null
+    let profileError: any = null
+    // Try profile fetch with one retry — session may not be fully propagated on first attempt
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('role, shop_id, is_platform_owner')
+        .eq('id', userId)
+        .single()
+      profile = data
+      profileError = error
+      if (profile) break
+      if (attempt === 0) await new Promise(r => setTimeout(r, 1000))
+    }
 
     if (profileError || !profile) {
       setError('Account not set up yet. Ask your admin.')
