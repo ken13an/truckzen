@@ -9,7 +9,7 @@ import { calcInvoiceTotals } from '@/lib/invoice-calc'
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
 
-const TABS = ['Pending Review', 'Approved', 'All']
+const TABS = ['Pending Review', 'Sent / Unpaid', 'Paid', 'All']
 
 const INVOICE_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   draft:                { label: 'Draft',            bg: '#F3F4F6', color: GRAY },
@@ -112,7 +112,8 @@ export default function AccountingPage() {
   const filteredWos = useMemo(() => {
     let list = wos.filter(wo => {
       if (tab === 0) return wo.invoice_status === 'accounting_review'
-      if (tab === 1) return ['sent', 'paid', 'closed'].includes(wo.invoice_status)
+      if (tab === 1) return wo.invoice_status === 'sent'
+      if (tab === 2) return ['paid', 'closed'].includes(wo.invoice_status)
       return true
     })
     if (acctSearch.trim()) {
