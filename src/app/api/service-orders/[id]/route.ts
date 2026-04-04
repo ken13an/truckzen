@@ -48,6 +48,10 @@ export async function PATCH(req: Request, { params }: Params) {
   const { data: current } = await s.from('service_orders').select('*').eq('id', id).eq('shop_id', shopId).single()
   if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  if (current.is_historical) {
+    return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+  }
+
   let body: any
   try { body = await req.json() } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
@@ -99,6 +103,11 @@ export async function DELETE(req: Request, { params }: Params) {
 
   const { id } = await params
   const s = db()
+
+  const { data: delTarget } = await s.from('service_orders').select('is_historical').eq('id', id).eq('shop_id', shopId).single()
+  if (delTarget?.is_historical) {
+    return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+  }
 
   await s.from('service_orders').update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id).eq('shop_id', shopId)
 

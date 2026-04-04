@@ -66,8 +66,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
   }
 
-  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status').eq('id', so_id).single()
+  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status, is_historical').eq('id', so_id).single()
   if (!so || so.shop_id !== ctx.shopId) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
+
+  if (so.is_historical) {
+    return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+  }
 
   // Lock: cannot add lines after invoice sent to customer
   if (so.invoice_status && ['sent', 'paid', 'closed'].includes(so.invoice_status)) {

@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const page = Math.max(parseInt(searchParams.get('page') ?? '1'), 1)
   const includeSoLines = searchParams.get('include_so_lines') === 'true'
   const excludeStatuses = searchParams.get('exclude_status')
-  const excludeHistorical = searchParams.get('exclude_historical') === 'true'
+  const excludeHistorical = searchParams.get('exclude_historical') !== 'false'
 
   const selectFields = includeSoLines
     ? `id, so_number, status, priority, complaint, bay, team, grand_total, created_at, updated_at, assets(id, unit_number, year, make, model), customers(id, company_name), users!assigned_tech(id, full_name), so_lines(id, line_type, description, parts_status, real_name, rough_name)`

@@ -23,12 +23,13 @@ export async function GET(req: Request) {
       )`)
     .eq('service_orders.shop_id', shopId)
     .is('service_orders.deleted_at', null)
+    .or('service_orders.is_historical.is.null,service_orders.is_historical.eq.false')
     .in('line_type', ['labor', 'job'])
     .not('service_orders.status', 'in', '("good_to_go","done","void")')
     .order('created_at', { ascending: false })
     .limit(200)
 
-  // Filter out historical WOs in JS (Supabase .or() on nested relations is unreliable)
+  // Fallback: remove any historical rows that may slip through if Supabase nested .or() filter is inconsistent
   const activeLines = (lines || []).filter((l: any) => !l.service_orders?.is_historical)
 
   // Get assignments from canonical source: wo_job_assignments

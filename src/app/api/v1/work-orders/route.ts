@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   const offset = (page - 1) * limit
 
   let q = s.from('service_orders')
-    .select(`id, so_number, status, priority, complaint, source, is_historical,
+    .select(`id, so_number, status, priority, complaint,
       grand_total, labor_total, parts_total, tax_total, mileage_at_service,
       created_at, updated_at, completed_at,
       assets(id, unit_number, vin, year, make, model),

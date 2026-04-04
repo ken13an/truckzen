@@ -34,6 +34,10 @@ export async function PATCH(req: Request, { params }: P) {
   const { data: current } = await supabase.from('invoices').select('*').eq('id', id).eq('shop_id', user.shop_id).single()
   if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  if (current.is_historical) {
+    return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+  }
+
   const updateable = ['status','due_date','tax_rate','tax_amount','subtotal','total','balance_due','amount_paid','notes','payment_method','paid_at']
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }

@@ -27,8 +27,9 @@ export async function GET(req: Request) {
     if (search) q = q.or(`invoice_number.ilike.%${search}%`)
     if (dateFrom) q = q.gte('created_at', dateFrom)
     if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59')
-    if (historical === 'false') q = q.or('is_historical.is.null,is_historical.eq.false')
+    // Default: exclude historical unless explicitly requested
     if (historical === 'true') q = q.eq('is_historical', true)
+    else if (historical !== 'all') q = q.or('is_historical.is.null,is_historical.eq.false')
     return q
   }
 
@@ -40,12 +41,17 @@ export async function GET(req: Request) {
     .is('deleted_at', null)
   countQ = applyFilters(countQ)
 
-  // Summary counts (unfiltered by status for pills)
+  // Summary counts (unfiltered by status for pills, but respect historical filter)
+  function applySummaryHistFilter(q: any) {
+    if (historical === 'true') return q.eq('is_historical', true)
+    if (historical !== 'all') return q.or('is_historical.is.null,is_historical.eq.false')
+    return q
+  }
   const summaryQ = Promise.all([
-    supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null),
-    supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'sent'),
-    supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'paid'),
-    supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'overdue'),
+    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null)),
+    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'sent')),
+    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'paid')),
+    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'overdue')),
   ])
 
   // Page data query

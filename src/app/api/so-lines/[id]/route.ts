@@ -37,7 +37,10 @@ export async function PATCH(req: Request, { params }: P) {
   // Lock ALL lines after invoice sent/paid/closed
   const soId = (line as any).so_id || (line as any).service_order_id
   if (soId) {
-    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soId).single()
+    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status, is_historical').eq('id', soId).single()
+    if (wo?.is_historical) {
+      return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+    }
     if (isInvoiceHardLocked(wo?.invoice_status)) {
       return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
     }
@@ -105,7 +108,10 @@ export async function DELETE(_req: Request, { params }: P) {
   // Lock ALL lines after invoice sent/paid/closed
   const soIdDel = (line as any).so_id || (line as any).service_order_id
   if (soIdDel) {
-    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status').eq('id', soIdDel).single()
+    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status, is_historical').eq('id', soIdDel).single()
+    if (wo?.is_historical) {
+      return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+    }
     if (isInvoiceHardLocked(wo?.invoice_status)) {
       return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
     }

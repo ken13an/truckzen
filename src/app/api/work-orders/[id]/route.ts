@@ -55,7 +55,7 @@ export async function GET(_req: Request, { params }: Params) {
       : Promise.resolve({ data: null }),
     ctx.admin.from('so_lines').select('id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price, related_labor_line_id').eq('so_id', id),
     ctx.admin.from('estimates').select('id, estimate_number, status, total, subtotal, tax_amount, customer_email, customer_phone, approval_method, approved_at, customer_notes, sent_at').eq('wo_id', id),
-    ctx.admin.from('invoices').select('id, invoice_number, status, total, balance_due, amount_paid, due_date').eq('wo_id', id),
+    ctx.admin.from('invoices').select('id, invoice_number, status, total, balance_due, amount_paid, due_date').eq('so_id', id),
     ctx.admin.from('wo_notes').select('id, user_id, note_text, visible_to_customer, created_at').eq('wo_id', id),
     ctx.admin.from('wo_files').select('id, user_id, file_url, filename, caption, visible_to_customer, created_at').eq('wo_id', id),
     ctx.admin.from('wo_activity_log').select('id, user_id, action, created_at').eq('wo_id', id),
@@ -156,6 +156,10 @@ export async function PATCH(req: Request, { params }: Params) {
   const { data: existing } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, so_number, status, invoice_status, assigned_tech, customer_id, asset_id, portal_token, is_historical')
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  if ((existing as any).is_historical) {
+    return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+  }
+
   const body = await req.json()
   const allowedFields = ['status', 'priority', 'team', 'bay', 'assigned_tech', 'complaint', 'cause', 'correction', 'internal_notes', 'customer_id', 'grand_total', 'due_date', 'service_writer_id', 'parts_person_id', 'customer_contact_name', 'customer_contact_phone', 'fleet_contact_name', 'fleet_contact_phone', 'po_number', 'estimate_date', 'promised_date', 'estimate_approved', 'estimate_status', 'approval_method', 'estimate_declined_reason', 'customer_estimate_notes', 'submitted_at']
   const update: Record<string, any> = {}
@@ -240,7 +244,7 @@ export async function PATCH(req: Request, { params }: Params) {
           await sendEmail(customer.email, subject, html)
         }
         if (update.status === 'good_to_go') {
-          const { data: invoice } = await ctx.admin.from('invoices').select('id, invoice_number, total').eq('wo_id', wo.id).order('created_at', { ascending: false }).limit(1).single()
+          const { data: invoice } = await ctx.admin.from('invoices').select('id, invoice_number, total').eq('so_id', wo.id).order('created_at', { ascending: false }).limit(1).single()
           const payLink = invoice ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${wo.portal_token}?pay=1` : portalLink
           const { subject, html } = truckReadyEmail({ customerName, unitNumber, invoiceNumber: invoice?.invoice_number || '', amount: invoice ? String(invoice.total) : '0', payLink, shop })
           await sendEmail(customer.email, subject, html)
@@ -263,8 +267,12 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params
   const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'service_writer'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
-  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, status, so_number')
+  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, status, so_number, is_historical')
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  if ((wo as any).is_historical) {
+    return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+  }
 
   // Void is allowed from any status — soft delete + status change, preserves all records
   const now = new Date().toISOString()
