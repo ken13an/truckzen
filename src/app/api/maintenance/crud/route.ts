@@ -1,18 +1,45 @@
 /**
- * TruckZen — Original Design
- * Generic CRUD API for all maint_* tables
- * Handles: GET (list with pagination), POST (create), PATCH (update), DELETE
+ * TruckZen — Maintenance CRUD API for maint_* tables
+ * Hardened: session auth, session-derived shop, role guard, table allowlist
  */
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+const ALLOWED_TABLES = new Set([
+  'maint_road_repairs', 'maint_road_repair_lines', 'maint_purchase_orders', 'maint_po_lines',
+  'maint_pm_schedules', 'maint_pm_completions', 'maint_inspections', 'maint_inspection_items',
+  'maint_issues', 'maint_faults', 'maint_fuel_entries', 'maint_meters',
+  'maint_service_programs', 'maint_service_reminders', 'maint_recalls',
+  'maint_warranties', 'maint_warranty_claims', 'maint_expenses',
+  'maint_vehicle_renewals', 'maint_contact_renewals', 'maint_documents',
+  'maint_vendors', 'maint_activity_log', 'maint_parts',
+])
+
+const ALLOWED_ROLES = [
+  'owner', 'gm', 'it_person', 'shop_manager', 'office_admin',
+  'maintenance_manager', 'fleet_manager', 'maintenance_technician',
+  'service_manager', 'service_writer',
+]
+
+function validateTable(table: string | null): string | null {
+  if (!table) return 'table required'
+  if (!table.startsWith('maint_')) return 'Only maint_* tables allowed'
+  if (!ALLOWED_TABLES.has(table)) return `Table ${table} not in allowlist`
+  return null
+}
 
 export async function GET(req: Request) {
-  const s = db()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+
   const { searchParams } = new URL(req.url)
   const table = searchParams.get('table')
-  const shopId = searchParams.get('shop_id')
+  const tableErr = validateTable(table)
+  if (tableErr) return jsonError(tableErr, 400)
+
   const select = searchParams.get('select') || '*'
   const page = Math.max(parseInt(searchParams.get('page') || '1'), 1)
   const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 50)
@@ -23,11 +50,9 @@ export async function GET(req: Request) {
   const filterKey = searchParams.get('filter_key')
   const filterVal = searchParams.get('filter_val')
 
-  if (!table || !shopId) return NextResponse.json({ error: 'table and shop_id required' }, { status: 400 })
-  if (!table.startsWith('maint_')) return NextResponse.json({ error: 'Only maint_* tables allowed' }, { status: 403 })
-
+  const s = createAdminSupabaseClient()
   const offset = (page - 1) * limit
-  let q = s.from(table).select(select, { count: 'exact' }).eq('shop_id', shopId)
+  let q = s.from(table!).select(select, { count: 'exact' }).eq('shop_id', shopId)
 
   if (filterKey && filterVal && filterVal !== 'all') q = q.eq(filterKey, filterVal)
   if (search && searchCols) {
@@ -43,17 +68,28 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const s = db()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+
   const { table, ...row } = await req.json()
-  if (!table?.startsWith('maint_')) return NextResponse.json({ error: 'Only maint_* tables' }, { status: 403 })
+  const tableErr = validateTable(table)
+  if (tableErr) return jsonError(tableErr, 400)
+
+  // Force shop_id from session
+  row.shop_id = shopId
+
+  const s = createAdminSupabaseClient()
 
   // Auto-generate repair/PO numbers
-  if (table === 'maint_road_repairs' && !row.repair_number && row.shop_id) {
-    const { count } = await s.from('maint_road_repairs').select('*', { count: 'exact', head: true }).eq('shop_id', row.shop_id)
+  if (table === 'maint_road_repairs' && !row.repair_number) {
+    const { count } = await s.from('maint_road_repairs').select('*', { count: 'exact', head: true }).eq('shop_id', shopId)
     row.repair_number = `RR-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(4, '0')}`
   }
-  if (table === 'maint_purchase_orders' && !row.po_number && row.shop_id) {
-    const { count } = await s.from('maint_purchase_orders').select('*', { count: 'exact', head: true }).eq('shop_id', row.shop_id)
+  if (table === 'maint_purchase_orders' && !row.po_number) {
+    const { count } = await s.from('maint_purchase_orders').select('*', { count: 'exact', head: true }).eq('shop_id', shopId)
     row.po_number = `PO-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(4, '0')}`
   }
 
@@ -63,20 +99,39 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const s = db()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+
   const { table, id, ...updates } = await req.json()
-  if (!table?.startsWith('maint_') || !id) return NextResponse.json({ error: 'table and id required' }, { status: 400 })
+  const tableErr = validateTable(table)
+  if (tableErr || !id) return jsonError(tableErr || 'id required', 400)
+
+  // Prevent overriding shop_id
+  delete updates.shop_id
+
   updates.updated_at = new Date().toISOString()
-  const { data, error } = await s.from(table).update(updates).eq('id', id).select().single()
+  const s = createAdminSupabaseClient()
+  const { data, error } = await s.from(table).update(updates).eq('id', id).eq('shop_id', shopId).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
 
 export async function DELETE(req: Request) {
-  const s = db()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+
   const { table, id } = await req.json()
-  if (!table?.startsWith('maint_') || !id) return NextResponse.json({ error: 'table and id required' }, { status: 400 })
-  const { error } = await s.from(table).delete().eq('id', id)
+  const tableErr = validateTable(table)
+  if (tableErr || !id) return jsonError(tableErr || 'id required', 400)
+
+  const s = createAdminSupabaseClient()
+  const { error } = await s.from(table).delete().eq('id', id).eq('shop_id', shopId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

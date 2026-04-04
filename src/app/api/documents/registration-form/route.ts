@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
 
 const BLUE = rgb(29 / 255, 111 / 255, 232 / 255)
 const DARK = rgb(26 / 255, 26 / 255, 26 / 255)
@@ -13,10 +9,12 @@ const LINE_COLOR = rgb(209 / 255, 213 / 255, 219 / 255)
 const LIGHT_BG = rgb(243 / 255, 244 / 255, 246 / 255)
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id') || '1f927e3e-4fe5-431a-bb7c-dac77501e892'
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
 
-  const s = db()
+  const s = createAdminSupabaseClient()
   const { data: shop } = await s.from('shops').select('name, dba, phone, email, address').eq('id', shopId).single()
   const shopName = shop?.dba || shop?.name || 'TruckZen'
 

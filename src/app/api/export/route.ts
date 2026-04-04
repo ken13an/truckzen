@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 function toCSV(rows: any[], columns: string[]): string {
   const header = columns.join(',')
@@ -16,17 +12,21 @@ function toCSV(rows: any[], columns: string[]): string {
   return [header, ...lines].join('\n')
 }
 
-// GET /api/export?shop_id=...&type=...&columns=...&format=csv
+const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin', 'shop_manager']
+
 export async function GET(req: Request) {
-  const s = db()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+
+  const s = createAdminSupabaseClient()
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
   const type = searchParams.get('type')
   const cols = searchParams.get('columns')?.split(',') || []
-  const userId = searchParams.get('user_id')
-  const userName = searchParams.get('user_name')
 
-  if (!shopId || !type) return NextResponse.json({ error: 'shop_id and type required' }, { status: 400 })
+  if (!type) return NextResponse.json({ error: 'type required' }, { status: 400 })
 
   let data: any[] = []
   let allCols: string[] = []
@@ -35,7 +35,6 @@ export async function GET(req: Request) {
     case 'customers': {
       const { data: rows } = await s.from('customers').select('company_name, contact_name, phone, email, address, notes, source, visit_count, total_spent, created_at').eq('shop_id', shopId).is('deleted_at', null).order('company_name')
       data = rows || []
-      // Enrich with unit count and invoice data
       const { data: assets } = await s.from('assets').select('customer_id').eq('shop_id', shopId).is('deleted_at', null)
       const { data: invoices } = await s.from('invoices').select('customer_id, total, balance_due, status').eq('shop_id', shopId).is('deleted_at', null)
       const { data: custIds } = await s.from('customers').select('id, company_name').eq('shop_id', shopId).is('deleted_at', null)
@@ -88,12 +87,12 @@ export async function GET(req: Request) {
   const exportCols = cols.length > 0 ? cols.filter(c => allCols.includes(c)) : allCols
 
   // Log the export
-  if (userId) {
+  try {
     await s.from('import_export_log').insert({
-      shop_id: shopId, user_id: userId, user_name: userName,
+      shop_id: shopId, user_id: actor.id, user_name: actor.full_name,
       action: 'export', data_type: type, record_count: data.length, file_name: `${type}-export.csv`,
     })
-  }
+  } catch {}
 
   const csv = toCSV(data, exportCols)
   return new NextResponse(csv, {

@@ -4,8 +4,6 @@
 // No frontend trust. Everything derived from user object only.
 // ============================================================
 
-const PLATFORM_OWNER_EMAIL = 'kenanagasiyev@gmail.com'
-
 export interface TruckZenPermissions {
   // Financial visibility
   canViewFinancials: boolean
@@ -330,8 +328,8 @@ export function getPermissions(user: { email?: string | null; role?: string | nu
 
   const role = user.role || 'unknown'
 
-  // Platform owner check: flag on user record OR email match
-  const isPlatformOwner = user.is_platform_owner === true || user.email === PLATFORM_OWNER_EMAIL
+  // Platform owner check: DB flag only
+  const isPlatformOwner = user.is_platform_owner === true
 
   if (isPlatformOwner) {
     return { ...FULL_ACCESS, isPlatformOwner: true, role }

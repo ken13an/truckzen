@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import Stripe from 'stripe'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!)
 }
 
-// GET /api/billing?shop_id=...
-export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
 
+export async function GET(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+
+  const s = createAdminSupabaseClient()
   const { data: shop } = await s.from('shops').select('id, name, dba, stripe_customer_id, subscription_status, subscription_plan').eq('id', shopId).single()
   if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 })
 
@@ -45,21 +44,25 @@ export async function GET(req: Request) {
   })
 }
 
-// POST /api/billing
 export async function POST(req: Request) {
-  const s = db()
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+  const shopId = getActorShopId(actor)
+  if (!shopId) return jsonError('No shop context', 400)
+  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+
+  const s = createAdminSupabaseClient()
   const stripe = getStripe()
   const body = await req.json()
-  const { action, shop_id } = body
+  const { action } = body
 
-  if (!shop_id || !action) return NextResponse.json({ error: 'shop_id and action required' }, { status: 400 })
+  if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
 
-  const { data: shop } = await s.from('shops').select('id, name, dba, email, stripe_customer_id').eq('id', shop_id).single()
+  const { data: shop } = await s.from('shops').select('id, name, dba, email, stripe_customer_id').eq('id', shopId).single()
   if (!shop) return NextResponse.json({ error: 'Shop not found' }, { status: 404 })
 
   switch (action) {
     case 'create_setup_session': {
-      // Create Stripe customer if needed
       let customerId = shop.stripe_customer_id
       if (!customerId) {
         const customer = await stripe.customers.create({
@@ -71,7 +74,6 @@ export async function POST(req: Request) {
         await s.from('shops').update({ stripe_customer_id: customerId }).eq('id', shop.id)
       }
 
-      // Create setup session for adding payment method
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
         mode: 'setup',
