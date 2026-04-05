@@ -49,7 +49,7 @@ export default function LoginPage() {
     for (let attempt = 0; attempt < 2; attempt++) {
       const { data, error } = await supabase
         .from('users')
-        .select('role, shop_id, is_platform_owner')
+        .select('role, shop_id, is_platform_owner, impersonate_role')
         .eq('id', userId)
         .single()
       profile = data
@@ -65,8 +65,11 @@ export default function LoginPage() {
       return
     }
 
-    // Platform owner → platform admin
-    if (profile.is_platform_owner) {
+    // Effective role = impersonated role if set, otherwise raw role
+    const effectiveRole = profile.impersonate_role || profile.role
+
+    // Platform owner → platform admin (only when NOT impersonating another role)
+    if (profile.is_platform_owner && !profile.impersonate_role) {
       router.replace('/platform-admin')
       return
     }
@@ -79,7 +82,7 @@ export default function LoginPage() {
       .single()
 
     if (shop && !shop.setup_complete) {
-      if (profile.role === 'office_admin' || profile.role === 'owner') {
+      if (effectiveRole === 'office_admin' || effectiveRole === 'owner') {
         router.replace('/setup')
       } else {
         router.replace('/waiting')
@@ -87,8 +90,8 @@ export default function LoginPage() {
       return
     }
 
-    // Role-based redirect — no role picker, ever
-    const destination = ROLE_REDIRECT[profile.role] ?? '/dashboard'
+    // Role-based redirect using effective role — respects impersonation
+    const destination = ROLE_REDIRECT[effectiveRole] ?? '/dashboard'
     router.replace(destination)
   }
 
