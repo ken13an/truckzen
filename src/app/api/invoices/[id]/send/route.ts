@@ -44,8 +44,14 @@ export async function POST(_req: Request, { params }: P) {
   const result = await sendInvoiceEmail(emailData)
   if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 })
 
-  // Mark as sent
-  await supabase.from('invoices').update({ status: 'sent' }).eq('id', id)
+  // Mark invoice as sent
+  const now = new Date().toISOString()
+  await supabase.from('invoices').update({ status: 'sent', sent_at: now }).eq('id', id)
+
+  // Sync service_orders.invoice_status so accounting page sees the sent state
+  if (inv.so_id) {
+    await supabase.from('service_orders').update({ invoice_status: 'sent', updated_at: now }).eq('id', inv.so_id)
+  }
 
   // Fire and forget
   logAction({ shop_id: user.shop_id, user_id: user.id, action: 'invoice.sent', entity_type: 'invoice', entity_id: id }).catch(() => {})
