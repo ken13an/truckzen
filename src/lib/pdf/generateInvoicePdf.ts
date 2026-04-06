@@ -44,246 +44,286 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
   let page = pdf.addPage([612, 792])
   const font = await pdf.embedFont(StandardFonts.Helvetica)
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold)
-  const black = rgb(0.1, 0.1, 0.1), gray = rgb(0.4, 0.4, 0.4), lightGray = rgb(0.88, 0.88, 0.88)
-  const blue = rgb(0.11, 0.44, 0.91), green = rgb(0.05, 0.6, 0.32)
 
-  let y = 745
-  const L = 45, R = 567
+  const dark = rgb(0.12, 0.14, 0.17)
+  const mid = rgb(0.35, 0.38, 0.42)
+  const light = rgb(0.6, 0.63, 0.67)
+  const rule = rgb(0.85, 0.87, 0.89)
+  const accent = rgb(0.11, 0.44, 0.91)
+  const money = rgb(0.06, 0.52, 0.30)
 
-  function dT(t: string, x: number, yy: number, o?: { f?: typeof font; s?: number; c?: typeof black }) {
-    page.drawText(t || '', { x, y: yy, size: o?.s || 10, font: o?.f || font, color: o?.c || black })
+  let y = 750
+  const L = 50, R = 562, W = R - L
+
+  function text(t: string, x: number, yy: number, size = 9, bold = false, color = dark) {
+    page.drawText(t || '', { x, y: yy, size, font: bold ? fontBold : font, color })
   }
-  function dL(x1: number, yy: number, x2: number, c?: typeof black) {
-    page.drawLine({ start: { x: x1, y: yy }, end: { x: x2, y: yy }, thickness: 0.5, color: c || lightGray })
+  function line(yy: number, color = rule) {
+    page.drawLine({ start: { x: L, y: yy }, end: { x: R, y: yy }, thickness: 0.5, color })
   }
-  function checkPage(need: number) {
-    if (y < need) { page = pdf.addPage([612, 792]); y = 745 }
-  }
+  function newPage() { page = pdf.addPage([612, 792]); y = 750 }
+  function need(h: number) { if (y < h) newPage() }
   const fmt = (n: number) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
-  // ── HEADER ──
+  // ════════════════════════════════════════════════════════
+  //  HEADER
+  // ════════════════════════════════════════════════════════
+
   const shopName = shop?.dba || shop?.name || ''
-  dT(shopName, L, y, { f: fontBold, s: 16, c: blue }); y -= 15
-  if (shop?.address) { dT(shop.address, L, y, { s: 8, c: gray }); y -= 11 }
-  const scl = [shop?.city, shop?.state, shop?.zip].filter(Boolean).join(', ')
-  if (scl) { dT(scl, L, y, { s: 8, c: gray }); y -= 11 }
-  if (shop?.phone) { dT(shop.phone, L, y, { s: 8, c: gray }); y -= 11 }
-  if (shop?.email) { dT(shop.email, L, y, { s: 8, c: gray }); y -= 11 }
+  text(shopName, L, y, 18, true, accent)
+  text('INVOICE', R - fontBold.widthOfTextAtSize('INVOICE', 20), y, 20, true, accent)
+  y -= 20; line(y, accent); y -= 14
 
-  dT('INVOICE', R - fontBold.widthOfTextAtSize('INVOICE', 22), 745, { f: fontBold, s: 22, c: blue })
-  const stl = inv.status === 'paid' ? 'PAID' : inv.status === 'sent' ? 'SENT' : ''
-  if (stl) dT(stl, R - fontBold.widthOfTextAtSize(stl, 10), 728, { f: fontBold, s: 10, c: inv.status === 'paid' ? green : gray })
+  // Left: shop info
+  const shopLines: string[] = []
+  if (shop?.address) shopLines.push(shop.address)
+  const cityLine = [shop?.city, shop?.state, shop?.zip].filter(Boolean).join(', ')
+  if (cityLine) shopLines.push(cityLine)
+  if (shop?.phone) shopLines.push(shop.phone)
+  if (shop?.email) shopLines.push(shop.email)
+  for (const s of shopLines) { text(s, L, y, 8, false, mid); y -= 11 }
 
-  // ── INVOICE DETAILS (right) ──
-  let ry = 712
-  const details = [
-    { l: 'Invoice #:', v: inv.invoice_number || '' },
-    { l: 'Date:', v: so?.created_at ? new Date(so.created_at).toLocaleDateString() : '' },
-    { l: 'Due Date:', v: inv.due_date || '' },
-    { l: 'Terms:', v: cust?.payment_terms || 'Due on receipt' },
-    { l: 'WO #:', v: so?.so_number || '' },
-    ...(asset?.unit_number ? [{ l: 'Unit #:', v: asset.unit_number }] : []),
+  // Right: invoice details (positioned at same starting y as shop lines)
+  let ry = y + shopLines.length * 11
+  const rx = 400
+  const dets = [
+    ['Invoice #', inv.invoice_number || ''],
+    ['Date', so?.created_at ? new Date(so.created_at).toLocaleDateString() : ''],
+    ['Due', inv.due_date || 'On receipt'],
+    ['Terms', cust?.payment_terms || 'Due on receipt'],
+    ['WO #', so?.so_number || ''],
   ]
-  for (const d of details) {
-    const lw = fontBold.widthOfTextAtSize(d.l, 8)
-    dT(d.l, R - 145, ry, { f: fontBold, s: 8, c: gray })
-    dT(d.v, R - 145 + lw + 5, ry, { s: 8 })
+  if (asset?.unit_number) dets.push(['Unit #', asset.unit_number])
+  for (const [label, val] of dets) {
+    text(label, rx, ry, 8, true, light)
+    text(val, rx + 55, ry, 8, false, dark)
     ry -= 12
   }
 
-  // ── BILL TO ──
-  y = Math.min(y, ry) - 16
-  dL(L, y + 6, R); y -= 2
-  dT('BILL TO', L, y, { f: fontBold, s: 8, c: gray }); y -= 12
-  if (cust?.company_name) { dT(cust.company_name, L, y, { f: fontBold, s: 10 }); y -= 12 }
-  if (cust?.contact_name) { dT(cust.contact_name, L, y, { s: 8, c: gray }); y -= 10 }
-  if (cust?.phone) { dT(cust.phone, L, y, { s: 8, c: gray }); y -= 10 }
-  if (cust?.email) { dT(cust.email, L, y, { s: 8, c: gray }); y -= 10 }
+  y = Math.min(y, ry) - 10
 
-  // ── VEHICLE (right of bill to) ──
+  // ════════════════════════════════════════════════════════
+  //  BILL TO + VEHICLE
+  // ════════════════════════════════════════════════════════
+
+  line(y); y -= 14
+  // Bill To (left)
+  text('BILL TO', L, y, 8, true, light); y -= 12
+  if (cust?.company_name) { text(cust.company_name, L, y, 11, true); y -= 13 }
+  if (cust?.contact_name) { text(cust.contact_name, L, y, 9, false, mid); y -= 11 }
+  if (cust?.phone) { text(cust.phone, L, y, 8, false, mid); y -= 10 }
+  if (cust?.email) { text(cust.email, L, y, 8, false, mid); y -= 10 }
+
+  // Vehicle (right, anchored at same row as bill-to)
   if (asset) {
-    const vy0 = y + 42
-    dT('UNIT', R - 190, vy0, { f: fontBold, s: 8, c: gray })
-    let vy = vy0 - 12
-    dT('#' + (asset.unit_number || ''), R - 190, vy, { f: fontBold, s: 9 }); vy -= 11
-    const vs = [asset.year, asset.make, asset.model].filter(Boolean).join(' ')
-    if (vs) { dT(vs, R - 190, vy, { s: 8 }); vy -= 10 }
-    if (asset.vin) { dT('VIN: ' + asset.vin, R - 190, vy, { s: 7, c: gray }); vy -= 10 }
+    let vy = y + 46
+    text('VEHICLE', 380, vy, 8, true, light); vy -= 12
+    text('#' + (asset.unit_number || ''), 380, vy, 10, true); vy -= 12
+    const vh = [asset.year, asset.make, asset.model].filter(Boolean).join(' ')
+    if (vh) { text(vh, 380, vy, 9); vy -= 11 }
+    if (asset.vin) { text('VIN: ' + asset.vin, 380, vy, 7, false, light); vy -= 10 }
     const mi = so?.mileage_at_service || asset.odometer
-    if (mi) dT('Mileage: ' + Number(mi).toLocaleString(), R - 190, vy, { s: 8, c: gray })
+    if (mi) text('Mileage: ' + Number(mi).toLocaleString(), 380, vy, 8, false, mid)
   }
 
-  // ── COMPLAINT ──
-  y -= 8
-  if (so?.complaint) { dT('Complaint: ' + (so.complaint || '').substring(0, 90), L, y, { s: 8, c: gray }); y -= 10 }
-  if (so?.cause) { dT('Cause: ' + (so.cause || '').substring(0, 90), L, y, { s: 8, c: gray }); y -= 10 }
-  if (so?.correction) { dT('Correction: ' + (so.correction || '').substring(0, 90), L, y, { s: 8, c: gray }); y -= 10 }
+  y -= 10
 
-  // ── JOB-GROUPED BODY ──
-  y -= 6
-  let totalLaborAmt = 0, totalPartsAmt = 0
+  // ════════════════════════════════════════════════════════
+  //  COMPLAINT / CAUSE / CORRECTION
+  // ════════════════════════════════════════════════════════
 
-  for (let idx = 0; idx < jobLines.length; idx++) {
-    const line = jobLines[idx]
-    const hrs = line.billed_hours || line.estimated_hours || 0
-    const jobLaborAmt = hrs * laborRate
-    const jobParts = partLines.filter((p: any) => p.related_labor_line_id === line.id)
-    const jobPartsTotal = jobParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0)
-    totalLaborAmt += jobLaborAmt
-    totalPartsAmt += jobPartsTotal
+  if (so?.complaint || so?.cause || so?.correction) {
+    line(y); y -= 12
+    if (so?.complaint) { text('Complaint:', L, y, 8, true, light); text(so.complaint.substring(0, 85), L + 60, y, 8, false, mid); y -= 12 }
+    if (so?.cause) { text('Cause:', L, y, 8, true, light); text(so.cause.substring(0, 85), L + 60, y, 8, false, mid); y -= 12 }
+    if (so?.correction) { text('Correction:', L, y, 8, true, light); text(so.correction.substring(0, 85), L + 60, y, 8, false, mid); y -= 12 }
+    y -= 4
+  }
 
-    checkPage(100)
+  // ════════════════════════════════════════════════════════
+  //  JOB-GROUPED LINE ITEMS
+  // ════════════════════════════════════════════════════════
+
+  let totalLabor = 0, totalParts = 0
+
+  for (let i = 0; i < jobLines.length; i++) {
+    const job = jobLines[i]
+    const hrs = job.billed_hours || job.estimated_hours || 0
+    const laborAmt = hrs * laborRate
+    const jobParts = partLines.filter((p: any) => p.related_labor_line_id === job.id)
+    const partsAmt = jobParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0)
+    totalLabor += laborAmt
+    totalParts += partsAmt
+
+    need(90)
+    line(y, accent); y -= 14
 
     // Job header
-    dL(L, y + 4, R, blue); y -= 2
-    dT(`JOB ${idx + 1}`, L, y, { f: fontBold, s: 8, c: gray })
-    dT((line.description || `Job ${idx + 1}`).substring(0, 60), L + 40, y, { f: fontBold, s: 9 })
-    y -= 14
+    text(`Job ${i + 1}`, L, y, 8, true, accent)
+    text((job.description || '').substring(0, 65), L + 38, y, 10, true)
+    y -= 16
+
+    // Labor table header
+    text('Description', L + 4, y, 7, true, light)
+    text('Hours', 370, y, 7, true, light)
+    text('Rate', 430, y, 7, true, light)
+    text('Amount', R - 40, y, 7, true, light)
+    y -= 4; line(y, rule); y -= 12
 
     // Labor row
-    dT('Labor', L + 4, y, { f: fontBold, s: 7, c: gray })
-    dT('Hours', 350, y, { f: fontBold, s: 7, c: gray })
-    dT('Rate', 420, y, { f: fontBold, s: 7, c: gray })
-    dT('Amount', R - 45, y, { f: fontBold, s: 7, c: gray })
-    y -= 10; dL(L + 4, y + 2, R - 4, lightGray); y -= 10
-    dT((line.description || '').substring(0, 50), L + 4, y, { s: 9 })
-    dT(String(hrs), 355, y, { s: 9 })
-    dT(fmt(laborRate) + '/hr', 410, y, { s: 8, c: gray })
-    dT(fmt(jobLaborAmt), R - 45, y, { f: fontBold, s: 9 })
-    y -= 14
+    text((job.description || '').substring(0, 55), L + 4, y, 9)
+    text(String(hrs), 375, y, 9)
+    text(fmt(laborRate) + '/hr', 422, y, 8, false, mid)
+    text(fmt(laborAmt), R - 40, y, 9, true)
+    y -= 16
 
     // Parts for this job
     if (jobParts.length > 0) {
-      dT('Qty', L + 4, y, { f: fontBold, s: 7, c: gray })
-      dT('Parts', L + 30, y, { f: fontBold, s: 7, c: gray })
-      dT('Part #', 310, y, { f: fontBold, s: 7, c: gray })
-      dT('Sell', 430, y, { f: fontBold, s: 7, c: gray })
-      dT('Amount', R - 45, y, { f: fontBold, s: 7, c: gray })
-      y -= 10; dL(L + 4, y + 2, R - 4, lightGray); y -= 10
+      text('Qty', L + 4, y, 7, true, light)
+      text('Part', L + 32, y, 7, true, light)
+      text('Part #', 320, y, 7, true, light)
+      text('Price', 440, y, 7, true, light)
+      text('Amount', R - 40, y, 7, true, light)
+      y -= 4; line(y, rule); y -= 12
 
       for (const p of jobParts) {
-        checkPage(30)
+        need(24)
         const sell = p.parts_sell_price || p.unit_price || 0
         const qty = p.quantity || 1
-        const lt = sell * qty
-        dT(String(qty), L + 8, y, { s: 8 })
-        dT((p.real_name || p.rough_name || p.description || '—').substring(0, 40), L + 30, y, { s: 8 })
-        dT(p.part_number || '—', 310, y, { s: 7, c: gray })
-        dT(fmt(sell), 425, y, { s: 8 })
-        dT(fmt(lt), R - 45, y, { s: 8 })
-        y -= 11
+        text(String(qty), L + 10, y, 9)
+        text((p.real_name || p.rough_name || p.description || '').substring(0, 42), L + 32, y, 9)
+        text(p.part_number || '', 320, y, 7, false, light)
+        text(fmt(sell), 438, y, 9)
+        text(fmt(sell * qty), R - 40, y, 9)
+        y -= 13
       }
     }
 
-    // Job recap
-    y -= 2; dL(L + 4, y + 4, R - 4, lightGray); y -= 8
-    dT(`Labor: ${fmt(jobLaborAmt)}`, 330, y, { s: 8, c: gray })
-    if (jobParts.length > 0) dT(`Parts: ${fmt(jobPartsTotal)}`, 410, y, { s: 8, c: gray })
-    dT(`Job Total: ${fmt(jobLaborAmt + jobPartsTotal)}`, R - 90, y, { f: fontBold, s: 8 })
-    y -= 16
+    // Job total
+    y -= 2; line(y + 4, rule); y -= 10
+    const jobTotal = laborAmt + partsAmt
+    text(`Labor: ${fmt(laborAmt)}`, 340, y, 8, false, mid)
+    if (jobParts.length > 0) text(`Parts: ${fmt(partsAmt)}`, 420, y, 8, false, mid)
+    y -= 12
+    text('Job Total', R - 120, y, 9, true, mid)
+    text(fmt(jobTotal), R - 40, y, 10, true)
+    y -= 18
   }
 
-  // ── ORPHAN PARTS ──
-  if (orphanParts.length > 0) {
-    checkPage(60)
-    dL(L, y + 4, R, blue); y -= 2
-    dT('ADDITIONAL PARTS', L, y, { f: fontBold, s: 8, c: gray })
-    dT(`(${orphanParts.length} ${orphanParts.length === 1 ? 'item' : 'items'})`, L + 95, y, { s: 7, c: gray })
-    y -= 14
+  // ════════════════════════════════════════════════════════
+  //  ORPHAN PARTS
+  // ════════════════════════════════════════════════════════
 
-    dT('Qty', L + 4, y, { f: fontBold, s: 7, c: gray })
-    dT('Part', L + 30, y, { f: fontBold, s: 7, c: gray })
-    dT('Part #', 310, y, { f: fontBold, s: 7, c: gray })
-    dT('Sell', 430, y, { f: fontBold, s: 7, c: gray })
-    dT('Amount', R - 45, y, { f: fontBold, s: 7, c: gray })
-    y -= 10; dL(L + 4, y + 2, R - 4, lightGray); y -= 10
+  if (orphanParts.length > 0) {
+    need(60)
+    line(y, accent); y -= 14
+    text('Additional Parts', L, y, 10, true)
+    y -= 16
+
+    text('Qty', L + 4, y, 7, true, light)
+    text('Part', L + 32, y, 7, true, light)
+    text('Part #', 320, y, 7, true, light)
+    text('Price', 440, y, 7, true, light)
+    text('Amount', R - 40, y, 7, true, light)
+    y -= 4; line(y, rule); y -= 12
 
     for (const p of orphanParts) {
-      checkPage(20)
+      need(20)
       const sell = p.parts_sell_price || p.unit_price || 0
       const qty = p.quantity || 1
-      const lt = sell * qty
-      totalPartsAmt += lt
-      dT(String(qty), L + 8, y, { s: 8 })
-      dT((p.real_name || p.rough_name || p.description || '—').substring(0, 40), L + 30, y, { s: 8 })
-      dT(p.part_number || '—', 310, y, { s: 7, c: gray })
-      dT(fmt(sell), 425, y, { s: 8 })
-      dT(fmt(lt), R - 45, y, { s: 8 })
-      y -= 11
+      totalParts += sell * qty
+      text(String(qty), L + 10, y, 9)
+      text((p.real_name || p.rough_name || p.description || '').substring(0, 42), L + 32, y, 9)
+      text(p.part_number || '', 320, y, 7, false, light)
+      text(fmt(sell), 438, y, 9)
+      text(fmt(sell * qty), R - 40, y, 9)
+      y -= 13
     }
-    y -= 6
+    y -= 8
   }
 
-  // ── SUMMARY & TOTALS ──
-  checkPage(120)
-  y -= 4; dL(L, y + 4, R, blue); y -= 4
-  dT('SUMMARY', L, y, { f: fontBold, s: 9, c: blue }); y -= 16
+  // ════════════════════════════════════════════════════════
+  //  TOTALS
+  // ════════════════════════════════════════════════════════
 
-  const subtotal = totalLaborAmt + totalPartsAmt
-  const taxableAmt = totalPartsAmt + (shop?.tax_labor ? totalLaborAmt : 0)
-  const taxAmt = taxRate > 0 ? taxableAmt * (taxRate / 100) : 0
-  const grandTotal = subtotal + taxAmt
+  need(100)
+  y -= 4; line(y, accent); y -= 16
 
-  const summaryX = R - 180
+  const subtotal = totalLabor + totalParts
+  const taxable = totalParts + (shop?.tax_labor ? totalLabor : 0)
+  const tax = taxRate > 0 ? taxable * (taxRate / 100) : 0
+  const total = subtotal + tax
+  const sx = R - 170
 
-  dT(`Labor (${jobLines.length} ${jobLines.length === 1 ? 'job' : 'jobs'})`, summaryX, y, { s: 9 })
-  dT(fmt(totalLaborAmt), R - 45, y, { f: fontBold, s: 9 }); y -= 14
+  text(`Labor (${jobLines.length} ${jobLines.length === 1 ? 'job' : 'jobs'})`, sx, y, 10)
+  text(fmt(totalLabor), R - 40, y, 10, true); y -= 16
 
-  dT(`Parts (${partLines.length} ${partLines.length === 1 ? 'item' : 'items'})`, summaryX, y, { s: 9 })
-  dT(fmt(totalPartsAmt), R - 45, y, { f: fontBold, s: 9 }); y -= 14
+  text(`Parts (${partLines.length} ${partLines.length === 1 ? 'item' : 'items'})`, sx, y, 10)
+  text(fmt(totalParts), R - 40, y, 10, true); y -= 16
 
-  dL(summaryX, y + 4, R - 4); y -= 8
-  dT('Subtotal', summaryX, y, { s: 9, c: gray }); dT(fmt(subtotal), R - 45, y, { f: fontBold, s: 9 }); y -= 14
+  line(y + 4, rule); y -= 12
+  text('Subtotal', sx, y, 10, false, mid)
+  text(fmt(subtotal), R - 40, y, 10, true); y -= 16
 
-  if (taxAmt > 0) {
-    dT(`Tax (${taxRate}%${shop?.tax_labor ? ' incl. labor' : ' parts only'})`, summaryX, y, { s: 9, c: gray })
-    dT(fmt(taxAmt), R - 45, y, { s: 9 }); y -= 14
+  if (tax > 0) {
+    text(`Tax (${taxRate}%${shop?.tax_labor ? ' incl. labor' : ' parts only'})`, sx, y, 9, false, mid)
+    text(fmt(tax), R - 40, y, 9); y -= 16
   } else {
-    dT('Tax', summaryX, y, { s: 9, c: gray }); dT('Exempt', R - 60, y, { s: 8, c: gray }); y -= 14
+    text('Tax', sx, y, 9, false, mid); text('Exempt', R - 50, y, 9, false, light); y -= 16
   }
 
-  dL(summaryX, y + 4, R - 4, blue); y -= 8
-  dT('Invoice Total', summaryX, y, { f: fontBold, s: 12 })
-  dT(fmt(grandTotal), R - 50, y, { f: fontBold, s: 13, c: green }); y -= 18
+  line(y + 4, accent); y -= 14
+  text('Total', sx, y, 14, true)
+  text(fmt(total), R - 45, y, 14, true, money)
+  y -= 24
 
-  if ((inv.amount_paid || 0) > 0) {
-    dT('Amount Paid', summaryX, y, { s: 9, c: green }); dT('-' + fmt(inv.amount_paid), R - 45, y, { s: 9, c: green }); y -= 14
-  }
-  dT('Balance Due', summaryX, y, { f: fontBold, s: 11 })
-  dT(fmt(inv.balance_due ?? grandTotal), R - 45, y, { f: fontBold, s: 11, c: (inv.balance_due ?? grandTotal) > 0 ? black : green }); y -= 20
+  // ════════════════════════════════════════════════════════
+  //  PAYMENT INSTRUCTIONS
+  // ════════════════════════════════════════════════════════
 
-  // ── PAYMENT INSTRUCTIONS ──
-  if ((inv.balance_due ?? grandTotal) > 0 && shop?.payment_payee_name) {
-    checkPage(80)
-    dL(L, y + 4, R, blue); y -= 4
-    dT('PAYMENT INSTRUCTIONS', L, y, { f: fontBold, s: 9, c: blue })
-    dT('Payable to: ' + shop.payment_payee_name, R - 200, y, { s: 8, c: gray })
+  if (shop?.payment_payee_name) {
+    need(70)
+    line(y, rule); y -= 14
+    text('PAYMENT INSTRUCTIONS', L, y, 9, true, accent)
     y -= 14
 
-    if (shop.payment_bank_name) { dT('Bank: ' + shop.payment_bank_name, L, y, { s: 8, c: gray }); y -= 12 }
+    text('Payable to: ' + shop.payment_payee_name, L, y, 9, true)
+    if (shop.payment_bank_name) { text('Bank: ' + shop.payment_bank_name, L + 250, y, 8, false, mid) }
+    y -= 16
 
-    const methods: string[][] = []
-    if (shop.payment_ach_account) methods.push(['ACH Payment', `Account: ${shop.payment_ach_account}`, shop.payment_ach_routing ? `Routing: ${shop.payment_ach_routing}` : ''])
-    if (shop.payment_wire_account) methods.push(['Wire Transfer', `Account: ${shop.payment_wire_account}`, shop.payment_wire_routing ? `Routing: ${shop.payment_wire_routing}` : ''])
-    if (shop.payment_zelle_email_1) methods.push(['Zelle', shop.payment_zelle_email_1, shop.payment_zelle_email_2 || ''])
-    if (shop.payment_mail_payee) methods.push(['Mail Check To', shop.payment_mail_payee, [shop.payment_mail_address, shop.payment_mail_city, shop.payment_mail_state, shop.payment_mail_zip].filter(Boolean).join(', ')])
-
-    for (const m of methods) {
-      checkPage(40)
-      dT(m[0].toUpperCase(), L, y, { f: fontBold, s: 7, c: gray }); y -= 10
-      if (m[1]) { dT(m[1], L, y, { s: 8 }); y -= 10 }
-      if (m[2]) { dT(m[2], L, y, { s: 8 }); y -= 10 }
-      y -= 4
+    if (shop.payment_ach_account) {
+      text('ACH', L, y, 7, true, light)
+      text('Account: ' + shop.payment_ach_account + (shop.payment_ach_routing ? '   Routing: ' + shop.payment_ach_routing : ''), L + 30, y, 8)
+      y -= 12
+    }
+    if (shop.payment_wire_account) {
+      text('Wire', L, y, 7, true, light)
+      text('Account: ' + shop.payment_wire_account + (shop.payment_wire_routing ? '   Routing: ' + shop.payment_wire_routing : ''), L + 30, y, 8)
+      y -= 12
+    }
+    if (shop.payment_zelle_email_1) {
+      text('Zelle', L, y, 7, true, light)
+      text(shop.payment_zelle_email_1 + (shop.payment_zelle_email_2 ? '  /  ' + shop.payment_zelle_email_2 : ''), L + 30, y, 8)
+      y -= 12
+    }
+    if (shop.payment_mail_payee) {
+      text('Mail', L, y, 7, true, light)
+      text(shop.payment_mail_payee + ', ' + [shop.payment_mail_address, shop.payment_mail_city, shop.payment_mail_state, shop.payment_mail_zip].filter(Boolean).join(', '), L + 30, y, 8)
+      y -= 12
     }
 
-    y -= 2
-    dT(`Please include invoice #${inv.invoice_number || ''} with your payment. Also accepted: Cash, Check, Credit/Debit Card.`, L, y, { s: 7, c: gray })
+    y -= 8
+    text(`Please reference invoice #${inv.invoice_number || ''} with your payment.  Also accepted: Cash, Check, Credit/Debit Card.`, L, y, 7, false, light)
   }
 
-  // ── DUE DATE ──
-  if (inv.due_date) {
-    y -= 14; dT('Payment due by ' + inv.due_date, L, y, { s: 8, c: gray })
-  }
+  // ════════════════════════════════════════════════════════
+  //  FOOTER
+  // ════════════════════════════════════════════════════════
+
+  const footerY = 28
+  page.drawLine({ start: { x: L, y: footerY + 8 }, end: { x: R, y: footerY + 8 }, thickness: 0.3, color: rule })
+  text(`${shopName}  |  ${shop?.phone || ''}  |  ${shop?.email || ''}`, L, footerY, 7, false, light)
+  text('Powered by TruckZen', R - fontBold.widthOfTextAtSize('Powered by TruckZen', 6), footerY, 6, false, light)
 
   const pdfBytes = await pdf.save()
   return { pdfBytes, filename: `Invoice-${inv.invoice_number || invoiceId}.pdf` }
