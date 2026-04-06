@@ -45,7 +45,8 @@ export default function AccountingPage() {
     const profile = await getCurrentUser(supabase)
     if (!profile) { window.location.href = '/login'; return }
     const allowed = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager']
-    if (!allowed.includes(profile.role)) { window.location.href = '/dashboard'; return }
+    const effectiveRole = profile.impersonate_role || profile.role
+    if (!allowed.includes(effectiveRole) && !profile.is_platform_owner) { window.location.href = '/dashboard'; return }
     setUser(profile)
 
     const res = await fetch(`/api/accounting?shop_id=${profile.shop_id}`)
