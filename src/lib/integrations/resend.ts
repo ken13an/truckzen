@@ -125,13 +125,17 @@ export async function sendInvoiceEmail(data: any) {
 </div>`
 
   try {
-    const result = await getResend().emails.send({
+    const sendPayload: any = {
       from:     getFrom(),
       to:       data.customer.email,
       reply_to:  data.shop.email || getReplyTo(),
       subject,
       html,
-    })
+    }
+    if (data.attachments?.length) {
+      sendPayload.attachments = data.attachments
+    }
+    const result = await getResend().emails.send(sendPayload)
     return { success: true, id: result.data?.id }
   } catch (err: any) {
     console.error('Resend error:', err.message)
