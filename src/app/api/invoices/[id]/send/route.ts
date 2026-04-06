@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { sendInvoiceEmail } from '@/lib/integrations/resend'
+import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf'
 import { logAction } from '@/lib/services/auditLog'
 
 type P = { params: Promise<{ id: string }> }
@@ -24,17 +25,12 @@ export async function POST(_req: Request, { params }: P) {
   const shop  = inv.shops as any
   const asset = so?.assets
 
-  // Generate invoice PDF bytes using the same PDF route logic
-  let pdfBuffer: Buffer | undefined
+  // Generate invoice PDF — direct call, no HTTP
+  let pdfAttachments: { filename: string; content: Buffer }[] | undefined
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'
-    const pdfRes = await fetch(`${appUrl}/api/invoices/${id}/pdf`)
-    if (pdfRes.ok) {
-      pdfBuffer = Buffer.from(await pdfRes.arrayBuffer())
-    }
-  } catch { /* PDF attachment is non-critical — email still sends without it */ }
-
-  const pdfFilename = `Invoice-${inv.invoice_number || id}.pdf`
+    const pdfResult = await generateInvoicePdf(id)
+    if (pdfResult) pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
+  } catch { /* non-critical */ }
 
   const emailData = {
     shop:        { name: shop?.name, dba: shop?.dba, phone: shop?.phone, email: shop?.email, address: shop?.address, payment_payee_name: shop?.payment_payee_name, payment_bank_name: shop?.payment_bank_name, payment_ach_account: shop?.payment_ach_account, payment_ach_routing: shop?.payment_ach_routing, payment_wire_account: shop?.payment_wire_account, payment_wire_routing: shop?.payment_wire_routing, payment_zelle_email_1: shop?.payment_zelle_email_1, payment_zelle_email_2: shop?.payment_zelle_email_2, payment_mail_payee: shop?.payment_mail_payee, payment_mail_address: shop?.payment_mail_address, payment_mail_city: shop?.payment_mail_city, payment_mail_state: shop?.payment_mail_state, payment_mail_zip: shop?.payment_mail_zip },
@@ -42,7 +38,7 @@ export async function POST(_req: Request, { params }: P) {
     invoice:     { invoice_number: inv.invoice_number, due_date: inv.due_date, subtotal: inv.subtotal, tax_amount: inv.tax_amount, total: inv.total, amount_paid: inv.amount_paid, balance_due: inv.balance_due, notes: inv.notes },
     serviceOrder:{ so_number: so?.so_number, complaint: so?.complaint, cause: so?.cause, correction: so?.correction, truck_unit: asset?.unit_number, truck_make_model: `${asset?.year} ${asset?.make} ${asset?.model}`, technician_name: so?.users?.full_name, odometer_in: asset?.odometer },
     lines:       so?.so_lines || [],
-    attachments: pdfBuffer ? [{ filename: pdfFilename, content: pdfBuffer }] : undefined,
+    attachments: pdfAttachments,
   }
 
   const result = await sendInvoiceEmail(emailData)

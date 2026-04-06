@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { truckReadyEmail } from '@/lib/emails/truckReady'
+import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -51,15 +52,13 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
           shop: { name: shop.name, phone: shop.phone },
         })
 
-        // Fetch invoice PDF for attachment
+        // Generate invoice PDF for attachment — direct call, no HTTP
         let attachments: { filename: string; content: Buffer }[] | undefined
         if (invoiceId) {
           try {
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'
-            const pdfRes = await fetch(`${appUrl}/api/invoices/${invoiceId}/pdf`)
-            if (pdfRes.ok) {
-              const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer())
-              attachments = [{ filename: `Invoice-${invoiceNumber || invoiceId}.pdf`, content: pdfBuffer }]
+            const pdfResult = await generateInvoicePdf(invoiceId)
+            if (pdfResult) {
+              attachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
             }
           } catch { /* PDF attachment non-critical */ }
         }
