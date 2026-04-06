@@ -49,12 +49,21 @@ export default function AccountingPage() {
     if (!allowed.includes(effectiveRole) && !profile.is_platform_owner) { window.location.href = '/dashboard'; return }
     setUser(profile)
 
-    const res = await fetch('/api/accounting')
-    if (!res.ok) { console.error('[Accounting] API error:', res.status, await res.text().catch(() => '')); setLoading(false); return }
-    const data = await res.json()
-    const list = Array.isArray(data) ? data : []
-    console.log('[Accounting] Loaded', list.length, 'WOs:', list.map((w: any) => w.so_number + ':' + w.invoice_status).join(', '))
-    setWos(list)
+    // Direct client-side query — same auth session, no server-side API dependency
+    const { data, error } = await supabase
+      .from('service_orders')
+      .select('id, so_number, status, invoice_status, complaint, grand_total, created_at, updated_at, accounting_notes, accounting_approved_at, accounting_approved_by, invoices(id, invoice_number), customers(id, company_name, contact_name), assets(id, unit_number, year, make, model)')
+      .eq('shop_id', profile.shop_id)
+      .is('deleted_at', null)
+      .neq('status', 'void')
+      .not('so_number', 'like', 'DRAFT-%')
+      .neq('is_historical', true)
+      .neq('source', 'fullbay')
+      .in('invoice_status', ['accounting_review', 'pending_accounting', 'sent', 'paid', 'closed', 'quality_check_failed'])
+      .order('updated_at', { ascending: false })
+      .limit(200)
+
+    setWos(error ? [] : (data || []))
     setLoading(false)
   }
 
