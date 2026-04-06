@@ -78,7 +78,7 @@ const DEPARTMENTS: DeptSection[] = [
     ],
   },
   {
-    label: 'Accounting', icon: Calculator, color: '#8B5CF6', dashboardHref: '/accounting/dashboard',
+    label: 'Accounting', icon: Calculator, color: '#8B5CF6', dashboardHref: '/accounting',
     items: [
       { href: '/accounting/history', label: 'Imported History', icon: FileText },
       { href: '/reports', label: 'Reports', icon: BarChart3 },
