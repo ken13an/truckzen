@@ -138,14 +138,18 @@ export default function WorkOrderDetail() {
         return
       }
 
-      // Fetch WO with retry — handles transient failures after create redirect
+      // Fetch WO with retry — handles transient failures after create redirect or auth delay
       let woRes = await fetch(`/api/work-orders/${id}`)
       if (!woRes.ok) {
-        await new Promise(r => setTimeout(r, 800))
+        await new Promise(r => setTimeout(r, 1000))
         woRes = await fetch(`/api/work-orders/${id}`)
       }
       if (!woRes.ok) {
-        await new Promise(r => setTimeout(r, 1500))
+        await new Promise(r => setTimeout(r, 2000))
+        woRes = await fetch(`/api/work-orders/${id}`)
+      }
+      if (!woRes.ok) {
+        await new Promise(r => setTimeout(r, 3000))
         woRes = await fetch(`/api/work-orders/${id}`)
       }
 
@@ -482,7 +486,7 @@ export default function WorkOrderDetail() {
   const userRole = user?.impersonate_role || user?.role || ''
   const isMechanic = ['technician', 'lead_tech', 'maintenance_technician'].includes(userRole)
   const isPartsRole = ['parts_manager'].includes(userRole)
-  const isAccounting = ['accountant'].includes(userRole)
+  const isAccounting = ['accountant', 'accounting_manager'].includes(userRole)
   const isWriter = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'].includes(userRole)
   const canSeePrices = !isMechanic
   const canEditPrices = isAccounting || isWriter
@@ -717,7 +721,7 @@ export default function WorkOrderDetail() {
       {/* HISTORICAL BANNER */}
       {wo.is_historical && (
         <div style={{ background: 'rgba(124,139,160,0.08)', border: '1px solid rgba(124,139,160,0.15)', borderRadius: 8, padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#7C8BA0' }}>
-          Historical Record — Imported from {wo.source === 'fullbay' ? 'Fullbay' : wo.source || 'external system'} | WO #{wo.so_number} | {new Date(wo.created_at).toLocaleDateString()}
+          Historical Record — Imported | WO #{wo.so_number} | {new Date(wo.created_at).toLocaleDateString()}
         </div>
       )}
 
@@ -1804,7 +1808,7 @@ export default function WorkOrderDetail() {
 
           {/* Summary cards */}
           {(() => {
-            const partsAmt = woPartsTotal + partsLineTotal + (wo.is_historical && partLines.length === 0 ? (wo.parts_total || 0) : 0)
+            const partsAmt = woPartsTotal + partsLineTotal
             const displayTotal = wo.is_historical && wo.grand_total ? wo.grand_total : grandTotal
             const items = [
               laborTotal > 0 ? { label: 'Labor', value: fmt(laborTotal), color: BLUE } : null,
@@ -1946,8 +1950,8 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* Historical parts summary */}
-          {wo.is_historical && partLines.length === 0 && wo.parts_total > 0 && (
+          {/* Historical parts summary — shown only when no summary card above already displays parts */}
+          {wo.is_historical && partLines.length === 0 && wo.parts_total > 0 && !partsLineTotal && (
             <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13, background: '#FAFBFC' }}>
               <span style={{ color: GRAY }}>Parts (imported summary)</span>
               <span style={{ fontWeight: 700 }}>{fmt(wo.parts_total)}</span>
@@ -2473,7 +2477,7 @@ export default function WorkOrderDetail() {
                 <span>Invoice #</span><span style={{ fontWeight: 600 }}>{wo.invoices[0].invoice_number || '—'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
-                <span>Status</span><span style={{ fontWeight: 600 }}>{wo.invoices[0].status || '—'}</span>
+                <span>Status</span><span style={{ fontWeight: 600, color: wo.invoices[0].status === 'paid' ? GREEN : undefined }}>{(wo.invoices[0].status || '—').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
                 <span>Labor</span><span style={{ fontWeight: 600 }}>{fmt(wo.labor_total || 0)}</span>
@@ -2485,7 +2489,7 @@ export default function WorkOrderDetail() {
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#1E293B' }}>Total</span>
                 <span style={{ fontSize: 18, fontWeight: 800, color: GREEN }}>{fmt(wo.invoices[0].total || wo.grand_total || 0)}</span>
               </div>
-              {wo.invoices[0].balance_due > 0 && (
+              {wo.invoices[0].balance_due > 0 && wo.invoices[0].status !== 'paid' && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: AMBER }}>
                   <span>Balance Due</span><span style={{ fontWeight: 600 }}>{fmt(wo.invoices[0].balance_due)}</span>
                 </div>
