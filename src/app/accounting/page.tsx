@@ -49,11 +49,12 @@ export default function AccountingPage() {
     if (!allowed.includes(effectiveRole) && !profile.is_platform_owner) { window.location.href = '/dashboard'; return }
     setUser(profile)
 
-    const res = await fetch(`/api/accounting?shop_id=${profile.shop_id}`)
+    const res = await fetch('/api/accounting')
     if (!res.ok) { console.error('[Accounting] API error:', res.status, await res.text().catch(() => '')); setLoading(false); return }
     const data = await res.json()
-
-    setWos(Array.isArray(data) ? data : [])
+    const list = Array.isArray(data) ? data : []
+    console.log('[Accounting] Loaded', list.length, 'WOs:', list.map((w: any) => w.so_number + ':' + w.invoice_status).join(', '))
+    setWos(list)
     setLoading(false)
   }
 
@@ -456,7 +457,9 @@ export default function AccountingPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 26, fontWeight: 800 }}>Invoice Review Queue</div>
-          <div style={{ fontSize: 12, color: '#9D9DA1', marginTop: 4 }}>Work orders ready for accounting review — approve to generate invoice</div>
+          <div style={{ fontSize: 12, color: '#9D9DA1', marginTop: 4 }}>
+            {wos.length > 0 ? `${wos.length} work order${wos.length !== 1 ? 's' : ''} in queue` : 'No work orders in accounting queue'}
+          </div>
         </div>
       </div>
 
