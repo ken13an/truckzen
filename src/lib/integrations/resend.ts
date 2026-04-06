@@ -32,7 +32,7 @@ export async function sendInvoiceEmail(data: any) {
   if (laborLines.length > 0) {
     lineItemsHtml += `<tr><td colspan="4" style="padding:8px;font-size:11px;font-weight:700;color:#1D6FE8;text-transform:uppercase;letter-spacing:.05em;background:#f8f9fa">Labor</td></tr>`
     for (const l of laborLines) {
-      const hrs = l.billed_hours ?? 0 // customer-facing: billed hours only (0 stays 0)
+      const hrs = l.billed_hours || l.estimated_hours || 0
       lineItemsHtml += lineRow(l.real_name || l.description || 'Labor', String(hrs), fmt(l.unit_price || 0), fmt(l.total_price || hrs * (l.unit_price || 0)))
     }
   }

@@ -29,9 +29,9 @@ export function calcInvoiceTotals(
   const laborLines = lines.filter((l: any) => l.line_type === 'labor')
   const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
 
-  // Labor: billed_hours only — no fallback to actual/estimated for invoice truth
+  // Labor: billed_hours preferred, fallback to estimated_hours for invoice truth
   const laborTotal = laborLines.reduce((sum: number, l: any) => {
-    const hrs = l.billed_hours || 0
+    const hrs = l.billed_hours || l.estimated_hours || 0
     return sum + (hrs * laborRate)
   }, 0)
 

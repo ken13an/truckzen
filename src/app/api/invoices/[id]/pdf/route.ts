@@ -194,7 +194,7 @@ export async function GET(_req: Request, { params }: P) {
       }
       const desc = (l.real_name || l.description || '').substring(0, 55)
       const price = l.line_type === 'part' ? (l.parts_sell_price || l.unit_price || 0) : (l.unit_price || 0)
-      const qty = l.line_type === 'labor' ? (l.billed_hours ?? 0) : (l.quantity || 0)
+      const qty = l.line_type === 'labor' ? (l.billed_hours || l.estimated_hours || 0) : (l.quantity || 0)
       const lineTotal = price * qty
       groupTotal += lineTotal
       drawText(desc, colX.desc, y, { size: 9 })
