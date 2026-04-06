@@ -29,7 +29,7 @@ export async function POST(req: Request, { params }: Params) {
   // Guard invoice status transitions
   const VALID_INVOICE_TRANSITIONS: Record<string, string[]> = {
     submit_to_accounting: [null, '', 'draft', 'quality_check_failed'].map(v => v ?? ''),
-    approve_invoicing: ['accounting_review', 'accounting_approved'],
+    approve_invoicing: ['accounting_review', 'pending_accounting', 'accounting_approved'],
     mark_paid: ['sent', 'sent_to_customer'],
     close_wo: ['paid'],
   }

@@ -186,6 +186,8 @@ export async function PATCH(req: Request, { params }: Params) {
 
   update.updated_at = new Date().toISOString()
   if (update.status === 'good_to_go' && (existing as any).status !== 'good_to_go') update.completed_at = new Date().toISOString()
+  // Auto-queue for accounting when WO reaches done (if not already in invoice flow)
+  if (update.status === 'done' && !(existing as any).invoice_status) update.invoice_status = 'accounting_review'
 
   const { data, error } = await ctx.admin.from('service_orders').update(update).eq('id', id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

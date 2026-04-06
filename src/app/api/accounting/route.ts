@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     .not('so_number', 'like', 'DRAFT-%')
     .neq('is_historical', true)
     .neq('source', 'fullbay')
-    .in('invoice_status', ['accounting_review', 'sent', 'paid', 'closed', 'quality_check_failed', 'draft'])
+    .in('invoice_status', ['accounting_review', 'pending_accounting', 'sent', 'paid', 'closed', 'quality_check_failed', 'draft'])
     .order('updated_at', { ascending: false })
     .limit(200)
 

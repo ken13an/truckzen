@@ -90,7 +90,7 @@ export async function POST(req: Request) {
         const allDone = woLines && woLines.length > 0 && woLines.every((l: any) => l.line_status === 'completed')
 
         if (allDone) {
-          await s.from('service_orders').update({ status: 'done' }).eq('id', woId)
+          await s.from('service_orders').update({ status: 'done', invoice_status: 'accounting_review' }).eq('id', woId)
 
           const { data: wo } = await s.from('service_orders')
             .select('shop_id, customer_id, customers(customer_type, is_owner_operator)')

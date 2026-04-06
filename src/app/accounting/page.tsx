@@ -111,7 +111,7 @@ export default function AccountingPage() {
 
   const filteredWos = useMemo(() => {
     let list = wos.filter(wo => {
-      if (tab === 0) return wo.invoice_status === 'accounting_review'
+      if (tab === 0) return ['accounting_review', 'pending_accounting', 'quality_check_failed'].includes(wo.invoice_status)
       if (tab === 1) return wo.invoice_status === 'sent'
       if (tab === 2) return ['paid', 'closed'].includes(wo.invoice_status)
       return true
@@ -395,7 +395,7 @@ export default function AccountingPage() {
         </div>
 
         {/* Action Buttons */}
-        {reviewWo.invoice_status === 'accounting_review' && (
+        {['accounting_review', 'pending_accounting', 'quality_check_failed'].includes(reviewWo.invoice_status) && (
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button onClick={handleApprove} disabled={actionLoading} style={{ ...S.btn(GREEN, '#fff'), opacity: actionLoading ? 0.5 : 1 }}>
               {actionLoading ? 'Processing...' : 'Approve & Send to Customer'}
@@ -447,7 +447,7 @@ export default function AccountingPage() {
             fontSize: 13, cursor: 'pointer', fontFamily: FONT,
           }}>
             {t}
-            {i === 0 && (() => { const c = wos.filter(w => w.invoice_status === 'accounting_review').length; return c > 0 ? ` (${c})` : '' })()}
+            {i === 0 && (() => { const c = wos.filter(w => ['accounting_review', 'pending_accounting', 'quality_check_failed'].includes(w.invoice_status)).length; return c > 0 ? ` (${c})` : '' })()}
           </button>
         ))}
       </div>
