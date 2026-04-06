@@ -68,7 +68,7 @@ export async function POST(req: Request, { params }: Params) {
           recipientId: acctUsers,
           type: 'invoice_submitted',
           title: 'Invoice Ready for Review',
-          body: `WO-${wo.so_number || id.slice(0, 6)} submitted to accounting`,
+          body: `${wo.so_number || id.slice(0, 6)} submitted to accounting`,
           link: `/accounting`,
           relatedWoId: id,
         })

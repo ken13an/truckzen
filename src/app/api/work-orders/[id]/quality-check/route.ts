@@ -112,8 +112,8 @@ export async function POST(req: Request, { params }: Params) {
     }
 
     // Notify accounting users
-    sendPushToRole(wo.shop_id, 'accountant', 'Invoice Ready for Review', `WO-${wo.so_number} is ready for accounting review`).catch(() => {})
-    sendPushToRole(wo.shop_id, 'owner', 'Invoice Ready for Review', `WO-${wo.so_number} is ready for accounting review`).catch(() => {})
+    sendPushToRole(wo.shop_id, 'accountant', 'Invoice Ready for Review', `${wo.so_number} is ready for accounting review`).catch(() => {})
+    sendPushToRole(wo.shop_id, 'owner', 'Invoice Ready for Review', `${wo.so_number} is ready for accounting review`).catch(() => {})
 
     return NextResponse.json({ passed: true, errors: [] })
   }

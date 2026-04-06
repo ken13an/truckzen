@@ -114,7 +114,7 @@ export async function POST(req: Request) {
         const { createNotification } = await import('@/lib/createNotification')
         await createNotification({
           shopId: wo.shop_id, recipientId: wo.service_writer_id, type: 'invoice_approved',
-          title: 'Invoice Sent', body: `WO-${wo.so_number} invoice approved and sent to customer`,
+          title: 'Invoice Sent', body: `${wo.so_number} invoice approved and sent to customer`,
           link: `/work-orders/${wo_id}`, relatedWoId: wo_id,
         })
       } catch {}
@@ -140,7 +140,7 @@ export async function POST(req: Request) {
         const { createNotification } = await import('@/lib/createNotification')
         await createNotification({
           shopId: wo.shop_id, recipientId: wo.service_writer_id, type: 'invoice_returned',
-          title: 'WO Returned', body: `WO-${wo.so_number}: ${notes || 'Returned for revision'}`,
+          title: 'WO Returned', body: `${wo.so_number}: ${notes || 'Returned for revision'}`,
           link: `/work-orders/${wo_id}`, relatedWoId: wo_id,
         })
       } catch {}

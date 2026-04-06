@@ -172,7 +172,7 @@ export default function AccountingPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700 }}>WO-{wo.so_number}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700 }}>{wo.so_number}</span>
                   <span style={S.pill(st.bg, st.color)}>{st.label}</span>
                 </div>
                 <div style={{ fontSize: 13, color: '#EDEDF0' }}>{customer?.company_name || 'No customer'}</div>

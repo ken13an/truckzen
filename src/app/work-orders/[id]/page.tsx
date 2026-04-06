@@ -2405,7 +2405,7 @@ export default function WorkOrderDetail() {
                 )}
               </div>
               <div style={{ marginTop: 10, fontSize: 11, color: GRAY }}>
-                Please include {wo.invoices?.[0]?.invoice_number ? `invoice #${wo.invoices[0].invoice_number}` : `WO-${wo.so_number}`} with your payment. Also accepted: Cash, Check, Credit/Debit Card.
+                Please include {wo.invoices?.[0]?.invoice_number ? `invoice #${wo.invoices[0].invoice_number}` : wo.so_number} with your payment. Also accepted: Cash, Check, Credit/Debit Card.
               </div>
             </div>
           </div>
