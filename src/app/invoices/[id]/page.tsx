@@ -357,7 +357,7 @@ export default function InvoiceDetailPage() {
   return (
     <div style={S.page}>
       {/* Print-safe styles */}
-      <style>{`@media print { body { background: #fff !important; color: #000 !important; } nav, aside, [data-sidebar], [data-appshell-nav], button, a[href="/invoices"] { display: none !important; } .print-hide { display: none !important; } * { color-adjust: exact; -webkit-print-color-adjust: exact; } }`}</style>
+      <style>{`@media print { body { background: #fff !important; color: #000 !important; } nav, aside, [data-sidebar], [data-appshell-nav], button, a[href="/accounting"] { display: none !important; } .print-hide { display: none !important; } * { color-adjust: exact; -webkit-print-color-adjust: exact; } }`}</style>
       {/* Record Payment Modal */}
       {showPaidModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
@@ -390,8 +390,8 @@ export default function InvoiceDetailPage() {
         </div>
       )}
 
-      <a href="/invoices" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
-  <ChevronLeft size={16} strokeWidth={2} /> Invoices
+      <a href="/accounting" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+  <ChevronLeft size={16} strokeWidth={2} /> Accounting
 </a>
 
       {/* Header */}
@@ -403,7 +403,7 @@ export default function InvoiceDetailPage() {
             {asset?.unit_number ? `Unit #${asset.unit_number}` : ''}{asset?.unit_number && so?.so_number ? ' · ' : ''}{so?.so_number || ''}
           </div>
           {so?.is_historical && (
-            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: '#7C8BA0', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical — {so.source === 'fullbay' ? 'Fullbay' : 'Imported'}</span>
+            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: '#7C8BA0', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical — Imported</span>
           )}
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
@@ -490,7 +490,7 @@ export default function InvoiceDetailPage() {
                       {lines.length === 0 && !so?.labor_total && !so?.parts_total && (
                         <tr>
                           <td colSpan={5} style={{ ...S.td, textAlign: 'center', color: '#7C8BA0', padding: 24, fontSize: 12 }}>
-                            Invoice generated from Fullbay WO — <a href={`/work-orders/${so?.id}`} style={{ color: '#4D9EFF', textDecoration: 'none' }}>see Work Order for details</a>
+                            Imported historical invoice — <a href={`/work-orders/${so?.id}`} style={{ color: '#4D9EFF', textDecoration: 'none' }}>see Work Order for details</a>
                           </td>
                         </tr>
                       )}

@@ -435,8 +435,8 @@ export default function AccountingPage() {
           <div style={{ fontSize: 26, fontWeight: 800 }}>Invoice Review Queue</div>
           <div style={{ fontSize: 12, color: '#9D9DA1', marginTop: 4 }}>Work orders ready for accounting review — approve to generate invoice</div>
         </div>
-        <a href="/invoices" style={{ padding: '8px 16px', borderRadius: 8, background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.2)', color: BLUE, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>
-          View Sent Invoices →
+        <a href="/accounting/dashboard" style={{ padding: '8px 16px', borderRadius: 8, background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.2)', color: BLUE, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>
+          Accounting Dashboard →
         </a>
       </div>
 
