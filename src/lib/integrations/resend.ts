@@ -115,12 +115,6 @@ export async function sendInvoiceEmail(data: any) {
     </div>
     ` : ''}
 
-    ${data.paymentUrl ? `
-    <div style="text-align:center;margin-bottom:20px">
-      <a href="${data.paymentUrl}" style="display:inline-block;padding:12px 28px;background:#1D6FE8;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px">Pay Online</a>
-    </div>
-    ` : ''}
-
     ${data.invoice.notes ? `<div style="font-size:12px;color:#6B7280;margin-bottom:20px"><strong>Notes:</strong> ${data.invoice.notes}</div>` : ''}
   </div>
 

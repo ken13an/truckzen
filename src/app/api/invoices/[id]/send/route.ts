@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { sendInvoiceEmail } from '@/lib/integrations/resend'
-import { generatePaymentQR } from '@/lib/payments/qr'
 import { logAction } from '@/lib/services/auditLog'
 
 type P = { params: Promise<{ id: string }> }
@@ -21,13 +20,6 @@ export async function POST(_req: Request, { params }: P) {
   if (!inv) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (!(inv.customers as any)?.email) return NextResponse.json({ error: 'Customer has no email address' }, { status: 400 })
 
-  // Generate QR payment link
-  let paymentUrl: string | undefined
-  try {
-    const qr = await generatePaymentQR(id)
-    paymentUrl = qr.paymentUrl
-  } catch { /* non-critical */ }
-
   const so    = inv.service_orders as any
   const shop  = inv.shops as any
   const asset = so?.assets
@@ -38,7 +30,6 @@ export async function POST(_req: Request, { params }: P) {
     invoice:     { invoice_number: inv.invoice_number, due_date: inv.due_date, subtotal: inv.subtotal, tax_amount: inv.tax_amount, total: inv.total, amount_paid: inv.amount_paid, balance_due: inv.balance_due, notes: inv.notes },
     serviceOrder:{ so_number: so?.so_number, complaint: so?.complaint, cause: so?.cause, correction: so?.correction, truck_unit: asset?.unit_number, truck_make_model: `${asset?.year} ${asset?.make} ${asset?.model}`, technician_name: so?.users?.full_name, odometer_in: asset?.odometer },
     lines:       so?.so_lines || [],
-    paymentUrl,
   }
 
   const result = await sendInvoiceEmail(emailData)
