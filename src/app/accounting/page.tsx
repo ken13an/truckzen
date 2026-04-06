@@ -395,6 +395,7 @@ export default function AccountingPage() {
         </div>
 
         {/* Action Buttons */}
+        {/* Pending Review actions */}
         {['accounting_review', 'pending_accounting', 'quality_check_failed'].includes(reviewWo.invoice_status) && (
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button onClick={handleApprove} disabled={actionLoading} style={{ ...S.btn(GREEN, '#fff'), opacity: actionLoading ? 0.5 : 1 }}>
@@ -421,6 +422,26 @@ export default function AccountingPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+        {/* Sent / Unpaid actions */}
+        {reviewWo.invoice_status === 'sent' && (
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button onClick={async () => {
+              if (!confirm('Mark this invoice as paid?')) return
+              setActionLoading(true)
+              try {
+                const res = await fetch(`/api/work-orders/${reviewWo.id}/invoice`, {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'mark_paid' }),
+                })
+                if (res.ok) { setReviewWo(null); await loadData() }
+                else { const err = await res.json(); alert(err.error || 'Failed') }
+              } catch { alert('Failed') }
+              setActionLoading(false)
+            }} disabled={actionLoading} style={{ ...S.btn(GREEN, '#fff'), opacity: actionLoading ? 0.5 : 1 }}>
+              {actionLoading ? 'Processing...' : 'Mark as Paid'}
+            </button>
           </div>
         )}
       </div>

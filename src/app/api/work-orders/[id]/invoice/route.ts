@@ -132,10 +132,23 @@ export async function POST(req: Request, { params }: Params) {
 
   // Mark as paid
   if (action === 'mark_paid') {
+    const now = new Date().toISOString()
     await s.from('service_orders').update({
       invoice_status: 'paid',
-      payment_date: new Date().toISOString(),
+      payment_date: now,
     }).eq('id', id)
+
+    // Also update the invoice row
+    const { data: inv } = await s.from('invoices').select('id, total').eq('so_id', id).limit(1).single()
+    if (inv) {
+      await s.from('invoices').update({
+        status: 'paid',
+        amount_paid: inv.total || 0,
+        balance_due: 0,
+        paid_at: now,
+      }).eq('id', inv.id)
+    }
+
     await s.from('wo_activity_log').insert({ wo_id: id, user_id, action: 'Marked as paid' })
     return NextResponse.json({ ok: true })
   }
