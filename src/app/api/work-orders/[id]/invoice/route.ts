@@ -186,11 +186,11 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ ok: true })
   }
 
-  // Reopen locked invoice for review (owner/gm/it only)
+  // Reopen locked invoice for review
   if (action === 'reopen') {
-    const reopenRoles = ['owner', 'gm', 'it_person']
+    const reopenRoles = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
     if (!reopenRoles.includes(actor.role) && !actor.is_platform_owner) {
-      return NextResponse.json({ error: 'Only owner/admin can reopen invoices' }, { status: 403 })
+      return NextResponse.json({ error: 'Only accounting/admin can reopen invoices' }, { status: 403 })
     }
     if (!['sent', 'paid', 'closed'].includes(currentInvoiceStatus)) {
       return NextResponse.json({ error: 'Invoice is not in a locked state' }, { status: 400 })

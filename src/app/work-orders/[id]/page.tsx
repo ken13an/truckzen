@@ -2444,7 +2444,7 @@ export default function WorkOrderDetail() {
                 {wo.invoice_status === 'closed' && (
                   <span style={{ color: '#374151', fontWeight: 600, fontSize: 13 }}>Work Order Closed</span>
                 )}
-                {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ['owner', 'gm', 'it_person'].includes(userRole) && (
+                {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin'].includes(userRole) && (
                   <button onClick={async () => {
                     if (!confirm('Reopen this invoice for accounting review? This will allow edits again.')) return
                     await invoiceAction('reopen')

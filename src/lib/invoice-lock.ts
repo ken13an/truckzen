@@ -22,7 +22,7 @@ export const ACCOUNTING_EDIT_STATUSES = ['accounting_review']
 export const ACCOUNTING_EDIT_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
 
 // Roles that can reopen a sent/paid invoice
-export const REOPEN_ROLES = ['owner', 'gm', 'it_person']
+export const REOPEN_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
 
 /**
  * Check if invoice is hard-locked (sent/paid/closed — no edits at all)
