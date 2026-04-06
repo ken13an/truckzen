@@ -23,7 +23,7 @@ export async function POST(req: Request, { params }: Params) {
 
   if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
 
-  const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id, so_number').eq('id', id).single()
+  const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id, so_number, customer_id').eq('id', id).single()
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
   // Guard invoice status transitions
@@ -78,9 +78,54 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ ok: true })
   }
 
-  // Approve for invoicing (accounting)
+  // Approve for invoicing (accounting) — must create invoice row before advancing to sent
   if (action === 'approve_invoicing') {
-    await s.from('service_orders').update({ invoice_status: 'sent' }).eq('id', id)
+    // Fetch lines for invoice generation
+    const { data: allLines } = await s.from('so_lines')
+      .select('id, line_type, description, real_name, quantity, unit_price, total_price, parts_status, parts_sell_price, parts_cost_price, billed_hours, estimated_hours, actual_hours')
+      .eq('so_id', id)
+
+    const { data: shop } = await s.from('shops').select('tax_rate, tax_labor, labor_rate, default_labor_rate').eq('id', wo.shop_id).single()
+    const taxRate = shop?.tax_rate || 0
+    const laborRate = shop?.labor_rate || shop?.default_labor_rate || 125
+
+    const lines = allLines || []
+    // Calculate totals using the same logic as accounting/approve
+    const { calcWoOperationalTotals } = await import('@/lib/invoice-calc')
+    const { laborTotal, partsTotal, subtotal, taxAmount, grandTotal: total } = calcWoOperationalTotals(lines, laborRate, taxRate, !!shop?.tax_labor)
+
+    // Snapshot labor rate onto labor lines
+    for (const l of lines) {
+      if (l.line_type === 'labor' && (l.unit_price || 0) !== laborRate) {
+        await s.from('so_lines').update({ unit_price: laborRate }).eq('id', l.id)
+      }
+    }
+
+    // Update WO totals
+    await s.from('service_orders').update({ labor_total: laborTotal, parts_total: partsTotal, grand_total: total }).eq('id', id)
+
+    // Create invoice row if not exists
+    const { data: existingInv } = await s.from('invoices').select('id').eq('so_id', id).limit(1).single()
+    if (!existingInv) {
+      const { count } = await s.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', wo.shop_id).is('deleted_at', null)
+      const year = new Date().getFullYear()
+      const invNum = `INV-${year}-${String((count || 0) + 1).padStart(4, '0')}`
+      await s.from('invoices').insert({
+        shop_id: wo.shop_id, so_id: id, customer_id: wo.customer_id || null,
+        invoice_number: invNum, status: 'sent',
+        subtotal, tax_rate: taxRate, tax_amount: taxAmount, total,
+        balance_due: total, amount_paid: 0,
+        due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+      })
+    } else {
+      await s.from('invoices').update({ status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total }).eq('id', existingInv.id)
+    }
+
+    await s.from('service_orders').update({
+      invoice_status: 'sent',
+      accounting_approved_by: user_id,
+      accounting_approved_at: new Date().toISOString(),
+    }).eq('id', id)
     await s.from('wo_activity_log').insert({ wo_id: id, user_id, action: 'Invoice approved and sent' })
     return NextResponse.json({ ok: true })
   }
