@@ -33,7 +33,7 @@ export default function InvoicesPage() {
 
   async function fetchInvoices(p: number) {
     setLoading(true)
-    let url = `/api/invoices?page=${p}&per_page=${perPage}&historical=false`
+    let url = `/api/invoices?page=${p}&per_page=${perPage}&historical=all`
     if (filter !== 'all') url += `&status=${filter}`
     if (search) url += `&q=${encodeURIComponent(search)}`
     if (dateFrom) url += `&date_from=${dateFrom}`
