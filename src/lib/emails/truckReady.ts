@@ -11,13 +11,13 @@ interface TruckReadyData {
 
 export function truckReadyEmail(data: TruckReadyData): { subject: string; html: string } {
   return {
-    subject: `Unit #${data.unitNumber} is ready for pickup - ${data.shop.name}`,
+    subject: `Invoice ${data.invoiceNumber} — $${data.amount} — ${data.shop.name}`,
     html: emailWrapper(data.shop, `
       <p style="color: #DDE3EE;">Hi ${data.customerName},</p>
-      <p style="color: #DDE3EE;">Your truck Unit #${data.unitNumber} is ready for pickup!</p>
+      <p style="color: #DDE3EE;">Your truck Unit #${data.unitNumber} service is complete. Please find your invoice attached.</p>
       ${infoCard('Invoice ' + data.invoiceNumber, '$' + data.amount)}
-      <p style="color: #DDE3EE;">You can pay online to speed up the pickup process:</p>
-      ${blueButton('Pay Online', data.payLink)}
+      <p style="color: #7C8BA0; font-size: 13px;">Payment instructions are included in the attached invoice. Please include invoice number <strong>${data.invoiceNumber}</strong> with your payment.</p>
+      <p style="color: #7C8BA0; font-size: 13px;">Questions? Call us at ${data.shop.phone}</p>
     `),
   }
 }

@@ -29,7 +29,7 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
   let invoiceId: string | null = null
   let invoiceNumber = ''
   let totalAmount = 0
-  const { data: inv } = await s.from('invoices').select('id, invoice_number, total').eq('service_order_id', woId).limit(1).single()
+  const { data: inv } = await s.from('invoices').select('id, invoice_number, total').eq('so_id', woId).limit(1).single()
   if (inv) { invoiceId = inv.id; invoiceNumber = inv.invoice_number; totalAmount = inv.total }
 
   const shop = await getShopInfo(shopId)
@@ -38,7 +38,7 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
   // Send email + SMS in parallel
   const promises: Promise<void>[] = []
 
-  // Email with invoice
+  // Email with invoice + PDF attachment
   if (email) {
     promises.push((async () => {
       try {
@@ -50,7 +50,21 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
           payLink,
           shop: { name: shop.name, phone: shop.phone },
         })
-        await sendEmail(email, subject, html)
+
+        // Fetch invoice PDF for attachment
+        let attachments: { filename: string; content: Buffer }[] | undefined
+        if (invoiceId) {
+          try {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'
+            const pdfRes = await fetch(`${appUrl}/api/invoices/${invoiceId}/pdf`)
+            if (pdfRes.ok) {
+              const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer())
+              attachments = [{ filename: `Invoice-${invoiceNumber || invoiceId}.pdf`, content: pdfBuffer }]
+            }
+          } catch { /* PDF attachment non-critical */ }
+        }
+
+        await sendEmail(email, subject, html, attachments)
         await logNotification(s, shopId, woId, 'email', null, email, 'sent')
       } catch (err: any) {
         await logNotification(s, shopId, woId, 'email', null, email, 'failed', err.message)
@@ -64,7 +78,7 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
       try {
         const twilio = (await import('twilio')).default
         const client = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
-        const smsBody = `${shop.name}: Your truck ${unitNumber} is ready! Invoice: $${totalAmount.toFixed(2)}. Pay by Zelle, cash, check, or card.${payLink ? ' View: ' + payLink : ''} Call us: ${shop.phone}`
+        const smsBody = `${shop.name}: Your truck Unit #${unitNumber} service is complete. Invoice ${invoiceNumber}: $${totalAmount.toFixed(2)}. Pay by Zelle, cash, check, or card. Call us: ${shop.phone}`
         await client.messages.create({
           body: smsBody,
           to: phone,

@@ -6,15 +6,17 @@ function getResend() {
   return resend
 }
 
-export async function sendEmail(to: string | string[], subject: string, html: string): Promise<boolean> {
+export async function sendEmail(to: string | string[], subject: string, html: string, attachments?: { filename: string; content: Buffer }[]): Promise<boolean> {
   try {
     const r = getResend()
-    const { error } = await r.emails.send({
+    const payload: any = {
       from: process.env.EMAIL_FROM || 'TruckZen <no-reply@truckzen.pro>',
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
-    })
+    }
+    if (attachments?.length) payload.attachments = attachments
+    const { error } = await r.emails.send(payload)
     if (error) { console.error('[Email] Send failed:', error); return false }
     return true
   } catch (err) {
