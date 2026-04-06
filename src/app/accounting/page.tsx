@@ -85,19 +85,44 @@ export default function AccountingPage() {
     if (!confirm('Approve this invoice and send to customer?')) return
     setActionLoading(true)
     try {
-      const res = await fetch('/api/accounting/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wo_id: reviewWo.id, action: 'approve', user_id: user.id }),
-      })
-      if (res.ok) {
-        setReviewWo(null)
-        await loadData()
-      } else {
-        const err = await res.json()
-        alert(err.error || 'Failed to approve')
+      // Direct client-side approve — set invoice_status='sent' and create invoice row
+      const now = new Date().toISOString()
+      const { error: woErr } = await supabase.from('service_orders').update({
+        invoice_status: 'sent',
+        accounting_approved_by: user.id,
+        accounting_approved_at: now,
+        accounting_notes: null,
+        updated_at: now,
+      }).eq('id', reviewWo.id)
+
+      if (woErr) { alert('Failed to approve: ' + woErr.message); setActionLoading(false); return }
+
+      // Create invoice row if not exists
+      const { data: existingInv } = await supabase.from('invoices').select('id').eq('so_id', reviewWo.id).limit(1).single()
+      if (!existingInv) {
+        const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id)
+        const invNum = `INV-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(4, '0')}`
+        await supabase.from('invoices').insert({
+          shop_id: user.shop_id,
+          so_id: reviewWo.id,
+          customer_id: (reviewWo.customers as any)?.id || null,
+          invoice_number: invNum,
+          status: 'sent',
+          total: reviewWo.grand_total || 0,
+          subtotal: reviewWo.grand_total || 0,
+          tax_amount: 0,
+          amount_paid: 0,
+          sent_at: now,
+          due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+        })
       }
-    } catch { alert('Failed to approve') }
+
+      // Log activity
+      await supabase.from('wo_activity_log').insert({ wo_id: reviewWo.id, user_id: user.id, action: 'Accounting approved and sent invoice to customer' })
+
+      setReviewWo(null)
+      await loadData()
+    } catch (e: any) { alert('Failed to approve: ' + (e.message || 'unknown error')) }
     setActionLoading(false)
   }
 
@@ -105,18 +130,18 @@ export default function AccountingPage() {
     if (!reviewWo || !user || !returnNotes.trim()) return
     setActionLoading(true)
     try {
-      const res = await fetch('/api/accounting/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wo_id: reviewWo.id, action: 'return', user_id: user.id, notes: returnNotes.trim() }),
-      })
-      if (res.ok) {
-        setReviewWo(null)
-        await loadData()
-      } else {
-        const err = await res.json()
-        alert(err.error || 'Failed to return')
-      }
+      const { error } = await supabase.from('service_orders').update({
+        invoice_status: 'draft',
+        accounting_notes: returnNotes.trim(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', reviewWo.id)
+
+      if (error) { alert('Failed to return: ' + error.message); setActionLoading(false); return }
+
+      await supabase.from('wo_activity_log').insert({ wo_id: reviewWo.id, user_id: user.id, action: `Accounting returned WO: ${returnNotes.trim()}` })
+
+      setReviewWo(null)
+      await loadData()
     } catch { alert('Failed to return') }
     setActionLoading(false)
   }
@@ -443,12 +468,12 @@ export default function AccountingPage() {
               if (!confirm('Mark this invoice as paid?')) return
               setActionLoading(true)
               try {
-                const res = await fetch(`/api/work-orders/${reviewWo.id}/invoice`, {
-                  method: 'POST', headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ action: 'mark_paid' }),
-                })
-                if (res.ok) { setReviewWo(null); await loadData() }
-                else { const err = await res.json(); alert(err.error || 'Failed') }
+                const now = new Date().toISOString()
+                await supabase.from('service_orders').update({ invoice_status: 'paid', payment_date: now }).eq('id', reviewWo.id)
+                const { data: inv } = await supabase.from('invoices').select('id, total').eq('so_id', reviewWo.id).limit(1).single()
+                if (inv) await supabase.from('invoices').update({ status: 'paid', amount_paid: inv.total || 0, paid_at: now }).eq('id', inv.id)
+                await supabase.from('wo_activity_log').insert({ wo_id: reviewWo.id, user_id: user.id, action: 'Marked as paid' })
+                setReviewWo(null); await loadData()
               } catch { alert('Failed') }
               setActionLoading(false)
             }} disabled={actionLoading} style={{ ...S.btn(GREEN, '#fff'), opacity: actionLoading ? 0.5 : 1 }}>
