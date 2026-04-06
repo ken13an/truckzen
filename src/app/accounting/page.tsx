@@ -50,7 +50,8 @@ export default function AccountingPage() {
     setUser(profile)
 
     const res = await fetch(`/api/accounting?shop_id=${profile.shop_id}`)
-    const data = res.ok ? await res.json() : []
+    if (!res.ok) { console.error('[Accounting] API error:', res.status, await res.text().catch(() => '')); setLoading(false); return }
+    const data = await res.json()
 
     setWos(Array.isArray(data) ? data : [])
     setLoading(false)
