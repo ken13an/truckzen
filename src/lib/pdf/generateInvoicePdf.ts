@@ -111,26 +111,29 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
   // ════════════════════════════════════════════════════════
 
   line(y); y -= 14
-  // Bill To (left)
-  text('BILL TO', L, y, 8, true, light); y -= 12
-  if (cust?.company_name) { text(cust.company_name, L, y, 11, true); y -= 13 }
-  if (cust?.contact_name) { text(cust.contact_name, L, y, 9, false, mid); y -= 11 }
-  if (cust?.phone) { text(cust.phone, L, y, 8, false, mid); y -= 10 }
-  if (cust?.email) { text(cust.email, L, y, 8, false, mid); y -= 10 }
+  const sectionTop = y
 
-  // Vehicle (right, anchored at same row as bill-to)
+  // Bill To (left column)
+  let leftY = sectionTop
+  text('BILL TO', L, leftY, 8, true, light); leftY -= 12
+  if (cust?.company_name) { text(cust.company_name, L, leftY, 11, true); leftY -= 13 }
+  if (cust?.contact_name) { text(cust.contact_name, L, leftY, 9, false, mid); leftY -= 11 }
+  if (cust?.phone) { text(cust.phone, L, leftY, 8, false, mid); leftY -= 10 }
+  if (cust?.email) { text(cust.email, L, leftY, 8, false, mid); leftY -= 10 }
+
+  // Vehicle (right column, same starting Y)
+  let rightY = sectionTop
   if (asset) {
-    let vy = y + 46
-    text('VEHICLE', 380, vy, 8, true, light); vy -= 12
-    text('#' + (asset.unit_number || ''), 380, vy, 10, true); vy -= 12
+    text('VEHICLE', 340, rightY, 8, true, light); rightY -= 12
+    text('#' + (asset.unit_number || ''), 340, rightY, 10, true); rightY -= 12
     const vh = [asset.year, asset.make, asset.model].filter(Boolean).join(' ')
-    if (vh) { text(vh, 380, vy, 9); vy -= 11 }
-    if (asset.vin) { text('VIN: ' + asset.vin, 380, vy, 7, false, light); vy -= 10 }
+    if (vh) { text(vh, 340, rightY, 9); rightY -= 11 }
+    if (asset.vin) { text('VIN: ' + asset.vin, 340, rightY, 7, false, light); rightY -= 10 }
     const mi = so?.mileage_at_service || asset.odometer
-    if (mi) text('Mileage: ' + Number(mi).toLocaleString(), 380, vy, 8, false, mid)
+    if (mi) { text('Mileage: ' + Number(mi).toLocaleString(), 340, rightY, 8, false, mid); rightY -= 10 }
   }
 
-  y -= 10
+  y = Math.min(leftY, rightY) - 10
 
   // ════════════════════════════════════════════════════════
   //  COMPLAINT / CAUSE / CORRECTION
@@ -160,58 +163,44 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
     totalParts += partsAmt
 
     need(90)
-    line(y, accent); y -= 14
+    line(y, accent); y -= 4
 
-    // Job header
-    text(`Job ${i + 1}`, L, y, 8, true, accent)
-    text((job.description || '').substring(0, 65), L + 38, y, 10, true)
-    y -= 16
-
-    // Labor table header
-    text('Description', L + 4, y, 7, true, light)
-    text('Hours', 370, y, 7, true, light)
-    text('Rate', 430, y, 7, true, light)
-    text('Amount', R - 40, y, 7, true, light)
-    y -= 4; line(y, rule); y -= 12
-
-    // Labor row
-    text((job.description || '').substring(0, 55), L + 4, y, 9)
-    text(String(hrs), 375, y, 9)
-    text(fmt(laborRate) + '/hr', 422, y, 8, false, mid)
+    // Job header with labor summary on same line
+    text(`Job ${i + 1}:`, L, y, 9, true, accent)
+    text((job.description || '').substring(0, 50), L + 42, y, 9, true)
+    text(`${hrs} hrs @ ${fmt(laborRate)}/hr`, 390, y, 8, false, mid)
     text(fmt(laborAmt), R - 40, y, 9, true)
-    y -= 16
+    y -= 18
 
     // Parts for this job
     if (jobParts.length > 0) {
-      text('Qty', L + 4, y, 7, true, light)
-      text('Part', L + 32, y, 7, true, light)
-      text('Part #', 320, y, 7, true, light)
-      text('Price', 440, y, 7, true, light)
+      text('Qty', L + 8, y, 7, true, light)
+      text('Part Description', L + 36, y, 7, true, light)
+      text('Part #', 290, y, 7, true, light)
+      text('Unit Price', 410, y, 7, true, light)
       text('Amount', R - 40, y, 7, true, light)
-      y -= 4; line(y, rule); y -= 12
+      y -= 4; line(y, rule); y -= 11
 
       for (const p of jobParts) {
-        need(24)
+        need(20)
         const sell = p.parts_sell_price || p.unit_price || 0
         const qty = p.quantity || 1
-        text(String(qty), L + 10, y, 9)
-        text((p.real_name || p.rough_name || p.description || '').substring(0, 42), L + 32, y, 9)
-        text(p.part_number || '', 320, y, 7, false, light)
-        text(fmt(sell), 438, y, 9)
-        text(fmt(sell * qty), R - 40, y, 9)
-        y -= 13
+        text(String(qty), L + 12, y, 8)
+        text((p.real_name || p.rough_name || p.description || '').substring(0, 38), L + 36, y, 8)
+        text((p.part_number || '').substring(0, 16), 290, y, 7, false, light)
+        text(fmt(sell), 415, y, 8)
+        text(fmt(sell * qty), R - 40, y, 8)
+        y -= 12
       }
     }
 
-    // Job total
-    y -= 2; line(y + 4, rule); y -= 10
+    // Job recap
+    y -= 4
     const jobTotal = laborAmt + partsAmt
-    text(`Labor: ${fmt(laborAmt)}`, 340, y, 8, false, mid)
-    if (jobParts.length > 0) text(`Parts: ${fmt(partsAmt)}`, 420, y, 8, false, mid)
-    y -= 12
-    text('Job Total', R - 120, y, 9, true, mid)
-    text(fmt(jobTotal), R - 40, y, 10, true)
-    y -= 18
+    text(`Labor: ${fmt(laborAmt)}`, 320, y, 7, false, mid)
+    if (jobParts.length > 0) text(`Parts: ${fmt(partsAmt)}`, 400, y, 7, false, mid)
+    text(`Job Total: ${fmt(jobTotal)}`, R - 80, y, 8, true)
+    y -= 16
   }
 
   // ════════════════════════════════════════════════════════
@@ -220,28 +209,28 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
 
   if (orphanParts.length > 0) {
     need(60)
-    line(y, accent); y -= 14
-    text('Additional Parts', L, y, 10, true)
+    line(y, accent); y -= 4
+    text('Additional Parts', L, y, 9, true)
     y -= 16
 
-    text('Qty', L + 4, y, 7, true, light)
-    text('Part', L + 32, y, 7, true, light)
-    text('Part #', 320, y, 7, true, light)
-    text('Price', 440, y, 7, true, light)
+    text('Qty', L + 8, y, 7, true, light)
+    text('Part Description', L + 36, y, 7, true, light)
+    text('Part #', 290, y, 7, true, light)
+    text('Unit Price', 410, y, 7, true, light)
     text('Amount', R - 40, y, 7, true, light)
-    y -= 4; line(y, rule); y -= 12
+    y -= 4; line(y, rule); y -= 11
 
     for (const p of orphanParts) {
       need(20)
       const sell = p.parts_sell_price || p.unit_price || 0
       const qty = p.quantity || 1
       totalParts += sell * qty
-      text(String(qty), L + 10, y, 9)
-      text((p.real_name || p.rough_name || p.description || '').substring(0, 42), L + 32, y, 9)
-      text(p.part_number || '', 320, y, 7, false, light)
-      text(fmt(sell), 438, y, 9)
-      text(fmt(sell * qty), R - 40, y, 9)
-      y -= 13
+      text(String(qty), L + 12, y, 8)
+      text((p.real_name || p.rough_name || p.description || '').substring(0, 38), L + 36, y, 8)
+      text((p.part_number || '').substring(0, 16), 290, y, 7, false, light)
+      text(fmt(sell), 415, y, 8)
+      text(fmt(sell * qty), R - 40, y, 8)
+      y -= 12
     }
     y -= 8
   }
