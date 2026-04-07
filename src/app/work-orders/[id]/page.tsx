@@ -909,7 +909,7 @@ export default function WorkOrderDetail() {
       })()}
 
       {/* WARRANTY BANNER — 3 scenarios */}
-      {!wo.is_historical && (wo.warranty_status === 'not_checked' || wo.warranty_status === 'none' || !wo.warranty_status) && (() => {
+      {!wo.is_historical && !isViewOnly && (wo.warranty_status === 'not_checked' || wo.warranty_status === 'none' || !wo.warranty_status) && (() => {
         const isFleet = customer?.is_fleet
         const hasWarranty = isFleet && asset?.warranty_expiry && new Date(asset.warranty_expiry) > new Date() && asset?.warranty_provider
         return (
@@ -962,7 +962,7 @@ export default function WorkOrderDetail() {
       )}
 
       {/* OWNER OPERATOR BANNER */}
-      {!wo.is_historical && (wo.ownership_type === 'owner_operator' || wo.assets?.is_owner_operator) && jobLines.some((l: any) => l.approval_status === 'needs_approval') && (
+      {!wo.is_historical && !isViewOnly && (wo.ownership_type === 'owner_operator' || wo.assets?.is_owner_operator) && jobLines.some((l: any) => l.approval_status === 'needs_approval') && (
         <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: AMBER, fontWeight: 600 }}>
           Owner Operator truck — customer approval required before work begins
         </div>
@@ -972,7 +972,7 @@ export default function WorkOrderDetail() {
       {!wo.is_historical && <WOStepper wo={wo} asset={asset} jobLines={jobLines} jobAssignments={jobAssignments} />}
 
       {/* AUTOMATION VISIBILITY */}
-      {wo.automation && wo.automation.stage !== 'closed' && wo.automation.stage !== 'void' && !wo.is_historical && (
+      {wo.automation && wo.automation.stage !== 'closed' && wo.automation.stage !== 'void' && !wo.is_historical && !isViewOnly && (
         <div style={{
           ...cardStyle,
           display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
@@ -1045,7 +1045,7 @@ export default function WorkOrderDetail() {
       </div>
 
       {/* QUICK ACTIONS */}
-      {!wo.is_historical && (
+      {!wo.is_historical && !isViewOnly && (
         <div data-no-print style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {[
             { icon: <Users size={16} />, label: 'Team', onClick: () => {
@@ -1138,7 +1138,7 @@ export default function WorkOrderDetail() {
                   )}
                   {isAdditional && <span style={pillStyle('#FFFBEB', AMBER)}>ADDITIONAL</span>}
                   {/* Approval badge */}
-                  {!wo.is_historical && (() => {
+                  {!wo.is_historical && !isViewOnly && (() => {
                     const as = line.approval_status || 'pre_approved'
                     const AB: Record<string, { bg: string; color: string; label: string }> = {
                       pre_approved: { bg: '#F0FDF4', color: GREEN, label: 'Pre-Approved' },
@@ -1153,7 +1153,7 @@ export default function WorkOrderDetail() {
                 </div>
 
                 {/* Pre-Approval Toggle */}
-                {!wo.is_historical && (line.approval_status === 'pre_approved' || line.approval_status === 'needs_approval' || !line.approval_status) && (
+                {!wo.is_historical && !isViewOnly && (line.approval_status === 'pre_approved' || line.approval_status === 'needs_approval' || !line.approval_status) && (
                   <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
                     <button onClick={() => toggleApproval(line.id, false)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, background: !line.approval_required ? 'rgba(22,163,74,0.1)' : 'transparent', color: !line.approval_required ? GREEN : GRAY, border: !line.approval_required ? `1px solid ${GREEN}40` : '1px solid #E5E7EB' }}>Pre-Approved</button>
                     <button onClick={() => toggleApproval(line.id, true)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, background: line.approval_required ? 'rgba(217,150,11,0.1)' : 'transparent', color: line.approval_required ? AMBER : GRAY, border: line.approval_required ? `1px solid ${AMBER}40` : '1px solid #E5E7EB' }}>Needs Approval</button>
@@ -1161,7 +1161,7 @@ export default function WorkOrderDetail() {
                 )}
 
                 {/* Approval actions (when needs approval) */}
-                {!wo.is_historical && line.approval_status === 'needs_approval' && (
+                {!wo.is_historical && !isViewOnly && line.approval_status === 'needs_approval' && (
                   <div style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 11 }}>
                     <div style={{ color: AMBER, fontWeight: 600, marginBottom: 6 }}>Waiting for customer approval</div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -1184,7 +1184,7 @@ export default function WorkOrderDetail() {
                   ) : (
                     <span style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>Unassigned</span>
                   )}
-                  {!wo.is_historical && (
+                  {!wo.is_historical && !isViewOnly && (
                     <button onClick={() => {
                       const bypassJobTypes = ['diagnostic', 'full_inspection']
                       if (wo.estimate_required && !wo.estimate_approved && !bypassJobTypes.includes(wo.job_type)) {
@@ -1259,7 +1259,7 @@ export default function WorkOrderDetail() {
                 })()}
 
                 {/* AI Parts Suggestion Bar */}
-                {!wo.is_historical && line.description && line.description.length >= 10 && (
+                {!wo.is_historical && !isViewOnly && line.description && line.description.length >= 10 && (
                   <>
                     {!aiSuggestions[line.id] && aiLoadingLine !== line.id && (
                       <button onClick={() => fetchAiSuggestions(line.id, line.description)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: 'rgba(139,92,246,.06)', border: '1px solid rgba(139,92,246,.15)', borderRadius: 8, color: '#8B5CF6', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
@@ -1361,7 +1361,7 @@ export default function WorkOrderDetail() {
                 )}
 
                 {/* Actions */}
-                {!wo.is_historical && (
+                {!wo.is_historical && !isViewOnly && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => {
                       setNewPartForms(prev => ({ ...prev, [line.id]: prev[line.id] || { desc: '', pn: '', qty: '', cost: '' } }))
@@ -1405,7 +1405,7 @@ export default function WorkOrderDetail() {
           })}
 
           {/* Add Job Line */}
-          {!wo.is_historical && (
+          {!wo.is_historical && !isViewOnly && (
             <div>
               <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', borderColor: (newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText)) ? '#FCA5A5' : undefined }}>
                 <button onClick={() => setUseAI(!useAI)} style={{ ...pillStyle(useAI ? '#EFF6FF' : '#F3F4F6', useAI ? BLUE : GRAY), cursor: 'pointer', border: 'none', fontFamily: FONT }}>
@@ -1441,7 +1441,7 @@ export default function WorkOrderDetail() {
           )}
 
           {/* Add Shop Charge */}
-          {!wo.is_historical && (
+          {!wo.is_historical && !isViewOnly && (
             <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: GRAY }}>Shop Charge:</span>
               <input value={newChargeDesc} onChange={e => setNewChargeDesc(e.target.value)} placeholder="Description" style={{ ...inputStyle, flex: 1, minWidth: 150 }} />
@@ -1995,7 +1995,7 @@ export default function WorkOrderDetail() {
       {tab === 3 && (
         <div>
           {/* Note input — hidden for historical/imported records */}
-          {!wo.is_historical && (
+          {!wo.is_historical && !isViewOnly && (
           <div style={cardStyle}>
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Add Note</span>
             <AITextInput
@@ -2040,7 +2040,7 @@ export default function WorkOrderDetail() {
           )}
 
           {/* File upload — hidden for historical/imported records */}
-          {!wo.is_historical && (
+          {!wo.is_historical && !isViewOnly && (
           <div style={cardStyle}>
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Files</span>
             <input ref={fileRef} type="file" multiple style={{ display: 'none' }} onChange={e => uploadFiles(e.target.files)} />
@@ -2420,7 +2420,7 @@ export default function WorkOrderDetail() {
           <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                {wo.invoice_status === 'draft' && (
+                {wo.invoice_status === 'draft' && !isViewOnly && (
                   <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>
                     {invoiceLoading ? 'Submitting...' : 'Send to Accounting'}
                   </button>
@@ -2443,7 +2443,7 @@ export default function WorkOrderDetail() {
                 {wo.invoice_status === 'sent' && canEditPrices && (
                   <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Record Payment</button>
                 )}
-                {wo.invoice_status === 'paid' && (
+                {wo.invoice_status === 'paid' && !isViewOnly && (
                   <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, '#fff'), padding: '8px 18px', fontSize: 13, borderRadius: 8 }}>Close Work Order</button>
                 )}
                 {wo.invoice_status === 'closed' && (
