@@ -485,9 +485,11 @@ export default function WorkOrderDetail() {
   // Role detection for department views
   const userRole = user?.impersonate_role || user?.role || ''
   const isMechanic = ['technician', 'lead_tech', 'maintenance_technician'].includes(userRole)
+  const isMaintenance = ['maintenance_manager', 'fleet_manager', 'dispatcher'].includes(userRole)
   const isPartsRole = ['parts_manager'].includes(userRole)
   const isAccounting = ['accountant', 'accounting_manager'].includes(userRole)
   const isWriter = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'].includes(userRole)
+  const isViewOnly = isMechanic || isMaintenance
   const canSeePrices = !isMechanic
   const canEditPrices = isAccounting || isWriter
 
@@ -1484,7 +1486,7 @@ export default function WorkOrderDetail() {
               <div style={{ fontSize: 12, color: GRAY }}>This imported historical work order has no part line items.</div>
             </div>
           )}
-          {partLines.length === 0 && !partsLocked && !wo.is_historical && !isMechanic && (
+          {partLines.length === 0 && !partsLocked && !wo.is_historical && !isViewOnly && (
             <div style={{ ...cardStyle, textAlign: 'center', padding: 30 }}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: GRAY }}>No parts on this work order</div>
               <button onClick={() => {
@@ -1500,7 +1502,7 @@ export default function WorkOrderDetail() {
             <div style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>Parts ({partLines.length})</div>
-                {!partsLocked && !wo.is_historical && !isMechanic && (
+                {!partsLocked && !wo.is_historical && !isViewOnly && (
                   <button onClick={() => {
                     const name = prompt('Part name or description:')
                     if (!name?.trim()) return
@@ -1563,7 +1565,7 @@ export default function WorkOrderDetail() {
                       {p.finding && partNoteOpen !== p.id && <div style={{ fontSize: 11, color: GRAY, marginTop: 2, marginBottom: 4, fontStyle: 'italic' }}>Note: {p.finding}</div>}
 
                       {/* Editable fields for parts dept (rough/sourced state) */}
-                      {partsEditable && !wo.is_historical && !isMechanic && (
+                      {partsEditable && !wo.is_historical && !isViewOnly && (
                         <div style={{ position: 'relative' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
                             <div style={{ position: 'relative' }}>
@@ -1603,7 +1605,7 @@ export default function WorkOrderDetail() {
                       )}
 
                       {/* Delete button for editable parts */}
-                      {partsEditable && !wo.is_historical && !isMechanic && (
+                      {partsEditable && !wo.is_historical && !isViewOnly && (
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
                           <button onClick={async () => { if (!confirm('Delete this part line?')) return; await fetch(`/api/so-lines/${p.id}`, { method: 'DELETE' }); await loadData() }} style={{ background: 'none', border: `1px solid ${RED}33`, borderRadius: 6, color: RED, fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '4px 10px', fontFamily: FONT }}>
                             Delete Part
@@ -1629,7 +1631,7 @@ export default function WorkOrderDetail() {
           )}
 
           {/* Request Part (mechanic) */}
-          {!wo.is_historical && !partsLocked && (
+          {!wo.is_historical && !partsLocked && !isMaintenance && (
             <div style={{ ...cardStyle, marginTop: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Request a Part</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
@@ -1654,7 +1656,7 @@ export default function WorkOrderDetail() {
           )}
 
           {/* Parts status summary + notify mechanic */}
-          {!wo.is_historical && !partsLocked && partLines.length > 0 && !isMechanic && (() => {
+          {!wo.is_historical && !partsLocked && partLines.length > 0 && !isViewOnly && (() => {
             const activeParts = partLines.filter((p: any) => p.parts_status !== 'canceled')
             const readyCount = activeParts.filter((p: any) => ['received', 'ready_for_job', 'installed'].includes(p.parts_status)).length
             const orderedCount = activeParts.filter((p: any) => p.parts_status === 'ordered').length
