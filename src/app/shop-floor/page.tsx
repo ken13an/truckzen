@@ -9,14 +9,15 @@ const STATUS_GROUPS = [
   { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: '#7C8BA0' },
   { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: '#F59E0B' },
   { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: '#F59E0B' },
-  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection', 'done'], color: '#06B6D4' },
+  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection'], color: '#06B6D4' },
+  { key: 'completed', label: 'Completed', statuses: ['done'], color: '#22C55E' },
   { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: '#22C55E' },
   { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: '#EF4444' },
 ]
 
 const STATUS_COLOR: Record<string, string> = {
   draft: '#7C8BA0', not_approved: '#8B5CF6', waiting_approval: '#F59E0B',
-  in_progress: '#F59E0B', waiting_parts: '#F59E0B', done: '#06B6D4',
+  in_progress: '#F59E0B', waiting_parts: '#F59E0B', done: '#22C55E',
   ready_final_inspection: '#06B6D4', good_to_go: '#22C55E', failed_inspection: '#EF4444',
 }
 
@@ -47,7 +48,7 @@ export default function ShopFloorPage() {
   const loadJobs = useCallback(async (profile: any) => {
     const res = await fetch(`/api/service-orders?shop_id=${profile.shop_id}&limit=100&historical=false`)
     const data = res.ok ? await res.json() : []
-    const filtered = (data || []).filter((j: any) => !['good_to_go', 'done', 'void'].includes(j.status))
+    const filtered = (data || []).filter((j: any) => !['good_to_go', 'void'].includes(j.status))
     setJobs(filtered)
   }, [])
 
@@ -125,7 +126,8 @@ export default function ShopFloorPage() {
   const stats = {
     active: jobs.filter(j => j.status === 'in_progress').length,
     waiting: jobs.filter(j => j.status === 'waiting_parts').length,
-    inspection: jobs.filter(j => ['ready_final_inspection', 'done'].includes(j.status)).length,
+    inspection: jobs.filter(j => j.status === 'ready_final_inspection').length,
+    completed: jobs.filter(j => j.status === 'done').length,
     failed: jobs.filter(j => j.status === 'failed_inspection').length,
     total: jobs.length,
   }
@@ -160,6 +162,7 @@ export default function ShopFloorPage() {
           { label: 'Active', value: stats.active, color: '#F59E0B' },
           { label: 'Waiting Parts', value: stats.waiting, color: '#F59E0B' },
           { label: 'Inspection', value: stats.inspection, color: '#06B6D4' },
+          { label: 'Completed', value: stats.completed, color: '#22C55E' },
           { label: 'Failed', value: stats.failed, color: '#EF4444' },
           { label: 'Total', value: stats.total, color: '#7C8BA0' },
         ].map(s => (

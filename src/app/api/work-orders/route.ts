@@ -58,8 +58,8 @@ export async function GET(req: Request) {
   if (status && status !== 'all') q = q.eq('status', status)
   if (historical === 'false') {
     q = q.or('is_historical.is.null,is_historical.eq.false')
-    // Exclude closed/completed WOs from Active view
-    q = q.not('status', 'in', '("good_to_go","done","void")')
+    // Exclude picked-up/voided WOs from Active view (done stays — in accounting review)
+    q = q.not('status', 'in', '("good_to_go","void")')
   }
   if (historical === 'true') q = q.eq('is_historical', true)
 
