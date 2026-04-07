@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { workStartedEmail } from '@/lib/emails/workStarted'
-import { truckReadyEmail } from '@/lib/emails/truckReady'
+
 import { logAction } from '@/lib/services/auditLog'
 import { deriveWOAutomation, deriveLineAutomation } from '@/lib/wo-automation'
 import { deriveWOETC } from '@/lib/wo-etc'
@@ -246,17 +246,8 @@ export async function PATCH(req: Request, { params }: Params) {
           await sendEmail(customer.email, subject, html)
         }
         if (update.status === 'good_to_go') {
-          const { data: invoice } = await ctx.admin.from('invoices').select('id, invoice_number, total').eq('so_id', wo.id).order('created_at', { ascending: false }).limit(1).single()
-          const payLink = invoice ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${wo.portal_token}?pay=1` : portalLink
-          const { subject, html } = truckReadyEmail({ customerName, unitNumber, invoiceNumber: invoice?.invoice_number || '', amount: invoice ? String(invoice.total) : '0', payLink, shop })
-          await sendEmail(customer.email, subject, html)
-          if (customer.phone && !customer.sms_opted_out) {
-            try {
-              const { sendSMS } = await import('@/lib/integrations/twilio')
-              const smsBody = `Your truck ${unitNumber} is ready for pickup at ${shop?.name || 'the shop'}. WO #${data.so_number}. Call us: ${shop?.phone || ''}. Reply STOP to unsubscribe.`
-              await sendSMS(customer.phone, smsBody.slice(0, 160))
-            } catch {}
-          }
+          const { sendPaymentNotifications } = await import('@/lib/notifications/sendPaymentNotifications')
+          await sendPaymentNotifications(wo.id, data.shop_id)
         }
       } catch {}
     })()
