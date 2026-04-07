@@ -45,12 +45,14 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
 
   async function switchRole(role: string | null) {
     setSwitching(true)
-    await fetch('/api/impersonate', {
+    const res = await fetch('/api/impersonate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, role: role || 'reset' }),
+      body: JSON.stringify({ role: role || 'reset' }),
     })
-    // Navigate directly to the new role's landing — no cascade of redirects
+    if (!res.ok) { setSwitching(false); return }
+    // Small delay to ensure DB write is committed before the new page reads it
+    await new Promise(r => setTimeout(r, 300))
     const effectiveRole = role === actualRole ? null : role
     const landing = effectiveRole ? (ROLE_LANDINGS[effectiveRole] || '/dashboard') : '/dashboard'
     window.location.href = landing
