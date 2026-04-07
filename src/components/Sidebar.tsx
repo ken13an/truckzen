@@ -33,7 +33,7 @@ const DEPARTMENTS: DeptSection[] = [
     ],
   },
   {
-    label: 'Parts', icon: Package, color: '#F97316', dashboardHref: '/parts/dashboard',
+    label: 'Parts', icon: Package, color: '#F97316', dashboardHref: '/parts',
     items: [
       { href: '/parts/queue', label: 'Parts Queue', icon: ClipboardList },
       { href: '/parts', label: 'Inventory', icon: Package },

@@ -12,7 +12,7 @@ const PAGE_BG = '#F4F5F7'
 
 type SortField = 'part_number' | 'description' | 'uom' | 'on_hand' | 'allocated' | 'average_cost' | 'price_ugl_company' | 'price_ugl_owner_operator' | 'price_outside' | 'min_qty' | 'max_qty' | 'default_location' | 'preferred_vendor' | 'part_category' | 'status'
 type SortDir = 'asc' | 'desc'
-type SubTab = 'inventory' | 'reorder' | 'vendors' | 'history' | 'purchase_orders'
+type SubTab = 'overview' | 'inventory' | 'reorder' | 'vendors' | 'history' | 'purchase_orders'
 
 export default function PartsPage() {
   const supabase = createClient()
@@ -22,7 +22,12 @@ export default function PartsPage() {
   const [loading, setLoading] = useState(true)
 
   // Sub tabs
-  const [subTab, setSubTab] = useState<SubTab>('inventory')
+  const [subTab, setSubTab] = useState<SubTab>('overview')
+
+  // Overview tab state (pending requests + low stock)
+  const [pendingParts, setPendingParts] = useState<any[]>([])
+  const [lowStock, setLowStock] = useState<any[]>([])
+  const [overviewStats, setOverviewStats] = useState({ pending: 0, onOrder: 0, lowStockCount: 0, fulfilledToday: 0 })
 
   // Filters
   const [search, setSearch] = useState('')
@@ -79,11 +84,28 @@ export default function PartsPage() {
 
   const searchTimer = useRef<ReturnType<typeof setTimeout>>()
 
-  // Load user
+  // Load user + overview data
   useEffect(() => {
-    getCurrentUser(supabase).then(p => {
+    getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
+      // Load overview data
+      const today = new Date().toISOString().split('T')[0]
+      const [reqRes, lowRes, ordRes, fulRes] = await Promise.all([
+        fetch('/api/parts-requests?status=active'),
+        fetch(`/api/parts?shop_id=${p.shop_id}&per_page=20&low_stock=true`),
+        fetch('/api/so-lines?line_type=part&parts_status=ordered&limit=500'),
+        fetch(`/api/so-lines?line_type=part&parts_status=received&updated_since=${today}&limit=500`),
+      ])
+      const reqs = reqRes.ok ? await reqRes.json() : []
+      const low = lowRes.ok ? await lowRes.json() : { data: [] }
+      const ord = ordRes.ok ? await ordRes.json() : []
+      const ful = fulRes.ok ? await fulRes.json() : []
+      const reqList = Array.isArray(reqs) ? reqs : []
+      const lowList = (low.data || []) as any[]
+      setPendingParts(reqList)
+      setLowStock(lowList)
+      setOverviewStats({ pending: reqList.length, onOrder: Array.isArray(ord) ? ord.length : 0, lowStockCount: lowList.length, fulfilledToday: Array.isArray(ful) ? ful.length : 0 })
     })
   }, [])
 
@@ -285,6 +307,7 @@ export default function PartsPage() {
   }
 
   const SUB_TABS: { key: SubTab; label: string }[] = [
+    { key: 'overview', label: 'Overview' },
     { key: 'inventory', label: 'Inventory' },
     { key: 'reorder', label: 'Reorder' },
     { key: 'vendors', label: 'Vendors' },
@@ -346,6 +369,76 @@ export default function PartsPage() {
           }}>{t.label}</button>
         ))}
       </div>
+
+      {/* ==================== OVERVIEW TAB ==================== */}
+      {subTab === 'overview' && (
+        <div>
+          {/* Stats cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+            {[
+              { label: 'Parts Requests', value: overviewStats.pending, color: '#D97706' },
+              { label: 'On Order', value: overviewStats.onOrder, color: '#D97706' },
+              { label: 'Low Stock Alerts', value: overviewStats.lowStockCount, color: '#DC2626' },
+              { label: 'Fulfilled Today', value: overviewStats.fulfilledToday, color: '#16A34A' },
+            ].map(s => (
+              <div key={s.label} style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '16px 18px' }}>
+                <div style={{ fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{s.label}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pending Parts Requests */}
+          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', marginBottom: 12 }}>Pending Parts Requests ({pendingParts.length})</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead><tr>{['Time', 'WO #', 'Truck', 'Part Requested', 'Status'].map(h => <th key={h} style={{ textAlign: 'left', padding: '6px 8px', fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: MONO, borderBottom: '1px solid #F3F4F6' }}>{h}</th>)}</tr></thead>
+              <tbody>
+                {pendingParts.map((p: any) => {
+                  const so = p.service_orders as any
+                  const mins = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 60000)
+                  const timeStr = mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.floor(mins / 60)}h` : `${Math.floor(mins / 1440)}d`
+                  return (
+                    <tr key={p.id} style={{ borderBottom: '1px solid #F8F9FA', cursor: 'pointer' }} onClick={() => so?.id && (window.location.href = `/work-orders/${so.id}`)}>
+                      <td style={{ padding: '8px', color: mins > 120 ? '#D97706' : '#9CA3AF', fontFamily: MONO, fontSize: 10 }}>{timeStr}</td>
+                      <td style={{ padding: '8px', fontFamily: MONO, color: BLUE, fontWeight: 700 }}>{so?.so_number || '—'}</td>
+                      <td style={{ padding: '8px', color: '#6B7280' }}>#{so?.assets?.unit_number || '—'}</td>
+                      <td style={{ padding: '8px', color: '#1E293B', fontWeight: 600 }}>{p.rough_name || p.description}</td>
+                      <td style={{ padding: '8px' }}><span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: p.parts_status === 'ordered' ? '#FFFBEB' : '#F3F4F6', color: p.parts_status === 'ordered' ? '#D97706' : '#6B7280' }}>{p.parts_status}</span></td>
+                    </tr>
+                  )
+                })}
+                {pendingParts.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#9CA3AF' }}>No pending parts requests</td></tr>}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Low Stock */}
+          {lowStock.length > 0 && (
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', marginBottom: 12 }}>Low Stock Alerts ({lowStock.length})</div>
+              {lowStock.slice(0, 10).map((p: any) => (
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F8F9FA' }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: '#1E293B' }}>{p.description}</div>
+                    {p.part_number && <div style={{ fontSize: 10, color: '#9CA3AF', fontFamily: MONO }}>{p.part_number}</div>}
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontFamily: MONO, fontSize: 14, fontWeight: 700, color: p.on_hand === 0 ? '#DC2626' : '#D97706' }}>{p.on_hand}</span>
+                    <span style={{ fontSize: 10, color: '#9CA3AF' }}> / {p.reorder_point || 2}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Quick links */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <button onClick={() => setSubTab('inventory')} style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid #E5E7EB', background: '#fff', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>View Inventory</button>
+            <a href="/parts/queue" style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid #E5E7EB', background: '#fff', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>Parts Queue</a>
+          </div>
+        </div>
+      )}
 
       {/* ==================== INVENTORY TAB ==================== */}
       {subTab === 'inventory' && (
