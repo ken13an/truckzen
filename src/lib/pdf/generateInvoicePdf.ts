@@ -7,10 +7,8 @@ function db() {
 
 function fmtDate(d: string | null | undefined): string {
   if (!d) return ''
-  try {
-    const dt = new Date(d)
-    return `${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')}/${dt.getFullYear()}`
-  } catch { return d || '' }
+  try { const dt = new Date(d); return `${String(dt.getMonth() + 1).padStart(2, '0')}/${String(dt.getDate()).padStart(2, '0')}/${dt.getFullYear()}` }
+  catch { return d || '' }
 }
 
 export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes: Uint8Array; filename: string } | null> {
@@ -41,7 +39,6 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
   const shop = inv.shops as any
   const cust = inv.customers as any
   const lines: any[] = so?.so_lines || []
-  const taxRate = shop?.tax_rate || 0
 
   const woOwnership = so?.ownership_type || asset?.ownership_type || 'outside_customer'
   const { data: rateRow } = await supabase.from('shop_labor_rates').select('rate_per_hour').eq('shop_id', inv.shop_id).eq('ownership_type', woOwnership).single()
@@ -64,55 +61,73 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
   const money = rgb(0.06, 0.52, 0.30)
 
   let y = 750
-  const L = 50, R = 562
-
-  function text(t: string, x: number, yy: number, size = 9, bold = false, color = dark) {
-    page.drawText(t || '', { x, y: yy, size, font: bold ? fontBold : font, color })
-  }
-  function ln(yy: number, color = rule) {
-    page.drawLine({ start: { x: L, y: yy }, end: { x: R, y: yy }, thickness: 0.5, color })
-  }
-  function newPage() { page = pdf.addPage([612, 792]); y = 750 }
-  function need(h: number) { if (y < h) newPage() }
+  const L = 50
+  const R = 562
+  const BOTTOM = 65 // minimum Y before page break — leaves room for footer
+  const LINE_H = 14 // standard line height
+  const shopName = shop?.dba || shop?.name || ''
   const fmt = (n: number) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
-  // Wrap long text into multiple lines
-  function wrapText(t: string, x: number, maxW: number, size: number, bold: boolean, color: typeof dark) {
-    const f = bold ? fontBold : font
-    const words = (t || '').split(' ')
-    let line = ''
-    for (const word of words) {
-      const test = line ? line + ' ' + word : word
-      if (f.widthOfTextAtSize(test, size) > maxW && line) {
-        text(line, x, y, size, bold, color); y -= size + 2
-        need(40)
-        line = word
-      } else { line = test }
-    }
-    if (line) { text(line, x, y, size, bold, color); y -= size + 2 }
+  function drawFooter() {
+    page.drawLine({ start: { x: L, y: 38 }, end: { x: R, y: 38 }, thickness: 0.3, color: rule })
+    page.drawText(`${shopName}  |  ${shop?.phone || ''}  |  ${shop?.email || ''}`, { x: L, y: 28, size: 7, font, color: light })
+    page.drawText('Powered by TruckZen', { x: R - font.widthOfTextAtSize('Powered by TruckZen', 6), y: 28, size: 6, font, color: light })
   }
 
-  // ═══════════════════════════════════════
+  function newPage() {
+    drawFooter()
+    page = pdf.addPage([612, 792])
+    y = 750
+  }
+
+  function need(h: number) {
+    if (y - h < BOTTOM) newPage()
+  }
+
+  function txt(t: string, x: number, yPos: number, size = 9, bold = false, color = dark) {
+    page.drawText(t || '', { x, y: yPos, size, font: bold ? fontBold : font, color })
+  }
+
+  function hr(yPos: number, color = rule) {
+    page.drawLine({ start: { x: L, y: yPos }, end: { x: R, y: yPos }, thickness: 0.5, color })
+  }
+
+  function wrap(t: string, x: number, maxW: number, size: number, bold: boolean, color: typeof dark) {
+    const f = bold ? fontBold : font
+    const words = (t || '').split(' ')
+    let ln = ''
+    for (const word of words) {
+      const test = ln ? ln + ' ' + word : word
+      if (f.widthOfTextAtSize(test, size) > maxW && ln) {
+        need(LINE_H)
+        txt(ln, x, y, size, bold, color)
+        y -= size + 3
+        ln = word
+      } else { ln = test }
+    }
+    if (ln) { need(LINE_H); txt(ln, x, y, size, bold, color); y -= size + 3 }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   //  HEADER
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
-  const shopName = shop?.dba || shop?.name || ''
-  text(shopName, L, y, 18, true, accent)
-  text('INVOICE', R - fontBold.widthOfTextAtSize('INVOICE', 20), y, 20, true, accent)
-  y -= 20; ln(y, accent); y -= 14
+  txt(shopName, L, y, 16, true, accent)
+  txt('INVOICE', R - fontBold.widthOfTextAtSize('INVOICE', 18), y, 18, true, accent)
+  y -= 22
+  hr(y, accent)
+  y -= 16
 
-  // Shop info (left) — avoid duplicating city if already in address
+  // Shop info (left)
   const shopAddr = shop?.address || ''
-  const shopCityLine = [shop?.city, shop?.state, shop?.zip].filter(Boolean).join(', ')
-  if (shopAddr) { text(shopAddr, L, y, 8, false, mid); y -= 11 }
-  if (shopCityLine && !shopAddr.includes(shop?.city || '___')) { text(shopCityLine, L, y, 8, false, mid); y -= 11 }
-  if (shop?.phone) { text(shop.phone, L, y, 8, false, mid); y -= 11 }
-  if (shop?.email) { text(shop.email, L, y, 8, false, mid); y -= 11 }
+  const shopCity = [shop?.city, shop?.state, shop?.zip].filter(Boolean).join(', ')
+  if (shopAddr) { txt(shopAddr, L, y, 8, false, mid); y -= 12 }
+  if (shopCity && !shopAddr.includes(shop?.city || '___')) { txt(shopCity, L, y, 8, false, mid); y -= 12 }
+  if (shop?.phone) { txt(shop.phone, L, y, 8, false, mid); y -= 12 }
+  if (shop?.email) { txt(shop.email, L, y, 8, false, mid); y -= 12 }
 
-  // Invoice details (right)
-  const detailsStartY = y + ((shopAddr ? 1 : 0) + (shopCityLine && !shopAddr.includes(shop?.city || '___') ? 1 : 0) + (shop?.phone ? 1 : 0) + (shop?.email ? 1 : 0)) * 11
-  let ry = detailsStartY
-  const rx = 400
+  // Invoice details (right column)
+  let ry = y + 48
   const dets: [string, string][] = [
     ['Invoice #', inv.invoice_number || ''],
     ['Date', fmtDate(so?.created_at || inv.created_at)],
@@ -122,58 +137,62 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
   ]
   if (asset?.unit_number) dets.push(['Unit #', asset.unit_number])
   for (const [label, val] of dets) {
-    text(label, rx, ry, 8, true, light)
-    text(val, rx + 60, ry, 8, false, dark)
-    ry -= 12
+    txt(label, 400, ry, 8, true, light)
+    txt(val, 460, ry, 8, false, dark)
+    ry -= 13
   }
+  y = Math.min(y, ry) - 16
 
-  y = Math.min(y, ry) - 12
+  // ═══════════════════════════════════════════════════════════
+  //  BILL TO + VEHICLE (two columns)
+  // ═══════════════════════════════════════════════════════════
 
-  // ═══════════════════════════════════════
-  //  BILL TO + VEHICLE
-  // ═══════════════════════════════════════
+  need(60)
+  hr(y)
+  y -= 16
+  const colStart = y
 
-  ln(y); y -= 14
-  const secTop = y
+  // Left: Bill To
+  let ly = colStart
+  txt('BILL TO', L, ly, 8, true, light); ly -= 14
+  if (cust?.company_name) { txt(cust.company_name, L, ly, 10, true); ly -= 14 }
+  if (cust?.contact_name) { txt(cust.contact_name, L, ly, 8, false, mid); ly -= 12 }
+  if (cust?.phone) { txt(cust.phone, L, ly, 8, false, mid); ly -= 12 }
+  if (cust?.email) { txt(cust.email, L, ly, 8, false, mid); ly -= 12 }
+  if (cust?.address) { txt(cust.address, L, ly, 8, false, mid); ly -= 12 }
 
-  let leftY = secTop
-  text('BILL TO', L, leftY, 8, true, light); leftY -= 13
-  if (cust?.company_name) { text(cust.company_name, L, leftY, 11, true); leftY -= 14 }
-  if (cust?.contact_name) { text(cust.contact_name, L, leftY, 9, false, mid); leftY -= 11 }
-  if (cust?.phone) { text(cust.phone, L, leftY, 8, false, mid); leftY -= 10 }
-  if (cust?.email) { text(cust.email, L, leftY, 8, false, mid); leftY -= 10 }
-  if (cust?.address) { text(cust.address, L, leftY, 8, false, mid); leftY -= 10 }
-
-  let rightY = secTop
+  // Right: Vehicle
+  let vy = colStart
   if (asset) {
-    text('VEHICLE', 340, rightY, 8, true, light); rightY -= 13
-    text('#' + (asset.unit_number || ''), 340, rightY, 10, true); rightY -= 13
+    txt('VEHICLE', 340, vy, 8, true, light); vy -= 14
+    txt('#' + (asset.unit_number || ''), 340, vy, 10, true); vy -= 14
     const vh = [asset.year, asset.make, asset.model].filter(Boolean).join(' ')
-    if (vh) { text(vh, 340, rightY, 9); rightY -= 11 }
-    if (asset.vin) { text('VIN: ' + asset.vin, 340, rightY, 7, false, light); rightY -= 10 }
+    if (vh) { txt(vh, 340, vy, 9); vy -= 12 }
+    if (asset.vin) { txt('VIN: ' + asset.vin, 340, vy, 7, false, light); vy -= 12 }
     const mi = so?.mileage_at_service || asset.odometer
-    if (mi) { text('Mileage: ' + Number(mi).toLocaleString(), 340, rightY, 8, false, mid); rightY -= 10 }
+    if (mi) { txt('Mileage: ' + Number(mi).toLocaleString(), 340, vy, 8, false, mid); vy -= 12 }
   }
+  y = Math.min(ly, vy) - 16
 
-  y = Math.min(leftY, rightY) - 10
-
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   //  COMPLAINT / CAUSE / CORRECTION
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
   if (so?.complaint || so?.cause || so?.correction) {
-    ln(y); y -= 12
-    if (so?.complaint) { text('Complaint:', L, y, 8, true, light); y -= 10; wrapText(so.complaint, L + 4, R - L - 8, 8, false, mid); y -= 2 }
-    if (so?.cause) { text('Cause:', L, y, 8, true, light); y -= 10; wrapText(so.cause, L + 4, R - L - 8, 8, false, mid); y -= 2 }
-    if (so?.correction) { text('Correction:', L, y, 8, true, light); y -= 10; wrapText(so.correction, L + 4, R - L - 8, 8, false, mid); y -= 2 }
-    y -= 4
+    need(30)
+    hr(y); y -= 14
+    if (so?.complaint) { txt('Complaint:', L, y, 8, true, light); y -= 12; wrap(so.complaint, L + 4, R - L - 8, 8, false, mid); y -= 4 }
+    if (so?.cause) { txt('Cause:', L, y, 8, true, light); y -= 12; wrap(so.cause, L + 4, R - L - 8, 8, false, mid); y -= 4 }
+    if (so?.correction) { txt('Correction:', L, y, 8, true, light); y -= 12; wrap(so.correction, L + 4, R - L - 8, 8, false, mid); y -= 4 }
+    y -= 6
   }
 
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   //  JOB-GROUPED LINE ITEMS
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
-  let totalLabor = 0, totalParts = 0
+  let totalLabor = 0
+  let totalParts = 0
 
   for (let i = 0; i < jobLines.length; i++) {
     const job = jobLines[i]
@@ -184,153 +203,176 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
     totalLabor += laborAmt
     totalParts += partsAmt
 
-    need(80)
-    ln(y, accent); y -= 4
-    text(`Job ${i + 1}:`, L, y, 9, true, accent)
-    text((job.description || '').substring(0, 50), L + 42, y, 9, true)
-    text(`${hrs} hrs @ ${fmt(laborRate)}/hr`, 390, y, 8, false, mid)
-    text(fmt(laborAmt), R - 40, y, 9, true)
+    // Job header — always start on a page with enough room
+    need(50)
+    hr(y, accent); y -= 6
+
+    txt(`Job ${i + 1}:`, L, y, 9, true, accent)
+    const jobDesc = (job.description || '').substring(0, 45)
+    txt(jobDesc, L + 44, y, 9, true)
     y -= 18
 
+    // Labor line
+    need(LINE_H * 2)
+    txt('Labor', L + 4, y, 7, true, light)
+    txt('Hours', 350, y, 7, true, light)
+    txt('Rate', 420, y, 7, true, light)
+    txt('Amount', R - 42, y, 7, true, light)
+    y -= 5
+    hr(y, rule)
+    y -= 14
+
+    txt(jobDesc, L + 4, y, 9)
+    txt(String(hrs), 355, y, 9)
+    txt(fmt(laborRate) + '/hr', 415, y, 8, false, mid)
+    txt(fmt(laborAmt), R - 42, y, 9, true)
+    y -= 18
+
+    // Parts for this job
     if (jobParts.length > 0) {
-      text('Qty', L + 8, y, 7, true, light)
-      text('Part Description', L + 36, y, 7, true, light)
-      text('Part #', 290, y, 7, true, light)
-      text('Unit Price', 410, y, 7, true, light)
-      text('Amount', R - 40, y, 7, true, light)
-      y -= 4; ln(y, rule); y -= 11
+      need(LINE_H * 2)
+      txt('Qty', L + 4, y, 7, true, light)
+      txt('Part', L + 34, y, 7, true, light)
+      txt('Part #', 280, y, 7, true, light)
+      txt('Price', 420, y, 7, true, light)
+      txt('Amount', R - 42, y, 7, true, light)
+      y -= 5
+      hr(y, rule)
+      y -= 13
 
       for (const p of jobParts) {
-        need(20)
+        need(LINE_H)
         const sell = p.parts_sell_price || p.unit_price || 0
         const qty = p.quantity || 1
-        text(String(qty), L + 12, y, 8)
-        text((p.real_name || p.rough_name || p.description || '').substring(0, 38), L + 36, y, 8)
-        text((p.part_number || '').substring(0, 16), 290, y, 7, false, light)
-        text(fmt(sell), 415, y, 8)
-        text(fmt(sell * qty), R - 40, y, 8)
-        y -= 12
+        txt(String(qty), L + 10, y, 8)
+        txt((p.real_name || p.rough_name || p.description || '').substring(0, 35), L + 34, y, 8)
+        txt((p.part_number || '').substring(0, 14), 280, y, 7, false, light)
+        txt(fmt(sell), 420, y, 8)
+        txt(fmt(sell * qty), R - 42, y, 8)
+        y -= 14
       }
     }
 
+    // Job recap line
     y -= 4
-    const jobTotal = laborAmt + partsAmt
-    text(`Labor: ${fmt(laborAmt)}`, 320, y, 7, false, mid)
-    if (jobParts.length > 0) text(`Parts: ${fmt(partsAmt)}`, 400, y, 7, false, mid)
-    text(`Job Total: ${fmt(jobTotal)}`, R - 80, y, 8, true)
-    y -= 16
+    need(LINE_H)
+    txt(`Job Total: ${fmt(laborAmt + partsAmt)}`, R - 100, y, 8, true)
+    y -= 20
   }
 
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   //  ORPHAN PARTS
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
   if (orphanParts.length > 0) {
-    need(60)
-    ln(y, accent); y -= 4
-    text('Additional Parts', L, y, 9, true)
-    y -= 16
+    need(50)
+    hr(y, accent); y -= 6
+    txt('Additional Parts', L, y, 9, true)
+    y -= 18
 
-    text('Qty', L + 8, y, 7, true, light)
-    text('Part Description', L + 36, y, 7, true, light)
-    text('Part #', 290, y, 7, true, light)
-    text('Unit Price', 410, y, 7, true, light)
-    text('Amount', R - 40, y, 7, true, light)
-    y -= 4; ln(y, rule); y -= 11
+    txt('Qty', L + 4, y, 7, true, light)
+    txt('Part', L + 34, y, 7, true, light)
+    txt('Part #', 280, y, 7, true, light)
+    txt('Price', 420, y, 7, true, light)
+    txt('Amount', R - 42, y, 7, true, light)
+    y -= 5; hr(y, rule); y -= 13
 
     for (const p of orphanParts) {
-      need(20)
+      need(LINE_H)
       const sell = p.parts_sell_price || p.unit_price || 0
       const qty = p.quantity || 1
       totalParts += sell * qty
-      text(String(qty), L + 12, y, 8)
-      text((p.real_name || p.rough_name || p.description || '').substring(0, 38), L + 36, y, 8)
-      text((p.part_number || '').substring(0, 16), 290, y, 7, false, light)
-      text(fmt(sell), 415, y, 8)
-      text(fmt(sell * qty), R - 40, y, 8)
-      y -= 12
+      txt(String(qty), L + 10, y, 8)
+      txt((p.real_name || p.rough_name || p.description || '').substring(0, 35), L + 34, y, 8)
+      txt((p.part_number || '').substring(0, 14), 280, y, 7, false, light)
+      txt(fmt(sell), 420, y, 8)
+      txt(fmt(sell * qty), R - 42, y, 8)
+      y -= 14
     }
-    y -= 8
+    y -= 10
   }
 
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   //  TOTALS — from stored invoice record
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
-  need(90)
-  y -= 4; ln(y, accent); y -= 16
-  const sx = R - 170
+  need(100)
+  hr(y, accent); y -= 18
+  const sx = R - 180
 
-  text(`Labor (${jobLines.length} ${jobLines.length === 1 ? 'job' : 'jobs'})`, sx, y, 10)
-  text(fmt(totalLabor), R - 40, y, 10, true); y -= 16
+  txt(`Labor (${jobLines.length} ${jobLines.length === 1 ? 'job' : 'jobs'})`, sx, y, 10)
+  txt(fmt(totalLabor), R - 42, y, 10, true)
+  y -= 18
 
-  text(`Parts (${partLines.length} ${partLines.length === 1 ? 'item' : 'items'})`, sx, y, 10)
-  text(fmt(totalParts), R - 40, y, 10, true); y -= 16
+  txt(`Parts (${partLines.length} ${partLines.length === 1 ? 'item' : 'items'})`, sx, y, 10)
+  txt(fmt(totalParts), R - 42, y, 10, true)
+  y -= 18
 
-  ln(y + 4, rule); y -= 12
-  text('Subtotal', sx, y, 10, false, mid)
-  text(fmt(inv.subtotal || (totalLabor + totalParts)), R - 40, y, 10, true); y -= 16
+  hr(y + 4, rule); y -= 14
+  txt('Subtotal', sx, y, 10, false, mid)
+  txt(fmt(inv.subtotal || (totalLabor + totalParts)), R - 42, y, 10, true)
+  y -= 18
 
   const storedTax = inv.tax_amount || 0
   if (storedTax > 0) {
-    text(`Tax (${taxRate}%${shop?.tax_labor ? ' incl. labor' : ' parts only'})`, sx, y, 9, false, mid)
-    text(fmt(storedTax), R - 40, y, 9); y -= 16
+    txt(`Tax (${shop?.tax_rate || 0}%${shop?.tax_labor ? ' incl. labor' : ' parts only'})`, sx, y, 9, false, mid)
+    txt(fmt(storedTax), R - 42, y, 9)
+    y -= 18
   } else {
-    text('Tax', sx, y, 9, false, mid); text('Exempt', R - 50, y, 9, false, light); y -= 16
+    txt('Tax', sx, y, 9, false, mid); txt('Exempt', R - 55, y, 9, false, light); y -= 18
   }
 
-  ln(y + 4, accent); y -= 14
-  text('Total', sx, y, 14, true)
-  text(fmt(inv.total || (totalLabor + totalParts + storedTax)), R - 45, y, 14, true, money)
-  y -= 24
+  hr(y + 4, accent); y -= 16
+  txt('Total', sx, y, 14, true)
+  txt(fmt(inv.total || (totalLabor + totalParts + storedTax)), R - 48, y, 14, true, money)
+  y -= 28
 
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   //  PAYMENT INSTRUCTIONS
-  // ═══════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
 
   if (shop?.payment_payee_name) {
-    need(70)
-    ln(y, rule); y -= 14
-    text('PAYMENT INSTRUCTIONS', L, y, 9, true, accent)
-    y -= 14
-
-    text('Payable to: ' + shop.payment_payee_name, L, y, 9, true)
-    if (shop.payment_bank_name) { text('Bank: ' + shop.payment_bank_name, 300, y, 8, false, mid) }
+    need(80)
+    hr(y, rule); y -= 16
+    txt('PAYMENT INSTRUCTIONS', L, y, 9, true, accent)
     y -= 16
 
+    txt('Payable to: ' + shop.payment_payee_name, L, y, 9, true)
+    if (shop.payment_bank_name) txt('Bank: ' + shop.payment_bank_name, 300, y, 8, false, mid)
+    y -= 18
+
     if (shop.payment_ach_account) {
-      text('ACH', L, y, 7, true, light)
-      text('Account: ' + shop.payment_ach_account + (shop.payment_ach_routing ? '   Routing: ' + shop.payment_ach_routing : ''), L + 30, y, 8)
-      y -= 12
+      need(LINE_H)
+      txt('ACH', L, y, 7, true, light)
+      txt('Account: ' + shop.payment_ach_account + (shop.payment_ach_routing ? '   Routing: ' + shop.payment_ach_routing : ''), L + 32, y, 8)
+      y -= 14
     }
     if (shop.payment_wire_account) {
-      text('Wire', L, y, 7, true, light)
-      text('Account: ' + shop.payment_wire_account + (shop.payment_wire_routing ? '   Routing: ' + shop.payment_wire_routing : ''), L + 30, y, 8)
-      y -= 12
+      need(LINE_H)
+      txt('Wire', L, y, 7, true, light)
+      txt('Account: ' + shop.payment_wire_account + (shop.payment_wire_routing ? '   Routing: ' + shop.payment_wire_routing : ''), L + 32, y, 8)
+      y -= 14
     }
     if (shop.payment_zelle_email_1) {
-      text('Zelle', L, y, 7, true, light)
-      text(shop.payment_zelle_email_1 + (shop.payment_zelle_email_2 ? '  /  ' + shop.payment_zelle_email_2 : ''), L + 30, y, 8)
-      y -= 12
+      need(LINE_H)
+      txt('Zelle', L, y, 7, true, light)
+      txt(shop.payment_zelle_email_1 + (shop.payment_zelle_email_2 ? '  /  ' + shop.payment_zelle_email_2 : ''), L + 32, y, 8)
+      y -= 14
     }
     if (shop.payment_mail_payee) {
-      text('Mail', L, y, 7, true, light)
-      text(shop.payment_mail_payee + ', ' + [shop.payment_mail_address, shop.payment_mail_city, shop.payment_mail_state, shop.payment_mail_zip].filter(Boolean).join(', '), L + 30, y, 8)
-      y -= 12
+      need(LINE_H)
+      txt('Mail', L, y, 7, true, light)
+      txt(shop.payment_mail_payee + ', ' + [shop.payment_mail_address, shop.payment_mail_city, shop.payment_mail_state, shop.payment_mail_zip].filter(Boolean).join(', '), L + 32, y, 8)
+      y -= 14
     }
 
     y -= 8
-    text(`Please reference invoice #${inv.invoice_number || ''} with your payment.  Also accepted: Cash, Check, Credit/Debit Card.`, L, y, 7, false, light)
+    need(LINE_H)
+    txt(`Please reference invoice #${inv.invoice_number || ''} with your payment.  Also accepted: Cash, Check, Credit/Debit Card.`, L, y, 7, false, light)
   }
 
-  // ═══════════════════════════════════════
-  //  FOOTER
-  // ═══════════════════════════════════════
-
-  const footerY = 28
-  page.drawLine({ start: { x: L, y: footerY + 8 }, end: { x: R, y: footerY + 8 }, thickness: 0.3, color: rule })
-  text(`${shopName}  |  ${shop?.phone || ''}  |  ${shop?.email || ''}`, L, footerY, 7, false, light)
-  text('Powered by TruckZen', R - fontBold.widthOfTextAtSize('Powered by TruckZen', 6), footerY, 6, false, light)
+  // Footer on last page
+  drawFooter()
 
   const pdfBytes = await pdf.save()
   return { pdfBytes, filename: `Invoice-${inv.invoice_number || invoiceId}.pdf` }
