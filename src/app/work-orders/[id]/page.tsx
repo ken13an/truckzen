@@ -681,7 +681,10 @@ export default function WorkOrderDetail() {
   const shop = wo.shop || {}
   // For imported historical WOs, do NOT apply current shop labor rate — use imported line prices only
   const isImportedHistory = !!wo.is_historical
-  const laborRate = isImportedHistory ? 0 : (shop.labor_rate || shop.default_labor_rate || 125)
+  // Labor rate from Settings → Labor Rates by ownership type, fallback to shop default
+  const ownershipType = wo?.ownership_type || wo?.assets?.ownership_type || 'outside_customer'
+  const ownershipRate = shopLaborRates.find((r: any) => r.ownership_type === ownershipType)
+  const laborRate = isImportedHistory ? 0 : (ownershipRate?.rate_per_hour || shop.labor_rate || shop.default_labor_rate || 125)
   const taxRate = isImportedHistory ? 0 : (shop.tax_rate || 0)
   const woStatus = WO_STATUS[wo.status] || { label: wo.status, bg: '#F3F4F6', color: GRAY }
   const vinDisplay = asset.vin ? asset.vin.slice(-6).toUpperCase() : '—'

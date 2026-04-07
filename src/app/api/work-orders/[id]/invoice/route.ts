@@ -23,7 +23,7 @@ export async function POST(req: Request, { params }: Params) {
 
   if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
 
-  const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id, so_number, customer_id').eq('id', id).single()
+  const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id, so_number, customer_id, ownership_type, assets(ownership_type)').eq('id', id).single()
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
   // Guard invoice status transitions
@@ -87,7 +87,11 @@ export async function POST(req: Request, { params }: Params) {
 
     const { data: shop } = await s.from('shops').select('tax_rate, tax_labor, labor_rate, default_labor_rate').eq('id', wo.shop_id).single()
     const taxRate = shop?.tax_rate || 0
-    const laborRate = shop?.labor_rate || shop?.default_labor_rate || 125
+
+    // Labor rate from Settings → Labor Rates by ownership type
+    const woOwnership = wo.ownership_type || (wo.assets as any)?.ownership_type || 'outside_customer'
+    const { data: rateRow } = await s.from('shop_labor_rates').select('rate_per_hour').eq('shop_id', wo.shop_id).eq('ownership_type', woOwnership).single()
+    const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || 125
 
     const lines = allLines || []
     // Calculate totals using the same logic as accounting/approve

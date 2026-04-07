@@ -12,8 +12,8 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
     .from('invoices')
     .select(`
       *,
-      service_orders(so_number, complaint, cause, correction, mileage_at_service, created_at,
-        assets(unit_number, year, make, model, odometer, vin),
+      service_orders(so_number, complaint, cause, correction, mileage_at_service, created_at, ownership_type,
+        assets(unit_number, year, make, model, odometer, vin, ownership_type),
         users!assigned_tech(full_name),
         so_lines(id, line_type, description, real_name, rough_name, part_number, quantity, unit_price, total_price, parts_sell_price, parts_cost_price, billed_hours, estimated_hours, actual_hours, parts_status, related_labor_line_id)
       ),
@@ -33,8 +33,12 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
   const shop = inv.shops as any
   const cust = inv.customers as any
   const lines: any[] = so?.so_lines || []
-  const laborRate = shop?.labor_rate || shop?.default_labor_rate || 125
   const taxRate = shop?.tax_rate || 0
+
+  // Labor rate from shop_labor_rates by ownership type
+  const woOwnership = so?.ownership_type || asset?.ownership_type || 'outside_customer'
+  const { data: rateRow } = await supabase.from('shop_labor_rates').select('rate_per_hour').eq('shop_id', inv.shop_id).eq('ownership_type', woOwnership).single()
+  const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || 125
 
   const jobLines = lines.filter((l: any) => l.line_type === 'labor')
   const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')

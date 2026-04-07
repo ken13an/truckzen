@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   const { data: wo, error: woErr } = await s
     .from('service_orders')
-    .select('id, so_number, shop_id, customer_id, asset_id, service_writer_id, invoice_status')
+    .select('id, so_number, shop_id, customer_id, asset_id, service_writer_id, invoice_status, ownership_type, assets(ownership_type)')
     .eq('id', wo_id)
     .eq('shop_id', actorShopId)
     .single()
@@ -43,7 +43,11 @@ export async function POST(req: Request) {
     const lines = allLines || []
     const { data: shop } = await s.from('shops').select('tax_rate, tax_labor, labor_rate, default_labor_rate').eq('id', wo.shop_id).single()
     const taxRate = shop?.tax_rate || 0
-    const laborRate = shop?.labor_rate || shop?.default_labor_rate || 125
+
+    // Labor rate from Settings → Labor Rates by ownership type
+    const woOwnership = wo.ownership_type || (wo.assets as any)?.ownership_type || 'outside_customer'
+    const { data: rateRow } = await s.from('shop_labor_rates').select('rate_per_hour').eq('shop_id', wo.shop_id).eq('ownership_type', woOwnership).single()
+    const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || 125
 
     const { laborTotal, partsTotal, subtotal, taxAmount, grandTotal: total } = calcWoOperationalTotals(lines, laborRate, taxRate, !!shop?.tax_labor)
 
