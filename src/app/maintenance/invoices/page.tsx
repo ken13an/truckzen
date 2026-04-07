@@ -199,26 +199,74 @@ export default function MaintenanceInvoicesPage() {
                 <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 14, minWidth: 80, textAlign: 'right', color: tab === 'paid' ? GREEN : '#F0F4FF' }}>{fmt(w.invoice_total ?? w.grand_total)}</span>
               </div>
 
-              {/* Expanded detail — customer-facing invoice view + maintenance actions */}
+              {/* Expanded detail — read-only invoice summary + maintenance actions */}
               {isExpanded && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '16px 20px', background: '#0A0C10' }}>
                   {detailLoading ? (
                     <div style={{ color: MUTED, fontSize: 12 }}>Loading...</div>
                   ) : detail ? (() => {
                     const invoiceId = detail.invoices?.[0]?.id
+                    const invRecord = detail.invoices?.[0]
+                    const lines = detail.so_lines || []
+                    const jobLines = lines.filter((l: any) => l.line_type === 'labor')
+                    const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
+                    const shopRate = detail.shop?.labor_rate || detail.shop?.default_labor_rate || 125
+
                     return (
                       <>
-                        {/* Customer-facing invoice — same page customer sees */}
-                        {invoiceId ? (
-                          <iframe
-                            src={`/invoices/${invoiceId}`}
-                            style={{ width: '100%', height: 700, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, background: '#fff' }}
-                          />
-                        ) : (
-                          <div style={{ color: MUTED, fontSize: 12, padding: 20, textAlign: 'center' }}>Invoice not yet created for this work order</div>
+                        {/* Invoice header */}
+                        {invRecord && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{invRecord.invoice_number}</div>
+                            <div style={{ fontSize: 11, color: MUTED }}>{invRecord.due_date ? `Due: ${invRecord.due_date}` : ''}</div>
+                          </div>
                         )}
 
-                        {/* Maintenance actions — view/payment only */}
+                        {detail.complaint && <div style={{ fontSize: 11, color: MUTED, marginBottom: 10 }}>Complaint: <span style={{ color: '#DDE3EE' }}>{detail.complaint}</span></div>}
+
+                        {/* Job-grouped summary */}
+                        {jobLines.map((job: any, idx: number) => {
+                          const hrs = job.billed_hours || job.estimated_hours || 0
+                          const rate = (job.unit_price && job.unit_price > 0) ? job.unit_price : shopRate
+                          const laborAmt = hrs * rate
+                          const jobParts = partLines.filter((p: any) => p.related_labor_line_id === job.id)
+                          const partsAmt = jobParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0)
+
+                          return (
+                            <div key={job.id} style={{ marginBottom: 10, padding: '8px 12px', background: 'rgba(255,255,255,.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,.04)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>Job {idx + 1}: <span style={{ color: '#DDE3EE', fontWeight: 600 }}>{(job.description || '').substring(0, 50)}</span></span>
+                                <span style={{ fontSize: 11, fontFamily: MONO, color: MUTED }}>{hrs}h @ {fmt(rate)}/hr = <strong style={{ color: '#DDE3EE' }}>{fmt(laborAmt)}</strong></span>
+                              </div>
+                              {jobParts.length > 0 && jobParts.map((p: any) => {
+                                const sell = p.parts_sell_price || p.unit_price || 0
+                                const qty = p.quantity || 1
+                                return (
+                                  <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0 2px 12px', fontSize: 11, color: MUTED }}>
+                                    <span>{qty}x {p.real_name || p.description || '—'} {p.part_number ? `(${p.part_number})` : ''}</span>
+                                    <span style={{ fontFamily: MONO }}>{fmt(sell * qty)}</span>
+                                  </div>
+                                )
+                              })}
+                              <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: '#DDE3EE', marginTop: 4 }}>Job Total: {fmt(laborAmt + partsAmt)}</div>
+                            </div>
+                          )
+                        })}
+
+                        {/* Totals from stored invoice record */}
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,.08)', paddingTop: 8, marginTop: 4 }}>
+                          {invRecord ? (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: MUTED }}><span>Subtotal</span><span>{fmt(invRecord.subtotal || 0)}</span></div>
+                              {(invRecord.tax_amount || 0) > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: MUTED }}><span>Tax</span><span>{fmt(invRecord.tax_amount)}</span></div>}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0', borderTop: '1px solid rgba(255,255,255,.06)', marginTop: 4 }}><span>Total</span><span style={{ color: GREEN }}>{fmt(invRecord.total || 0)}</span></div>
+                            </>
+                          ) : (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0' }}><span>Total</span><span style={{ color: GREEN }}>{fmt(w.invoice_total ?? w.grand_total ?? 0)}</span></div>
+                          )}
+                        </div>
+
+                        {/* Maintenance actions */}
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,.06)' }}>
                           {tab === 'unpaid' && !lastAction && (
                             <button disabled={!!actionLoading} onClick={() => doAction(w.id, 'payment_sent')}
@@ -236,9 +284,6 @@ export default function MaintenanceInvoicesPage() {
                               Download PDF
                             </a>
                           )}
-                          <a href={`/work-orders/${w.id}`} target="_blank" rel="noopener" style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'transparent', color: MUTED, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-                            View WO Detail
-                          </a>
                         </div>
                       </>
                     )
