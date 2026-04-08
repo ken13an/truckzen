@@ -10,7 +10,7 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 
 type Params = { params: Promise<{ id: string }> }
 
-const INVOICE_ACTION_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'accountant', 'accounting_manager']
+import { INVOICE_ACTION_ROLES, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 
 export async function POST(req: Request, { params }: Params) {
   const actor = await getAuthenticatedUserProfile()
@@ -94,7 +94,7 @@ export async function POST(req: Request, { params }: Params) {
     // Labor rate from Settings → Labor Rates by ownership type
     const woOwnership = wo.ownership_type || (wo.assets as any)?.ownership_type || 'outside_customer'
     const { data: rateRow } = await s.from('shop_labor_rates').select('rate_per_hour').eq('shop_id', wo.shop_id).eq('ownership_type', woOwnership).single()
-    const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || 125
+    const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK
 
     const lines = allLines || []
     // Calculate totals using the same logic as accounting/approve

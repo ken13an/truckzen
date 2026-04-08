@@ -38,7 +38,7 @@ export default function AutoBotsPage() {
 
   // Run test state
   const [selectedScenario, setSelectedScenario] = useState('')
-  const [targetShop, setTargetShop] = useState('1f927e3e-4fe5-431a-bb7c-dac77501e892')
+  const [targetShop, setTargetShop] = useState('')
   const [shops, setShops] = useState<any[]>([])
   const [running, setRunning] = useState(false)
   const [runProgress, setRunProgress] = useState<any>(null)

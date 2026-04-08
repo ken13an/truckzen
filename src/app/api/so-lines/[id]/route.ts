@@ -1,3 +1,4 @@
+import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
 
@@ -7,7 +8,7 @@ async function recalcTotals(admin: any, soId: string) {
   const { data: allLines } = await admin.from('so_lines').select('line_type, quantity, unit_price, parts_sell_price, parts_status, billed_hours, actual_hours, estimated_hours').eq('so_id', soId)
   const { data: shop } = await admin.from('service_orders').select('shop_id, shops(labor_rate, default_labor_rate, tax_rate, tax_labor)').eq('id', soId).single()
   const shopData = (shop?.shops as any) || {}
-  const laborRate = shopData.labor_rate || shopData.default_labor_rate || 125
+  const laborRate = shopData.labor_rate || shopData.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK
   const taxRate = parseFloat(shopData.tax_rate) || 0
   const taxLabor = !!shopData.tax_labor
   const laborTotal = (allLines || []).filter((l: any) => l.line_type === 'labor').reduce((sum: number, l: any) => {

@@ -1,4 +1,4 @@
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.vercel.app'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'
 export async function generatePaymentQR(invoiceId: string) {
   const paymentUrl = `${APP_URL}/pay/${Buffer.from(invoiceId).toString('base64')}`
   return { token: invoiceId, paymentUrl }

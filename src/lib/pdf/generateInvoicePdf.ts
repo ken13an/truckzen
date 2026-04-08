@@ -1,3 +1,4 @@
+import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { createClient } from '@supabase/supabase-js'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
@@ -42,7 +43,7 @@ export async function generateInvoicePdf(invoiceId: string): Promise<{ pdfBytes:
 
   const woOwnership = so?.ownership_type || asset?.ownership_type || 'outside_customer'
   const { data: rateRow } = await supabase.from('shop_labor_rates').select('rate_per_hour').eq('shop_id', inv.shop_id).eq('ownership_type', woOwnership).single()
-  const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || 125
+  const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK
 
   const jobLines = lines.filter((l: any) => l.line_type === 'labor')
   const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')

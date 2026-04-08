@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         authUserId = found.id
       } else {
         const { data: auth, error: authErr } = await s.auth.admin.createUser({
-          email: bot.email, password: 'AutoBot2026!',
+          email: bot.email, password: crypto.randomUUID() + crypto.randomUUID(),
           email_confirm: true, user_metadata: { full_name: bot.name },
         })
         if (authErr || !auth.user) {

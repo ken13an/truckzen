@@ -1,3 +1,4 @@
+import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 /**
  * TruckZen — Original Design
  * Estimates API — create from WO, list, send, approve/decline
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
 
     const shopId = (wo as any).shop_id
     const { data: shop } = await ctx.admin.from('shops').select('default_labor_rate, labor_rate, tax_rate, default_tax_rate').eq('id', shopId).single()
-    const laborRate = shop?.default_labor_rate || shop?.labor_rate || 125
+    const laborRate = shop?.default_labor_rate || shop?.labor_rate || DEFAULT_LABOR_RATE_FALLBACK
     const taxRate = shop?.tax_rate || shop?.default_tax_rate || 0
 
     const { data: lines } = await ctx.admin.from('so_lines').select('*').eq('so_id', woId)

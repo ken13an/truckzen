@@ -1,3 +1,4 @@
+import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 /**
  * One-time backfill: recalculate stale service_orders + invoices totals
  * Uses same canonical calculation as WO Invoice tab (calcWoOperationalTotals)
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
 
   // Get shop rates
   const { data: shop } = await s.from('shops').select('labor_rate, default_labor_rate, tax_rate, tax_labor').eq('id', shopId).single()
-  const laborRate = shop?.labor_rate || shop?.default_labor_rate || 125
+  const laborRate = shop?.labor_rate || shop?.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK
   const taxRate = shop?.tax_rate || 0
   const taxLabor = !!shop?.tax_labor
 

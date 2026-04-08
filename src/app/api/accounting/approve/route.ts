@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendPaymentNotifications } from '@/lib/notifications/sendPaymentNotifications'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { calcWoOperationalTotals } from '@/lib/invoice-calc'
+import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
     // Labor rate from Settings → Labor Rates by ownership type
     const woOwnership = wo.ownership_type || (wo.assets as any)?.ownership_type || 'outside_customer'
     const { data: rateRow } = await s.from('shop_labor_rates').select('rate_per_hour').eq('shop_id', wo.shop_id).eq('ownership_type', woOwnership).single()
-    const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || 125
+    const laborRate = rateRow?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK
 
     const { laborTotal, partsTotal, subtotal, taxAmount, grandTotal: total } = calcWoOperationalTotals(lines, laborRate, taxRate, !!shop?.tax_labor)
 

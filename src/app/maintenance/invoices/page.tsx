@@ -1,4 +1,5 @@
 'use client'
+import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
@@ -210,7 +211,7 @@ export default function MaintenanceInvoicesPage() {
                     const lines = detail.so_lines || []
                     const jobLines = lines.filter((l: any) => l.line_type === 'labor')
                     const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
-                    const shopRate = detail.shop?.labor_rate || detail.shop?.default_labor_rate || 125
+                    const shopRate = detail.shop?.labor_rate || detail.shop?.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK
 
                     return (
                       <>
