@@ -77,6 +77,18 @@ export async function PATCH(req: Request, { params }: P) {
   const recalcSoId = (data as any).so_id || soId
   const grandTotal = recalcSoId ? await recalcTotals(ctx.admin, recalcSoId) : null
 
+  // Auto-clear hours-request queue items when estimated_hours is updated
+  if (update.estimated_hours !== undefined && recalcSoId) {
+    try {
+      const woLink = `/work-orders/${recalcSoId}`
+      await ctx.admin.from('notifications')
+        .update({ is_read: true })
+        .in('type', ['hours_request_more', 'hours_request_needed'])
+        .eq('link', woLink)
+        .eq('is_read', false)
+    } catch { /* cleanup failure must not break the hours update */ }
+  }
+
   // Notify mechanic when part marked Ready
   if (update.parts_status === 'ready_for_job' && recalcSoId) {
     try {
