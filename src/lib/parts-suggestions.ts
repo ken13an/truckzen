@@ -194,6 +194,15 @@ const JOB_AUTO_PARTS: Record<string, RoughPart[]> = {
   'thermostat': [{ rough_name: 'Thermostat', quantity: 1, is_labor: false }, { rough_name: 'Coolant', quantity: 1, is_labor: false }],
   'dpf': [{ rough_name: 'DPF Filter', quantity: 1, is_labor: false }],
   'egr': [{ rough_name: 'EGR Valve', quantity: 1, is_labor: false }],
+  'bumper': [{ rough_name: 'Bumper', quantity: 1, is_labor: false }, { rough_name: 'Bumper Bracket', quantity: 1, is_labor: false }],
+  'fender': [{ rough_name: 'Fender', quantity: 1, is_labor: false }],
+  'hood': [{ rough_name: 'Hood', quantity: 1, is_labor: false }],
+  'mirror': [{ rough_name: 'Side Mirror', quantity: 1, is_labor: false }],
+  'door': [{ rough_name: 'Door Handle', quantity: 1, is_labor: false }],
+  'glad hand': [{ rough_name: 'Glad Hand', quantity: 1, is_labor: false }, { rough_name: 'Glad Hand Seal', quantity: 1, is_labor: false }],
+  'air bag': [{ rough_name: 'Air Bag (Suspension)', quantity: 1, is_labor: false }],
+  'u joint': [{ rough_name: 'U-Joint', quantity: 1, is_labor: false }],
+  'slack adjuster': [{ rough_name: 'Slack Adjuster', quantity: 1, is_labor: false }],
 }
 
 export function isDiagnosticJob(desc: string): boolean {
@@ -208,17 +217,21 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
   // Diagnostic jobs — no auto parts
   if (isDiagnosticJob(lower)) return []
 
-  // Tire jobs — generate from positions
-  if (['tire', 'tyre', 'flat', 'blowout'].some(k => lower.includes(k)) && tirePositions && tirePositions.length > 0) {
-    const steerCount = tirePositions.filter(p => p.includes('Steer')).length
-    const driveCount = tirePositions.filter(p => p.includes('2nd')).length
-    const rearCount = tirePositions.filter(p => p.includes('3rd')).length
-    const parts: RoughPart[] = []
-    if (steerCount > 0) parts.push({ rough_name: `${steerCount}x Steer Tire${steerCount > 1 ? 's' : ''}`, quantity: steerCount, is_labor: false })
-    if (driveCount > 0) parts.push({ rough_name: `${driveCount}x Drive Axle Tire${driveCount > 1 ? 's' : ''}`, quantity: driveCount, is_labor: false })
-    if (rearCount > 0) parts.push({ rough_name: `${rearCount}x Rear Axle Tire${rearCount > 1 ? 's' : ''}`, quantity: rearCount, is_labor: false })
-    if (parts.length === 0) parts.push({ rough_name: `${tirePositions.length}x Tire${tirePositions.length > 1 ? 's' : ''}`, quantity: tirePositions.length, is_labor: false })
-    return parts
+  // Tire jobs — generate from positions if available, otherwise generic fallback
+  if (['tire', 'tyre', 'flat', 'blowout'].some(k => lower.includes(k))) {
+    if (tirePositions && tirePositions.length > 0) {
+      const steerCount = tirePositions.filter(p => p.includes('Steer')).length
+      const driveCount = tirePositions.filter(p => p.includes('2nd')).length
+      const rearCount = tirePositions.filter(p => p.includes('3rd')).length
+      const parts: RoughPart[] = []
+      if (steerCount > 0) parts.push({ rough_name: `${steerCount}x Steer Tire${steerCount > 1 ? 's' : ''}`, quantity: steerCount, is_labor: false })
+      if (driveCount > 0) parts.push({ rough_name: `${driveCount}x Drive Axle Tire${driveCount > 1 ? 's' : ''}`, quantity: driveCount, is_labor: false })
+      if (rearCount > 0) parts.push({ rough_name: `${rearCount}x Rear Axle Tire${rearCount > 1 ? 's' : ''}`, quantity: rearCount, is_labor: false })
+      if (parts.length === 0) parts.push({ rough_name: `${tirePositions.length}x Tire${tirePositions.length > 1 ? 's' : ''}`, quantity: tirePositions.length, is_labor: false })
+      return parts
+    }
+    // No positions selected — still needs a tire as rough part
+    return [{ rough_name: 'Tire', quantity: 1, is_labor: false }, { rough_name: 'Valve Stem', quantity: 1, is_labor: false }]
   }
 
   // PM Service
