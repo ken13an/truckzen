@@ -70,8 +70,15 @@ export default function PayrollPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0C0C12', color: '#EDEDF0', fontFamily: FONT, padding: 24 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 4px' }}>Payroll</h1>
-      <p style={{ fontSize: 13, color: '#7C8BA0', margin: '0 0 20px' }}>Employee compensation and pay rates</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 4px' }}>Payroll</h1>
+          <p style={{ fontSize: 13, color: '#7C8BA0', margin: 0 }}>Employee compensation and pay rates</p>
+        </div>
+        <a href="/accounting/payroll/punch-report" style={{ padding: '8px 16px', borderRadius: 8, background: 'rgba(29,111,232,.1)', border: `1px solid ${BLUE}33`, color: BLUE, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}>
+          Punch Report →
+        </a>
+      </div>
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 16 }}>
