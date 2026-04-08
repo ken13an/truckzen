@@ -20,6 +20,24 @@ export async function POST(req: Request, { params }: P) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const soId = (data as any).so_id
+  const so = (data as any).service_orders as any
   if (soId) await ctx.admin.from('wo_activity_log').insert({ wo_id: soId, user_id: ctx.actor?.id || null, action: partial ? 'Some parts marked ready — partial pickup available' : 'All parts marked ready for pickup' })
+
+  // Notify assigned mechanic that parts are ready for pickup
+  if (so?.assigned_tech) {
+    try {
+      const { createNotification } = await import('@/lib/createNotification')
+      await createNotification({
+        shopId: ctx.shopId!,
+        recipientId: so.assigned_tech,
+        type: 'parts_ready',
+        title: partial ? 'Parts Partially Ready' : 'Parts Ready for Pickup',
+        body: `${so.so_number || 'WO'} — ${(data as any).part_name || 'parts'} ${partial ? 'partially' : ''} ready. Pick up from parts dept.`,
+        link: `/mechanic/dashboard`,
+        relatedWoId: soId,
+      })
+    } catch {}
+  }
+
   return NextResponse.json(data)
 }

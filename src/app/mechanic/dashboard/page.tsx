@@ -28,9 +28,14 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   completed:  { bg: 'rgba(34,197,94,0.15)',  text: GREEN },
   declined:   { bg: 'rgba(239,68,68,0.15)',  text: RED },
   requested:  { bg: 'rgba(245,158,11,0.15)', text: AMBER },
+  reviewing:  { bg: 'rgba(245,158,11,0.15)', text: AMBER },
+  submitted:  { bg: 'rgba(29,111,232,0.15)', text: BLUE },
   approved:   { bg: 'rgba(34,197,94,0.15)',  text: GREEN },
   rejected:   { bg: 'rgba(239,68,68,0.15)',  text: RED },
-  ready:      { bg: 'rgba(29,111,232,0.15)', text: BLUE },
+  ready:      { bg: 'rgba(34,197,94,0.15)',  text: GREEN },
+  ordered:    { bg: 'rgba(245,158,11,0.15)', text: AMBER },
+  partial:    { bg: 'rgba(29,111,232,0.15)', text: BLUE },
+  picked_up:  { bg: 'rgba(34,197,94,0.15)',  text: GREEN },
 }
 
 const LANGUAGES = [
