@@ -670,9 +670,31 @@ export default function MechanicDashboardPage() {
                               const stColor = p.parts_status === 'ready_for_job' ? GREEN : p.parts_status === 'received' ? BLUE : p.parts_status === 'ordered' ? AMBER : DIM
                               const stLabel = p.parts_status === 'ready_for_job' ? 'Ready for Pickup' : p.parts_status === 'received' ? 'Preparing' : p.parts_status === 'ordered' ? 'Ordered' : p.parts_status === 'installed' ? 'Installed' : 'Pending'
                               return (
-                                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11 }}>
-                                  <span style={{ color: DIM }}>{p.real_name || p.rough_name || p.description || '—'}</span>
-                                  <span style={{ color: stColor, fontWeight: 600, fontSize: 10 }}>{stLabel}</span>
+                                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11, gap: 6 }}>
+                                  <span style={{ color: DIM, flex: 1 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
+                                  {p.parts_status === 'ready_for_job' ? (
+                                    <button
+                                      disabled={actionLoading === 'pickup-' + p.id}
+                                      onClick={async (e) => {
+                                        e.stopPropagation()
+                                        setActionLoading('pickup-' + p.id)
+                                        try {
+                                          await fetch(`/api/so-lines/${p.id}`, {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ parts_status: 'installed' }),
+                                          })
+                                          if (user) await fetchData(user.id)
+                                        } catch {}
+                                        setActionLoading(null)
+                                      }}
+                                      style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${GREEN}`, background: `${GREEN}15`, color: GREEN, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap' }}
+                                    >
+                                      {actionLoading === 'pickup-' + p.id ? '...' : 'Confirm Pickup'}
+                                    </button>
+                                  ) : (
+                                    <span style={{ color: stColor, fontWeight: 600, fontSize: 10, whiteSpace: 'nowrap' }}>{stLabel}</span>
+                                  )}
                                 </div>
                               )
                             })}
