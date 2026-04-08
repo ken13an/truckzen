@@ -1119,7 +1119,7 @@ export default function MechanicDashboardPage() {
                 try {
                   const res = await fetch('/api/mechanic/request-hours', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ assignment_id: moreTimeModal.id, wo_number: moreTimeModal.wo?.so_number, job_description: `${moreTimeModal.line?.description || 'job'} — requesting ${label} more` }),
+                    body: JSON.stringify({ assignment_id: moreTimeModal.id, wo_number: moreTimeModal.wo?.so_number, job_description: moreTimeModal.line?.description || 'job', request_type: 'more_time', requested_minutes: mins }),
                   })
                   if (res.ok) { alert(`Requested ${label} more — supervisor notified.`); setMoreTimeModal(null) }
                   else alert('Could not send request.')
