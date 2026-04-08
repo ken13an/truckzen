@@ -290,7 +290,7 @@ export default function MechanicDashboardPage() {
         }
       } catch {}
       setLoading(false)
-      interval = setInterval(() => { if (document.visibilityState === 'visible') fetchData(profile.id) }, 15000)
+      interval = setInterval(() => { if (document.visibilityState === 'visible') { fetchData(profile.id); fetchActiveClock(profile.id) } }, 15000)
     }
     load()
     return () => clearInterval(interval)
@@ -306,7 +306,11 @@ export default function MechanicDashboardPage() {
         body: JSON.stringify({ assignment_id: assignmentId, action, user_id: user.id, reason }),
       })
       if (res.ok) {
-        await fetchData(user.id)
+        if (action === 'complete') {
+          // Completion auto-clocks-out on backend — immediately clear local timer and sync
+          setActiveClock(null)
+        }
+        await Promise.all([fetchData(user.id), fetchActiveClock(user.id)])
         if (action === 'decline') { setDeclineModal(null); setDeclineReason('') }
       }
     } catch { /* silent */ }
