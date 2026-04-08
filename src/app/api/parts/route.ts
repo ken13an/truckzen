@@ -100,7 +100,7 @@ export async function POST(req: Request) {
   if (!user) return jsonError('Unauthorized', 401)
 
   const allowed = ['owner','gm','it_person','shop_manager','parts_manager','office_admin']
-  if (!user.is_platform_owner && !allowed.includes(user.role)) return jsonError('Access denied', 403)
+  if (!(user.is_platform_owner && !user.impersonate_role) && !allowed.includes(user.impersonate_role || user.role)) return jsonError('Access denied', 403)
 
   const body = await req.json()
   const { part_number, description, category, on_hand, reorder_point, cost_price, sell_price, vendor, bin_location, core_charge, warranty_months,

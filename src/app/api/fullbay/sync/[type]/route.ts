@@ -10,7 +10,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ type: s
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) {
+  if (!ALLOWED_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) {
     return jsonError('Only shop owners can trigger data sync', 403)
   }
 

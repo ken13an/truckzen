@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor) || ''
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ADMIN_ROLES.includes(actor.role) && !actor.is_platform_owner) {
+  if (!ADMIN_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) {
     return jsonError('Only owners/admins can trigger financial re-pull', 403)
   }
 

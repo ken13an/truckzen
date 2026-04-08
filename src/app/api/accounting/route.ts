@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!ACCOUNTING_ROLES.includes(user.role) && !user.is_platform_owner) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!ACCOUNTING_ROLES.includes(user.impersonate_role || user.role) && !(user.is_platform_owner && !user.impersonate_role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const shopId = user.shop_id
 

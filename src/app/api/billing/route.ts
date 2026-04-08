@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ACCOUNTING_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+  if (!ACCOUNTING_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return jsonError('Forbidden', 403)
 
   const s = createAdminSupabaseClient()
   const { data: shop } = await s.from('shops').select('id, name, dba, stripe_customer_id, subscription_status, subscription_plan').eq('id', shopId).single()
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ACCOUNTING_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+  if (!ACCOUNTING_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return jsonError('Forbidden', 403)
 
   const s = createAdminSupabaseClient()
   const stripe = getStripe()

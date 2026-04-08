@@ -35,7 +35,8 @@ export async function PATCH(req: Request, { params }: P) {
   if (!shopId) return jsonError('No shop context', 400)
 
   const allowed = ['owner','gm','it_person','shop_manager','parts_manager','office_admin']
-  if (!user.is_platform_owner && !allowed.includes(user.role)) return jsonError('Access denied', 403)
+  const effectiveRole = user.impersonate_role || user.role
+  if (!(user.is_platform_owner && !user.impersonate_role) && !allowed.includes(effectiveRole)) return jsonError('Access denied', 403)
 
   const body = await req.json()
   const s = db()
@@ -74,7 +75,7 @@ export async function DELETE(_req: Request, { params }: P) {
   const shopId = getActorShopId(user)
   if (!shopId) return jsonError('No shop context', 400)
 
-  if (!user.is_platform_owner && !ADMIN_ROLES.includes(user.role)) return jsonError('Access denied', 403)
+  if (!(user.is_platform_owner && !user.impersonate_role) && !ADMIN_ROLES.includes(user.impersonate_role || user.role)) return jsonError('Access denied', 403)
 
   const s = db()
   const { data: part } = await s.from('parts').select('description').eq('id', id).eq('shop_id', shopId).single()

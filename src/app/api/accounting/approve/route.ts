@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const actorShopId = getActorShopId(actor)
   if (!actorShopId) return jsonError('No shop context', 400)
-  if (!ACCOUNTING_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Access denied', 403)
+  if (!ACCOUNTING_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return jsonError('Access denied', 403)
 
   const s = db()
   const body = await req.json()

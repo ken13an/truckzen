@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+  if (!ALLOWED_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return jsonError('Forbidden', 403)
 
   const { searchParams } = new URL(req.url)
   const table = searchParams.get('table')
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+  if (!ALLOWED_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return jsonError('Forbidden', 403)
 
   const { table, ...row } = await req.json()
   const tableErr = validateTable(table)
@@ -104,7 +104,7 @@ export async function PATCH(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+  if (!ALLOWED_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return jsonError('Forbidden', 403)
 
   const { table, id, ...updates } = await req.json()
   const tableErr = validateTable(table)
@@ -125,7 +125,7 @@ export async function DELETE(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+  if (!ALLOWED_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return jsonError('Forbidden', 403)
 
   const { table, id } = await req.json()
   const tableErr = validateTable(table)

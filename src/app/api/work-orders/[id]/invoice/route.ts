@@ -17,7 +17,7 @@ export async function POST(req: Request, { params }: Params) {
   if (!actor) return jsonError('Unauthorized', 401)
   const actorShopId = getActorShopId(actor)
   if (!actorShopId) return jsonError('No shop context', 400)
-  if (!INVOICE_ACTION_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Not authorized for invoice actions', 403)
+  if (!INVOICE_ACTION_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return jsonError('Not authorized for invoice actions', 403)
   const user_id = actor.id
 
   const { id } = await params
@@ -195,7 +195,7 @@ export async function POST(req: Request, { params }: Params) {
 
   // Reopen locked invoice for review
   if (action === 'reopen') {
-    if (!REOPEN_ROLES.includes(actor.role) && !actor.is_platform_owner) {
+    if (!REOPEN_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) {
       return NextResponse.json({ error: 'Only accounting/admin can reopen invoices' }, { status: 403 })
     }
     if (!['sent', 'paid', 'closed'].includes(currentInvoiceStatus)) {

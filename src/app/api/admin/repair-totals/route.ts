@@ -14,7 +14,7 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
-  if (!actor.is_platform_owner && !ADMIN_ROLES.includes(actor.role)) {
+  if (!(actor.is_platform_owner && !actor.impersonate_role) && !ADMIN_ROLES.includes(actor.impersonate_role || actor.role)) {
     return jsonError('Admin only', 403)
   }
 
