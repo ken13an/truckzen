@@ -100,7 +100,7 @@ export default function PayrollPage() {
       <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr>{['Employee', 'Role', 'Pay Type', 'Rate', 'Est. Weekly Cost', 'Actions'].map(h => (
+            <tr>{['Employee', 'Role', 'Pay Type', 'Rate', 'Est. Weekly Cost', 'Shift Hrs', 'Job Hrs', 'Actions'].map(h => (
               <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#12121A' }}>{h}</th>
             ))}</tr>
           </thead>
@@ -167,6 +167,12 @@ export default function PayrollPage() {
                   </td>
                   <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 700, color: weekly > 0 ? BLUE : '#48536A' }}>
                     {weekly > 0 ? '$' + weekly.toFixed(2) : '—'}
+                  </td>
+                  <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#EDEDF0' }}>
+                    {e.punchStats?.minutes > 0 ? <><span style={{ fontWeight: 700 }}>{+(e.punchStats.minutes / 60).toFixed(1)}h</span> <span style={{ color: '#7C8BA0', fontSize: 10 }}>({e.punchStats.count})</span></> : <span style={{ color: '#48536A' }}>—</span>}
+                  </td>
+                  <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#EDEDF0' }}>
+                    {e.jobStats?.minutes > 0 ? <><span style={{ fontWeight: 700 }}>{+(e.jobStats.minutes / 60).toFixed(1)}h</span> <span style={{ color: '#7C8BA0', fontSize: 10 }}>({e.jobStats.count})</span></> : <span style={{ color: '#48536A' }}>—</span>}
                   </td>
                   <td style={{ padding: '10px 14px' }}>
                     <button onClick={() => { setEditing(e.id); setForm(p ? { pay_type: p.pay_type, hourly_rate: String(p.hourly_rate || 0), salary_amount: String(p.salary_amount || 0), weekly_hours: String(p.weekly_hours || 40), effective_date: p.effective_date || '', notes: p.notes || '' } : { pay_type: 'hourly', hourly_rate: '0', salary_amount: '0', weekly_hours: '40', effective_date: '', notes: '' }) }}

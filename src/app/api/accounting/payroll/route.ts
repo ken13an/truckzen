@@ -39,9 +39,51 @@ export async function GET() {
   const { data: users } = await usersQuery
   const { data: payroll } = await s.from('employee_payroll').select('*').eq('shop_id', shopId)
 
+  // Fetch punch counts for the current week (Mon-Sun)
+  const now = new Date()
+  const dayOfWeek = now.getDay()
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset)
+  const weekStartISO = weekStart.toISOString()
+
+  const userIds = (users || []).map((u: any) => u.id)
+
+  // Workplace punches this week
+  const { data: punches } = userIds.length > 0
+    ? await s.from('work_punches').select('user_id, duration_minutes').in('user_id', userIds).eq('shop_id', shopId).gte('punch_in_at', weekStartISO).not('punch_out_at', 'is', null)
+    : { data: [] }
+
+  // Job-line time entries this week
+  const { data: timeEntries } = userIds.length > 0
+    ? await s.from('so_time_entries').select('user_id, duration_minutes').in('user_id', userIds).eq('shop_id', shopId).gte('clocked_in_at', weekStartISO).not('clocked_out_at', 'is', null)
+    : { data: [] }
+
+  // Aggregate per user
+  const punchMap = new Map<string, { count: number; minutes: number }>()
+  for (const p of punches || []) {
+    const cur = punchMap.get(p.user_id) || { count: 0, minutes: 0 }
+    cur.count++
+    cur.minutes += p.duration_minutes || 0
+    punchMap.set(p.user_id, cur)
+  }
+
+  const jobMap = new Map<string, { count: number; minutes: number }>()
+  for (const t of timeEntries || []) {
+    const cur = jobMap.get(t.user_id) || { count: 0, minutes: 0 }
+    cur.count++
+    cur.minutes += t.duration_minutes || 0
+    jobMap.set(t.user_id, cur)
+  }
+
   const payMap = new Map<string, any>()
   for (const p of payroll || []) payMap.set(p.user_id, p)
-  return NextResponse.json((users || []).map((u) => ({ ...u, payroll: payMap.get(u.id) || null })))
+
+  return NextResponse.json((users || []).map((u) => ({
+    ...u,
+    payroll: payMap.get(u.id) || null,
+    punchStats: punchMap.get(u.id) || { count: 0, minutes: 0 },
+    jobStats: jobMap.get(u.id) || { count: 0, minutes: 0 },
+  })))
 }
 
 export async function POST(req: Request) {
