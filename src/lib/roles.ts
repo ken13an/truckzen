@@ -22,6 +22,9 @@ export const ASSIGNMENT_ROLES: string[] = ['owner', 'gm', 'it_person', 'shop_man
 // Parts management — fulfill parts requests, manage parts workflow
 export const PARTS_MANAGE_ROLES: string[] = ['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'parts_clerk', 'floor_manager', 'office_admin']
 
+// Invoice actions — roles that can perform invoice workflow actions (submit, approve, mark paid, close, reopen)
+export const INVOICE_ACTION_ROLES: string[] = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'accountant', 'accounting_manager']
+
 // WO full access — all operational roles that can mutate WO data
 export const WO_FULL_ACCESS_ROLES: string[] = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager', 'accountant', 'accounting_manager']
 

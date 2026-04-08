@@ -12,23 +12,25 @@
  * Reopen: only owner/gm/it can reopen a sent/paid invoice back to accounting_review
  */
 
+import { ACCOUNTING_ROLES, INVOICE_ACTION_ROLES as _INVOICE_ACTION_ROLES } from '@/lib/roles'
+
 // Statuses where NO edits are allowed (customer has received invoice)
 export const HARD_LOCKED_STATUSES = ['sent', 'paid', 'closed']
 
 // Statuses where only accounting/full-WO roles can edit
 export const ACCOUNTING_EDIT_STATUSES = ['accounting_review']
 
-// Roles that can edit during accounting_review
-export const ACCOUNTING_EDIT_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
+// Re-export from shared source — same members as ACCOUNTING_ROLES
+export const ACCOUNTING_EDIT_ROLES = ACCOUNTING_ROLES
 
-// Roles allowed to perform invoice workflow actions (submit, approve, mark_paid, close, reopen)
-export const INVOICE_ACTION_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'accountant', 'accounting_manager']
+// Re-export from shared source
+export const INVOICE_ACTION_ROLES = _INVOICE_ACTION_ROLES
 
 // Emergency fallback labor rate — used only when shop has no rate configured at all
 export const DEFAULT_LABOR_RATE_FALLBACK = 125
 
-// Roles that can reopen a sent/paid invoice
-export const REOPEN_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
+// Re-export from shared source — same members as ACCOUNTING_ROLES
+export const REOPEN_ROLES = ACCOUNTING_ROLES
 
 /**
  * Check if invoice is hard-locked (sent/paid/closed — no edits at all)
