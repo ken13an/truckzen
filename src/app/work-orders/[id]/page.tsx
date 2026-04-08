@@ -489,7 +489,7 @@ export default function WorkOrderDetail() {
   const isPartsRole = ['parts_manager'].includes(userRole)
   const isAccounting = ['accountant', 'accounting_manager'].includes(userRole)
   const isWriter = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'].includes(userRole)
-  const isViewOnly = isMechanic || isMaintenance
+  const isViewOnly = isMechanic || isMaintenance || isPartsRole
   const canSeePrices = !isMechanic
   const canEditPrices = isAccounting || isWriter
 
