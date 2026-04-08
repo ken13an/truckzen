@@ -13,7 +13,9 @@
     "migrate:all": "npm run migrate:monday && npm run migrate:fleetio && npm run migrate:fullbay",
     "setup:webhook": "node telegram-bot/setup-webhook.js",
     "typecheck": "tsc --noEmit",
-    "lint:strict": "next lint --max-warnings=0"
+    "lint:strict": "next lint --max-warnings=0",
+    "test": "vitest run",
+    "pre-deploy": "bash scripts/pre-deploy-check.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
@@ -51,6 +53,7 @@
     "dotenv": "^16.4.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.1.7",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vitest": "^4.1.3"
   }
 }
