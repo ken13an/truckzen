@@ -338,7 +338,8 @@ export function getPermissions(user: { email?: string | null; role?: string | nu
 
   // Platform owner IS impersonating → use impersonated role's permissions
   // Keep isPlatformOwner true so they can navigate back to platform admin to stop impersonation
+  // Keep canImpersonate true so they can switch roles without resetting first
   const perms = ROLE_PERMISSIONS[effectiveRole] || NO_PERMISSIONS
 
-  return { ...perms, isPlatformOwner, role: effectiveRole }
+  return { ...perms, isPlatformOwner, canImpersonate: isPlatformOwner, role: effectiveRole }
 }

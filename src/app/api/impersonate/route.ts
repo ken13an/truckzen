@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
-import { getPermissions } from '@/lib/getPermissions'
 
 const ALLOWED_IMPERSONATION_ROLES = new Set([
   'owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin',
@@ -16,8 +15,8 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
   const requestedRole = typeof body?.role === 'string' ? body.role : null
 
-  const perms = getPermissions(actor)
-  if (!perms.canImpersonate) {
+  // Impersonation management is always based on the real user, not the impersonated role
+  if (!actor.can_impersonate && !actor.is_platform_owner) {
     return jsonError('Not authorized to impersonate', 403)
   }
 
