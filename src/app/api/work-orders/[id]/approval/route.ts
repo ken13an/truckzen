@@ -1,3 +1,4 @@
+import { SERVICE_PARTS_ROLES } from '@/lib/roles'
 /**
  * TruckZen — Original Design
  * Built independently by TruckZen development team
@@ -9,7 +10,7 @@ type Params = { params: Promise<{ id: string }> }
 
 export async function POST(req: Request, { params }: Params) {
   const { id } = await params
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager'])
+  const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id')
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })

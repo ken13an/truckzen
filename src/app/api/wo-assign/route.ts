@@ -1,3 +1,4 @@
+import { ASSIGNMENT_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
@@ -6,7 +7,7 @@ function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
-const ASSIGN_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer', 'office_admin']
+const ASSIGN_ROLES = [...ASSIGNMENT_ROLES]
 
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()

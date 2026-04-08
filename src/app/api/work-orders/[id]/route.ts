@@ -1,3 +1,4 @@
+import { WO_FULL_ACCESS_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { workStartedEmail } from '@/lib/emails/workStarted'
@@ -151,7 +152,7 @@ export async function GET(_req: Request, { params }: Params) {
 
 export async function PATCH(req: Request, { params }: Params) {
   const { id } = await params
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager', 'accountant', 'accounting_manager'])
+  const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { data: existing } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, shop_id, so_number, status, invoice_status, assigned_tech, customer_id, asset_id, portal_token, is_historical')
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })

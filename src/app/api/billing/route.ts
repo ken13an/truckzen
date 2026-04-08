@@ -1,3 +1,4 @@
+import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import Stripe from 'stripe'
@@ -6,14 +7,13 @@ function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!)
 }
 
-const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
 
 export async function GET(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+  if (!ACCOUNTING_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
 
   const s = createAdminSupabaseClient()
   const { data: shop } = await s.from('shops').select('id, name, dba, stripe_customer_id, subscription_status, subscription_plan').eq('id', shopId).single()
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)
-  if (!ALLOWED_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
+  if (!ACCOUNTING_ROLES.includes(actor.role) && !actor.is_platform_owner) return jsonError('Forbidden', 403)
 
   const s = createAdminSupabaseClient()
   const stripe = getStripe()

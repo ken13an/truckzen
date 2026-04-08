@@ -9,7 +9,7 @@ function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
-const ACCOUNTING_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
+import { ACCOUNTING_ROLES } from '@/lib/roles'
 
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()

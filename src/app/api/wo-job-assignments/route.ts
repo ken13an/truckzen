@@ -1,3 +1,4 @@
+import { ASSIGNMENT_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
 
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer', 'office_admin'])
+  const ctx = await requireRouteContext([...ASSIGNMENT_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { line_id, assignments, wo_id } = await req.json().catch(() => ({}))
   if (!line_id || !Array.isArray(assignments)) return NextResponse.json({ error: 'line_id and assignments[] required' }, { status: 400 })
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer', 'office_admin'])
+  const ctx = await requireRouteContext([...ASSIGNMENT_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const id = new URL(req.url).searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })

@@ -1,3 +1,4 @@
+import { WO_FULL_ACCESS_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
 import { getActorShopId } from '@/lib/server-auth'
@@ -34,7 +35,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager', 'accountant', 'accounting_manager'])
+  const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const body = await req.json().catch(() => null)
   const woId = body?.wo_id
