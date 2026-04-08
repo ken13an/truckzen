@@ -178,10 +178,11 @@ export default function WorkOrdersPage() {
         searchPlaceholder="Search WO #, customer, unit..."
         statusOptions={[
           { value: 'all', label: 'All Statuses' },
-          { value: 'open', label: 'Open' },
+          { value: 'draft', label: 'Draft' },
           { value: 'in_progress', label: 'In Progress' },
-          { value: 'completed', label: 'Completed' },
-          { value: 'closed', label: 'Closed' },
+          { value: 'waiting_parts', label: 'Waiting Parts' },
+          { value: 'done', label: 'Completed' },
+          { value: 'good_to_go', label: 'Good to Go' },
         ]}
         statusValue={statusFilter}
         onStatusChange={val => { setStatusFilter(val); setPage(1) }}
