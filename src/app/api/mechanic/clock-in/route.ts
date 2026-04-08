@@ -40,7 +40,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'You are not assigned to this job' }, { status: 403 })
   }
 
-  // 3. Check mechanic isn't already clocked into another job
+  // 3. Check mechanic is workplace-punched-in
+  const { data: punch } = await s.from('work_punches')
+    .select('id')
+    .eq('user_id', actor.id)
+    .is('punch_out_at', null)
+    .limit(1)
+
+  if (!punch || punch.length === 0) {
+    return NextResponse.json({ error: 'You must punch in to your shift before starting a job.' }, { status: 403 })
+  }
+
+  // 4. Check mechanic isn't already clocked into another job
   const { data: active } = await s.from('so_time_entries')
     .select('id, so_id')
     .eq('user_id', actor.id)

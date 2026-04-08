@@ -735,7 +735,7 @@ export default function MechanicDashboardPage() {
                             <Clock size={14} /> Request Hours
                           </button>
                         )}
-                        {job.status === 'in_progress' && (
+                        {job.status === 'in_progress' && workPunch && (
                           <>
                             {hasHours && (
                             <button
