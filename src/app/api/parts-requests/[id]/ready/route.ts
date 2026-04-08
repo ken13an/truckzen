@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
+import { PARTS_MANAGE_ROLES } from '@/lib/roles'
 
 type P = { params: Promise<{ id: string }> }
 
 export async function POST(req: Request, { params }: P) {
   const { id } = await params
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'parts_clerk', 'floor_manager', 'office_admin'])
+  const ctx = await requireRouteContext([...PARTS_MANAGE_ROLES])
   if (ctx.error || !ctx.shopId || !ctx.admin) return ctx.error!
   const { partial } = await req.json().catch(() => ({ partial: false }))
 

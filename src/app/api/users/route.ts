@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendWelcomeEmail } from '@/lib/integrations/resend'
 import { getActorShopId } from '@/lib/server-auth'
+import { MANAGEMENT_ROLES } from '@/lib/roles'
 import { requireManagementContext, requireRouteContext } from '@/lib/api-route-auth'
 
 function managementError() { return NextResponse.json({ error: 'Access denied — only management can manage staff' }, { status: 403 }) }
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
 
   const shopId = ctx.actor.is_platform_owner && shop_id ? shop_id : getActorShopId(ctx.actor)
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
-  if (!['owner', 'gm', 'it_person', 'shop_manager', 'office_admin'].includes(ctx.actor.role) && !ctx.actor.is_platform_owner) return managementError()
+  if (!MANAGEMENT_ROLES.includes(ctx.actor.role) && !ctx.actor.is_platform_owner) return managementError()
 
   const normalizedEmail = email.toLowerCase().trim()
   const { data: existingProfile } = await ctx.admin.from('users').select('id, email').eq('email', normalizedEmail).single()

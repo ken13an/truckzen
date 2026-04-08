@@ -7,13 +7,14 @@ import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
-  if (!actor.is_platform_owner && !['owner', 'gm', 'it_person'].includes(actor.role)) {
+  if (!actor.is_platform_owner && !ADMIN_ROLES.includes(actor.role)) {
     return jsonError('Admin only', 403)
   }
 

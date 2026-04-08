@@ -1,5 +1,6 @@
 // src/lib/auth.ts
 import { type SupabaseClient } from '@supabase/supabase-js'
+import { ADMIN_ROLES, MANAGEMENT_ROLES } from '@/lib/roles'
 
 export interface UserProfile {
   id:        string
@@ -37,8 +38,8 @@ export async function getCurrentUser(supabase: SupabaseClient): Promise<UserProf
   return profile as UserProfile
 }
 
-export const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
-export const MANAGEMENT_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'office_admin']
+export const UNLIMITED_ROLES = ADMIN_ROLES
+export { MANAGEMENT_ROLES }
 
 export function canAccess(role: string, allowedRoles: string[]): boolean {
   if (UNLIMITED_ROLES.includes(role)) return true

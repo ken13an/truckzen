@@ -1,4 +1,5 @@
 import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
+import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 /**
  * TruckZen — Original Design
  * Estimates API — create from WO, list, send, approve/decline
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'accountant', 'accounting_manager'])
+  const ctx = await requireRouteContext([...INVOICE_ACTION_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { action, ...body } = await req.json().catch(() => ({}))
 

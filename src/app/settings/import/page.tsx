@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 
 const IMPORT_TYPES = [
   { key: 'customers', label: 'Customers', icon: '', desc: 'Company Name, Contact, Phone, Email, Address' },
@@ -28,7 +29,7 @@ export default function ImportPage() {
   useEffect(() => {
     getCurrentUser(supabase).then((p: any) => {
       if (!p) { window.location.href = '/login'; return }
-      if (!['owner', 'gm', 'it_person'].includes(p.role)) { window.location.href = '/dashboard'; return }
+      if (!ADMIN_ROLES.includes(p.role)) { window.location.href = '/dashboard'; return }
       setUser(p)
     })
   }, [])

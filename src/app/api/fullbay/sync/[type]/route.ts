@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { fetchInvoices, extractCustomers, extractTrucks, extractParts, mapServiceOrder, mapInvoice } from '@/lib/fullbay/client'
+import { ADMIN_ROLES } from '@/lib/roles'
 
-const ALLOWED_ROLES = ['owner', 'gm', 'it_person']
+const ALLOWED_ROLES = ADMIN_ROLES
 
 export async function POST(req: Request, { params }: { params: Promise<{ type: string }> }) {
   const actor = await getAuthenticatedUserProfile()

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { ADMIN_ROLES } from '@/lib/roles'
 
 type P = { params: Promise<{ id: string }> }
 
@@ -45,7 +46,7 @@ export async function DELETE(_req: Request, { params }: P) {
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  if (!['owner','gm','it_person'].includes(user.role))
+  if (!ADMIN_ROLES.includes(user.role))
     return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
   await supabase.from('drivers').update({ status: 'inactive' }).eq('id', id).eq('shop_id', user.shop_id)

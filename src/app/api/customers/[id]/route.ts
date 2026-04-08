@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
+import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 
 type P = { params: Promise<{ id: string }> }
 
@@ -34,7 +35,7 @@ export async function GET(req: Request, { params }: P) {
 
 export async function PATCH(req: Request, { params }: P) {
   const { id } = await params
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'accountant', 'accounting_manager'])
+  const ctx = await requireRouteContext([...INVOICE_ACTION_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const body = await req.json().catch(() => null)
   const { data: existing } = await ctx.admin.from('customers').select('id, shop_id').eq('id', id).single()

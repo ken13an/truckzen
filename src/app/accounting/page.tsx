@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { PageFooter } from '@/components/ui/PageControls'
 import FilterBar from '@/components/FilterBar'
 
@@ -36,9 +37,8 @@ export default function AccountingPage() {
   async function loadData() {
     const profile = await getCurrentUser(supabase)
     if (!profile) { window.location.href = '/login'; return }
-    const allowed = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager']
     const effectiveRole = profile.impersonate_role || profile.role
-    if (!allowed.includes(effectiveRole) && !profile.is_platform_owner) { window.location.href = '/dashboard'; return }
+    if (!ACCOUNTING_ROLES.includes(effectiveRole) && !profile.is_platform_owner) { window.location.href = '/dashboard'; return }
     setUser(profile)
 
     // Direct client-side query — same auth session, no server-side API dependency

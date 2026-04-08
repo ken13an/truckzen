@@ -7,6 +7,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
+import { SERVICE_WRITE_ROLES } from '@/lib/roles'
 import { PageFooter } from '@/components/ui/PageControls'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import SourceBadge from '@/components/ui/SourceBadge'
@@ -89,9 +90,8 @@ export default function WorkOrdersPage() {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
       // Work Orders list is a service-operational surface
-      const WO_LIST_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin']
       const eff = p.impersonate_role || p.role
-      if (!WO_LIST_ROLES.includes(eff) && !(!p.impersonate_role && p.is_platform_owner)) {
+      if (!SERVICE_WRITE_ROLES.includes(eff) && !(!p.impersonate_role && p.is_platform_owner)) {
         window.location.href = '/dashboard'; return
       }
       setUser(p)
@@ -156,7 +156,7 @@ export default function WorkOrdersPage() {
           <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A' }}>Work Orders</div>
           <div style={{ fontSize: 13, color: '#6B7280' }}>{total.toLocaleString()} work order{total !== 1 ? 's' : ''} {viewFilter !== 'all' ? `(${viewFilter})` : ''}</div>
         </div>
-        {user && ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'].includes(user.impersonate_role || user.role) && (
+        {user && SERVICE_WRITE_ROLES.includes(user.impersonate_role || user.role) && (
           <a href="/work-orders/new" style={{ padding: '10px 20px', background: '#1D6FE8', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Work Order</a>
         )}
       </div>

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getActorShopId } from '@/lib/server-auth'
 import { requireAuthenticatedUser, requireRole } from '@/lib/route-guards'
+import { SERVICE_WRITE_ROLES } from '@/lib/roles'
 import { logAction } from '@/lib/services/auditLog'
 
-const IMPORT_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'office_admin', 'service_writer'] as const
+const IMPORT_ROLES = SERVICE_WRITE_ROLES
 
 export async function DELETE(req: Request) {
   const { actor, error } = await requireAuthenticatedUser()

@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 import { sendWelcomeEmail } from '@/lib/integrations/resend'
 import { createAdminSupabaseClient, getActorShopId } from '@/lib/server-auth'
 import { requireAuthenticatedUser, requireRole } from '@/lib/route-guards'
+import { MANAGEMENT_ROLES } from '@/lib/roles'
 import { logAction } from '@/lib/services/auditLog'
 
-const INVITE_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'office_admin'] as const
+const INVITE_ROLES = MANAGEMENT_ROLES
 
 export async function POST(req: Request) {
   const { actor, error } = await requireAuthenticatedUser()

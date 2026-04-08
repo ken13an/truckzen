@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { MANAGEMENT_ROLES } from '@/lib/roles'
 
 type P = { params: Promise<{ id: string }> }
 
-const MANAGE_USER_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'office_admin']
+const MANAGE_USER_ROLES = MANAGEMENT_ROLES
 const OWNER_ONLY_ROLE_CHANGES = new Set(['owner', 'gm', 'it_person'])
 const UPDATEABLE_FIELDS = ['role', 'team', 'language', 'telegram_id', 'active', 'full_name', 'phone', 'department'] as const
 

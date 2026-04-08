@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { requireRouteContext } from '@/lib/api-route-auth'
+import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 
 async function getEstimateForActor(admin: any, actor: any, id: string) {
   let q = admin.from('estimates').select('*').eq('id', id)
@@ -11,7 +12,7 @@ async function getEstimateForActor(admin: any, actor: any, id: string) {
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'accountant', 'accounting_manager'])
+  const ctx = await requireRouteContext([...INVOICE_ACTION_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { data: estimate, error } = await getEstimateForActor(ctx.admin, ctx.actor, id)
   if (error || !estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })

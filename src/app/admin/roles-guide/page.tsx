@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 import { MODULES, ALL_ROLES, DEFAULT_ROLE_PERMISSIONS, ROLE_LABEL, ROLE_COLOR, ROLE_REDIRECT, hasAccess } from '@/lib/permissions'
 
 export default function RolesGuidePage() {
@@ -12,7 +13,7 @@ export default function RolesGuidePage() {
   useEffect(() => {
     getCurrentUser(supabase).then((p: any) => {
       if (!p) { window.location.href = '/login'; return }
-      if (!['owner', 'gm', 'it_person'].includes(p.role)) { window.location.href = '/403'; return }
+      if (!ADMIN_ROLES.includes(p.role)) { window.location.href = '/403'; return }
       setUser(p)
       setLoading(false)
     })

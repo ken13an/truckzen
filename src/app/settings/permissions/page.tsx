@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 import { DEPARTMENT_PERMISSIONS, type DepartmentPermissions } from '@/lib/permissionDefinitions'
 
 const FONT = "'Instrument Sans', sans-serif"
 const MONO = "'IBM Plex Mono', monospace"
 const BLUE = '#1B6EE6'
 const PAGE_BG = '#F4F5F7'
-
-const ADMIN_ROLES = ['owner', 'gm', 'it_person']
 const MANAGER_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'maintenance_manager', 'office_admin']
 
 export default function PermissionsPage() {

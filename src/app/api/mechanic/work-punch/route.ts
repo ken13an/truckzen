@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { ASSIGNMENT_ROLES } from '@/lib/roles'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
 
     if (!insideGeofence) {
       const effectiveRole = actor.impersonate_role || actor.role || ''
-      const canSelfOverride = ['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'service_writer', 'office_admin'].includes(effectiveRole)
+      const canSelfOverride = ASSIGNMENT_ROLES.includes(effectiveRole)
 
       if (!canSelfOverride) {
         // Technicians/mechanics cannot self-override geofence — must be at the shop

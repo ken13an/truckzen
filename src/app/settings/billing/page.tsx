@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 
 export default function BillingPage() {
   const supabase = createClient()
@@ -14,7 +15,7 @@ export default function BillingPage() {
   useEffect(() => {
     getCurrentUser(supabase).then(async (p: any) => {
       if (!p) { window.location.href = '/login'; return }
-      if (!['owner', 'gm', 'it_person'].includes(p.role)) { window.location.href = '/403'; return }
+      if (!ADMIN_ROLES.includes(p.role)) { window.location.href = '/403'; return }
       setUser(p)
 
       const res = await fetch(`/api/billing?shop_id=${p.shop_id}`)

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ACCOUNTING_ROLES } from '@/lib/roles'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', AMBER = '#D97706'
@@ -38,7 +39,7 @@ export default function PayrollPage() {
   useEffect(() => {
     getCurrentUser(supabase).then(async (p: any) => {
       if (!p) { window.location.href = '/login'; return }
-      if (!['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager'].includes(p.role)) { window.location.href = '/dashboard'; return }
+      if (!ACCOUNTING_ROLES.includes(p.role)) { window.location.href = '/dashboard'; return }
       setUser(p)
       const res = await fetch(`/api/accounting/payroll?shop_id=${p.shop_id}`)
       if (res.ok) setData(await res.json())

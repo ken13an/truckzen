@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 import { log } from '@/lib/security'
 import { invalidateCache } from '@/lib/cache'
 
@@ -73,7 +74,7 @@ export async function DELETE(_req: Request, { params }: P) {
   const shopId = getActorShopId(user)
   if (!shopId) return jsonError('No shop context', 400)
 
-  if (!user.is_platform_owner && !['owner','gm','it_person'].includes(user.role)) return jsonError('Access denied', 403)
+  if (!user.is_platform_owner && !ADMIN_ROLES.includes(user.role)) return jsonError('Access denied', 403)
 
   const s = db()
   const { data: part } = await s.from('parts').select('description').eq('id', id).eq('shop_id', shopId).single()

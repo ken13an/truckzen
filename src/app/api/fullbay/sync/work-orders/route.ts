@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { fetchInvoices, mapCustomer, mapTruck, mapServiceOrder } from '@/lib/fullbay/client'
+import { ADMIN_ROLES } from '@/lib/roles'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
   const s = db()
   const { shop_id, user_id, user_role } = await req.json()
 
-  if (!user_role || !['owner', 'gm', 'it_person'].includes(user_role)) {
+  if (!user_role || !ADMIN_ROLES.includes(user_role)) {
     return NextResponse.json({ error: 'Only shop owners can trigger sync' }, { status: 403 })
   }
   if (!process.env.FULLBAY_API_KEY) return NextResponse.json({ error: 'FULLBAY_API_KEY not configured' }, { status: 500 })

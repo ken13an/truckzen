@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getActorShopId } from '@/lib/server-auth'
 import { requireAuthenticatedUser } from '@/lib/route-guards'
+import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { logAction } from '@/lib/services/auditLog'
 
-const FULL_ACCESS_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager']
+const FULL_ACCESS_ROLES = ACCOUNTING_ROLES
 const SHOP_MANAGER_ROLES = ['shop_manager', 'floor_manager', 'service_manager']
 const PARTS_MANAGER_ROLES = ['parts_manager']
 const TECH_ROLES = ['technician', 'lead_tech', 'maintenance_technician']

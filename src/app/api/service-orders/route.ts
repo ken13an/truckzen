@@ -82,7 +82,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'service_writer', 'shop_manager', 'office_admin'])
+  const ctx = await requireRouteContext([...SERVICE_WRITE_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor || !ctx.shopId) return ctx.error!
 
   let body: any

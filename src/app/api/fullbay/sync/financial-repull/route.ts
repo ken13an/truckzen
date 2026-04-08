@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 import { fetchInvoices, mapServiceOrder, mapInvoice } from '@/lib/fullbay/client'
 
 /**
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor) || ''
   if (!shopId) return jsonError('No shop context', 400)
-  if (!['owner', 'gm', 'it_person'].includes(actor.role) && !actor.is_platform_owner) {
+  if (!ADMIN_ROLES.includes(actor.role) && !actor.is_platform_owner) {
     return jsonError('Only owners/admins can trigger financial re-pull', 403)
   }
 

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 import { MODULES, ALL_ROLES, DEFAULT_ROLE_PERMISSIONS, ROLE_LABEL, ROLE_COLOR, hasAccess } from '@/lib/permissions'
 
 type View = 'roles' | 'users' | 'audit'
@@ -52,7 +53,7 @@ export default function PermissionsPage() {
   useEffect(() => {
     getCurrentUser(supabase).then(async (p: any) => {
       if (!p) { window.location.href = '/login'; return }
-      if (!['owner', 'gm', 'it_person'].includes(p.role)) { window.location.href = '/403'; return }
+      if (!ADMIN_ROLES.includes(p.role)) { window.location.href = '/403'; return }
       setUser(p)
       await loadPerms(p.shop_id)
       setLoading(false)
@@ -156,7 +157,7 @@ export default function PermissionsPage() {
                   {ALL_ROLES.map(r => {
                     const allowed = hasAccess(r, m.key, rolePerms[r])
                     const isDefault = !(rolePerms[r] && m.key in rolePerms[r])
-                    const isUnlimited = ['owner', 'gm', 'it_person'].includes(r)
+                    const isUnlimited = ADMIN_ROLES.includes(r)
                     return (
                       <td key={r} style={{ ...S.td, textAlign: 'center', padding: '4px 2px' }}>
                         <button

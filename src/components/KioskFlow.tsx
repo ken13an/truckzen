@@ -6,6 +6,7 @@ import Logo from '@/components/Logo'
 
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 import { VinInput } from '@/components/shared/VinInput'
 
 // ---------------------------------------------------------------------------
@@ -424,7 +425,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
     ;(async () => {
       try {
         const user = await getCurrentUser(supabase)
-        if (user && ['owner', 'gm', 'it_person'].includes(user.role)) setIsAdmin(true)
+        if (user && ADMIN_ROLES.includes(user.role)) setIsAdmin(true)
       } catch {}
     })()
   }, [shopId])

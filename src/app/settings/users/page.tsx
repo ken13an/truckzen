@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 import Pagination from '@/components/Pagination'
 import { Search, X, UserPlus, ChevronLeft } from 'lucide-react'
 
@@ -97,7 +98,7 @@ export default function UsersPage() {
   useEffect(() => {
     getCurrentUser(supabase).then(p => {
       if (!p) { window.location.href = '/login'; return }
-      if (!['owner', 'gm', 'it_person'].includes(p.role)) { window.location.href = '/dashboard'; return }
+      if (!ADMIN_ROLES.includes(p.role)) { window.location.href = '/dashboard'; return }
       setMe(p)
     })
   }, [])

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { MANAGEMENT_ROLES } from '@/lib/roles'
 import { parseStaffFile, generateTemplate, type StaffRow } from '@/lib/parseStaffFile'
 
 type Step = 'upload' | 'preview' | 'importing' | 'done'
@@ -24,7 +25,7 @@ export default function StaffImportPage() {
   useEffect(() => {
     getCurrentUser(supabase).then((p: any) => {
       if (!p) { window.location.href = '/login'; return }
-      if (!['owner', 'gm', 'it_person', 'shop_manager', 'office_admin'].includes(p.role)) { window.location.href = '/dashboard'; return }
+      if (!MANAGEMENT_ROLES.includes(p.role)) { window.location.href = '/dashboard'; return }
       setUser(p)
     })
   }, [])

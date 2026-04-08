@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
+import { PARTS_MANAGE_ROLES } from '@/lib/roles'
 
 const VIEWABLE_STATUSES = ['requested', 'reviewing', 'submitted', 'partial', 'ready', 'ordered', 'picked_up']
 
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'parts_clerk', 'office_admin', 'floor_manager'])
+  const ctx = await requireRouteContext([...PARTS_MANAGE_ROLES])
   if (ctx.error || !ctx.shopId || !ctx.admin || !ctx.actor) return ctx.error!
 
   const { id, status, rejected_reason, in_stock } = await req.json()

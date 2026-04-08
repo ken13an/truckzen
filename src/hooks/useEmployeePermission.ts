@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
+import { ADMIN_ROLES } from '@/lib/roles'
 
 let cachedPermissions: Record<string, boolean> | null = null
 let cachedRole: string | null = null
@@ -26,7 +27,7 @@ export function useEmployeePermission(key: string): boolean {
         .single()
 
       // Owners/admins always have all permissions
-      if (['owner', 'gm', 'it_person'].includes(userData?.role)) {
+      if (ADMIN_ROLES.includes(userData?.role)) {
         cachedPermissions = {}
         cachedRole = userData.role
         setAllowed(true)

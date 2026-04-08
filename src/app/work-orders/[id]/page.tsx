@@ -17,6 +17,7 @@ import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
 import { isInvoiceHardLocked, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
+import { SERVICE_WRITE_ROLES, ACCOUNTING_ROLES } from '@/lib/roles'
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
 
@@ -488,7 +489,7 @@ export default function WorkOrderDetail() {
   const isMaintenance = ['maintenance_manager', 'fleet_manager', 'dispatcher'].includes(userRole)
   const isPartsRole = ['parts_manager'].includes(userRole)
   const isAccounting = ['accountant', 'accounting_manager'].includes(userRole)
-  const isWriter = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin'].includes(userRole)
+  const isWriter = SERVICE_WRITE_ROLES.includes(userRole)
   const isViewOnly = isMechanic || isMaintenance || isPartsRole
   const canSeePrices = !isMechanic
   const canEditPrices = isAccounting || isWriter
@@ -2449,7 +2450,7 @@ export default function WorkOrderDetail() {
                 {wo.invoice_status === 'closed' && (
                   <span style={{ color: '#374151', fontWeight: 600, fontSize: 13 }}>Work Order Closed</span>
                 )}
-                {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin'].includes(userRole) && (
+                {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ACCOUNTING_ROLES.includes(userRole) && (
                   <button onClick={async () => {
                     if (!confirm('Reopen this invoice for accounting review? This will allow edits again.')) return
                     await invoiceAction('reopen')

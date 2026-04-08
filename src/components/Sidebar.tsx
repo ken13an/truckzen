@@ -9,9 +9,10 @@ import { createClient } from '@/lib/supabase'
 import { getSidebarItems, hasAccess } from '@/lib/permissions'
 import { getPermissions } from '@/lib/getPermissions'
 import Logo, { LogoIcon } from '@/components/Logo'
+import { ADMIN_ROLES } from '@/lib/roles'
 import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock, Banknote } from 'lucide-react'
 
-const UNLIMITED_ROLES = ['owner', 'gm', 'it_person']
+const UNLIMITED_ROLES = ADMIN_ROLES
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
 const TRASH_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'floor_supervisor', 'service_writer', 'office_admin']
 const PERMISSIONS_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'parts_manager', 'maintenance_manager', 'office_admin']

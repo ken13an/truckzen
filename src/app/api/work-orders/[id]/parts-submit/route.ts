@@ -10,7 +10,7 @@ type Params = { params: Promise<{ id: string }> }
 
 export async function POST(req: Request, { params }: Params) {
   const { id } = await params
-  const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'parts_clerk', 'floor_manager', 'service_writer', 'office_admin'])
+  const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, id, 'id, so_number, shop_id, asset_id, assigned_tech, created_by_user_id, advisor_id, invoice_status, assets(unit_number)')
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })

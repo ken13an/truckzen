@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
@@ -31,7 +32,7 @@ export default function ExportPage() {
   useEffect(() => {
     getCurrentUser(supabase).then(async (p: any) => {
       if (!p) { window.location.href = '/login'; return }
-      if (!['owner', 'gm', 'it_person'].includes(p.role)) { window.location.href = '/settings'; return }
+      if (!ADMIN_ROLES.includes(p.role)) { window.location.href = '/settings'; return }
       setUser(p)
       // Get row counts
       const c: Record<string, number> = {}

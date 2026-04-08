@@ -8,6 +8,7 @@ import { ChevronLeft } from 'lucide-react'
 import { VinInput } from '@/components/shared/VinInput'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
+import { SERVICE_WRITE_ROLES } from '@/lib/roles'
 import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
@@ -89,8 +90,7 @@ export default function NewWorkOrderPage() {
       if (!p) { window.location.href = '/login'; return }
       // Only service-operational roles can create work orders
       const effectiveRole = p.impersonate_role || p.role
-      const WO_CREATE_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin']
-      if (!WO_CREATE_ROLES.includes(effectiveRole)) { window.location.href = '/dashboard'; return }
+      if (!SERVICE_WRITE_ROLES.includes(effectiveRole)) { window.location.href = '/dashboard'; return }
       setProfile(p)
       const partsRes = await fetch(`/api/parts?shop_id=${p.shop_id}&per_page=50`)
       const partsData = await partsRes.json()
