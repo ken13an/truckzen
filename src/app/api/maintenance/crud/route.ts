@@ -6,13 +6,14 @@ import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 const ALLOWED_TABLES = new Set([
-  'maint_road_repairs', 'maint_road_repair_lines', 'maint_purchase_orders', 'maint_po_lines',
-  'maint_pm_schedules', 'maint_pm_completions', 'maint_inspections', 'maint_inspection_items',
-  'maint_issues', 'maint_faults', 'maint_fuel_entries', 'maint_meters',
+  'maint_road_repairs', 'maint_road_repair_lines', 'maint_purchase_orders', 'maint_purchase_order_lines',
+  'maint_pm_schedules', 'maint_pm_history', 'maint_inspections', 'maint_inspection_defects',
+  'maint_issues', 'maint_faults', 'maint_fuel_entries', 'maint_meter_entries',
   'maint_service_programs', 'maint_service_reminders', 'maint_recalls',
   'maint_warranties', 'maint_warranty_claims', 'maint_expenses',
   'maint_vehicle_renewals', 'maint_contact_renewals', 'maint_documents',
   'maint_vendors', 'maint_activity_log', 'maint_parts',
+  'maint_drivers', 'maint_driver_assignments', 'maint_equipment', 'maint_places',
 ])
 
 const ALLOWED_ROLES = [
