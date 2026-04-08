@@ -91,7 +91,7 @@ export default function FloorManagerDashboardPage() {
         fetch(`/api/floor-manager/parts-requests?shop_id=${shopId}`),
         fetch(`/api/users?shop_id=${shopId}`),
         fetch(`/api/time-tracking/active?shop_id=${shopId}`),
-        fetch('/api/notifications?limit=50'),
+        fetch('/api/notifications?type=hours_request_more,hours_request_needed&limit=100'),
       ])
       if (jobsRes.ok) {
         const d = await jobsRes.json()
@@ -124,8 +124,7 @@ export default function FloorManagerDashboardPage() {
       }
       if (hoursRes.ok) {
         const d = await hoursRes.json()
-        const notifs = d.notifications || []
-        setHoursRequests(notifs.filter((n: any) => n.type === 'hours_request_more' || n.type === 'hours_request_needed'))
+        setHoursRequests(d.notifications || [])
       }
       setLastRefresh(new Date())
     } catch { /* silent */ }

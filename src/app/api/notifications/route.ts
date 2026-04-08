@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const limit = parseInt(searchParams.get('limit') || '20')
   const unreadOnly = searchParams.get('unread') === 'true'
+  const typeFilter = searchParams.get('type') // comma-separated types for direct filtering
 
   // Filter notifications by effective role during impersonation
   const effectiveRole = actor.impersonate_role || actor.role
@@ -36,6 +37,12 @@ export async function GET(req: Request) {
     query = query.in('type', ROLE_NOTIF_TYPES[effectiveRole])
   }
 
+  // Direct type filter — used by dashboard queues for reliable typed notification fetch
+  if (typeFilter) {
+    const types = typeFilter.split(',').map(t => t.trim()).filter(Boolean)
+    if (types.length > 0) query = query.in('type', types)
+  }
+
   if (unreadOnly) query = query.eq('is_read', false)
 
   const { data, error } = await query
@@ -51,6 +58,10 @@ export async function GET(req: Request) {
     .eq('is_dismissed', false)
   if (actor.impersonate_role && ROLE_NOTIF_TYPES[effectiveRole]) {
     countQ = countQ.in('type', ROLE_NOTIF_TYPES[effectiveRole])
+  }
+  if (typeFilter) {
+    const types = typeFilter.split(',').map(t => t.trim()).filter(Boolean)
+    if (types.length > 0) countQ = countQ.in('type', types)
   }
   const { count } = await countQ
 

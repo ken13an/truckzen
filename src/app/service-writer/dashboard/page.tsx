@@ -29,7 +29,7 @@ export default function ServiceWriterDashboard() {
       fetch(`/api/service-requests?shop_id=${shopId}`).then(r => r.json()),
       fetch(`/api/service-orders?shop_id=${shopId}&limit=100`).then(r => r.json()),
       fetch(`/api/estimates?shop_id=${shopId}&status=sent`).then(r => r.json()),
-      fetch('/api/notifications?limit=50').then(r => r.ok ? r.json() : { notifications: [] }),
+      fetch('/api/notifications?type=hours_request_more,hours_request_needed&limit=100').then(r => r.ok ? r.json() : { notifications: [] }),
     ])
 
     const allReqs: any[] = Array.isArray(reqsRes) ? reqsRes : []
@@ -41,7 +41,7 @@ export default function ServiceWriterDashboard() {
     const wos = allWos.filter(wo => !excludedStatuses.has(wo.status) && !wo.is_historical).slice(0, 30)
     const completedToday = allWos.filter(wo => (wo.status === 'done' || wo.status === 'good_to_go') && wo.completed_at && wo.completed_at.startsWith(today)).length
 
-    const hrsReqs = (notifsRes.notifications || []).filter((n: any) => n.type === 'hours_request_more' || n.type === 'hours_request_needed')
+    const hrsReqs = notifsRes.notifications || []
 
     setRequests(reqs)
     setMyWos(wos)
