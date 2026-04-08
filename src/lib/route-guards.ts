@@ -1,7 +1,7 @@
 import { getAuthenticatedUserProfile, createAdminSupabaseClient, jsonError, type AuthenticatedUser } from '@/lib/server-auth'
+import { MANAGEMENT_ROLES, ACCOUNTING_ROLES } from '@/lib/roles'
 
-export const MANAGEMENT_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'office_admin'] as const
-export const ACCOUNTING_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager'] as const
+export { MANAGEMENT_ROLES, ACCOUNTING_ROLES }
 
 export async function requireAuthenticatedUser() {
   const actor = await getAuthenticatedUserProfile()

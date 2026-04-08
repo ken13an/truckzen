@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getActorShopId } from '@/lib/server-auth'
 import { requireAuthenticatedUser, requireRole } from '@/lib/route-guards'
+import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { logAction } from '@/lib/services/auditLog'
 
 const SETTINGS_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'office_admin', 'accountant', 'accounting_manager'] as const
-
-const PAYMENT_EDIT_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin'] as const
 
 const PAYMENT_FIELDS = [
   'payment_payee_name', 'payment_bank_name',
@@ -51,7 +50,7 @@ export async function PATCH(req: Request) {
   const hasPaymentFields = PAYMENT_FIELDS.some(f => body?.[f] !== undefined)
   if (hasPaymentFields) {
     const effectiveRole = actor.impersonate_role || actor.role || ''
-    if (!PAYMENT_EDIT_ROLES.includes(effectiveRole as any)) {
+    if (!ACCOUNTING_ROLES.includes(effectiveRole)) {
       return NextResponse.json({ error: 'Not authorized to edit payment settings' }, { status: 403 })
     }
     for (const f of PAYMENT_FIELDS) {
