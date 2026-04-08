@@ -29,7 +29,7 @@ export default function ServiceWriterDashboard() {
       fetch(`/api/service-requests?shop_id=${shopId}`).then(r => r.json()),
       fetch(`/api/service-orders?shop_id=${shopId}&limit=100`).then(r => r.json()),
       fetch(`/api/estimates?shop_id=${shopId}&status=sent`).then(r => r.json()),
-      fetch('/api/notifications?type=hours_request_more,hours_request_needed&limit=100').then(r => r.ok ? r.json() : { notifications: [] }),
+      fetch('/api/notifications?type=hours_request_more,hours_request_needed&unread=true&limit=100').then(r => r.ok ? r.json() : { notifications: [] }),
     ])
 
     const allReqs: any[] = Array.isArray(reqsRes) ? reqsRes : []
@@ -137,7 +137,7 @@ export default function ServiceWriterDashboard() {
         <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16, marginTop: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: AMBER, marginBottom: 12 }}>Mechanic Hours Requests</div>
           {hoursRequests.map((r: any) => (
-            <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: r.link ? 'pointer' : 'default' }} onClick={() => r.link && (window.location.href = r.link)}>
+            <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: r.link ? 'pointer' : 'default' }} onClick={() => { if (r.link) { fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: r.id, action: 'mark_read' }) }).catch(() => {}); window.location.href = r.link } }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#F0F4FF' }}>{r.title}</div>
                 <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{r.body}</div>

@@ -91,7 +91,7 @@ export default function FloorManagerDashboardPage() {
         fetch(`/api/floor-manager/parts-requests?shop_id=${shopId}`),
         fetch(`/api/users?shop_id=${shopId}`),
         fetch(`/api/time-tracking/active?shop_id=${shopId}`),
-        fetch('/api/notifications?type=hours_request_more,hours_request_needed&limit=100'),
+        fetch('/api/notifications?type=hours_request_more,hours_request_needed&unread=true&limit=100'),
       ])
       if (jobsRes.ok) {
         const d = await jobsRes.json()
@@ -827,7 +827,7 @@ export default function FloorManagerDashboardPage() {
                   </div>
                   <div style={{ fontSize: 12, color: TEXT, marginBottom: 6 }}>{r.body}</div>
                   {r.link && (
-                    <a href={r.link} style={{ fontSize: 12, color: BLUE, fontWeight: 600, textDecoration: 'none' }}>Open WO →</a>
+                    <a href={r.link} onClick={() => { fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: r.id, action: 'mark_read' }) }).catch(() => {}) }} style={{ fontSize: 12, color: BLUE, fontWeight: 600, textDecoration: 'none' }}>Open WO →</a>
                   )}
                 </div>
               ))}
