@@ -10,7 +10,7 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 
 type Params = { params: Promise<{ id: string }> }
 
-import { INVOICE_ACTION_ROLES, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
+import { INVOICE_ACTION_ROLES, REOPEN_ROLES, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 
 export async function POST(req: Request, { params }: Params) {
   const actor = await getAuthenticatedUserProfile()
@@ -195,8 +195,7 @@ export async function POST(req: Request, { params }: Params) {
 
   // Reopen locked invoice for review
   if (action === 'reopen') {
-    const reopenRoles = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
-    if (!reopenRoles.includes(actor.role) && !actor.is_platform_owner) {
+    if (!REOPEN_ROLES.includes(actor.role) && !actor.is_platform_owner) {
       return NextResponse.json({ error: 'Only accounting/admin can reopen invoices' }, { status: 403 })
     }
     if (!['sent', 'paid', 'closed'].includes(currentInvoiceStatus)) {
