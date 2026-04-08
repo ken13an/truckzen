@@ -19,15 +19,17 @@ export default function ServiceWriterDashboard() {
   const [myWos, setMyWos] = useState<any[]>([])
   const [pendingEstimates, setPendingEstimates] = useState<any[]>([])
   const [stats, setStats] = useState({ requests: 0, openWos: 0, pendingApprovals: 0, completedToday: 0 })
+  const [hoursRequests, setHoursRequests] = useState<any[]>([])
 
   const loadData = useCallback(async (profile: any) => {
     const shopId = profile.shop_id
     const today = new Date().toISOString().split('T')[0]
 
-    const [reqsRes, wosRes, estsRes] = await Promise.all([
+    const [reqsRes, wosRes, estsRes, notifsRes] = await Promise.all([
       fetch(`/api/service-requests?shop_id=${shopId}`).then(r => r.json()),
       fetch(`/api/service-orders?shop_id=${shopId}&limit=100`).then(r => r.json()),
       fetch(`/api/estimates?shop_id=${shopId}&status=sent`).then(r => r.json()),
+      fetch('/api/notifications?limit=50').then(r => r.ok ? r.json() : { notifications: [] }),
     ])
 
     const allReqs: any[] = Array.isArray(reqsRes) ? reqsRes : []
@@ -39,9 +41,12 @@ export default function ServiceWriterDashboard() {
     const wos = allWos.filter(wo => !excludedStatuses.has(wo.status) && !wo.is_historical).slice(0, 30)
     const completedToday = allWos.filter(wo => (wo.status === 'done' || wo.status === 'good_to_go') && wo.completed_at && wo.completed_at.startsWith(today)).length
 
+    const hrsReqs = (notifsRes.notifications || []).filter((n: any) => n.type === 'hours_request_more' || n.type === 'hours_request_needed')
+
     setRequests(reqs)
     setMyWos(wos)
     setPendingEstimates(allEsts)
+    setHoursRequests(hrsReqs)
     setStats({ requests: reqs.length, openWos: wos.length, pendingApprovals: allEsts.length, completedToday })
   }, [])
 
@@ -122,6 +127,22 @@ export default function ServiceWriterDashboard() {
             <div key={est.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }} onClick={() => est.wo_id && (window.location.href = `/work-orders/${est.wo_id}`)}>
               <div style={{ fontSize: 12, color: '#F0F4FF' }}>{est.customer_name || '—'} · {est.estimate_number}</div>
               <div style={{ fontSize: 12, fontWeight: 700, color: AMBER }}>${(est.grand_total || 0).toFixed(0)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Mechanic Hours Requests */}
+      {hoursRequests.length > 0 && (
+        <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16, marginTop: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: AMBER, marginBottom: 12 }}>Mechanic Hours Requests</div>
+          {hoursRequests.map((r: any) => (
+            <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: r.link ? 'pointer' : 'default' }} onClick={() => r.link && (window.location.href = r.link)}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#F0F4FF' }}>{r.title}</div>
+                <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{r.body}</div>
+              </div>
+              <div style={{ fontSize: 10, color: '#48536A', whiteSpace: 'nowrap', marginLeft: 12 }}>{r.created_at ? new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}</div>
             </div>
           ))}
         </div>
