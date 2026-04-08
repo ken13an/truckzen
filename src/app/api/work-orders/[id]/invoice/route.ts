@@ -112,7 +112,7 @@ export async function POST(req: Request, { params }: Params) {
     await s.from('service_orders').update({ labor_total: laborTotal, parts_total: partsTotal, grand_total: total }).eq('id', id)
 
     // Create invoice row if not exists
-    const { data: existingInv } = await s.from('invoices').select('id').eq('so_id', id).limit(1).single()
+    const { data: existingInv } = await s.from('invoices').select('id, amount_paid').eq('so_id', id).limit(1).single()
     if (!existingInv) {
       const { count } = await s.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', wo.shop_id).is('deleted_at', null)
       const year = new Date().getFullYear()
@@ -125,7 +125,8 @@ export async function POST(req: Request, { params }: Params) {
         due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       })
     } else {
-      await s.from('invoices').update({ status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total }).eq('id', existingInv.id)
+      const priorPaid = existingInv.amount_paid || 0
+      await s.from('invoices').update({ status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total - priorPaid }).eq('id', existingInv.id)
     }
 
     await s.from('service_orders').update({

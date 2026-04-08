@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
     // Auto-generate invoice if not exists
     const { data: existingInv } = await s.from('invoices')
-      .select('id').eq('so_id', wo_id).limit(1).single()
+      .select('id, amount_paid').eq('so_id', wo_id).limit(1).single()
 
     if (!existingInv) {
       const { count } = await s.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', wo.shop_id).is('deleted_at', null)
@@ -88,8 +88,9 @@ export async function POST(req: Request) {
         due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       })
     } else {
+      const priorPaid = existingInv.amount_paid || 0
       await s.from('invoices').update({
-        status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total,
+        status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total - priorPaid,
       }).eq('id', existingInv.id)
     }
 
