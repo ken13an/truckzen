@@ -34,7 +34,6 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
   if (inv) { invoiceId = inv.id; invoiceNumber = inv.invoice_number; totalAmount = inv.total }
 
   const shop = await getShopInfo(shopId)
-  const payLink = invoiceId ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/pay/${invoiceId}` : ''
 
   // Send email + SMS in parallel
   const promises: Promise<void>[] = []
@@ -48,7 +47,6 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
           unitNumber,
           invoiceNumber: invoiceNumber || wo.so_number,
           amount: totalAmount.toFixed(2),
-          payLink,
           shop: { name: shop.name, phone: shop.phone },
         })
 

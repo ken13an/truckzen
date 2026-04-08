@@ -1,11 +1,10 @@
-import { emailWrapper, blueButton, infoCard } from './wrapper'
+import { emailWrapper, infoCard } from './wrapper'
 
 interface TruckReadyData {
   customerName: string
   unitNumber: string
   invoiceNumber: string
   amount: string
-  payLink: string
   shop: { name: string; phone: string }
 }
 
