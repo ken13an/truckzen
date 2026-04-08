@@ -10,8 +10,11 @@ export async function requireAuthenticatedUser() {
 }
 
 export function requireRole(actor: AuthenticatedUser, allowed: readonly string[]) {
-  if (actor.is_platform_owner) return null
-  if (!allowed.includes(actor.role)) return jsonError('Forbidden', 403)
+  // Platform owner not impersonating → always allowed
+  if (actor.is_platform_owner && !actor.impersonate_role) return null
+  // Use effective role (impersonated or real)
+  const effectiveRole = actor.impersonate_role || actor.role
+  if (!allowed.includes(effectiveRole)) return jsonError('Forbidden', 403)
   return null
 }
 

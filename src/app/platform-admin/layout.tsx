@@ -30,12 +30,12 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
       if (!u) { window.location.href = '/login'; return }
 
       const perms = getPermissions(u)
-      if (!perms.canAccessPlatformAdmin) {
+      if (!perms.canAccessPlatformAdmin && !perms.isPlatformOwner) {
         window.location.href = '/403'
         return
       }
 
-      setUser({ ...u, is_platform_owner: true })
+      setUser({ ...u, is_platform_owner: u.is_platform_owner ?? false })
 
       // Fetch pending registrations count
       const res = await fetch(`/api/platform-admin/stats?user_id=${u.id}`)

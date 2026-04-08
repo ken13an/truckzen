@@ -97,8 +97,11 @@ export function getRequestIp(req: Request): string {
 }
 
 export function requireRoles(actor: AuthenticatedUser, allowedRoles: string[]): string | null {
-  if (actor.is_platform_owner) return null
-  return allowedRoles.includes(actor.role) ? null : 'Forbidden'
+  // Platform owner not impersonating → always allowed
+  if (actor.is_platform_owner && !actor.impersonate_role) return null
+  // Use effective role (impersonated or real)
+  const effectiveRole = actor.impersonate_role || actor.role
+  return allowedRoles.includes(effectiveRole) ? null : 'Forbidden'
 }
 
 export function jsonError(message: string, status = 400) {

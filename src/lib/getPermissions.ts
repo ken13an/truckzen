@@ -321,21 +321,24 @@ const FULL_ACCESS: Omit<TruckZenPermissions, 'isPlatformOwner' | 'role'> = {
  * @param user - Must have at minimum: { email, role, is_platform_owner? }
  * @returns TruckZenPermissions with all boolean flags
  */
-export function getPermissions(user: { email?: string | null; role?: string | null; is_platform_owner?: boolean }): TruckZenPermissions {
+export function getPermissions(user: { email?: string | null; role?: string | null; is_platform_owner?: boolean; impersonate_role?: string | null }): TruckZenPermissions {
   if (!user) {
     return { ...NO_PERMISSIONS, isPlatformOwner: false, role: 'unknown' }
   }
 
-  const role = user.role || 'unknown'
-
-  // Platform owner check: DB flag only
+  const rawRole = user.role || 'unknown'
   const isPlatformOwner = user.is_platform_owner === true
+  const isImpersonating = isPlatformOwner && !!user.impersonate_role
+  const effectiveRole = isImpersonating ? user.impersonate_role! : rawRole
 
-  if (isPlatformOwner) {
-    return { ...FULL_ACCESS, isPlatformOwner: true, role }
+  // Platform owner NOT impersonating → full access
+  if (isPlatformOwner && !isImpersonating) {
+    return { ...FULL_ACCESS, isPlatformOwner: true, role: rawRole }
   }
 
-  const perms = ROLE_PERMISSIONS[role] || NO_PERMISSIONS
+  // Platform owner IS impersonating → use impersonated role's permissions
+  // Keep isPlatformOwner true so they can navigate back to platform admin to stop impersonation
+  const perms = ROLE_PERMISSIONS[effectiveRole] || NO_PERMISSIONS
 
-  return { ...perms, isPlatformOwner: false, role }
+  return { ...perms, isPlatformOwner, role: effectiveRole }
 }
