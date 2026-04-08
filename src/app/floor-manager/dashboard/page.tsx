@@ -81,15 +81,17 @@ export default function FloorManagerDashboardPage() {
   const [activeTechs, setActiveTechs] = useState<any[]>([])
   const [idleMechanics, setIdleMechanics] = useState<any[]>([])
   const [idleExpanded, setIdleExpanded] = useState(false)
+  const [hoursRequests, setHoursRequests] = useState<any[]>([])
 
   // -- Data fetching --
   const fetchData = useCallback(async (shopId: string) => {
     try {
-      const [jobsRes, partsRes, usersRes, activeRes] = await Promise.all([
+      const [jobsRes, partsRes, usersRes, activeRes, hoursRes] = await Promise.all([
         fetch(`/api/floor-manager/jobs?shop_id=${shopId}`),
         fetch(`/api/floor-manager/parts-requests?shop_id=${shopId}`),
         fetch(`/api/users?shop_id=${shopId}`),
         fetch(`/api/time-tracking/active?shop_id=${shopId}`),
+        fetch('/api/notifications?limit=50'),
       ])
       if (jobsRes.ok) {
         const d = await jobsRes.json()
@@ -119,6 +121,11 @@ export default function FloorManagerDashboardPage() {
           idle_minutes: t.idle_minutes || (t.last_activity_at ? Math.floor((Date.now() - new Date(t.last_activity_at).getTime()) / 60000) : 0),
         }))
         setIdleMechanics(idle)
+      }
+      if (hoursRes.ok) {
+        const d = await hoursRes.json()
+        const notifs = d.notifications || []
+        setHoursRequests(notifs.filter((n: any) => n.type === 'hours_request_more' || n.type === 'hours_request_needed'))
       }
       setLastRefresh(new Date())
     } catch { /* silent */ }
@@ -305,7 +312,7 @@ export default function FloorManagerDashboardPage() {
 
   if (!user) return null
 
-  const tabLabels = ['Kanban', 'Active Techs', 'Parts Requests']
+  const tabLabels = ['Kanban', 'Active Techs', 'Parts Requests', 'Hours Requests']
   const tabIcons = [<Users key="u" size={16} />, <Package key="p" size={16} />]
 
   return (
@@ -799,6 +806,34 @@ export default function FloorManagerDashboardPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ===== TAB 3: HOURS REQUESTS ===== */}
+      {tab === 3 && (
+        <div style={{ padding: '12px 16px' }}>
+          <h3 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 700 }}>Mechanic Hours Requests</h3>
+          {hoursRequests.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: DIM, fontSize: 13 }}>
+              <Clock size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
+              <div>No pending hours requests</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {hoursRequests.map((r: any) => (
+                <div key={r.id} style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: 10, padding: '12px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: AMBER }}>{r.title}</span>
+                    <span style={{ fontSize: 10, color: DIM }}>{r.created_at ? new Date(r.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: TEXT, marginBottom: 6 }}>{r.body}</div>
+                  {r.link && (
+                    <a href={r.link} style={{ fontSize: 12, color: BLUE, fontWeight: 600, textDecoration: 'none' }}>Open WO →</a>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -11,16 +11,19 @@ export async function notifyUser(opts: {
   title: string
   body?: string
   link?: string
+  type?: string
 }) {
   const s = db()
   // In-app notification
-  await s.from('notifications').insert({
+  const row: any = {
     shop_id: opts.shopId,
     user_id: opts.userId,
     title: opts.title,
     body: opts.body || null,
     link: opts.link || null,
-  })
+  }
+  if (opts.type) row.type = opts.type
+  await s.from('notifications').insert(row)
 
   // Telegram notification
   const { data: user } = await s.from('users').select('telegram_id').eq('id', opts.userId).single()
@@ -43,6 +46,7 @@ export async function notifyRole(opts: {
   title: string
   body?: string
   link?: string
+  type?: string
 }) {
   const s = db()
   const roles = Array.isArray(opts.role) ? opts.role : [opts.role]

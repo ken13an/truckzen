@@ -48,7 +48,8 @@ export async function POST(req: Request) {
   try {
     await notifyRole({
       shopId,
-      role: ['shop_manager', 'service_writer', 'owner', 'gm'],
+      role: ['shop_manager', 'service_writer', 'owner', 'gm', 'floor_manager'],
+      type: isMoreTime ? 'hours_request_more' : 'hours_request_needed',
       title,
       body,
       link: woId ? `/work-orders/${woId}` : undefined,
