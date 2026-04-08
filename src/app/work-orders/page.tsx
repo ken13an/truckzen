@@ -89,7 +89,7 @@ export default function WorkOrdersPage() {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
       // Work Orders list is a service-operational surface
-      const WO_LIST_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager']
+      const WO_LIST_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin']
       const eff = p.impersonate_role || p.role
       if (!WO_LIST_ROLES.includes(eff) && !(!p.impersonate_role && p.is_platform_owner)) {
         window.location.href = '/dashboard'; return

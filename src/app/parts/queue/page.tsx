@@ -47,7 +47,7 @@ export default function PartsQueuePage() {
     }
     // Also fetch WOs with part lines (existing workflow)
     const woRes = await fetch(
-      `/api/service-orders?shop_id=${profile.shop_id}&include_so_lines=true&exclude_historical=true&exclude_status=good_to_go,void,done&limit=100`
+      `/api/service-orders?shop_id=${profile.shop_id}&include_so_lines=true&exclude_historical=true&exclude_status=good_to_go,void&limit=100`
     )
     const wosData = woRes.ok ? await woRes.json() : []
     setWos(Array.isArray(wosData) ? wosData : [])
