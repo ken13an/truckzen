@@ -50,9 +50,14 @@ export async function POST(req: Request) {
   const fenceLng = shop?.geofence_lng
   const fenceRadius = shop?.geofence_radius_meters || 100
 
+  const geofenceConfigured = !!(fenceLat && fenceLng)
+  const locationProvided = !!(lat && lng)
+
   let insideGeofence = true
-  if (fenceLat && fenceLng && lat && lng) {
+  if (geofenceConfigured && locationProvided) {
     insideGeofence = haversineMeters(lat, lng, fenceLat, fenceLng) <= fenceRadius
+  } else if (geofenceConfigured && !locationProvided) {
+    insideGeofence = false
   }
 
   if (action === 'punch_in') {
@@ -67,8 +72,10 @@ export async function POST(req: Request) {
       const canSelfOverride = ASSIGNMENT_ROLES.includes(effectiveRole)
 
       if (!canSelfOverride) {
-        // Technicians/mechanics cannot self-override geofence — must be at the shop
-        return NextResponse.json({ error: 'You must be at the shop to punch in. Contact your supervisor if you need assistance.', outsideGeofence: true, blocked: true }, { status: 403 })
+        const msg = !locationProvided
+          ? 'Location is required to punch in. Please enable GPS and try again.'
+          : 'You must be at the shop to punch in. Contact your supervisor if you need assistance.'
+        return NextResponse.json({ error: msg, outsideGeofence: true, blocked: true }, { status: 403 })
       }
 
       if (!override_reason || override_reason.trim().length < 10) {
