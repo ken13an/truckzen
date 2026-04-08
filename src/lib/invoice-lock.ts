@@ -21,6 +21,9 @@ export const ACCOUNTING_EDIT_STATUSES = ['accounting_review']
 // Roles that can edit during accounting_review
 export const ACCOUNTING_EDIT_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
 
+// Maintenance roles — view-only on shop WO data, cannot mutate through WO API routes
+export const MAINTENANCE_VIEW_ONLY_ROLES = ['maintenance_manager', 'fleet_manager', 'dispatcher']
+
 // Roles that can reopen a sent/paid invoice
 export const REOPEN_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'accounting_manager', 'office_admin']
 
