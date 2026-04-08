@@ -15,19 +15,40 @@ export async function GET() {
   return NextResponse.json(data || [])
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
 export async function POST(req: Request) {
   const ip = getRequestIp(req)
-  if (!checkRateLimit(`registration:${ip}`, 10, 60_000)) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  // Tight rate limit: 3 registrations per hour per IP
+  if (!checkRateLimit(`registration:${ip}`, 3, 3_600_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 
   const s = createAdminSupabaseClient()
   const body = await req.json().catch(() => null)
+
+  // Honeypot — hidden field that bots fill. Legitimate users never see it.
+  if (body?.company_website) {
+    return NextResponse.json({ id: 'ok' }, { status: 201 })
+  }
+
   const shopName = typeof body?.shop_name === 'string' ? body.shop_name.trim() : ''
   const ownerName = typeof body?.owner_name === 'string' ? body.owner_name.trim() : ''
   const ownerEmail = typeof body?.owner_email === 'string' ? body.owner_email.toLowerCase().trim() : ''
   if (!shopName || !ownerName || !ownerEmail) {
-    return NextResponse.json({ error: 'shop_name, owner_name, owner_email required' }, { status: 400 })
+    return NextResponse.json({ error: 'Shop name, your name, and email are required.' }, { status: 400 })
+  }
+
+  // Email format validation
+  if (!EMAIL_RE.test(ownerEmail)) {
+    return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 })
+  }
+
+  // Duplicate pending registration check — generic response to avoid email enumeration
+  const { data: existing } = await s.from('shop_registrations')
+    .select('id').eq('owner_email', ownerEmail).eq('status', 'pending').limit(1)
+  if (existing && existing.length > 0) {
+    return NextResponse.json({ id: 'ok' }, { status: 201 })
   }
 
   const { data, error: dbError } = await s.from('shop_registrations').insert({

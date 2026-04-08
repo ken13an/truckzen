@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     shop_name: '', owner_name: '', owner_email: '', owner_phone: '',
     city: '', state: '', fleet_size: '', current_software: '', message: '',
+    company_website: '', // honeypot — hidden from real users
   })
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -20,6 +21,10 @@ export default function RegisterPage() {
     e.preventDefault()
     if (!form.shop_name || !form.owner_name || !form.owner_email) {
       setError('Shop name, your name, and email are required.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.owner_email.trim())) {
+      setError('Please enter a valid email address.')
       return
     }
     setLoading(true)
@@ -67,6 +72,10 @@ export default function RegisterPage() {
         <div style={{ fontSize: 13, color: '#7C8BA0', marginBottom: 28 }}>Tell us about your shop and we&apos;ll get you set up.</div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Honeypot — hidden from real users, bots fill it */}
+          <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+            <input type="text" name="company_website" tabIndex={-1} autoComplete="off" value={form.company_website} onChange={e => set('company_website', e.target.value)} />
+          </div>
           {/* Shop Name */}
           <div>
             <label style={styles.label}>Shop Name *</label>
