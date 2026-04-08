@@ -1,5 +1,4 @@
 'use client'
-import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
@@ -211,7 +210,6 @@ export default function MaintenanceInvoicesPage() {
                     const lines = detail.so_lines || []
                     const jobLines = lines.filter((l: any) => l.line_type === 'labor')
                     const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
-                    const shopRate = detail.shop?.labor_rate || detail.shop?.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK
 
                     return (
                       <>
@@ -225,10 +223,10 @@ export default function MaintenanceInvoicesPage() {
 
                         {detail.complaint && <div style={{ fontSize: 11, color: MUTED, marginBottom: 10 }}>Complaint: <span style={{ color: '#DDE3EE' }}>{detail.complaint}</span></div>}
 
-                        {/* Job-grouped summary */}
+                        {/* Job-grouped summary — uses stored line values, not recalculated */}
                         {jobLines.map((job: any, idx: number) => {
                           const hrs = job.billed_hours || job.estimated_hours || 0
-                          const rate = (job.unit_price && job.unit_price > 0) ? job.unit_price : shopRate
+                          const rate = job.unit_price || 0
                           const laborAmt = hrs * rate
                           const jobParts = partLines.filter((p: any) => p.related_labor_line_id === job.id)
                           const partsAmt = jobParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0)
@@ -237,7 +235,7 @@ export default function MaintenanceInvoicesPage() {
                             <div key={job.id} style={{ marginBottom: 10, padding: '8px 12px', background: 'rgba(255,255,255,.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,.04)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                 <span style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>Job {idx + 1}: <span style={{ color: '#DDE3EE', fontWeight: 600 }}>{(job.description || '').substring(0, 50)}</span></span>
-                                <span style={{ fontSize: 11, fontFamily: MONO, color: MUTED }}>{hrs}h @ {fmt(rate)}/hr = <strong style={{ color: '#DDE3EE' }}>{fmt(laborAmt)}</strong></span>
+                                <span style={{ fontSize: 11, fontFamily: MONO, color: MUTED }}>{hrs}h {rate > 0 ? `@ ${fmt(rate)}/hr = ` : ''}<strong style={{ color: '#DDE3EE' }}>{fmt(laborAmt)}</strong></span>
                               </div>
                               {jobParts.length > 0 && jobParts.map((p: any) => {
                                 const sell = p.parts_sell_price || p.unit_price || 0
@@ -254,16 +252,18 @@ export default function MaintenanceInvoicesPage() {
                           )
                         })}
 
-                        {/* Totals from stored invoice record */}
+                        {/* Totals from canonical invoice record — single source of truth */}
                         <div style={{ borderTop: '1px solid rgba(255,255,255,.08)', paddingTop: 8, marginTop: 4 }}>
                           {invRecord ? (
                             <>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: MUTED }}><span>Subtotal</span><span>{fmt(invRecord.subtotal || 0)}</span></div>
                               {(invRecord.tax_amount || 0) > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: MUTED }}><span>Tax</span><span>{fmt(invRecord.tax_amount)}</span></div>}
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0', borderTop: '1px solid rgba(255,255,255,.06)', marginTop: 4 }}><span>Total</span><span style={{ color: GREEN }}>{fmt(invRecord.total || 0)}</span></div>
+                              {invRecord.amount_paid > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: GREEN }}><span>Paid</span><span>{fmt(invRecord.amount_paid)}</span></div>}
+                              {invRecord.balance_due > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: AMBER }}><span>Balance Due</span><span>{fmt(invRecord.balance_due)}</span></div>}
                             </>
                           ) : (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0' }}><span>Total</span><span style={{ color: GREEN }}>{fmt(w.invoice_total ?? w.grand_total ?? 0)}</span></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0' }}><span>Total</span><span style={{ color: GREEN }}>{fmt(w.grand_total ?? 0)}</span></div>
                           )}
                         </div>
 
