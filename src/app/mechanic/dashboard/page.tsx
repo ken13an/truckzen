@@ -129,7 +129,32 @@ export default function MechanicDashboardPage() {
     if (!user) return
     setPunchLoading(true)
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 })).catch(() => null)
+      // Request geolocation with explicit error handling per failure type
+      let pos: GeolocationPosition | null = null
+      if (!navigator.geolocation) {
+        if (action === 'punch_in') { alert('Location services are not available on this device.'); setPunchLoading(false); return }
+      } else {
+        try {
+          pos = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 }))
+        } catch (geoErr: any) {
+          if (action === 'punch_in') {
+            const code = geoErr?.code
+            if (code === 1) { // PERMISSION_DENIED
+              alert('Location permission denied. Please allow location access in your browser settings for this site, then try again.')
+              setPunchLoading(false); return
+            } else if (code === 2) { // POSITION_UNAVAILABLE
+              alert('Could not determine your location. Make sure GPS/Location is enabled on your device.')
+              setPunchLoading(false); return
+            } else if (code === 3) { // TIMEOUT
+              alert('Location request timed out. Please try again in an open area with better GPS signal.')
+              setPunchLoading(false); return
+            }
+            alert('Could not get your location. Please check your GPS settings.')
+            setPunchLoading(false); return
+          }
+          // For punch_out, proceed without coordinates
+        }
+      }
       const payload = { action, lat: pos?.coords.latitude, lng: pos?.coords.longitude, accuracy: pos?.coords.accuracy, override_reason: override }
       let res: Response | null = null
       try {
@@ -155,7 +180,7 @@ export default function MechanicDashboardPage() {
         if (err.outsideGeofence && !err.blocked) setOverrideModal(true)
         else alert(err.error || 'Punch failed')
       }
-    } catch { alert('Could not get location. Enable GPS and try again.') }
+    } catch { alert('Something went wrong. Please try again.') }
     setPunchLoading(false)
   }
 
