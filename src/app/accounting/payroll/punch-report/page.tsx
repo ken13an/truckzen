@@ -19,6 +19,7 @@ export default function PunchReportPage() {
   const [view, setView] = useState<View>('weekly')
   const [loading, setLoading] = useState(true)
   const [periodInfo, setPeriodInfo] = useState<any>(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => { loadList() }, [view])
 
@@ -152,10 +153,14 @@ export default function PunchReportPage() {
         ))}
       </div>
 
-      {loading ? (
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search mechanic..." style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#151520', color: '#EDEDF0', fontSize: 13, fontFamily: FONT, outline: 'none', width: 220, marginBottom: 12 }} />
+
+      {(() => {
+        const filtered = search ? mechanics.filter(m => (m.full_name || '').toLowerCase().includes(search.toLowerCase())) : mechanics
+        return loading ? (
         <div style={{ textAlign: 'center', padding: 60, color: DIM }}>Loading...</div>
-      ) : mechanics.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, color: DIM }}>No active mechanics found</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 60, color: DIM }}>{search ? 'No mechanics match search' : 'No active mechanics found'}</div>
       ) : (
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -165,7 +170,7 @@ export default function PunchReportPage() {
               ))}</tr>
             </thead>
             <tbody>
-              {mechanics.map((m: any) => (
+              {filtered.map((m: any) => (
                 <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }}
                   onClick={() => loadDetail(m.id)}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
@@ -188,7 +193,8 @@ export default function PunchReportPage() {
             </tbody>
           </table>
         </div>
-      )}
+      )
+      })()}
     </div>
   )
 }
