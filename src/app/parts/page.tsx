@@ -91,21 +91,24 @@ export default function PartsPage() {
       setUser(p)
       // Load overview data
       const today = new Date().toISOString().split('T')[0]
-      const [reqRes, lowRes, ordRes, fulRes] = await Promise.all([
+      const [reqRes, lowRes, ordRes, fulRes, roughRes] = await Promise.all([
         fetch('/api/parts-requests?status=active'),
         fetch(`/api/parts?shop_id=${p.shop_id}&per_page=20&low_stock=true`),
         fetch('/api/so-lines?line_type=part&parts_status=ordered&limit=500'),
         fetch(`/api/so-lines?line_type=part&parts_status=received&updated_since=${today}&limit=500`),
+        fetch('/api/so-lines?line_type=part&parts_status=rough,sourced&limit=500'),
       ])
       const reqs = reqRes.ok ? await reqRes.json() : []
       const low = lowRes.ok ? await lowRes.json() : { data: [] }
       const ord = ordRes.ok ? await ordRes.json() : []
       const ful = fulRes.ok ? await fulRes.json() : []
+      const rough = roughRes.ok ? await roughRes.json() : []
       const reqList = Array.isArray(reqs) ? reqs : []
+      const roughList = Array.isArray(rough) ? rough : []
       const lowList = (low.data || []) as any[]
-      setPendingParts(reqList)
+      setPendingParts([...reqList, ...roughList])
       setLowStock(lowList)
-      setOverviewStats({ pending: reqList.length, onOrder: Array.isArray(ord) ? ord.length : 0, lowStockCount: lowList.length, fulfilledToday: Array.isArray(ful) ? ful.length : 0 })
+      setOverviewStats({ pending: reqList.length + roughList.length, onOrder: Array.isArray(ord) ? ord.length : 0, lowStockCount: lowList.length, fulfilledToday: Array.isArray(ful) ? ful.length : 0 })
     })
   }, [])
 

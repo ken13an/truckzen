@@ -7,12 +7,13 @@ import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/se
 import { deriveWOAutomation } from '@/lib/wo-automation'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { isDiagnosticJob } from '@/lib/parts-suggestions'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -104,7 +105,7 @@ export async function GET(req: Request) {
   })
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shop_id = getActorShopId(actor)
@@ -212,7 +213,7 @@ export async function POST(req: Request) {
       await s.from('so_lines').insert({
         so_id: wo.id,
         line_type: 'part',
-        description: inv ? inv.description : partName,
+        description: partName,
         rough_name: partName,
         real_name: inv ? inv.description : null,
         part_number: inv ? inv.part_number : null,
@@ -263,7 +264,7 @@ export async function POST(req: Request) {
   return NextResponse.json(wo, { status: 201 })
 }
 
-export async function DELETE(req: Request) {
+async function _DELETE(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -305,3 +306,7 @@ export async function DELETE(req: Request) {
     errors: [],
   })
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)
+export const DELETE = safeRoute(_DELETE)

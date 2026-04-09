@@ -237,20 +237,50 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
   // PM Service
   if (['pm service', 'pm ', 'preventive maintenance', 'preventative maintenance'].some(k => lower.includes(k))) return PM_PARTS
 
-  // Oil change / oil filter replacement
-  if ((lower.includes('oil change') || lower.includes('oil filter')) && !lower.includes('pm')) return OIL_CHANGE_PARTS
-
   // Brake adjustment — labor only, no parts
   if (lower.includes('brake adjustment') || lower.includes('brake adjust')) return []
 
-  // Brake repair/job
+  // Brake repair/job — preserve exact requested brake components
   if (lower.includes('brake') && (lower.includes('repair') || lower.includes('job') || lower.includes('replace'))) {
-    return [{ rough_name: 'Brake Pads', quantity: 1, is_labor: false }, { rough_name: 'Brake Drums/Rotors', quantity: 1, is_labor: false }]
+    const parts: RoughPart[] = []
+    if (lower.includes('drum')) parts.push({ rough_name: 'Brake Drum', quantity: 1, is_labor: false })
+    if (lower.includes('shoe')) parts.push({ rough_name: 'Brake Shoes', quantity: 1, is_labor: false })
+    if (lower.includes('pad')) parts.push({ rough_name: 'Brake Pads', quantity: 1, is_labor: false })
+    if (lower.includes('rotor')) parts.push({ rough_name: 'Brake Rotor', quantity: 1, is_labor: false })
+    if (lower.includes('caliper')) parts.push({ rough_name: 'Brake Caliper', quantity: 1, is_labor: false })
+    if (parts.length > 0) return parts
+    // Generic brake job with no specific component
+    return [{ rough_name: 'Brake Parts', quantity: 1, is_labor: false }]
   }
 
-  // Other common jobs
+  // Oil change — preserve explicit viscosity from description if present
+  if ((lower.includes('oil change') || lower.includes('oil filter')) && !lower.includes('pm')) {
+    const viscosityMatch = jobDescription.match(/\b(\d+[Ww]-?\d+)\b/)
+    const oilName = viscosityMatch ? `Engine Oil (${viscosityMatch[1].toUpperCase()})` : 'Engine Oil'
+    return [
+      { rough_name: 'Oil Filter', quantity: 1, is_labor: false },
+      { rough_name: oilName, quantity: 1, is_labor: false },
+      { rough_name: 'Drain Plug Gasket', quantity: 1, is_labor: false },
+    ]
+  }
+
+  // Other common jobs — use keyword lookup but with domain-preservation guard:
+  // If the job description explicitly names a broader assembly, do not narrow to a subcomponent
   for (const [keyword, parts] of Object.entries(JOB_AUTO_PARTS)) {
-    if (lower.includes(keyword)) return parts
+    if (lower.includes(keyword)) {
+      // Domain guard: strip common action verbs to extract the actual requested component
+      const requestedComponent = jobDescription.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
+      // If the requested component is broader than the suggested part, preserve the request
+      if (requestedComponent.length > 0 && parts.length === 1) {
+        const suggestedLower = parts[0].rough_name.toLowerCase()
+        const requestedLower = requestedComponent.toLowerCase()
+        // Don't narrow "headlight" → "Headlight Bulb" unless "bulb" is in the request
+        if (requestedLower.includes(keyword) && !requestedLower.includes(suggestedLower.replace(keyword, '').trim()) && suggestedLower !== requestedLower) {
+          return [{ rough_name: requestedComponent, quantity: parts[0].quantity, is_labor: false }]
+        }
+      }
+      return parts
+    }
   }
 
   return []
