@@ -625,7 +625,7 @@ export default function MechanicDashboardPage() {
           if (!job) { setSelectedJobId(null); return null }
           return (
           <>
-            <button onClick={() => setSelectedJobId(null)} style={{ background: 'none', border: 'none', color: BLUE, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, padding: '4px 0', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button onClick={() => setSelectedJobId(null)} style={{ background: 'rgba(29,111,232,0.08)', border: `1px solid ${BLUE}44`, color: BLUE, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, padding: '14px 20px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, borderRadius: 12, width: '100%', justifyContent: 'center' }}>
               &larr; Back to Jobs
             </button>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
