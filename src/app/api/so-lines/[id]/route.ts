@@ -1,4 +1,5 @@
 import { WO_FULL_ACCESS_ROLES, SERVICE_WRITE_ROLES, MECHANIC_ROLES } from '@/lib/roles'
+import { VALID_PARTS_STATUSES, VALID_LINE_STATUSES, PARTS_PICKUP_STATUS } from '@/lib/parts-status'
 import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
@@ -54,7 +55,7 @@ export async function PATCH(req: Request, { params }: P) {
   // Mechanic roles can only confirm parts receipt (parts_status → picked_up)
   const effectiveRole = ctx.actor.impersonate_role || ctx.actor.role
   if (MECHANIC_ROLES.includes(effectiveRole)) {
-    if (Object.keys(body).length !== 1 || body.parts_status !== 'picked_up') {
+    if (Object.keys(body).length !== 1 || body.parts_status !== PARTS_PICKUP_STATUS) {
       return NextResponse.json({ error: 'Mechanics can only confirm parts pickup' }, { status: 403 })
     }
   }
@@ -67,16 +68,14 @@ export async function PATCH(req: Request, { params }: P) {
 
   // Validate line_status enum
   if (update.line_status !== undefined) {
-    const VALID_LINE_STATUSES = ['unassigned', 'pending_review', 'approved', 'in_progress', 'completed']
-    if (!VALID_LINE_STATUSES.includes(update.line_status)) {
+    if (!(VALID_LINE_STATUSES as readonly string[]).includes(update.line_status)) {
       return NextResponse.json({ error: `Invalid line_status "${update.line_status}"` }, { status: 400 })
     }
   }
 
   // Validate parts_status enum
   if (update.parts_status !== undefined) {
-    const VALID_PARTS_STATUSES = ['rough', 'sourced', 'ordered', 'received', 'ready_for_job', 'picked_up', 'installed', 'canceled']
-    if (!VALID_PARTS_STATUSES.includes(update.parts_status)) {
+    if (!(VALID_PARTS_STATUSES as readonly string[]).includes(update.parts_status)) {
       return NextResponse.json({ error: `Invalid parts_status "${update.parts_status}"` }, { status: 400 })
     }
   }

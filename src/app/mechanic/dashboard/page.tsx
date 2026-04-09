@@ -2,10 +2,10 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
+import { MECHANIC_ROLES } from '@/lib/roles'
+import { PARTS_PICKUP_STATUS, PARTS_READY_STATUS } from '@/lib/parts-status'
 import Logo from '@/components/Logo'
 import { ChevronRight, Wrench, Clock, CheckCircle2, XCircle, Package, Play, Square } from 'lucide-react'
-
-const MECHANIC_ROLES = ['mechanic', 'technician', 'lead_tech', 'maintenance_technician']
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BG = '#0C0C12'
@@ -699,7 +699,7 @@ export default function MechanicDashboardPage() {
                           })
                         }
                         if (matched.length === 0) return null
-                        const readyParts = matched.filter((p: any) => p.parts_status === 'ready_for_job')
+                        const readyParts = matched.filter((p: any) => p.parts_status === PARTS_READY_STATUS)
                         return (
                           <div style={{ marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.06)` }}>
                             {matched.map((p: any) => {
@@ -725,7 +725,7 @@ export default function MechanicDashboardPage() {
                                       const res = await fetch(`/api/so-lines/${p.id}`, {
                                         method: 'PATCH',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ parts_status: 'picked_up' }),
+                                        body: JSON.stringify({ parts_status: PARTS_PICKUP_STATUS }),
                                       })
                                       if (!res.ok) failed++
                                     } catch { failed++ }
