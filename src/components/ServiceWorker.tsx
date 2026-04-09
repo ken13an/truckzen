@@ -28,9 +28,14 @@ export function InstallPrompt() {
     const lsFlag = localStorage.getItem('tz_native_shell') === '1'
     if (shellParam || uaShell || windowFlag) localStorage.setItem('tz_native_shell', '1')
     const isNativeShell = uaShell || windowFlag || shellParam || lsFlag
-    const standalone = window.matchMedia('(display-mode: standalone)').matches
-      || (navigator as any).standalone === true
-      || isNativeShell
+
+    // Standalone detection — check ALL signals synchronously before any timers
+    const mqStandalone = window.matchMedia('(display-mode: standalone)').matches
+    const iosStandalone = (navigator as any).standalone === true
+    // iOS fullscreen mode also indicates home-screen launch
+    const mqFullscreen = window.matchMedia('(display-mode: fullscreen)').matches
+    const standalone = mqStandalone || iosStandalone || mqFullscreen || isNativeShell
+
     setIsStandalone(standalone)
     if (standalone) return
 
