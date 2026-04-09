@@ -275,7 +275,9 @@ function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[]
       if (parts.length === 0) parts.push({ rough_name: `${tirePositions.length}x Tire${tirePositions.length > 1 ? 's' : ''}`, quantity: tirePositions.length, is_labor: false })
       return parts
     }
-    return [{ rough_name: 'Tire', quantity: 1, is_labor: false }, { rough_name: 'Valve Stem', quantity: 1, is_labor: false }]
+    // No positions selected — use explicit quantity if stated (e.g. "replace 4 tires"), otherwise 1
+    const tireQty = explicitQty > 1 ? explicitQty : 1
+    return [{ rough_name: 'Tire', quantity: tireQty, is_labor: false }, { rough_name: 'Valve Stem', quantity: tireQty, is_labor: false }]
   }
 
   // PM Service
@@ -287,13 +289,14 @@ function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[]
   // Brake repair — preserve exact components
   if (lower.includes('brake') && (lower.includes('repair') || lower.includes('job') || lower.includes('replace'))) {
     const parts: RoughPart[] = []
-    if (lower.includes('drum')) parts.push({ rough_name: 'Brake Drum', quantity: 1, is_labor: false })
-    if (lower.includes('shoe')) parts.push({ rough_name: 'Brake Shoes', quantity: 1, is_labor: false })
-    if (lower.includes('pad')) parts.push({ rough_name: 'Brake Pads', quantity: 1, is_labor: false })
-    if (lower.includes('rotor')) parts.push({ rough_name: 'Brake Rotor', quantity: 1, is_labor: false })
-    if (lower.includes('caliper')) parts.push({ rough_name: 'Brake Caliper', quantity: 1, is_labor: false })
+    const brakeQty = explicitQty > 1 ? explicitQty : 1
+    if (lower.includes('drum')) parts.push({ rough_name: 'Brake Drum', quantity: brakeQty, is_labor: false })
+    if (lower.includes('shoe')) parts.push({ rough_name: 'Brake Shoes', quantity: brakeQty, is_labor: false })
+    if (lower.includes('pad')) parts.push({ rough_name: 'Brake Pads', quantity: brakeQty, is_labor: false })
+    if (lower.includes('rotor')) parts.push({ rough_name: 'Brake Rotor', quantity: brakeQty, is_labor: false })
+    if (lower.includes('caliper')) parts.push({ rough_name: 'Brake Caliper', quantity: brakeQty, is_labor: false })
     if (parts.length > 0) return parts
-    return [{ rough_name: 'Brake Parts', quantity: 1, is_labor: false }]
+    return [{ rough_name: 'Brake Parts', quantity: brakeQty, is_labor: false }]
   }
 
   // Oil change — preserve viscosity and quantity
