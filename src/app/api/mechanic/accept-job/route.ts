@@ -122,6 +122,23 @@ export async function POST(req: Request) {
                 link: `/work-orders/${woId}`,
               })
             }
+
+            // Notify maintenance team for fleet/O-O units
+            if (customerType === 'owner_operator' || customerType === 'fleet_asset') {
+              const { data: maintTargets } = await s.from('users')
+                .select('id')
+                .eq('shop_id', wo.shop_id)
+                .in('role', ['maintenance_manager', 'fleet_manager'])
+                .or('is_autobot.is.null,is_autobot.eq.false')
+              for (const t of maintTargets || []) {
+                await s.from('notifications').insert({
+                  shop_id: wo.shop_id, user_id: t.id, type: 'wo_completed',
+                  title: `WO Complete: ${soNum}`,
+                  message: `All jobs done on WO #${soNum}${unitNum ? ` — Unit #${unitNum}` : ''}. Pending invoice review.`,
+                  link: `/work-orders/${woId}`,
+                })
+              }
+            }
           }
         }
       } catch (err) {
