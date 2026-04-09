@@ -253,13 +253,13 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
     return [{ rough_name: 'Brake Parts', quantity: 1, is_labor: false }]
   }
 
-  // Oil change — preserve explicit viscosity from description if present
+  // Oil change — preserve explicit viscosity and quantity from canonical template
   if ((lower.includes('oil change') || lower.includes('oil filter')) && !lower.includes('pm')) {
     const viscosityMatch = jobDescription.match(/\b(\d+[Ww]-?\d+)\b/)
-    const oilName = viscosityMatch ? `Engine Oil (${viscosityMatch[1].toUpperCase()})` : 'Engine Oil'
+    const oilName = viscosityMatch ? `Engine Oil (${viscosityMatch[1].toUpperCase()})` : 'Engine Oil (15W-40)'
     return [
       { rough_name: 'Oil Filter', quantity: 1, is_labor: false },
-      { rough_name: oilName, quantity: 1, is_labor: false },
+      { rough_name: oilName, quantity: 10, is_labor: false },
       { rough_name: 'Drain Plug Gasket', quantity: 1, is_labor: false },
     ]
   }
@@ -281,6 +281,14 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
       }
       return parts
     }
+  }
+
+  // Multi-part text splitting: if description contains multiple distinct parts
+  // joined by separators (+, and, &, commas), split into separate itemized rough parts
+  const stripped = jobDescription.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
+  const segments = stripped.split(/\s*(?:\+|,|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
+  if (segments.length >= 2) {
+    return segments.map(seg => ({ rough_name: seg, quantity: 1, is_labor: false }))
   }
 
   return []
