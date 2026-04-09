@@ -50,7 +50,9 @@ const PART_STATUS: Record<string, { label: string; bg: string; color: string }> 
   needed: { label: 'Needed', bg: '#FEF2F2', color: RED },
   ordered: { label: 'Ordered', bg: '#FFFBEB', color: AMBER },
   received: { label: 'Received', bg: '#EFF6FF', color: BLUE },
-  installed: { label: 'Installed', bg: '#F0FDF4', color: GREEN },
+  ready_for_job: { label: 'Ready for Pickup', bg: '#F0FDF4', color: GREEN },
+  picked_up: { label: 'Picked Up', bg: '#F0FDF4', color: GREEN },
+  installed: { label: 'Installed', bg: '#ECFDF5', color: '#059669' },
 }
 
 const TABS = ['Jobs', 'Parts', 'Estimate', 'Files & Notes', 'Activity', 'Invoice']
@@ -1526,6 +1528,7 @@ export default function WorkOrderDetail() {
                     ordered: { label: 'Ordered', bg: '#FFFBEB', color: AMBER },
                     received: { label: 'Preparing', bg: '#DBEAFE', color: BLUE },
                     ready_for_job: { label: 'Ready for Pickup', bg: '#ECFDF5', color: GREEN },
+                    picked_up: { label: 'Picked Up', bg: '#ECFDF5', color: GREEN },
                     installed: { label: 'Installed', bg: '#ECFDF5', color: '#059669' },
                     canceled: { label: 'Canceled', bg: '#FEF2F2', color: '#DC2626' },
                   }

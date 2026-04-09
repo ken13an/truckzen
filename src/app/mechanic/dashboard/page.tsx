@@ -703,8 +703,8 @@ export default function MechanicDashboardPage() {
                         return (
                           <div style={{ marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.06)` }}>
                             {matched.map((p: any) => {
-                              const stColor = p.parts_status === 'ready_for_job' ? GREEN : p.parts_status === 'received' ? BLUE : p.parts_status === 'ordered' ? AMBER : DIM
-                              const stLabel = p.parts_status === 'ready_for_job' ? 'Ready for Pickup' : p.parts_status === 'received' ? 'Preparing' : p.parts_status === 'ordered' ? 'Ordered' : p.parts_status === 'installed' ? 'Installed' : 'Pending'
+                              const stColor = p.parts_status === 'ready_for_job' ? GREEN : p.parts_status === 'picked_up' ? GREEN : p.parts_status === 'received' ? BLUE : p.parts_status === 'ordered' ? AMBER : p.parts_status === 'installed' ? DIM : DIM
+                              const stLabel = p.parts_status === 'ready_for_job' ? 'Ready for Pickup' : p.parts_status === 'picked_up' ? 'Picked Up' : p.parts_status === 'received' ? 'Preparing' : p.parts_status === 'ordered' ? 'Ordered' : p.parts_status === 'installed' ? 'Installed' : 'Pending'
                               return (
                                 <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11, gap: 6 }}>
                                   <span style={{ color: DIM, flex: 1 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
@@ -725,7 +725,7 @@ export default function MechanicDashboardPage() {
                                       const res = await fetch(`/api/so-lines/${p.id}`, {
                                         method: 'PATCH',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ parts_status: 'installed' }),
+                                        body: JSON.stringify({ parts_status: 'picked_up' }),
                                       })
                                       if (!res.ok) failed++
                                     } catch { failed++ }
