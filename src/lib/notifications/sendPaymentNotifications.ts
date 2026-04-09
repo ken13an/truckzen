@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail, getShopInfo } from '@/lib/services/email'
-import { truckReadyEmail } from '@/lib/emails/truckReady'
+import { getShopInfo } from '@/lib/services/email'
+import { sendInvoiceEmail } from '@/lib/integrations/resend'
 import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
@@ -38,31 +38,44 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
   // Send email + SMS in parallel
   const promises: Promise<void>[] = []
 
-  // Email with invoice + PDF attachment
+  // Email with full invoice detail + PDF attachment
   if (email) {
     promises.push((async () => {
       try {
-        const { subject, html } = truckReadyEmail({
-          customerName,
-          unitNumber,
-          invoiceNumber: invoiceNumber || wo.so_number,
-          amount: totalAmount.toFixed(2),
-          shop: { name: shop.name, phone: shop.phone },
-        })
+        // Fetch full invoice data for the detailed email template
+        const { data: fullInv } = await s.from('invoices')
+          .select('*, service_orders(so_number, complaint, cause, correction, assets(unit_number,year,make,model,odometer), users!assigned_tech(full_name), so_lines(line_type, description, real_name, part_number, quantity, unit_price, total_price, parts_sell_price, billed_hours, estimated_hours, actual_hours, parts_status, related_labor_line_id)), shops(name,dba,phone,email,address,payment_payee_name,payment_bank_name,payment_ach_account,payment_ach_routing,payment_wire_account,payment_wire_routing,payment_zelle_email_1,payment_zelle_email_2,payment_mail_payee,payment_mail_address,payment_mail_address_2,payment_mail_city,payment_mail_state,payment_mail_zip,payment_note)')
+          .eq('id', invoiceId).single()
 
-        // Generate invoice PDF for attachment — direct call, no HTTP
-        let attachments: { filename: string; content: Buffer }[] | undefined
-        if (invoiceId) {
-          try {
-            const pdfResult = await generateInvoicePdf(invoiceId)
-            if (pdfResult) {
-              attachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
-            }
-          } catch { /* PDF attachment non-critical */ }
+        if (!fullInv) {
+          await logNotification(s, shopId, woId, 'email', null, email, 'failed', 'Invoice not found for email')
+          return
         }
 
-        await sendEmail(email, subject, html, attachments)
-        await logNotification(s, shopId, woId, 'email', null, email, 'sent')
+        const so = fullInv.service_orders as any
+        const shopData = fullInv.shops as any
+
+        // Generate PDF attachment
+        let pdfAttachments: { filename: string; content: Buffer }[] | undefined
+        try {
+          const pdfResult = await generateInvoicePdf(invoiceId!)
+          if (pdfResult) pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
+        } catch { /* PDF non-critical */ }
+
+        const result = await sendInvoiceEmail({
+          shop: { name: shopData?.name, dba: shopData?.dba, phone: shopData?.phone, email: shopData?.email, address: shopData?.address, payment_payee_name: shopData?.payment_payee_name, payment_bank_name: shopData?.payment_bank_name, payment_ach_account: shopData?.payment_ach_account, payment_ach_routing: shopData?.payment_ach_routing, payment_wire_account: shopData?.payment_wire_account, payment_wire_routing: shopData?.payment_wire_routing, payment_zelle_email_1: shopData?.payment_zelle_email_1, payment_zelle_email_2: shopData?.payment_zelle_email_2, payment_mail_payee: shopData?.payment_mail_payee, payment_mail_address: shopData?.payment_mail_address, payment_mail_city: shopData?.payment_mail_city, payment_mail_state: shopData?.payment_mail_state, payment_mail_zip: shopData?.payment_mail_zip },
+          customer: { company_name: customerName, contact_name: customerName, email },
+          invoice: { invoice_number: fullInv.invoice_number, due_date: fullInv.due_date, subtotal: fullInv.subtotal, tax_amount: fullInv.tax_amount, total: fullInv.total, amount_paid: fullInv.amount_paid, balance_due: fullInv.balance_due, notes: fullInv.notes },
+          serviceOrder: { so_number: so?.so_number, complaint: so?.complaint, cause: so?.cause, correction: so?.correction, truck_unit: (so?.assets as any)?.unit_number, truck_make_model: `${(so?.assets as any)?.year || ''} ${(so?.assets as any)?.make || ''} ${(so?.assets as any)?.model || ''}`.trim(), technician_name: (so?.users as any)?.full_name, odometer_in: (so?.assets as any)?.odometer },
+          lines: so?.so_lines || [],
+          attachments: pdfAttachments,
+        })
+
+        if (result.success) {
+          await logNotification(s, shopId, woId, 'email', null, email, 'sent')
+        } else {
+          await logNotification(s, shopId, woId, 'email', null, email, 'failed', result.error)
+        }
       } catch (err: any) {
         await logNotification(s, shopId, woId, 'email', null, email, 'failed', err.message)
       }
