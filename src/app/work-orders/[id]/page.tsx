@@ -178,8 +178,8 @@ export default function WorkOrderDetail() {
         setAllUsers(usersData)
         setMechanics(usersData.filter((u: any) => ['technician', 'lead_tech', 'maintenance_technician'].includes(u.role)))
       }
-      if (ratesRes) {
-        try { setShopLaborRates(await ratesRes.json()) } catch {}
+      if (ratesRes?.ok) {
+        try { const r = await ratesRes.json(); if (Array.isArray(r)) setShopLaborRates(r) } catch {}
       }
     } catch (e) {
       console.error('Load error', e)

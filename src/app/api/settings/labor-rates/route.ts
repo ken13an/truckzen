@@ -4,7 +4,7 @@ import { getCache, setCache, invalidateCache } from '@/lib/cache'
 import { requireAuthenticatedUser, requireRole } from '@/lib/route-guards'
 import { logAction } from '@/lib/services/auditLog'
 
-const LABOR_RATE_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager', 'shop_manager'] as const
+const LABOR_RATE_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin', 'accounting_manager', 'shop_manager', 'service_writer', 'floor_manager', 'parts_manager'] as const
 
 export async function GET() {
   const { actor, error } = await requireAuthenticatedUser()
