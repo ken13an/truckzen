@@ -88,6 +88,7 @@ export default function MechanicDashboardPage() {
   const [punchLoading, setPunchLoading] = useState(false)
   const [overrideModal, setOverrideModal] = useState(false)
   const [overrideReason, setOverrideReason] = useState('')
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Timer logic
@@ -557,7 +558,7 @@ export default function MechanicDashboardPage() {
         )}
 
         {/* ========== TAB 0: MY JOBS ========== */}
-        {tab === 0 && (
+        {tab === 0 && !selectedJobId && (
           <>
             {/* Filter pills */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -581,14 +582,58 @@ export default function MechanicDashboardPage() {
                 <p style={{ fontSize: 13, marginTop: 4 }}>When a manager assigns work, it will appear here.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {filteredJobs.map((job: any) => (
-                  <div key={job.id} style={{
-                    background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: 12,
-                    display: 'flex', overflow: 'hidden',
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {filteredJobs.map((job: any) => {
+                  const lineId = job.line_id || job.line?.id
+                  const isActiveJob = activeClock && activeClock.so_line_id === lineId
+                  const isPaused = !isActiveJob && lineId && clockedLines.has(lineId) && job.status !== 'completed'
+                  return (
+                  <button key={job.id} onClick={() => setSelectedJobId(job.id)} style={{
+                    background: isActiveJob ? 'rgba(34,197,94,0.08)' : CARD_BG,
+                    border: isActiveJob ? `2px solid ${GREEN}` : `1px solid ${CARD_BORDER}`,
+                    borderRadius: 12, display: 'flex', overflow: 'hidden', cursor: 'pointer',
+                    textAlign: 'left', width: '100%', padding: 0, fontFamily: FONT, color: TEXT,
                   }}>
-                    {/* Left color bar */}
                     <div style={{ width: 4, flexShrink: 0, background: leftBarColor(job.status) }} />
+                    <div style={{ flex: 1, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ color: BLUE, fontWeight: 700, fontSize: 14 }}>{job.wo?.so_number || 'WO'}</span>
+                          {isActiveJob && <span style={{ padding: '2px 8px', borderRadius: 999, background: GREEN, color: '#fff', fontSize: 10, fontWeight: 700 }}>Working Now</span>}
+                          {isPaused && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 10, fontWeight: 700 }}>Paused</span>}
+                          {job.status === 'completed' && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(34,197,94,0.15)', color: GREEN, fontSize: 10, fontWeight: 700 }}>Done</span>}
+                          {job.status === 'pending' && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 10, fontWeight: 700 }}>Pending</span>}
+                        </div>
+                        {job.line?.description && <div style={{ fontSize: 13, fontWeight: 600, color: TEXT, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.line.description}</div>}
+                        <div style={{ fontSize: 11, color: DIM }}>
+                          {job.wo?.customers?.company_name || ''}{job.wo?.assets?.unit_number ? ` — #${job.wo.assets.unit_number}` : ''}
+                        </div>
+                      </div>
+                      <ChevronRight size={18} color={DIM} style={{ flexShrink: 0 }} />
+                    </div>
+                  </button>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ========== TAB 0: FOCUSED SINGLE JOB VIEW ========== */}
+        {tab === 0 && selectedJobId && (() => {
+          const job = jobs.find((j: any) => j.id === selectedJobId)
+          if (!job) { setSelectedJobId(null); return null }
+          return (
+          <>
+            <button onClick={() => setSelectedJobId(null)} style={{ background: 'none', border: 'none', color: BLUE, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, padding: '4px 0', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+              &larr; Back to Jobs
+            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{
+                background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: 12,
+                display: 'flex', overflow: 'hidden',
+              }}>
+                <div style={{ width: 4, flexShrink: 0, background: leftBarColor(job.status) }} />
 
                     <div style={{ flex: 1, padding: '14px 16px' }}>
                       {/* Top row */}
@@ -853,11 +898,10 @@ export default function MechanicDashboardPage() {
                       })()}
                     </div>
                   </div>
-                ))}
               </div>
-            )}
           </>
-        )}
+          )
+        })()}
 
         {/* ========== TAB 1: PARTS REQUESTS ========== */}
         {tab === 1 && (
