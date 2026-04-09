@@ -29,9 +29,13 @@ async function recalcTotals(admin: any, soId: string) {
 
 type P = { params: Promise<{ id: string }> }
 
+// Mechanic roles that can confirm parts receipt (parts_status → installed) but not edit other fields
+const MECHANIC_RECEIPT_ROLES = ['technician', 'lead_tech', 'maintenance_technician']
+
 export async function PATCH(req: Request, { params }: P) {
   const { id } = await params
-  const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES])
+  // Allow mechanics through for parts receipt only — full role check happens below
+  const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES, ...MECHANIC_RECEIPT_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, quantity, unit_price, parts_sell_price, line_type')
   if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -49,6 +53,15 @@ export async function PATCH(req: Request, { params }: P) {
   }
 
   const body = await req.json()
+
+  // Mechanic roles can only confirm parts receipt (parts_status → installed)
+  const effectiveRole = ctx.actor.impersonate_role || ctx.actor.role
+  if (MECHANIC_RECEIPT_ROLES.includes(effectiveRole)) {
+    if (Object.keys(body).length !== 1 || body.parts_status !== 'installed') {
+      return NextResponse.json({ error: 'Mechanics can only confirm parts receipt' }, { status: 403 })
+    }
+  }
+
   // total_price is a generated column — never write it directly
   const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name']
   const update: Record<string, any> = {}

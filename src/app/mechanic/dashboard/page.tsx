@@ -699,6 +699,7 @@ export default function MechanicDashboardPage() {
                           })
                         }
                         if (matched.length === 0) return null
+                        const readyParts = matched.filter((p: any) => p.parts_status === 'ready_for_job')
                         return (
                           <div style={{ marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.06)` }}>
                             {matched.map((p: any) => {
@@ -707,32 +708,37 @@ export default function MechanicDashboardPage() {
                               return (
                                 <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontSize: 11, gap: 6 }}>
                                   <span style={{ color: DIM, flex: 1 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
-                                  {p.parts_status === 'ready_for_job' ? (
-                                    <button
-                                      disabled={actionLoading === 'pickup-' + p.id}
-                                      onClick={async (e) => {
-                                        e.stopPropagation()
-                                        setActionLoading('pickup-' + p.id)
-                                        try {
-                                          await fetch(`/api/so-lines/${p.id}`, {
-                                            method: 'PATCH',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ parts_status: 'installed' }),
-                                          })
-                                          if (user) await fetchData(user.id)
-                                        } catch {}
-                                        setActionLoading(null)
-                                      }}
-                                      style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${GREEN}`, background: `${GREEN}15`, color: GREEN, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap' }}
-                                    >
-                                      {actionLoading === 'pickup-' + p.id ? '...' : 'Confirm Pickup'}
-                                    </button>
-                                  ) : (
-                                    <span style={{ color: stColor, fontWeight: 600, fontSize: 10, whiteSpace: 'nowrap' }}>{stLabel}</span>
-                                  )}
+                                  <span style={{ color: stColor, fontWeight: 600, fontSize: 10, whiteSpace: 'nowrap' }}>{stLabel}</span>
                                 </div>
                               )
                             })}
+                            {/* One grouped confirm action for all ready parts */}
+                            {readyParts.length > 0 && (
+                              <button
+                                disabled={actionLoading === 'pickup-grouped'}
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  setActionLoading('pickup-grouped')
+                                  let failed = 0
+                                  for (const p of readyParts) {
+                                    try {
+                                      const res = await fetch(`/api/so-lines/${p.id}`, {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ parts_status: 'installed' }),
+                                      })
+                                      if (!res.ok) failed++
+                                    } catch { failed++ }
+                                  }
+                                  if (failed > 0) alert(`${failed} part${failed > 1 ? 's' : ''} could not be confirmed. Please try again.`)
+                                  if (user) await fetchData(user.id)
+                                  setActionLoading(null)
+                                }}
+                                style={{ marginTop: 8, width: '100%', padding: '10px 16px', borderRadius: 8, border: `1px solid ${GREEN}`, background: `${GREEN}18`, color: GREEN, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}
+                              >
+                                {actionLoading === 'pickup-grouped' ? 'Confirming...' : `Confirm Parts Received (${readyParts.length})`}
+                              </button>
+                            )}
                           </div>
                         )
                       })()}
