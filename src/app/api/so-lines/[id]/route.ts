@@ -1,4 +1,4 @@
-import { WO_FULL_ACCESS_ROLES, SERVICE_WRITE_ROLES } from '@/lib/roles'
+import { WO_FULL_ACCESS_ROLES, SERVICE_WRITE_ROLES, MECHANIC_ROLES } from '@/lib/roles'
 import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
@@ -29,13 +29,10 @@ async function recalcTotals(admin: any, soId: string) {
 
 type P = { params: Promise<{ id: string }> }
 
-// Mechanic roles that can confirm parts receipt (parts_status → installed) but not edit other fields
-const MECHANIC_RECEIPT_ROLES = ['technician', 'lead_tech', 'maintenance_technician']
-
 export async function PATCH(req: Request, { params }: P) {
   const { id } = await params
   // Allow mechanics through for parts receipt only — full role check happens below
-  const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES, ...MECHANIC_RECEIPT_ROLES])
+  const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES, ...MECHANIC_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { data: line } = await getSoLineForActor(ctx.admin, ctx.actor, id, 'id, so_id, quantity, unit_price, parts_sell_price, line_type')
   if (!line) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -56,7 +53,7 @@ export async function PATCH(req: Request, { params }: P) {
 
   // Mechanic roles can only confirm parts receipt (parts_status → picked_up)
   const effectiveRole = ctx.actor.impersonate_role || ctx.actor.role
-  if (MECHANIC_RECEIPT_ROLES.includes(effectiveRole)) {
+  if (MECHANIC_ROLES.includes(effectiveRole)) {
     if (Object.keys(body).length !== 1 || body.parts_status !== 'picked_up') {
       return NextResponse.json({ error: 'Mechanics can only confirm parts pickup' }, { status: 403 })
     }

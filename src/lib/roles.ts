@@ -30,3 +30,6 @@ export const WO_FULL_ACCESS_ROLES: string[] = ['owner', 'gm', 'it_person', 'shop
 
 // Service + parts operational (no accounting) — for line creation, parts workflow
 export const SERVICE_PARTS_ROLES: string[] = ['owner', 'gm', 'it_person', 'shop_manager', 'service_writer', 'office_admin', 'parts_manager', 'parts_clerk', 'floor_manager']
+
+// Mechanic roles — can confirm parts receipt (pickup) on assigned jobs
+export const MECHANIC_ROLES: string[] = ['technician', 'lead_tech', 'maintenance_technician']
