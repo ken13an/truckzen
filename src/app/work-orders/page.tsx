@@ -66,23 +66,25 @@ export default function WorkOrdersPage() {
   const fetchOrders = async (sid: string, p: number) => {
     if (!sid) return
     setLoading(true)
-    let url = `/api/work-orders?shop_id=${sid}&page=${p}&limit=${perPage}`
-    if (viewFilter === 'active') url += '&historical=false'
-    if (viewFilter === 'historical') url += '&historical=true'
-    if (viewFilter === 'dealer') url += '&warranty_status=send_to_dealer'
-    if (viewFilter === 'drafts') url += '&status=draft&include_drafts=true'
-    if (statusFilter !== 'all') url += `&status=${statusFilter}`
-    if (search) url += `&q=${encodeURIComponent(search)}`
-    const res = await fetch(url)
-    if (res.ok) {
-      const json = await res.json()
-      // Handle both old array response and new paginated response
-      if (Array.isArray(json)) {
-        setOrders(json); setTotal(json.length); setTotalPages(1)
-      } else {
-        setOrders(json.data || []); setTotal(json.total || 0); setTotalPages(json.totalPages || 1)
+    try {
+      let url = `/api/work-orders?shop_id=${sid}&page=${p}&limit=${perPage}`
+      if (viewFilter === 'active') url += '&historical=false'
+      if (viewFilter === 'historical') url += '&historical=true'
+      if (viewFilter === 'dealer') url += '&warranty_status=send_to_dealer'
+      if (viewFilter === 'drafts') url += '&status=draft&include_drafts=true'
+      if (statusFilter !== 'all') url += `&status=${statusFilter}`
+      if (search) url += `&q=${encodeURIComponent(search)}`
+      const res = await fetch(url)
+      if (res.ok) {
+        const json = await res.json()
+        // Handle both old array response and new paginated response
+        if (Array.isArray(json)) {
+          setOrders(json); setTotal(json.length); setTotalPages(1)
+        } else {
+          setOrders(json.data || []); setTotal(json.total || 0); setTotalPages(json.totalPages || 1)
+        }
       }
-    }
+    } catch { /* network or parse error — page stays in current state */ }
     setLoading(false)
   }
 
@@ -97,7 +99,7 @@ export default function WorkOrdersPage() {
       setUser(p)
       setShopId(p.shop_id)
       await fetchOrders(p.shop_id, 1)
-    })
+    }).catch(() => { /* auth error — page stays on loading state, no crash */ })
   }, [])
 
   // Re-fetch when filters, page, or search change
