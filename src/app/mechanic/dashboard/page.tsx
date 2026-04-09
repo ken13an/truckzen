@@ -800,7 +800,8 @@ export default function MechanicDashboardPage() {
                         )}
                         {job.status === 'in_progress' && workPunch && (
                           <>
-                            {hasHours && (
+                            {/* Mark Complete: requires real logged time or active clock — book hours not required */}
+                            {(clockedLines.has(job.line_id || job.line?.id) || (activeClock && activeClock.so_line_id === (job.line_id || job.line?.id))) && (
                             <button
                               disabled={actionLoading === job.id + 'complete'}
                               onClick={() => setCompleteModal(job)}
