@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { ADMIN_ROLES } from '@/lib/roles'
 import ExcelJS from 'exceljs'
 import * as XLSX from 'xlsx'
 
@@ -154,16 +155,16 @@ export default function SmartDropPage() {
       if (!p) { window.location.href = '/login'; return }
       setUser(p)
       fetchHistory(p.shop_id)
-      fetchFbStats(p.shop_id)
+      // Fullbay stats and connection check are admin-only
+      const adminCheck = !p.impersonate_role && (ADMIN_ROLES.includes(p.role) || p.is_platform_owner)
+      if (adminCheck) {
+        fetchFbStats(p.shop_id)
+        fetch('/api/fullbay/test-connection').then(r => r.json()).then(d => {
+          setFbConnected(d.ok)
+          if (d.name) setFbName(d.name)
+        }).catch(() => setFbConnected(false))
+      }
     })
-  }, [])
-
-  // Check Fullbay connection on mount
-  useEffect(() => {
-    fetch('/api/fullbay/test-connection').then(r => r.json()).then(d => {
-      setFbConnected(d.ok)
-      if (d.name) setFbName(d.name)
-    }).catch(() => setFbConnected(false))
   }, [])
 
   async function fetchHistory(shopId: string) {
@@ -514,6 +515,7 @@ export default function SmartDropPage() {
 
   if (!user) return null
 
+  const isAdmin = !user.impersonate_role && (ADMIN_ROLES.includes(user.role) || user.is_platform_owner)
   const allFields = importType === 'parts' ? Object.keys(PARTS_ALIASES) : importType === 'trucks' ? Object.keys(TRUCK_ALIASES) : Object.keys(COLUMN_ALIASES)
 
   return (
@@ -523,30 +525,32 @@ export default function SmartDropPage() {
       <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: TEXT, marginBottom: 4 }}>Smart Drop</div>
       <div style={{ fontSize: 12, color: DIM, marginBottom: 16 }}>Upload Excel or CSV files. Columns are auto-mapped using AI + smart matching.</div>
 
-      {/* Mode toggle */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <button onClick={() => setMode('upload')} style={{
-          flex: 1, padding: '14px 20px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
-          border: mode === 'upload' ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
-          background: mode === 'upload' ? 'rgba(29,111,232,.1)' : CARD_BG,
-          color: mode === 'upload' ? '#4D9EFF' : DIM,
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Upload
-        </button>
-        <button onClick={() => setMode('fullbay')} style={{
-          flex: 1, padding: '14px 20px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
-          border: mode === 'fullbay' ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
-          background: mode === 'fullbay' ? 'rgba(29,111,232,.1)' : CARD_BG,
-          color: mode === 'fullbay' ? '#4D9EFF' : DIM,
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
-          Fullbay
-        </button>
-      </div>
+      {/* Mode toggle — Fullbay integration is admin-only */}
+      {isAdmin && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          <button onClick={() => setMode('upload')} style={{
+            flex: 1, padding: '14px 20px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+            border: mode === 'upload' ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
+            background: mode === 'upload' ? 'rgba(29,111,232,.1)' : CARD_BG,
+            color: mode === 'upload' ? '#4D9EFF' : DIM,
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+          </button>
+          <button onClick={() => setMode('fullbay')} style={{
+            flex: 1, padding: '14px 20px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+            border: mode === 'fullbay' ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
+            background: mode === 'fullbay' ? 'rgba(29,111,232,.1)' : CARD_BG,
+            color: mode === 'fullbay' ? '#4D9EFF' : DIM,
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+            Fullbay
+          </button>
+        </div>
+      )}
 
-      {/* ═══ FULLBAY MODE ═══ */}
-      {mode === 'fullbay' && (
+      {/* ═══ FULLBAY MODE — admin only ═══ */}
+      {mode === 'fullbay' && isAdmin && (
         <>
           {/* Connection status */}
           <div style={{
@@ -560,7 +564,7 @@ export default function SmartDropPage() {
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {fbConnected === null && <span style={{ color: DIM }}>Checking Fullbay connection...</span>}
               {fbConnected === true && <span style={{ color: GREEN }}>Connected to Fullbay{fbName ? ` \u2014 ${fbName}` : ''}</span>}
-              {fbConnected === false && <span style={{ color: RED }}>Fullbay not connected. Add FULLBAY_API_KEY in environment variables.</span>}
+              {fbConnected === false && <span style={{ color: RED }}>Fullbay not connected. Contact your administrator to configure the integration.</span>}
             </div>
           </div>
 
@@ -700,8 +704,8 @@ export default function SmartDropPage() {
               onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
           </div>
 
-          {/* Fullbay WO Sync */}
-          {importType === 'trucks' && fbStats && (
+          {/* Fullbay WO Sync — admin only */}
+          {isAdmin && importType === 'trucks' && fbStats && (
             <div style={{ ...card, marginTop: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>Fullbay Work Orders</div>
