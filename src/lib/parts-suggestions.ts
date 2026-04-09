@@ -242,10 +242,25 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
   return parseSingleSegment(jobDescription, tirePositions)
 }
 
+/** Extract explicit quantity from text like "all 3 cabin filters", "2x wipers", "replace 4 tires" */
+function extractQuantity(text: string): { quantity: number; cleaned: string } {
+  // "all N items" / "N items" / "Nx items"
+  const numMatch = text.match(/\b(?:all\s+)?(\d+)\s*x?\s+/i)
+  if (numMatch) {
+    const qty = parseInt(numMatch[1])
+    if (qty > 0 && qty <= 100) {
+      return { quantity: qty, cleaned: text.replace(numMatch[0], '').trim() }
+    }
+  }
+  return { quantity: 1, cleaned: text }
+}
+
 /** Parse a single job segment into rough parts */
 function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[] {
   if (!text) return []
   const lower = text.toLowerCase().trim()
+  // Extract explicit quantity early
+  const { quantity: explicitQty, cleaned: cleanedText } = extractQuantity(text)
 
   // Tire jobs
   if (['tire', 'tyre', 'flat', 'blowout'].some(k => lower.includes(k))) {
@@ -306,22 +321,24 @@ function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[]
     if (lower.includes(keyword)) {
       const parts = JOB_AUTO_PARTS[keyword]
       // Domain guard: preserve the exact requested component instead of narrowing
-      const requestedComponent = text.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
+      const requestedComponent = cleanedText.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
       if (requestedComponent.length > 0 && parts.length === 1) {
         const suggestedLower = parts[0].rough_name.toLowerCase()
         const requestedLower = requestedComponent.toLowerCase()
         if (suggestedLower !== requestedLower && requestedLower.includes(keyword)) {
-          return [{ rough_name: requestedComponent, quantity: parts[0].quantity, is_labor: false }]
+          return [{ rough_name: requestedComponent, quantity: Math.max(explicitQty, parts[0].quantity), is_labor: false }]
         }
       }
+      // Apply explicit quantity if provided
+      if (explicitQty > 1) return parts.map(p => ({ ...p, quantity: p.is_labor ? p.quantity : explicitQty }))
       return parts
     }
   }
 
   // Fallback: return the stripped component name as a single rough part
-  const component = text.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
+  const component = cleanedText.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
   if (component.length > 2) {
-    return [{ rough_name: component, quantity: 1, is_labor: false }]
+    return [{ rough_name: component, quantity: explicitQty, is_labor: false }]
   }
 
   return []

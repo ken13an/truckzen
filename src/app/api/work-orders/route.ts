@@ -208,13 +208,19 @@ async function _POST(req: Request) {
         .gt('on_hand', 0)
         .limit(5)
 
-      // Conservative match: only auto-confirm when inventory description closely matches the request
-      // Reject sibling/subcomponent matches (e.g. "Windshield Seal" for "Windshield")
-      const partNameLower = partName.toLowerCase()
+      // Conservative component-level match: only auto-confirm when inventory is the SAME component
+      // Reject sibling/subcomponent matches (e.g. "Windshield Seal" for "Windshield", "Door Mirror" for "Door")
+      const partWords = partName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean)
       const inv = (invMatch || []).find((item: any) => {
-        const invLower = (item.description || '').toLowerCase()
-        // Exact match or inventory starts with the requested part
-        return invLower === partNameLower || invLower.startsWith(partNameLower + ' ') || invLower.startsWith(partNameLower + ',')
+        const invWords: string[] = (item.description || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean)
+        // All requested words must be present in inventory description
+        if (!partWords.every((w: string) => invWords.some((iw: string) => iw === w || iw === w + 's' || iw + 's' === w))) return false
+        // Inventory must not have significant extra nouns that change the component identity
+        // Allow generic suffixes: assembly, kit, set, oem, aftermarket, heavy duty
+        const safeExtras = new Set(['assembly', 'assy', 'kit', 'set', 'oem', 'aftermarket', 'heavy', 'duty', 'hd', 'lh', 'rh', 'left', 'right', 'front', 'rear', 'new', 'replacement'])
+        const extraWords = invWords.filter((w: string) => !partWords.includes(w) && !partWords.some((pw: string) => w === pw + 's' || w + 's' === pw))
+        const unsafeExtras = extraWords.filter((w: string) => !safeExtras.has(w))
+        return unsafeExtras.length === 0
       }) || null
 
       await s.from('so_lines').insert({
