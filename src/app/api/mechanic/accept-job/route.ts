@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
-import { sendPaymentNotifications } from '@/lib/notifications/sendPaymentNotifications'
 import { makeCompletionCalls } from '@/lib/notifications/makeCompletionCalls'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
@@ -98,9 +97,10 @@ export async function POST(req: Request) {
 
           const customerType = (wo?.customers as any)?.is_owner_operator ? 'owner_operator' : ((wo?.customers as any)?.customer_type || 'company')
 
-          if (customerType === 'owner_operator' || customerType === 'outside_customer') {
-            await sendPaymentNotifications(woId, wo?.shop_id)
-          } else {
+          // Notify about completion — but do NOT send invoice email here.
+          // Invoice email is sent by accounting/approve after the invoice row is created with real totals.
+          // Sending here would produce $0.00 because no invoice exists yet at accounting_review stage.
+          if (customerType !== 'owner_operator' && customerType !== 'outside_customer') {
             await makeCompletionCalls(woId, wo?.shop_id)
           }
 
