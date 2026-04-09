@@ -171,38 +171,46 @@ const OIL_CHANGE_PARTS: RoughPart[] = [
 ]
 
 const JOB_AUTO_PARTS: Record<string, RoughPart[]> = {
-  'alternator': [{ rough_name: 'Alternator', quantity: 1, is_labor: false }, { rough_name: 'Serpentine Belt', quantity: 1, is_labor: false }],
-  'starter': [{ rough_name: 'Starter Motor', quantity: 1, is_labor: false }],
+  // Phrase-priority entries (longer phrases must be listed so they match before shorter ones)
+  'windshield wiper': [{ rough_name: 'Wiper Blade', quantity: 2, is_labor: false }],
+  'wiper blade': [{ rough_name: 'Wiper Blade', quantity: 2, is_labor: false }],
+  'hood mirror': [{ rough_name: 'Hood Mirror', quantity: 1, is_labor: false }],
+  'door mirror': [{ rough_name: 'Door Mirror', quantity: 1, is_labor: false }],
+  'door handle': [{ rough_name: 'Door Handle', quantity: 1, is_labor: false }],
+  'cabin filter': [{ rough_name: 'Cabin Filter', quantity: 1, is_labor: false }],
+  'air filter': [{ rough_name: 'Engine Air Filter', quantity: 1, is_labor: false }],
+  'fuel filter': [{ rough_name: 'Fuel Filter', quantity: 1, is_labor: false }],
+  'fuel pump': [{ rough_name: 'Fuel Pump', quantity: 1, is_labor: false }],
+  'water pump': [{ rough_name: 'Water Pump', quantity: 1, is_labor: false }, { rough_name: 'Water Pump Gasket', quantity: 1, is_labor: false }],
+  'hub seal': [{ rough_name: 'Hub Seal', quantity: 1, is_labor: false }, { rough_name: 'Hub Oil', quantity: 1, is_labor: false }],
+  'wheel bearing': [{ rough_name: 'Wheel Bearing', quantity: 1, is_labor: false }],
+  'king pin': [{ rough_name: 'King Pin Kit', quantity: 1, is_labor: false }],
+  'u joint': [{ rough_name: 'U-Joint', quantity: 1, is_labor: false }],
+  'slack adjuster': [{ rough_name: 'Slack Adjuster', quantity: 1, is_labor: false }],
+  'air bag': [{ rough_name: 'Air Bag (Suspension)', quantity: 1, is_labor: false }],
+  'glad hand': [{ rough_name: 'Glad Hand', quantity: 1, is_labor: false }, { rough_name: 'Glad Hand Seal', quantity: 1, is_labor: false }],
   'ac repair': [{ rough_name: 'AC Compressor', quantity: 1, is_labor: false }, { rough_name: 'Refrigerant', quantity: 1, is_labor: false }],
   'a/c': [{ rough_name: 'AC Compressor', quantity: 1, is_labor: false }, { rough_name: 'Refrigerant', quantity: 1, is_labor: false }],
+  // Standard entries (shorter keywords — matched after longer phrases above)
+  'alternator': [{ rough_name: 'Alternator', quantity: 1, is_labor: false }, { rough_name: 'Serpentine Belt', quantity: 1, is_labor: false }],
+  'starter': [{ rough_name: 'Starter Motor', quantity: 1, is_labor: false }],
   'turbo': [{ rough_name: 'Turbocharger', quantity: 1, is_labor: false }, { rough_name: 'Turbo Gasket Kit', quantity: 1, is_labor: false }],
   'exhaust': [{ rough_name: 'Exhaust Gasket', quantity: 1, is_labor: false }, { rough_name: 'Exhaust Clamp', quantity: 1, is_labor: false }],
   'clutch': [{ rough_name: 'Clutch Disc', quantity: 1, is_labor: false }, { rough_name: 'Pressure Plate', quantity: 1, is_labor: false }, { rough_name: 'Throw-Out Bearing', quantity: 1, is_labor: false }],
   'battery': [{ rough_name: 'Battery', quantity: 1, is_labor: false }],
-  'water pump': [{ rough_name: 'Water Pump', quantity: 1, is_labor: false }, { rough_name: 'Water Pump Gasket', quantity: 1, is_labor: false }],
   'radiator': [{ rough_name: 'Radiator', quantity: 1, is_labor: false }],
-  'windshield': [{ rough_name: 'Windshield', quantity: 1, is_labor: false }, { rough_name: 'Windshield Seal', quantity: 1, is_labor: false }],
-  'air filter': [{ rough_name: 'Air Filter', quantity: 1, is_labor: false }],
-  'fuel filter': [{ rough_name: 'Fuel Filter', quantity: 1, is_labor: false }],
-  'fuel pump': [{ rough_name: 'Fuel Pump', quantity: 1, is_labor: false }],
+  'windshield': [{ rough_name: 'Windshield', quantity: 1, is_labor: false }],
   'wiper': [{ rough_name: 'Wiper Blade', quantity: 2, is_labor: false }],
-  'headlight': [{ rough_name: 'Headlight Bulb', quantity: 1, is_labor: false }],
-  'hub seal': [{ rough_name: 'Hub Seal', quantity: 1, is_labor: false }, { rough_name: 'Hub Oil', quantity: 1, is_labor: false }],
-  'wheel bearing': [{ rough_name: 'Wheel Bearing', quantity: 1, is_labor: false }],
-  'king pin': [{ rough_name: 'King Pin Kit', quantity: 1, is_labor: false }],
+  'headlight': [{ rough_name: 'Headlight', quantity: 1, is_labor: false }],
   'belt': [{ rough_name: 'Serpentine Belt', quantity: 1, is_labor: false }],
   'thermostat': [{ rough_name: 'Thermostat', quantity: 1, is_labor: false }, { rough_name: 'Coolant', quantity: 1, is_labor: false }],
   'dpf': [{ rough_name: 'DPF Filter', quantity: 1, is_labor: false }],
   'egr': [{ rough_name: 'EGR Valve', quantity: 1, is_labor: false }],
-  'bumper': [{ rough_name: 'Bumper', quantity: 1, is_labor: false }, { rough_name: 'Bumper Bracket', quantity: 1, is_labor: false }],
+  'bumper': [{ rough_name: 'Bumper', quantity: 1, is_labor: false }],
   'fender': [{ rough_name: 'Fender', quantity: 1, is_labor: false }],
   'hood': [{ rough_name: 'Hood', quantity: 1, is_labor: false }],
-  'mirror': [{ rough_name: 'Side Mirror', quantity: 1, is_labor: false }],
-  'door': [{ rough_name: 'Door Handle', quantity: 1, is_labor: false }],
-  'glad hand': [{ rough_name: 'Glad Hand', quantity: 1, is_labor: false }, { rough_name: 'Glad Hand Seal', quantity: 1, is_labor: false }],
-  'air bag': [{ rough_name: 'Air Bag (Suspension)', quantity: 1, is_labor: false }],
-  'u joint': [{ rough_name: 'U-Joint', quantity: 1, is_labor: false }],
-  'slack adjuster': [{ rough_name: 'Slack Adjuster', quantity: 1, is_labor: false }],
+  'mirror': [{ rough_name: 'Mirror', quantity: 1, is_labor: false }],
+  'door': [{ rough_name: 'Door', quantity: 1, is_labor: false }],
 }
 
 export function isDiagnosticJob(desc: string): boolean {
@@ -217,7 +225,29 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
   // Diagnostic jobs — no auto parts
   if (isDiagnosticJob(lower)) return []
 
-  // Tire jobs — generate from positions if available, otherwise generic fallback
+  // ══ STEP 1: Multi-part splitting FIRST ══
+  // If text contains multiple parts joined by +, and, &, commas — split and parse each independently
+  const stripped = jobDescription.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
+  const segments = stripped.split(/\s*(?:\+|,|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
+  if (segments.length >= 2) {
+    const allParts: RoughPart[] = []
+    for (const seg of segments) {
+      const segParts = parseSingleSegment(seg, tirePositions)
+      allParts.push(...segParts)
+    }
+    return allParts.length > 0 ? allParts : segments.map(seg => ({ rough_name: seg, quantity: 1, is_labor: false }))
+  }
+
+  // ══ STEP 2: Single segment parsing ══
+  return parseSingleSegment(jobDescription, tirePositions)
+}
+
+/** Parse a single job segment into rough parts */
+function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[] {
+  if (!text) return []
+  const lower = text.toLowerCase().trim()
+
+  // Tire jobs
   if (['tire', 'tyre', 'flat', 'blowout'].some(k => lower.includes(k))) {
     if (tirePositions && tirePositions.length > 0) {
       const steerCount = tirePositions.filter(p => p.includes('Steer')).length
@@ -230,17 +260,16 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
       if (parts.length === 0) parts.push({ rough_name: `${tirePositions.length}x Tire${tirePositions.length > 1 ? 's' : ''}`, quantity: tirePositions.length, is_labor: false })
       return parts
     }
-    // No positions selected — still needs a tire as rough part
     return [{ rough_name: 'Tire', quantity: 1, is_labor: false }, { rough_name: 'Valve Stem', quantity: 1, is_labor: false }]
   }
 
   // PM Service
   if (['pm service', 'pm ', 'preventive maintenance', 'preventative maintenance'].some(k => lower.includes(k))) return PM_PARTS
 
-  // Brake adjustment — labor only, no parts
+  // Brake adjustment — labor only
   if (lower.includes('brake adjustment') || lower.includes('brake adjust')) return []
 
-  // Brake repair/job — preserve exact requested brake components
+  // Brake repair — preserve exact components
   if (lower.includes('brake') && (lower.includes('repair') || lower.includes('job') || lower.includes('replace'))) {
     const parts: RoughPart[] = []
     if (lower.includes('drum')) parts.push({ rough_name: 'Brake Drum', quantity: 1, is_labor: false })
@@ -249,13 +278,12 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
     if (lower.includes('rotor')) parts.push({ rough_name: 'Brake Rotor', quantity: 1, is_labor: false })
     if (lower.includes('caliper')) parts.push({ rough_name: 'Brake Caliper', quantity: 1, is_labor: false })
     if (parts.length > 0) return parts
-    // Generic brake job with no specific component
     return [{ rough_name: 'Brake Parts', quantity: 1, is_labor: false }]
   }
 
-  // Oil change — preserve explicit viscosity and quantity from canonical template
-  if ((lower.includes('oil change') || lower.includes('oil filter')) && !lower.includes('pm')) {
-    const viscosityMatch = jobDescription.match(/\b(\d+[Ww]-?\d+)\b/)
+  // Oil change — preserve viscosity and quantity
+  if ((lower.includes('oil change') || lower.includes('oil filter') || lower.includes('engine oil')) && !lower.includes('pm')) {
+    const viscosityMatch = text.match(/\b(\d+[Ww]-?\d+)\b/)
     const oilName = viscosityMatch ? `Engine Oil (${viscosityMatch[1].toUpperCase()})` : 'Engine Oil (15W-40)'
     return [
       { rough_name: 'Oil Filter', quantity: 1, is_labor: false },
@@ -264,18 +292,25 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
     ]
   }
 
-  // Other common jobs — use keyword lookup but with domain-preservation guard:
-  // If the job description explicitly names a broader assembly, do not narrow to a subcomponent
-  for (const [keyword, parts] of Object.entries(JOB_AUTO_PARTS)) {
+  // Greasing — labor service, no physical parts
+  if (lower.includes('greas') || lower.includes('lubrication')) {
+    return [{ rough_name: 'Grease/Lubrication', quantity: 1, is_labor: true }]
+  }
+
+  // ══ Phrase-priority keyword lookup ══
+  // Sort keywords longest-first so "windshield wiper" beats "windshield",
+  // "hood mirror" beats "hood", "door handle" beats "door"
+  const sortedKeywords = Object.keys(JOB_AUTO_PARTS).sort((a, b) => b.length - a.length)
+
+  for (const keyword of sortedKeywords) {
     if (lower.includes(keyword)) {
-      // Domain guard: strip common action verbs to extract the actual requested component
-      const requestedComponent = jobDescription.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
-      // If the requested component is broader than the suggested part, preserve the request
+      const parts = JOB_AUTO_PARTS[keyword]
+      // Domain guard: preserve the exact requested component instead of narrowing
+      const requestedComponent = text.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
       if (requestedComponent.length > 0 && parts.length === 1) {
         const suggestedLower = parts[0].rough_name.toLowerCase()
         const requestedLower = requestedComponent.toLowerCase()
-        // Don't narrow "headlight" → "Headlight Bulb" unless "bulb" is in the request
-        if (requestedLower.includes(keyword) && !requestedLower.includes(suggestedLower.replace(keyword, '').trim()) && suggestedLower !== requestedLower) {
+        if (suggestedLower !== requestedLower && requestedLower.includes(keyword)) {
           return [{ rough_name: requestedComponent, quantity: parts[0].quantity, is_labor: false }]
         }
       }
@@ -283,12 +318,10 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
     }
   }
 
-  // Multi-part text splitting: if description contains multiple distinct parts
-  // joined by separators (+, and, &, commas), split into separate itemized rough parts
-  const stripped = jobDescription.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
-  const segments = stripped.split(/\s*(?:\+|,|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
-  if (segments.length >= 2) {
-    return segments.map(seg => ({ rough_name: seg, quantity: 1, is_labor: false }))
+  // Fallback: return the stripped component name as a single rough part
+  const component = text.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
+  if (component.length > 2) {
+    return [{ rough_name: component, quantity: 1, is_labor: false }]
   }
 
   return []

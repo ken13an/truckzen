@@ -199,16 +199,23 @@ async function _POST(req: Request) {
       const partName = rp.rough_name || rp.description || ''
       if (!partName) continue
 
-      // Try to match against shop inventory
+      // Try to match against shop inventory — conservative match only
       const { data: invMatch } = await s.from('parts')
         .select('id, description, part_number, cost_price, sell_price, on_hand')
         .eq('shop_id', shop_id)
         .is('deleted_at', null)
         .ilike('description', `%${partName}%`)
         .gt('on_hand', 0)
-        .limit(1)
+        .limit(5)
 
-      const inv = invMatch?.[0]
+      // Conservative match: only auto-confirm when inventory description closely matches the request
+      // Reject sibling/subcomponent matches (e.g. "Windshield Seal" for "Windshield")
+      const partNameLower = partName.toLowerCase()
+      const inv = (invMatch || []).find((item: any) => {
+        const invLower = (item.description || '').toLowerCase()
+        // Exact match or inventory starts with the requested part
+        return invLower === partNameLower || invLower.startsWith(partNameLower + ' ') || invLower.startsWith(partNameLower + ',')
+      }) || null
 
       await s.from('so_lines').insert({
         so_id: wo.id,
