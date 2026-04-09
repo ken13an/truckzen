@@ -8,6 +8,7 @@ import { ChevronLeft } from 'lucide-react'
 import { VinInput } from '@/components/shared/VinInput'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
+import { mergeDraftLines, type DraftJobLine } from '@/lib/merge-lines'
 import { SERVICE_WRITE_ROLES } from '@/lib/roles'
 import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
 
@@ -66,8 +67,9 @@ export default function NewWorkOrderPage() {
   const [duplicateWarning, setDuplicateWarning] = useState('')
 
   const [step, setStep] = useState<'edit' | 'processing' | 'review'>('edit')
-  const [jobLines, setJobLines] = useState<{ description: string; skills: string[]; tirePositions: string[]; isTire: boolean; isDiagnostic: boolean; roughParts: { rough_name: string; quantity: number; is_labor: boolean }[] }[]>([])
+  const [jobLines, setJobLines] = useState<DraftJobLine[]>([])
   const [aiFailed, setAiFailed] = useState(false)
+  const [mergeSelected, setMergeSelected] = useState<Set<number>>(new Set())
 
   const [inventoryParts, setInventoryParts] = useState<any[]>([])
   const [suggestions, setSuggestions] = useState<PartSuggestion[]>([])
@@ -634,12 +636,35 @@ export default function NewWorkOrderPage() {
               </div>
             )}
 
+            {/* Merge controls */}
+            {jobLines.length > 1 && mergeSelected.size >= 2 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#1D6FE8' }}>{mergeSelected.size} lines selected</span>
+                <button onClick={() => {
+                  const indices = Array.from(mergeSelected).sort((a, b) => a - b)
+                  const destIdx = indices[0]
+                  const srcIndices = indices.slice(1)
+                  const dest = jobLines[destIdx]
+                  const sources = srcIndices.map(i => jobLines[i])
+                  const merged = mergeDraftLines(dest, sources)
+                  setJobLines(prev => prev.filter((_, idx) => !srcIndices.includes(idx)).map((l, idx) => idx === destIdx ? merged : l))
+                  setMergeSelected(new Set())
+                }} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: '#1D6FE8', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  Merge into Job {Array.from(mergeSelected).sort((a, b) => a - b)[0] + 1}
+                </button>
+                <button onClick={() => setMergeSelected(new Set())} style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
               {jobLines.map((line, i) => {
                 const unrecognized = isUnrecognizedJob(line.description, line.skills)
                 return (
-                <div key={i} style={{ border: unrecognized ? '1px solid #FCA5A5' : '1px solid #E5E7EB', borderLeft: unrecognized ? '4px solid #EF4444' : '1px solid #E5E7EB', borderRadius: 10, padding: 12, background: unrecognized ? '#FEF2F2' : '#fff' }}>
+                <div key={i} style={{ border: mergeSelected.has(i) ? '2px solid #1D6FE8' : unrecognized ? '1px solid #FCA5A5' : '1px solid #E5E7EB', borderLeft: unrecognized && !mergeSelected.has(i) ? '4px solid #EF4444' : mergeSelected.has(i) ? '2px solid #1D6FE8' : '1px solid #E5E7EB', borderRadius: 10, padding: 12, background: mergeSelected.has(i) ? '#EFF6FF' : unrecognized ? '#FEF2F2' : '#fff' }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: line.isTire ? 10 : 0 }}>
+                    {jobLines.length > 1 && (
+                      <input type="checkbox" checked={mergeSelected.has(i)} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n })} style={{ cursor: 'pointer', accentColor: '#1D6FE8', width: 16, height: 16, flexShrink: 0 }} />
+                    )}
                     <span style={{ fontSize: 11, fontWeight: 700, color: unrecognized ? '#DC2626' : '#9CA3AF', minWidth: 40, display: 'flex', alignItems: 'center', gap: 4 }}>
                       {unrecognized && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>}
                       Job {i + 1}

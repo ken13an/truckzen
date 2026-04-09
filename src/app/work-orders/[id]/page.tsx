@@ -120,6 +120,8 @@ export default function WorkOrderDetail() {
   const [partsSubmitting, setPartsSubmitting] = useState(false)
   const [partNoteOpen, setPartNoteOpen] = useState<string | null>(null)
   const [shopLaborRates, setShopLaborRates] = useState<any[]>([])
+  const [mergeSelected, setMergeSelected] = useState<Set<string>>(new Set())
+  const [merging, setMerging] = useState(false)
   const [contactEmail, setContactEmail] = useState('')
   const [contactPhone, setContactPhone] = useState('')
   const [approvalConfirmModal, setApprovalConfirmModal] = useState<{ method: string; notes: string } | null>(null)
@@ -1115,6 +1117,37 @@ export default function WorkOrderDetail() {
       {tab === 0 && (
         <JobsTab>
         <div>
+          {/* Merge controls for service writers */}
+          {!wo.is_historical && !isViewOnly && jobLines.length > 1 && mergeSelected.size >= 2 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 10, marginBottom: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#1D6FE8' }}>{mergeSelected.size} lines selected</span>
+              <button disabled={merging} onClick={async () => {
+                const ids = Array.from(mergeSelected)
+                const destId = ids[0]
+                const srcIds = ids.slice(1)
+                setMerging(true)
+                try {
+                  const res = await fetch('/api/so-lines/merge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ destination_id: destId, source_ids: srcIds }),
+                  })
+                  if (res.ok) {
+                    setMergeSelected(new Set())
+                    const woRes = await fetch(`/api/work-orders/${wo.id}`)
+                    if (woRes.ok) { const d = await woRes.json(); setWo(d) }
+                  } else {
+                    const err = await res.json().catch(() => ({}))
+                    alert(err.blocked ? err.blocked.join('\n') : err.error || 'Merge failed')
+                  }
+                } catch { alert('Merge failed — please try again') }
+                setMerging(false)
+              }} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: '#1D6FE8', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: merging ? 0.5 : 1 }}>
+                {merging ? 'Merging...' : `Merge into first selected`}
+              </button>
+              <button onClick={() => setMergeSelected(new Set())} style={{ background: 'none', border: 'none', color: '#9CA3AF', fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+            </div>
+          )}
           {jobLines.map((line: any, idx: number) => {
             const st = LINE_STATUS[line.line_status] || LINE_STATUS.unassigned
             const lineAssignments = jobAssignments.filter((a: any) => a.line_id === line.id)
@@ -1125,6 +1158,9 @@ export default function WorkOrderDetail() {
               <div key={line.id} style={{ ...cardStyle, borderLeft: `3px solid ${isAdditional ? AMBER : st.color}`, position: 'relative' }}>
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                  {!wo.is_historical && !isViewOnly && jobLines.length > 1 && (
+                    <input type="checkbox" checked={mergeSelected.has(line.id)} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(line.id) ? n.delete(line.id) : n.add(line.id); return n })} style={{ cursor: 'pointer', accentColor: '#1D6FE8', width: 16, height: 16, flexShrink: 0 }} />
+                  )}
                   <span style={{ fontSize: 14, fontWeight: 700 }}>Job {idx + 1}</span>
                   {wo.is_historical ? (
                     <span style={pillStyle(st.bg, st.color)}>{st.label}</span>
