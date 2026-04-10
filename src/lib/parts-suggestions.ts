@@ -219,12 +219,117 @@ export function needsClarification(roughParts: RoughPart[]): boolean {
   return roughParts.some(p => p.needs_clarification === true)
 }
 
-/** Clarification options for noun-only input */
+/** Clarification options for noun-only input (legacy default) */
 export const CLARIFICATION_OPTIONS = ['Replace', 'Install', 'Repair', 'Inspect'] as const
+
+// ══ INTENT-AWARE CLARIFICATION (TZBridge4) ══
+
+export type ClarificationCategory = 'generic_installable' | 'repair_or_replace' | 'existing_default'
+
+const INSTALLABLE_NOUNS = ['fridge', 'refrigerator', 'microwave', 'inverter', 'tv', 'television', 'cb radio', 'radio', 'gps', 'dashcam', 'dash cam', 'coffee maker']
+const REPAIR_OR_REPLACE_NOUNS = ['windshield', 'hood', 'bumper', 'fender', 'mirror', 'door', 'grille', 'visor', 'panel']
+
+/** Determine clarification category for a noun-only input */
+export function getClarificationCategory(rawInput: string): ClarificationCategory {
+  const lower = rawInput.toLowerCase().trim()
+  if (INSTALLABLE_NOUNS.some(n => lower.includes(n))) return 'generic_installable'
+  if (REPAIR_OR_REPLACE_NOUNS.some(n => lower.includes(n))) return 'repair_or_replace'
+  return 'existing_default'
+}
+
+/** Get intent-aware clarification options for the given input */
+export function getClarificationOptionsForInput(rawInput: string): string[] {
+  const category = getClarificationCategory(rawInput)
+  switch (category) {
+    case 'generic_installable': return ['Install', 'Add']
+    case 'repair_or_replace': return ['Replace', 'Repair']
+    case 'existing_default': return [...CLARIFICATION_OPTIONS]
+  }
+}
 
 export function isDiagnosticJob(desc: string): boolean {
   const lower = desc.toLowerCase()
   return DIAGNOSTIC_KEYWORDS.some(k => lower.includes(k))
+}
+
+// ══ POST-DETERMINISTIC BRAIN ADAPTER SEAM (TZBridge6) ══
+// This adapter runs ONLY at the review step, AFTER deterministic parsing and clarification.
+// It must NEVER override deterministic truth. It must NEVER run before clarification resolves.
+// Currently a no-op — later patches will inject safe-family historical suggestions here.
+
+export interface BrainAssistRequest {
+  job_description: string
+  deterministic_rough_parts: string[]
+  is_diagnostic: boolean
+  is_tire: boolean
+  asset_make?: string | null
+  asset_model?: string | null
+  asset_year?: number | null
+}
+
+export interface BrainAssistSuggestion {
+  description: string
+  part_number?: string
+  suggested_quantity: number
+  confidence: 'high' | 'medium' | 'low'
+  source: 'historical_brain'
+  historical_wo_count: number
+}
+
+export interface BrainAssistResponse {
+  suggestions: BrainAssistSuggestion[]
+}
+
+// ══ PM / OIL CHANGE ASSIST SEED (TZBridge7) ══
+// Smallest curated suggestion data for PM Service and Oil Change only.
+// Derived from Brain1-4 historical evidence (33,250 WOs). Not a full catalog.
+
+const PM_OIL_ASSIST_SEED: Record<string, BrainAssistSuggestion[]> = {
+  volvo: [
+    { description: 'Engine Oil 15W-40', part_number: 'MOBIL DELVAC', suggested_quantity: 44, confidence: 'high', source: 'historical_brain', historical_wo_count: 1634 },
+    { description: 'Oil Filter', part_number: 'LF667', suggested_quantity: 2, confidence: 'high', source: 'historical_brain', historical_wo_count: 774 },
+    { description: 'Fuel Filter', part_number: 'FF5507', suggested_quantity: 1, confidence: 'high', source: 'historical_brain', historical_wo_count: 891 },
+  ],
+  freightliner: [
+    { description: 'Engine Oil 10W-30', part_number: 'MOBIL DELVAC', suggested_quantity: 44, confidence: 'high', source: 'historical_brain', historical_wo_count: 914 },
+    { description: 'Oil Filter', part_number: 'A4711800209', suggested_quantity: 1, confidence: 'high', source: 'historical_brain', historical_wo_count: 664 },
+    { description: 'Fuel Filter', part_number: 'FK48002', suggested_quantity: 1, confidence: 'high', source: 'historical_brain', historical_wo_count: 500 },
+  ],
+  _default: [
+    { description: 'Engine Oil', suggested_quantity: 44, confidence: 'medium', source: 'historical_brain', historical_wo_count: 3877 },
+    { description: 'Oil Filter', suggested_quantity: 1, confidence: 'medium', source: 'historical_brain', historical_wo_count: 3758 },
+    { description: 'Fuel Filter', suggested_quantity: 1, confidence: 'medium', source: 'historical_brain', historical_wo_count: 1914 },
+  ],
+}
+
+const PM_OIL_PATTERNS = [/\bpm\b/i, /\bpreventive\s*maint/i, /\bpreventative\s*maint/i, /\bpm\s*service/i, /\boil\s*change/i, /\bengine\s*oil\s*change/i]
+
+function isPmOrOilChangeJob(description: string): boolean {
+  const lower = description.toLowerCase()
+  return PM_OIL_PATTERNS.some(p => p.test(lower))
+}
+
+/** Post-deterministic brain adapter — returns PM/Oil Change assist for approved families.
+ *  All other families return empty. Deterministic truth is never overridden. */
+export function getBrainAssist(lines: BrainAssistRequest[]): BrainAssistResponse[] {
+  return lines.map(line => {
+    // Bypass: diagnostic, tire, or not PM/Oil Change family
+    if (line.is_diagnostic || line.is_tire || !isPmOrOilChangeJob(line.job_description)) {
+      return { suggestions: [] }
+    }
+
+    // Pick make-conditioned seed
+    const make = (line.asset_make || '').toLowerCase()
+    const seed = make.includes('volvo') ? PM_OIL_ASSIST_SEED.volvo
+      : make.includes('freightliner') ? PM_OIL_ASSIST_SEED.freightliner
+      : PM_OIL_ASSIST_SEED._default
+
+    // Filter out suggestions already covered by deterministic rough parts
+    const existingLower = new Set(line.deterministic_rough_parts.map(p => p.toLowerCase()))
+    const filtered = seed.filter(s => !existingLower.has(s.description.toLowerCase()))
+
+    return { suggestions: filtered }
+  })
 }
 
 export function getAutoRoughParts(jobDescription: string, tirePositions?: string[]): RoughPart[] {
@@ -250,6 +355,150 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
   return parseSingleSegment(jobDescription, tirePositions)
 }
 
+// ══ PRE-AI DETERMINISTIC GATE (TZBridge2) ══
+
+export type PreAiDecision = 'deterministic_simple' | 'ambiguous_noun_only' | 'send_to_ai'
+
+/**
+ * Classify raw complaint text BEFORE sending to AI.
+ * Returns whether the complaint can be handled deterministically or needs AI splitting.
+ */
+// Known PM/Oil Change family phrases that are deterministic even without a leading verb (TZBridge7A)
+const PM_OIL_FAMILY_PHRASES = [/^pm$/i, /^pm\s+service/i, /^preventive\s+maint/i, /^preventative\s+maint/i, /^oil\s+change/i, /^engine\s+oil\s+change/i]
+
+function isPmOilFamilyPhrase(text: string): boolean {
+  const lower = text.toLowerCase().trim()
+  return PM_OIL_FAMILY_PHRASES.some(p => p.test(lower))
+}
+
+export function preClassifyComplaint(rawComplaint: string): PreAiDecision {
+  const trimmed = rawComplaint.trim()
+  if (!trimmed) return 'send_to_ai'
+
+  // Multi-segment complaints need AI for proper splitting
+  const segments = trimmed.split(/\s*(?:\+|,|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
+  if (segments.length >= 2) return 'send_to_ai'
+
+  // Long or multi-sentence complaints need AI
+  if (trimmed.split(/\s+/).length > 12) return 'send_to_ai'
+  if (/[.;]/.test(trimmed) && trimmed.split(/[.;]/).filter(s => s.trim().length > 3).length >= 2) return 'send_to_ai'
+
+  // Approved PM/Oil family phrases — deterministic even without a leading verb (TZBridge7A)
+  if (isPmOilFamilyPhrase(trimmed)) return 'deterministic_simple'
+
+  // Single segment — check verb intent
+  const { intent } = detectVerbIntent(trimmed)
+
+  // Clear verb found — deterministic can handle it
+  if (intent === 'part_candidate' || intent === 'no_auto_parts' || intent === 'labor_only' ||
+      intent === 'labor_unless_replacement' || intent === 'material_expected') {
+    return 'deterministic_simple'
+  }
+
+  // No verb — noun-only ambiguous
+  if (intent === 'ambiguous') {
+    return 'ambiguous_noun_only'
+  }
+
+  return 'send_to_ai'
+}
+
+// ══ VERB CONSTANTS (hoisted for use by splitter and parser) ══
+
+const PART_CANDIDATE_VERBS = ['replace', 'install', 'add']
+const NO_AUTO_PARTS_VERBS = ['clean', 'wash', 'grease', 'inspect', 'diagnose', 'diagnostic', 'test']
+const LABOR_ONLY_VERBS = ['fix', 'adjust', 'tighten', 'align', 'check']
+const MATERIAL_VERBS = ['change']
+
+// ══ PRE-AI MIXED-LINE SPLITTING (TZBridge3) ══
+
+export type PreRouteDecision = 'deterministic_single' | 'deterministic_multi' | 'ambiguous_noun_only' | 'send_to_ai'
+
+export interface PreRouteResult {
+  decision: PreRouteDecision
+  segments: string[]
+}
+
+/** Check if a segment is complete enough to stand alone (not just a bare verb) */
+function isCompleteSegment(seg: string): boolean {
+  const words = seg.trim().split(/\s+/).filter(w => w.length > 0)
+  // A standalone segment needs at least a verb + object (2+ meaningful words)
+  return words.length >= 2
+}
+
+/** Check if a segment starts with a recognizable action verb */
+function startsWithActionVerb(seg: string): boolean {
+  const first = seg.trim().split(/\s+/)[0]?.toLowerCase()
+  if (!first) return false
+  const allVerbs = [...PART_CANDIDATE_VERBS, ...NO_AUTO_PARTS_VERBS, ...LABOR_ONLY_VERBS, 'repair', 'change']
+  return allVerbs.includes(first)
+}
+
+/** Split raw complaint into candidate segments using safe boundary rules.
+ *  Strong delimiters (+, ;, newline) always split.
+ *  Soft delimiters (, and, &) only split when both sides are independently actionable. */
+export function splitComplaintIntoDeterministicSegments(rawComplaint: string): string[] {
+  const trimmed = rawComplaint.trim()
+
+  // Phase 1: Split on strong delimiters (always safe)
+  const strongParts = trimmed.split(/\s*[+;\n]\s*/).map(s => s.trim()).filter(s => s.length > 2)
+
+  // Phase 2: For each strong part, try soft splitting on "and" / "&" / ","
+  const result: string[] = []
+  for (const part of strongParts) {
+    // Try splitting on ", " or " and " or " & "
+    const softCandidates = part.split(/\s*(?:,\s+|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
+
+    if (softCandidates.length >= 2) {
+      // Only split if: left side is a complete segment AND right side starts with an action verb
+      // This prevents splitting "check and tighten fairings" or "remove and replace bumper"
+      let shouldSoftSplit = true
+      for (let i = 0; i < softCandidates.length; i++) {
+        if (i === 0 && !isCompleteSegment(softCandidates[i])) { shouldSoftSplit = false; break }
+        if (i > 0 && !startsWithActionVerb(softCandidates[i])) { shouldSoftSplit = false; break }
+      }
+      if (shouldSoftSplit) {
+        result.push(...softCandidates)
+      } else {
+        result.push(part)
+      }
+    } else {
+      result.push(part)
+    }
+  }
+
+  return result
+}
+
+/** Classify full complaint for pre-AI routing with multi-segment support */
+export function preRouteComplaintBeforeAi(rawComplaint: string): PreRouteResult {
+  const trimmed = rawComplaint.trim()
+  if (!trimmed) return { decision: 'send_to_ai', segments: [trimmed] }
+
+  // Long or multi-sentence → AI
+  if (trimmed.split(/\s+/).length > 12) return { decision: 'send_to_ai', segments: [trimmed] }
+  if (/[.;]/.test(trimmed) && trimmed.split(/[.;]/).filter(s => s.trim().length > 3).length >= 2) {
+    return { decision: 'send_to_ai', segments: [trimmed] }
+  }
+
+  const segments = splitComplaintIntoDeterministicSegments(trimmed)
+
+  // Single segment — delegate to existing single-segment classifier
+  if (segments.length <= 1) {
+    const single = preClassifyComplaint(trimmed)
+    if (single === 'deterministic_simple') return { decision: 'deterministic_single', segments: [trimmed] }
+    if (single === 'ambiguous_noun_only') return { decision: 'ambiguous_noun_only', segments: [trimmed] }
+    return { decision: 'send_to_ai', segments: [trimmed] }
+  }
+
+  // Multi-segment — classify each
+  const allSimple = segments.every(seg => preClassifyComplaint(seg) === 'deterministic_simple')
+  if (allSimple) return { decision: 'deterministic_multi', segments }
+
+  // Not all segments are deterministic — fall back to AI
+  return { decision: 'send_to_ai', segments: [trimmed] }
+}
+
 // ══ DETERMINISTIC VERB-INTENT PARSING (Patch 109) ══
 
 // Abbreviation normalization
@@ -271,11 +520,6 @@ function normalizeText(text: string): string {
 
 // Verb → intent mapping
 type VerbIntent = 'part_candidate' | 'no_auto_parts' | 'labor_only' | 'labor_unless_replacement' | 'material_expected' | 'ambiguous'
-
-const PART_CANDIDATE_VERBS = ['replace', 'install', 'add']
-const NO_AUTO_PARTS_VERBS = ['clean', 'wash', 'grease', 'inspect', 'diagnose', 'diagnostic', 'test']
-const LABOR_ONLY_VERBS = ['fix', 'adjust', 'tighten', 'align', 'check']
-const MATERIAL_VERBS = ['change']
 
 function detectVerbIntent(text: string): { intent: VerbIntent; verb: string | null } {
   const lower = text.toLowerCase().trim()

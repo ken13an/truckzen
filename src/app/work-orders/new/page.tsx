@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { mergeDraftLines, type DraftJobLine } from '@/lib/merge-lines'
 import { SERVICE_WRITE_ROLES } from '@/lib/roles'
-import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob, needsClarification, CLARIFICATION_OPTIONS } from '@/lib/parts-suggestions'
+import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob, needsClarification, getClarificationOptionsForInput, preRouteComplaintBeforeAi, getBrainAssist, type BrainAssistRequest, type BrainAssistResponse } from '@/lib/parts-suggestions'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
 interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string; ownership_type?: string; unit_type?: string; is_owner_operator?: boolean }
@@ -73,6 +73,7 @@ export default function NewWorkOrderPage() {
 
   const [inventoryParts, setInventoryParts] = useState<any[]>([])
   const [suggestions, setSuggestions] = useState<PartSuggestion[]>([])
+  const [brainSuggestions, setBrainSuggestions] = useState<BrainAssistResponse[]>([])
 
   const [showNewUnit, setShowNewUnit] = useState(false)
   const [newUnit, setNewUnit] = useState({ number: '', vin: '', year: '', make: '', model: '' })
@@ -344,8 +345,53 @@ export default function NewWorkOrderPage() {
 
     setStep('processing'); setError(''); setAiFailed(false); setDuplicateWarning('')
 
+    const raw = complaint.trim()
+    const route = preRouteComplaintBeforeAi(raw)
+
+    // Post-deterministic brain adapter seam (TZBridge6) — runs at review step only.
+    // Must NEVER run before clarification resolves. Only called when all lines are resolved.
+    // Currently no-op. Later patches inject safe-family historical suggestions here.
+    const runBrainSeam = (lines: typeof jobLines) => {
+      // Guard: do not call brain if any line still needs clarification (TZBridge6A)
+      if (lines.some(l => needsClarification(l.roughParts))) { setBrainSuggestions([]); return }
+      const requests: BrainAssistRequest[] = lines.map(l => ({
+        job_description: l.description,
+        deterministic_rough_parts: l.roughParts.map(p => p.rough_name),
+        is_diagnostic: l.isDiagnostic,
+        is_tire: l.isTire,
+        asset_make: selectedAsset?.make,
+        asset_model: selectedAsset?.model,
+        asset_year: selectedAsset?.year,
+      }))
+      // TZBridge7: returns PM/Oil Change suggestions for approved families, empty for all others
+      setBrainSuggestions(getBrainAssist(requests))
+    }
+
+    if (route.decision === 'deterministic_single' || route.decision === 'ambiguous_noun_only') {
+      const lines: typeof jobLines = [{ description: raw, skills: [], tirePositions: [], isTire: isTireJob(raw), isDiagnostic: isDiagnosticJob(raw), roughParts: getAutoRoughParts(raw) }]
+      setJobLines(lines)
+      runBrainSeam(lines)
+      const dup = checkDuplicates(lines)
+      if (dup) setDuplicateWarning(dup)
+      setStep('review')
+      return
+    }
+
+    if (route.decision === 'deterministic_multi') {
+      const lines: typeof jobLines = route.segments.map(seg => ({
+        description: seg, skills: [], tirePositions: [], isTire: isTireJob(seg), isDiagnostic: isDiagnosticJob(seg), roughParts: getAutoRoughParts(seg),
+      }))
+      setJobLines(lines)
+      runBrainSeam(lines)
+      const dup = checkDuplicates(lines)
+      if (dup) setDuplicateWarning(dup)
+      setStep('review')
+      return
+    }
+
+    // send_to_ai — complex/multi-action/mixed-ambiguity complaints use AI splitting
     try {
-      const res = await fetch('/api/ai/action-items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ complaint: complaint.trim(), shop_id: profile?.shop_id, user_id: profile?.id }) })
+      const res = await fetch('/api/ai/action-items', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ complaint: raw, shop_id: profile?.shop_id, user_id: profile?.id }) })
       const data = await res.json()
       let lines: typeof jobLines = []
       if (data.action_items && Array.isArray(data.action_items) && data.action_items.length > 0) {
@@ -354,14 +400,15 @@ export default function NewWorkOrderPage() {
           return { description: desc, skills: typeof item === 'string' ? [] : item.skills || [], tirePositions: [], isTire: isTireJob(desc), isDiagnostic: isDiagnosticJob(desc), roughParts: getAutoRoughParts(desc) }
         })
       } else {
-        lines = [{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint), isDiagnostic: isDiagnosticJob(complaint), roughParts: getAutoRoughParts(complaint) }]
+        lines = [{ description: raw, skills: [], tirePositions: [], isTire: isTireJob(raw), isDiagnostic: isDiagnosticJob(raw), roughParts: getAutoRoughParts(raw) }]
         setAiFailed(true)
       }
       setJobLines(lines)
+      runBrainSeam(lines)
       const dup = checkDuplicates(lines)
       if (dup) setDuplicateWarning(dup)
     } catch {
-      setJobLines([{ description: complaint.trim(), skills: [], tirePositions: [], isTire: isTireJob(complaint), isDiagnostic: isDiagnosticJob(complaint), roughParts: getAutoRoughParts(complaint) }])
+      setJobLines([{ description: raw, skills: [], tirePositions: [], isTire: isTireJob(raw), isDiagnostic: isDiagnosticJob(raw), roughParts: getAutoRoughParts(raw) }])
       setAiFailed(true)
     }
     setStep('review')
@@ -713,7 +760,7 @@ export default function NewWorkOrderPage() {
                     <div style={{ marginTop: 8, padding: '10px 12px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8 }}>
                       <div style={{ fontSize: 11, fontWeight: 700, color: '#D97706', marginBottom: 6 }}>What do you need done? Choose an action:</div>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {CLARIFICATION_OPTIONS.map(opt => (
+                        {getClarificationOptionsForInput(line.description).map(opt => (
                           <button key={opt} onClick={() => {
                             const newDesc = `${opt} ${line.description}`.trim()
                             setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: newDesc, isTire: isTireJob(newDesc), isDiagnostic: isDiagnosticJob(newDesc), roughParts: getAutoRoughParts(newDesc, l.tirePositions) } : l))
@@ -738,6 +785,21 @@ export default function NewWorkOrderPage() {
                         ))}
                       </div>
                       <div style={{ fontSize: 9, color: '#9CA3AF', marginTop: 4 }}>Parts dept will replace with real names + part numbers</div>
+                    </div>
+                  )}
+
+                  {/* Historical brain suggestions (TZBridge7) — PM/Oil Change only */}
+                  {brainSuggestions[i]?.suggestions?.length > 0 && !needsClarification(line.roughParts) && (
+                    <div style={{ marginTop: 6, padding: '8px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#1D6FE8', textTransform: 'uppercase', marginBottom: 4 }}>Historical Suggestions</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {brainSuggestions[i].suggestions.map((s, si) => (
+                          <span key={si} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 5, fontSize: 10, background: '#DBEAFE', color: '#1E40AF', border: '1px solid #93C5FD' }}>
+                            {s.suggested_quantity > 1 ? `${s.suggested_quantity}x ` : ''}{s.description}{s.part_number ? ` [${s.part_number}]` : ''}
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 9, color: '#6B7280', marginTop: 3 }}>Based on {brainSuggestions[i].suggestions[0]?.historical_wo_count?.toLocaleString()}+ historical work orders</div>
                     </div>
                   )}
                 </div>
