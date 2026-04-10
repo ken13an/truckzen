@@ -675,6 +675,7 @@ export default function WorkOrderDetail() {
   const customer = wo.customers || {}
   const jobLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'labor')
   const partLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
+  const feeLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'fee')
   // Parts locked after invoice sent to customer (sent, paid, closed) — NOT during accounting_review
   const partsLocked = isInvoiceHardLocked(wo.invoice_status)
   const shopCharges = wo.wo_shop_charges || []
@@ -699,11 +700,16 @@ export default function WorkOrderDetail() {
   const woPartsTotal = woParts.reduce((s: number, p: any) => s + (p.quantity || 1) * (p.unit_cost || 0), 0)
   let laborTotal: number, partsLineTotal: number, chargesTotal: number, subtotal: number, taxAmt: number, grandTotal: number
   if (isImportedHistory) {
-    // Use imported source totals — do not recalculate with current shop rates
-    laborTotal = wo.labor_total || 0
-    partsLineTotal = wo.parts_total || 0
-    chargesTotal = 0
-    subtotal = laborTotal + partsLineTotal
+    // Compute from actual so_lines when available; fall back to stored columns only if no lines exist
+    const hasLines = jobLines.length > 0 || partLines.length > 0 || feeLines.length > 0
+    laborTotal = hasLines
+      ? jobLines.reduce((s: number, l: any) => s + (l.unit_price || l.total_price || 0), 0)
+      : (wo.labor_total || 0)
+    partsLineTotal = hasLines
+      ? partLines.reduce((s: number, l: any) => s + ((l.parts_sell_price || l.unit_price || 0) * (l.quantity || 1)), 0)
+      : (wo.parts_total || 0)
+    chargesTotal = feeLines.reduce((s: number, l: any) => s + (l.total_price || (l.quantity || 1) * (l.unit_price || 0)), 0)
+    subtotal = laborTotal + partsLineTotal + chargesTotal
     taxAmt = 0
     grandTotal = wo.grand_total || subtotal
   } else {
@@ -1995,6 +2001,40 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
+          {/* Imported fee / misc / supplies detail */}
+          {wo.is_historical && feeLines.length > 0 && (
+            <div style={cardStyle}>
+              <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Fees & Charges</span>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Description</th>
+                    <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Amount</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {feeLines.map((f: any) => {
+                    const lineTotal = f.total_price || (f.quantity || 1) * (f.unit_price || 0)
+                    return (
+                      <tr key={f.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                        <td style={{ padding: '6px 8px' }}>{f.description || '—'}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>{f.quantity || 1}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(f.unit_price || 0)}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(lineTotal)}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={3} style={{ padding: '8px 8px', textAlign: 'right' }}>Fees Total</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(chargesTotal)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {/* Historical parts summary — shown only when no summary card above already displays parts */}
           {wo.is_historical && partLines.length === 0 && wo.parts_total > 0 && !partsLineTotal && (
             <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13, background: '#FAFBFC' }}>
@@ -2525,11 +2565,16 @@ export default function WorkOrderDetail() {
                 <span>Status</span><span style={{ fontWeight: 600, color: wo.invoices[0].status === 'paid' ? GREEN : undefined }}>{(wo.invoices[0].status || '—').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
-                <span>Labor</span><span style={{ fontWeight: 600 }}>{fmt(wo.labor_total || 0)}</span>
+                <span>Labor</span><span style={{ fontWeight: 600 }}>{fmt(laborTotal)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
-                <span>Parts</span><span style={{ fontWeight: 600 }}>{fmt(wo.parts_total || 0)}</span>
+                <span>Parts</span><span style={{ fontWeight: 600 }}>{fmt(partsLineTotal)}</span>
               </div>
+              {chargesTotal > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: '#374151' }}>
+                  <span>Fees</span><span style={{ fontWeight: 600 }}>{fmt(chargesTotal)}</span>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px', borderTop: '1px solid #CBD5E1', marginTop: 8 }}>
                 <span style={{ fontSize: 15, fontWeight: 800, color: '#1E293B' }}>Total</span>
                 <span style={{ fontSize: 18, fontWeight: 800, color: GREEN }}>{fmt(wo.invoices[0].total || wo.grand_total || 0)}</span>
