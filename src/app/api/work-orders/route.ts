@@ -125,17 +125,25 @@ async function rollbackNewWO(s: any, woId: string, woNumber: string, reason: str
     headerDeleteOk = false
   }
 
-  // Step 3: verify cleanup — check if header still exists
+  // Step 3: verify cleanup — check both header and child rows are gone
+  let headerGone = false
+  let childRowsGone = false
   if (childDeleteOk && headerDeleteOk) {
-    const { data: check } = await s.from('service_orders').select('id').eq('id', woId).maybeSingle()
-    verified = !check
-    if (check) {
+    const { data: headerCheck } = await s.from('service_orders').select('id').eq('id', woId).maybeSingle()
+    headerGone = !headerCheck
+    if (headerCheck) {
       console.error(`[WO ${woNumber}] ROLLBACK VERIFICATION FAILED: WO header still exists after delete`)
     }
+    const { data: childCheck, count: childCount } = await s.from('so_lines').select('id', { count: 'exact', head: true }).eq('so_id', woId)
+    childRowsGone = (childCount ?? (childCheck ? childCheck.length : 0)) === 0
+    if (!childRowsGone) {
+      console.error(`[WO ${woNumber}] ROLLBACK VERIFICATION FAILED: ${childCount ?? '?'} child so_lines still exist after delete`)
+    }
+    verified = headerGone && childRowsGone
   }
 
   const clean = childDeleteOk && headerDeleteOk && verified
-  console.error(`[WO ${woNumber}] ROLLBACK ${clean ? 'SUCCESS' : 'PARTIAL/FAILED'}: reason=${reason}, childDelete=${childDeleteOk}, headerDelete=${headerDeleteOk}, verified=${verified}`)
+  console.error(`[WO ${woNumber}] ROLLBACK ${clean ? 'SUCCESS' : 'PARTIAL/FAILED'}: reason=${reason}, childDelete=${childDeleteOk}, headerDelete=${headerDeleteOk}, headerGone=${headerGone}, childRowsGone=${childRowsGone}`)
   return { clean }
 }
 
