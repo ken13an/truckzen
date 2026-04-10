@@ -6,7 +6,7 @@ import { insertServiceOrder } from '@/lib/generateWoNumber'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { deriveWOAutomation } from '@/lib/wo-automation'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
-import { isDiagnosticJob } from '@/lib/parts-suggestions'
+import { isDiagnosticJob, shouldCreateFallbackPart } from '@/lib/parts-suggestions'
 import { safeRoute } from '@/lib/api-handler'
 
 function db() {
@@ -292,9 +292,9 @@ async function _POST(req: Request) {
       partsCreated++
     }
 
-    // Simple parts rule: if non-diagnostic job has no auto-parts, create rough placeholder
-    if (partsCreated === 0 && !isDiagnosticJob(lineText.trim())) {
-      const roughName = lineText.trim().replace(/^(replace|install|swap|new)\s+/i, '').trim() || lineText.trim()
+    // Fallback rough part: only for safely proven part-candidate/material lines (TZBridgeFixAB)
+    if (partsCreated === 0 && shouldCreateFallbackPart(lineText.trim())) {
+      const roughName = lineText.trim().replace(/^(replace|install|swap|new|remove\s+and\s+replace|drain\s+and\s+refill)\s+/i, '').trim() || lineText.trim()
       await s.from('so_lines').insert({
         so_id: wo.id, line_type: 'part', description: roughName, rough_name: roughName,
         quantity: 1, unit_price: 0, parts_status: 'rough', related_labor_line_id: laborLineId,

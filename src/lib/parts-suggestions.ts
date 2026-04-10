@@ -252,6 +252,18 @@ export function isDiagnosticJob(desc: string): boolean {
   return DIAGNOSTIC_KEYWORDS.some(k => lower.includes(k))
 }
 
+/** Check if a job description should be allowed to create a fallback rough part (TZBridgeFixAB2).
+ *  Returns true ONLY for safe explicit part-candidate lines (replace/install/add verb).
+ *  PM/Oil, material_expected (drain-and-refill), and all labor intents are excluded.
+ *  Better no fallback part than a fake fallback part. */
+export function shouldCreateFallbackPart(jobDescription: string): boolean {
+  if (!jobDescription || isDiagnosticJob(jobDescription)) return false
+  const { intent } = detectVerbIntent(jobDescription)
+  if (intent === 'part_candidate') return true
+  if (intent === 'labor_unless_replacement' && hasExplicitReplacement(jobDescription)) return true
+  return false
+}
+
 /** Resolve a clarification choice into a clean description (TZBridge7B).
  *  Strips existing action verbs from the base phrase before prepending the chosen action. */
 export function resolveClarification(chosenAction: string, rawDescription: string): string {
