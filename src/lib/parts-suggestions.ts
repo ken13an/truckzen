@@ -226,9 +226,8 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
   if (isDiagnosticJob(lower)) return []
 
   // ══ STEP 1: Multi-part splitting FIRST ══
-  // If text contains multiple parts joined by +, and, &, commas — split and parse each independently
-  const stripped = jobDescription.trim().replace(/^(replace|install|swap|new|repair|fix|change)\s+/i, '').trim()
-  const segments = stripped.split(/\s*(?:\+|,|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
+  // Split on +, and, &, commas — preserve verb per segment
+  const segments = jobDescription.trim().split(/\s*(?:\+|,|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
   if (segments.length >= 2) {
     const allParts: RoughPart[] = []
     for (const seg of segments) {
@@ -240,6 +239,58 @@ export function getAutoRoughParts(jobDescription: string, tirePositions?: string
 
   // ══ STEP 2: Single segment parsing ══
   return parseSingleSegment(jobDescription, tirePositions)
+}
+
+// ══ DETERMINISTIC VERB-INTENT PARSING (Patch 109) ══
+
+// Abbreviation normalization
+const ABBREVIATIONS: [RegExp, string][] = [
+  [/\bDS\b/gi, 'driver side'],
+  [/\bPS\b/gi, 'passenger side'],
+  [/\bLH\b/gi, 'left'],
+  [/\bRH\b/gi, 'right'],
+  [/\bFRHT\b/gi, 'freightliner'],
+]
+
+function normalizeText(text: string): string {
+  let result = text
+  for (const [pattern, replacement] of ABBREVIATIONS) {
+    result = result.replace(pattern, replacement)
+  }
+  return result
+}
+
+// Verb → intent mapping
+type VerbIntent = 'part_candidate' | 'no_auto_parts' | 'labor_only' | 'labor_unless_replacement' | 'material_expected' | 'ambiguous'
+
+const PART_CANDIDATE_VERBS = ['replace', 'install', 'add']
+const NO_AUTO_PARTS_VERBS = ['clean', 'wash', 'grease', 'inspect', 'diagnose', 'diagnostic', 'test']
+const LABOR_ONLY_VERBS = ['fix', 'adjust', 'tighten', 'align', 'check']
+const MATERIAL_VERBS = ['change']
+
+function detectVerbIntent(text: string): { intent: VerbIntent; verb: string | null } {
+  const lower = text.toLowerCase().trim()
+  const firstWord = lower.split(/\s+/)[0]
+
+  // Check first word against verb categories
+  if (PART_CANDIDATE_VERBS.includes(firstWord)) return { intent: 'part_candidate', verb: firstWord }
+  if (NO_AUTO_PARTS_VERBS.includes(firstWord)) return { intent: 'no_auto_parts', verb: firstWord }
+  if (LABOR_ONLY_VERBS.includes(firstWord)) return { intent: 'labor_only', verb: firstWord }
+  if (firstWord === 'repair') return { intent: 'labor_unless_replacement', verb: 'repair' }
+  if (MATERIAL_VERBS.includes(firstWord)) return { intent: 'material_expected', verb: firstWord }
+
+  // Check if ANY verb appears in the text (not just first word)
+  for (const v of NO_AUTO_PARTS_VERBS) { if (lower.includes(v)) return { intent: 'no_auto_parts', verb: v } }
+  for (const v of LABOR_ONLY_VERBS) { if (lower.includes(v)) return { intent: 'labor_only', verb: v } }
+
+  // No verb found — noun-only input
+  return { intent: 'ambiguous', verb: null }
+}
+
+/** Check if repair text also has explicit replacement language */
+function hasExplicitReplacement(text: string): boolean {
+  const lower = text.toLowerCase()
+  return ['replace', 'install', 'new ', 'swap', 'put in', 'with new'].some(w => lower.includes(w))
 }
 
 /** Extract explicit quantity from text like "all 3 cabin filters", "2x wipers", "replace 4 tires" */
@@ -258,9 +309,31 @@ function extractQuantity(text: string): { quantity: number; cleaned: string } {
 /** Parse a single job segment into rough parts */
 function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[] {
   if (!text) return []
-  const lower = text.toLowerCase().trim()
+  // Step 0: normalize abbreviations
+  const normalized = normalizeText(text)
+  const lower = normalized.toLowerCase().trim()
   // Extract explicit quantity early
-  const { quantity: explicitQty, cleaned: cleanedText } = extractQuantity(text)
+  const { quantity: explicitQty, cleaned: cleanedText } = extractQuantity(normalized)
+
+  // ══ STEP 1: Deterministic verb-intent detection ══
+  const { intent, verb } = detectVerbIntent(lower)
+
+  // No auto parts for clean/wash/grease/inspect/diagnose/test
+  if (intent === 'no_auto_parts') {
+    return [{ rough_name: normalized.trim(), quantity: 1, is_labor: true }]
+  }
+
+  // Labor only for fix/adjust/tighten/align/check
+  if (intent === 'labor_only') {
+    return [{ rough_name: normalized.trim(), quantity: 1, is_labor: true }]
+  }
+
+  // Repair = labor only UNLESS explicit replacement language present
+  if (intent === 'labor_unless_replacement' && !hasExplicitReplacement(lower)) {
+    return [{ rough_name: normalized.trim(), quantity: 1, is_labor: true }]
+  }
+
+  // ══ Continue with part-candidate / material / ambiguous intents ══
 
   // Tire jobs
   if (['tire', 'tyre', 'flat', 'blowout'].some(k => lower.includes(k))) {
