@@ -170,11 +170,10 @@ async function _POST(req: Request) {
 
   // Create job lines — skip for draft saves
   // Guard: empty array must fall back to complaint ([] is truthy in JS)
-  const rawLines = isDraftSave ? [] : (job_lines && job_lines.length > 0 ? job_lines : [complaint.trim()])
-  const lines = rawLines
-  let childCreationError: string | null = null
+  const lines = isDraftSave ? [] : (job_lines && job_lines.length > 0 ? job_lines : [complaint.trim()])
+  let laborLinesCreated = 0
+  try {
   for (let i = 0; i < lines.length; i++) {
-    try {
     const line = lines[i]
     const lineText = typeof line === 'string' ? line : line.description
     const lineSkills = typeof line === 'string' ? [] : (line.skills || [])
@@ -195,6 +194,7 @@ async function _POST(req: Request) {
       customer_provides_parts: line.customer_provides_parts || false,
     }).select('id').single()
     const laborLineId = laborLine?.id || null
+    if (laborLineId) laborLinesCreated++
 
     // Auto-insert rough parts for this job line — check inventory first
     const roughParts = line.rough_parts || []
@@ -252,14 +252,24 @@ async function _POST(req: Request) {
         quantity: 1, unit_price: 0, parts_status: 'rough', related_labor_line_id: laborLineId,
       })
     }
-    } catch (lineErr: unknown) {
-      console.error(`[WO ${wo.so_number}] Failed to create job line ${i + 1}:`, lineErr)
-      childCreationError = lineErr instanceof Error ? lineErr.message : 'Failed to create job line'
-    }
   }
 
-  // If child creation had errors but WO header exists, still return the WO so user can retry
-  // Do not leave a silent orphan — the WO will be editable
+  // ══ INVARIANT: at least one labor/job line must be persisted for non-draft WOs ══
+  if (!isDraftSave && laborLinesCreated === 0) {
+    // Rollback: clean up the just-created WO and any partial child rows
+    await s.from('so_lines').delete().eq('so_id', wo.id)
+    await s.from('service_orders').delete().eq('id', wo.id)
+    console.error(`[WO ${wo.so_number}] Rolled back — zero labor lines created`)
+    return NextResponse.json({ error: 'Failed to create job lines. Work order was not saved. Please try again.' }, { status: 500 })
+  }
+
+  } catch (childErr: unknown) {
+    // Child creation threw — rollback the entire WO
+    console.error(`[WO ${wo.so_number}] Child creation failed, rolling back:`, childErr)
+    try { await s.from('so_lines').delete().eq('so_id', wo.id) } catch {}
+    try { await s.from('service_orders').delete().eq('id', wo.id) } catch {}
+    return NextResponse.json({ error: 'Failed to create work order lines. Please try again.' }, { status: 500 })
+  }
 
   // Log activity
   await s.from('wo_activity_log').insert({
@@ -285,7 +295,7 @@ async function _POST(req: Request) {
     } catch {}
   }
 
-  return NextResponse.json({ ...wo, ...(childCreationError ? { warning: 'Some job lines may not have been created. Please check the work order.' } : {}) }, { status: 201 })
+  return NextResponse.json(wo, { status: 201 })
 }
 
 async function _DELETE(req: Request) {
