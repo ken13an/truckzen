@@ -729,10 +729,17 @@ export default function WorkOrderDetail() {
   return (
     <div style={{ fontFamily: FONT, color: '#1A1A1A', background: '#fff', minHeight: '100vh', maxWidth: 960, margin: '0 auto', padding: 'clamp(10px, 3vw, 20px)' }}>
 
-      {/* BACK BUTTON */}
-      <a href={wo.is_historical ? '/accounting/history' : '/work-orders'} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#ECEEF2', color: '#1A1A1A', borderRadius: 100, padding: '6px 14px 6px 8px', fontSize: 13, fontWeight: 700, textDecoration: 'none', marginBottom: 16, fontFamily: FONT }}>
-        <ChevronLeft size={16} /> {wo.is_historical ? 'Imported History' : 'Work Orders'}
-      </a>
+      {/* BACK BUTTON — role-safe: only accounting roles go to /accounting/history */}
+      {(() => {
+        const isAccountingUser = ACCOUNTING_ROLES.includes(userRole)
+        const backHref = wo.is_historical && isAccountingUser ? '/accounting/history' : '/work-orders'
+        const backLabel = wo.is_historical && isAccountingUser ? 'Imported History' : 'Work Orders'
+        return (
+          <a href={backHref} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#ECEEF2', color: '#1A1A1A', borderRadius: 100, padding: '6px 14px 6px 8px', fontSize: 13, fontWeight: 700, textDecoration: 'none', marginBottom: 16, fontFamily: FONT }}>
+            <ChevronLeft size={16} /> {backLabel}
+          </a>
+        )
+      })()}
 
       {/* HISTORICAL BANNER */}
       {wo.is_historical && (
