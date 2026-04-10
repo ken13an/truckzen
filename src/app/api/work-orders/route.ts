@@ -169,8 +169,12 @@ async function _POST(req: Request) {
   // Mileage saved on WO only — truck odometer updates when WO closes
 
   // Create job lines — skip for draft saves
-  const lines = isDraftSave ? [] : (job_lines || [complaint.trim()])
+  // Guard: empty array must fall back to complaint ([] is truthy in JS)
+  const rawLines = isDraftSave ? [] : (job_lines && job_lines.length > 0 ? job_lines : [complaint.trim()])
+  const lines = rawLines
+  let childCreationError: string | null = null
   for (let i = 0; i < lines.length; i++) {
+    try {
     const line = lines[i]
     const lineText = typeof line === 'string' ? line : line.description
     const lineSkills = typeof line === 'string' ? [] : (line.skills || [])
@@ -248,7 +252,14 @@ async function _POST(req: Request) {
         quantity: 1, unit_price: 0, parts_status: 'rough', related_labor_line_id: laborLineId,
       })
     }
+    } catch (lineErr: unknown) {
+      console.error(`[WO ${wo.so_number}] Failed to create job line ${i + 1}:`, lineErr)
+      childCreationError = lineErr instanceof Error ? lineErr.message : 'Failed to create job line'
+    }
   }
+
+  // If child creation had errors but WO header exists, still return the WO so user can retry
+  // Do not leave a silent orphan — the WO will be editable
 
   // Log activity
   await s.from('wo_activity_log').insert({
@@ -274,7 +285,7 @@ async function _POST(req: Request) {
     } catch {}
   }
 
-  return NextResponse.json(wo, { status: 201 })
+  return NextResponse.json({ ...wo, ...(childCreationError ? { warning: 'Some job lines may not have been created. Please check the work order.' } : {}) }, { status: 201 })
 }
 
 async function _DELETE(req: Request) {
