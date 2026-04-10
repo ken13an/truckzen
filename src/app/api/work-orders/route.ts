@@ -105,6 +105,40 @@ async function _GET(req: Request) {
   })
 }
 
+/** Rollback a just-created WO: delete children then header, verify cleanup, log result */
+async function rollbackNewWO(s: any, woId: string, woNumber: string, reason: string): Promise<{ clean: boolean }> {
+  let childDeleteOk = true
+  let headerDeleteOk = true
+  let verified = false
+
+  // Step 1: delete child so_lines
+  const { error: childErr } = await s.from('so_lines').delete().eq('so_id', woId)
+  if (childErr) {
+    console.error(`[WO ${woNumber}] ROLLBACK: failed to delete child so_lines:`, childErr.message)
+    childDeleteOk = false
+  }
+
+  // Step 2: delete WO header
+  const { error: headerErr } = await s.from('service_orders').delete().eq('id', woId)
+  if (headerErr) {
+    console.error(`[WO ${woNumber}] ROLLBACK: failed to delete WO header:`, headerErr.message)
+    headerDeleteOk = false
+  }
+
+  // Step 3: verify cleanup — check if header still exists
+  if (childDeleteOk && headerDeleteOk) {
+    const { data: check } = await s.from('service_orders').select('id').eq('id', woId).maybeSingle()
+    verified = !check
+    if (check) {
+      console.error(`[WO ${woNumber}] ROLLBACK VERIFICATION FAILED: WO header still exists after delete`)
+    }
+  }
+
+  const clean = childDeleteOk && headerDeleteOk && verified
+  console.error(`[WO ${woNumber}] ROLLBACK ${clean ? 'SUCCESS' : 'PARTIAL/FAILED'}: reason=${reason}, childDelete=${childDeleteOk}, headerDelete=${headerDeleteOk}, verified=${verified}`)
+  return { clean }
+}
+
 async function _POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
@@ -256,19 +290,14 @@ async function _POST(req: Request) {
 
   // ══ INVARIANT: at least one labor/job line must be persisted for non-draft WOs ══
   if (!isDraftSave && laborLinesCreated === 0) {
-    // Rollback: clean up the just-created WO and any partial child rows
-    await s.from('so_lines').delete().eq('so_id', wo.id)
-    await s.from('service_orders').delete().eq('id', wo.id)
-    console.error(`[WO ${wo.so_number}] Rolled back — zero labor lines created`)
-    return NextResponse.json({ error: 'Failed to create job lines. Work order was not saved. Please try again.' }, { status: 500 })
+    const rb = await rollbackNewWO(s, wo.id, wo.so_number, 'zero labor lines created')
+    return NextResponse.json({ error: 'Failed to create job lines. Work order was not saved. Please try again.', rollback: rb.clean ? 'clean' : 'partial' }, { status: 500 })
   }
 
   } catch (childErr: unknown) {
-    // Child creation threw — rollback the entire WO
-    console.error(`[WO ${wo.so_number}] Child creation failed, rolling back:`, childErr)
-    try { await s.from('so_lines').delete().eq('so_id', wo.id) } catch {}
-    try { await s.from('service_orders').delete().eq('id', wo.id) } catch {}
-    return NextResponse.json({ error: 'Failed to create work order lines. Please try again.' }, { status: 500 })
+    const errMsg = childErr instanceof Error ? childErr.message : String(childErr)
+    const rb = await rollbackNewWO(s, wo.id, wo.so_number, `child creation threw: ${errMsg}`)
+    return NextResponse.json({ error: 'Failed to create work order lines. Please try again.', rollback: rb.clean ? 'clean' : 'partial' }, { status: 500 })
   }
 
   // Log activity
