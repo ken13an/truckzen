@@ -59,10 +59,10 @@ const LABOR_HOURS_TABLE: [string[], LaborHoursEntry][] = [
   [['belt', 'serpentine'],
     { fast: 0.5, medium: 1.0, long: 2.0 }],
 
-  // HVAC
+  // HVAC — use word-boundary-safe patterns to prevent "ac" matching inside "replace"
   [['ac repair', 'a/c repair', 'ac compressor', 'a/c compressor'],
     { fast: 2.0, medium: 4.0, long: 6.0 }],
-  [['ac', 'a/c', 'heater', 'hvac'],
+  [['ac system', 'ac service', 'ac charge', 'ac leak', 'a/c system', 'a/c service', 'a/c charge', 'a/c leak', 'heater', 'hvac'],
     { fast: 1.0, medium: 2.0, long: 4.0 }],
 
   // Exhaust / emissions
@@ -114,7 +114,25 @@ const LABOR_HOURS_TABLE: [string[], LaborHoursEntry][] = [
     { fast: 0.5, medium: 1.0, long: 2.0 }],
 
   // Glad hand / air
-  [['glad hand', 'air leak'],
+  [['glad hand', 'glad-hand', 'gladhand', 'air leak'],
+    { fast: 0.25, medium: 0.5, long: 1.0 }],
+
+  // General cleaning (TZBridge7C)
+  [['clean'],
+    { fast: 0.5, medium: 1.0, long: 2.0 }],
+
+  // Fridge install — approved mechanic expected time 0.5h (TZBridge7D)
+  [['install fridge', 'add fridge'],
+    { fast: 0.25, medium: 0.5, long: 1.0 }],
+
+  // Compound labor phrases (TZBridge7C)
+  [['tighten', 'secure'],
+    { fast: 0.25, medium: 0.5, long: 1.0 }],
+  [['drain and refill', 'refill'],
+    { fast: 0.5, medium: 1.0, long: 2.0 }],
+  [['differential'],
+    { fast: 1.0, medium: 2.0, long: 3.5 }],
+  [['fairing'],
     { fast: 0.25, medium: 0.5, long: 1.0 }],
 ]
 

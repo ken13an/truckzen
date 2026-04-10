@@ -146,7 +146,7 @@ const DIAGNOSTIC_KEYWORDS = [
   'diagnostic', 'diagnostics', 'diagnosis',
   'inspect', 'inspection',
   'test drive', 'testing', 'scan',
-  'check ', 'checking', 'verify', 'verifying',
+  'checking', 'verify', 'verifying',
   'troubleshoot', 'troubleshooting',
   'hard to start',
 ]
@@ -250,6 +250,21 @@ export function getClarificationOptionsForInput(rawInput: string): string[] {
 export function isDiagnosticJob(desc: string): boolean {
   const lower = desc.toLowerCase()
   return DIAGNOSTIC_KEYWORDS.some(k => lower.includes(k))
+}
+
+/** Resolve a clarification choice into a clean description (TZBridge7B).
+ *  Strips existing action verbs from the base phrase before prepending the chosen action. */
+export function resolveClarification(chosenAction: string, rawDescription: string): string {
+  const lower = rawDescription.toLowerCase().trim()
+  // Strip leading compound verb phrases
+  const stripped = lower
+    .replace(/^(remove\s+and\s+replace|drain\s+and\s+refill|check\s+and\s+tighten|check\s+and\s+adjust)\s+/i, '')
+    .replace(/^(replace|install|add|repair|fix|adjust|tighten|align|check|clean|wash|grease|inspect|diagnose|test|remove|perform|do|change)\s+/i, '')
+    .trim()
+  const base = stripped || rawDescription.trim()
+  // Capitalize first letter of base
+  const cleanBase = base.charAt(0).toUpperCase() + base.slice(1)
+  return `${chosenAction} ${cleanBase}`
 }
 
 // ══ POST-DETERMINISTIC BRAIN ADAPTER SEAM (TZBridge6) ══
@@ -364,7 +379,7 @@ export type PreAiDecision = 'deterministic_simple' | 'ambiguous_noun_only' | 'se
  * Returns whether the complaint can be handled deterministically or needs AI splitting.
  */
 // Known PM/Oil Change family phrases that are deterministic even without a leading verb (TZBridge7A)
-const PM_OIL_FAMILY_PHRASES = [/^pm$/i, /^pm\s+service/i, /^preventive\s+maint/i, /^preventative\s+maint/i, /^oil\s+change/i, /^engine\s+oil\s+change/i]
+const PM_OIL_FAMILY_PHRASES = [/^pm$/i, /^pm\s+service/i, /^preventive\s+maint/i, /^preventative\s+maint/i, /^oil\s+change/i, /^engine\s+oil\s+change/i, /^perform\s+pm/i, /^do\s+pm/i, /^perform\s+preventive/i, /^perform\s+preventative/i, /^do\s+oil\s+change/i, /^perform\s+oil\s+change/i]
 
 function isPmOilFamilyPhrase(text: string): boolean {
   const lower = text.toLowerCase().trim()
@@ -521,9 +536,23 @@ function normalizeText(text: string): string {
 // Verb → intent mapping
 type VerbIntent = 'part_candidate' | 'no_auto_parts' | 'labor_only' | 'labor_unless_replacement' | 'material_expected' | 'ambiguous'
 
+// Compound verb phrases that resolve to a single intent (TZBridge7B)
+const COMPOUND_VERB_PHRASES: [RegExp, VerbIntent][] = [
+  [/^remove\s+and\s+replace\b/i, 'part_candidate'],
+  [/^drain\s+and\s+refill\b/i, 'material_expected'],
+  [/^check\s+and\s+(tighten|adjust|secure)\b/i, 'labor_only'],
+  [/^perform\s+(pm|preventive|preventative|oil change)/i, 'material_expected'],
+  [/^do\s+(pm|preventive|preventative|oil change)/i, 'material_expected'],
+]
+
 function detectVerbIntent(text: string): { intent: VerbIntent; verb: string | null } {
   const lower = text.toLowerCase().trim()
   const firstWord = lower.split(/\s+/)[0]
+
+  // Compound verb phrases first (TZBridge7B)
+  for (const [pattern, intent] of COMPOUND_VERB_PHRASES) {
+    if (pattern.test(lower)) return { intent, verb: lower.match(pattern)?.[0] || firstWord }
+  }
 
   // Check first word against verb categories
   if (PART_CANDIDATE_VERBS.includes(firstWord)) return { intent: 'part_candidate', verb: firstWord }
@@ -533,6 +562,8 @@ function detectVerbIntent(text: string): { intent: VerbIntent; verb: string | nu
   if (MATERIAL_VERBS.includes(firstWord)) return { intent: 'material_expected', verb: firstWord }
 
   // Check if ANY verb appears in the text (not just first word)
+  for (const v of PART_CANDIDATE_VERBS) { if (lower.includes(v)) return { intent: 'part_candidate', verb: v } }
+  for (const v of MATERIAL_VERBS) { if (lower.includes(v)) return { intent: 'material_expected', verb: v } }
   for (const v of NO_AUTO_PARTS_VERBS) { if (lower.includes(v)) return { intent: 'no_auto_parts', verb: v } }
   for (const v of LABOR_ONLY_VERBS) { if (lower.includes(v)) return { intent: 'labor_only', verb: v } }
 
@@ -571,20 +602,14 @@ function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[]
   // ══ STEP 1: Deterministic verb-intent detection ══
   const { intent, verb } = detectVerbIntent(lower)
 
-  // No auto parts for clean/wash/grease/inspect/diagnose/test
-  if (intent === 'no_auto_parts') {
-    return [{ rough_name: normalized.trim(), quantity: 1, is_labor: true }]
-  }
+  // No auto parts for clean/wash/grease/inspect/diagnose/test — return empty (labor-only, no rough parts)
+  if (intent === 'no_auto_parts') return []
 
-  // Labor only for fix/adjust/tighten/align/check
-  if (intent === 'labor_only') {
-    return [{ rough_name: normalized.trim(), quantity: 1, is_labor: true }]
-  }
+  // Labor only for fix/adjust/tighten/align/check — return empty (labor-only, no rough parts)
+  if (intent === 'labor_only') return []
 
   // Repair = labor only UNLESS explicit replacement language present
-  if (intent === 'labor_unless_replacement' && !hasExplicitReplacement(lower)) {
-    return [{ rough_name: normalized.trim(), quantity: 1, is_labor: true }]
-  }
+  if (intent === 'labor_unless_replacement' && !hasExplicitReplacement(lower)) return []
 
   // ══ Continue with part-candidate / material / ambiguous intents ══
 

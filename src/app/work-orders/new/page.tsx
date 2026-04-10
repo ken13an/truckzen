@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { mergeDraftLines, type DraftJobLine } from '@/lib/merge-lines'
 import { SERVICE_WRITE_ROLES } from '@/lib/roles'
-import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob, needsClarification, getClarificationOptionsForInput, preRouteComplaintBeforeAi, getBrainAssist, type BrainAssistRequest, type BrainAssistResponse } from '@/lib/parts-suggestions'
+import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob, needsClarification, getClarificationOptionsForInput, preRouteComplaintBeforeAi, getBrainAssist, type BrainAssistRequest, type BrainAssistResponse, resolveClarification } from '@/lib/parts-suggestions'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
 interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string; ownership_type?: string; unit_type?: string; is_owner_operator?: boolean }
@@ -762,7 +762,7 @@ export default function NewWorkOrderPage() {
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {getClarificationOptionsForInput(line.description).map(opt => (
                           <button key={opt} onClick={() => {
-                            const newDesc = `${opt} ${line.description}`.trim()
+                            const newDesc = resolveClarification(opt, line.description)
                             setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: newDesc, isTire: isTireJob(newDesc), isDiagnostic: isDiagnosticJob(newDesc), roughParts: getAutoRoughParts(newDesc, l.tirePositions) } : l))
                           }} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #D97706', background: '#fff', color: '#D97706', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                             {opt}
