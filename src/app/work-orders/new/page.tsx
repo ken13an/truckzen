@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { mergeDraftLines, type DraftJobLine } from '@/lib/merge-lines'
 import { SERVICE_WRITE_ROLES } from '@/lib/roles'
-import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
+import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob, needsClarification, CLARIFICATION_OPTIONS } from '@/lib/parts-suggestions'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
 interface Asset { id: string; unit_number: string; year: number | null; make: string | null; model: string | null; vin?: string; ownership_type?: string; unit_type?: string; is_owner_operator?: boolean }
@@ -377,6 +377,7 @@ export default function NewWorkOrderPage() {
     if (!mileageNum || mileageNum <= 0) { setError('Please enter current mileage'); return }
     if (jobLines.length === 0) { setError('Please add at least one job line'); return }
     if (jobLines.some(j => isUnrecognizedJob(j.description, j.skills))) { setError('Please fix or remove unrecognized job lines (shown in red)'); return }
+    if (jobLines.some(j => needsClarification(j.roughParts))) { setError('Some job lines need clarification — please choose an action (Replace, Install, Repair, or Inspect)'); return }
     setSubmitting(true); setError('')
     try {
       // Delete any auto-saved draft BEFORE creating the real WO — prevents duplicates
@@ -707,8 +708,25 @@ export default function NewWorkOrderPage() {
                     </div>
                   )}
 
+                  {/* Noun-only clarification gate */}
+                  {needsClarification(line.roughParts) && (
+                    <div style={{ marginTop: 8, padding: '10px 12px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#D97706', marginBottom: 6 }}>What do you need done? Choose an action:</div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {CLARIFICATION_OPTIONS.map(opt => (
+                          <button key={opt} onClick={() => {
+                            const newDesc = `${opt} ${line.description}`.trim()
+                            setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: newDesc, isTire: isTireJob(newDesc), isDiagnostic: isDiagnosticJob(newDesc), roughParts: getAutoRoughParts(newDesc, l.tirePositions) } : l))
+                          }} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #D97706', background: '#fff', color: '#D97706', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Auto rough parts */}
-                  {line.roughParts.length > 0 && !line.isDiagnostic && (
+                  {line.roughParts.length > 0 && !line.isDiagnostic && !needsClarification(line.roughParts) && (
                     <div style={{ marginTop: 8, padding: '8px 12px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8 }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', marginBottom: 6 }}>Auto-Generated Parts (rough)</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>

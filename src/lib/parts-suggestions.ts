@@ -135,6 +135,7 @@ export function getPartSuggestions(jobDescription: string, inventoryParts?: any[
 export interface RoughPart {
   rough_name: string
   quantity: number
+  needs_clarification?: boolean
   is_labor: boolean
 }
 
@@ -212,6 +213,14 @@ const JOB_AUTO_PARTS: Record<string, RoughPart[]> = {
   'mirror': [{ rough_name: 'Mirror', quantity: 1, is_labor: false }],
   'door': [{ rough_name: 'Door', quantity: 1, is_labor: false }],
 }
+
+/** Check if a job line's rough parts indicate noun-only ambiguity needing clarification */
+export function needsClarification(roughParts: RoughPart[]): boolean {
+  return roughParts.some(p => p.needs_clarification === true)
+}
+
+/** Clarification options for noun-only input */
+export const CLARIFICATION_OPTIONS = ['Replace', 'Install', 'Repair', 'Inspect'] as const
 
 export function isDiagnosticJob(desc: string): boolean {
   const lower = desc.toLowerCase()
@@ -334,6 +343,12 @@ function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[]
   }
 
   // ══ Continue with part-candidate / material / ambiguous intents ══
+
+  // Noun-only / ambiguous: block keyword guessing, require clarification
+  if (intent === 'ambiguous') {
+    const component = normalized.trim()
+    return [{ rough_name: component, quantity: explicitQty, is_labor: false, needs_clarification: true }]
+  }
 
   // Tire jobs
   if (['tire', 'tyre', 'flat', 'blowout'].some(k => lower.includes(k))) {
