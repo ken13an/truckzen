@@ -101,14 +101,14 @@ export default function DashboardPage() {
     color: key.includes('pending') || key.includes('unassigned') || key.includes('overdue') ? AMBER : key.includes('revenue') || key.includes('approved') || key.includes('completed') ? GREEN : BLUE,
   }))
 
-  const card: React.CSSProperties = { background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }
+  const card: React.CSSProperties = { background: '#fff', border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16 }
 
   return (
     <div style={{ background: '#F9FAFB', minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>{greeting}, {user?.full_name?.split(' ')[0] || 'there'}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: t.textLight }}>{greeting}, {user?.full_name?.split(' ')[0] || 'there'}</div>
           <div style={{ fontSize: 13, color: GRAY, marginTop: 2 }}>{shop?.name || ''} · {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
         </div>
         <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#EFF6FF', color: BLUE }}>{ROLE_LABEL[role] || role}</span>
@@ -119,7 +119,7 @@ export default function DashboardPage() {
         {statCards.map(c => (
           <div key={c.label} style={{ ...card, borderLeft: `3px solid ${c.color}` }}>
             <div style={{ fontSize: 11, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>{c.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#111827' }}>{String(c.value)}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: t.textLight }}>{String(c.value)}</div>
           </div>
         ))}
       </div>
@@ -127,7 +127,7 @@ export default function DashboardPage() {
       {/* Action Items */}
       <div style={{ marginBottom: 24 }}>
         <div style={card}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Action Items</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: t.textLight, marginBottom: 12 }}>Action Items</div>
           {actionItems.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 30, color: GREEN }}>
               <Check size={28} style={{ marginBottom: 6 }} />
@@ -137,7 +137,7 @@ export default function DashboardPage() {
           ) : actionItems.map((item: any) => (
             <div key={item.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #F3F4F6', borderLeft: `3px solid ${PRIORITY_BORDER[item.priority] || BLUE}`, paddingLeft: 12 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{item.title}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: t.textLight }}>{item.title}</div>
                 {item.wo_number && <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, marginTop: 2 }}>{item.wo_number}{item.unit ? ` · #${item.unit}` : ''}</div>}
                 {item.description && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{item.description}</div>}
               </div>
@@ -152,11 +152,11 @@ export default function DashboardPage() {
       {/* Team Status (Floor Manager / Owner) */}
       {teamStatus && Array.isArray(teamStatus) && teamStatus.length > 0 && (
         <div style={{ ...card, marginBottom: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Team Status</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: t.textLight, marginBottom: 12 }}>Team Status</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
             {teamStatus.map((m: any) => (
               <div key={m.id} style={{ padding: '10px 14px', background: '#F9FAFB', borderRadius: 8, border: '1px solid #F3F4F6' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{m.full_name}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: t.textLight }}>{m.full_name}</div>
                 <div style={{ fontSize: 11, color: GRAY, marginTop: 2 }}>Team {m.team || '—'}</div>
               </div>
             ))}
@@ -166,7 +166,7 @@ export default function DashboardPage() {
 
       {/* Recent Activity */}
       <div style={card}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Recent Activity</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: t.textLight, marginBottom: 12 }}>Recent Activity</div>
         {recentActivity.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 20, color: GRAY, fontSize: 12 }}>No recent activity</div>
         ) : recentActivity.map((a: any) => (

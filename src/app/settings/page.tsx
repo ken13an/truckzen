@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
 
 const SECTIONS = [
   { key: 'team', label: 'Team Members', href: '/settings/users' },
@@ -21,6 +22,7 @@ const SECTIONS = [
 ]
 
 export default function SettingsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [shop, setShop] = useState<any>({})
@@ -117,12 +119,12 @@ export default function SettingsPage() {
 
   const S = {
     page: { background: '#0C0C12', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", padding: 24 } as React.CSSProperties,
-    card: { background: '#151520', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, maxWidth: 560, marginBottom: 16 } as React.CSSProperties,
+    card: { background: t.bgElevated, border: `1px solid ${t.bgActive}`, borderRadius: 12, padding: 20, maxWidth: 560, marginBottom: 16 } as React.CSSProperties,
     label: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.04em', display: 'block', marginBottom: 4, marginTop: 10 } as React.CSSProperties,
-    input: { width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const } as React.CSSProperties,
+    input: { width: '100%', padding: '9px 12px', background: t.border, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const } as React.CSSProperties,
     val: { fontSize: 13, color: '#EDEDF0', padding: '6px 0' } as React.CSSProperties,
-    btn: { padding: '8px 18px', background: '#1D6FE8', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } as React.CSSProperties,
-    menuItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer', fontSize: 14, color: '#EDEDF0', fontWeight: 500 } as React.CSSProperties,
+    btn: { padding: '8px 18px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } as React.CSSProperties,
+    menuItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${t.bgHover}`, cursor: 'pointer', fontSize: 14, color: '#EDEDF0', fontWeight: 500 } as React.CSSProperties,
   }
 
   function handleSectionClick(s: typeof SECTIONS[0]) {
@@ -138,7 +140,7 @@ export default function SettingsPage() {
         <div style={{ ...S.card, padding: 0, overflow: 'hidden' }}>
           {SECTIONS.map(s => (
             <div key={s.key} style={S.menuItem} onClick={() => handleSectionClick(s)}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.04)')}
+              onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
               <span>{s.label}</span>
               <span style={{ color: '#9D9DA1' }}>&rarr;</span>
@@ -158,9 +160,9 @@ export default function SettingsPage() {
   // Labor Rates
   if (activeSection === 'labor_rates') {
     const RATE_LABELS: Record<string, { label: string; color: string }> = {
-      fleet_asset: { label: 'Company Truck', color: '#1D6FE8' },
+      fleet_asset: { label: 'Company Truck', color: t.accent },
       owner_operator: { label: 'Owner Operator', color: '#D97706' },
-      outside_customer: { label: 'Outside Customer', color: '#6B7280' },
+      outside_customer: { label: 'Outside Customer', color: t.textLightSecondary },
     }
     async function saveLaborRates() {
       setLaborSaving(true)
@@ -174,28 +176,28 @@ export default function SettingsPage() {
     return (
       <div style={S.page}>
         {backBar}
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 }}>Labor Rates</div>
-        <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>Set hourly labor rates by truck type. These rates auto-fill when building estimates.</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Labor Rates</div>
+        <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 20 }}>Set hourly labor rates by truck type. These rates auto-fill when building estimates.</div>
         <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
           {laborRates.length === 0 ? (
-            <div style={{ color: '#48536A', fontSize: 13, textAlign: 'center', padding: 20 }}>No labor rates configured. Check database setup.</div>
+            <div style={{ color: t.textTertiary, fontSize: 13, textAlign: 'center', padding: 20 }}>No labor rates configured. Check database setup.</div>
           ) : laborRates.map((r: any) => {
-            const cfg = RATE_LABELS[r.ownership_type] || { label: r.ownership_type, color: '#7C8BA0' }
+            const cfg = RATE_LABELS[r.ownership_type] || { label: r.ownership_type, color: t.textSecondary }
             return (
-              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: `1px solid ${t.bgHover}` }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: cfg.color }}>{cfg.label}</div>
-                  {r.updated_at && <div style={{ fontSize: 10, color: '#48536A', marginTop: 2 }}>Last updated: {new Date(r.updated_at).toLocaleDateString()}</div>}
+                  {r.updated_at && <div style={{ fontSize: 10, color: t.textTertiary, marginTop: 2 }}>Last updated: {new Date(r.updated_at).toLocaleDateString()}</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 14, color: '#7C8BA0' }}>$</span>
+                  <span style={{ fontSize: 14, color: t.textSecondary }}>$</span>
                   <input
                     type="number" step="0.01" min="0"
                     value={r.rate_per_hour}
                     onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, rate_per_hour: parseFloat(e.target.value) || 0 } : x))}
-                    style={{ width: 100, padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }}
+                    style={{ width: 100, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }}
                   />
-                  <span style={{ fontSize: 12, color: '#7C8BA0' }}>/hr</span>
+                  <span style={{ fontSize: 12, color: t.textSecondary }}>/hr</span>
                 </div>
               </div>
             )
@@ -211,43 +213,43 @@ export default function SettingsPage() {
         </div>
 
         {/* Parts Pricing */}
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4, marginTop: 32 }}>Parts Pricing</div>
-        <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 20 }}>Set parts markup by truck type. Applied automatically when adding parts to work orders.</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4, marginTop: 32 }}>Parts Pricing</div>
+        <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 20 }}>Set parts markup by truck type. Applied automatically when adding parts to work orders.</div>
         <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
           {laborRates.map((r: any) => {
-            const cfg = RATE_LABELS[r.ownership_type] || { label: r.ownership_type, color: '#7C8BA0' }
+            const cfg = RATE_LABELS[r.ownership_type] || { label: r.ownership_type, color: t.textSecondary }
             const costExample = 10
             const markupSell = costExample * (1 + (r.parts_markup_pct || 0) / 100)
             const marginSell = r.parts_margin_pct > 0 ? costExample / (1 - (r.parts_margin_pct || 0) / 100) : costExample
             return (
-              <div key={r.id + '-parts'} style={{ padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+              <div key={r.id + '-parts'} style={{ padding: '16px 0', borderBottom: `1px solid ${t.bgHover}` }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: cfg.color, marginBottom: 12 }}>{cfg.label}</div>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
                   <div>
-                    <label style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Mode</label>
+                    <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Mode</label>
                     <select value={r.parts_pricing_mode || 'markup'} onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_pricing_mode: e.target.value } : x))}
-                      style={{ padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+                      style={{ padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
                       <option value="markup">Markup %</option>
                       <option value="margin">Margin %</option>
                     </select>
                   </div>
                   {(r.parts_pricing_mode === 'markup' || !r.parts_pricing_mode) && (
                     <div>
-                      <label style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Markup %</label>
+                      <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Markup %</label>
                       <input type="number" step="0.1" min="0" value={r.parts_markup_pct ?? 0}
                         onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_markup_pct: parseFloat(e.target.value) || 0 } : x))}
-                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                     </div>
                   )}
                   {r.parts_pricing_mode === 'margin' && (
                     <div>
-                      <label style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Margin %</label>
+                      <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Margin %</label>
                       <input type="number" step="0.1" min="0" max="99" value={r.parts_margin_pct ?? 0}
                         onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_margin_pct: parseFloat(e.target.value) || 0 } : x))}
-                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                     </div>
                   )}
-                  <div style={{ fontSize: 12, color: '#7C8BA0', background: 'rgba(255,255,255,.03)', padding: '8px 12px', borderRadius: 8, fontFamily: "'IBM Plex Mono', monospace" }}>
+                  <div style={{ fontSize: 12, color: t.textSecondary, background: 'rgba(255,255,255,.03)', padding: '8px 12px', borderRadius: 8, fontFamily: "'IBM Plex Mono', monospace" }}>
                     Cost $10.00 → Sell <span style={{ fontWeight: 700, color: '#1DB870' }}>${(r.parts_pricing_mode === 'margin' ? marginSell : markupSell).toFixed(2)}</span>
                   </div>
                 </div>
@@ -345,9 +347,9 @@ export default function SettingsPage() {
             { name: 'Twilio', desc: 'SMS notifications' },
             { name: 'Samsara GPS', desc: 'Fleet tracking' },
           ].map(int => (
-            <div key={int.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+            <div key={int.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${t.bgHover}` }}>
               <div><div style={{ fontSize: 13, fontWeight: 600 }}>{int.name}</div><div style={{ fontSize: 11, color: '#9D9DA1' }}>{int.desc}</div></div>
-              <button style={{ padding: '5px 14px', borderRadius: 7, background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.25)', color: '#4D9EFF', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Connect</button>
+              <button style={{ padding: '5px 14px', borderRadius: 7, background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.25)', color: t.accentLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Connect</button>
             </div>
           ))}
         </div>
@@ -366,30 +368,30 @@ export default function SettingsPage() {
     }
     return (
       <div style={{ padding: 24, maxWidth: 700, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", color: '#EDEDF0' }}>
-        <button onClick={() => setActiveSection(null)} style={{ background: 'none', border: 'none', color: '#7C8BA0', fontSize: 13, cursor: 'pointer', marginBottom: 16, fontFamily: 'inherit' }}>&larr; Back to Settings</button>
+        <button onClick={() => setActiveSection(null)} style={{ background: 'none', border: 'none', color: t.textSecondary, fontSize: 13, cursor: 'pointer', marginBottom: 16, fontFamily: 'inherit' }}>&larr; Back to Settings</button>
         <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700 }}>Kiosk Mode</h2>
 
-        <div style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+        <div style={{ background: t.bgCard, border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 16 }}>
           {kioskCode && (
             <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk URL</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk URL</label>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <code style={{ flex: 1, padding: '10px 14px', background: '#060708', border: '1px solid #1A1D23', borderRadius: 8, fontSize: 14, color: '#4D9EFF' }}>{kioskUrl}</code>
+                <code style={{ flex: 1, padding: '10px 14px', background: t.bg, border: '1px solid #1A1D23', borderRadius: 8, fontSize: 14, color: t.accentLight }}>{kioskUrl}</code>
                 <button onClick={() => { navigator.clipboard.writeText(`https://${kioskUrl}`); setKioskCopied(true); setTimeout(() => setKioskCopied(false), 2000) }}
-                  style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #1A1D23', background: kioskCopied ? 'rgba(34,197,94,.1)' : '#0D0F12', color: kioskCopied ? '#22C55E' : '#7C8BA0', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #1A1D23', background: kioskCopied ? 'rgba(34,197,94,.1)' : t.bgCard, color: kioskCopied ? t.success : t.textSecondary, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {kioskCopied ? 'Copied' : 'Copy'}
                 </button>
                 <a href={`https://${kioskUrl}`} target="_blank" rel="noopener"
-                  style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #1A1D23', background: '#0D0F12', color: '#7C8BA0', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Open</a>
+                  style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bgCard, color: t.textSecondary, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Open</a>
               </div>
             </div>
           )}
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk Code</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk Code</label>
             <input value={kioskCode} onChange={e => setKioskCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-              placeholder="e.g. ugl" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: '#060708', color: '#EDEDF0', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
-            <div style={{ fontSize: 11, color: '#48536A', marginTop: 4 }}>Lowercase letters, numbers, and dashes only. This becomes your kiosk URL.</div>
+              placeholder="e.g. ugl" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bg, color: '#EDEDF0', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+            <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 4 }}>Lowercase letters, numbers, and dashes only. This becomes your kiosk URL.</div>
           </div>
 
           <div style={{ marginBottom: 16 }}>
@@ -400,24 +402,24 @@ export default function SettingsPage() {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk PIN</label>
+            <label style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk PIN</label>
             <input value={kioskPin} onChange={e => setKioskPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="0000" maxLength={6}
-              style={{ width: 120, padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: '#060708', color: '#EDEDF0', fontSize: 18, fontFamily: 'monospace', outline: 'none', letterSpacing: 4, textAlign: 'center' }} />
-            <div style={{ fontSize: 11, color: '#48536A', marginTop: 4 }}>4-6 digits. Staff enters PIN once to activate the kiosk tablet. Customers never see it.</div>
+              style={{ width: 120, padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bg, color: '#EDEDF0', fontSize: 18, fontFamily: 'monospace', outline: 'none', letterSpacing: 4, textAlign: 'center' }} />
+            <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 4 }}>4-6 digits. Staff enters PIN once to activate the kiosk tablet. Customers never see it.</div>
           </div>
 
           <button onClick={saveKiosk} disabled={kioskSaving || !kioskCode.trim()}
-            style={{ padding: '10px 24px', borderRadius: 8, background: '#1D6FE8', color: '#fff', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: kioskSaving || !kioskCode.trim() ? 0.5 : 1 }}>
+            style={{ padding: '10px 24px', borderRadius: 8, background: t.accent, color: '#fff', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: kioskSaving || !kioskCode.trim() ? 0.5 : 1 }}>
             {kioskSaving ? 'Saving...' : 'Save Kiosk Settings'}
           </button>
         </div>
 
-        <div style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: t.bgCard, border: '1px solid #1A1D23', borderRadius: 12, padding: 20 }}>
           <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Tablet Setup Instructions</h3>
           <ol style={{ margin: 0, padding: '0 0 0 20px', fontSize: 13, color: '#9D9DA1', lineHeight: 2 }}>
             <li>Open Safari or Chrome on the tablet</li>
-            <li>Go to: <strong style={{ color: '#4D9EFF' }}>{kioskUrl || 'truckzen.pro/kiosk/your-code'}</strong></li>
+            <li>Go to: <strong style={{ color: t.accentLight }}>{kioskUrl || 'truckzen.pro/kiosk/your-code'}</strong></li>
             <li>Tap Share then "Add to Home Screen"</li>
             <li>Enable Guided Access (iPad: Settings &gt; Accessibility &gt; Guided Access) to lock the tablet to the kiosk</li>
           </ol>
@@ -467,9 +469,9 @@ export default function SettingsPage() {
           <label style={S.label}>Shop Logo</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
             {brandingShop.logo_url ? (
-              <img src={brandingShop.logo_url} alt="Logo" style={{ maxHeight: 50, maxWidth: 200, borderRadius: 6, background: 'rgba(255,255,255,.06)', padding: 4 }} />
+              <img src={brandingShop.logo_url} alt="Logo" style={{ maxHeight: 50, maxWidth: 200, borderRadius: 6, background: t.border, padding: 4 }} />
             ) : (
-              <div style={{ width: 80, height: 50, background: 'rgba(255,255,255,.06)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9D9DA1' }}>No logo</div>
+              <div style={{ width: 80, height: 50, background: t.border, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9D9DA1' }}>No logo</div>
             )}
             <label style={{ ...S.btn, fontSize: 11, opacity: logoUploading ? 0.5 : 1, cursor: logoUploading ? 'wait' : 'pointer' }}>
               {logoUploading ? 'Uploading...' : 'Upload Logo'}
@@ -590,7 +592,7 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>Status</div>
-                <div style={{ fontSize: 12, color: tfaStatus?.enabled ? '#1DB870' : '#7C8BA0', marginTop: 4, fontWeight: 600 }}>
+                <div style={{ fontSize: 12, color: tfaStatus?.enabled ? '#1DB870' : t.textSecondary, marginTop: 4, fontWeight: 600 }}>
                   {tfaStatus?.enabled ? 'Enabled' : 'Not enabled'}
                 </div>
               </div>
@@ -613,8 +615,8 @@ export default function SettingsPage() {
                 <div style={{ textAlign: 'center', marginBottom: 16 }}>
                   <img src={tfaQR} alt="2FA QR Code" style={{ width: 200, height: 200, borderRadius: 8, background: '#fff', padding: 8 }} />
                 </div>
-                <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 16, textAlign: 'center' }}>
-                  Or enter manually: <code style={{ fontFamily: "'IBM Plex Mono', monospace", background: 'rgba(255,255,255,.06)', padding: '2px 6px', borderRadius: 4, fontSize: 11, letterSpacing: '.05em' }}>{tfaSecret}</code>
+                <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 16, textAlign: 'center' }}>
+                  Or enter manually: <code style={{ fontFamily: "'IBM Plex Mono', monospace", background: t.border, padding: '2px 6px', borderRadius: 4, fontSize: 11, letterSpacing: '.05em' }}>{tfaSecret}</code>
                 </div>
                 <div style={{ fontSize: 13, color: '#EDEDF0', marginBottom: 8 }}>Enter the 6-digit code to verify:</div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -628,7 +630,7 @@ export default function SettingsPage() {
             )}
 
             {tfaMsg && (
-              <div style={{ marginTop: 12, fontSize: 12, color: tfaMsg.includes('success') || tfaMsg.includes('enabled') ? '#1DB870' : tfaMsg.includes('disabled') ? '#7C8BA0' : '#EF4444' }}>
+              <div style={{ marginTop: 12, fontSize: 12, color: tfaMsg.includes('success') || tfaMsg.includes('enabled') ? '#1DB870' : tfaMsg.includes('disabled') ? t.textSecondary : '#EF4444' }}>
                 {tfaMsg}
               </div>
             )}
@@ -664,7 +666,7 @@ export default function SettingsPage() {
         <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Payment Information</div>
         <div style={S.card}>
           <div style={{ padding: 20 }}>
-            <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 16 }}>This information appears on invoices, PDFs, and emails sent to customers.</div>
+            <div style={{ fontSize: 12, color: t.textLightSecondary, marginBottom: 16 }}>This information appears on invoices, PDFs, and emails sent to customers.</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Company & Bank</div>

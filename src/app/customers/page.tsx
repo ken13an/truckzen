@@ -7,6 +7,7 @@ import ExcelJS from 'exceljs'
 import { PageFooter } from '@/components/ui/PageControls'
 import SourceBadge from '@/components/ui/SourceBadge'
 import FilterBar from '@/components/FilterBar'
+import { useTheme } from '@/hooks/useTheme'
 
 type Customer = {
   id: string
@@ -24,6 +25,7 @@ type Customer = {
 type FilterStatus = 'all' | 'active' | 'inactive'
 
 export default function CustomersPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const router = useRouter()
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -218,8 +220,8 @@ export default function CustomersPage() {
         borderRadius: 999,
         fontSize: 11,
         fontWeight: 600,
-        background: isActive ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.06)',
-        color: isActive ? '#4ADE80' : '#6B7280',
+        background: isActive ? 'rgba(34,197,94,0.12)' : t.border,
+        color: isActive ? '#4ADE80' : t.textLightSecondary,
         whiteSpace: 'nowrap',
       }}>
         {isActive ? 'Active' : 'Inactive'}
@@ -254,7 +256,7 @@ export default function CustomersPage() {
           }}>
             Customers
           </h1>
-          <div style={{ fontSize: 13, color: '#6B7280', marginTop: 4 }}>
+          <div style={{ fontSize: 13, color: t.textLightSecondary, marginTop: 4 }}>
             {total.toLocaleString()} customers
           </div>
         </div>
@@ -266,7 +268,7 @@ export default function CustomersPage() {
               background: 'transparent',
               border: '1px solid rgba(29,111,232,0.3)',
               borderRadius: 8,
-              color: '#1D6FE8',
+              color: t.accent,
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
@@ -279,7 +281,7 @@ export default function CustomersPage() {
             onClick={() => router.push('/customers/new')}
             style={{
               padding: '8px 16px',
-              background: '#1D6FE8',
+              background: t.accent,
               border: 'none',
               borderRadius: 8,
               color: '#fff',
@@ -331,7 +333,7 @@ export default function CustomersPage() {
       {/* Table */}
       <div style={{
         background: '#151520',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: `1px solid ${t.bgActive}`,
         borderRadius: 12,
         overflow: 'hidden',
       }}>
@@ -343,14 +345,14 @@ export default function CustomersPage() {
                   <th key={h} style={{
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontSize: 10,
-                    color: '#6B7280',
+                    color: t.textLightSecondary,
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                     padding: '10px 14px',
                     textAlign: 'left',
                     background: '#12121A',
                     whiteSpace: 'nowrap',
-                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    borderBottom: `1px solid ${t.border}`,
                     fontWeight: 500,
                   }}>
                     {h}
@@ -361,13 +363,13 @@ export default function CustomersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', color: '#6B7280', padding: 48, fontSize: 13 }}>
+                  <td colSpan={6} style={{ textAlign: 'center', color: t.textLightSecondary, padding: 48, fontSize: 13 }}>
                     Loading...
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', color: '#6B7280', padding: 48, fontSize: 13 }}>
+                  <td colSpan={6} style={{ textAlign: 'center', color: t.textLightSecondary, padding: 48, fontSize: 13 }}>
                     {search || statusFilter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No customers found'}
                   </td>
                 </tr>
@@ -381,16 +383,16 @@ export default function CustomersPage() {
                 >
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: `1px solid ${t.bgHover}`,
                     fontSize: 13,
                     fontWeight: 600,
-                    color: '#1D6FE8',
+                    color: t.accent,
                   }}>
                     {c.company_name || 'Unnamed'} <SourceBadge source={c.source} />
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: `1px solid ${t.bgHover}`,
                     fontSize: 13,
                     fontFamily: "'IBM Plex Mono', monospace",
                     color: '#9CA3AF',
@@ -399,7 +401,7 @@ export default function CustomersPage() {
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: `1px solid ${t.bgHover}`,
                     fontSize: 13,
                     color: '#9CA3AF',
                   }}>
@@ -407,23 +409,23 @@ export default function CustomersPage() {
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: `1px solid ${t.bgHover}`,
                     fontSize: 13,
                   }}>
                     {paymentBadge(c.payment_terms)}
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: `1px solid ${t.bgHover}`,
                     fontSize: 13,
                   }}>
                     {statusBadge(c.customer_status)}
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: `1px solid ${t.bgHover}`,
                     fontSize: 13,
-                    color: '#6B7280',
+                    color: t.textLightSecondary,
                   }}>
                     {c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}
                   </td>

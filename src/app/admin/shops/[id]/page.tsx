@@ -4,8 +4,10 @@ import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { COLORS, FONT } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function PlatformAdminShopDetail() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const params = useParams()
   const shopId = params.id as string
@@ -121,8 +123,8 @@ export default function PlatformAdminShopDetail() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: COLORS.textSecondary, fontFamily: FONT }}>Loading...</span>
+      <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: t.textSecondary, fontFamily: FONT }}>Loading...</span>
       </div>
     )
   }
@@ -130,33 +132,33 @@ export default function PlatformAdminShopDetail() {
   if (!user || !shop) return null
 
   const statusColor = (status: string) => {
-    if (status === 'active') return COLORS.green
-    if (status === 'pending') return COLORS.amber
-    if (status === 'suspended') return COLORS.red
-    return COLORS.textSecondary
+    if (status === 'active') return t.success
+    if (status === 'pending') return t.warning
+    if (status === 'suspended') return t.danger
+    return t.textSecondary
   }
 
   const statusBg = (status: string) => {
-    if (status === 'active') return COLORS.greenBg
-    if (status === 'pending') return COLORS.amberBg
-    if (status === 'suspended') return COLORS.redBg
+    if (status === 'active') return t.successBg
+    if (status === 'pending') return t.warningBg
+    if (status === 'suspended') return t.dangerBg
     return 'transparent'
   }
 
   const statCards = [
-    { label: 'Users', value: shop.user_count, color: COLORS.blue },
-    { label: 'Customers', value: shop.customer_count, color: COLORS.green },
-    { label: 'Vehicles', value: shop.asset_count, color: COLORS.amber },
-    { label: 'Work Orders', value: shop.wo_count, color: COLORS.blueLight },
+    { label: 'Users', value: shop.user_count, color: t.accent },
+    { label: 'Customers', value: shop.customer_count, color: t.success },
+    { label: 'Vehicles', value: shop.asset_count, color: t.warning },
+    { label: 'Work Orders', value: shop.wo_count, color: t.accentLight },
     { label: 'Invoices', value: shop.invoice_count, color: COLORS.roleParts },
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: COLORS.bg, color: COLORS.text, fontFamily: FONT }}>
+    <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: FONT }}>
       {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', top: 20, right: 20, background: COLORS.blue, color: '#fff',
+          position: 'fixed', top: 20, right: 20, background: t.accent, color: '#fff',
           padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999,
           boxShadow: '0 4px 20px rgba(0,0,0,.4)',
         }}>{toast}</div>
@@ -164,7 +166,7 @@ export default function PlatformAdminShopDetail() {
 
       {/* Header */}
       <div style={{ padding: '32px 40px 0' }}>
-        <a href="/admin/shops" style={{ color: COLORS.blueLight, fontSize: 12, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
+        <a href="/admin/shops" style={{ color: t.accentLight, fontSize: 12, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
           ← Back to All Shops
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
@@ -177,14 +179,14 @@ export default function PlatformAdminShopDetail() {
           </span>
         </div>
         {shop.dba && shop.name !== shop.dba && (
-          <p style={{ fontSize: 13, color: COLORS.textDim, margin: '2px 0 0' }}>Legal: {shop.name}</p>
+          <p style={{ fontSize: 13, color: t.textTertiary, margin: '2px 0 0' }}>Legal: {shop.name}</p>
         )}
       </div>
 
       {/* Shop Info */}
       <div style={{ padding: '24px 40px' }}>
         <div style={{
-          background: COLORS.bgCard, borderRadius: 12, border: `1px solid ${COLORS.border}`,
+          background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`,
           padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20,
         }}>
           {[
@@ -196,8 +198,8 @@ export default function PlatformAdminShopDetail() {
             { label: 'Kiosk Code', value: shop.kiosk_code || '—' },
           ].map(item => (
             <div key={item.label}>
-              <div style={{ fontSize: 10, color: COLORS.textDim, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 4 }}>{item.label}</div>
-              <div style={{ fontSize: 13, color: item.value ? COLORS.text : COLORS.textDim }}>{item.value || '—'}</div>
+              <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 4 }}>{item.label}</div>
+              <div style={{ fontSize: 13, color: item.value ? t.text : t.textTertiary }}>{item.value || '—'}</div>
             </div>
           ))}
         </div>
@@ -207,9 +209,9 @@ export default function PlatformAdminShopDetail() {
       <div style={{ padding: '0 40px 24px', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
         {statCards.map(card => (
           <div key={card.label} style={{
-            background: COLORS.bgCard, borderRadius: 12, border: `1px solid ${COLORS.border}`, padding: 20,
+            background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, padding: 20,
           }}>
-            <div style={{ fontSize: 10, color: COLORS.textDim, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 8 }}>{card.label}</div>
+            <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 8 }}>{card.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: card.color }}>{card.value}</div>
           </div>
         ))}
@@ -218,15 +220,15 @@ export default function PlatformAdminShopDetail() {
       {/* Admin Actions */}
       <div style={{ padding: '0 40px 40px' }}>
         <div style={{
-          background: COLORS.bgCard, borderRadius: 12, border: `1px solid ${COLORS.border}`, padding: 24,
+          background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, padding: 24,
         }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 16px', color: COLORS.text }}>Admin Actions</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 16px', color: t.text }}>Admin Actions</h3>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {/* Impersonate */}
             <button
               onClick={handleImpersonate}
               style={{
-                background: COLORS.blueBg, color: COLORS.blueLight, border: `1px solid ${COLORS.blue}`,
+                background: t.accentBg, color: t.accentLight, border: `1px solid ${t.accent}`,
                 borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
               }}
             >
@@ -238,9 +240,9 @@ export default function PlatformAdminShopDetail() {
               onClick={handleSuspend}
               disabled={suspending}
               style={{
-                background: shop.status === 'suspended' ? COLORS.greenBg : COLORS.amberBg,
-                color: shop.status === 'suspended' ? COLORS.green : COLORS.amber,
-                border: `1px solid ${shop.status === 'suspended' ? COLORS.green : COLORS.amber}`,
+                background: shop.status === 'suspended' ? t.successBg : t.warningBg,
+                color: shop.status === 'suspended' ? t.success : t.warning,
+                border: `1px solid ${shop.status === 'suspended' ? t.success : t.warning}`,
                 borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                 opacity: suspending ? 0.6 : 1,
               }}
@@ -252,7 +254,7 @@ export default function PlatformAdminShopDetail() {
             <button
               onClick={() => setShowClearConfirm(true)}
               style={{
-                background: COLORS.redBg, color: COLORS.red, border: `1px solid ${COLORS.red}`,
+                background: t.dangerBg, color: t.danger, border: `1px solid ${t.danger}`,
                 borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
               }}
             >
@@ -263,15 +265,15 @@ export default function PlatformAdminShopDetail() {
           {/* Clear Result */}
           {clearResult && (
             <div style={{
-              marginTop: 16, padding: 16, background: COLORS.bgDark, borderRadius: 8, border: `1px solid ${COLORS.border}`,
+              marginTop: 16, padding: 16, background: t.bgAlt, borderRadius: 8, border: `1px solid ${t.border}`,
             }}>
-              <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', color: COLORS.green }}>
+              <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', color: t.success }}>
                 Cleared {clearResult.total} records from {clearResult.shop}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
                 {Object.entries(clearResult.cleared).map(([key, val]) => (
-                  <div key={key} style={{ fontSize: 12, color: COLORS.textSecondary }}>
-                    <span style={{ color: COLORS.textDim }}>{key}:</span> <span style={{ fontWeight: 600, color: COLORS.text }}>{val as number}</span>
+                  <div key={key} style={{ fontSize: 12, color: t.textSecondary }}>
+                    <span style={{ color: t.textTertiary }}>{key}:</span> <span style={{ fontWeight: 600, color: t.text }}>{val as number}</span>
                   </div>
                 ))}
               </div>
@@ -289,15 +291,15 @@ export default function PlatformAdminShopDetail() {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: COLORS.bgCard, borderRadius: 16, border: `1px solid ${COLORS.border}`,
+              background: t.bgCard, borderRadius: 16, border: `1px solid ${t.border}`,
               padding: 32, width: 440, boxShadow: '0 20px 60px rgba(0,0,0,.5)',
             }}
           >
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 12px', color: COLORS.red }}>Clear All Test Data?</h2>
-            <p style={{ fontSize: 13, color: COLORS.textSecondary, margin: '0 0 8px', lineHeight: 1.6 }}>
-              This will permanently delete <strong style={{ color: COLORS.text }}>all</strong> data for <strong style={{ color: COLORS.text }}>{shop.dba || shop.name}</strong>:
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 12px', color: t.danger }}>Clear All Test Data?</h2>
+            <p style={{ fontSize: 13, color: t.textSecondary, margin: '0 0 8px', lineHeight: 1.6 }}>
+              This will permanently delete <strong style={{ color: t.text }}>all</strong> data for <strong style={{ color: t.text }}>{shop.dba || shop.name}</strong>:
             </p>
-            <ul style={{ fontSize: 12, color: COLORS.textSecondary, margin: '8px 0 20px', paddingLeft: 20, lineHeight: 1.8 }}>
+            <ul style={{ fontSize: 12, color: t.textSecondary, margin: '8px 0 20px', paddingLeft: 20, lineHeight: 1.8 }}>
               <li>All service orders, lines, and job assignments</li>
               <li>All invoices and invoice lines</li>
               <li>All customers and contacts</li>
@@ -305,7 +307,7 @@ export default function PlatformAdminShopDetail() {
               <li>All time entries, notes, files, parts requests</li>
               <li>Test user accounts (technicians, mechanics)</li>
             </ul>
-            <p style={{ fontSize: 12, color: COLORS.red, margin: '0 0 20px', fontWeight: 600 }}>
+            <p style={{ fontSize: 12, color: t.danger, margin: '0 0 20px', fontWeight: 600 }}>
               This action cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
@@ -313,7 +315,7 @@ export default function PlatformAdminShopDetail() {
                 onClick={() => setShowClearConfirm(false)}
                 disabled={clearing}
                 style={{
-                  background: 'transparent', color: COLORS.textSecondary, border: `1px solid ${COLORS.border}`,
+                  background: 'transparent', color: t.textSecondary, border: `1px solid ${t.border}`,
                   borderRadius: 8, padding: '10px 20px', fontSize: 13, cursor: 'pointer', fontFamily: FONT,
                 }}
               >
@@ -326,7 +328,7 @@ export default function PlatformAdminShopDetail() {
                 }}
                 disabled={clearing}
                 style={{
-                  background: COLORS.red, color: '#fff', border: 'none', borderRadius: 8,
+                  background: t.danger, color: '#fff', border: 'none', borderRadius: 8,
                   padding: '10px 24px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                   opacity: clearing ? 0.6 : 1,
                 }}
