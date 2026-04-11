@@ -10,8 +10,9 @@ import { getSidebarItems, hasAccess } from '@/lib/permissions'
 import { getPermissions } from '@/lib/getPermissions'
 import Logo, { LogoIcon } from '@/components/Logo'
 import { ADMIN_ROLES } from '@/lib/roles'
-import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock, Banknote } from 'lucide-react'
+import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock, Banknote, X } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
+import { COLORS } from '@/lib/config/colors'
 
 const UNLIMITED_ROLES = ADMIN_ROLES
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
@@ -28,14 +29,14 @@ interface DeptSection {
 
 const DEPARTMENTS: DeptSection[] = [
   {
-    label: 'Service', icon: Wrench, color: '#1D6FE8', dashboardHref: '/service-writer/dashboard',
+    label: 'Service', icon: Wrench, color: COLORS.blue, dashboardHref: '/service-writer/dashboard',
     items: [
       { href: '/work-orders', label: 'Work Orders', icon: Wrench },
       { href: '/shop-floor', label: 'Shop Floor', icon: Factory },
     ],
   },
   {
-    label: 'Parts', icon: Package, color: '#F97316', dashboardHref: '/parts',
+    label: 'Parts', icon: Package, color: COLORS.amber, dashboardHref: '/parts',
     items: [
       { href: '/parts/queue', label: 'Parts Queue', icon: ClipboardList },
       { href: '/parts', label: 'Inventory', icon: Package },
@@ -43,7 +44,7 @@ const DEPARTMENTS: DeptSection[] = [
     ],
   },
   {
-    label: 'Fleet', icon: Truck, color: '#22C55E', dashboardHref: '/fleet',
+    label: 'Fleet', icon: Truck, color: COLORS.green, dashboardHref: '/fleet',
     items: [
       { href: '/fleet/service-requests', label: 'Service Requests', icon: FileText },
       { href: '/fleet/compliance', label: 'Compliance', icon: ShieldCheck },
@@ -51,7 +52,7 @@ const DEPARTMENTS: DeptSection[] = [
     ],
   },
   {
-    label: 'Maintenance', icon: Wrench, color: '#F59E0B', dashboardHref: '/maintenance',
+    label: 'Maintenance', icon: Wrench, color: COLORS.amber, dashboardHref: '/maintenance',
     items: [
       // Group 1: Billing — highest visibility
       { href: '/maintenance/invoices', label: 'Invoices', icon: Receipt },
@@ -79,7 +80,7 @@ const DEPARTMENTS: DeptSection[] = [
     ],
   },
   {
-    label: 'Accounting', icon: Calculator, color: '#8B5CF6', dashboardHref: '/accounting',
+    label: 'Accounting', icon: Calculator, color: COLORS.roleParts, dashboardHref: '/accounting',
     items: [
       { href: '/accounting/history', label: 'Imported History', icon: FileText },
       { href: '/reports', label: 'Reports', icon: BarChart3 },
@@ -109,17 +110,24 @@ function getDeptAccess(
 }
 
 export default function Sidebar() {
-  const { tokens: t } = useTheme()
+  const { tokens: t, mode, toggleMode } = useTheme()
   const pathname = usePathname()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('tz-sidebar-collapsed') === 'true'
+    return false
+  })
   const [lowStock, setLowStock] = useState(0)
   const [openJobs, setOpenJobs] = useState(0)
   const [isPlatformOwner, setIsPlatformOwner] = useState(false)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [rolePerms, setRolePerms] = useState<Record<string, boolean>>({})
   const [userOverrides, setUserOverrides] = useState<Record<string, boolean>>({})
+  const [punchedIn, setPunchedIn] = useState(false)
+  const [punchTime, setPunchTime] = useState<string | null>(null)
+  const [elapsed, setElapsed] = useState('')
+  const [qaOpen, setQaOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -146,6 +154,38 @@ export default function Sidebar() {
     }
     load()
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('tz-sidebar-collapsed', String(collapsed))
+    window.dispatchEvent(new Event('storage'))
+  }, [collapsed])
+
+  // Fetch punch status
+  useEffect(() => {
+    fetch('/api/mechanic/work-punch').then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.punchedIn && d.activePunch?.punch_in_at) { setPunchedIn(true); setPunchTime(d.activePunch.punch_in_at) }
+    }).catch(() => {})
+  }, [])
+
+  // Elapsed timer
+  useEffect(() => {
+    if (!punchedIn || !punchTime) { setElapsed(''); return }
+    const tick = () => {
+      const m = Math.floor((Date.now() - new Date(punchTime).getTime()) / 60000)
+      setElapsed(m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`)
+    }
+    tick()
+    const iv = setInterval(tick, 60000)
+    return () => clearInterval(iv)
+  }, [punchedIn, punchTime])
+
+  // ESC to close Quick Actions
+  useEffect(() => {
+    if (!qaOpen) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setQaOpen(false) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [qaOpen])
 
   // Auto-expand section containing active page — runs on every pathname change
   // Also auto-expand Accounting for accountant roles
@@ -195,6 +235,34 @@ export default function Sidebar() {
     setExpanded(prev => ({ ...prev, [label]: !prev[label] }))
   }
 
+  async function togglePunch() {
+    if (punchedIn) {
+      if (!confirm(`Clock out after ${elapsed || '0m'}?`)) return
+      const res = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'punch_out' }) })
+      if (res.ok) { setPunchedIn(false); setPunchTime(null); setElapsed('') }
+    } else {
+      const res = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'punch_in' }) })
+      if (res.ok) { const d = await res.json(); setPunchedIn(true); setPunchTime(d.punch?.punch_in_at || new Date().toISOString()) }
+    }
+  }
+
+  const qaItems = [
+    { group: 'Sales', items: [
+      { label: 'New Work Order', href: '/work-orders/new' },
+      { label: 'Quick Service Order', href: null },
+      { label: 'New Estimate', href: null },
+      { label: 'Counter Sale', href: null },
+      { label: 'Service Request', href: '/service-requests/new' },
+    ]},
+    { group: 'Operations', items: [
+      { label: 'Add Customer', href: '/customers/new' },
+      { label: 'Add Unit', href: '/fleet/new' },
+      { label: 'Receive Payment', href: null },
+      { label: 'Purchase Order', href: '/maintenance/purchase-orders/new' },
+      { label: 'Receive Parts', href: null },
+    ]},
+  ]
+
   function renderNavItem(item: { href: string; label: string; icon: any }, indent: boolean = false) {
     const active = isActive(item.href)
     const Icon = item.icon
@@ -207,20 +275,20 @@ export default function Sidebar() {
           padding: collapsed ? '8px 0' : indent ? '7px 14px' : '8px 16px',
           justifyContent: collapsed ? 'center' : 'flex-start',
           margin: '1px 6px', borderRadius: 8, marginLeft: indent && !collapsed ? 16 : 6,
-          background: active ? t.accentBg : 'transparent',
-          borderLeft: active ? `2px solid ${t.accent}` : '2px solid transparent',
+          background: active ? t.sidebarActiveBg : 'transparent',
+          border: active ? `1px solid ${t.sidebarActiveBorder}` : '1px solid transparent',
           cursor: 'pointer', transition: 'all .12s',
         }}
-        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = t.bgHover }}
-        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+        onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = t.bgHover; (e.currentTarget as HTMLElement).style.color = t.text } }}
+        onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '' } }}>
           <span style={{ flexShrink: 0, width: indent ? 13 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon size={indent ? 13 : 15} strokeWidth={1.5} color={active ? t.accentLight : t.textTertiary} />
+            <Icon size={indent ? 13 : 15} strokeWidth={1.5} color={active ? t.sidebarTextActive : t.textTertiary} />
           </span>
           {!collapsed && (
             <>
-              <span style={{ fontSize: indent ? 11 : 12, fontWeight: active ? 700 : 400, color: active ? t.text : t.textSecondary, flex: 1, whiteSpace: 'nowrap' }}>{item.label}</span>
+              <span style={{ fontSize: indent ? 11 : 12, fontWeight: active ? 600 : 400, color: active ? t.sidebarTextActive : t.textSecondary, flex: 1, whiteSpace: 'nowrap' }}>{item.label}</span>
               {badge != null && badge > 0 && (
-                <span style={{ background: item.href === '/parts' ? t.danger : t.accent, color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>{badge > 99 ? '99+' : badge}</span>
+                <span style={{ background: item.href === '/parts' ? t.danger : t.accent, color: t.bgLight, fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>{badge > 99 ? '99+' : badge}</span>
               )}
             </>
           )}
@@ -230,7 +298,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside style={{ width: W, minHeight: '100vh', background: t.bgInput, borderRight: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', transition: 'width .2s ease', flexShrink: 0, position: 'sticky', top: 0 }}>
+    <aside style={{ width: W, minHeight: '100vh', background: t.sidebarBg, borderRight: `1px solid ${t.sidebarBorder}`, display: 'flex', flexDirection: 'column', transition: 'width .2s ease', flexShrink: 0, position: 'sticky', top: 0 }}>
       {/* Logo */}
       <div style={{ padding: collapsed ? '16px 14px' : '16px 18px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', minHeight: 56 }}>
         {collapsed ? <LogoIcon size="sm" /> : <Logo size="sm" showWordmark={true} />}
@@ -244,6 +312,25 @@ export default function Sidebar() {
         </div>
       )}
 
+      {/* Clock In/Out */}
+      <div style={{ padding: collapsed ? '8px 6px' : '8px 12px' }}>
+        <button onClick={togglePunch} style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+          padding: collapsed ? '8px 0' : '8px 12px',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          background: punchedIn ? 'rgba(92,184,138,0.04)' : 'transparent',
+          border: `1px solid ${punchedIn ? 'rgba(92,184,138,0.2)' : t.cardBorder}`,
+          borderRadius: 8, cursor: 'pointer', transition: 'all .15s',
+        }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: punchedIn ? t.success : t.danger, flexShrink: 0, animation: 'tz-pulse 2s infinite' }} />
+          {!collapsed && <>
+            <span style={{ fontSize: 11, fontWeight: 600, color: punchedIn ? t.success : t.textSecondary }}>{punchedIn ? 'Clocked In' : 'Clock In'}</span>
+            {punchedIn && elapsed && <span style={{ marginLeft: 'auto', fontSize: 10, fontFamily: "'IBM Plex Mono', monospace", color: t.textTertiary }}>{elapsed}</span>}
+          </>}
+        </button>
+      </div>
+      <style>{`@keyframes tz-pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }`}</style>
+
       <nav style={{ flex: 1, padding: '6px 0', overflowY: 'auto', overflowX: 'hidden' }}>
         {/* Smart Drop — standalone */}
         {SMART_DROP_ROLES.includes(effectiveRole) && (
@@ -253,7 +340,7 @@ export default function Sidebar() {
         )}
 
         {/* Department sections */}
-        {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.1em', padding: '8px 18px 4px', fontFamily: "'IBM Plex Mono', monospace" }}>Departments</div>}
+        {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', padding: '8px 18px 4px', fontFamily: "'IBM Plex Mono', monospace" }}>Departments</div>}
 
         {DEPARTMENTS.filter(dept => deptAccess.includes(dept.label)).map(dept => {
           const DeptIcon = dept.icon
@@ -296,12 +383,49 @@ export default function Sidebar() {
         })}
       </nav>
 
+      {/* Quick Actions */}
+      <div style={{ padding: '4px 6px' }}>
+        <div onClick={() => setQaOpen(true)} role="button" tabIndex={0} style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: collapsed ? '8px 0' : '8px 16px',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          margin: '1px 0', borderRadius: 8,
+          cursor: 'pointer', transition: 'all .12s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
+        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+          <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M11.5 2L4 12h5.5l-1 6L17 8h-5.5l1-6z" fill={t.warning} /></svg>
+          </span>
+          {!collapsed && <span style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary }}>Quick Actions</span>}
+        </div>
+      </div>
+
       {/* Bottom: Settings + Sign Out */}
       <div style={{ borderTop: `1px solid ${t.border}`, padding: '6px 0' }}>
-        {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.1em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
+        {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
         {TRASH_ROLES.includes(effectiveRole) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
         {hasAccess(effectiveRole, 'settings', rolePerms, userOverrides) && renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
         {PERMISSIONS_ROLES.includes(effectiveRole) && renderNavItem({ href: '/settings/permissions', label: 'Permissions', icon: Lock })}
+        {/* Theme Toggle */}
+        <div onClick={toggleMode} role="button" tabIndex={0} style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: collapsed ? '8px 0' : '8px 16px',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          margin: '1px 6px', borderRadius: 8,
+          cursor: 'pointer', transition: 'all .12s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
+        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+          <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {mode === 'dark' ? (
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke={t.textSecondary} strokeWidth="1.5"><circle cx="10" cy="10" r="4"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"/></svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke={t.textSecondary} strokeWidth="1.5"><path d="M17.3 14.3A7 7 0 015.7 2.7 8 8 0 1017.3 14.3z"/></svg>
+            )}
+          </span>
+          {!collapsed && <span style={{ fontSize: 12, color: t.textSecondary }}>{mode === 'dark' ? 'Dark Mode' : 'Warm Mode'}</span>}
+        </div>
         <a href="#" onClick={async (e) => { e.preventDefault(); try { await fetch('/api/auth/session', { method: 'DELETE' }) } catch {}; await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,.08)'}
@@ -312,6 +436,30 @@ export default function Sidebar() {
         </a>
       </div>
       <div style={{ height: 4 }} />
+
+      {/* Quick Actions Modal */}
+      {qaOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setQaOpen(false)}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />
+          <div style={{ position: 'relative', width: 400, maxWidth: '90vw', background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 14, padding: 24, zIndex: 1 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: t.text }}>Quick Actions</span>
+              <button onClick={() => setQaOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary, padding: 4 }}><X size={18} /></button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              {qaItems.map(g => (
+                <div key={g.group}>
+                  <div style={{ fontSize: 9, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{g.group}</div>
+                  {g.items.map(item => (
+                    <div key={item.label} onClick={() => { if (item.href) { window.location.href = item.href } else { setQaOpen(false) } }} style={{ fontSize: 12, color: t.textSecondary, padding: '6px 0', cursor: 'pointer', opacity: item.href ? 1 : 0.5 }}
+                      onMouseEnter={e => (e.currentTarget.style.color = t.accent)} onMouseLeave={e => (e.currentTarget.style.color = t.textSecondary)}>{item.label}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   )
 }

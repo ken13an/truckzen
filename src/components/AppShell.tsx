@@ -7,8 +7,10 @@ import RoleSwitcher from '@/components/RoleSwitcher'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Search, Plus } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
+import { COLORS } from '@/lib/config/colors'
+import CommandPalette from '@/components/CommandPalette'
 
 const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password', '/tech', '/offline', '/403', '/mechanic', '/floor-manager', '/platform-admin', '/register']
 
@@ -20,6 +22,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [shopImpersonation, setShopImpersonation] = useState<{ shopName: string; originalShopId: string } | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('tz-sidebar-collapsed') === 'true'
+    return false
+  })
   useKeyboardShortcuts()
 
   useEffect(() => {
@@ -27,6 +34,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    const sync = () => setSidebarCollapsed(localStorage.getItem('tz-sidebar-collapsed') === 'true')
+    window.addEventListener('storage', sync)
+    return () => window.removeEventListener('storage', sync)
+  }, [])
+
+  // Cmd+K / Ctrl+K / "/" to open command palette
+  useEffect(() => {
+    function handleCmdK(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setCommandPaletteOpen(true); return }
+      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName)) { e.preventDefault(); setCommandPaletteOpen(true) }
+    }
+    window.addEventListener('keydown', handleCmdK)
+    return () => window.removeEventListener('keydown', handleCmdK)
   }, [])
 
   // Close drawer on navigation
@@ -95,17 +118,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} onClick={() => setDrawerOpen(false)} />
           <div style={{ position: 'relative', zIndex: 1, width: 260, maxWidth: '80vw' }}>
             <Sidebar />
-            <button onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', top: 12, right: -44, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer', color: '#fff' }}>
+            <button onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', top: 12, right: -44, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer', color: t.bgLight }}>
               <X size={20} />
             </button>
           </div>
         </div>
       )}
 
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', transition: 'margin .2s ease' }}>
         {/* Shop impersonation banner */}
         {shopImpersonation && (
-          <div style={{ background: 'rgba(232,105,42,.12)', borderBottom: '1px solid rgba(232,105,42,.25)', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontSize: 12, color: '#E8692A', fontWeight: 600 }}>
+          <div style={{ background: 'rgba(232,105,42,.12)', borderBottom: '1px solid rgba(232,105,42,.25)', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontSize: 12, color: COLORS.roleAccounting, fontWeight: 600 }}>
             <span>You are viewing <strong>{shopImpersonation.shopName}</strong> as Owner</span>
             <button onClick={async () => {
               await fetch('/api/platform-admin/impersonate', {
@@ -115,34 +138,65 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               })
               localStorage.removeItem('tz_original_shop_id')
               window.location.href = '/platform-admin'
-            }} style={{ background: '#E8692A', border: 'none', borderRadius: 4, color: '#fff', fontSize: 10, cursor: 'pointer', padding: '3px 10px', fontFamily: 'inherit', fontWeight: 700 }}>
+            }} style={{ background: COLORS.roleAccounting, border: 'none', borderRadius: 4, color: t.bgLight, fontSize: 10, cursor: 'pointer', padding: '3px 10px', fontFamily: 'inherit', fontWeight: 700 }}>
               Exit Impersonation
             </button>
           </div>
         )}
         {/* Role impersonation banner */}
         {isImpersonating && !shopImpersonation && (
-          <div style={{ background: 'rgba(245,158,11,.1)', borderBottom: '1px solid rgba(245,158,11,.2)', padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, color: '#F59E0B', fontWeight: 600 }}>
+          <div style={{ background: 'rgba(245,158,11,.1)', borderBottom: '1px solid rgba(245,158,11,.2)', padding: '6px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12, color: COLORS.amber, fontWeight: 600 }}>
             <span>Impersonating: {user.impersonate_role?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
             <button onClick={async () => {
               await fetch('/api/impersonate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'reset' }) })
               await new Promise(r => setTimeout(r, 300))
               window.location.href = '/dashboard'
-            }} style={{ background: 'none', border: '1px solid rgba(245,158,11,.3)', borderRadius: 4, color: '#F59E0B', fontSize: 10, cursor: 'pointer', padding: '2px 8px', fontFamily: 'inherit' }}>
+            }} style={{ background: 'none', border: '1px solid rgba(245,158,11,.3)', borderRadius: 4, color: COLORS.amber, fontSize: 10, cursor: 'pointer', padding: '2px 8px', fontFamily: 'inherit' }}>
               Exit
             </button>
           </div>
         )}
-        {/* Top bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))', borderBottom: `1px solid ${t.bgHover}` }}>
-          {isMobile ? (
-            <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textSecondary, padding: 6 }}>
-              <Menu size={22} />
-            </button>
-          ) : <div />}
+        {/* Sticky top bar */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 15, background: t.bgCard, borderBottom: `1px solid ${t.border}`, backdropFilter: 'blur(16px)', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))' }}>
+          {/* Left: mobile menu or spacer */}
+          <div>
+            {isMobile && (
+              <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textSecondary, padding: 6 }}>
+                <Menu size={22} />
+              </button>
+            )}
+          </div>
+          {/* Center: search + New WO */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div onClick={() => setCommandPaletteOpen(true)} style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <Search size={14} style={{ position: 'absolute', left: 10, pointerEvents: 'none', color: t.textTertiary }} />
+              <div style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, padding: '6px 12px 6px 30px', fontSize: 13, color: t.textTertiary, width: isMobile ? 160 : 260, userSelect: 'none' }}>
+                Search truck #, company, SO #...
+              </div>
+              {!isMobile && (
+                <span style={{ position: 'absolute', right: 8, fontSize: 10, color: t.textTertiary, background: t.bgHover, borderRadius: 4, padding: '1px 5px', pointerEvents: 'none' }}>/</span>
+              )}
+            </div>
+            <a href="/work-orders/new" style={{ textDecoration: 'none' }}>
+              <button style={{ background: t.accent, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                <Plus size={14} strokeWidth={2.5} /> New WO
+              </button>
+            </a>
+          </div>
+          {/* Right: role badge + avatar + notifications */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
             {user?.can_impersonate && (
               <RoleSwitcher userId={user.id} actualRole={user.role} impersonateRole={user.impersonate_role} />
+            )}
+            {user && effectiveRole && (
+              <span style={{ fontSize: 10, fontWeight: 600, color: t.textSecondary, background: t.bgHover, borderRadius: 4, padding: '2px 8px', textTransform: 'capitalize' }}>
+                {effectiveRole.replace(/_/g, ' ')}
+              </span>
+            )}
+            {user && (
+              <div style={{ width: 28, height: 28, borderRadius: 14, background: t.accent, color: t.bgLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+                {(user.full_name || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
             )}
             {user && <NotificationBell userId={user.id} />}
           </div>
@@ -151,6 +205,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </div>
   )
 }

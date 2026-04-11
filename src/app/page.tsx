@@ -1,110 +1,381 @@
 import type { Metadata } from 'next'
-import Logo from '@/components/Logo'
+import StarfieldCanvas from '@/components/StarfieldCanvas'
 
 export const metadata: Metadata = {
-  title: 'TruckZen — The Operating System for Truck Repair Shops',
-  description: 'One platform for every department. Work orders, estimates, parts inventory, fleet maintenance, invoicing, and AI-powered service writing — built for heavy-duty repair shops.',
+  title: 'TruckZen — The Whole Operation',
+  description: 'One platform for your entire heavy-duty operation. Shop, fleet, parts, and people — connected.',
   openGraph: {
-    title: 'TruckZen — The Operating System for Truck Repair Shops',
-    description: 'One platform. Every department. Zero chaos.',
+    title: 'TruckZen — The Whole Operation',
+    description: 'One platform. Every department. Every language.',
     url: 'https://truckzen.pro',
     type: 'website',
   },
 }
 
-const FONT = "'Instrument Sans', sans-serif"
-const BLUE = '#1D6FE8'
+const BLUE = '#1B6EE6'
+const TEXT = '#e2e6ed'
+const DIM = '#6a7590'
+const DIM2 = '#3a4560'
+const BORDER = 'rgba(255,255,255,.06)'
+const GREEN = '#34d399'
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
 
-const features = [
-  {
-    title: 'Service',
-    desc: 'Work orders from check-in to invoice. Estimates with customer approval. Self-service kiosk. Customer portal with real-time tracking. AI that writes professional service notes in any language.',
-  },
-  {
-    title: 'Parts & Inventory',
-    desc: 'Mechanics request rough parts. Parts department sources, prices, and fulfills. Auto-pricing from your catalog. Core tracking for warranty returns. Real-time stock levels across locations.',
-  },
-  {
-    title: 'Fleet & Maintenance',
-    desc: 'Full truck profiles with 5-year service history. Warranty tracking with manufacturer, extended, and dealer scenarios. Tire lifecycle management. Mileage-based PM scheduling.',
-  },
-]
+const secStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 48px', textAlign: 'center', position: 'relative' }
+const dividerStyle: React.CSSProperties = { height: 1, background: `linear-gradient(90deg, transparent, ${BORDER}, transparent)` }
+
+function LogoMark({ size = 30 }: { size?: number }) {
+  const ds = Math.round(size * 0.13)
+  return (
+    <div style={{ width: size, height: size, background: '#e0deda', borderRadius: Math.round(size * 0.23), display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <span style={{ fontSize: Math.round(size * 0.4), fontWeight: 900, color: '#111' }}>TZ</span>
+      <span style={{ position: 'absolute', bottom: Math.round(size * 0.2), right: Math.round(size * 0.2), width: ds, height: ds, borderRadius: '50%', background: BLUE }} />
+    </div>
+  )
+}
+
+function Wordmark({ size = 17 }: { size?: number }) {
+  return <span style={{ fontSize: size, fontWeight: 700, color: '#fff' }}>truckzen<span style={{ color: BLUE }}>.</span></span>
+}
+
+function BrowserFrame({ children, url, accent }: { children: React.ReactNode; url: string; accent?: boolean }) {
+  return (
+    <div style={{ border: `1px solid ${accent ? 'rgba(27,110,230,.15)' : BORDER}`, borderRadius: 12, overflow: 'hidden', background: accent ? 'rgba(27,110,230,.02)' : 'rgba(255,255,255,.02)', boxShadow: accent ? '0 0 60px rgba(27,110,230,.06)' : 'none' }}>
+      <div style={{ display: 'flex', gap: 6, padding: '8px 12px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,255,255,.02)', alignItems: 'center' }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: DIM2 }} />
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: DIM2 }} />
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: DIM2 }} />
+        <span style={{ marginLeft: 10, fontSize: 9, color: DIM, padding: '2px 8px', background: 'rgba(255,255,255,.03)', borderRadius: 4 }}>{url}</span>
+      </div>
+      <div style={{ padding: 24 }}>{children}</div>
+    </div>
+  )
+}
+
+function PlaceholderBar({ w, color }: { w: string; color: string }) {
+  return <div style={{ height: 6, width: w, borderRadius: 3, background: color, marginBottom: 6 }} />
+}
 
 export default function HomePage() {
   return (
-    <div style={{ background: '#060708', color: '#F0F4FF', fontFamily: FONT, minHeight: '100vh' }}>
+    <div style={{ background: '#000', color: TEXT, fontFamily: FONT, overflowX: 'hidden', position: 'relative' }}>
+      <StarfieldCanvas />
 
-      {/* ── NAV ── */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <Logo size="md" />
-        <div style={{ display: 'flex', gap: 12 }}>
-          <a href="/login" style={{ padding: '10px 20px', borderRadius: 8, color: '#7C8BA0', fontSize: 14, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>Sign In</a>
+      {/* NAV */}
+      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, padding: '16px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><LogoMark /><Wordmark /></div>
+        <div style={{ display: 'flex', gap: 32 }}>
+          {['Platform', 'Features', 'FAQ', 'Contact'].map(l => (
+            <a key={l} href={`#${l.toLowerCase()}`} style={{ fontSize: 13, color: DIM, fontWeight: 500, textDecoration: 'none' }}>{l}</a>
+          ))}
         </div>
+        <a href="/login" style={{ fontSize: 13, color: '#fff', fontWeight: 500, padding: '7px 20px', border: '1px solid rgba(255,255,255,.2)', borderRadius: 20, textDecoration: 'none' }}>Log In</a>
       </nav>
 
-      {/* ── HERO ── */}
-      <section style={{ textAlign: 'center', padding: '80px 24px 60px', maxWidth: 700, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 48, fontWeight: 800, lineHeight: 1.15, margin: '0 0 16px', letterSpacing: '-0.02em' }}>
-          The Operating System<br />for Truck Repair Shops
-        </h1>
-        <p style={{ fontSize: 20, color: '#7C8BA0', lineHeight: 1.5, margin: '0 0 40px' }}>
-          One platform. Every department. Zero chaos.
-        </p>
-        <a href="/register" style={{ display: 'inline-block', padding: '16px 44px', borderRadius: 10, background: BLUE, color: '#fff', fontSize: 17, fontWeight: 700, textDecoration: 'none', fontFamily: FONT, boxShadow: '0 0 30px rgba(29,111,232,.25)' }}>
-          Get Started
-        </a>
+      {/* ── S1: HERO ── */}
+      <section style={{ ...secStyle, minHeight: '100vh', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 900 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 11, color: DIM, fontWeight: 500, marginBottom: 32, background: 'rgba(255,255,255,.02)' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE, animation: 'tz-lp-pulse 2s infinite' }} />
+            Now in production
+          </div>
+          <h1 style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, letterSpacing: '-.04em', color: '#fff', marginBottom: 24 }}>
+            You run the company.<br /><span style={{ color: BLUE }}>TruckZen runs everything&nbsp;else.</span>
+          </h1>
+          <p style={{ fontSize: 21, color: DIM, lineHeight: 1.6, maxWidth: 560, margin: '0 auto 24px' }}>One platform for your entire heavy-duty operation.</p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
+            {['Shop', 'Fleet', 'Parts', 'People'].map(t => (
+              <span key={t} style={{ padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: DIM, fontWeight: 500, background: 'rgba(255,255,255,.02)' }}>{t}</span>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+            <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: '#fff', fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 24px rgba(27,110,230,.25)' }}>Book a demo</a>
+            <a href="#platform" style={{ padding: '14px 36px', color: '#fff', fontSize: 16, fontWeight: 600, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', textDecoration: 'none' }}>Learn more</a>
+          </div>
+        </div>
+        <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', color: DIM, fontSize: 11, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, animation: 'tz-lp-bob 2s infinite' }}>
+          Scroll
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" /></svg>
+        </div>
       </section>
 
-      {/* ── WHAT WE DO ── */}
-      <section style={{ padding: '40px 24px 60px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-          {features.map(f => (
-            <div key={f.title} style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '28px 24px' }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 10px', color: '#F0F4FF' }}>{f.title}</h3>
-              <p style={{ fontSize: 14, color: '#7C8BA0', lineHeight: 1.7, margin: 0 }}>{f.desc}</p>
+      {/* Hero visual — browser frame */}
+      <div style={{ padding: '0 48px 120px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,.02)', boxShadow: '0 0 80px rgba(27,110,230,.06)' }}>
+          <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,255,255,.02)', alignItems: 'center' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
+            <span style={{ marginLeft: 12, fontSize: 10, color: DIM, padding: '3px 10px', background: 'rgba(255,255,255,.03)', borderRadius: 4 }}>truckzen.pro</span>
+          </div>
+          <div style={{ padding: 32, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, minHeight: 300 }}>
+            {[
+              { t: 'Shop', rows: [['Bay 1', 'Assigned'], ['Bay 2', 'Active'], ['Bay 3', 'Open']] },
+              { t: 'Invoices', rows: [['Pending', '—'], ['Paid', '—'], ['Overdue', '—']] },
+              { t: 'Fleet', rows: [['Uptime', '—'], ['Utilization', '—'], ['PM Due', '—']] },
+              { t: 'Warranty', rows: [['Active', '—'], ['Pending', '—']] },
+            ].map(p => (
+              <div key={p.t} style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${BORDER}`, borderRadius: 8, padding: 16, textAlign: 'left' }}>
+                <div style={{ fontSize: 9, color: DIM, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>{p.t}</div>
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {p.rows.map(([l, v]) => (
+                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: DIM, padding: '3px 0', borderBottom: `1px solid ${BORDER}` }}>
+                      <span>{l}</span><span style={{ color: TEXT, fontWeight: 600 }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={dividerStyle} />
+
+      {/* ── S2: TWO PILLARS ── */}
+      <section id="platform" style={{ ...secStyle, minHeight: 'auto' }}>
+        <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>The Platform</div>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 8 }}>Two engines. One platform.</h2>
+        <p style={{ fontSize: 18, color: DIM, marginBottom: 48, maxWidth: 520 }}>AI is built into every step. Not bolted on top.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, maxWidth: 1000, margin: '0 auto', background: BORDER, borderRadius: 16, overflow: 'hidden', textAlign: 'left' }}>
+          <div style={{ background: '#000', padding: '48px 40px' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: 'rgba(27,110,230,.08)' }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={BLUE} strokeWidth="1.5"><path d="M3 15V8l7-5 7 5v7" /><path d="M8 15v-4h4v4" /></svg>
+            </div>
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Shop operations</h3>
+            <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, marginBottom: 20 }}>Everything from truck arrival to payment collected. AI writes service notes, classifies jobs, suggests parts.</p>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, padding: 0 }}>
+              {['AI service writer (4 languages)', 'Work orders + estimates + invoicing', 'Parts tracking + auto reorder', 'Mechanic time clock + payroll', 'Kiosk check-in for walk-ins', 'Customer portal for approvals', 'Dynamic pricing by customer type', 'Telegram bot for remote updates'].map(i => (
+                <li key={i} style={{ fontSize: 13, color: TEXT, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{i}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div style={{ background: '#000', padding: '48px 40px' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: 'rgba(52,211,153,.08)' }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={GREEN} strokeWidth="1.5"><rect x="2" y="8" width="16" height="7" rx="1.5" /><circle cx="5.5" cy="13.5" r="1.5" /><circle cx="14.5" cy="13.5" r="1.5" /><path d="M2 10l2.5-4h7l2.5 4" /></svg>
+            </div>
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Fleet intelligence</h3>
+            <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, marginBottom: 20 }}>Know the health of every truck before it breaks down. Connected to your shop.</p>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, padding: 0 }}>
+              {['Preventive maintenance scheduling', 'Inspections + DVIR tracking', 'Warranty + recall management', 'Fuel + expense tracking', 'Driver management', 'Telematics integration ready', 'GPS + vehicle location tracking', 'Compliance alerts + renewals'].map(i => (
+                <li key={i} style={{ fontSize: 13, color: TEXT, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: GREEN, flexShrink: 0 }} />{i}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <div style={dividerStyle} />
+
+      {/* ── S3: COMPARISON — browser-frame mockups ── */}
+      <section style={{ ...secStyle, minHeight: 'auto' }}>
+        <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>Why shops are switching</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 1000, margin: '0 auto', textAlign: 'left' }}>
+          {/* Left: generic competitor */}
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 12, color: DIM }}>The platform you overpay for</div>
+            <BrowserFrame url="legacy-platform.com">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 9, color: DIM2, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>Dashboard</div>
+                  <PlaceholderBar w="70%" color="rgba(255,255,255,.04)" />
+                  <PlaceholderBar w="50%" color="rgba(255,255,255,.04)" />
+                  <PlaceholderBar w="85%" color="rgba(255,255,255,.04)" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, color: DIM2, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>Work Orders</div>
+                  <PlaceholderBar w="60%" color="rgba(255,255,255,.04)" />
+                  <PlaceholderBar w="45%" color="rgba(255,255,255,.04)" />
+                  <PlaceholderBar w="75%" color="rgba(255,255,255,.04)" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, color: DIM2, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>Invoicing</div>
+                  <PlaceholderBar w="55%" color="rgba(255,255,255,.04)" />
+                  <PlaceholderBar w="40%" color="rgba(255,255,255,.04)" />
+                </div>
+              </div>
+            </BrowserFrame>
+          </div>
+          {/* Right: TruckZen */}
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 12, color: BLUE }}>TruckZen. The whole operation.</div>
+            <BrowserFrame url="truckzen.pro" accent>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {['Shop', 'Invoices', 'Fleet', 'Warranty'].map(label => (
+                  <div key={label} style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${BORDER}`, borderRadius: 6, padding: 12 }}>
+                    <div style={{ fontSize: 9, color: BLUE, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>{label}</div>
+                    <PlaceholderBar w="80%" color="rgba(27,110,230,.15)" />
+                    <PlaceholderBar w="55%" color="rgba(27,110,230,.10)" />
+                    <PlaceholderBar w="65%" color="rgba(27,110,230,.08)" />
+                  </div>
+                ))}
+              </div>
+            </BrowserFrame>
+          </div>
+        </div>
+      </section>
+
+      <div style={dividerStyle} />
+
+      {/* ── S4: FEATURES 2x2 ── */}
+      <section id="features" style={{ ...secStyle, minHeight: 'auto' }}>
+        <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>Built Different</div>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 8 }}>What you get that nobody else offers.</h2>
+        <p style={{ fontSize: 18, color: DIM, marginBottom: 48, maxWidth: 560 }}>Every feature built from real shop problems, not a product roadmap.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 900, margin: '0 auto', textAlign: 'left' }}>
+          {[
+            { t: 'Multilingual AI, native', d: 'AI that understands Russian, Spanish, Uzbek, and English natively. Built into every input across the platform.' },
+            { t: 'Runs on any device', d: 'Web, iOS, Android, and kiosk. Mechanic on the floor, manager at home, owner on a plane.' },
+            { t: 'Free data migration', d: 'Complete history from your current platform. Zero cost. Days, not months.' },
+            { t: 'Shop + fleet, connected', d: 'Repair history flows into fleet health. Fleet alerts create work orders. One system.' },
+          ].map(f => (
+            <div key={f.t} style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${BORDER}`, borderRadius: 14, padding: '36px 32px' }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 8 }}>{f.t}</h3>
+              <p style={{ fontSize: 14, color: DIM, lineHeight: 1.6, margin: 0 }}>{f.d}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── WHY TRUCKZEN ── */}
-      <section style={{ padding: '40px 24px 60px', maxWidth: 700, margin: '0 auto' }}>
-        <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 16px', textAlign: 'center' }}>Built by people who understand truck shops</h2>
-        <p style={{ fontSize: 15, color: '#7C8BA0', lineHeight: 1.8, margin: 0, textAlign: 'center' }}>
-          Replace Fullbay, Fleetio, Monday, and QuickBooks with one platform. Multilingual for your entire team — English, Spanish, Russian, Ukrainian, Uzbek. AI-powered service writing that turns rough mechanic notes into professional repair descriptions. Your data is always yours — export anytime or build on our API.
-        </p>
-      </section>
+      <div style={dividerStyle} />
 
-      {/* ── BUILT FOR SCALE ── */}
-      <section style={{ padding: '40px 24px 60px', maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 12px' }}>From 10 trucks to 10,000</h2>
-        <p style={{ fontSize: 15, color: '#7C8BA0', lineHeight: 1.7, margin: 0 }}>
-          TruckZen handles single-location shops and multi-location fleets with the same ease.
-        </p>
-      </section>
-
-      {/* ── FOOTER ── */}
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '32px 24px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>truckzen.pro</div>
-            <div style={{ fontSize: 12, color: '#48536A' }}>Made in Chicago</div>
-          </div>
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-            {[
-              { label: 'Sign In', href: '/login' },
-              { label: 'Get Started', href: '/register' },
-              { label: 'Privacy', href: '/privacy' },
-              { label: 'Terms', href: '/terms' },
-            ].map(l => (
-              <a key={l.href} href={l.href} style={{ fontSize: 13, color: '#7C8BA0', textDecoration: 'none' }}>{l.label}</a>
-            ))}
-          </div>
+      {/* ── S5: GET STARTED ── */}
+      <section style={{ ...secStyle, minHeight: 'auto' }}>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 48 }}>Running in days, not months.</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, maxWidth: 900, margin: '0 auto', textAlign: 'left' }}>
+          {[
+            { n: '1', t: 'We migrate your data', d: 'Complete history imported at no cost. Your team never has to re-enter anything.' },
+            { n: '2', t: 'Set up your team', d: 'Bulk import staff. Assign roles. Configure bays. Your team is ready same day.' },
+            { n: '3', t: 'Run your operation', d: 'Shop, fleet, parts, people. AI handles the paperwork. You run the business.' },
+          ].map(s => (
+            <div key={s.n} style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${BORDER}`, borderRadius: 14, padding: '36px 28px' }}>
+              <div style={{ fontSize: 48, fontWeight: 800, color: BLUE, lineHeight: 1, marginBottom: 12 }}>{s.n}</div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 8 }}>{s.t}</h3>
+              <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, margin: 0 }}>{s.d}</p>
+            </div>
+          ))}
         </div>
-        <div style={{ fontSize: 11, color: '#48536A', marginTop: 16, textAlign: 'center' }}>
-          Copyright 2026 TruckZen Inc. All rights reserved.
+      </section>
+
+      <div style={dividerStyle} />
+
+      {/* ── S6: APP STORE + TRUST ── */}
+      <section style={{ ...secStyle, minHeight: 'auto' }}>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 8 }}>Available everywhere.</h2>
+        <p style={{ fontSize: 18, color: DIM, marginBottom: 40, maxWidth: 520 }}>Your team accesses TruckZen from whatever device they have in hand.</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 48 }}>
+          {['App Store', 'Google Play', 'Web Browser'].map(b => (
+            <div key={b} style={{ padding: '12px 28px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#fff', background: 'rgba(255,255,255,.02)' }}>{b}</div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 32, justifyContent: 'center' }}>
+          {['256-bit encryption', '99.9% uptime', 'Role-based access', 'Daily backups'].map(tr => (
+            <div key={tr} style={{ fontSize: 12, color: DIM, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE }} />{tr}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div style={dividerStyle} />
+
+      {/* ── S7: VISION ── */}
+      <section style={{ ...secStyle, minHeight: 'auto' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', border: '1px solid rgba(27,110,230,.15)', borderRadius: 16, padding: 48, background: 'rgba(27,110,230,.03)', textAlign: 'left' }}>
+          <h3 style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Where we&apos;re headed</h3>
+          <p style={{ fontSize: 16, color: DIM, lineHeight: 1.7, margin: 0 }}>TruckZen is building toward a future where trucks communicate directly with shops. Predictive maintenance before breakdowns happen. Automated repair authorization for autonomous fleets. The infrastructure for the next era of heavy-duty starts here.</p>
+        </div>
+      </section>
+
+      <div style={dividerStyle} />
+
+      {/* ── S8: FAQ ── */}
+      <section id="faq" style={{ ...secStyle, minHeight: 'auto' }}>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 48 }}>FAQ</h2>
+        <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'left' }}>
+          {[
+            { q: 'Is TruckZen only for repair shops?', a: 'No. TruckZen serves shops, fleets, and operations that run both. The platform connects repair operations to fleet management in one system.' },
+            { q: 'How long does setup take?', a: '1\u20132 weeks total. Data migration takes 3\u20135 days. Your team can start using the platform the same day it\u2019s configured.' },
+            { q: 'What devices does it run on?', a: 'iOS, Android, web browser, and kiosk mode. Your team uses whatever device they already have.' },
+            { q: 'What languages does the AI support?', a: 'English, Russian, Spanish, and Uzbek. The AI understands all four natively and converts to professional English repair descriptions.' },
+            { q: 'Can I migrate from my current platform?', a: 'Yes. Complete history \u2014 work orders, customers, units, parts, invoices. Zero cost migration. We handle everything.' },
+            { q: 'Is there a long-term contract?', a: 'No. Month-to-month. Cancel anytime.' },
+          ].map(f => (
+            <div key={f.q} style={{ borderBottom: `1px solid ${BORDER}`, padding: '20px 0' }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 8 }}>{f.q}</div>
+              <div style={{ fontSize: 14, color: DIM, lineHeight: 1.6 }}>{f.a}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div style={dividerStyle} />
+
+      {/* ── S9: BOTTOM CTA ── */}
+      <section id="contact" style={secStyle}>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 8, lineHeight: 1.1 }}>
+          The future of heavy-duty<br /><span style={{ color: BLUE }}>starts here.</span>
+        </h2>
+        <p style={{ fontSize: 18, color: DIM, maxWidth: 520, margin: '0 auto 32px' }}>See how TruckZen connects your shop, your fleet, and your people.</p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24 }}>
+          <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: '#fff', fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 24px rgba(27,110,230,.25)' }}>Book a demo</a>
+          <a href="mailto:info@truckzen.pro" style={{ padding: '14px 36px', color: '#fff', fontSize: 16, fontWeight: 600, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', textDecoration: 'none' }}>Contact us</a>
+        </div>
+        <div style={{ fontSize: 13, color: DIM }}>
+          <a href="mailto:demo@truckzen.pro" style={{ color: BLUE, textDecoration: 'none' }}>demo@truckzen.pro</a>
+          {' \u00B7 '}
+          <a href="mailto:info@truckzen.pro" style={{ color: BLUE, textDecoration: 'none' }}>info@truckzen.pro</a>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ padding: '64px 48px 32px', borderTop: `1px solid ${BORDER}`, maxWidth: 1100, margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 32, marginBottom: 48, textAlign: 'left' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><LogoMark size={28} /><Wordmark size={16} /></div>
+            <div style={{ fontSize: 13, color: DIM, lineHeight: 1.6, maxWidth: 280 }}>The heavy-duty platform that connects your shop, your fleet, and your people. Built in Chicago.</div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+              {[
+                { t: 'LinkedIn', d: 'M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.27c-.97 0-1.75-.79-1.75-1.76s.78-1.76 1.75-1.76 1.75.79 1.75 1.76-.78 1.76-1.75 1.76zm13.5 11.27h-3v-5.6c0-3.37-4-3.12-4 0v5.6h-3v-10h3v1.77c1.4-2.59 7-2.78 7 2.48v5.75z' },
+                { t: 'YouTube', d: 'M23.5 6.2c-.2-.7-.7-1.2-1.4-1.4C20.2 4.2 12 4.2 12 4.2s-8.2 0-10.1.6c-.7.2-1.2.7-1.4 1.4C0 8.1 0 12 0 12s0 3.9.5 5.8c.2.7.7 1.2 1.4 1.4 1.9.6 10.1.6 10.1.6s8.2 0 10.1-.6c.7-.2 1.2-.7 1.4-1.4.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.5 15.6V8.4l6.8 3.6-6.8 3.6z' },
+              ].map(s => (
+                <a key={s.t} href="#" style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: DIM, textDecoration: 'none' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d={s.d} /></svg>
+                </a>
+              ))}
+            </div>
+          </div>
+          {[
+            { h: 'Platform', links: ['Shop operations', 'Fleet intelligence', 'Parts management', 'AI service writer', 'Kiosk check-in', 'Customer portal'] },
+            { h: 'Company', links: ['About', 'Blog', 'Careers', 'Contact', 'Book a demo'] },
+            { h: 'Support', links: ['Help center', 'API docs'], email: 'support@truckzen.pro' },
+          ].map(col => (
+            <div key={col.h} style={{ textAlign: 'left' }}>
+              <h4 style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 16 }}>{col.h}</h4>
+              {col.links.map(l => (
+                <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: '#8494a7', padding: '4px 0', textDecoration: 'none' }}>{l}</a>
+              ))}
+              {col.email && <a href={`mailto:${col.email}`} style={{ display: 'block', fontSize: 13, color: '#8494a7', padding: '4px 0', textDecoration: 'none' }}>{col.email}</a>}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 24, borderTop: `1px solid ${BORDER}`, fontSize: 11, color: '#4a5568' }}>
+          <span>&copy; 2026 TruckZen. All rights reserved.</span>
+          <div>
+            <a href="/privacy" style={{ color: '#4a5568', marginLeft: 16, textDecoration: 'none' }}>Privacy</a>
+            <a href="/terms" style={{ color: '#4a5568', marginLeft: 16, textDecoration: 'none' }}>Terms</a>
+            <a href="#" style={{ color: '#4a5568', marginLeft: 16, textDecoration: 'none' }}>Security</a>
+          </div>
         </div>
       </footer>
+
+      <style>{`
+        @keyframes tz-lp-pulse { 0%,100% { opacity:1 } 50% { opacity:.4 } }
+        @keyframes tz-lp-bob { 0%,100% { transform:translateX(-50%) translateY(0) } 50% { transform:translateX(-50%) translateY(6px) } }
+      `}</style>
     </div>
   )
 }
