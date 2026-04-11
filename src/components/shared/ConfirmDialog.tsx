@@ -1,7 +1,7 @@
 'use client'
 import { Modal } from './Modal'
 import { Button } from './Button'
-import { COLORS } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 
 interface Props {
   open: boolean
@@ -15,9 +15,10 @@ interface Props {
 }
 
 export function ConfirmDialog({ open, onClose, onConfirm, title, message, confirmLabel = 'Confirm', variant = 'primary', loading }: Props) {
+  const { tokens: t } = useTheme()
   return (
     <Modal open={open} onClose={onClose} title={title} maxWidth={380}>
-      <p style={{ margin: '0 0 20px', fontSize: 14, color: COLORS.textSecondary, lineHeight: 1.5 }}>{message}</p>
+      <p style={{ margin: '0 0 20px', fontSize: 14, color: t.textSecondary, lineHeight: 1.5 }}>{message}</p>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         <Button variant="secondary" onClick={onClose}>Cancel</Button>
         <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm} disabled={loading}>

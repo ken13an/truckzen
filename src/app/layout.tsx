@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { ToastProvider } from '@/components/Toast'
 import AppShell from '@/components/AppShell'
 import { ServiceWorkerRegistrar, InstallPrompt } from '@/components/ServiceWorker'
+import { ThemeProvider } from '@/lib/providers/ThemeProvider'
 
 const SITE_URL = 'https://truckzen.pro'
 
@@ -138,11 +139,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body style={{ margin: 0, padding: 0, background: '#060708', fontFamily: "'Instrument Sans',sans-serif" }}>
-        <ToastProvider>
-          <AppShell>{children}</AppShell>
-        </ToastProvider>
-        <ServiceWorkerRegistrar/>
-        <InstallPrompt/>
+        <ThemeProvider>
+          <ToastProvider>
+            <AppShell>{children}</AppShell>
+          </ToastProvider>
+          <ServiceWorkerRegistrar/>
+          <InstallPrompt/>
+        </ThemeProvider>
       </body>
     </html>
   )

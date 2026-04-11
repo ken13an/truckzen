@@ -11,6 +11,7 @@ import { getPermissions } from '@/lib/getPermissions'
 import Logo, { LogoIcon } from '@/components/Logo'
 import { ADMIN_ROLES } from '@/lib/roles'
 import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock, Banknote } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const UNLIMITED_ROLES = ADMIN_ROLES
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
@@ -108,6 +109,7 @@ function getDeptAccess(
 }
 
 export default function Sidebar() {
+  const { tokens: t } = useTheme()
   const pathname = usePathname()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -205,20 +207,20 @@ export default function Sidebar() {
           padding: collapsed ? '8px 0' : indent ? '7px 14px' : '8px 16px',
           justifyContent: collapsed ? 'center' : 'flex-start',
           margin: '1px 6px', borderRadius: 8, marginLeft: indent && !collapsed ? 16 : 6,
-          background: active ? 'rgba(29,111,232,.12)' : 'transparent',
-          borderLeft: active ? '2px solid #1D6FE8' : '2px solid transparent',
+          background: active ? t.accentBg : 'transparent',
+          borderLeft: active ? `2px solid ${t.accent}` : '2px solid transparent',
           cursor: 'pointer', transition: 'all .12s',
         }}
-        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)' }}
+        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = t.bgHover }}
         onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
           <span style={{ flexShrink: 0, width: indent ? 13 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon size={indent ? 13 : 15} strokeWidth={1.5} color={active ? '#4D9EFF' : '#48536A'} />
+            <Icon size={indent ? 13 : 15} strokeWidth={1.5} color={active ? t.accentLight : t.textTertiary} />
           </span>
           {!collapsed && (
             <>
-              <span style={{ fontSize: indent ? 11 : 12, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : '#7C8BA0', flex: 1, whiteSpace: 'nowrap' }}>{item.label}</span>
+              <span style={{ fontSize: indent ? 11 : 12, fontWeight: active ? 700 : 400, color: active ? t.text : t.textSecondary, flex: 1, whiteSpace: 'nowrap' }}>{item.label}</span>
               {badge != null && badge > 0 && (
-                <span style={{ background: item.href === '/parts' ? '#D94F4F' : '#1D6FE8', color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>{badge > 99 ? '99+' : badge}</span>
+                <span style={{ background: item.href === '/parts' ? t.danger : t.accent, color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>{badge > 99 ? '99+' : badge}</span>
               )}
             </>
           )}
@@ -228,16 +230,16 @@ export default function Sidebar() {
   }
 
   return (
-    <aside style={{ width: W, minHeight: '100vh', background: '#0B0D11', borderRight: '1px solid rgba(255,255,255,.06)', display: 'flex', flexDirection: 'column', transition: 'width .2s ease', flexShrink: 0, position: 'sticky', top: 0 }}>
+    <aside style={{ width: W, minHeight: '100vh', background: t.bgInput, borderRight: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', transition: 'width .2s ease', flexShrink: 0, position: 'sticky', top: 0 }}>
       {/* Logo */}
-      <div style={{ padding: collapsed ? '16px 14px' : '16px 18px', borderBottom: '1px solid rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', minHeight: 56 }}>
+      <div style={{ padding: collapsed ? '16px 14px' : '16px 18px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', minHeight: 56 }}>
         {collapsed ? <LogoIcon size="sm" /> : <Logo size="sm" showWordmark={true} />}
-        <button onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#48536A', fontSize: 16, padding: 4, lineHeight: 1 }}>{collapsed ? '\u00BB' : '\u00AB'}</button>
+        <button onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary, fontSize: 16, padding: 4, lineHeight: 1 }}>{collapsed ? '\u00BB' : '\u00AB'}</button>
       </div>
 
       {/* Platform Admin */}
       {isPlatformOwner && (
-        <div style={{ borderBottom: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
+        <div style={{ borderBottom: `1px solid ${t.border}`, padding: '6px 0' }}>
           {renderNavItem({ href: '/platform-admin', label: 'Platform Admin', icon: Shield })}
         </div>
       )}
@@ -251,7 +253,7 @@ export default function Sidebar() {
         )}
 
         {/* Department sections */}
-        {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '8px 18px 4px', fontFamily: "'IBM Plex Mono', monospace" }}>Departments</div>}
+        {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.1em', padding: '8px 18px 4px', fontFamily: "'IBM Plex Mono', monospace" }}>Departments</div>}
 
         {DEPARTMENTS.filter(dept => deptAccess.includes(dept.label)).map(dept => {
           const DeptIcon = dept.icon
@@ -268,18 +270,18 @@ export default function Sidebar() {
                 padding: collapsed ? '8px 0' : '8px 16px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 margin: '1px 6px', borderRadius: 8,
-                background: hasDeptActive && !isExpanded ? 'rgba(255,255,255,.04)' : 'transparent',
+                background: hasDeptActive && !isExpanded ? t.bgHover : 'transparent',
                 cursor: 'pointer', transition: 'all .12s', userSelect: 'none',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.04)')}
-              onMouseLeave={e => (e.currentTarget.style.background = hasDeptActive && !isExpanded ? 'rgba(255,255,255,.04)' : 'transparent')}>
+              onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
+              onMouseLeave={e => (e.currentTarget.style.background = hasDeptActive && !isExpanded ? t.bgHover : 'transparent')}>
                 <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <DeptIcon size={14} strokeWidth={1.5} color={hasDeptActive ? dept.color : '#7C8BA0'} />
+                  <DeptIcon size={14} strokeWidth={1.5} color={hasDeptActive ? dept.color : t.textSecondary} />
                 </span>
                 {!collapsed && (
                   <>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: hasDeptActive ? '#F0F4FF' : '#7C8BA0', flex: 1, textAlign: 'left' }}>{dept.label}</span>
-                    <ChevronDown size={12} color="#48536A" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: hasDeptActive ? t.text : t.textSecondary, flex: 1, textAlign: 'left' }}>{dept.label}</span>
+                    <ChevronDown size={12} color={t.textTertiary} style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }} />
                   </>
                 )}
               </div>
@@ -295,8 +297,8 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom: Settings + Sign Out */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '6px 0' }}>
-        {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
+      <div style={{ borderTop: `1px solid ${t.border}`, padding: '6px 0' }}>
+        {!collapsed && <div style={{ fontSize: 9, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.1em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
         {TRASH_ROLES.includes(effectiveRole) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
         {hasAccess(effectiveRole, 'settings', rolePerms, userOverrides) && renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
         {PERMISSIONS_ROLES.includes(effectiveRole) && renderNavItem({ href: '/settings/permissions', label: 'Permissions', icon: Lock })}
@@ -304,8 +306,8 @@ export default function Sidebar() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,.08)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
-            <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LogOut size={15} strokeWidth={1.5} color="#7C8BA0" /></span>
-            {!collapsed && <span style={{ fontSize: 12, color: '#7C8BA0' }}>Sign Out</span>}
+            <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LogOut size={15} strokeWidth={1.5} color={t.textSecondary} /></span>
+            {!collapsed && <span style={{ fontSize: 12, color: t.textSecondary }}>Sign Out</span>}
           </div>
         </a>
       </div>

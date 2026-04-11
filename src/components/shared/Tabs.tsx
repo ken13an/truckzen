@@ -1,5 +1,6 @@
 'use client'
-import { COLORS, FONT } from '@/lib/config/colors'
+import { FONT } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 import { ReactNode } from 'react'
 
 interface Tab { label: string; icon?: ReactNode }
@@ -11,17 +12,18 @@ interface Props {
 }
 
 export function Tabs({ tabs, active, onChange }: Props) {
+  const { tokens: t } = useTheme()
   return (
-    <div style={{ display: 'flex', borderBottom: `1px solid ${COLORS.borderCard}`, fontFamily: FONT }}>
+    <div style={{ display: 'flex', borderBottom: `1px solid ${t.borderCard}`, fontFamily: FONT }}>
       {tabs.map((tab, i) => (
         <button
           key={i}
           onClick={() => onChange(i)}
           style={{
             flex: 1, padding: '12px 16px', background: 'none', border: 'none',
-            color: active === i ? COLORS.blue : COLORS.textSecondary,
+            color: active === i ? t.accent : t.textSecondary,
             fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-            borderBottom: active === i ? `2px solid ${COLORS.blue}` : '2px solid transparent',
+            borderBottom: active === i ? `2px solid ${t.accent}` : '2px solid transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             transition: 'color 0.15s',
           }}

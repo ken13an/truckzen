@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { useVinDecode, VinResult } from '@/hooks/useVinDecode'
-import { COLORS, FONT } from '@/lib/config/colors'
+import { FONT } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 import { Loader2, Search, CheckCircle2 } from 'lucide-react'
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
+  const { tokens: t } = useTheme()
   const { decode, result, loading, error } = useVinDecode()
   const isDark = theme === 'dark'
 
@@ -39,9 +41,9 @@ export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
           maxLength={17}
           style={{
             flex: 1, padding: '10px 12px', borderRadius: 10, fontSize: 13, fontFamily: FONT,
-            border: `1px solid ${isDark ? COLORS.border : COLORS.borderLight}`,
-            background: isDark ? COLORS.bgCard : '#fff',
-            color: isDark ? COLORS.text : COLORS.textLight,
+            border: `1px solid ${isDark ? t.border : t.borderLight}`,
+            background: isDark ? t.bgCard : '#fff',
+            color: isDark ? t.text : t.textLight,
             outline: 'none', boxSizing: 'border-box',
             letterSpacing: '1px', textTransform: 'uppercase',
           }}
@@ -50,8 +52,8 @@ export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
           onClick={handleDecode}
           disabled={loading || value.length !== 17}
           style={{
-            padding: '10px 16px', borderRadius: 10, border: `1px solid ${COLORS.blue}`,
-            background: 'transparent', color: COLORS.blue, fontSize: 12, fontWeight: 700,
+            padding: '10px 16px', borderRadius: 10, border: `1px solid ${t.accent}`,
+            background: 'transparent', color: t.accent, fontSize: 12, fontWeight: 700,
             cursor: loading || value.length !== 17 ? 'not-allowed' : 'pointer',
             fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
             opacity: loading || value.length !== 17 ? 0.5 : 1,
@@ -61,11 +63,11 @@ export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
           Decode
         </button>
       </div>
-      <div style={{ fontSize: 11, color: isDark ? COLORS.textDim : COLORS.textLightSecondary, marginTop: 4 }}>
+      <div style={{ fontSize: 11, color: isDark ? t.textTertiary : t.textLightSecondary, marginTop: 4 }}>
         {value.length}/17 characters
       </div>
 
-      {error && <div style={{ color: COLORS.red, fontSize: 12, marginTop: 6 }}>{error}</div>}
+      {error && <div style={{ color: t.danger, fontSize: 12, marginTop: 6 }}>{error}</div>}
 
       {result && !error && (
         <div style={{
@@ -74,10 +76,10 @@ export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
           border: `1px solid ${isDark ? 'rgba(34,197,94,0.2)' : '#bbf7d0'}`,
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <CheckCircle2 size={16} color={COLORS.green} />
-          <div style={{ fontSize: 13, color: isDark ? COLORS.text : COLORS.textLight }}>
+          <CheckCircle2 size={16} color={t.success} />
+          <div style={{ fontSize: 13, color: isDark ? t.text : t.textLight }}>
             <strong>{result.year} {result.make} {result.model}</strong>
-            {result.engine && <span style={{ color: isDark ? COLORS.textSecondary : COLORS.textLightSecondary }}> — {result.engine}</span>}
+            {result.engine && <span style={{ color: isDark ? t.textSecondary : t.textLightSecondary }}> — {result.engine}</span>}
           </div>
         </div>
       )}

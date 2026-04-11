@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import { COLORS, FONT } from '@/lib/config/colors'
+import { FONT } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 import { Search } from 'lucide-react'
 
 interface Props {
@@ -22,16 +23,18 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', deboun
     timer.current = setTimeout(() => onChange(v), debounceMs)
   }
 
+  const { tokens: t } = useTheme()
+
   return (
     <div style={{ position: 'relative' }}>
-      <Search size={16} color={COLORS.textSecondary} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+      <Search size={16} color={t.textSecondary} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
       <input
         value={local}
         onChange={e => handleChange(e.target.value)}
         placeholder={placeholder}
         style={{
           width: '100%', padding: '10px 12px 10px 36px', borderRadius: 10,
-          border: `1px solid ${COLORS.border}`, background: COLORS.bgCard, color: COLORS.text,
+          border: `1px solid ${t.border}`, background: t.bgCard, color: t.text,
           fontFamily: FONT, fontSize: 13, outline: 'none', boxSizing: 'border-box',
         }}
       />

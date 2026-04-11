@@ -1,5 +1,6 @@
 'use client'
-import { COLORS, FONT } from '@/lib/config/colors'
+import { FONT } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 import { CSSProperties, ReactNode } from 'react'
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost'
@@ -15,11 +16,13 @@ interface Props {
   type?: 'button' | 'submit'
 }
 
-const VARIANT_STYLES: Record<Variant, CSSProperties> = {
-  primary: { background: COLORS.blue, color: '#fff', border: 'none' },
-  secondary: { background: 'transparent', color: COLORS.textSecondary, border: `1px solid ${COLORS.border}` },
-  danger: { background: COLORS.red, color: '#fff', border: 'none' },
-  ghost: { background: 'transparent', color: COLORS.blue, border: 'none' },
+function getVariantStyles(t: { accent: string; textSecondary: string; border: string; danger: string }): Record<Variant, CSSProperties> {
+  return {
+    primary: { background: t.accent, color: '#fff', border: 'none' },
+    secondary: { background: 'transparent', color: t.textSecondary, border: `1px solid ${t.border}` },
+    danger: { background: t.danger, color: '#fff', border: 'none' },
+    ghost: { background: 'transparent', color: t.accent, border: 'none' },
+  }
 }
 
 const SIZE_STYLES: Record<string, CSSProperties> = {
@@ -29,6 +32,7 @@ const SIZE_STYLES: Record<string, CSSProperties> = {
 }
 
 export function Button({ children, onClick, variant = 'primary', disabled, fullWidth, size = 'md', style, type = 'button' }: Props) {
+  const { tokens: t } = useTheme()
   return (
     <button
       type={type}
@@ -46,7 +50,7 @@ export function Button({ children, onClick, variant = 'primary', disabled, fullW
         opacity: disabled ? 0.5 : 1,
         transition: 'opacity 0.15s',
         ...(fullWidth ? { width: '100%' } : {}),
-        ...VARIANT_STYLES[variant],
+        ...getVariantStyles(t)[variant],
         ...SIZE_STYLES[size],
         ...style,
       }}

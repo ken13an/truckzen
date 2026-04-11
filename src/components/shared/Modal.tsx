@@ -1,5 +1,6 @@
 'use client'
-import { COLORS, FONT } from '@/lib/config/colors'
+import { FONT } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 import { ReactNode } from 'react'
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function Modal({ open, onClose, title, children, maxWidth = 440 }: Props) {
+  const { tokens: t } = useTheme()
   if (!open) return null
   return (
     <div
@@ -22,16 +24,16 @@ export function Modal({ open, onClose, title, children, maxWidth = 440 }: Props)
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div style={{
-        background: COLORS.bgCard, borderRadius: 16, width: '100%', maxWidth,
-        border: `1px solid ${COLORS.borderCard}`, overflow: 'hidden', fontFamily: FONT,
+        background: t.bgCard, borderRadius: 16, width: '100%', maxWidth,
+        border: `1px solid ${t.borderCard}`, overflow: 'hidden', fontFamily: FONT,
       }}>
         <div style={{
-          padding: '16px 20px', borderBottom: `1px solid ${COLORS.borderCard}`,
+          padding: '16px 20px', borderBottom: `1px solid ${t.borderCard}`,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: COLORS.text }}>{title}</h3>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: t.text }}>{title}</h3>
           <button onClick={onClose} style={{
-            background: 'none', border: 'none', color: COLORS.textSecondary, cursor: 'pointer', fontSize: 18, padding: 4,
+            background: 'none', border: 'none', color: t.textSecondary, cursor: 'pointer', fontSize: 18, padding: 4,
           }}>&times;</button>
         </div>
         <div style={{ padding: 20 }}>{children}</div>

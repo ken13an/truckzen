@@ -8,10 +8,12 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { Menu, X } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password', '/tech', '/offline', '/403', '/mechanic', '/floor-manager', '/platform-admin', '/register']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const { tokens: t } = useTheme()
   const pathname = usePathname()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -83,7 +85,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isImpersonating = !!user?.impersonate_role
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#060708' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: t.bg }}>
       {/* Desktop sidebar */}
       {!isMobile && <Sidebar />}
 
@@ -132,9 +134,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
         {/* Top bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))', borderBottom: `1px solid ${t.bgHover}` }}>
           {isMobile ? (
-            <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 6 }}>
+            <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textSecondary, padding: 6 }}>
               <Menu size={22} />
             </button>
           ) : <div />}

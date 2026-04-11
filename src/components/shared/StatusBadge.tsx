@@ -1,36 +1,39 @@
 'use client'
-import { COLORS } from '@/lib/config/colors'
-
-const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  // WO statuses
-  draft: { bg: 'rgba(124,139,160,0.15)', text: COLORS.textSecondary },
-  in_progress: { bg: COLORS.blueBg, text: COLORS.blue },
-  waiting_parts: { bg: COLORS.amberBg, text: COLORS.amber },
-  done: { bg: COLORS.greenBg, text: COLORS.green },
-  good_to_go: { bg: COLORS.greenBg, text: COLORS.green },
-  void: { bg: COLORS.redBg, text: COLORS.red },
-  // Job statuses
-  pending: { bg: COLORS.amberBg, text: COLORS.amber },
-  accepted: { bg: COLORS.blueBg, text: COLORS.blue },
-  completed: { bg: COLORS.greenBg, text: COLORS.green },
-  declined: { bg: COLORS.redBg, text: COLORS.red },
-  // Invoice
-  paid: { bg: COLORS.greenBg, text: COLORS.green },
-  sent: { bg: COLORS.blueBg, text: COLORS.blue },
-  overdue: { bg: COLORS.redBg, text: COLORS.red },
-  // Parts
-  requested: { bg: COLORS.amberBg, text: COLORS.amber },
-  approved: { bg: COLORS.greenBg, text: COLORS.green },
-  rejected: { bg: COLORS.redBg, text: COLORS.red },
-  in_stock: { bg: COLORS.greenBg, text: COLORS.green },
-  ordered: { bg: COLORS.blueBg, text: COLORS.blue },
-  ready: { bg: COLORS.blueBg, text: COLORS.blue },
-}
+import { useMemo } from 'react'
+import { useTheme } from '@/hooks/useTheme'
 
 interface Props { status: string; size?: 'sm' | 'md' }
 
 export function StatusBadge({ status, size = 'sm' }: Props) {
-  const s = STATUS_STYLES[status] || { bg: 'rgba(255,255,255,0.08)', text: COLORS.textSecondary }
+  const { tokens: t } = useTheme()
+
+  const statusStyles = useMemo(() => ({
+    // WO statuses
+    draft: { bg: 'rgba(124,139,160,0.15)', text: t.textSecondary },
+    in_progress: { bg: t.accentBg, text: t.accent },
+    waiting_parts: { bg: t.warningBg, text: t.warning },
+    done: { bg: t.successBg, text: t.success },
+    good_to_go: { bg: t.successBg, text: t.success },
+    void: { bg: t.dangerBg, text: t.danger },
+    // Job statuses
+    pending: { bg: t.warningBg, text: t.warning },
+    accepted: { bg: t.accentBg, text: t.accent },
+    completed: { bg: t.successBg, text: t.success },
+    declined: { bg: t.dangerBg, text: t.danger },
+    // Invoice
+    paid: { bg: t.successBg, text: t.success },
+    sent: { bg: t.accentBg, text: t.accent },
+    overdue: { bg: t.dangerBg, text: t.danger },
+    // Parts
+    requested: { bg: t.warningBg, text: t.warning },
+    approved: { bg: t.successBg, text: t.success },
+    rejected: { bg: t.dangerBg, text: t.danger },
+    in_stock: { bg: t.successBg, text: t.success },
+    ordered: { bg: t.accentBg, text: t.accent },
+    ready: { bg: t.accentBg, text: t.accent },
+  }), [t]) as Record<string, { bg: string; text: string }>
+
+  const s = statusStyles[status] || { bg: 'rgba(255,255,255,0.08)', text: t.textSecondary }
   return (
     <span style={{
       display: 'inline-block',
