@@ -3,9 +3,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { Check, ChevronRight } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Inter', -apple-system, sans-serif"
-const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
 
 const ROLE_LABEL: Record<string, string> = {
   owner: 'Owner', gm: 'GM', it_person: 'IT Admin', shop_manager: 'Shop Manager',
@@ -14,9 +14,10 @@ const ROLE_LABEL: Record<string, string> = {
   maintenance_technician: 'Maint. Tech', accountant: 'Accounting', office_admin: 'Office Admin',
 }
 
-const PRIORITY_BORDER: Record<string, string> = { urgent: RED, high: AMBER, normal: BLUE, low: GRAY }
-
 export default function DashboardPage() {
+  const { tokens: t } = useTheme()
+  const BLUE = t.accent, GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = t.textLightSecondary
+  const PRIORITY_BORDER: Record<string, string> = { urgent: RED, high: AMBER, normal: BLUE, low: GRAY }
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [data, setData] = useState<any>(null)

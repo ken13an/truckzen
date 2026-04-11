@@ -8,20 +8,23 @@ import { getCurrentUser } from '@/lib/auth'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import Pagination from '@/components/Pagination'
+import { useTheme } from '@/hooks/useTheme'
 
 type OwnerTab = 'fleet_asset' | 'owner_operator' | 'outside_customer' | 'all'
 type StatusFilter = 'active' | 'removed' | 'all'
 
-const TABS: { key: OwnerTab; label: string; badgeBg: string; badgeColor: string }[] = [
-  { key: 'fleet_asset', label: 'Our Fleet', badgeBg: 'rgba(22,163,74,.1)', badgeColor: '#16A34A' },
-  { key: 'owner_operator', label: 'Owner Operators', badgeBg: 'rgba(217,119,6,.1)', badgeColor: '#D97706' },
-  { key: 'outside_customer', label: 'Outside Customers', badgeBg: 'rgba(29,111,232,.1)', badgeColor: '#1D6FE8' },
-  { key: 'all', label: 'All Trucks', badgeBg: 'rgba(124,139,160,.1)', badgeColor: '#7C8BA0' },
-]
-
-const STATUS_COLORS: Record<string, string> = { active: '#1DB870', inactive: '#7C8BA0', in_shop: '#4D9EFF', decommissioned: '#D94F4F', removed: '#D94F4F' }
-
 export default function FleetPage() {
+  const { tokens: t } = useTheme()
+
+  const TABS: { key: OwnerTab; label: string; badgeBg: string; badgeColor: string }[] = [
+    { key: 'fleet_asset', label: 'Our Fleet', badgeBg: 'rgba(22,163,74,.1)', badgeColor: '#16A34A' },
+    { key: 'owner_operator', label: 'Owner Operators', badgeBg: 'rgba(217,119,6,.1)', badgeColor: '#D97706' },
+    { key: 'outside_customer', label: 'Outside Customers', badgeBg: 'rgba(29,111,232,.1)', badgeColor: t.accent },
+    { key: 'all', label: 'All Trucks', badgeBg: 'rgba(124,139,160,.1)', badgeColor: t.textSecondary },
+  ]
+
+  const STATUS_COLORS: Record<string, string> = { active: '#1DB870', inactive: t.textSecondary, in_shop: t.accentLight, decommissioned: t.danger, removed: t.danger }
+
   const supabase = createClient()
   const [assets, setAssets] = useState<any[]>([])
   const [total, setTotal] = useState(0)
@@ -69,26 +72,26 @@ export default function FleetPage() {
   useEffect(() => {
     if (!shopId) return
     if (searchTimer) clearTimeout(searchTimer)
-    const t = setTimeout(() => { setPage(1); fetchAssets(shopId, 1) }, 400)
-    setSearchTimer(t)
-    return () => clearTimeout(t)
+    const tm = setTimeout(() => { setPage(1); fetchAssets(shopId, 1) }, 400)
+    setSearchTimer(tm)
+    return () => clearTimeout(tm)
   }, [search])
 
-  const switchTab = (t: OwnerTab) => {
-    setTab(t)
+  const switchTab = (newTab: OwnerTab) => {
+    setTab(newTab)
     setPage(1)
     const url = new URL(window.location.href)
-    url.searchParams.set('tab', t)
+    url.searchParams.set('tab', newTab)
     window.history.replaceState({}, '', url.toString())
   }
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Trucks</div>
-          <div style={{ fontSize: 12, color: '#7C8BA0' }}>{total.toLocaleString()} vehicles</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Trucks</div>
+          <div style={{ fontSize: 12, color: t.textSecondary }}>{total.toLocaleString()} vehicles</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search unit, make, VIN, owner, driver..." style={{ padding: '7px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#DDE3EE', fontSize: 11, fontFamily: 'inherit', outline: 'none', width: 260 }} />
@@ -98,18 +101,18 @@ export default function FleetPage() {
 
       {/* 4 Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: 12 }}>
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => switchTab(t.key)} style={{
+        {TABS.map(tb => (
+          <button key={tb.key} onClick={() => switchTab(tb.key)} style={{
             padding: '10px 16px', background: 'none', border: 'none',
-            borderBottom: tab === t.key ? '2px solid #1D6FE8' : '2px solid transparent',
-            color: tab === t.key ? '#F0F4FF' : '#7C8BA0',
-            fontWeight: tab === t.key ? 700 : 500, fontSize: 13, cursor: 'pointer',
+            borderBottom: tab === tb.key ? `2px solid ${t.accent}` : '2px solid transparent',
+            color: tab === tb.key ? t.text : t.textSecondary,
+            fontWeight: tab === tb.key ? 700 : 500, fontSize: 13, cursor: 'pointer',
             fontFamily: 'inherit', marginBottom: -1, display: 'flex', alignItems: 'center', gap: 6,
           }}>
-            {t.label}
-            {counts[t.key] != null && (
-              <span style={{ padding: '1px 7px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: tab === t.key ? t.badgeBg : 'rgba(124,139,160,.08)', color: tab === t.key ? t.badgeColor : '#7C8BA0' }}>
-                {(counts[t.key] || 0).toLocaleString()}
+            {tb.label}
+            {counts[tb.key] != null && (
+              <span style={{ padding: '1px 7px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: tab === tb.key ? tb.badgeBg : 'rgba(124,139,160,.08)', color: tab === tb.key ? tb.badgeColor : t.textSecondary }}>
+                {(counts[tb.key] || 0).toLocaleString()}
               </span>
             )}
           </button>
@@ -123,7 +126,7 @@ export default function FleetPage() {
             padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
             background: statusFilter === v ? 'rgba(29,111,232,.1)' : 'transparent',
             border: statusFilter === v ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)',
-            color: statusFilter === v ? '#4D9EFF' : '#7C8BA0',
+            color: statusFilter === v ? t.accentLight : t.textSecondary,
           }}>{l}</button>
         ))}
       </div>
@@ -133,27 +136,27 @@ export default function FleetPage() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
             <thead><tr>{['Unit #', 'Year', 'Make / Model', 'VIN', 'Plate', 'Owner', 'Driver', 'Company', 'Type', 'Status'].map(h =>
-              <th key={h} style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left', background: '#0B0D11', whiteSpace: 'nowrap' }}>{h}</th>
+              <th key={h} style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left', background: t.bgInput, whiteSpace: 'nowrap' }}>{h}</th>
             )}</tr></thead>
             <tbody>
-              {loading ? <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: '#7C8BA0' }}>Loading...</td></tr>
-              : assets.length === 0 ? <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: '#7C8BA0' }}>No vehicles found</td></tr>
+              {loading ? <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: t.textSecondary }}>Loading...</td></tr>
+              : assets.length === 0 ? <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: t.textSecondary }}>No vehicles found</td></tr>
               : assets.map(a => {
                 const st = a.asset_status || a.status || 'active'
-                const sc = STATUS_COLORS[st] || '#7C8BA0'
+                const sc = STATUS_COLORS[st] || t.textSecondary
                 return (
                   <tr key={a.id} style={{ cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.025)' }} onClick={() => window.location.href = '/fleet/' + a.id}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.03)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                    <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: '#4D9EFF', fontWeight: 700 }}>
+                    <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: t.accentLight, fontWeight: 700 }}>
                       {a.unit_number} <SourceBadge source={a.source} />
                     </td>
-                    <td style={{ padding: '9px 10px', fontSize: 11, color: '#7C8BA0' }}>{a.year || '—'}</td>
-                    <td style={{ padding: '9px 10px', fontSize: 12, color: '#F0F4FF', fontWeight: 600 }}>{a.make || '—'} {a.model || ''}</td>
-                    <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={a.vin || ''}>{a.vin ? '...' + a.vin.slice(-6) : '—'}</td>
-                    <td style={{ padding: '9px 10px', fontSize: 10, color: '#7C8BA0' }}>{a.license_plate || '—'}</td>
+                    <td style={{ padding: '9px 10px', fontSize: 11, color: t.textSecondary }}>{a.year || '—'}</td>
+                    <td style={{ padding: '9px 10px', fontSize: 12, color: t.text, fontWeight: 600 }}>{a.make || '—'} {a.model || ''}</td>
+                    <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: t.textTertiary, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={a.vin || ''}>{a.vin ? '...' + a.vin.slice(-6) : '—'}</td>
+                    <td style={{ padding: '9px 10px', fontSize: 10, color: t.textSecondary }}>{a.license_plate || '—'}</td>
                     <td style={{ padding: '9px 10px', fontSize: 11, color: '#DDE3EE', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.owner_name || '—'}</td>
                     <td style={{ padding: '9px 10px', fontSize: 11, color: '#DDE3EE', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.driver_name || '—'}</td>
-                    <td style={{ padding: '9px 10px', fontSize: 11, color: '#7C8BA0', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(a.customers as any)?.company_name || '—'}</td>
+                    <td style={{ padding: '9px 10px', fontSize: 11, color: t.textSecondary, maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(a.customers as any)?.company_name || '—'}</td>
                     <td style={{ padding: '9px 10px' }}><OwnershipTypeBadge type={a.is_owner_operator ? 'owner_operator' : a.ownership_type} size="sm" dark /></td>
                     <td style={{ padding: '9px 10px' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 100, fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, background: sc + '18', color: sc, border: '1px solid ' + sc + '33' }}>

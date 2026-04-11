@@ -5,22 +5,25 @@ import { getCurrentUser } from '@/lib/auth'
 import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { PageFooter } from '@/components/ui/PageControls'
 import FilterBar from '@/components/FilterBar'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Inter', -apple-system, sans-serif"
-const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
 
 const TABS = ['Pending Review', 'Sent / Unpaid', 'Paid', 'All']
 
-const INVOICE_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  draft:                { label: 'Draft',            bg: '#F3F4F6', color: GRAY },
-  quality_check_failed: { label: 'QC Failed',        bg: '#FEF2F2', color: RED },
-  accounting_review:    { label: 'Pending Review',   bg: '#FFFBEB', color: AMBER },
-  sent:                 { label: 'Sent',             bg: '#EFF6FF', color: BLUE },
-  paid:                 { label: 'Paid',             bg: '#F0FDF4', color: GREEN },
-  closed:               { label: 'Closed',           bg: '#F3F4F6', color: GRAY },
-}
-
 export default function AccountingPage() {
+  const { tokens: t } = useTheme()
+  const BLUE = t.accent, GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = t.textLightSecondary
+
+  const INVOICE_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
+    draft:                { label: 'Draft',            bg: '#F3F4F6', color: GRAY },
+    quality_check_failed: { label: 'QC Failed',        bg: '#FEF2F2', color: RED },
+    accounting_review:    { label: 'Pending Review',   bg: '#FFFBEB', color: AMBER },
+    sent:                 { label: 'Sent',             bg: '#EFF6FF', color: BLUE },
+    paid:                 { label: 'Paid',             bg: '#F0FDF4', color: GREEN },
+    closed:               { label: 'Closed',           bg: '#F3F4F6', color: GRAY },
+  }
+
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [tab, setTab] = useState(0)
