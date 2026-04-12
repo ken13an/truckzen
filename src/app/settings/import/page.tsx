@@ -111,7 +111,7 @@ export default function ImportPage() {
     }),
     btn: (disabled: boolean) => ({
       padding: '12px 28px', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, cursor: disabled ? 'not-allowed' : 'pointer',
-      background: disabled ? '#1A1D23' : th.accent, color: disabled ? '#48536A' : '#fff',
+      background: disabled ? '#1A1D23' : th.accent, color: disabled ? '#48536A' : th.bgLight,
       opacity: disabled ? 0.6 : 1,
     }),
     dropzone: {

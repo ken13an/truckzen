@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth'
 import { ADMIN_ROLES } from '@/lib/roles'
 import { DEPARTMENT_PERMISSIONS, type DepartmentPermissions } from '@/lib/permissionDefinitions'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans', sans-serif"
 const MONO = "'IBM Plex Mono', monospace"
@@ -13,6 +14,7 @@ const PAGE_BG = '#F4F5F7'
 const MANAGER_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'maintenance_manager', 'office_admin']
 
 export default function PermissionsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [activeDept, setActiveDept] = useState<string>('')
@@ -156,7 +158,7 @@ export default function PermissionsPage() {
       <div style={{ display: 'flex', gap: 24 }}>
         {/* Employee List */}
         <div style={{ width: 256, flexShrink: 0 }}>
-          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: t.bgLight, border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>
                 {activeDeptDef?.label} Team
@@ -176,7 +178,7 @@ export default function PermissionsPage() {
                     onClick={() => selectEmployee(emp)}
                     style={{
                       padding: '12px 16px', cursor: 'pointer',
-                      background: selectedEmployee?.id === emp.id ? 'rgba(27,110,230,.06)' : '#fff',
+                      background: selectedEmployee?.id === emp.id ? 'rgba(27,110,230,.06)' : t.bgLight,
                       borderLeft: selectedEmployee?.id === emp.id ? `2px solid ${BLUE}` : '2px solid transparent',
                       borderBottom: i < employees.length - 1 ? '1px solid #F3F4F6' : 'none',
                       transition: 'all .12s',
@@ -203,7 +205,7 @@ export default function PermissionsPage() {
               <span style={{ color: '#9CA3AF', fontSize: 13 }}>Select an employee to manage their permissions</span>
             </div>
           ) : (
-            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: t.bgLight, border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
               {/* Employee Header */}
               <div style={{
                 padding: '16px 24px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB',
@@ -225,7 +227,7 @@ export default function PermissionsPage() {
                     disabled={saving}
                     style={{
                       padding: '8px 20px', background: BLUE, border: 'none', borderRadius: 8,
-                      color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+                      color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                       fontFamily: FONT, opacity: saving ? 0.5 : 1, transition: 'opacity .12s',
                     }}
                   >
@@ -260,7 +262,7 @@ export default function PermissionsPage() {
                     >
                       <span style={{
                         display: 'inline-block', height: 20, width: 20,
-                        borderRadius: 10, background: '#fff',
+                        borderRadius: 10, background: t.bgLight,
                         boxShadow: '0 1px 3px rgba(0,0,0,.15)',
                         transform: permissions[perm.key] ? 'translateX(22px)' : 'translateX(2px)',
                         transition: 'transform .2s',

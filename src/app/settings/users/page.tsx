@@ -196,7 +196,7 @@ export default function UsersPage() {
   return (
     <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, padding: 24, color: th.text }}>
       {/* Toast */}
-      {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: '#1D6FE8', color: '#fff', padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: '#1D6FE8', color: th.bgLight, padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
 
       {/* Back */}
       <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 600, color: th.textSecondary, textDecoration: 'none', marginBottom: 20 }}>
@@ -210,7 +210,7 @@ export default function UsersPage() {
           <span style={{ padding: '4px 12px', background: 'rgba(29,111,232,.1)', color: '#4D9EFF', borderRadius: 100, fontSize: 12, fontWeight: 700, fontFamily: mono }}>{total} members</span>
         </div>
         <button onClick={() => setInviting(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: '#1D6FE8', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: '#1D6FE8', border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>
           <UserPlus size={14} strokeWidth={2.5} /> Invite Member
         </button>
       </div>
@@ -371,7 +371,7 @@ export default function UsersPage() {
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
               <button onClick={() => setEditing(null)} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
-              <button onClick={saveUser} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Saving...' : 'Save'}</button>
+              <button onClick={saveUser} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>
@@ -406,7 +406,7 @@ export default function UsersPage() {
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
               <button onClick={() => { setInviting(false); setInviteError('') }} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
-              <button onClick={sendInvite} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Sending...' : 'Send Invite'}</button>
+              <button onClick={sendInvite} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Sending...' : 'Send Invite'}</button>
             </div>
           </div>
         </div>

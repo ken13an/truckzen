@@ -123,7 +123,7 @@ export default function SettingsPage() {
     label: { fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.04em', display: 'block', marginBottom: 4, marginTop: 10 } as React.CSSProperties,
     input: { width: '100%', padding: '9px 12px', background: t.border, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const } as React.CSSProperties,
     val: { fontSize: 13, color: t.text, padding: '6px 0' } as React.CSSProperties,
-    btn: { padding: '8px 18px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } as React.CSSProperties,
+    btn: { padding: '8px 18px', background: t.accent, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } as React.CSSProperties,
     menuItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${t.bgHover}`, cursor: 'pointer', fontSize: 14, color: t.text, fontWeight: 500 } as React.CSSProperties,
   }
 
@@ -207,7 +207,7 @@ export default function SettingsPage() {
               Warning: One or more labor rates are $0 — estimates will show $0 labor charges.
             </div>
           )}
-          <button onClick={saveLaborRates} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={saveLaborRates} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: t.accent, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {laborSaving ? 'Saving...' : 'Save Rates'}
           </button>
         </div>
@@ -260,7 +260,7 @@ export default function SettingsPage() {
             setLaborSaving(true)
             await fetch('/api/settings/labor-rates', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rates: laborRates.map(r => ({ id: r.id, parts_margin_pct: r.parts_margin_pct, parts_markup_pct: r.parts_markup_pct, parts_pricing_mode: r.parts_pricing_mode })), user_id: user?.id }) })
             setLaborSaving(false)
-          }} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          }} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: t.accent, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {laborSaving ? 'Saving...' : 'Save Parts Pricing'}
           </button>
         </div>
@@ -410,7 +410,7 @@ export default function SettingsPage() {
           </div>
 
           <button onClick={saveKiosk} disabled={kioskSaving || !kioskCode.trim()}
-            style={{ padding: '10px 24px', borderRadius: 8, background: t.accent, color: '#fff', border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: kioskSaving || !kioskCode.trim() ? 0.5 : 1 }}>
+            style={{ padding: '10px 24px', borderRadius: 8, background: t.accent, color: t.bgLight, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: kioskSaving || !kioskCode.trim() ? 0.5 : 1 }}>
             {kioskSaving ? 'Saving...' : 'Save Kiosk Settings'}
           </button>
         </div>
@@ -613,7 +613,7 @@ export default function SettingsPage() {
                   Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):
                 </div>
                 <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                  <img src={tfaQR} alt="2FA QR Code" style={{ width: 200, height: 200, borderRadius: 8, background: '#fff', padding: 8 }} />
+                  <img src={tfaQR} alt="2FA QR Code" style={{ width: 200, height: 200, borderRadius: 8, background: t.bgLight, padding: 8 }} />
                 </div>
                 <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 16, textAlign: 'center' }}>
                   Or enter manually: <code style={{ fontFamily: "'IBM Plex Mono', monospace", background: t.border, padding: '2px 6px', borderRadius: 4, fontSize: 11, letterSpacing: '.05em' }}>{tfaSecret}</code>
@@ -705,7 +705,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-              <button onClick={savePayment} disabled={saving} style={{ padding: '10px 24px', background: '#16A34A', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={savePayment} disabled={saving} style={{ padding: '10px 24px', background: '#16A34A', color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                 {saving ? 'Saving...' : 'Save Payment Settings'}
               </button>
             </div>

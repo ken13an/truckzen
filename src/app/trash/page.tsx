@@ -5,9 +5,6 @@ import { getCurrentUser } from '@/lib/auth'
 import { Trash2, RotateCcw, AlertTriangle } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 
-const BG = '#060708', CARD = '#161B24', BORDER = 'rgba(255,255,255,.055)'
-const TEXT = '#DDE3EE', MUTED = '#7C8BA0', WHITE = '#F0F4FF', BLUE = '#4D9EFF'
-const RED = '#D94F4F', AMBER = '#D4882A'
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const HEADING = "'Bebas Neue',sans-serif"
@@ -105,25 +102,25 @@ export default function TrashPage() {
   if (!user) return null
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: FONT, padding: '32px 40px' }}>
+    <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: FONT, padding: '32px 40px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <Trash2 size={28} color={MUTED} />
-        <h1 style={{ fontFamily: HEADING, fontSize: 32, color: WHITE, letterSpacing: 1, margin: 0 }}>Trash</h1>
-        <span style={{ fontSize: 12, color: MUTED, fontFamily: MONO, marginLeft: 8 }}>Items are permanently deleted after 45 days</span>
+        <Trash2 size={28} color={t.textSecondary} />
+        <h1 style={{ fontFamily: HEADING, fontSize: 32, color: t.text, letterSpacing: 1, margin: 0 }}>Trash</h1>
+        <span style={{ fontSize: 12, color: t.textSecondary, fontFamily: MONO, marginLeft: 8 }}>Items are permanently deleted after 45 days</span>
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 2, marginBottom: 24, borderBottom: `1px solid ${BORDER}`, paddingBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 2, marginBottom: 24, borderBottom: `1px solid ${t.border}`, paddingBottom: 0 }}>
         {TABS.map((tab, i) => (
           <button
             key={tab.filter}
             onClick={() => setActiveTab(i)}
             style={{
-              background: activeTab === i ? CARD : 'transparent',
-              color: activeTab === i ? WHITE : MUTED,
+              background: activeTab === i ? t.bgCard : 'transparent',
+              color: activeTab === i ? t.text : t.textSecondary,
               border: 'none',
-              borderBottom: activeTab === i ? `2px solid ${BLUE}` : '2px solid transparent',
+              borderBottom: activeTab === i ? `2px solid ${t.accent}` : '2px solid transparent',
               padding: '10px 18px',
               fontSize: 12,
               fontWeight: activeTab === i ? 700 : 400,
@@ -137,7 +134,7 @@ export default function TrashPage() {
           >
             {tab.label}
             {tabCounts[i] > 0 && (
-              <span style={{ background: t.border, color: MUTED, fontSize: 10, fontFamily: MONO, padding: '1px 6px', borderRadius: 100 }}>{tabCounts[i]}</span>
+              <span style={{ background: t.border, color: t.textSecondary, fontSize: 10, fontFamily: MONO, padding: '1px 6px', borderRadius: 100 }}>{tabCounts[i]}</span>
             )}
           </button>
         ))}
@@ -145,8 +142,8 @@ export default function TrashPage() {
 
       {/* Bulk actions */}
       {selected.size > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, padding: '10px 16px', background: CARD, borderRadius: 10, border: `1px solid ${BORDER}` }}>
-          <span style={{ fontSize: 12, color: WHITE, fontWeight: 600 }}>{selected.size} selected</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, padding: '10px 16px', background: t.bgCard, borderRadius: 10, border: `1px solid ${t.border}` }}>
+          <span style={{ fontSize: 12, color: t.text, fontWeight: 600 }}>{selected.size} selected</span>
           <button onClick={async () => {
             if (!confirm(`Permanently delete ${selected.size} items? This cannot be undone.`)) return
             setActionLoading('bulk')
@@ -157,25 +154,25 @@ export default function TrashPage() {
             setItems(prev => prev.filter(i => !selected.has(`${i.table}::${i.id}`)))
             setSelected(new Set())
             setActionLoading(null)
-          }} disabled={actionLoading === 'bulk'} style={{ background: RED, color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+          }} disabled={actionLoading === 'bulk'} style={{ background: t.danger, color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
             {actionLoading === 'bulk' ? 'Deleting...' : `Delete ${selected.size} Forever`}
           </button>
-          <button onClick={() => setSelected(new Set())} style={{ background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`, padding: '6px 14px', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>Clear</button>
+          <button onClick={() => setSelected(new Set())} style={{ background: 'transparent', color: t.textSecondary, border: `1px solid ${t.border}`, padding: '6px 14px', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>Clear</button>
         </div>
       )}
 
       {/* Table */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: MUTED }}>Loading...</div>
+        <div style={{ textAlign: 'center', padding: 60, color: t.textSecondary }}>Loading...</div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 80 }}>
           <Trash2 size={48} color={t.border} style={{ marginBottom: 16 }} />
-          <div style={{ color: MUTED, fontSize: 14 }}>Trash is empty</div>
+          <div style={{ color: t.textSecondary, fontSize: 14 }}>Trash is empty</div>
         </div>
       ) : (
-        <div style={{ background: CARD, borderRadius: 12, border: `1px solid ${BORDER}`, overflow: 'hidden' }}>
+        <div style={{ background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
           {/* Table header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 120px 180px 100px 160px', gap: 12, padding: '12px 20px', borderBottom: `1px solid ${BORDER}`, fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 120px 180px 100px 160px', gap: 12, padding: '12px 20px', borderBottom: `1px solid ${t.border}`, fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO }}>
             <div><input type="checkbox" checked={filtered.slice((page - 1) * perPage, page * perPage).every(i => selected.has(`${i.table}::${i.id}`))} onChange={e => { const pageItems = filtered.slice((page - 1) * perPage, page * perPage); const newSel = new Set(selected); if (e.target.checked) pageItems.forEach(i => newSel.add(`${i.table}::${i.id}`)); else pageItems.forEach(i => newSel.delete(`${i.table}::${i.id}`)); setSelected(newSel) }} /></div>
             <div>Item</div>
             <div>Type</div>
@@ -190,27 +187,27 @@ export default function TrashPage() {
               key={`${item.table}-${item.id}`}
               style={{
                 display: 'grid', gridTemplateColumns: '32px 1.5fr 120px 180px 100px 160px', gap: 12,
-                padding: '12px 20px', borderBottom: `1px solid ${BORDER}`,
+                padding: '12px 20px', borderBottom: `1px solid ${t.border}`,
                 alignItems: 'center', fontSize: 13,
               }}
             >
               <div><input type="checkbox" checked={selected.has(`${item.table}::${item.id}`)} onChange={e => { const key = `${item.table}::${item.id}`; const newSel = new Set(selected); if (e.target.checked) newSel.add(key); else newSel.delete(key); setSelected(newSel) }} /></div>
               <div>
-                <div style={{ color: WHITE, fontWeight: 600 }}>{item.name}</div>
-                {item.details?.description && <div style={{ color: MUTED, fontSize: 11, marginTop: 2 }}>{item.details.description}</div>}
-                {item.details?.company_name && item.type !== 'Customer' && <div style={{ color: MUTED, fontSize: 11, marginTop: 2 }}>{item.details.company_name}</div>}
+                <div style={{ color: t.text, fontWeight: 600 }}>{item.name}</div>
+                {item.details?.description && <div style={{ color: t.textSecondary, fontSize: 11, marginTop: 2 }}>{item.details.description}</div>}
+                {item.details?.company_name && item.type !== 'Customer' && <div style={{ color: t.textSecondary, fontSize: 11, marginTop: 2 }}>{item.details.company_name}</div>}
               </div>
               <div>
-                <span style={{ background: t.border, color: MUTED, fontSize: 10, padding: '3px 8px', borderRadius: 6, fontFamily: MONO }}>{item.type}</span>
+                <span style={{ background: t.border, color: t.textSecondary, fontSize: 10, padding: '3px 8px', borderRadius: 6, fontFamily: MONO }}>{item.type}</span>
               </div>
-              <div style={{ color: MUTED, fontSize: 12, fontFamily: MONO }}>
+              <div style={{ color: t.textSecondary, fontSize: 12, fontFamily: MONO }}>
                 {new Date(item.deleted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 {' '}
                 {new Date(item.deleted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
               </div>
               <div>
                 <span style={{
-                  color: item.days_remaining < 7 ? RED : item.days_remaining < 14 ? AMBER : MUTED,
+                  color: item.days_remaining < 7 ? t.danger : item.days_remaining < 14 ? t.warning : t.textSecondary,
                   fontWeight: item.days_remaining < 7 ? 700 : 400,
                   fontFamily: MONO,
                   fontSize: 12,
@@ -235,7 +232,7 @@ export default function TrashPage() {
                   onClick={() => setConfirmDelete(item)}
                   disabled={actionLoading === item.id}
                   style={{
-                    background: 'rgba(217,79,79,.12)', color: RED, border: 'none',
+                    background: 'rgba(217,79,79,.12)', color: t.danger, border: 'none',
                     padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
                     cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
                     opacity: actionLoading === item.id ? 0.5 : 1,
@@ -251,11 +248,11 @@ export default function TrashPage() {
 
       {/* Pagination */}
       {filtered.length > perPage && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', marginTop: 12, fontSize: 12, color: MUTED }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', marginTop: 12, fontSize: 12, color: t.textSecondary }}>
           <span>{filtered.length} items · page {page} of {Math.ceil(filtered.length / perPage)}</span>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${BORDER}`, background: 'transparent', color: page <= 1 ? MUTED : WHITE, cursor: page <= 1 ? 'default' : 'pointer', fontSize: 11, fontWeight: 600 }}>Prev</button>
-            <button disabled={page >= Math.ceil(filtered.length / perPage)} onClick={() => setPage(p => p + 1)} style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${BORDER}`, background: 'transparent', color: page >= Math.ceil(filtered.length / perPage) ? MUTED : WHITE, cursor: page >= Math.ceil(filtered.length / perPage) ? 'default' : 'pointer', fontSize: 11, fontWeight: 600 }}>Next</button>
+            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${t.border}`, background: 'transparent', color: page <= 1 ? t.textSecondary : t.text, cursor: page <= 1 ? 'default' : 'pointer', fontSize: 11, fontWeight: 600 }}>Prev</button>
+            <button disabled={page >= Math.ceil(filtered.length / perPage)} onClick={() => setPage(p => p + 1)} style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${t.border}`, background: 'transparent', color: page >= Math.ceil(filtered.length / perPage) ? t.textSecondary : t.text, cursor: page >= Math.ceil(filtered.length / perPage) ? 'default' : 'pointer', fontSize: 11, fontWeight: 600 }}>Next</button>
           </div>
         </div>
       )}
@@ -263,26 +260,26 @@ export default function TrashPage() {
       {/* Confirmation Modal */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ background: '#1A1F2B', borderRadius: 16, padding: 32, maxWidth: 420, width: '90%', border: `1px solid ${BORDER}` }}>
+          <div style={{ background: '#1A1F2B', borderRadius: 16, padding: 32, maxWidth: 420, width: '90%', border: `1px solid ${t.border}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <AlertTriangle size={22} color={RED} />
-              <h3 style={{ margin: 0, color: WHITE, fontSize: 16 }}>Permanently Delete?</h3>
+              <AlertTriangle size={22} color={t.danger} />
+              <h3 style={{ margin: 0, color: t.text, fontSize: 16 }}>Permanently Delete?</h3>
             </div>
-            <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, margin: '0 0 24px' }}>
-              This will permanently delete <strong style={{ color: WHITE }}>{confirmDelete.name}</strong> ({confirmDelete.type}).
+            <p style={{ color: t.textSecondary, fontSize: 13, lineHeight: 1.6, margin: '0 0 24px' }}>
+              This will permanently delete <strong style={{ color: t.text }}>{confirmDelete.name}</strong> ({confirmDelete.type}).
               This action cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setConfirmDelete(null)}
-                style={{ background: t.border, color: MUTED, border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}
+                style={{ background: t.border, color: t.textSecondary, border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}
               >
                 Cancel
               </button>
               <button
                 onClick={() => permanentDelete(confirmDelete)}
                 disabled={actionLoading === confirmDelete.id}
-                style={{ background: RED, color: '#fff', border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: actionLoading === confirmDelete.id ? 0.5 : 1 }}
+                style={{ background: t.danger, color: '#fff', border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: actionLoading === confirmDelete.id ? 0.5 : 1 }}
               >
                 {actionLoading === confirmDelete.id ? 'Deleting...' : 'Delete Forever'}
               </button>
