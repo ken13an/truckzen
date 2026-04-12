@@ -1,4 +1,5 @@
 'use client'
+import { useTheme } from '@/hooks/useTheme'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { CheckCircle2, Loader2, ClipboardCheck, Sparkles } from 'lucide-react'
@@ -334,6 +335,7 @@ const labelStyle: React.CSSProperties = {
 // ---------------------------------------------------------------------------
 
 export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: string; shopName: string; kioskCode?: string }) {
+  const { tokens: th } = useTheme()
   // ---- PIN Gate (all hooks before any return) ----
   const [pinAuthed, setPinAuthed] = useState(!kioskCode) // no code = skip PIN
   const [pinChecked, setPinChecked] = useState(!kioskCode)
@@ -488,7 +490,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   // Show loading while checking sessionStorage for PIN
   if (!pinChecked && kioskCode) {
     return (
-      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif" }}>
+      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif" }}>
         <p style={{ color: '#71717A' }}>Loading...</p>
       </div>
     )
@@ -496,7 +498,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
   if (!pinAuthed && kioskCode) {
     return (
-      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", padding: 24 }}>
+      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", padding: 24 }}>
         <div style={{ textAlign: 'center', maxWidth: 340 }}>
           <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: 2, marginBottom: 8 }}>TRUCKZEN</div>
           <div style={{ fontSize: 15, color: '#71717A', marginBottom: 32 }}>Enter PIN to activate kiosk</div>
@@ -507,7 +509,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
               <div key={i} style={{
                 width: 24, height: 24, borderRadius: '50%',
                 background: i < pin.length ? '#1B6EE6' : 'transparent',
-                border: '2px solid ' + (i < pin.length ? '#1B6EE6' : '#48536A'),
+                border: '2px solid ' + (i < pin.length ? '#1B6EE6' : th.textTertiary),
                 transition: 'all 0.15s',
               }} />
             ))}

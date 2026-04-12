@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { Sparkles, Loader2, Check, X } from 'lucide-react'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 interface AITextInputProps {
   value: string
@@ -118,7 +120,7 @@ export default function AITextInput({
   return (
     <div style={{ position: 'relative' }}>
       {label && (
-        <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: 14, color: '#cbd5e1' }}>
+        <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: 14, color: _t.textSecondary }}>
           {label}
         </label>
       )}
@@ -133,9 +135,9 @@ export default function AITextInput({
           padding: '12px 14px',
           paddingRight: 48,
           borderRadius: 10,
-          border: '1px solid #334155',
-          background: '#1e293b',
-          color: '#f1f5f9',
+          border: `1px solid ${_t.inputBorder}`,
+          background: _t.inputBg,
+          color: _t.text,
           fontSize: 15,
           resize: 'vertical',
           outline: 'none',
@@ -153,7 +155,7 @@ export default function AITextInput({
           position: 'absolute',
           right: 10,
           top: label ? 38 : 10,
-          background: loading ? '#334155' : '#6366f1',
+          background: loading ? _t.surfaceMuted : _t.accent,
           border: 'none',
           borderRadius: 8,
           width: 34,
@@ -167,15 +169,15 @@ export default function AITextInput({
         }}
       >
         {loading ? (
-          <Loader2 size={18} color="#94a3b8" style={{ animation: 'spin 1s linear infinite' }} />
+          <Loader2 size={18} color={_t.textSecondary} style={{ animation: 'spin 1s linear infinite' }} />
         ) : (
-          <Sparkles size={18} color="#fff" />
+          <Sparkles size={18} color={_t.bgLight} />
         )}
       </button>
 
       {/* Error */}
       {error && (
-        <div style={{ color: '#f87171', fontSize: 13, marginTop: 4 }}>{error}</div>
+        <div style={{ color: _t.danger, fontSize: 13, marginTop: 4 }}>{error}</div>
       )}
 
       {/* Suggestion Card */}
@@ -183,26 +185,26 @@ export default function AITextInput({
         <div
           style={{
             marginTop: 8,
-            background: isDark ? '#1e293b' : '#f8fafc',
-            border: '1px solid #6366f1',
+            background: isDark ? _t.bgCard : _t.bgElevated,
+            border: `1px solid ${_t.accent}`,
             borderRadius: 10,
             padding: '12px 14px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <Sparkles size={14} color="#6366f1" />
-            <span style={{ fontSize: 12, color: '#818cf8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Sparkles size={14} color={_t.accent} />
+            <span style={{ fontSize: 12, color: _t.accentLight, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
               AI Suggestion
             </span>
           </div>
 
-          <div style={{ color: isDark ? '#e2e8f0' : '#1e293b', fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+          <div style={{ color: isDark ? _t.text : _t.text, fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
             {getSuggestionPreview()}
           </div>
 
           {/* Native language translation if present */}
           {(suggestion.concern_native || suggestion.cause_native || suggestion.note_native) && (
-            <div style={{ color: isDark ? '#94a3b8' : '#6b7280', fontSize: 13, marginTop: 8, fontStyle: 'italic' }}>
+            <div style={{ color: _t.textSecondary, fontSize: 13, marginTop: 8, fontStyle: 'italic' }}>
               {suggestion.concern_native || suggestion.cause_native || suggestion.note_native}
             </div>
           )}
@@ -215,8 +217,8 @@ export default function AITextInput({
                 alignItems: 'center',
                 gap: 6,
                 padding: '6px 16px',
-                background: '#22c55e',
-                color: '#fff',
+                background: _t.success,
+                color: _t.bgLight,
                 border: 'none',
                 borderRadius: 8,
                 fontSize: 13,
@@ -233,8 +235,8 @@ export default function AITextInput({
                 alignItems: 'center',
                 gap: 6,
                 padding: '6px 16px',
-                background: isDark ? '#334155' : '#e2e8f0',
-                color: isDark ? '#94a3b8' : '#6b7280',
+                background: isDark ? _t.surfaceMuted : _t.border,
+                color: _t.textSecondary,
                 border: 'none',
                 borderRadius: 8,
                 fontSize: 13,
@@ -249,7 +251,7 @@ export default function AITextInput({
       )}
 
       {/* AI Disclosure */}
-      <div style={{ fontSize: 11, color: isDark ? '#7C8BA0' : '#9CA3AF', marginTop: 4, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 11, color: _t.textSecondary, marginTop: 4, lineHeight: 1.4 }}>
         AI-assisted writing powered by TruckZen AI. Your input is processed to generate professional service notes. No data is shared with third parties.
       </div>
 

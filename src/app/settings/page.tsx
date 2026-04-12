@@ -118,7 +118,7 @@ export default function SettingsPage() {
   }
 
   const S = {
-    page: { background: '#0C0C12', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", padding: 24 } as React.CSSProperties,
+    page: { background: t.bg, minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", padding: 24 } as React.CSSProperties,
     card: { background: t.bgElevated, border: `1px solid ${t.bgActive}`, borderRadius: 12, padding: 20, maxWidth: 560, marginBottom: 16 } as React.CSSProperties,
     label: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.04em', display: 'block', marginBottom: 4, marginTop: 10 } as React.CSSProperties,
     input: { width: '100%', padding: '9px 12px', background: t.border, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const } as React.CSSProperties,
@@ -195,7 +195,7 @@ export default function SettingsPage() {
                     type="number" step="0.01" min="0"
                     value={r.rate_per_hour}
                     onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, rate_per_hour: parseFloat(e.target.value) || 0 } : x))}
-                    style={{ width: 100, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }}
+                    style={{ width: 100, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }}
                   />
                   <span style={{ fontSize: 12, color: t.textSecondary }}>/hr</span>
                 </div>
@@ -228,7 +228,7 @@ export default function SettingsPage() {
                   <div>
                     <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Mode</label>
                     <select value={r.parts_pricing_mode || 'markup'} onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_pricing_mode: e.target.value } : x))}
-                      style={{ padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+                      style={{ padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
                       <option value="markup">Markup %</option>
                       <option value="margin">Margin %</option>
                     </select>
@@ -238,7 +238,7 @@ export default function SettingsPage() {
                       <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Markup %</label>
                       <input type="number" step="0.1" min="0" value={r.parts_markup_pct ?? 0}
                         onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_markup_pct: parseFloat(e.target.value) || 0 } : x))}
-                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                     </div>
                   )}
                   {r.parts_pricing_mode === 'margin' && (
@@ -246,7 +246,7 @@ export default function SettingsPage() {
                       <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Margin %</label>
                       <input type="number" step="0.1" min="0" max="99" value={r.parts_margin_pct ?? 0}
                         onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_margin_pct: parseFloat(e.target.value) || 0 } : x))}
-                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: '#DDE3EE', outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                     </div>
                   )}
                   <div style={{ fontSize: 12, color: t.textSecondary, background: 'rgba(255,255,255,.03)', padding: '8px 12px', borderRadius: 8, fontFamily: "'IBM Plex Mono', monospace" }}>

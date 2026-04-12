@@ -1,4 +1,5 @@
 'use client'
+import { useTheme } from '@/hooks/useTheme'
 
 const pulse = `
   @keyframes pulse {
@@ -10,28 +11,27 @@ const pulse = `
 function Bone({ w = '100%', h = 16, radius = 6, style = {} }: {
   w?: string | number; h?: number; radius?: number; style?: React.CSSProperties
 }) {
+  const { tokens: t } = useTheme()
   return (
     <div style={{
       width: w, height: h, borderRadius: radius,
-      background: 'rgba(255,255,255,.06)',
+      background: t.surfaceMuted,
       animation: 'pulse 1.5s ease-in-out infinite',
       flexShrink: 0, ...style,
     }}/>
   )
 }
 
-// ── TABLE SKELETON ────────────────────────────────────────────
 export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: number }) {
+  const { tokens: t } = useTheme()
   return (
-    <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+    <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, overflow: 'hidden' }}>
       <style>{pulse}</style>
-      {/* Header */}
-      <div style={{ display: 'flex', gap: 12, padding: '10px 14px', background: '#0B0D11', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+      <div style={{ display: 'flex', gap: 12, padding: '10px 14px', background: t.bg, borderBottom: `1px solid ${t.border}` }}>
         {Array.from({ length: cols }).map((_, i) => <Bone key={i} w={`${60 + Math.random() * 60}px`} h={8}/>)}
       </div>
-      {/* Rows */}
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,.025)', alignItems: 'center' }}>
+        <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderBottom: `1px solid ${t.border}`, alignItems: 'center' }}>
           {Array.from({ length: cols }).map((_, j) => (
             <Bone key={j} w={j === 0 ? '80px' : j === cols - 1 ? '60px' : `${40 + Math.random() * 100}%`} h={12}/>
           ))}
@@ -41,13 +41,13 @@ export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
   )
 }
 
-// ── STAT CARDS SKELETON ───────────────────────────────────────
 export function StatsSkeleton({ count = 6 }: { count?: number }) {
+  const { tokens: t } = useTheme()
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 10, marginBottom: 20 }}>
       <style>{pulse}</style>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 10, padding: '12px 14px' }}>
+        <div key={i} style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 10, padding: '12px 14px' }}>
           <Bone w="60%" h={8} style={{ marginBottom: 10 }}/>
           <Bone w="50%" h={28} radius={4}/>
         </div>
@@ -56,10 +56,10 @@ export function StatsSkeleton({ count = 6 }: { count?: number }) {
   )
 }
 
-// ── CARD SKELETON ─────────────────────────────────────────────
 export function CardSkeleton({ lines = 3 }: { lines?: number }) {
+  const { tokens: t } = useTheme()
   return (
-    <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16 }}>
+    <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 16 }}>
       <style>{pulse}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
         <Bone w="40%" h={16}/>
@@ -72,7 +72,6 @@ export function CardSkeleton({ lines = 3 }: { lines?: number }) {
   )
 }
 
-// ── FULL PAGE SKELETON ────────────────────────────────────────
 export function PageSkeleton() {
   return (
     <div style={{ padding: 24 }}>
@@ -90,13 +89,13 @@ export function PageSkeleton() {
   )
 }
 
-// ── SO CARD SKELETON ──────────────────────────────────────────
 export function SOCardSkeleton({ count = 4 }: { count?: number }) {
+  const { tokens: t } = useTheme()
   return (
     <>
       <style>{pulse}</style>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 14, marginBottom: 10 }}>
+        <div key={i} style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 14, marginBottom: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ flex: 1 }}>
               <Bone w={80} h={10} style={{ marginBottom: 8 }}/>

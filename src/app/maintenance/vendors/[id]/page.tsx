@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', MUTED = '#7C8BA0'
 
 export default function VendorDetailPage() {
+  const { tokens: th } = useTheme()
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -44,12 +46,12 @@ export default function VendorDetailPage() {
     setSaving(false)
   }
 
-  if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: th.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const S: Record<string, React.CSSProperties> = {
     card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
-    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A', marginBottom: 4, display: 'block' },
-    input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary, marginBottom: 4, display: 'block' },
+    input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
   }
 
@@ -57,10 +59,10 @@ export default function VendorDetailPage() {
   const totalSpend = repairs.reduce((s, r) => s + (r.total_cost || 0), 0)
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>{vendor.name}</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text }}>{vendor.name}</div>
           <div style={{ fontSize: 12, color: MUTED }}>{[vendor.city, vendor.state].filter(Boolean).join(', ')} · {repairs.length} repairs · ${totalSpend.toFixed(0)} total</div>
         </div>
         <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: vendor.active ? `${GREEN}18` : `${MUTED}18`, color: vendor.active ? GREEN : MUTED }}>
@@ -111,12 +113,12 @@ export default function VendorDetailPage() {
       {tab === 'repairs' && (
         <div style={S.card}>
           {repairs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 20, color: '#48536A', fontSize: 12 }}>No repair history with this vendor</div>
+            <div style={{ textAlign: 'center', padding: 20, color: th.textTertiary, fontSize: 12 }}>No repair history with this vendor</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>{['Repair #', 'Truck', 'Description', 'Status', 'Cost', 'Date'].map(h => (
-                  <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: '#48536A', textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
+                  <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
                 ))}</tr>
               </thead>
               <tbody>

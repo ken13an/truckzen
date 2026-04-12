@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { SKILL_CATALOG, SKILL_TEMPLATES } from '@/lib/mechanic-skills'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -15,6 +16,7 @@ const BLUE = '#4D9EFF', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', M
 const LEVEL_COLORS: Record<string, string> = { beginner: '#7C8BA0', intermediate: '#4D9EFF', experienced: '#D4882A', expert: '#1DB870' }
 
 export default function BulkSkillsPage() {
+  const { tokens: th } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [mechanics, setMechanics] = useState<any[]>([])
@@ -96,13 +98,13 @@ export default function BulkSkillsPage() {
     } else flash('Failed')
   }
 
-  if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: th.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24 }}>
       {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 }}>Bulk Skills Assignment</div>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text, marginBottom: 4 }}>Bulk Skills Assignment</div>
       <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>Select mechanics and assign skills in bulk for onboarding</div>
 
       {/* Action bar */}
@@ -129,7 +131,7 @@ export default function BulkSkillsPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>
             {['', 'Name', 'Role', 'Team', 'Skills', 'Top Category'].map(h =>
-              <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '8px 10px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
+              <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', letterSpacing: '.1em', padding: '8px 10px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
             )}
           </tr></thead>
           <tbody>
@@ -145,11 +147,11 @@ export default function BulkSkillsPage() {
                   <td style={{ padding: '10px 10px', width: 30 }}>
                     <input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleSelect(m.id)} onClick={e => e.stopPropagation()} style={{ accentColor: '#1D6FE8' }} />
                   </td>
-                  <td style={{ padding: '10px 10px', fontWeight: 600, color: '#F0F4FF', fontSize: 13 }}>{m.full_name}</td>
+                  <td style={{ padding: '10px 10px', fontWeight: 600, color: th.text, fontSize: 13 }}>{m.full_name}</td>
                   <td style={{ padding: '10px 10px', fontSize: 11, color: MUTED }}>{m.role?.replace(/_/g, ' ')}</td>
                   <td style={{ padding: '10px 10px', fontSize: 11, color: MUTED }}>{m.team || '—'}</td>
                   <td style={{ padding: '10px 10px' }}>
-                    <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: mechSkills.length > 0 ? BLUE : '#48536A' }}>{mechSkills.length}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: mechSkills.length > 0 ? BLUE : th.textTertiary }}>{mechSkills.length}</span>
                   </td>
                   <td style={{ padding: '10px 10px', fontSize: 11, color: MUTED }}>{topCat}</td>
                 </tr>
@@ -161,17 +163,17 @@ export default function BulkSkillsPage() {
 
       {/* Skill Templates */}
       <div style={{ marginTop: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Quick Templates</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: th.text, marginBottom: 12 }}>Quick Templates</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
           {Object.entries(SKILL_TEMPLATES).map(([name, tmpl]) => (
             <div key={name} style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.06)', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>{name}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 4 }}>{name}</div>
               <div style={{ fontSize: 10, color: MUTED, marginBottom: 8 }}>{tmpl.skills.length} skills</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 8 }}>
                 {tmpl.skills.slice(0, 4).map(s => (
                   <span key={s.name} style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: `${LEVEL_COLORS[s.level]}18`, color: LEVEL_COLORS[s.level] }}>{s.name.slice(0, 20)}</span>
                 ))}
-                {tmpl.skills.length > 4 && <span style={{ fontSize: 8, color: '#48536A' }}>+{tmpl.skills.length - 4} more</span>}
+                {tmpl.skills.length > 4 && <span style={{ fontSize: 8, color: th.textTertiary }}>+{tmpl.skills.length - 4} more</span>}
               </div>
               <button onClick={() => { if (selected.size === 0) flash('Select mechanics first'); else applyTemplate(name) }} disabled={saving || selected.size === 0}
                 style={{ ...btnS, fontSize: 10, padding: '4px 10px', opacity: selected.size > 0 ? 1 : 0.4 }}>
@@ -186,7 +188,7 @@ export default function BulkSkillsPage() {
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setShowModal(false)}>
           <div style={{ background: '#12131a', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: 28, width: 480, maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF', marginBottom: 16 }}>Assign Skills to {selected.size} Mechanic{selected.size !== 1 ? 's' : ''}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: th.text, marginBottom: 16 }}>Assign Skills to {selected.size} Mechanic{selected.size !== 1 ? 's' : ''}</div>
 
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: MUTED, textTransform: 'uppercase', marginBottom: 4 }}>Category</div>
@@ -205,7 +207,7 @@ export default function BulkSkillsPage() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {SKILL_CATALOG[modalCategory].map(skill => (
-                      <label key={skill} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#DDE3EE', cursor: 'pointer', padding: '4px 0' }}>
+                      <label key={skill} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: th.text, cursor: 'pointer', padding: '4px 0' }}>
                         <input type="checkbox" checked={modalSkills.has(skill)} onChange={() => { const n = new Set(modalSkills); n.has(skill) ? n.delete(skill) : n.add(skill); setModalSkills(n) }} style={{ accentColor: '#1D6FE8' }} />
                         {skill}
                       </label>

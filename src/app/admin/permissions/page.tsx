@@ -4,10 +4,12 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { ADMIN_ROLES } from '@/lib/roles'
 import { MODULES, ALL_ROLES, DEFAULT_ROLE_PERMISSIONS, ROLE_LABEL, ROLE_COLOR, hasAccess } from '@/lib/permissions'
+import { useTheme } from '@/hooks/useTheme'
 
 type View = 'roles' | 'users' | 'audit'
 
 export default function PermissionsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [view, setView] = useState<View>('roles')
@@ -115,7 +117,7 @@ export default function PermissionsPage() {
     setSaving(false)
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary }}>Loading...</div>
 
   return (
     <div style={S.page}>
@@ -123,14 +125,14 @@ export default function PermissionsPage() {
 
       <div style={{ marginBottom: 20 }}>
         <div style={S.title}>Permissions & Access Control</div>
-        <div style={{ fontSize: 12, color: '#7C8BA0' }}>{ALL_ROLES.length} roles · {MODULES.length} modules · {users.length} users</div>
+        <div style={{ fontSize: 12, color: t.textSecondary }}>{ALL_ROLES.length} roles · {MODULES.length} modules · {users.length} users</div>
       </div>
 
       {/* View tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#0D0F12', borderRadius: 10, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: t.bgCard, borderRadius: 10, padding: 4 }}>
         {([['roles', 'Role Permissions'], ['users', 'User Overrides'], ['audit', 'Audit Log']] as const).map(([k, l]) => (
           <button key={k} onClick={() => { setView(k); if (k === 'audit') loadAudit(user.shop_id) }}
-            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: view === k ? '#1A1D23' : 'transparent', color: view === k ? '#F0F4FF' : '#48536A' }}>{l}</button>
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: view === k ? '#1A1D23' : 'transparent', color: view === k ? '#F0F4FF' : t.textTertiary }}>{l}</button>
         ))}
       </div>
 
@@ -151,7 +153,7 @@ export default function PermissionsPage() {
             <tbody>
               {MODULES.map(m => (
                 <tr key={m.key}>
-                  <td style={{ ...S.td, position: 'sticky', left: 0, background: '#060708', zIndex: 1, fontWeight: 600, fontSize: 11, whiteSpace: 'nowrap' }}>
+                  <td style={{ ...S.td, position: 'sticky', left: 0, background: t.bg, zIndex: 1, fontWeight: 600, fontSize: 11, whiteSpace: 'nowrap' }}>
                     {m.icon} {m.label}
                   </td>
                   {ALL_ROLES.map(r => {
@@ -165,7 +167,7 @@ export default function PermissionsPage() {
                           disabled={isUnlimited || saving}
                           style={{
                             width: 32, height: 22, borderRadius: 11, border: 'none', cursor: isUnlimited ? 'default' : 'pointer',
-                            background: allowed ? '#22C55E' : '#1A1D23',
+                            background: allowed ? '#22C55E' : t.border,
                             opacity: isUnlimited ? 0.4 : isDefault ? 0.7 : 1,
                             transition: 'background .15s',
                             position: 'relative',
@@ -182,7 +184,7 @@ export default function PermissionsPage() {
               ))}
             </tbody>
           </table>
-          <div style={{ fontSize: 10, color: '#48536A', marginTop: 8 }}>
+          <div style={{ fontSize: 10, color: t.textTertiary, marginTop: 8 }}>
             Owner / GM / IT have full access and cannot be restricted. Dimmed toggles use default permissions — click to customize.
           </div>
         </div>
@@ -197,8 +199,8 @@ export default function PermissionsPage() {
                 style={{
                   padding: '8px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
                   border: selectedUser?.id === u.id ? '1px solid #1D6FE8' : '1px solid #1A1D23',
-                  background: selectedUser?.id === u.id ? 'rgba(29,111,232,.1)' : '#0D0F12',
-                  color: selectedUser?.id === u.id ? '#F0F4FF' : '#7C8BA0',
+                  background: selectedUser?.id === u.id ? 'rgba(29,111,232,.1)' : t.bgCard,
+                  color: selectedUser?.id === u.id ? '#F0F4FF' : t.textSecondary,
                 }}>
                 {u.full_name}
                 <span style={{ fontSize: 9, color: ROLE_COLOR[u.role], marginLeft: 6 }}>{ROLE_LABEL[u.role]}</span>
@@ -208,8 +210,8 @@ export default function PermissionsPage() {
 
           {selectedUser && (
             <div style={S.card}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>{selectedUser.full_name}</div>
-              <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 16 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 4 }}>{selectedUser.full_name}</div>
+              <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 16 }}>
                 Role: <span style={{ color: ROLE_COLOR[selectedUser.role] }}>{ROLE_LABEL[selectedUser.role]}</span> · Overrides shown in blue
               </div>
 
@@ -225,11 +227,11 @@ export default function PermissionsPage() {
                       style={{
                         padding: '10px 12px', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         border: hasOvr ? '1px solid #1D6FE8' : '1px solid #1A1D23',
-                        background: hasOvr ? 'rgba(29,111,232,.06)' : '#0D0F12',
+                        background: hasOvr ? 'rgba(29,111,232,.06)' : t.bgCard,
                       }}>
-                      <span style={{ fontSize: 12, color: effective ? '#F0F4FF' : '#48536A' }}>{m.icon} {m.label}</span>
+                      <span style={{ fontSize: 12, color: effective ? '#F0F4FF' : t.textTertiary }}>{m.icon} {m.label}</span>
                       <div style={{
-                        width: 28, height: 16, borderRadius: 8, background: effective ? '#22C55E' : '#1A1D23',
+                        width: 28, height: 16, borderRadius: 8, background: effective ? '#22C55E' : t.border,
                         position: 'relative',
                       }}>
                         <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: effective ? 14 : 4, transition: 'left .15s' }} />
@@ -238,7 +240,7 @@ export default function PermissionsPage() {
                   )
                 })}
               </div>
-              <div style={{ fontSize: 10, color: '#48536A', marginTop: 8 }}>Click to toggle. Blue border = user-specific override. Click an override again to remove it and revert to role default.</div>
+              <div style={{ fontSize: 10, color: t.textTertiary, marginTop: 8 }}>Click to toggle. Blue border = user-specific override. Click an override again to remove it and revert to role default.</div>
             </div>
           )}
         </>
@@ -248,7 +250,7 @@ export default function PermissionsPage() {
       {view === 'audit' && (
         <>
           <div style={S.sectionLabel}>Permission Changes</div>
-          {auditLog.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: '#48536A' }}>No permission changes recorded yet</div>}
+          {auditLog.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: t.textTertiary }}>No permission changes recorded yet</div>}
           <table style={S.table}>
             <thead><tr>
               <th style={S.th}>When</th><th style={S.th}>Changed By</th><th style={S.th}>Target</th><th style={S.th}>Module</th><th style={S.th}>Change</th>

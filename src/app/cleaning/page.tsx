@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
 
 const DEFAULT_ZONES = [
   { name:'Bay 1-4 — Engine Team',  icon:'', team:'A', checklist:['Sweep floor','Degrease floor drains','Clean tool chests','Wipe down benches','Stack used oil filters','Dispose rags','Check fire extinguisher'] },
@@ -13,6 +14,7 @@ const DEFAULT_ZONES = [
 ]
 
 export default function CleaningPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user,     setUser]     = useState<any>(null)
   const [sessions, setSessions] = useState<any[]>([])
@@ -82,8 +84,8 @@ export default function CleaningPage() {
   const completedToday = (zoneName: string) => sessions.some(s => s.cleaning_zones?.name === zoneName)
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'#F0F4FF', marginBottom:4 },
+    page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
+    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:4 },
     card:  { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:10 },
   }
 
@@ -93,9 +95,9 @@ export default function CleaningPage() {
     const done = zone.checklist.filter(item => checks[item]).length
     return (
       <div style={{ ...S.page, maxWidth:480, margin:'0 auto' }}>
-        <button onClick={() => setActive(null)} style={{ fontSize:12, color:'#7C8BA0', background:'none', border:'none', cursor:'pointer', marginBottom:20, fontFamily:'inherit' }}>← Back</button>
-        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'#F0F4FF', marginBottom:4 }}>{zone.icon} {zone.name}</div>
-        <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:20 }}>{done}/{zone.checklist.length} items complete</div>
+        <button onClick={() => setActive(null)} style={{ fontSize:12, color:t.textSecondary, background:'none', border:'none', cursor:'pointer', marginBottom:20, fontFamily:'inherit' }}>← Back</button>
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:t.text, marginBottom:4 }}>{zone.icon} {zone.name}</div>
+        <div style={{ fontSize:12, color:t.textSecondary, marginBottom:20 }}>{done}/{zone.checklist.length} items complete</div>
 
         {/* Progress */}
         <div style={{ height:6, background:'#1C2130', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
@@ -108,7 +110,7 @@ export default function CleaningPage() {
             <div style={{ width:24, height:24, borderRadius:'50%', border:`2px solid ${checks[item]?'#1DB870':'rgba(255,255,255,.2)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: checks[item]?'#1DB870':'transparent', color:'#fff', fontSize:12, fontWeight:700 }}>
               {checks[item] ? '✓' : ''}
             </div>
-            <span style={{ fontSize:13, color: checks[item]?'#DDE3EE':'#7C8BA0', textDecoration: checks[item]?'line-through':'none' }}>{item}</span>
+            <span style={{ fontSize:13, color: checks[item]?'#DDE3EE':t.textSecondary, textDecoration: checks[item]?'line-through':'none' }}>{item}</span>
           </div>
         ))}
 
@@ -128,9 +130,9 @@ export default function CleaningPage() {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 }}>
         <div>
           <div style={S.title}>Shop Cleaning</div>
-          <div style={{ fontSize:12, color:'#7C8BA0' }}>{completedCount}/{totalZones} zones clean today</div>
+          <div style={{ fontSize:12, color:t.textSecondary }}>{completedCount}/{totalZones} zones clean today</div>
         </div>
-        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color: completedCount===totalZones?'#1DB870':completedCount>0?'#D4882A':'#7C8BA0' }}>
+        <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color: completedCount===totalZones?'#1DB870':completedCount>0?'#D4882A':t.textSecondary }}>
           {Math.round(completedCount/totalZones*100)}%
         </div>
       </div>
@@ -149,8 +151,8 @@ export default function CleaningPage() {
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
                 <div>
                   <div style={{ fontSize:20, marginBottom:4 }}>{zone.icon}</div>
-                  <div style={{ fontSize:13, fontWeight:700, color:'#F0F4FF' }}>{zone.name}</div>
-                  {zone.team && <div style={{ fontSize:10, color:'#48536A', marginTop:2 }}>Team {zone.team}</div>}
+                  <div style={{ fontSize:13, fontWeight:700, color:t.text }}>{zone.name}</div>
+                  {zone.team && <div style={{ fontSize:10, color:t.textTertiary, marginTop:2 }}>Team {zone.team}</div>}
                 </div>
                 {done && (
                   <div style={{ textAlign:'right' }}>
@@ -159,7 +161,7 @@ export default function CleaningPage() {
                   </div>
                 )}
               </div>
-              <div style={{ fontSize:10, color:'#7C8BA0', marginBottom:12 }}>{zone.checklist.length} items</div>
+              <div style={{ fontSize:10, color:t.textSecondary, marginBottom:12 }}>{zone.checklist.length} items</div>
               {!done && (
                 <button onClick={() => startZone(zone)}
                   style={{ width:'100%', padding:'9px 0', background:'rgba(29,111,232,.1)', border:'1px solid rgba(29,111,232,.25)', borderRadius:8, color:'#4D9EFF', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>

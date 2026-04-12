@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
@@ -11,6 +12,7 @@ const PHASE_COLOR: Record<string, string> = {
 }
 
 export default function BuildProgressPage() {
+  const { tokens: th } = useTheme()
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -37,10 +39,10 @@ export default function BuildProgressPage() {
     grouped[t.phase].push(t)
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#0C0C12', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>Loading...</div>
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0C0C12', fontFamily: FONT, color: '#EDEDF0', padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, color: '#EDEDF0', padding: 24 }}>
       <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={16} strokeWidth={2} /> Dashboard
       </a>

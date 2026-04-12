@@ -6,17 +6,21 @@ import Logo from '@/components/Logo'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import { RefreshCw, Clock, Users, Package } from 'lucide-react'
 
+import { useTheme } from '@/hooks/useTheme'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
+
 const FONT = "'Inter', -apple-system, sans-serif"
-const BG = '#0C0C12'
-const TEXT = '#EDEDF0'
-const CARD_BG = '#1A1A26'
-const HEADER_BG = '#151520'
-const CARD_BORDER = 'rgba(255,255,255,0.08)'
-const BLUE = '#1D6FE8'
-const AMBER = '#F59E0B'
-const GREEN = '#22C55E'
-const RED = '#EF4444'
-const DIM = '#71717A'
+const BG = _t.bg
+const TEXT = _t.text
+const CARD_BG = _t.bgCard
+const HEADER_BG = _t.bgElevated
+const CARD_BORDER = _t.cardBorder
+const BLUE = _t.accent
+const AMBER = _t.warning
+const GREEN = _t.success
+const RED = _t.danger
+const DIM = _t.textTertiary
 
 const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager']
 
@@ -132,6 +136,7 @@ export default function FloorManagerDashboardPage() {
 
   // -- Mount + auth --
   useEffect(() => {
+    let cancelled = false
     let interval: ReturnType<typeof setInterval>
     let tickInterval: ReturnType<typeof setInterval>
     async function load() {
@@ -140,6 +145,7 @@ export default function FloorManagerDashboardPage() {
       if (!ALLOWED_ROLES.includes(profile.role)) { window.location.href = '/dashboard'; return }
       setUser(profile)
       await fetchData(profile.shop_id)
+      if (cancelled) return
       setLoading(false)
       // Auto-refresh every 10s, paused during drag
       interval = setInterval(() => {
@@ -156,7 +162,7 @@ export default function FloorManagerDashboardPage() {
       }, 1000)
     }
     load()
-    return () => { clearInterval(interval); clearInterval(tickInterval) }
+    return () => { cancelled = true; clearInterval(interval); clearInterval(tickInterval) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // -- Manual refresh --

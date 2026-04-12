@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { getPermissions } from '@/lib/getPermissions'
 import { LayoutDashboard, Store, FileText, Users, Activity, Shield, LogOut, ChevronLeft, DollarSign, Cpu, Bot, ClipboardCheck } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const NAV_ITEMS = [
   { href: '/platform-admin', label: 'Overview', icon: LayoutDashboard, exact: true },
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
 ]
 
 export default function PlatformAdminLayout({ children }: { children: React.ReactNode }) {
+  const { tokens: t } = useTheme()
   const pathname = usePathname()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -54,14 +56,14 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
 
   if (!user) {
     return (
-      <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: 28, height: 28, border: '2px solid rgba(29,111,232,0.2)', borderTopColor: '#1D6FE8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#060708' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: t.bg }}>
       {/* Platform Admin Sidebar */}
       <aside style={{
         width: 240, minHeight: '100vh', background: '#0B0D11',
@@ -73,10 +75,10 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
         <div style={{ padding: '20px 18px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <Shield size={18} color="#1D6FE8" />
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', letterSpacing: '0.02em' }}>TruckZen Platform</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: t.text, letterSpacing: '0.02em' }}>TruckZen Platform</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-            <span style={{ fontSize: 11, color: '#7C8BA0' }}>{user.full_name}</span>
+            <span style={{ fontSize: 11, color: t.textSecondary }}>{user.full_name}</span>
             <span style={{ fontSize: 9, fontWeight: 700, color: '#1D6FE8', background: 'rgba(29,111,232,.12)', padding: '2px 6px', borderRadius: 4, fontFamily: "'IBM Plex Mono', monospace" }}>PLATFORM OWNER</span>
           </div>
         </div>
@@ -97,8 +99,8 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
                 }}
                 onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)' }}
                 onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
-                  <Icon size={15} strokeWidth={1.5} color={active ? '#4D9EFF' : '#7C8BA0'} />
-                  <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : '#7C8BA0', flex: 1 }}>
+                  <Icon size={15} strokeWidth={1.5} color={active ? '#4D9EFF' : t.textSecondary} />
+                  <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : t.textSecondary, flex: 1 }}>
                     {item.label}
                   </span>
                   {item.label === 'Registrations' && pendingCount > 0 && (
@@ -122,8 +124,8 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
             onClick={() => { window.location.href = '/dashboard' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
-              <ChevronLeft size={15} strokeWidth={1.5} color="#7C8BA0" />
-              <span style={{ fontSize: 12, color: '#7C8BA0' }}>Back to Dashboard</span>
+              <ChevronLeft size={15} strokeWidth={1.5} color={t.textSecondary} />
+              <span style={{ fontSize: 12, color: t.textSecondary }}>Back to Dashboard</span>
           </div>
         </div>
       </aside>

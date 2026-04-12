@@ -59,7 +59,7 @@ export default function MaintenanceDashboard() {
   const typeColor: Record<string, string> = { comment: BLUE, status_change: AMBER, repair_created: GREEN, fault_detected: RED, issue_reported: AMBER }
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 20 }}>Maintenance</div>
 
       {/* Stats Cards */}
@@ -113,7 +113,7 @@ export default function MaintenanceDashboard() {
                   {(a.user_name || 'S')[0].toUpperCase()}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, color: '#DDE3EE' }}><span style={{ fontWeight: 600 }}>{a.user_name || 'System'}</span> <span style={{ color: MUTED }}>{a.activity_type?.replace(/_/g, ' ')}</span></div>
+                  <div style={{ fontSize: 11, color: t.text }}><span style={{ fontWeight: 600 }}>{a.user_name || 'System'}</span> <span style={{ color: MUTED }}>{a.activity_type?.replace(/_/g, ' ')}</span></div>
                   <div style={{ fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.message}</div>
                 </div>
                 <div style={{ fontSize: 9, color: MUTED, whiteSpace: 'nowrap' }}>{new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>

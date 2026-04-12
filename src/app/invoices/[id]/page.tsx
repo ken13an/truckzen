@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
+import { useTheme } from '@/hooks/useTheme'
 
 interface LineItem {
   id?: string
@@ -18,6 +19,7 @@ interface LineItem {
 }
 
 export default function InvoiceDetailPage() {
+  const { tokens: t } = useTheme()
   const params   = useParams()
   const supabase = createClient()
   const [user,    setUser]    = useState<any>(null)
@@ -261,16 +263,16 @@ export default function InvoiceDetailPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:   { background:'#060708', minHeight:'100vh', color:'#DDE3EE', fontFamily:"'Inter', -apple-system, sans-serif", padding:24 },
+    page:   { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Inter', -apple-system, sans-serif", padding:24 },
     card:   { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
-    label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#48536A', marginBottom:5, display:'block' },
-    th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'#48536A', textTransform:'uppercase' as const, letterSpacing:'.08em', padding:'7px 10px', textAlign:'left' as const, background:'#0B0D11' },
+    label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
+    th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase' as const, letterSpacing:'.08em', padding:'7px 10px', textAlign:'left' as const, background:'#0B0D11' },
     td:     { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:12 },
     btn:    { padding:'9px 18px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
-    input:  { background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:4, color:'#DDE3EE', padding:'4px 8px', fontSize:11, fontFamily:'inherit', outline:'none', width:'100%' },
+    input:  { background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:4, color:t.text, padding:'4px 8px', fontSize:11, fontFamily:'inherit', outline:'none', width:'100%' },
   }
 
-  if (loading) return <div style={{ ...S.page, color:'#7C8BA0', padding:60 }}>Loading...</div>
+  if (loading) return <div style={{ ...S.page, color:t.textSecondary, padding:60 }}>Loading...</div>
 
   const so     = invoice.service_orders
   const asset  = so?.assets
@@ -291,7 +293,7 @@ export default function InvoiceDetailPage() {
   const displayBalance   = liveTotals ? liveTotals.balance_due : (invoice.balance_due || 0)
   const displayPaid      = invoice.amount_paid || 0
 
-  const statusColor: Record<string, string> = { draft:'#7C8BA0', sent:'#4D9EFF', paid:'#1DB870', voided:'#48536A' }
+  const statusColor: Record<string, string> = { draft:t.textSecondary, sent:'#4D9EFF', paid:'#1DB870', voided:t.textTertiary }
   const stColor = statusColor[invoice.status] || '#7C8BA0'
 
   function editableCell(lineIndex: number, field: keyof LineItem, value: any, type: 'text' | 'number' = 'text') {
@@ -333,9 +335,9 @@ export default function InvoiceDetailPage() {
           return (
             <tr key={l.id || l._tempId || localIdx}>
               <td style={S.td}>{editableCell(globalIdx, 'description', l.real_name || l.description)}</td>
-              <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#48536A' }}>{l.part_number || '—'}</td>
+              <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:t.textTertiary }}>{l.part_number || '—'}</td>
               <td style={{ ...S.td, fontFamily:'monospace', textAlign:'center' }}>{editableCell(globalIdx, 'quantity', l.quantity, 'number')}</td>
-              <td style={{ ...S.td, fontFamily:'monospace', color:'#7C8BA0' }}>
+              <td style={{ ...S.td, fontFamily:'monospace', color:t.textSecondary }}>
                 {isDraft ? editableCell(globalIdx, 'unit_price', l.parts_sell_price || l.unit_price || 0, 'number') : '$' + (l.parts_sell_price || l.unit_price || 0).toFixed(2)}
               </td>
               <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color: color }}>${(l.total_price || (l.parts_sell_price || l.unit_price || 0) * (l.quantity || 1)).toFixed(2)}</td>
@@ -363,26 +365,26 @@ export default function InvoiceDetailPage() {
       {showPaidModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
           <div style={{ background:'#1C2130', border:'1px solid rgba(255,255,255,.1)', borderRadius:14, padding:28, minWidth:380, maxWidth:440 }}>
-            <div style={{ fontSize:16, fontWeight:700, color:'#F0F4FF', marginBottom:4 }}>Record Payment</div>
-            <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:20 }}>
+            <div style={{ fontSize:16, fontWeight:700, color:t.text, marginBottom:4 }}>Record Payment</div>
+            <div style={{ fontSize:12, color:t.textSecondary, marginBottom:20 }}>
               Invoice Total: ${(invoice.total || 0).toFixed(2)} | Balance Due: ${(invoice.balance_due ?? invoice.total ?? 0).toFixed(2)}
             </div>
             <label style={{ ...S.label, marginBottom:4 }}>Payment Method</label>
-            <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:13, marginBottom:12, fontFamily:'inherit' }}>
+            <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:t.text, fontSize:13, marginBottom:12, fontFamily:'inherit' }}>
               {['cash', 'zelle', 'card', 'bank_transfer', 'check', 'ach', 'other'].map(m => (
                 <option key={m} value={m}>{m.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
               ))}
             </select>
             <label style={{ ...S.label, marginBottom:4 }}>Amount</label>
-            <input type="number" step="0.01" value={paymentAmount || (invoice.balance_due ?? invoice.total ?? 0)} onChange={e => setPaymentAmount(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:14, fontFamily:"'IBM Plex Mono',monospace", marginBottom:12, boxSizing:'border-box' }} />
+            <input type="number" step="0.01" value={paymentAmount || (invoice.balance_due ?? invoice.total ?? 0)} onChange={e => setPaymentAmount(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:t.text, fontSize:14, fontFamily:"'IBM Plex Mono',monospace", marginBottom:12, boxSizing:'border-box' }} />
             <label style={{ ...S.label, marginBottom:4 }}>Reference # (optional)</label>
-            <input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Check #, Zelle ID, etc." style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
+            <input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Check #, Zelle ID, etc." style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:t.text, fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
             <label style={{ ...S.label, marginBottom:4 }}>Date Received</label>
-            <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
+            <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:t.text, fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
             <label style={{ ...S.label, marginBottom:4 }}>Notes (optional)</label>
-            <textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} rows={2} style={{ width:'100%', padding:'8px 10px', background:'#0D0F12', border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:'#DDE3EE', fontSize:12, marginBottom:16, fontFamily:'inherit', resize:'vertical', boxSizing:'border-box' }} />
+            <textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} rows={2} style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:'1px solid rgba(255,255,255,.1)', borderRadius:8, color:t.text, fontSize:12, marginBottom:16, fontFamily:'inherit', resize:'vertical', boxSizing:'border-box' }} />
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
-              <button onClick={() => setShowPaidModal(false)} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.1)' }}>Cancel</button>
+              <button onClick={() => setShowPaidModal(false)} style={{ ...S.btn, background:'transparent', color:t.textSecondary, border:'1px solid rgba(255,255,255,.1)' }}>Cancel</button>
               <button onClick={recordPayment} disabled={markingPaid} style={{ ...S.btn, background:'linear-gradient(135deg,#1DB870,#15955a)', color:'#fff' }}>
                 {markingPaid ? 'Saving...' : 'Record Payment'}
               </button>
@@ -399,12 +401,12 @@ export default function InvoiceDetailPage() {
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
           <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color:'#4D9EFF', fontWeight:700, marginBottom:4 }}>{invoice.invoice_number}</div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'#F0F4FF' }}>{cust?.company_name || '—'}</div>
-          <div style={{ fontSize:12, color:'#7C8BA0', marginTop:4 }}>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:t.text }}>{cust?.company_name || '—'}</div>
+          <div style={{ fontSize:12, color:t.textSecondary, marginTop:4 }}>
             {asset?.unit_number ? `Unit #${asset.unit_number}` : ''}{asset?.unit_number && so?.so_number ? ' · ' : ''}{so?.so_number || ''}
           </div>
           {so?.is_historical && (
-            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: '#7C8BA0', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical — Imported</span>
+            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: t.textSecondary, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical — Imported</span>
           )}
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
@@ -414,7 +416,7 @@ export default function InvoiceDetailPage() {
           <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color: isPaid?'#1DB870':'#4D9EFF' }}>
             ${displayTotal.toFixed(2)}
           </div>
-          {displayBalance > 0 && <div style={{ fontSize:12, color:'#7C8BA0' }}>Balance due: ${displayBalance.toFixed(2)}</div>}
+          {displayBalance > 0 && <div style={{ fontSize:12, color:t.textSecondary }}>Balance due: ${displayBalance.toFixed(2)}</div>}
         </div>
       </div>
 
@@ -439,7 +441,7 @@ export default function InvoiceDetailPage() {
           {/* Line items */}
           <div style={S.card}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Line Items</div>
+              <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Line Items</div>
               {isDraft && (
                 <div style={{ display:'flex', gap:8 }}>
                   <button onClick={addLine} style={{ ...S.btn, padding:'5px 12px', background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.2)', fontSize:10 }}>
@@ -473,24 +475,24 @@ export default function InvoiceDetailPage() {
                       {so?.labor_total > 0 && (
                         <tr>
                           <td style={S.td}>Labor (from Work Order)</td>
-                          <td style={{ ...S.td, color: '#48536A' }}>—</td>
+                          <td style={{ ...S.td, color: t.textTertiary }}>—</td>
                           <td style={{ ...S.td, textAlign: 'center' }}>—</td>
-                          <td style={{ ...S.td, color: '#7C8BA0' }}>—</td>
+                          <td style={{ ...S.td, color: t.textSecondary }}>—</td>
                           <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: '#4D9EFF' }}>${(so.labor_total || 0).toFixed(2)}</td>
                         </tr>
                       )}
                       {so?.parts_total > 0 && (
                         <tr>
                           <td style={S.td}>Parts (from Work Order)</td>
-                          <td style={{ ...S.td, color: '#48536A' }}>—</td>
+                          <td style={{ ...S.td, color: t.textTertiary }}>—</td>
                           <td style={{ ...S.td, textAlign: 'center' }}>—</td>
-                          <td style={{ ...S.td, color: '#7C8BA0' }}>—</td>
+                          <td style={{ ...S.td, color: t.textSecondary }}>—</td>
                           <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: '#1DB870' }}>${(so.parts_total || 0).toFixed(2)}</td>
                         </tr>
                       )}
                       {lines.length === 0 && !so?.labor_total && !so?.parts_total && (
                         <tr>
-                          <td colSpan={5} style={{ ...S.td, textAlign: 'center', color: '#7C8BA0', padding: 24, fontSize: 12 }}>
+                          <td colSpan={5} style={{ ...S.td, textAlign: 'center', color: t.textSecondary, padding: 24, fontSize: 12 }}>
                             Imported historical invoice — <a href={so?.id ? getWorkorderRoute(so.id, undefined, 'invoice') : '#'} style={{ color: '#4D9EFF', textDecoration: 'none' }}>see Work Order for details</a>
                           </td>
                         </tr>
@@ -503,17 +505,17 @@ export default function InvoiceDetailPage() {
             {/* Totals */}
             <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, paddingTop:12, marginTop:8, borderTop:'1px solid rgba(255,255,255,.06)' }}>
               {[
-                { label:'Subtotal', val: displaySubtotal, color:'#DDE3EE' },
-                { label:'Tax',      val: displayTax, color:'#DDE3EE' },
+                { label:'Subtotal', val: displaySubtotal, color:t.text },
+                { label:'Tax',      val: displayTax, color:t.text },
                 ...(displayPaid > 0 ? [{ label:'Amount Paid', val: -displayPaid, color:'#1DB870' }] : []),
               ].map(r => (
                 <div key={r.label} style={{ display:'flex', gap:40 }}>
-                  <span style={{ fontSize:12, color:'#7C8BA0' }}>{r.label}</span>
+                  <span style={{ fontSize:12, color:t.textSecondary }}>{r.label}</span>
                   <span style={{ fontFamily:'monospace', fontSize:12, color:r.color, minWidth:80, textAlign:'right' }}>{r.val < 0 ? '-' : ''}${Math.abs(r.val).toFixed(2)}</span>
                 </div>
               ))}
               <div style={{ display:'flex', gap:40, paddingTop:8, marginTop:4, borderTop:'1px solid rgba(255,255,255,.08)' }}>
-                <span style={{ fontSize:15, fontWeight:700, color:'#F0F4FF' }}>Total</span>
+                <span style={{ fontSize:15, fontWeight:700, color:t.text }}>Total</span>
                 <span style={{ fontFamily:'monospace', fontSize:18, fontWeight:700, color: isPaid?'#1DB870':'#4D9EFF', minWidth:80, textAlign:'right' }}>${displayTotal.toFixed(2)}</span>
               </div>
             </div>
@@ -523,8 +525,8 @@ export default function InvoiceDetailPage() {
           {so?.cause && (
             <div style={S.card}>
               <label style={S.label}>Work Performed</label>
-              <div style={{ fontSize:12, color:'#7C8BA0', marginBottom:8 }}>Cause: <span style={{ color:'#DDE3EE' }}>{so.cause}</span></div>
-              <div style={{ fontSize:12, color:'#7C8BA0' }}>Correction: <span style={{ color:'#DDE3EE' }}>{so.correction}</span></div>
+              <div style={{ fontSize:12, color:t.textSecondary, marginBottom:8 }}>Cause: <span style={{ color:t.text }}>{so.cause}</span></div>
+              <div style={{ fontSize:12, color:t.textSecondary }}>Correction: <span style={{ color:t.text }}>{so.correction}</span></div>
             </div>
           )}
         </div>
@@ -548,7 +550,7 @@ export default function InvoiceDetailPage() {
                   {qrUrl && (
                     <div style={{ textAlign:'center', padding:'12px 0' }}>
                       <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}&bgcolor=161B24&color=ffffff`} alt="QR Code" style={{ width:160, borderRadius:8 }}/>
-                      <div style={{ fontSize:10, color:'#48536A', marginTop:6 }}>Customer scans to pay</div>
+                      <div style={{ fontSize:10, color:t.textTertiary, marginTop:6 }}>Customer scans to pay</div>
                     </div>
                   )}
                   <button style={{ ...S.btn, background:'rgba(29,184,112,.15)', color:'#1DB870', border:'1px solid rgba(29,184,112,.25)', width:'100%' }}
@@ -564,18 +566,18 @@ export default function InvoiceDetailPage() {
               {isPaid && (
                 <div style={{ textAlign:'center', padding:'12px 0' }}>
                   <div style={{ fontSize:13, fontWeight:700, color:'#1DB870' }}>Paid</div>
-                  {invoice.payment_method && <div style={{ fontSize:11, color:'#7C8BA0', marginTop:4 }}>via {invoice.payment_method}</div>}
-                  {invoice.paid_at && <div style={{ fontSize:10, color:'#48536A', marginTop:4 }}>{new Date(invoice.paid_at).toLocaleDateString()}</div>}
+                  {invoice.payment_method && <div style={{ fontSize:11, color:t.textSecondary, marginTop:4 }}>via {invoice.payment_method}</div>}
+                  {invoice.paid_at && <div style={{ fontSize:10, color:t.textTertiary, marginTop:4 }}>{new Date(invoice.paid_at).toLocaleDateString()}</div>}
                 </div>
               )}
-              <a href={`/api/invoices/${params.id}/pdf`} target="_blank" style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
+              <a href={`/api/invoices/${params.id}/pdf`} target="_blank" style={{ ...S.btn, background:'transparent', color:t.textSecondary, border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
                 Download PDF
               </a>
-              <button onClick={() => window.print()} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', width:'100%', cursor:'pointer' }}>
+              <button onClick={() => window.print()} style={{ ...S.btn, background:'transparent', color:t.textSecondary, border:'1px solid rgba(255,255,255,.08)', width:'100%', cursor:'pointer' }}>
                 Print Invoice
               </button>
               {so?.id && (
-                <a href={getWorkorderRoute(so.id, undefined, 'invoice')} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
+                <a href={getWorkorderRoute(so.id, undefined, 'invoice')} style={{ ...S.btn, background:'transparent', color:t.textSecondary, border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
                   View Work Order
                 </a>
               )}
@@ -590,12 +592,12 @@ export default function InvoiceDetailPage() {
                 {payments.map((p: any) => (
                   <div key={p.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,.03)', fontSize:12 }}>
                     <div>
-                      <div style={{ color:'#DDE3EE', fontWeight:600 }}>${Number(p.amount).toFixed(2)}</div>
-                      <div style={{ color:'#48536A', fontSize:10, marginTop:2 }}>{p.payment_method?.replace(/_/g,' ')} {p.reference_number ? `- ${p.reference_number}` : ''}</div>
+                      <div style={{ color:t.text, fontWeight:600 }}>${Number(p.amount).toFixed(2)}</div>
+                      <div style={{ color:t.textTertiary, fontSize:10, marginTop:2 }}>{p.payment_method?.replace(/_/g,' ')} {p.reference_number ? `- ${p.reference_number}` : ''}</div>
                     </div>
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ color:'#7C8BA0', fontSize:10 }}>{p.received_at ? new Date(p.received_at).toLocaleDateString() : ''}</div>
-                      <div style={{ color:'#48536A', fontSize:9 }}>{(p.users as any)?.full_name || ''}</div>
+                      <div style={{ color:t.textSecondary, fontSize:10 }}>{p.received_at ? new Date(p.received_at).toLocaleDateString() : ''}</div>
+                      <div style={{ color:t.textTertiary, fontSize:9 }}>{(p.users as any)?.full_name || ''}</div>
                     </div>
                   </div>
                 ))}
@@ -618,8 +620,8 @@ export default function InvoiceDetailPage() {
                 { label:'Due Date',   val: invoice.due_date },
               ].filter(r => r.val).map(r => (
                 <div key={r.label} style={{ display:'flex', justifyContent:'space-between', paddingBottom:6, borderBottom:'1px solid rgba(255,255,255,.03)' }}>
-                  <span style={{ color:'#48536A' }}>{r.label}</span>
-                  <span style={{ color:'#DDE3EE', textAlign:'right', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis' }}>{r.val}</span>
+                  <span style={{ color:t.textTertiary }}>{r.label}</span>
+                  <span style={{ color:t.text, textAlign:'right', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis' }}>{r.val}</span>
                 </div>
               ))}
             </div>

@@ -5,6 +5,7 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { ADMIN_ROLES } from '@/lib/roles'
 import Pagination from '@/components/Pagination'
 import { Search, X, UserPlus, ChevronLeft } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const ROLES = [
   { value: 'owner', label: 'Owner' },
@@ -50,6 +51,7 @@ const font = "'Instrument Sans', sans-serif"
 const mono = "'IBM Plex Mono', monospace"
 
 export default function UsersPage() {
+  const { tokens: th } = useTheme()
   const supabase = createClient()
   const [me, setMe] = useState<UserProfile | null>(null)
   const [members, setMembers] = useState<any[]>([])
@@ -187,12 +189,12 @@ export default function UsersPage() {
     select: { padding: '8px 12px', background: '#151520', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#EDEDF0', outline: 'none', fontFamily: font, appearance: 'auto' as const, cursor: 'pointer', minWidth: 120 },
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#0C0C12', fontFamily: font, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1' }}>Loading...</div>
 
   const allCount = Object.values(deptCounts).reduce((a, b) => a + b, 0)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0C0C12', fontFamily: font, padding: 24, color: '#EDEDF0' }}>
+    <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, padding: 24, color: '#EDEDF0' }}>
       {/* Toast */}
       {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: '#1D6FE8', color: '#fff', padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
 
@@ -216,7 +218,7 @@ export default function UsersPage() {
       {/* Filter bar */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: 320 }}>
-          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#48536A' }} />
+          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: th.textTertiary }} />
           <input
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
@@ -249,7 +251,7 @@ export default function UsersPage() {
                 padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: active ? 700 : 500,
                 background: active ? 'rgba(29,111,232,.12)' : 'transparent',
                 border: active ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.06)',
-                color: active ? '#4D9EFF' : '#7C8BA0',
+                color: active ? '#4D9EFF' : th.textSecondary,
                 cursor: 'pointer', fontFamily: font, whiteSpace: 'nowrap',
                 display: 'flex', alignItems: 'center', gap: 6,
               }}>
@@ -293,7 +295,7 @@ export default function UsersPage() {
                         </div>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 600 }}>{u.full_name}</div>
-                          <div style={{ fontSize: 10, color: '#7C8BA0', fontFamily: mono }}>{u.email}</div>
+                          <div style={{ fontSize: 10, color: th.textSecondary, fontFamily: mono }}>{u.email}</div>
                         </div>
                       </div>
                     </td>
@@ -301,7 +303,7 @@ export default function UsersPage() {
                     <td style={{ padding: '10px 14px', fontSize: 12 }}>{ROLE_LABEL[u.role] || u.role?.replace(/_/g, ' ')}</td>
                     {/* Department */}
                     <td style={{ padding: '10px 14px' }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'capitalize', color: '#7C8BA0', padding: '3px 8px', background: 'rgba(255,255,255,.04)', borderRadius: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'capitalize', color: th.textSecondary, padding: '3px 8px', background: 'rgba(255,255,255,.04)', borderRadius: 4 }}>
                         {u.department || '—'}
                       </span>
                     </td>
@@ -310,7 +312,7 @@ export default function UsersPage() {
                       <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: st.bg, color: st.color }}>{st.label}</span>
                     </td>
                     {/* Last Active */}
-                    <td style={{ padding: '10px 14px', fontSize: 10, color: '#7C8BA0', fontFamily: mono }}>
+                    <td style={{ padding: '10px 14px', fontSize: 10, color: th.textSecondary, fontFamily: mono }}>
                       {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : 'Never'}
                     </td>
                     {/* Actions */}

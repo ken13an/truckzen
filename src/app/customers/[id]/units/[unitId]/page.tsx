@@ -7,6 +7,7 @@ import { ChevronLeft } from 'lucide-react'
 import { VinInput } from '@/components/shared/VinInput'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import { getWorkorderRoute, getNewWorkorderRoute } from '@/lib/navigation/workorder-route'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -26,6 +27,7 @@ const labelStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: 
 const pillStyle = (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: bg, color })
 
 export default function UnitProfilePage() {
+  const { tokens: th } = useTheme()
   const params = useParams()
   const id = params.id as string
   const unitId = params.unitId as string
@@ -118,7 +120,7 @@ export default function UnitProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0C0C12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+      <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
         <div style={{ color: GRAY, fontSize: 14 }}>Loading…</div>
       </div>
     )
@@ -126,7 +128,7 @@ export default function UnitProfilePage() {
 
   if (!unit) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0C0C12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+      <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
         <div style={{ color: GRAY, fontSize: 14 }}>Unit not found.</div>
       </div>
     )
@@ -541,7 +543,7 @@ export default function UnitProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0C0C12', color: '#EDEDF0', fontFamily: FONT }}>
+    <div style={{ minHeight: '100vh', background: th.bg, color: '#EDEDF0', fontFamily: FONT }}>
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
 
         {/* Back button */}

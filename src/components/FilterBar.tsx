@@ -1,5 +1,6 @@
 'use client'
 import { useRef, useState, useEffect, useMemo } from 'react'
+import { useTheme } from '@/hooks/useTheme'
 
 interface StatusOption {
   value: string
@@ -27,6 +28,7 @@ export default function FilterBar({
   dateFrom, dateTo, onDateFromChange, onDateToChange,
   theme = 'dark', onClearAll,
 }: FilterBarProps) {
+  const { tokens: t } = useTheme()
   const [localSearch, setLocalSearch] = useState(search)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
@@ -37,8 +39,6 @@ export default function FilterBar({
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => onSearchChange(val), 300)
   }
-
-  const isLight = theme === 'light'
 
   const activeCount = useMemo(() => {
     let count = 0
@@ -58,109 +58,40 @@ export default function FilterBar({
     onClearAll?.()
   }
 
-  const S = {
-    bar: {
-      display: 'flex',
-      gap: 8,
-      alignItems: 'center',
-      flexWrap: 'wrap' as const,
-      padding: '10px 14px',
-      background: isLight ? '#fff' : 'rgba(255,255,255,0.03)',
-      border: isLight ? '1px solid #E5E7EB' : '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 10,
-      marginBottom: 12,
-    },
-    search: {
-      flex: '1 1 200px',
-      minWidth: 180,
-      padding: '7px 12px 7px 32px',
-      background: isLight ? '#F9FAFB' : 'rgba(255,255,255,0.06)',
-      border: isLight ? '1px solid #E5E7EB' : '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 8,
-      fontSize: 12,
-      color: isLight ? '#1A1A1A' : '#DDE3EE',
-      outline: 'none',
-      fontFamily: "'Instrument Sans', sans-serif",
-      boxSizing: 'border-box' as const,
-    },
-    select: {
-      padding: '7px 12px',
-      background: isLight ? '#F9FAFB' : 'rgba(255,255,255,0.06)',
-      border: isLight ? '1px solid #E5E7EB' : '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 8,
-      fontSize: 12,
-      color: isLight ? '#374151' : '#DDE3EE',
-      outline: 'none',
-      fontFamily: "'Instrument Sans', sans-serif",
-      cursor: 'pointer',
-      minWidth: 120,
-    },
-    dateInput: {
-      padding: '6px 10px',
-      background: isLight ? '#F9FAFB' : 'rgba(255,255,255,0.06)',
-      border: isLight ? '1px solid #E5E7EB' : '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 8,
-      fontSize: 11,
-      color: isLight ? '#374151' : '#DDE3EE',
-      outline: 'none',
-      fontFamily: "'Instrument Sans', sans-serif",
-      cursor: 'pointer',
-      colorScheme: isLight ? 'light' : 'dark',
-    } as React.CSSProperties,
-    clearBtn: {
-      padding: '6px 12px',
-      background: 'rgba(239,68,68,0.08)',
-      border: '1px solid rgba(239,68,68,0.2)',
-      borderRadius: 8,
-      fontSize: 11,
-      fontWeight: 600,
-      color: '#EF4444',
-      cursor: 'pointer',
-      fontFamily: "'Instrument Sans', sans-serif",
-      whiteSpace: 'nowrap' as const,
-    },
-    badge: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minWidth: 16,
-      height: 16,
-      padding: '0 4px',
-      borderRadius: 100,
-      background: '#1B6EE6',
-      color: '#fff',
-      fontSize: 9,
-      fontWeight: 700,
-      marginLeft: 4,
-    },
-    label: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: isLight ? '#6B7280' : '#7C8BA0',
-      whiteSpace: 'nowrap' as const,
-      display: 'flex',
-      alignItems: 'center',
-    },
+  const inputStyle: React.CSSProperties = {
+    padding: '7px 12px',
+    background: t.inputBg,
+    border: `1px solid ${t.inputBorder}`,
+    borderRadius: 8,
+    fontSize: 12,
+    color: t.text,
+    outline: 'none',
+    fontFamily: "'Instrument Sans', sans-serif",
+    boxSizing: 'border-box',
   }
 
   return (
-    <div style={S.bar}>
-      {/* Filters label with active count */}
-      <div style={S.label}>
+    <div style={{
+      display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
+      padding: '10px 14px', background: t.bgCard, border: `1px solid ${t.cardBorder}`,
+      borderRadius: 10, marginBottom: 12,
+    }}>
+      {/* Filters label */}
+      <div style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
         Filters
-        {activeCount > 0 && <span style={S.badge}>{activeCount}</span>}
+        {activeCount > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 16, height: 16, padding: '0 4px', borderRadius: 100, background: t.accent, color: t.bgLight, fontSize: 9, fontWeight: 700, marginLeft: 4 }}>{activeCount}</span>}
       </div>
 
       {/* Search */}
       <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isLight ? '#9CA3AF' : '#48536A'} strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.textTertiary} strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
           <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
         </svg>
         <input
           value={localSearch}
           onChange={e => handleSearch(e.target.value)}
           placeholder={searchPlaceholder}
-          style={S.search}
+          style={{ ...inputStyle, flex: '1 1 200px', minWidth: 180, paddingLeft: 32 }}
         />
       </div>
 
@@ -169,7 +100,7 @@ export default function FilterBar({
         <select
           value={statusValue || 'all'}
           onChange={e => onStatusChange(e.target.value)}
-          style={S.select}
+          style={{ ...inputStyle, cursor: 'pointer', minWidth: 120 }}
         >
           {statusOptions.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -180,32 +111,28 @@ export default function FilterBar({
       {/* Date From */}
       {onDateFromChange && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 10, color: isLight ? '#9CA3AF' : '#48536A' }}>From</span>
-          <input
-            type="date"
-            value={dateFrom || ''}
-            onChange={e => onDateFromChange(e.target.value)}
-            style={S.dateInput}
-          />
+          <span style={{ fontSize: 10, color: t.textTertiary }}>From</span>
+          <input type="date" value={dateFrom || ''} onChange={e => onDateFromChange(e.target.value)}
+            style={{ ...inputStyle, padding: '6px 10px', fontSize: 11, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties} />
         </div>
       )}
 
       {/* Date To */}
       {onDateToChange && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 10, color: isLight ? '#9CA3AF' : '#48536A' }}>To</span>
-          <input
-            type="date"
-            value={dateTo || ''}
-            onChange={e => onDateToChange(e.target.value)}
-            style={S.dateInput}
-          />
+          <span style={{ fontSize: 10, color: t.textTertiary }}>To</span>
+          <input type="date" value={dateTo || ''} onChange={e => onDateToChange(e.target.value)}
+            style={{ ...inputStyle, padding: '6px 10px', fontSize: 11, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties} />
         </div>
       )}
 
       {/* Clear Filters */}
       {activeCount > 0 && (
-        <button onClick={clearAll} style={S.clearBtn}>
+        <button onClick={clearAll} style={{
+          padding: '6px 12px', background: t.dangerBg, border: `1px solid ${t.danger}`,
+          borderRadius: 8, fontSize: 11, fontWeight: 600, color: t.danger,
+          cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif", whiteSpace: 'nowrap',
+        }}>
           Clear Filters
         </button>
       )}

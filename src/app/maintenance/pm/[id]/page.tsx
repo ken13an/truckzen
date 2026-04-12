@@ -4,12 +4,14 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { CheckCircle } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
 
 export default function PMDetailPage() {
+  const { tokens: t } = useTheme()
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -85,7 +87,7 @@ export default function PMDetailPage() {
     setSaving(false)
   }
 
-  if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const asset = pm.assets || {}
   const today = new Date().toISOString().split('T')[0]
@@ -95,15 +97,15 @@ export default function PMDetailPage() {
 
   const S: Record<string, React.CSSProperties> = {
     card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
-    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A' },
-    input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary },
+    input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
   }
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>{pm.custom_name || pm.service_type?.replace(/_/g, ' ')}</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>{pm.custom_name || pm.service_type?.replace(/_/g, ' ')}</div>
           <div style={{ fontSize: 13, color: MUTED }}>#{asset.unit_number} {asset.year} {asset.make} {asset.model}</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, background: `${stColor}18`, color: stColor }}>{isOver ? 'OVERDUE' : isSoon ? 'DUE SOON' : 'OK'} {pm.next_due_date ? `· ${pm.next_due_date}` : ''}</span>
@@ -132,7 +134,7 @@ export default function PMDetailPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 14, alignItems: 'start' }}>
         <div>
           <div style={S.card}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Schedule Details</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: t.text, marginBottom: 12 }}>Schedule Details</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {[
                 { label: 'Service Type', val: pm.service_type?.replace(/_/g, ' ') },
@@ -142,25 +144,25 @@ export default function PMDetailPage() {
                 { label: 'Last Completed', val: pm.last_completed_date ? new Date(pm.last_completed_date).toLocaleDateString() : '—' },
                 { label: 'Last Miles', val: pm.last_completed_miles ? pm.last_completed_miles.toLocaleString() : '—' },
               ].map(r => (
-                <div key={r.label}><div style={S.label}>{r.label}</div><div style={{ fontSize: 13, color: '#F0F4FF', marginTop: 4 }}>{r.val}</div></div>
+                <div key={r.label}><div style={S.label}>{r.label}</div><div style={{ fontSize: 13, color: t.text, marginTop: 4 }}>{r.val}</div></div>
               ))}
             </div>
             {pm.notes && <div style={{ marginTop: 12 }}><div style={S.label}>Notes</div><div style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>{pm.notes}</div></div>}
           </div>
 
           <div style={S.card}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Completion History</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: t.text, marginBottom: 12 }}>Completion History</div>
             {history.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 16, color: '#48536A', fontSize: 12 }}>No completions recorded yet</div>
+              <div style={{ textAlign: 'center', padding: 16, color: t.textTertiary, fontSize: 12 }}>No completions recorded yet</div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr>{['Date', 'Miles', 'Notes'].map(h => <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: '#48536A', textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>)}</tr>
+                  <tr>{['Date', 'Miles', 'Notes'].map(h => <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: t.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {history.map(h => (
                     <tr key={h.id}>
-                      <td style={{ padding: '8px', fontSize: 12, color: '#DDE3EE' }}>{new Date(h.completed_date).toLocaleDateString()}</td>
+                      <td style={{ padding: '8px', fontSize: 12, color: t.text }}>{new Date(h.completed_date).toLocaleDateString()}</td>
                       <td style={{ padding: '8px', fontSize: 12, fontFamily: MONO, color: MUTED }}>{h.completed_miles?.toLocaleString() || '—'}</td>
                       <td style={{ padding: '8px', fontSize: 11, color: MUTED }}>{h.notes || '—'}</td>
                     </tr>
@@ -172,7 +174,7 @@ export default function PMDetailPage() {
         </div>
 
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Vehicle</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: t.text, marginBottom: 12 }}>Vehicle</div>
           {[
             { label: 'Unit #', val: `#${asset.unit_number}` },
             { label: 'Year', val: asset.year },
@@ -181,7 +183,7 @@ export default function PMDetailPage() {
             { label: 'Odometer', val: asset.odometer ? `${asset.odometer.toLocaleString()} mi` : '—' },
           ].filter(r => r.val).map(r => (
             <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 12 }}>
-              <span style={{ color: '#48536A' }}>{r.label}</span><span style={{ color: '#DDE3EE' }}>{r.val}</span>
+              <span style={{ color: t.textTertiary }}>{r.label}</span><span style={{ color: t.text }}>{r.val}</span>
             </div>
           ))}
         </div>

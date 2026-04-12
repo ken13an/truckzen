@@ -8,10 +8,12 @@ import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import { validateFile, sanitizeFilename, DOC_EXTENSIONS, DOC_MIMES, MAX_DOC_SIZE } from '@/lib/upload-safety'
 import { getWorkorderRoute, getNewWorkorderRoute } from '@/lib/navigation/workorder-route'
+import { useTheme } from '@/hooks/useTheme'
 
 type Tab = 'fleet' | 'work-orders' | 'contacts' | 'billing' | 'documents' | 'parts'
 
 export default function CustomerProfilePage() {
+  const { tokens: th } = useTheme()
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -219,7 +221,7 @@ export default function CustomerProfilePage() {
   // -- Loading state --
   if (loading) {
     return (
-      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: '#7C8BA0' }}>
+      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: th.textSecondary }}>
         Loading...
       </div>
     )
@@ -227,7 +229,7 @@ export default function CustomerProfilePage() {
 
   if (loadError) {
     return (
-      <div style={{ background: '#0C0C12', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: '#EF4444', gap: 16 }}>
+      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: '#EF4444', gap: 16 }}>
         <div style={{ fontSize: 15 }}>{loadError}</div>
         <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
       </div>
@@ -254,7 +256,7 @@ export default function CustomerProfilePage() {
     if (t === 'net15') return { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
     if (t === 'net30') return { bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
     if (t === 'net60') return { bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
-    return { bg: 'rgba(255,255,255,0.06)', color: '#7C8BA0' }
+    return { bg: 'rgba(255,255,255,0.06)', color: th.textSecondary }
   }
 
   const unitTypeBadge = (type: string) => {
@@ -262,7 +264,7 @@ export default function CustomerProfilePage() {
     if (t === 'tractor') return { label: 'TRACTOR', bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
     if (t.includes('reefer')) return { label: 'TRAILER-REEFER', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
     if (t.includes('trailer')) return { label: 'TRAILER', bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
-    return { label: t.toUpperCase(), bg: 'rgba(255,255,255,0.08)', color: '#7C8BA0' }
+    return { label: t.toUpperCase(), bg: 'rgba(255,255,255,0.08)', color: th.textSecondary }
   }
 
   const woStatusColor = (s: string) => {
@@ -286,7 +288,7 @@ export default function CustomerProfilePage() {
   ]
 
   return (
-    <div style={{ background: '#0C0C12', minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Inter', sans-serif", padding: 24 }}>
+    <div style={{ background: th.bg, minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Inter', sans-serif", padding: 24 }}>
       {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
@@ -311,7 +313,7 @@ export default function CustomerProfilePage() {
               </span>
             )}
             {!customer.is_owner_operator && customer.customer_type === 'outside_customer' && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(107,114,128,0.15)', color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(107,114,128,0.15)', color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
                 Outside
               </span>
             )}
@@ -343,7 +345,7 @@ export default function CustomerProfilePage() {
             </select>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: '#7C8BA0', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: th.textSecondary, flexWrap: 'wrap' }}>
             {customer.dot_number && <span>DOT #{customer.dot_number}</span>}
             {customer.dot_number && customer.mc_number && <span style={{ color: '#3A3A4A' }}>|</span>}
             {customer.mc_number && <span>MC #{customer.mc_number}</span>}
@@ -410,7 +412,7 @@ export default function CustomerProfilePage() {
         ].map(s => (
           <div key={s.label} style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '16px 20px' }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: '#EDEDF0', fontFamily: "'Inter', sans-serif" }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginTop: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -429,7 +431,7 @@ export default function CustomerProfilePage() {
               background: 'none',
               border: 'none',
               borderBottom: tab === t.key ? '2px solid #3B82F6' : '2px solid transparent',
-              color: tab === t.key ? '#3B82F6' : '#7C8BA0',
+              color: tab === t.key ? '#3B82F6' : th.textSecondary,
               fontFamily: "'Inter', sans-serif",
               marginBottom: -1,
             }}
@@ -480,13 +482,13 @@ export default function CustomerProfilePage() {
           </div>
 
           {filteredUnits.length === 0 ? (
-            <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No units found</div>
+            <div style={{ color: th.textSecondary, textAlign: 'center', padding: 40, fontSize: 13 }}>No units found</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
               <thead>
                 <tr>
                   {['Unit #', 'Type', 'Truck Type', 'Year / Make / Model', 'Mileage', 'Status', ''].map(h => (
-                    <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
+                    <th key={h} style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -515,7 +517,7 @@ export default function CustomerProfilePage() {
                         {u.odometer ? u.odometer.toLocaleString() : '\u2014'}
                       </td>
                       <td style={{ padding: '10px 12px' }}>
-                        <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, color: u.status === 'on_road' ? '#22C55E' : u.status === 'in_shop' ? '#F59E0B' : '#7C8BA0' }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, color: u.status === 'on_road' ? '#22C55E' : u.status === 'in_shop' ? '#F59E0B' : th.textSecondary }}>
                           {u.status?.replace(/_/g, ' ') || 'unknown'}
                         </span>
                       </td>
@@ -562,7 +564,7 @@ export default function CustomerProfilePage() {
           </div>
 
           {workOrders.length === 0 ? (
-            <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No work orders yet</div>
+            <div style={{ color: th.textSecondary, textAlign: 'center', padding: 40, fontSize: 13 }}>No work orders yet</div>
           ) : (() => {
             const sorted = [...workOrders].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             const totalPages = Math.ceil(sorted.length / woPerPage)
@@ -573,7 +575,7 @@ export default function CustomerProfilePage() {
                   <thead>
                     <tr>
                       {['WO #', 'Unit', 'Status', 'Created', 'Total'].map(h => (
-                        <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
+                        <th key={h} style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -585,7 +587,7 @@ export default function CustomerProfilePage() {
                             {wo.so_number}
                           </a>
                           {wo.is_historical && (
-                            <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: '#7C8BA0', fontSize: 9, fontWeight: 600, textTransform: 'uppercase' as const }}>Historical</span>
+                            <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: th.textSecondary, fontSize: 9, fontWeight: 600, textTransform: 'uppercase' as const }}>Historical</span>
                           )}
                         </td>
                         <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
@@ -596,7 +598,7 @@ export default function CustomerProfilePage() {
                             {wo.status?.replace(/_/g, ' ')}
                           </span>
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#7C8BA0' }}>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
                           {wo.created_at ? new Date(wo.created_at).toLocaleDateString() : '\u2014'}
                         </td>
                         <td style={{ padding: '10px 12px', fontSize: 12, color: '#EDEDF0', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
@@ -607,7 +609,7 @@ export default function CustomerProfilePage() {
                   </tbody>
                 </table>
                 {totalPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 12, color: '#7C8BA0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 12, color: th.textSecondary }}>
                     <button
                       disabled={woPage <= 1}
                       onClick={() => setWoPage(p => Math.max(1, p - 1))}
@@ -662,7 +664,7 @@ export default function CustomerProfilePage() {
           </div>
 
           {contacts.length === 0 ? (
-            <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No contacts yet</div>
+            <div style={{ color: th.textSecondary, textAlign: 'center', padding: 40, fontSize: 13 }}>No contacts yet</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {contacts.map((c: any) => (
@@ -676,7 +678,7 @@ export default function CustomerProfilePage() {
                         </span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: 16, marginTop: 4, fontSize: 12, color: '#7C8BA0' }}>
+                    <div style={{ display: 'flex', gap: 16, marginTop: 4, fontSize: 12, color: th.textSecondary }}>
                       {c.role && <span>{c.role}</span>}
                       {c.phone && <span>{c.phone}</span>}
                       {c.email && <span>{c.email}</span>}
@@ -689,14 +691,14 @@ export default function CustomerProfilePage() {
                         setEditingContactId(c.id)
                         setContactModal(true)
                       }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}
                       title="Edit contact"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => deleteContact(c.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}
                       title="Delete contact"
                     >
                       <Trash2 size={14} />
@@ -716,7 +718,7 @@ export default function CustomerProfilePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Payment Terms</label>
+              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Payment Terms</label>
               <select
                 value={customer.payment_terms || ''}
                 onChange={e => updateField('payment_terms', e.target.value)}
@@ -742,7 +744,7 @@ export default function CustomerProfilePage() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Credit Limit</label>
+              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Credit Limit</label>
               <input
                 type="number"
                 defaultValue={customer.credit_limit || ''}
@@ -769,7 +771,7 @@ export default function CustomerProfilePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Default Truck Type</label>
+              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Default Truck Type</label>
               <select
                 value={customer.default_ownership_type || 'fleet_asset'}
                 onChange={e => updateField('default_ownership_type', e.target.value)}
@@ -779,7 +781,7 @@ export default function CustomerProfilePage() {
                 <option value="owner_operator" style={{ background: '#151520' }}>Owner Operator</option>
                 <option value="outside_customer" style={{ background: '#151520' }}>Outside Customer</option>
               </select>
-              <div style={{ fontSize: 10, color: '#48536A', marginTop: 4 }}>Changing this does not update existing trucks — only new trucks added after this change</div>
+              <div style={{ fontSize: 10, color: th.textTertiary, marginTop: 4 }}>Changing this does not update existing trucks — only new trucks added after this change</div>
             </div>
           </div>
         </div>
@@ -822,13 +824,13 @@ export default function CustomerProfilePage() {
           </div>
 
           {documents.length === 0 ? (
-            <div style={{ color: '#7C8BA0', textAlign: 'center', padding: 40, fontSize: 13 }}>No documents uploaded yet</div>
+            <div style={{ color: th.textSecondary, textAlign: 'center', padding: 40, fontSize: 13 }}>No documents uploaded yet</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
               <thead>
                 <tr>
                   {['Filename', 'Type', 'Date', ''].map(h => (
-                    <th key={h} style={{ fontSize: 10, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
+                    <th key={h} style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: '1px solid rgba(255,255,255,0.06)', fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -836,8 +838,8 @@ export default function CustomerProfilePage() {
                 {documents.map((doc: any) => (
                   <tr key={doc.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                     <td style={{ padding: '10px 12px', fontSize: 13, color: '#EDEDF0', fontWeight: 600 }}>{doc.filename}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#7C8BA0' }}>{doc.file_type || '\u2014'}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#7C8BA0' }}>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>{doc.file_type || '\u2014'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
                       {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '\u2014'}
                     </td>
                     <td style={{ padding: '10px 12px', textAlign: 'right' as const }}>
@@ -851,7 +853,7 @@ export default function CustomerProfilePage() {
                         </button>
                         <button
                           onClick={() => deleteDocument(doc)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}
                           title="Delete"
                         >
                           <Trash2 size={14} />
@@ -870,13 +872,13 @@ export default function CustomerProfilePage() {
       {tab === 'parts' && (
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0', marginBottom: 16 }}>Pricing Tier</div>
-          <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 16, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 12, color: th.textSecondary, marginBottom: 16, lineHeight: 1.6 }}>
             Determines which price level is used when parts are quoted for this customer&apos;s work orders.
           </div>
 
           {/* Current tier badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <span style={{ fontSize: 12, color: '#7C8BA0' }}>Current tier:</span>
+            <span style={{ fontSize: 12, color: th.textSecondary }}>Current tier:</span>
             <span style={{
               padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 700,
               background: customer.pricing_tier === 'ugl_company' ? 'rgba(59,130,246,0.15)' : customer.pricing_tier === 'ugl_owner_operator' ? 'rgba(245,158,11,0.15)' : 'rgba(107,114,128,0.15)',
@@ -931,7 +933,7 @@ export default function CustomerProfilePage() {
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#EDEDF0' }}>{t.label}</div>
-                  <div style={{ fontSize: 11, color: '#7C8BA0' }}>{t.desc}</div>
+                  <div style={{ fontSize: 11, color: th.textSecondary }}>{t.desc}</div>
                 </div>
                 {customer.pricing_tier === t.tier && (
                   <span style={{ marginLeft: 'auto', fontSize: 10, color: t.color, fontWeight: 700 }}>ACTIVE</span>
@@ -948,7 +950,7 @@ export default function CustomerProfilePage() {
           <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '85vh', overflowY: 'auto' as const }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>Edit Customer</div>
-              <button onClick={() => setEditModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}><X size={18} /></button>
+              <button onClick={() => setEditModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}><X size={18} /></button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
@@ -961,7 +963,7 @@ export default function CustomerProfilePage() {
                 { key: 'mc_number', label: 'MC #' },
               ].map(f => (
                 <div key={f.key}>
-                  <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
+                  <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
                   <input
                     value={editForm[f.key] || ''}
                     onChange={e => setEditForm((p: any) => ({ ...p, [f.key]: e.target.value }))}
@@ -983,7 +985,7 @@ export default function CustomerProfilePage() {
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Address</label>
+              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Address</label>
               <input
                 value={editForm.address || ''}
                 onChange={e => setEditForm((p: any) => ({ ...p, address: e.target.value }))}
@@ -1003,7 +1005,7 @@ export default function CustomerProfilePage() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Notes</label>
+              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Notes</label>
               <textarea
                 value={editForm.notes || ''}
                 onChange={e => setEditForm((p: any) => ({ ...p, notes: e.target.value }))}
@@ -1055,7 +1057,7 @@ export default function CustomerProfilePage() {
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setEditModal(false)}
-                style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7C8BA0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+                style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: th.textSecondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
               >
                 Cancel
               </button>
@@ -1085,7 +1087,7 @@ export default function CustomerProfilePage() {
             <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {Object.entries(customer.external_data).map(([key, val]) => (
                 <div key={key} style={{ fontSize: 12 }}>
-                  <span style={{ color: '#7C8BA0', fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
+                  <span style={{ color: th.textSecondary, fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
                   <span style={{ color: '#EDEDF0' }}>{val != null ? String(val) : '\u2014'}</span>
                 </div>
               ))}
@@ -1100,7 +1102,7 @@ export default function CustomerProfilePage() {
           <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, width: 440, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>{editingContactId ? 'Edit Contact' : 'Add Contact'}</div>
-              <button onClick={() => setContactModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7C8BA0', padding: 4 }}><X size={18} /></button>
+              <button onClick={() => setContactModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}><X size={18} /></button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1111,7 +1113,7 @@ export default function CustomerProfilePage() {
                 { key: 'email', label: 'Email', type: 'email' },
               ].map(f => (
                 <div key={f.key}>
-                  <label style={{ display: 'block', fontSize: 11, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
+                  <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
                   <input
                     type={f.type}
                     value={contactForm[f.key] || ''}
@@ -1164,7 +1166,7 @@ export default function CustomerProfilePage() {
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
               <button
                 onClick={() => setContactModal(false)}
-                style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7C8BA0', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+                style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: th.textSecondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
               >
                 Cancel
               </button>

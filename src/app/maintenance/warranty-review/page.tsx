@@ -7,12 +7,14 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const BLUE = '#4D9EFF', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
 
 export default function WarrantyReviewPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [wos, setWos] = useState<any[]>([])
@@ -63,11 +65,11 @@ export default function WarrantyReviewPage() {
 
   const daysSince = (d: string) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
 
-  if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 }}>Warranty Review</div>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Warranty Review</div>
       <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>{wos.length} work order{wos.length !== 1 ? 's' : ''} pending warranty verification</div>
 
       {wos.length === 0 ? (
@@ -89,9 +91,9 @@ export default function WarrantyReviewPage() {
                       <a href={getWorkorderRoute(wo.id, undefined, 'warranty')} style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE, textDecoration: 'none' }}>{wo.so_number}</a>
                       {isUrgent && <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: 'rgba(245,158,11,.12)', color: AMBER }}>{age}d OLD — NEEDS ATTENTION</span>}
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F4FF' }}>#{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: t.text }}>#{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
                     <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{cust.company_name || '—'}</div>
-                    {wo.complaint && <div style={{ fontSize: 12, color: '#DDE3EE', marginTop: 6, padding: '6px 10px', background: 'rgba(255,255,255,.03)', borderRadius: 6 }}>{wo.complaint}</div>}
+                    {wo.complaint && <div style={{ fontSize: 12, color: t.text, marginTop: 6, padding: '6px 10px', background: 'rgba(255,255,255,.03)', borderRadius: 6 }}>{wo.complaint}</div>}
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     {asset.warranty_provider && <div style={{ fontSize: 11, color: AMBER, fontWeight: 600 }}>Warranty: {asset.warranty_provider}</div>}
@@ -102,11 +104,11 @@ export default function WarrantyReviewPage() {
                 {/* Action buttons */}
                 {actionWo?.id === wo.id ? (
                   <div style={{ padding: 12, background: 'rgba(255,255,255,.03)', borderRadius: 8, marginTop: 8 }}>
-                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes..." rows={2} style={{ width: '100%', padding: '8px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: FONT, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes..." rows={2} style={{ width: '100%', padding: '8px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
                     {actionWo.decision === 'send_to_dealer' && (
                       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                        <input value={dealerName} onChange={e => setDealerName(e.target.value)} placeholder="Dealer name" style={{ flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: FONT }} />
-                        <input value={dealerLocation} onChange={e => setDealerLocation(e.target.value)} placeholder="Location" style={{ flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: FONT }} />
+                        <input value={dealerName} onChange={e => setDealerName(e.target.value)} placeholder="Dealer name" style={{ flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT }} />
+                        <input value={dealerLocation} onChange={e => setDealerLocation(e.target.value)} placeholder="Location" style={{ flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT }} />
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 6 }}>

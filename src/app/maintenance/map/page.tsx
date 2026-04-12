@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { MapPin, Search } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
 
 export default function FleetMapPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [vehicles, setVehicles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,21 +49,21 @@ export default function FleetMapPage() {
   }
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 16 }}>Fleet Map</div>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 16 }}>Fleet Map</div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 16, minHeight: 'calc(100vh - 120px)' }}>
         {/* Vehicle List */}
-        <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#1C2130', borderRadius: 8, padding: '6px 10px' }}>
-              <Search size={13} color="#48536A" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search trucks..." style={{ background: 'none', border: 'none', color: '#DDE3EE', fontSize: 12, outline: 'none', fontFamily: FONT, width: '100%' }} />
+              <Search size={13} color={t.textTertiary} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search trucks..." style={{ background: 'none', border: 'none', color: t.text, fontSize: 12, outline: 'none', fontFamily: FONT, width: '100%' }} />
             </div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
-            {loading ? <div style={{ padding: 20, textAlign: 'center', color: '#48536A', fontSize: 12 }}>Loading...</div> :
-            filtered.length === 0 ? <div style={{ padding: 20, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No vehicle locations yet. Connect Samsara to see live fleet tracking.</div> :
+            {loading ? <div style={{ padding: 20, textAlign: 'center', color: t.textTertiary, fontSize: 12 }}>Loading...</div> :
+            filtered.length === 0 ? <div style={{ padding: 20, textAlign: 'center', color: t.textTertiary, fontSize: 12 }}>No vehicle locations yet. Connect Samsara to see live fleet tracking.</div> :
             filtered.map(v => {
               const asset = v.assets || {}
               const c = statusColor(v)
@@ -69,7 +71,7 @@ export default function FleetMapPage() {
                 <div key={v.asset_id} style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,.03)', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: c, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#F0F4FF' }}>#{asset.unit_number || '—'} <span style={{ fontWeight: 400, color: MUTED }}>{asset.make} {asset.model}</span></div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: t.text }}>#{asset.unit_number || '—'} <span style={{ fontWeight: 400, color: MUTED }}>{asset.make} {asset.model}</span></div>
                     <div style={{ fontSize: 10, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.address || `${v.latitude?.toFixed(4)}, ${v.longitude?.toFixed(4)}`}</div>
                   </div>
                   <div style={{ fontSize: 9, color: MUTED, whiteSpace: 'nowrap' }}>{v.speed > 0 ? `${v.speed} mph` : new Date(v.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
@@ -80,10 +82,10 @@ export default function FleetMapPage() {
         </div>
 
         {/* Map placeholder */}
-        <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <MapPin size={40} color="#48536A" style={{ marginBottom: 12 }} />
-          <div style={{ color: '#48536A', fontSize: 14, fontWeight: 600 }}>Fleet Map</div>
-          <div style={{ color: '#48536A', fontSize: 12, marginTop: 4, maxWidth: 300, textAlign: 'center' }}>
+        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <MapPin size={40} color={t.textTertiary} style={{ marginBottom: 12 }} />
+          <div style={{ color: t.textTertiary, fontSize: 14, fontWeight: 600 }}>Fleet Map</div>
+          <div style={{ color: t.textTertiary, fontSize: 12, marginTop: 4, maxWidth: 300, textAlign: 'center' }}>
             {vehicles.length === 0 ? 'No vehicle locations yet. Connect Samsara to see live fleet tracking.' : `${vehicles.length} vehicles with location data. Map visualization coming with Samsara integration.`}
           </div>
           {/* Legend */}

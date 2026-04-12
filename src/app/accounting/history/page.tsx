@@ -87,24 +87,24 @@ export default function ImportedHistoryPage() {
       />
 
       {records.length === 0 && !loading && (
-        <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 40, textAlign: 'center', color: '#48536A', fontSize: 13 }}>
+        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 40, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>
           {search || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No imported records found.'}
         </div>
       )}
 
       {records.length > 0 && (
-        <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,.08)' }}>
-                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.04em' }}>WO #</th>
-                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.04em' }}>Customer</th>
-                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.04em' }}>Unit</th>
-                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.04em' }}>Complaint</th>
-                <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.04em' }}>Total</th>
-                <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.04em' }}>Date</th>
-                <th style={{ textAlign: 'center', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.04em' }}>Source</th>
-                <th style={{ textAlign: 'center', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.04em' }}>Status</th>
+                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>WO #</th>
+                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Customer</th>
+                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Unit</th>
+                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Complaint</th>
+                <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Total</th>
+                <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Date</th>
+                <th style={{ textAlign: 'center', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Source</th>
+                <th style={{ textAlign: 'center', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Status</th>
               </tr>
             </thead>
             <tbody>

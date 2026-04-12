@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -11,6 +12,7 @@ const stColor: Record<string, string> = { draft: MUTED, sent: BLUE, partial: AMB
 const STATUS_FLOW = ['draft', 'sent', 'partial', 'received', 'paid']
 
 export default function PODetailPage() {
+  const { tokens: th } = useTheme()
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -56,23 +58,23 @@ export default function PODetailPage() {
     setLines(l => l.map(x => x.id === lineId ? { ...x, quantity_received: qty } : x))
   }
 
-  if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: th.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const vendor = po.maint_vendors || {}
   const nextStatus = STATUS_FLOW[STATUS_FLOW.indexOf(po.status) + 1]
 
   const S: Record<string, React.CSSProperties> = {
     card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
-    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A' },
+    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary },
   }
 
   const tabs = ['overview', 'lines', 'receive'] as const
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>{po.po_number || 'Purchase Order'}</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text }}>{po.po_number || 'Purchase Order'}</div>
           <div style={{ fontSize: 13, color: MUTED }}>{vendor.name || '—'} · ${(po.total || 0).toFixed(2)}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -105,7 +107,7 @@ export default function PODetailPage() {
               { label: 'Tax', val: `$${(po.tax || 0).toFixed(2)}` },
               { label: 'Total', val: `$${(po.total || 0).toFixed(2)}` },
             ].map(r => (
-              <div key={r.label}><div style={S.label}>{r.label}</div><div style={{ fontSize: 13, color: '#F0F4FF', marginTop: 4, fontWeight: r.label === 'Total' ? 700 : 400 }}>{r.val}</div></div>
+              <div key={r.label}><div style={S.label}>{r.label}</div><div style={{ fontSize: 13, color: th.text, marginTop: 4, fontWeight: r.label === 'Total' ? 700 : 400 }}>{r.val}</div></div>
             ))}
           </div>
           {po.notes && <div style={{ marginTop: 12 }}><div style={S.label}>Notes</div><div style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>{po.notes}</div></div>}
@@ -114,14 +116,14 @@ export default function PODetailPage() {
 
       {tab === 'lines' && (
         <div style={S.card}>
-          {lines.length === 0 ? <div style={{ textAlign: 'center', padding: 20, color: '#48536A', fontSize: 12 }}>No items</div> : (
+          {lines.length === 0 ? <div style={{ textAlign: 'center', padding: 20, color: th.textTertiary, fontSize: 12 }}>No items</div> : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr>{['Description', 'Part #', 'Qty', 'Unit Cost', 'Total'].map(h => (
-                <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: '#48536A', textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
+                <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
               ))}</tr></thead>
               <tbody>{lines.map(l => (
                 <tr key={l.id}>
-                  <td style={{ padding: 8, fontSize: 12, color: '#F0F4FF' }}>{l.description}</td>
+                  <td style={{ padding: 8, fontSize: 12, color: th.text }}>{l.description}</td>
                   <td style={{ padding: 8, fontSize: 10, fontFamily: MONO, color: MUTED }}>{l.part_number || '—'}</td>
                   <td style={{ padding: 8, fontSize: 12, fontFamily: MONO }}>{l.quantity_ordered ?? l.quantity}</td>
                   <td style={{ padding: 8, fontSize: 12, fontFamily: MONO }}>${(l.unit_cost || 0).toFixed(2)}</td>
@@ -135,15 +137,15 @@ export default function PODetailPage() {
 
       {tab === 'receive' && (
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Receive Items</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 12 }}>Receive Items</div>
           {lines.map(l => (
             <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
               <div>
-                <div style={{ fontSize: 12, color: '#F0F4FF' }}>{l.description}</div>
+                <div style={{ fontSize: 12, color: th.text }}>{l.description}</div>
                 <div style={{ fontSize: 10, color: MUTED }}>Ordered: {l.quantity_ordered ?? l.quantity} · Received: {l.quantity_received || 0}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="number" defaultValue={l.quantity_received || 0} min={0} max={l.quantity_ordered ?? l.quantity} style={{ width: 60, padding: '4px 8px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 12, color: '#DDE3EE', textAlign: 'center', fontFamily: MONO }} onBlur={e => receiveLine(l.id, parseFloat(e.target.value) || 0)} />
+                <input type="number" defaultValue={l.quantity_received || 0} min={0} max={l.quantity_ordered ?? l.quantity} style={{ width: 60, padding: '4px 8px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 12, color: th.text, textAlign: 'center', fontFamily: MONO }} onBlur={e => receiveLine(l.id, parseFloat(e.target.value) || 0)} />
                 {(l.quantity_received || 0) >= (l.quantity_ordered ?? l.quantity) && <span style={{ fontSize: 9, color: GREEN, fontWeight: 700 }}>FULL</span>}
               </div>
             </div>

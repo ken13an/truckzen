@@ -198,7 +198,7 @@ export default function MaintenanceInvoicesPage() {
                   {lastAction === 'approve' ? 'Approved' : lastAction === 'payment_sent' ? 'Payment Sent' : 'Issue Flagged'}
                 </span>}
                 <span style={{ fontSize: 10, fontWeight: 700, color: st.color, background: `${st.color}18`, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' }}>{st.label}</span>
-                <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 14, minWidth: 80, textAlign: 'right', color: tab === 'paid' ? GREEN : '#F0F4FF' }}>{fmt(w.invoice_total ?? w.grand_total)}</span>
+                <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: 14, minWidth: 80, textAlign: 'right', color: tab === 'paid' ? GREEN : th.text }}>{fmt(w.invoice_total ?? w.grand_total)}</span>
               </div>
 
               {/* Expanded detail — read-only invoice summary + maintenance actions */}

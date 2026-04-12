@@ -2,6 +2,8 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/Logo'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 export default function ForgotPasswordPage() {
   const supabase = createClient()
@@ -22,17 +24,17 @@ export default function ForgotPasswordPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:    { minHeight:'100vh', background:'#060708', display:'flex', alignItems:'center', justifyContent:'center', padding:20, fontFamily:"'Instrument Sans',sans-serif" },
-    card:    { width:'100%', maxWidth:400, background:'#161B24', border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'36px 32px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
+    page:    { minHeight:'100vh', background:_t.bg, display:'flex', alignItems:'center', justifyContent:'center', padding:20, fontFamily:"'Instrument Sans',sans-serif" },
+    card:    { width:'100%', maxWidth:400, background:_t.bgCard, border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'36px 32px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
     logo:    { display:'flex', alignItems:'center', gap:10, marginBottom:28 },
-    mark:    { width:32, height:32, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' },
-    title:   { fontSize:22, fontWeight:700, color:'#F0F4FF', marginBottom:6 },
-    sub:     { fontSize:13, color:'#7C8BA0', marginBottom:24, lineHeight:1.5 },
-    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:11, letterSpacing:'.08em', textTransform:'uppercase' as const, color:'#7C8BA0', marginBottom:6, display:'block' },
-    input:   { width:'100%', padding:'11px 14px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:14, color:'#DDE3EE', outline:'none', fontFamily:'inherit', minHeight:44, boxSizing:'border-box' as const },
-    btn:     { width:'100%', padding:13, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', marginTop:16, minHeight:48, fontFamily:'inherit' },
-    error:   { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#D94F4F', marginTop:10 },
-    back:    { display:'block', textAlign:'center' as const, marginTop:20, fontSize:12, color:'#48536A', textDecoration:'none' },
+    mark:    { width:32, height:32, background:'linear-gradient(135deg,${_t.accent},${_t.accentHover})', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center' },
+    title:   { fontSize:22, fontWeight:700, color:_t.text, marginBottom:6 },
+    sub:     { fontSize:13, color:_t.textSecondary, marginBottom:24, lineHeight:1.5 },
+    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:11, letterSpacing:'.08em', textTransform:'uppercase' as const, color:_t.textSecondary, marginBottom:6, display:'block' },
+    input:   { width:'100%', padding:'11px 14px', background:_t.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:14, color:_t.text, outline:'none', fontFamily:'inherit', minHeight:44, boxSizing:'border-box' as const },
+    btn:     { width:'100%', padding:13, background:'linear-gradient(135deg,${_t.accent},${_t.accentHover})', border:'none', borderRadius:9, fontSize:14, fontWeight:700, color:_t.bgLight, cursor:'pointer', marginTop:16, minHeight:48, fontFamily:'inherit' },
+    error:   { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:_t.danger, marginTop:10 },
+    back:    { display:'block', textAlign:'center' as const, marginTop:20, fontSize:12, color:_t.textTertiary, textDecoration:'none' },
     success: { textAlign:'center' as const, padding:'20px 0' },
   }
 
@@ -43,13 +45,13 @@ export default function ForgotPasswordPage() {
 
         {sent ? (
           <div style={S.success}>
-            <div style={{ fontSize:16, fontWeight:700, color:'#4D9EFF', marginBottom:16 }}>Email Sent</div>
-            <div style={{ fontSize:18, fontWeight:700, color:'#F0F4FF', marginBottom:8 }}>Check your email</div>
-            <div style={{ fontSize:13, color:'#7C8BA0', lineHeight:1.6 }}>
-              We sent a password reset link to <strong style={{ color:'#DDE3EE' }}>{email}</strong>.<br/>
+            <div style={{ fontSize:16, fontWeight:700, color:_t.accentLight, marginBottom:16 }}>Email Sent</div>
+            <div style={{ fontSize:18, fontWeight:700, color:_t.text, marginBottom:8 }}>Check your email</div>
+            <div style={{ fontSize:13, color:_t.textSecondary, lineHeight:1.6 }}>
+              We sent a password reset link to <strong style={{ color:_t.text }}>{email}</strong>.<br/>
               Check your inbox and click the link.
             </div>
-            <a href="/login" style={{ ...S.back, marginTop:24, color:'#4D9EFF' }}>Back to login</a>
+            <a href="/login" style={{ ...S.back, marginTop:24, color:_t.accentLight }}>Back to login</a>
           </div>
         ) : (
           <>

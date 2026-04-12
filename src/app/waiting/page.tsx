@@ -1,9 +1,11 @@
 'use client'
+import { useTheme } from '@/hooks/useTheme'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function WaitingPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [userName, setUserName] = useState('')
 
@@ -48,7 +50,7 @@ export default function WaitingPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#060708',
+      minHeight: '100vh', background: t.bg,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Instrument Sans', sans-serif", padding: '20px',
     }}>
@@ -69,11 +71,11 @@ export default function WaitingPage() {
           </svg>
         </div>
 
-        <div style={{ fontSize: '22px', fontWeight: 700, color: '#F0F4FF', marginBottom: '8px' }}>
+        <div style={{ fontSize: '22px', fontWeight: 700, color: t.text, marginBottom: '8px' }}>
           {userName ? `Hi ${userName}` : 'Almost ready'}
         </div>
 
-        <div style={{ fontSize: '14px', color: '#7C8BA0', lineHeight: 1.7, marginBottom: '28px' }}>
+        <div style={{ fontSize: '14px', color: t.textSecondary, lineHeight: 1.7, marginBottom: '28px' }}>
           Your shop admin is finishing setup. This page will update automatically once TruckZen is ready for you.
         </div>
 
@@ -100,7 +102,7 @@ export default function WaitingPage() {
           onClick={handleSignOut}
           style={{
             background: 'none', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '8px', padding: '9px 20px', color: '#48536A',
+            borderRadius: '8px', padding: '9px 20px', color: t.textTertiary,
             fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit',
             transition: 'all 0.14s',
           }}

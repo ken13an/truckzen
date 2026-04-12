@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { X, Plus, ExternalLink, GripVertical, Trash2 } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const CATEGORIES: Record<string, { label: string; color: string }> = {
   hosting: { label: 'Hosting', color: '#1D6FE8' },
@@ -34,6 +35,7 @@ const ADDONS = [
 ]
 
 export default function CostsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [services, setServices] = useState<any[]>([])
@@ -137,7 +139,7 @@ export default function CostsPage() {
     return diff > 0 && diff <= 30
   }
 
-  if (loading) return <div style={{ color: '#7C8BA0', fontSize: 13, padding: 40 }}>Loading...</div>
+  if (loading) return <div style={{ color: t.textSecondary, fontSize: 13, padding: 40 }}>Loading...</div>
 
   const svcForm = editSvc || (newSvc ? editSvc : null)
   function openNewSvc() {
@@ -150,7 +152,7 @@ export default function CostsPage() {
     <div>
       {toast && <div style={{ position: 'fixed', top: 20, right: 20, background: '#1D6FE8', color: '#fff', padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>{toast}</div>}
 
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#F0F4FF', margin: '0 0 24px' }}>Costs & Services</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: t.text, margin: '0 0 24px' }}>Costs & Services</h1>
 
       {/* ═══ Section 1: Stats ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 28 }}>
@@ -159,17 +161,17 @@ export default function CostsPage() {
           { label: 'Variable Costs (This Month)', value: fmt(variableCosts), color: '#F59E0B' },
           { label: 'Total Monthly Spend', value: fmt(totalMonthly), color: '#22C55E' },
         ].map(c => (
-          <div key={c.label} style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '20px 18px' }}>
-            <div style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{c.label}</div>
+          <div key={c.label} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '20px 18px' }}>
+            <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{c.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: c.color }}>{c.value}</div>
           </div>
         ))}
       </div>
 
       {/* ═══ Section 2: Subscriptions ═══ */}
-      <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 28 }}>
+      <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', margin: 0 }}>Subscriptions & Services</h2>
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: 0 }}>Subscriptions & Services</h2>
           <button onClick={openNewSvc} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', background: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             <Plus size={12} /> Add Service
           </button>
@@ -178,7 +180,7 @@ export default function CostsPage() {
           <thead>
             <tr>
               {['Service', 'Provider', 'Category', 'Monthly Cost', 'Billing', 'Start', 'Renewal', 'Dashboard', 'Status', ''].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '8px 8px', fontSize: 9, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: '1px solid rgba(255,255,255,.06)', fontWeight: 600 }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '8px 8px', fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: '1px solid rgba(255,255,255,.06)', fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -187,15 +189,15 @@ export default function CostsPage() {
               const cat = CATEGORIES[svc.category] || CATEGORIES.other
               return (
                 <tr key={svc.id}>
-                  <td style={td}><span style={{ fontWeight: 600, color: '#F0F4FF' }}>{svc.name}</span></td>
+                  <td style={td}><span style={{ fontWeight: 600, color: t.text }}>{svc.name}</span></td>
                   <td style={td}>{svc.provider}</td>
                   <td style={td}><span style={{ fontSize: 9, fontWeight: 600, color: cat.color, background: `${cat.color}1a`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>{cat.label}</span></td>
-                  <td style={td}>{svc.billing_cycle === 'usage_based' ? <span style={{ color: '#48536A' }}>{fmt(0)} (usage)</span> : <span style={{ fontWeight: 700, color: '#F0F4FF' }}>{fmt(svc.monthly_cost)}</span>}</td>
+                  <td style={td}>{svc.billing_cycle === 'usage_based' ? <span style={{ color: t.textTertiary }}>{fmt(0)} (usage)</span> : <span style={{ fontWeight: 700, color: t.text }}>{fmt(svc.monthly_cost)}</span>}</td>
                   <td style={{ ...td, fontSize: 11 }}>{svc.billing_cycle.replace('_', ' ')}</td>
                   <td style={{ ...td, fontSize: 11 }}>{fmtDate(svc.start_date)}</td>
                   <td style={td}>
                     {svc.renewal_date ? (
-                      <span style={{ fontSize: 11, fontWeight: isRenewalSoon(svc.renewal_date) ? 700 : 400, color: isRenewalSoon(svc.renewal_date) ? '#D94F4F' : '#7C8BA0', background: isRenewalSoon(svc.renewal_date) ? 'rgba(217,79,79,.12)' : 'transparent', padding: isRenewalSoon(svc.renewal_date) ? '2px 6px' : 0, borderRadius: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: isRenewalSoon(svc.renewal_date) ? 700 : 400, color: isRenewalSoon(svc.renewal_date) ? '#D94F4F' : t.textSecondary, background: isRenewalSoon(svc.renewal_date) ? 'rgba(217,79,79,.12)' : 'transparent', padding: isRenewalSoon(svc.renewal_date) ? '2px 6px' : 0, borderRadius: 4 }}>
                         {fmtDate(svc.renewal_date)}
                       </span>
                     ) : '—'}
@@ -207,7 +209,7 @@ export default function CostsPage() {
                     <span style={{ fontSize: 9, fontWeight: 600, color: svc.is_active ? '#22C55E' : '#D94F4F', background: svc.is_active ? 'rgba(34,197,94,.12)' : 'rgba(217,79,79,.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>{svc.is_active ? 'active' : 'inactive'}</span>
                   </td>
                   <td style={td}>
-                    <button onClick={() => setEditSvc({ ...svc })} style={{ background: 'rgba(255,255,255,.06)', color: '#7C8BA0', border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+                    <button onClick={() => setEditSvc({ ...svc })} style={{ background: 'rgba(255,255,255,.06)', color: t.textSecondary, border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
                   </td>
                 </tr>
               )
@@ -217,28 +219,28 @@ export default function CostsPage() {
       </div>
 
       {/* ═══ Section 3: Per-Shop Usage ═══ */}
-      <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 28 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', margin: '0 0 14px' }}>Per-Shop Usage This Month</h2>
+      <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 28 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: '0 0 14px' }}>Per-Shop Usage This Month</h2>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               {['Shop', 'SMS', 'Calls', 'AI Requests', 'Emails', 'Est. Cost'].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '8px 8px', fontSize: 9, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: '1px solid rgba(255,255,255,.06)', fontWeight: 600 }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '8px 8px', fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: '1px solid rgba(255,255,255,.06)', fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {shopUsage.map(u => (
               <tr key={u.shop_id}>
-                <td style={{ ...td, fontWeight: 600, color: '#F0F4FF' }}>{u.shop_name}</td>
+                <td style={{ ...td, fontWeight: 600, color: t.text }}>{u.shop_name}</td>
                 <td style={td}>{u.sms}</td>
                 <td style={td}>{u.calls}</td>
                 <td style={td}>{u.ai_requests}</td>
                 <td style={td}>{u.emails}</td>
-                <td style={{ ...td, fontWeight: 700, color: u.est_cost > 0 ? '#F59E0B' : '#48536A' }}>{fmt(u.est_cost)}</td>
+                <td style={{ ...td, fontWeight: 700, color: u.est_cost > 0 ? '#F59E0B' : t.textTertiary }}>{fmt(u.est_cost)}</td>
               </tr>
             ))}
-            {shopUsage.length === 0 && <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: '#48536A' }}>No usage data yet</td></tr>}
+            {shopUsage.length === 0 && <tr><td colSpan={6} style={{ ...td, textAlign: 'center', color: t.textTertiary }}>No usage data yet</td></tr>}
           </tbody>
         </table>
       </div>
@@ -246,16 +248,16 @@ export default function CostsPage() {
       {/* ═══ Section 4: Progress Tracker (Kanban) ═══ */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', margin: 0 }}>Project Progress</h2>
+          <h2 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: 0 }}>Project Progress</h2>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <select value={newItemCat} onChange={e => setNewItemCat(e.target.value)} style={{ padding: '5px 8px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: '#DDE3EE', fontFamily: 'inherit' }}>
+            <select value={newItemCat} onChange={e => setNewItemCat(e.target.value)} style={{ padding: '5px 8px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: t.text, fontFamily: 'inherit' }}>
               <option value="feature">Feature</option>
               <option value="integration">Integration</option>
               <option value="fix">Fix</option>
               <option value="database">Database</option>
             </select>
-            <input value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addProgressItem()} placeholder="Add new item..." style={{ padding: '5px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', width: 200 }} />
-            <button onClick={addProgressItem} disabled={!newItem.trim()} style={{ padding: '5px 10px', background: newItem.trim() ? '#1D6FE8' : 'rgba(255,255,255,.06)', color: newItem.trim() ? '#fff' : '#48536A', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: newItem.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+            <input value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addProgressItem()} placeholder="Add new item..." style={{ padding: '5px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: t.text, outline: 'none', fontFamily: 'inherit', width: 200 }} />
+            <button onClick={addProgressItem} disabled={!newItem.trim()} style={{ padding: '5px 10px', background: newItem.trim() ? '#1D6FE8' : 'rgba(255,255,255,.06)', color: newItem.trim() ? '#fff' : t.textTertiary, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: newItem.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
               <Plus size={12} />
             </button>
           </div>
@@ -265,15 +267,15 @@ export default function CostsPage() {
           {(['done', 'in_progress', 'planned'] as const).map(status => {
             const items = progress.filter(p => p.status === status)
             const label = status === 'done' ? 'DONE' : status === 'in_progress' ? 'IN PROGRESS' : 'PLANNED'
-            const headerColor = status === 'done' ? '#22C55E' : status === 'in_progress' ? '#1D6FE8' : '#7C8BA0'
+            const headerColor = status === 'done' ? '#22C55E' : status === 'in_progress' ? '#1D6FE8' : t.textSecondary
             return (
               <div key={status}
                 onDragOver={e => e.preventDefault()}
                 onDrop={() => handleDrop(status)}
-                style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 12, minHeight: 200 }}>
+                style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 12, minHeight: 200 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: headerColor, letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace" }}>{label}</span>
-                  <span style={{ fontSize: 9, color: '#48536A', background: 'rgba(255,255,255,.06)', padding: '1px 5px', borderRadius: 100 }}>{items.length}</span>
+                  <span style={{ fontSize: 9, color: t.textTertiary, background: 'rgba(255,255,255,.06)', padding: '1px 5px', borderRadius: 100 }}>{items.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {items.map(item => {
@@ -283,12 +285,12 @@ export default function CostsPage() {
                         draggable
                         onDragStart={() => setDragItem(item.id)}
                         style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '8px 10px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <GripVertical size={10} color="#48536A" style={{ flexShrink: 0 }} />
+                        <GripVertical size={10} color={t.textTertiary} style={{ flexShrink: 0 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 11, color: '#DDE3EE', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
+                          <div style={{ fontSize: 11, color: t.text, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
                           <span style={{ fontSize: 8, fontWeight: 700, color: cat.color, background: `${cat.color}1a`, padding: '1px 4px', borderRadius: 3, textTransform: 'uppercase' }}>{cat.label}</span>
                         </div>
-                        <button onClick={() => deleteProgressItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#48536A', padding: 2, flexShrink: 0 }}><Trash2 size={10} /></button>
+                        <button onClick={() => deleteProgressItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary, padding: 2, flexShrink: 0 }}><Trash2 size={10} /></button>
                       </div>
                     )
                   })}
@@ -301,26 +303,26 @@ export default function CostsPage() {
 
       {/* ═══ Section 5: Add-Ons ═══ */}
       <div>
-        <h2 style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', margin: '0 0 14px' }}>Add-Ons & Planned Integrations</h2>
-        <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 10, fontWeight: 600 }}>Near Term</div>
+        <h2 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: '0 0 14px' }}>Add-Ons & Planned Integrations</h2>
+        <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 10, fontWeight: 600 }}>Near Term</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
           {ADDONS.filter(a => a.phase === 'near').map(a => (
-            <div key={a.name} style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>{a.name}</div>
-              <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 8, lineHeight: 1.4 }}>{a.desc}</div>
-              <div style={{ fontSize: 10, color: '#48536A', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{a.cost}</div>
+            <div key={a.name} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 4 }}>{a.name}</div>
+              <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 8, lineHeight: 1.4 }}>{a.desc}</div>
+              <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{a.cost}</div>
               <button style={{ padding: '4px 10px', background: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'none', borderRadius: 4, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
             </div>
           ))}
         </div>
-        <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 10, fontWeight: 600 }}>Growth Phase</div>
+        <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 10, fontWeight: 600 }}>Growth Phase</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           {ADDONS.filter(a => a.phase === 'growth').map(a => (
-            <div key={a.name} style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>{a.name}</div>
-              <div style={{ fontSize: 11, color: '#7C8BA0', marginBottom: 8, lineHeight: 1.4 }}>{a.desc}</div>
-              <div style={{ fontSize: 10, color: '#48536A', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{a.cost}</div>
-              <button style={{ padding: '4px 10px', background: 'rgba(255,255,255,.06)', color: '#7C8BA0', border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
+            <div key={a.name} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 4 }}>{a.name}</div>
+              <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 8, lineHeight: 1.4 }}>{a.desc}</div>
+              <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{a.cost}</div>
+              <button style={{ padding: '4px 10px', background: 'rgba(255,255,255,.06)', color: t.textSecondary, border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
             </div>
           ))}
         </div>
@@ -331,8 +333,8 @@ export default function CostsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={closeModal}>
           <div style={{ background: '#12131a', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: 28, width: 440, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#F0F4FF', margin: 0 }}>{newSvc ? 'Add Service' : 'Edit Service'}</h3>
-              <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#48536A' }}><X size={18} /></button>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: t.text, margin: 0 }}>{newSvc ? 'Add Service' : 'Edit Service'}</h3>
+              <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary }}><X size={18} /></button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -376,10 +378,10 @@ export default function CostsPage() {
               </div>
 
               <div style={{ display: 'flex', gap: 12 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#7C8BA0', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: t.textSecondary, cursor: 'pointer' }}>
                   <input type="checkbox" checked={editSvc.is_active} onChange={e => setEditSvc({ ...editSvc, is_active: e.target.checked })} /> Active
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#7C8BA0', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: t.textSecondary, cursor: 'pointer' }}>
                   <input type="checkbox" checked={editSvc.auto_renews} onChange={e => setEditSvc({ ...editSvc, auto_renews: e.target.checked })} /> Auto-renews
                 </label>
               </div>

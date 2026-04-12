@@ -2,10 +2,12 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
 
 const STEPS = ['Shop Info', 'Teams & Bays', 'Invite Staff', 'Parts Setup', 'Done']
 
 export default function SetupPage() {
+  const { tokens: th } = useTheme()
   const supabase = createClient()
   const [step,    setStep]    = useState(0)
   const [saving,  setSaving]  = useState(false)
@@ -58,16 +60,16 @@ export default function SetupPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:    { minHeight:'100vh', background:'#060708', color:'#DDE3EE', fontFamily:"'Instrument Sans',sans-serif", display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 },
+    page:    { minHeight:'100vh', background:th.bg, color:th.text, fontFamily:"'Instrument Sans',sans-serif", display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 },
     card:    { width:'100%', maxWidth:560, background:'#161B24', border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'32px 28px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
     steps:   { display:'flex', gap:6, marginBottom:28 },
     stepDot: { flex:1, height:4, borderRadius:100, background:'rgba(255,255,255,.08)', transition:'all .2s' },
     stepOn:  { background:'#1D6FE8' },
     stepDone:{ background:'#1DB870' },
-    title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:'#F0F4FF', marginBottom:6 },
-    sub:     { fontSize:12, color:'#7C8BA0', marginBottom:20, lineHeight:1.5 },
-    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'#7C8BA0', marginBottom:4, display:'block' },
-    input:   { width:'100%', padding:'9px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:'#DDE3EE', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
+    title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:th.text, marginBottom:6 },
+    sub:     { fontSize:12, color:th.textSecondary, marginBottom:20, lineHeight:1.5 },
+    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:th.textSecondary, marginBottom:4, display:'block' },
+    input:   { width:'100%', padding:'9px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:th.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
     btn:     { padding:'12px 24px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:8 },
     grid2:   { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   }
@@ -88,10 +90,10 @@ export default function SetupPage() {
           <div style={{ width:28, height:28, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-          <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:'#F0F4FF' }}>
+          <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:th.text }}>
             TRUCK<span style={{ color:'#4D9EFF' }}>ZEN</span>
           </span>
-          <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#7C8BA0' }}>Step {step + 1} of {STEPS.length}</span>
+          <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:th.textSecondary }}>Step {step + 1} of {STEPS.length}</span>
         </div>
 
         {/* Progress */}
@@ -135,8 +137,8 @@ export default function SetupPage() {
               <div key={t.team} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:9, marginBottom:8 }}>
                 <div style={{ width:28, height:28, borderRadius:7, background:`${t.color}20`, border:`1px solid ${t.color}33`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Bebas Neue',sans-serif", fontSize:14, color:t.color }}>{t.team}</div>
                 <div>
-                  <div style={{ fontSize:12, fontWeight:700, color:'#F0F4FF' }}>Team {t.team} — {t.dept}</div>
-                  <div style={{ fontSize:10, color:'#7C8BA0' }}>{t.bays}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:th.text }}>Team {t.team} — {t.dept}</div>
+                  <div style={{ fontSize:10, color:th.textSecondary }}>{t.bays}</div>
                 </div>
               </div>
             ))}
@@ -181,7 +183,7 @@ export default function SetupPage() {
             <button style={S.btn} onClick={inviteStaff} disabled={saving}>
               {saving ? 'Inviting...' : 'Send Invites & Continue →'}
             </button>
-            <button style={{ ...S.btn, background:'transparent', color:'#7C8BA0', marginLeft:8 }} onClick={() => setStep(3)}>
+            <button style={{ ...S.btn, background:'transparent', color:th.textSecondary, marginLeft:8 }} onClick={() => setStep(3)}>
               Skip for now
             </button>
           </>
@@ -202,8 +204,8 @@ export default function SetupPage() {
                   onClick={() => setStep(4)}>
                   <span style={{ fontSize:18 }}>{opt.icon}</span>
                   <div>
-                    <div style={{ fontSize:12, fontWeight:600, color:'#F0F4FF' }}>{opt.label}</div>
-                    <div style={{ fontSize:10, color:'#7C8BA0', marginTop:2 }}>{opt.sub}</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:th.text }}>{opt.label}</div>
+                    <div style={{ fontSize:10, color:th.textSecondary, marginTop:2 }}>{opt.sub}</div>
                   </div>
                 </div>
               ))}
@@ -217,7 +219,7 @@ export default function SetupPage() {
             <div style={{ textAlign:'center' as const, padding:'10px 0' }}>
               <div style={{ fontSize:16, fontWeight:700, color:'#1DB870', marginBottom:16 }}>All Set</div>
               <div style={S.title}>TruckZen is ready</div>
-              <div style={{ fontSize:13, color:'#7C8BA0', lineHeight:1.7, marginBottom:24 }}>
+              <div style={{ fontSize:13, color:th.textSecondary, lineHeight:1.7, marginBottom:24 }}>
                 Your shop is set up. Kiosk is live at <strong style={{ color:'#4D9EFF' }}>truckzen.com/kiosk</strong>.<br/>
                 Staff accounts have been created. Data migration is ready to run.<br/>
                 Everything is connected and waiting for your first job.

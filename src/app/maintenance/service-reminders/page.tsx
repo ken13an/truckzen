@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import DataTable from '@/components/DataTable'
 import { AlertTriangle, Clock } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -11,6 +12,7 @@ const GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
 const stColor: Record<string, string> = { active: GREEN, on_time: GREEN, due_soon: AMBER, overdue: RED }
 
 export default function ServiceRemindersPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [shopId, setShopId] = useState('')
   const [overdueCount, setOverdueCount] = useState(0)
@@ -30,12 +32,12 @@ export default function ServiceRemindersPage() {
     })
   }, [])
 
-  if (!shopId) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Service Reminders</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Service Reminders</div>
         <a href="/maintenance/service-reminders/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
       </div>
 
@@ -56,7 +58,7 @@ export default function ServiceRemindersPage() {
 
       <DataTable
         columns={[
-          { key: 'reminder_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: '#F0F4FF', textTransform: 'capitalize' }}>{r.custom_name || r.reminder_type?.replace(/_/g, ' ')}</span> },
+          { key: 'reminder_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: t.text, textTransform: 'capitalize' }}>{r.custom_name || r.reminder_type?.replace(/_/g, ' ')}</span> },
           { key: 'interval_miles', label: 'Interval', render: (r: any) => [r.interval_miles ? `${r.interval_miles.toLocaleString()} mi` : null, r.interval_days ? `${r.interval_days}d` : null].filter(Boolean).join(' / ') || '—' },
           { key: 'last_completed_date', label: 'Last Done', render: (r: any) => r.last_completed_date ? new Date(r.last_completed_date).toLocaleDateString() : '—' },
           { key: 'next_due_date', label: 'Next Due', render: (r: any) => { const c = r.overdue ? RED : r.next_due_date && new Date(r.next_due_date) < new Date(Date.now() + 30 * 86400000) ? AMBER : GREEN; return <span style={{ color: c }}>{r.next_due_date ? new Date(r.next_due_date).toLocaleDateString() : '—'}</span> } },

@@ -138,7 +138,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body style={{ margin: 0, padding: 0, background: '#060708', fontFamily: "'Instrument Sans',sans-serif" }}>
+      <body style={{ margin: 0, padding: 0, fontFamily: "'Instrument Sans',sans-serif" }}>
         <ThemeProvider>
           <ToastProvider>
             <AppShell>{children}</AppShell>

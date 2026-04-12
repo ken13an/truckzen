@@ -3,11 +3,13 @@ import { useEffect, useState, useCallback } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
 
 interface CustomerResult { id: string; company_name: string; contact_name: string | null; phone: string | null; email: string | null }
 interface UnitResult { id: string; unit_number: string | null; year: number | null; make: string | null; model: string | null; vin: string | null }
 
 export default function NewServiceRequestPage() {
+  const { tokens: th } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
 
@@ -125,28 +127,28 @@ export default function NewServiceRequestPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page: { padding: 24, fontFamily: "'Instrument Sans', sans-serif", maxWidth: 720, margin: '0 auto' },
-    back: { fontSize: 12, color: '#7C8BA0', textDecoration: 'none', display: 'block', marginBottom: 20 },
-    title: { fontSize: 22, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 },
-    sub: { fontSize: 13, color: '#7C8BA0', marginBottom: 28 },
+    back: { fontSize: 12, color: th.textSecondary, textDecoration: 'none', display: 'block', marginBottom: 20 },
+    title: { fontSize: 22, fontWeight: 700, color: th.text, marginBottom: 4 },
+    sub: { fontSize: 13, color: th.textSecondary, marginBottom: 28 },
     section: { background: '#161B24', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 20, marginBottom: 16 },
-    sectionTitle: { fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 14 },
-    label: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 6 },
-    input: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
-    textarea: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', minHeight: 100, resize: 'vertical' as const, boxSizing: 'border-box' as const },
-    select: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
+    sectionTitle: { fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 14 },
+    label: { fontSize: 11, fontWeight: 600, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 6 },
+    input: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
+    textarea: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 100, resize: 'vertical' as const, boxSizing: 'border-box' as const },
+    select: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
     row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
     field: { marginBottom: 12 },
     custCard: { padding: '10px 14px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
     unitCard: { padding: '8px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, cursor: 'pointer', marginBottom: 6 },
     unitCardActive: { padding: '8px 12px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.25)', borderRadius: 8, cursor: 'pointer', marginBottom: 6 },
-    secondaryBtn: { padding: '7px 14px', background: 'none', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, color: '#7C8BA0', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
+    secondaryBtn: { padding: '7px 14px', background: 'none', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, color: th.textSecondary, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
     submitBtn: { width: '100%', padding: 14, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', minHeight: 48, boxShadow: '0 0 16px rgba(29,111,232,.25)' },
-    submitDisabled: { width: '100%', padding: 14, background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#7C8BA0', cursor: 'not-allowed', fontFamily: 'inherit', minHeight: 48 },
+    submitDisabled: { width: '100%', padding: 14, background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 14, fontWeight: 600, color: th.textSecondary, cursor: 'not-allowed', fontFamily: 'inherit', minHeight: 48 },
     error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 16 },
     searchResult: { padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.04)' },
   }
 
-  if (!user) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
+  if (!user) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: th.textSecondary }}>Loading...</div>
 
   return (
     <div style={S.page}>
@@ -164,8 +166,8 @@ export default function NewServiceRequestPage() {
           {selectedCustomer ? (
             <div style={S.custCard}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{selectedCustomer.company_name}</div>
-                <div style={{ fontSize: 11, color: '#7C8BA0' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: th.text }}>{selectedCustomer.company_name}</div>
+                <div style={{ fontSize: 11, color: th.textSecondary }}>
                   {[selectedCustomer.contact_name, selectedCustomer.phone].filter(Boolean).join(' - ') || 'No contact info'}
                 </div>
               </div>
@@ -208,7 +210,7 @@ export default function NewServiceRequestPage() {
                   placeholder="Search by company name, contact, or phone..."
                   autoFocus
                 />
-                {searching && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#7C8BA0' }}>Searching...</div>}
+                {searching && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: th.textSecondary }}>Searching...</div>}
               </div>
               {customerResults.length > 0 && (
                 <div style={{ background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, marginTop: 6, maxHeight: 200, overflowY: 'auto' }}>
@@ -217,8 +219,8 @@ export default function NewServiceRequestPage() {
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                       onClick={() => { setSelectedCustomer(c); setCustomerResults([]); setCustomerSearch('') }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{c.company_name || 'Unnamed'}</div>
-                      <div style={{ fontSize: 10, color: '#7C8BA0' }}>{[c.contact_name, c.phone].filter(Boolean).join(' - ')}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: th.text }}>{c.company_name || 'Unnamed'}</div>
+                      <div style={{ fontSize: 10, color: th.textSecondary }}>{[c.contact_name, c.phone].filter(Boolean).join(' - ')}</div>
                     </div>
                   ))}
                 </div>
@@ -234,7 +236,7 @@ export default function NewServiceRequestPage() {
             <div style={S.sectionTitle}>Unit / Vehicle</div>
 
             {loadingUnits ? (
-              <div style={{ color: '#7C8BA0', fontSize: 12 }}>Loading units...</div>
+              <div style={{ color: th.textSecondary, fontSize: 12 }}>Loading units...</div>
             ) : (
               <>
                 {units.length > 0 && !showNewUnit && (
@@ -243,10 +245,10 @@ export default function NewServiceRequestPage() {
                       <div key={u.id}
                         style={selectedUnit?.id === u.id ? S.unitCardActive : S.unitCard}
                         onClick={() => { setSelectedUnit(u); setShowNewUnit(false) }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedUnit?.id === u.id ? '#4D9EFF' : '#F0F4FF' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedUnit?.id === u.id ? '#4D9EFF' : th.text }}>
                           #{u.unit_number || '—'} {u.year ? `${u.year} ` : ''}{u.make || ''} {u.model || ''}
                         </div>
-                        {u.vin && <div style={{ fontSize: 10, color: '#48536A', fontFamily: 'monospace' }}>{u.vin}</div>}
+                        {u.vin && <div style={{ fontSize: 10, color: th.textTertiary, fontFamily: 'monospace' }}>{u.vin}</div>}
                       </div>
                     ))}
                   </div>

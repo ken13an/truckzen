@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { Upload } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -19,6 +20,7 @@ function expiryStatus(d: string | null) {
 }
 
 export default function DriverDetailPage() {
+  const { tokens: th } = useTheme()
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -77,12 +79,12 @@ export default function DriverDetailPage() {
     }
   }
 
-  if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: th.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const S: Record<string, React.CSSProperties> = {
     card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
-    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A', marginBottom: 4, display: 'block' },
-    input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary, marginBottom: 4, display: 'block' },
+    input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
   }
 
@@ -90,10 +92,10 @@ export default function DriverDetailPage() {
   const currentAssignment = assignments.find(a => !a.unassigned_date)
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>{driver.full_name}</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text }}>{driver.full_name}</div>
           <div style={{ fontSize: 12, color: MUTED }}>
             CDL {driver.cdl_class || 'A'} · {driver.cdl_number || 'No CDL'} · {currentAssignment ? `Truck #${currentAssignment.assets?.unit_number}` : 'Unassigned'}
           </div>
@@ -114,7 +116,7 @@ export default function DriverDetailPage() {
 
       {tab === 'profile' && (
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Driver Profile</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 12 }}>Driver Profile</div>
           <div style={S.row2}>
             <div><label style={S.label}>Full Name</label><input style={S.input} defaultValue={driver.full_name} onBlur={e => saveField('full_name', e.target.value)} /></div>
             <div><label style={S.label}>Phone</label><input style={S.input} defaultValue={driver.phone || ''} onBlur={e => saveField('phone', e.target.value)} /></div>
@@ -152,7 +154,7 @@ export default function DriverDetailPage() {
             return (
               <div key={item.title} style={{ ...S.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 4 }}>{item.title}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 4 }}>{item.title}</div>
                   <div style={{ fontSize: 11, color: MUTED }}>{item.details}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -178,11 +180,11 @@ export default function DriverDetailPage() {
             <button onClick={assignTruck} style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, minHeight: 36 }}>Assign</button>
           </div>
           {assignments.length === 0 ? (
-            <div style={{ ...S.card, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No assignments yet</div>
+            <div style={{ ...S.card, textAlign: 'center', color: th.textTertiary, fontSize: 12 }}>No assignments yet</div>
           ) : assignments.map(a => (
             <div key={a.id} style={{ ...S.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>#{a.assets?.unit_number || '—'}</div>
+                <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: th.text }}>#{a.assets?.unit_number || '—'}</div>
                 <div style={{ fontSize: 11, color: MUTED }}>{[a.assets?.year, a.assets?.make, a.assets?.model].filter(Boolean).join(' ')}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -201,15 +203,15 @@ export default function DriverDetailPage() {
       {tab === 'documents' && (
         <div>
           <div style={{ ...S.card, textAlign: 'center', padding: 30, border: '2px dashed rgba(255,255,255,.08)' }}>
-            <Upload size={24} color="#48536A" style={{ marginBottom: 8 }} />
-            <div style={{ color: '#48536A', fontSize: 12 }}>Upload CDL, medical card, drug test results, MVR report</div>
+            <Upload size={24} color={th.textTertiary} style={{ marginBottom: 8 }} />
+            <div style={{ color: th.textTertiary, fontSize: 12 }}>Upload CDL, medical card, drug test results, MVR report</div>
           </div>
           {documents.length === 0 ? (
-            <div style={{ ...S.card, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No documents uploaded yet</div>
+            <div style={{ ...S.card, textAlign: 'center', color: th.textTertiary, fontSize: 12 }}>No documents uploaded yet</div>
           ) : documents.map(doc => (
             <div key={doc.id} style={{ ...S.card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#F0F4FF', textTransform: 'capitalize' }}>{doc.doc_type?.replace(/_/g, ' ')}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: th.text, textTransform: 'capitalize' }}>{doc.doc_type?.replace(/_/g, ' ')}</div>
                 <div style={{ fontSize: 11, color: MUTED }}>{doc.file_name || 'Document'}</div>
               </div>
               <div style={{ fontSize: 11, color: MUTED }}>{doc.expiry_date ? `Expires: ${new Date(doc.expiry_date).toLocaleDateString()}` : ''}</div>

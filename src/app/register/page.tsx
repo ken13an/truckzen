@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
 import Logo from '@/components/Logo'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 const FLEET_OPTIONS = ['1-10', '11-50', '51-200', '200+']
 const SOFTWARE_OPTIONS = ['Fullbay', 'TMT', 'BigShop', 'Excel', 'Paper', 'Other']
@@ -52,11 +54,11 @@ export default function RegisterPage() {
         <div style={styles.glow} />
         <div style={styles.card}>
           <Logo size="md" style={{ marginBottom: 28 }} />
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Application Received!</div>
-          <p style={{ fontSize: 13, color: '#7C8BA0', lineHeight: 1.6, margin: '0 0 20px' }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: _t.bgLight, marginBottom: 8 }}>Application Received!</div>
+          <p style={{ fontSize: 13, color: _t.textSecondary, lineHeight: 1.6, margin: '0 0 20px' }}>
             Thank you for your interest in TruckZen. We&apos;ll review your application and get back to you within 24-48 hours.
           </p>
-          <a href="/login" style={{ fontSize: 12, color: '#1D6FE8', textDecoration: 'none' }}>Back to login</a>
+          <a href="/login" style={{ fontSize: 12, color: _t.accent, textDecoration: 'none' }}>Back to login</a>
         </div>
       </div>
     )
@@ -68,8 +70,8 @@ export default function RegisterPage() {
       <div style={styles.glow} />
       <div style={{ ...styles.card, maxWidth: 480 }}>
         <Logo size="md" style={{ marginBottom: 28 }} />
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Apply for Early Access</div>
-        <div style={{ fontSize: 13, color: '#7C8BA0', marginBottom: 28 }}>Tell us about your shop and we&apos;ll get you set up.</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: _t.bgLight, marginBottom: 6 }}>Apply for Early Access</div>
+        <div style={{ fontSize: 13, color: _t.textSecondary, marginBottom: 28 }}>Tell us about your shop and we&apos;ll get you set up.</div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Honeypot — hidden from real users, bots fill it */}
@@ -138,22 +140,22 @@ export default function RegisterPage() {
 
           {/* Error */}
           {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: _t.danger }}>
               {error}
             </div>
           )}
 
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: 13, background: loading ? 'rgba(255,255,255,.06)' : '#1D6FE8', color: loading ? '#7C8BA0' : '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: "'Instrument Sans', sans-serif", marginTop: 4 }}>
+          <button type="submit" disabled={loading} style={{ width: '100%', padding: 13, background: loading ? 'rgba(255,255,255,.06)' : _t.accent, color: loading ? _t.textSecondary : _t.bgLight, border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: "'Instrument Sans', sans-serif", marginTop: 4 }}>
             {loading ? 'Submitting...' : 'Submit Application'}
           </button>
         </form>
 
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <a href="/login" style={{ fontSize: 12, color: '#1D6FE8', textDecoration: 'none' }}>Already have an account? Sign in</a>
+          <a href="/login" style={{ fontSize: 12, color: _t.accent, textDecoration: 'none' }}>Already have an account? Sign in</a>
         </div>
       </div>
 
-      <div style={{ position: 'fixed', bottom: 16, fontSize: 10, color: '#48536A', letterSpacing: '0.06em', zIndex: 1, fontFamily: "'IBM Plex Mono', monospace" }}>
+      <div style={{ position: 'fixed', bottom: 16, fontSize: 10, color: _t.textTertiary, letterSpacing: '0.06em', zIndex: 1, fontFamily: "'IBM Plex Mono', monospace" }}>
         Powered by TruckZen &bull; Your Shop. Powered.
       </div>
     </div>
@@ -162,7 +164,7 @@ export default function RegisterPage() {
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    minHeight: '100vh', background: '#0a0a10', display: 'flex', flexDirection: 'column',
+    minHeight: '100vh', background: _t.bg, display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', padding: 20,
     fontFamily: "'Instrument Sans', -apple-system, sans-serif", position: 'relative', overflow: 'hidden',
   },
@@ -177,19 +179,19 @@ const styles: Record<string, React.CSSProperties> = {
     pointerEvents: 'none', zIndex: 0,
   },
   card: {
-    width: '100%', maxWidth: 400, background: '#12131a',
+    width: '100%', maxWidth: 400, background: _t.bgCard,
     border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16,
     padding: '40px 36px', position: 'relative', zIndex: 1,
     boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
   },
   label: {
-    fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase' as const,
+    fontSize: 11, fontWeight: 600, color: _t.textSecondary, textTransform: 'uppercase' as const,
     letterSpacing: '0.08em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 4,
   },
   input: {
     width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,.06)',
     border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13,
-    color: '#DDE3EE', outline: 'none', fontFamily: "'Instrument Sans', sans-serif",
+    color: _t.text, outline: 'none', fontFamily: "'Instrument Sans', sans-serif",
     boxSizing: 'border-box' as const, minHeight: 42,
   },
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { ChevronRight } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const MAINTENANCE_ROLES = ['owner', 'gm', 'it_person', 'maintenance_manager']
 
@@ -38,6 +39,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
 }
 
 export default function MaintenanceLayout({ children }: { children: React.ReactNode }) {
+  const { tokens: t } = useTheme()
   const pathname = usePathname()
   const supabase = createClient()
   const [allowed, setAllowed] = useState<boolean | null>(null) // null = loading
@@ -55,7 +57,7 @@ export default function MaintenanceLayout({ children }: { children: React.ReactN
     })
   }, [])
 
-  if (allowed === null) return <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0', fontFamily: "'Instrument Sans',sans-serif" }}>Loading...</div>
+  if (allowed === null) return <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary, fontFamily: "'Instrument Sans',sans-serif" }}>Loading...</div>
   if (!allowed) return null
 
   // Build breadcrumbs
@@ -75,16 +77,16 @@ export default function MaintenanceLayout({ children }: { children: React.ReactN
   const isRoot = pathname === '/maintenance'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#060708' }}>
+    <div style={{ minHeight: '100vh', background: t.bg }}>
       {!isRoot && crumbs.length > 1 && (
         <div style={{ padding: '12px 24px 0', display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Instrument Sans',sans-serif" }}>
           {crumbs.map((c, i) => (
             <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {i > 0 && <ChevronRight size={12} color="#48536A" />}
+              {i > 0 && <ChevronRight size={12} color={t.textTertiary} />}
               {c.href && i < crumbs.length - 1 ? (
-                <a href={c.href} style={{ color: '#4D9EFF', fontSize: 12, textDecoration: 'none' }}>{c.label}</a>
+                <a href={c.href} style={{ color: t.accentLight, fontSize: 12, textDecoration: 'none' }}>{c.label}</a>
               ) : (
-                <span style={{ color: '#7C8BA0', fontSize: 12 }}>{c.label}</span>
+                <span style={{ color: t.textSecondary, fontSize: 12 }}>{c.label}</span>
               )}
             </span>
           ))}

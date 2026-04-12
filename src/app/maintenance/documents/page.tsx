@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import DataTable from '@/components/DataTable'
 import { Upload } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -11,6 +12,7 @@ const BLUE = '#1B6EE6', MUTED = '#7C8BA0'
 const typeColor: Record<string, string> = { invoice: '#F97316', photo: BLUE, repair_order: '#8B5CF6', other: MUTED }
 
 export default function DocumentsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [shopId, setShopId] = useState('')
   const [filter, setFilter] = useState('all')
@@ -19,18 +21,18 @@ export default function DocumentsPage() {
     getCurrentUser(supabase).then((p: any) => { if (!p) { window.location.href = '/login'; return }; setShopId(p.shop_id) })
   }, [])
 
-  if (!shopId) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Documents</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Documents</div>
       </div>
 
       <div style={{ background: '#161B24', border: '2px dashed rgba(255,255,255,.08)', borderRadius: 12, padding: 30, textAlign: 'center', marginBottom: 16 }}>
-        <Upload size={28} color="#48536A" style={{ marginBottom: 8 }} />
-        <div style={{ color: '#48536A', fontSize: 13 }}>Upload files to the maintenance document library</div>
-        <div style={{ color: '#48536A', fontSize: 11, marginTop: 4 }}>Drag & drop or click to upload. Uses maintenance-files storage.</div>
+        <Upload size={28} color={t.textTertiary} style={{ marginBottom: 8 }} />
+        <div style={{ color: t.textTertiary, fontSize: 13 }}>Upload files to the maintenance document library</div>
+        <div style={{ color: t.textTertiary, fontSize: 11, marginTop: 4 }}>Drag & drop or click to upload. Uses maintenance-files storage.</div>
       </div>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
@@ -41,7 +43,7 @@ export default function DocumentsPage() {
 
       <DataTable
         columns={[
-          { key: 'file_name', label: 'File Name', render: (r: any) => <span style={{ fontWeight: 600, color: '#F0F4FF' }}>{r.file_name}</span> },
+          { key: 'file_name', label: 'File Name', render: (r: any) => <span style={{ fontWeight: 600, color: t.text }}>{r.file_name}</span> },
           { key: 'file_type', label: 'Type', render: (r: any) => <span style={{ fontSize: 9, fontWeight: 600, color: typeColor[r.file_type] || MUTED, background: `${typeColor[r.file_type] || MUTED}18`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>{r.file_type || 'other'}</span> },
           { key: 'file_size', label: 'Size', render: (r: any) => r.file_size ? `${(r.file_size / 1024).toFixed(0)} KB` : '—' },
           { key: 'linked_type', label: 'Linked To', render: (r: any) => <span style={{ textTransform: 'capitalize' }}>{r.linked_type?.replace(/_/g, ' ') || '—'}</span> },

@@ -3,13 +3,17 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 const FONT = "'Instrument Sans', sans-serif"
 const MONO = "'IBM Plex Mono', monospace"
-const BLUE = '#1B6EE6'
-const PAGE_BG = '#F4F5F7'
+const BLUE = _t.accent
+const PAGE_BG = _t.bg
 
 export default function PartDetailPage() {
+  const { tokens: t } = useTheme()
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -95,7 +99,7 @@ export default function PartDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: FONT, padding: 48, textAlign: 'center', color: '#9CA3AF' }}>
+      <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: FONT, padding: 48, textAlign: 'center', color: t.textTertiary }}>
         Loading...
       </div>
     )
@@ -109,7 +113,7 @@ export default function PartDetailPage() {
     <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: FONT, padding: 24 }}>
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: BLUE, color: '#fff', padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: BLUE, color: t.bgLight, padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
           {toast}
         </div>
       )}
@@ -121,34 +125,34 @@ export default function PartDetailPage() {
             <div style={{ fontFamily: MONO, fontSize: 13, color: BLUE, fontWeight: 600 }}>{part.part_number || 'No Part #'}</div>
             <span style={{
               display: 'inline-block', padding: '2px 10px', borderRadius: 100, fontSize: 10, fontWeight: 600,
-              background: status === 'active' ? '#F0FDF4' : '#F3F4F6',
-              color: status === 'active' ? '#16A34A' : '#9CA3AF',
+              background: status === 'active' ? t.successBg : t.surfaceMuted,
+              color: status === 'active' ? t.success : t.textTertiary,
             }}>
               {status === 'active' ? 'Active' : 'Inactive'}
             </span>
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#1A1A1A' }}>{part.description || 'Untitled Part'}</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: t.text }}>{part.description || 'Untitled Part'}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <a href="/parts" style={{
-            padding: '8px 16px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff',
-            color: '#374151', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'inherit',
+            padding: '8px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard,
+            color: t.textSecondary, fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'inherit',
           }}>Back to Parts</a>
           {canEdit && !editing && (
             <button onClick={() => setEditing(true)} style={{
               padding: '8px 16px', borderRadius: 8, border: 'none', background: BLUE,
-              color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+              color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
             }}>Edit</button>
           )}
           {editing && (
             <>
               <button onClick={handleCancel} style={{
-                padding: '8px 16px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff',
-                color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                padding: '8px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard,
+                color: t.textSecondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
               }}>Cancel</button>
               <button onClick={handleSave} disabled={saving} style={{
                 padding: '8px 16px', borderRadius: 8, border: 'none', background: BLUE,
-                color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                 opacity: saving ? 0.6 : 1,
               }}>{saving ? 'Saving...' : 'Save'}</button>
             </>
@@ -210,13 +214,13 @@ export default function PartDetailPage() {
               {Array.isArray(crossRefs) && crossRefs.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {crossRefs.map((ref: any, i: number) => (
-                    <div key={i} style={{ padding: '8px 12px', background: '#F9FAFB', borderRadius: 6, fontSize: 12, color: '#374151', fontFamily: MONO }}>
+                    <div key={i} style={{ padding: '8px 12px', background: t.bgHover, borderRadius: 6, fontSize: 12, color: t.textSecondary, fontFamily: MONO }}>
                       {typeof ref === 'string' ? ref : (ref.part_number || ref.reference || JSON.stringify(ref))}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: '#9CA3AF' }}>No cross references</div>
+                <div style={{ fontSize: 13, color: t.textTertiary }}>No cross references</div>
               )}
             </div>
           </div>
@@ -230,7 +234,7 @@ export default function PartDetailPage() {
                 const cost = part.average_cost ?? part.cost_price ?? 0
                 const sell = part.selling_price ?? part.sell_price ?? 0
                 return cost > 0 && sell > 0 && sell < cost ? (
-                  <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 12, color: '#D97706', marginBottom: 12, fontWeight: 600 }}>
+                  <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 12, color: t.warning, marginBottom: 12, fontWeight: 600 }}>
                     Sell price below cost — margin is negative
                   </div>
                 ) : null
@@ -274,7 +278,7 @@ export default function PartDetailPage() {
             <div style={cardStyle}>
               <div style={sectionTitle}>Inventory</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <Field label="In Stock" value={editing ? undefined : fmtQty(onHand)} valueColor={onHand > 0 ? BLUE : '#9CA3AF'}>
+                <Field label="In Stock" value={editing ? undefined : fmtQty(onHand)} valueColor={onHand > 0 ? BLUE : t.textTertiary}>
                   {editing && <input type="number" step="0.01" value={form.on_hand ?? 0} onChange={e => setForm({ ...form, on_hand: parseFloat(e.target.value) || 0 })} style={inputStyle} />}
                 </Field>
                 <Field label="Allocated" value={editing ? undefined : fmtQty(part.allocated ?? part.reserved_qty ?? 0)}>
@@ -306,44 +310,44 @@ export default function PartDetailPage() {
 
       {/* Tabs section */}
       <div style={{ marginTop: 24 }}>
-        <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.border}`, marginBottom: 16 }}>
           {[
             { key: 'exceptions' as const, label: 'Pricing Exceptions' },
             { key: 'history' as const, label: 'Field History' },
             { key: 'pos' as const, label: 'Purchase Orders' },
-          ].map(t => (
-            <button key={t.key} onClick={() => { setActiveTab(t.key); if (t.key === 'pos') setPoPage(1) }} style={{
+          ].map(tab => (
+            <button key={tab.key} onClick={() => { setActiveTab(tab.key); if (tab.key === 'pos') setPoPage(1) }} style={{
               padding: '10px 18px', background: 'none', border: 'none',
-              borderBottom: activeTab === t.key ? `2px solid ${BLUE}` : '2px solid transparent',
-              color: activeTab === t.key ? BLUE : '#9CA3AF',
-              fontWeight: activeTab === t.key ? 700 : 500, fontSize: 13, cursor: 'pointer',
+              borderBottom: activeTab === tab.key ? `2px solid ${BLUE}` : '2px solid transparent',
+              color: activeTab === tab.key ? BLUE : t.textTertiary,
+              fontWeight: activeTab === tab.key ? 700 : 500, fontSize: 13, cursor: 'pointer',
               fontFamily: 'inherit', marginBottom: -2,
-            }}>{t.label}</button>
+            }}>{tab.label}</button>
           ))}
         </div>
 
         <div style={cardStyle}>
           {tabLoading ? (
-            <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>Loading...</div>
+            <div style={{ padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>Loading...</div>
           ) : activeTab === 'exceptions' ? (
             tabData.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No pricing exceptions</div>
+              <div style={{ padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No pricing exceptions</div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                  <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                     {['Customer', 'Price', 'Discount', 'Effective Date'].map(h => (
-                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {tabData.map((row: any) => (
-                    <tr key={row.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A' }}>{row.customer_name || row.customer_id || '--'}</td>
+                    <tr key={row.id} style={{ borderBottom: `1px solid ${t.border}` }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.text }}>{row.customer_name || row.customer_id || '--'}</td>
                       <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12 }}>{row.price != null ? fmt(row.price) : '--'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.discount_pct ? `${row.discount_pct}%` : '--'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.effective_date || row.created_at ? new Date(row.effective_date || row.created_at).toLocaleDateString() : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.discount_pct ? `${row.discount_pct}%` : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.effective_date || row.created_at ? new Date(row.effective_date || row.created_at).toLocaleDateString() : '--'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -351,24 +355,24 @@ export default function PartDetailPage() {
             )
           ) : activeTab === 'history' ? (
             tabData.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No history records</div>
+              <div style={{ padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No history records</div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                  <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                     {['Date', 'Field', 'Old Value', 'New Value', 'Changed By'].map(h => (
-                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {tabData.map((row: any) => (
-                    <tr key={row.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '--'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: '#1A1A1A' }}>{row.field_name || '--'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>{row.old_value ?? '--'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: '#1A1A1A' }}>{row.new_value ?? '--'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.changed_by_name || row.changed_by || '--'}</td>
+                    <tr key={row.id} style={{ borderBottom: `1px solid ${t.border}` }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: t.text }}>{row.field_name || '--'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: t.textTertiary }}>{row.old_value ?? '--'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: t.text }}>{row.new_value ?? '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.changed_by_name || row.changed_by || '--'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -377,25 +381,25 @@ export default function PartDetailPage() {
           ) : (
             /* Purchase Orders tab */
             tabData.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No purchase orders</div>
+              <div style={{ padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No purchase orders</div>
             ) : (
               <>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                       {['PO #', 'Vendor', 'Date', 'Qty', 'Unit Cost', 'Total'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {tabData.map((row: any) => (
-                      <tr key={row.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <tr key={row.id} style={{ borderBottom: `1px solid ${t.border}` }}>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{row.po_number || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A' }}>{row.vendor || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{row.date ? new Date(row.date).toLocaleDateString() : '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.text }}>{row.vendor || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.date ? new Date(row.date).toLocaleDateString() : '--'}</td>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12 }}>{row.quantity ?? '--'}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280' }}>{row.cost_price != null ? fmt(row.cost_price) : '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: t.textSecondary }}>{row.cost_price != null ? fmt(row.cost_price) : '--'}</td>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600 }}>{row.cost_price != null && row.quantity != null ? fmt(row.cost_price * row.quantity) : '--'}</td>
                       </tr>
                     ))}
@@ -403,9 +407,9 @@ export default function PartDetailPage() {
                 </table>
                 {poTotal > 25 && (
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 8, padding: '12px 0', fontSize: 12 }}>
-                    <button disabled={poPage <= 1} onClick={() => setPoPage(p => p - 1)} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: poPage <= 1 ? '#D1D5DB' : '#374151', cursor: poPage <= 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>Previous</button>
-                    <span style={{ color: '#6B7280', lineHeight: '28px' }}>Page {poPage} of {Math.ceil(poTotal / 25)}</span>
-                    <button disabled={poPage >= Math.ceil(poTotal / 25)} onClick={() => setPoPage(p => p + 1)} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: poPage >= Math.ceil(poTotal / 25) ? '#D1D5DB' : '#374151', cursor: poPage >= Math.ceil(poTotal / 25) ? 'default' : 'pointer', fontFamily: 'inherit' }}>Next</button>
+                    <button disabled={poPage <= 1} onClick={() => setPoPage(p => p - 1)} style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${t.border}`, background: t.bgCard, color: poPage <= 1 ? t.textTertiary : t.textSecondary, cursor: poPage <= 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>Previous</button>
+                    <span style={{ color: t.textSecondary, lineHeight: '28px' }}>Page {poPage} of {Math.ceil(poTotal / 25)}</span>
+                    <button disabled={poPage >= Math.ceil(poTotal / 25)} onClick={() => setPoPage(p => p + 1)} style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${t.border}`, background: t.bgCard, color: poPage >= Math.ceil(poTotal / 25) ? t.textTertiary : t.textSecondary, cursor: poPage >= Math.ceil(poTotal / 25) ? 'default' : 'pointer', fontFamily: 'inherit' }}>Next</button>
                   </div>
                 )}
               </>
@@ -437,12 +441,12 @@ function Field({ label, value, valueColor, children }: {
   return (
     <div>
       <div style={{
-        fontSize: 10, fontWeight: 600, color: '#9CA3AF', textTransform: 'uppercase',
+        fontSize: 10, fontWeight: 600, color: _t.textTertiary, textTransform: 'uppercase',
         letterSpacing: '.06em', marginBottom: 4,
       }}>{label}</div>
       {children || (
         <div style={{
-          fontSize: 14, fontWeight: 500, color: valueColor || '#1A1A1A',
+          fontSize: 14, fontWeight: 500, color: valueColor || _t.text,
           fontFamily: (label.includes('Cost') || label.includes('Price') || label.includes('Stock') || label.includes('Qty') || label.includes('Margin') || label.includes('Markup') || label.includes('Balance') || label.includes('Allocated') || label.includes('Transit'))
             ? "'IBM Plex Mono', monospace" : "'Instrument Sans', sans-serif",
         }}>{value}</div>
@@ -452,8 +456,8 @@ function Field({ label, value, valueColor, children }: {
 }
 
 const cardStyle: React.CSSProperties = {
-  background: '#fff',
-  border: '1px solid #E5E7EB',
+  background: _t.bgCard,
+  border: `1px solid ${_t.cardBorder}`,
   borderRadius: 12,
   padding: 20,
 }
@@ -461,21 +465,21 @@ const cardStyle: React.CSSProperties = {
 const sectionTitle: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 700,
-  color: '#1A1A1A',
+  color: _t.text,
   marginBottom: 16,
   paddingBottom: 10,
-  borderBottom: '1px solid #F3F4F6',
+  borderBottom: `1px solid ${_t.border}`,
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '8px 10px',
-  border: '1px solid #D1D5DB',
+  border: `1px solid ${_t.inputBorder}`,
   borderRadius: 6,
   fontSize: 13,
-  color: '#1A1A1A',
+  color: _t.text,
   fontFamily: "'Instrument Sans', sans-serif",
   outline: 'none',
-  background: '#fff',
+  background: _t.inputBg,
   boxSizing: 'border-box',
 }

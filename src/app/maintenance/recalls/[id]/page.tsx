@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const GREEN = '#1DB870', RED = '#D94F4F', MUTED = '#7C8BA0'
 
 export default function RecallDetailPage() {
+  const { tokens: t } = useTheme()
   const params = useParams()
   const router = useRouter()
   const supabase = createClient()
@@ -35,15 +37,15 @@ export default function RecallDetailPage() {
     setSaving(false)
   }
 
-  if (loading) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
   const asset = recall.assets || {}
-  const S: Record<string, React.CSSProperties> = { card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 }, label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A' } }
+  const S: Record<string, React.CSSProperties> = { card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 }, label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary } }
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>{recall.title}</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>{recall.title}</div>
           <div style={{ fontSize: 13, color: MUTED }}>#{asset.unit_number || '—'} {asset.make} {asset.model} · {recall.manufacturer || '—'}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -53,8 +55,8 @@ export default function RecallDetailPage() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 14, alignItems: 'start' }}>
         <div>
-          <div style={S.card}><div style={S.label}>Description</div><div style={{ fontSize: 13, color: '#DDE3EE', marginTop: 4 }}>{recall.description || 'No description'}</div></div>
-          {recall.remedy && <div style={S.card}><div style={S.label}>Remedy</div><div style={{ fontSize: 13, color: '#DDE3EE', marginTop: 4 }}>{recall.remedy}</div></div>}
+          <div style={S.card}><div style={S.label}>Description</div><div style={{ fontSize: 13, color: t.text, marginTop: 4 }}>{recall.description || 'No description'}</div></div>
+          {recall.remedy && <div style={S.card}><div style={S.label}>Remedy</div><div style={{ fontSize: 13, color: t.text, marginTop: 4 }}>{recall.remedy}</div></div>}
         </div>
         <div style={S.card}>
           {[
@@ -65,7 +67,7 @@ export default function RecallDetailPage() {
             { label: 'Completed', val: recall.completed_date ? new Date(recall.completed_date).toLocaleDateString() : '—' },
           ].map(r => (
             <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 12 }}>
-              <span style={{ color: '#48536A' }}>{r.label}</span><span style={{ color: '#DDE3EE' }}>{r.val || '—'}</span>
+              <span style={{ color: t.textTertiary }}>{r.label}</span><span style={{ color: t.text }}>{r.val || '—'}</span>
             </div>
           ))}
         </div>

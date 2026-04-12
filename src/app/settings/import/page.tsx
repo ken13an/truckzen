@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { ADMIN_ROLES } from '@/lib/roles'
+import { useTheme } from '@/hooks/useTheme'
 
 const IMPORT_TYPES = [
   { key: 'customers', label: 'Customers', icon: '', desc: 'Company Name, Contact, Phone, Email, Address' },
@@ -15,6 +16,7 @@ const IMPORT_TYPES = [
 type ImportResult = { created: number; skipped: number; errors: number; total: number; details: string[] }
 
 export default function ImportPage() {
+  const { tokens: th } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [selectedType, setSelectedType] = useState<string>('customers')
@@ -97,14 +99,14 @@ export default function ImportPage() {
   if (!user) return null
 
   const sty = {
-    page: { padding: '32px 40px', maxWidth: 960, margin: '0 auto', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif" } as const,
-    h1: { fontSize: 24, fontWeight: 700, color: '#F0F4FF', marginBottom: 6 } as const,
-    sub: { fontSize: 13, color: '#7C8BA0', marginBottom: 32 } as const,
-    card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 24, marginBottom: 20 } as const,
-    label: { fontSize: 12, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 10, display: 'block' },
+    page: { padding: '32px 40px', maxWidth: 960, margin: '0 auto', color: th.text, fontFamily: "'Instrument Sans',sans-serif" } as const,
+    h1: { fontSize: 24, fontWeight: 700, color: th.text, marginBottom: 6 } as const,
+    sub: { fontSize: 13, color: th.textSecondary, marginBottom: 32 } as const,
+    card: { background: th.bgCard, border: '1px solid #1A1D23', borderRadius: 12, padding: 24, marginBottom: 20 } as const,
+    label: { fontSize: 12, fontWeight: 600, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 10, display: 'block' },
     typeBtn: (active: boolean) => ({
       display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 9,
-      border: active ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: active ? 'rgba(29,111,232,.08)' : '#0D0F12',
+      border: active ? '1px solid #1D6FE8' : '1px solid #1A1D23', background: active ? 'rgba(29,111,232,.08)' : th.bgCard,
       cursor: 'pointer', transition: 'all .15s', width: '100%', textAlign: 'left' as const,
     }),
     btn: (disabled: boolean) => ({
@@ -117,11 +119,11 @@ export default function ImportPage() {
       cursor: 'pointer', transition: 'border-color .15s',
     },
     table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 },
-    th: { padding: '8px 10px', borderBottom: '1px solid #1A1D23', color: '#7C8BA0', textAlign: 'left' as const, fontWeight: 600 },
+    th: { padding: '8px 10px', borderBottom: '1px solid #1A1D23', color: th.textSecondary, textAlign: 'left' as const, fontWeight: 600 },
     td: { padding: '8px 10px', borderBottom: '1px solid #0D0F12', color: '#A0AABF', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
-    stat: (color: string) => ({ textAlign: 'center' as const, padding: '16px 20px', borderRadius: 9, background: '#0D0F12', border: '1px solid #1A1D23', flex: 1, minWidth: 100 }),
+    stat: (color: string) => ({ textAlign: 'center' as const, padding: '16px 20px', borderRadius: 9, background: th.bgCard, border: '1px solid #1A1D23', flex: 1, minWidth: 100 }),
     statNum: (color: string) => ({ fontSize: 28, fontWeight: 700, color, lineHeight: 1 }),
-    statLabel: { fontSize: 11, color: '#7C8BA0', marginTop: 4, textTransform: 'uppercase' as const, letterSpacing: '.05em' },
+    statLabel: { fontSize: 11, color: th.textSecondary, marginTop: 4, textTransform: 'uppercase' as const, letterSpacing: '.05em' },
   }
 
   return (
@@ -138,7 +140,7 @@ export default function ImportPage() {
               <span style={{ fontSize: 22 }}>{t.icon}</span>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: selectedType === t.key ? '#F0F4FF' : '#A0AABF' }}>{t.label}</div>
-                <div style={{ fontSize: 11, color: '#48536A', marginTop: 2 }}>{t.desc}</div>
+                <div style={{ fontSize: 11, color: th.textTertiary, marginTop: 2 }}>{t.desc}</div>
               </div>
             </div>
           ))}
@@ -152,14 +154,14 @@ export default function ImportPage() {
           <input ref={fileRef} type="file" accept=".csv" onChange={handleFile} style={{ display: 'none' }} />
           {file ? (
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F4FF' }}>{file.name}</div>
-              <div style={{ fontSize: 12, color: '#7C8BA0', marginTop: 4 }}>{(file.size / 1024).toFixed(1)} KB — Click to replace</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: th.text }}>{file.name}</div>
+              <div style={{ fontSize: 12, color: th.textSecondary, marginTop: 4 }}>{(file.size / 1024).toFixed(1)} KB — Click to replace</div>
             </div>
           ) : (
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#7C8BA0', marginBottom: 8 }}>Upload File</div>
-              <div style={{ fontSize: 14, color: '#7C8BA0' }}>Click to select a .csv file</div>
-              <div style={{ fontSize: 11, color: '#48536A', marginTop: 4 }}>Exported from FullBay → Reports → Export</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: th.textSecondary, marginBottom: 8 }}>Upload File</div>
+              <div style={{ fontSize: 14, color: th.textSecondary }}>Click to select a .csv file</div>
+              <div style={{ fontSize: 11, color: th.textTertiary, marginTop: 4 }}>Exported from FullBay → Reports → Export</div>
             </div>
           )}
         </div>
@@ -192,7 +194,7 @@ export default function ImportPage() {
             <button style={sty.btn(importing)} onClick={handleImport} disabled={importing}>
               {importing ? 'Importing...' : `Import ${IMPORT_TYPES.find(t => t.key === selectedType)?.label}`}
             </button>
-            {importing && <div style={{ fontSize: 13, color: '#7C8BA0' }}>Processing {preview.length > 4 ? 'all' : ''} rows... This may take a moment.</div>}
+            {importing && <div style={{ fontSize: 13, color: th.textSecondary }}>Processing {preview.length > 4 ? 'all' : ''} rows... This may take a moment.</div>}
           </div>
         </div>
       )}
@@ -229,12 +231,12 @@ export default function ImportPage() {
           </div>
 
           {result.details.length > 0 && (
-            <div style={{ background: '#060708', borderRadius: 9, padding: 16, maxHeight: 200, overflowY: 'auto' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#7C8BA0', marginBottom: 8 }}>DETAILS</div>
+            <div style={{ background: th.bg, borderRadius: 9, padding: 16, maxHeight: 200, overflowY: 'auto' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: th.textSecondary, marginBottom: 8 }}>DETAILS</div>
               {result.details.slice(0, 50).map((d, i) => (
                 <div key={i} style={{ fontSize: 12, color: '#A0AABF', padding: '3px 0', borderBottom: '1px solid #0D0F12' }}>{d}</div>
               ))}
-              {result.details.length > 50 && <div style={{ fontSize: 11, color: '#48536A', marginTop: 8 }}>...and {result.details.length - 50} more</div>}
+              {result.details.length > 50 && <div style={{ fontSize: 11, color: th.textTertiary, marginTop: 8 }}>...and {result.details.length - 50} more</div>}
             </div>
           )}
 

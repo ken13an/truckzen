@@ -4,12 +4,14 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import DataTable from '@/components/DataTable'
 import { DollarSign, Gauge, Droplets, TrendingUp } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const BLUE = '#1B6EE6', GREEN = '#1DB870', MUTED = '#7C8BA0'
 
 export default function FuelPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [shopId, setShopId] = useState('')
   const [stats, setStats] = useState({ spend: 0, avgMpg: 0, gallons: 0, avgCpg: 0 })
@@ -29,7 +31,7 @@ export default function FuelPage() {
     })
   }, [])
 
-  if (!shopId) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const cards = [
     { label: 'Spend This Month', value: `$${stats.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, icon: DollarSign, color: BLUE },
@@ -39,9 +41,9 @@ export default function FuelPage() {
   ]
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Fuel Entries</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Fuel Entries</div>
         <a href="/maintenance/fuel/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
       </div>
 
@@ -49,10 +51,10 @@ export default function FuelPage() {
         {cards.map(c => {
           const Icon = c.icon
           return (
-            <div key={c.label} style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px' }}>
+            <div key={c.label} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                 <Icon size={13} color={c.color} />
-                <span style={{ fontSize: 9, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>{c.label}</span>
+                <span style={{ fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>{c.label}</span>
               </div>
               <div style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{c.value}</div>
             </div>

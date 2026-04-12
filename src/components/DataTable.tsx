@@ -6,6 +6,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import Pagination from '@/components/Pagination'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -38,6 +39,7 @@ export default function DataTable({
   onRowClick, emptyMessage = 'No data found', headerActions,
   externalSearch, externalFilter, externalDateFrom, externalDateTo,
 }: DataTableProps) {
+  const { tokens: t } = useTheme()
   const [data, setData] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
@@ -80,7 +82,7 @@ export default function DataTable({
             value={search}
             onChange={e => handleSearch(e.target.value)}
             placeholder={searchPlaceholder}
-            style={{ padding: '7px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#DDE3EE', fontSize: 12, fontFamily: FONT, outline: 'none', flex: 1, minWidth: 180, maxWidth: 300 }}
+            style={{ padding: '7px 12px', background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, color: t.text, fontSize: 12, fontFamily: FONT, outline: 'none', flex: 1, minWidth: 180, maxWidth: 300 }}
           />
           {headerActions}
         </div>
@@ -92,29 +94,29 @@ export default function DataTable({
       )}
 
       {/* Table */}
-      <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
             <thead>
               <tr>
                 {columns.map(col => (
-                  <th key={col.key} style={{ fontFamily: MONO, fontSize: 8, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left', background: '#0B0D11', whiteSpace: 'nowrap', ...col.headerStyle }}>{col.label}</th>
+                  <th key={col.key} style={{ fontFamily: MONO, fontSize: 8, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left', background: t.bg, whiteSpace: 'nowrap', ...col.headerStyle }}>{col.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: '#7C8BA0', fontSize: 13 }}>Loading...</td></tr>
+                <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: t.textSecondary, fontSize: 13 }}>Loading...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: '#7C8BA0', fontSize: 13 }}>{emptyMessage}</td></tr>
+                <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: t.textSecondary, fontSize: 13 }}>{emptyMessage}</td></tr>
               ) : data.map((row, i) => (
                 <tr key={row.id || i}
-                  style={{ borderBottom: '1px solid rgba(255,255,255,.025)', cursor: onRowClick ? 'pointer' : 'default' }}
+                  style={{ borderBottom: `1px solid ${t.border}`, cursor: onRowClick ? 'pointer' : 'default' }}
                   onClick={() => onRowClick?.(row)}
-                  onMouseEnter={e => { if (onRowClick) (e.currentTarget.style.background = 'rgba(255,255,255,.03)') }}
+                  onMouseEnter={e => { if (onRowClick) (e.currentTarget.style.background = t.bgHover) }}
                   onMouseLeave={e => { if (onRowClick) (e.currentTarget.style.background = '') }}>
                   {columns.map(col => (
-                    <td key={col.key} style={{ padding: '9px 10px', fontSize: 12, color: '#DDE3EE', ...col.style }}>
+                    <td key={col.key} style={{ padding: '9px 10px', fontSize: 12, color: t.text, ...col.style }}>
                       {col.render ? col.render(row) : (row[col.key] ?? '—')}
                     </td>
                   ))}

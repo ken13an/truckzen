@@ -4,10 +4,12 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { MANAGEMENT_ROLES } from '@/lib/roles'
 import { parseStaffFile, generateTemplate, type StaffRow } from '@/lib/parseStaffFile'
+import { useTheme } from '@/hooks/useTheme'
 
 type Step = 'upload' | 'preview' | 'importing' | 'done'
 
 export default function StaffImportPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [step, setStep] = useState<Step>('upload')
@@ -121,7 +123,7 @@ export default function StaffImportPage() {
     setImportProgress(0); setImportLog([]); setImportSummary(null)
   }
 
-  if (!user) return <div style={S.page}><div style={{ color: '#48536A', textAlign: 'center', paddingTop: 100 }}>Loading...</div></div>
+  if (!user) return <div style={S.page}><div style={{ color: t.textTertiary, textAlign: 'center', paddingTop: 100 }}>Loading...</div></div>
 
   const ROLE_COLORS: Record<string, string> = {
     technician: '#1D6FE8', maintenance_technician: '#1D6FE8', maintenance_manager: '#7C3AED',
@@ -131,9 +133,9 @@ export default function StaffImportPage() {
 
   return (
     <div style={S.page}>
-      <a href="/settings/users" style={{ fontSize: 12, color: '#7C8BA0', textDecoration: 'none', display: 'block', marginBottom: 20 }}>← Staff</a>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 }}>Staff Bulk Import</div>
-      <div style={{ fontSize: 12, color: '#7C8BA0', marginBottom: 24 }}>Upload the completed staff roster Excel file to create accounts for all employees at once.</div>
+      <a href="/settings/users" style={{ fontSize: 12, color: t.textSecondary, textDecoration: 'none', display: 'block', marginBottom: 20 }}>← Staff</a>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Staff Bulk Import</div>
+      <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 24 }}>Upload the completed staff roster Excel file to create accounts for all employees at once.</div>
 
       {/* Step indicator */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
@@ -144,10 +146,10 @@ export default function StaffImportPage() {
               width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontWeight: 700,
               background: step === s || (s === 'importing' && step === 'done') ? '#1D6FE8' : i < ['upload', 'preview', 'importing'].indexOf(step) || step === 'done' ? 'rgba(29,111,232,.2)' : '#1C2130',
-              color: step === s || step === 'done' ? '#fff' : '#48536A',
+              color: step === s || step === 'done' ? '#fff' : t.textTertiary,
               border: `1px solid ${step === s ? '#1D6FE8' : 'rgba(255,255,255,.06)'}`,
             }}>{i + 1}</div>
-            <span style={{ fontSize: 11, color: step === s || (s === 'importing' && step === 'done') ? '#DDE3EE' : '#48536A' }}>
+            <span style={{ fontSize: 11, color: step === s || (s === 'importing' && step === 'done') ? '#DDE3EE' : t.textTertiary }}>
               {s === 'upload' ? 'Upload' : s === 'preview' ? 'Preview' : 'Import'}
             </span>
           </div>
@@ -169,8 +171,8 @@ export default function StaffImportPage() {
             }}
           >
             <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>+</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#DDE3EE', marginBottom: 6 }}>Drop your Excel or CSV file here</div>
-            <div style={{ fontSize: 12, color: '#48536A' }}>or click to browse — accepts .xlsx and .csv</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: t.text, marginBottom: 6 }}>Drop your Excel or CSV file here</div>
+            <div style={{ fontSize: 12, color: t.textTertiary }}>or click to browse — accepts .xlsx and .csv</div>
           </div>
           <input ref={fileRef} type="file" accept=".xlsx,.csv,.xls" style={{ display: 'none' }} onChange={onFileSelect} />
 
@@ -179,15 +181,15 @@ export default function StaffImportPage() {
           <button onClick={downloadTemplate} style={{ ...S.btnOutline, marginTop: 12 }}>Download Blank Template (.xlsx)</button>
 
           <div style={{ ...S.card, marginTop: 16, padding: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#7C8BA0', letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 10 }}>Required Columns</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 10 }}>Required Columns</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {['Full Name', 'Email', 'Role'].map(c => <span key={c} style={{ padding: '4px 10px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 6, fontSize: 11, color: '#4D9EFF' }}>{c}</span>)}
             </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#7C8BA0', letterSpacing: '.05em', textTransform: 'uppercase', marginTop: 14, marginBottom: 10 }}>Optional Columns</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, letterSpacing: '.05em', textTransform: 'uppercase', marginTop: 14, marginBottom: 10 }}>Optional Columns</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {['Team', 'Language', 'Phone', 'Skills', 'Employee ID', 'Notes'].map(c => <span key={c} style={{ padding: '4px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.06)', borderRadius: 6, fontSize: 11, color: '#7C8BA0' }}>{c}</span>)}
+              {['Team', 'Language', 'Phone', 'Skills', 'Employee ID', 'Notes'].map(c => <span key={c} style={{ padding: '4px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.06)', borderRadius: 6, fontSize: 11, color: t.textSecondary }}>{c}</span>)}
             </div>
-            <div style={{ fontSize: 11, color: '#48536A', marginTop: 12, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 12, lineHeight: 1.6 }}>
               Valid roles: Technician, Service Writer, Shop Manager, Parts Manager, Accountant, Office Admin, GM, Dispatcher, Driver, Fleet Manager, Maintenance Technician, Maintenance Manager, Owner<br />
               Valid languages: English, Russian, Uzbek, Spanish, Ukrainian
             </div>
@@ -203,7 +205,7 @@ export default function StaffImportPage() {
             <div style={{ ...S.badge, background: 'rgba(29,184,112,.08)', borderColor: 'rgba(29,184,112,.2)', color: '#1DB870' }}>{validRows.length} valid</div>
             <div style={{ ...S.badge, background: 'rgba(217,167,6,.08)', borderColor: 'rgba(217,167,6,.2)', color: '#D9A706' }}>{warningRows.length} warnings</div>
             <div style={{ ...S.badge, background: 'rgba(217,79,79,.08)', borderColor: 'rgba(217,79,79,.2)', color: '#D94F4F' }}>{errorRows.length} errors</div>
-            <div style={{ ...S.badge, color: '#7C8BA0' }}>{rows.length} total from {fileName}</div>
+            <div style={{ ...S.badge, color: t.textSecondary }}>{rows.length} total from {fileName}</div>
           </div>
 
           {errorRows.length > 0 && (
@@ -226,7 +228,7 @@ export default function StaffImportPage() {
                 {rows.map((row, i) => (
                   <tr key={i} style={{ background: row._status === 'error' ? 'rgba(217,79,79,.04)' : 'transparent' }}>
                     <td style={S.td}>{i + 1}</td>
-                    <td style={{ ...S.td, fontWeight: 600, color: '#DDE3EE' }}>{row.full_name || '—'}</td>
+                    <td style={{ ...S.td, fontWeight: 600, color: t.text }}>{row.full_name || '—'}</td>
                     <td style={S.td}>{row.email || '—'}</td>
                     <td style={S.td}>
                       {row.role && (
@@ -276,7 +278,7 @@ export default function StaffImportPage() {
         <div>
           {/* Progress bar */}
           <div style={{ ...S.card, padding: 16, marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#7C8BA0', marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: t.textSecondary, marginBottom: 8 }}>
               <span>{step === 'done' ? 'Import complete' : 'Creating accounts...'}</span>
               <span>{importProgress} / {importable.length}</span>
             </div>
@@ -294,15 +296,15 @@ export default function StaffImportPage() {
             <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
               <div style={{ ...S.statCard, borderColor: 'rgba(29,184,112,.2)' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#1DB870' }}>{importSummary.created}</div>
-                <div style={{ fontSize: 10, color: '#7C8BA0', marginTop: 2 }}>Created</div>
+                <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 2 }}>Created</div>
               </div>
               <div style={{ ...S.statCard, borderColor: 'rgba(217,167,6,.2)' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#D9A706' }}>{importSummary.skipped}</div>
-                <div style={{ fontSize: 10, color: '#7C8BA0', marginTop: 2 }}>Skipped</div>
+                <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 2 }}>Skipped</div>
               </div>
               <div style={{ ...S.statCard, borderColor: 'rgba(217,79,79,.2)' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#D94F4F' }}>{importSummary.failed}</div>
-                <div style={{ fontSize: 10, color: '#7C8BA0', marginTop: 2 }}>Failed</div>
+                <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 2 }}>Failed</div>
               </div>
             </div>
           )}
@@ -314,12 +316,12 @@ export default function StaffImportPage() {
                 <span style={{ width: 16, textAlign: 'center', flexShrink: 0 }}>
                   {entry.status === 'created' ? <span style={{ color: '#1DB870' }}>&#10003;</span> : entry.status === 'skipped' ? <span style={{ color: '#D9A706' }}>&#8212;</span> : <span style={{ color: '#D94F4F' }}>&#10007;</span>}
                 </span>
-                <span style={{ color: '#DDE3EE', fontWeight: 500, minWidth: 140 }}>{entry.name}</span>
-                <span style={{ color: '#48536A', flex: 1 }}>{entry.reason}</span>
+                <span style={{ color: t.text, fontWeight: 500, minWidth: 140 }}>{entry.name}</span>
+                <span style={{ color: t.textTertiary, flex: 1 }}>{entry.reason}</span>
               </div>
             ))}
             {step === 'importing' && importLog.length < importable.length && (
-              <div style={{ padding: '10px 14px', fontSize: 12, color: '#48536A' }}>Processing...</div>
+              <div style={{ padding: '10px 14px', fontSize: 12, color: t.textTertiary }}>Processing...</div>
             )}
           </div>
 

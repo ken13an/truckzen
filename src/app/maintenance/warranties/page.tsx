@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import DataTable from '@/components/DataTable'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
 
 export default function WarrantiesPage() {
+  const { tokens: th } = useTheme()
   const supabase = createClient()
   const [shopId, setShopId] = useState('')
   const [tab, setTab] = useState<'warranties' | 'claims'>('warranties')
@@ -19,14 +21,14 @@ export default function WarrantiesPage() {
     getCurrentUser(supabase).then((p: any) => { if (!p) { window.location.href = '/login'; return }; setShopId(p.shop_id) })
   }, [])
 
-  if (!shopId) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: th.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const stColor: Record<string, string> = { active: GREEN, expired: RED, submitted: BLUE, approved: GREEN, denied: RED, paid: GREEN }
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Warranties</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text }}>Warranties</div>
         <a href="/maintenance/warranties/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
       </div>
 
@@ -39,7 +41,7 @@ export default function WarrantiesPage() {
       {tab === 'warranties' && (
         <DataTable
           columns={[
-            { key: 'warranty_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: '#F0F4FF', textTransform: 'capitalize' }}>{r.warranty_type?.replace(/_/g, ' ')}</span> },
+            { key: 'warranty_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: th.text, textTransform: 'capitalize' }}>{r.warranty_type?.replace(/_/g, ' ')}</span> },
             { key: 'provider', label: 'Provider' },
             { key: 'end_date', label: 'End Date', render: (r: any) => { const c = !r.end_date ? MUTED : r.end_date < today ? RED : r.end_date <= in90 ? AMBER : GREEN; return <span style={{ color: c, fontFamily: MONO }}>{r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}</span> } },
             { key: 'end_miles', label: 'End Miles', render: (r: any) => r.end_miles ? r.end_miles.toLocaleString() : '—' },

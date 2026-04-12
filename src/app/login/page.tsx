@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 import { ROLE_REDIRECT } from '@/lib/permissions'
 import Logo from '@/components/Logo'
@@ -248,21 +250,21 @@ export default function LoginPage() {
 
           {/* Account disabled banner */}
           {accountDisabled && !error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.25)', fontSize: 13, color: '#EF4444', marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.25)', fontSize: 13, color: _t.danger, marginBottom: 4 }}>
               Your account has been disabled. Contact your manager.
             </div>
           )}
 
           {/* Session replaced banner */}
           {sessionReplaced && !error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 13, color: '#D97706', marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 13, color: _t.warning, marginBottom: 4 }}>
               You were signed in on another device. Please log in again.
             </div>
           )}
 
           {/* Session expired banner */}
           {sessionExpired && !error && !accountDisabled && !sessionReplaced && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 13, color: '#D97706', marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 13, color: _t.warning, marginBottom: 4 }}>
               Session expired, please log in again.
             </div>
           )}
@@ -308,7 +310,7 @@ export default function LoginPage() {
         <div style={styles.footerNote}>
           No account? Contact your shop admin.
           <div style={{ marginTop: 10 }}>
-            <a href="/register" style={{ color: '#1D6FE8', textDecoration: 'none', fontWeight: 600, fontSize: 12 }}>Apply for Early Access</a>
+            <a href="/register" style={{ color: _t.accent, textDecoration: 'none', fontWeight: 600, fontSize: 12 }}>Apply for Early Access</a>
           </div>
         </div>
       </div>
@@ -317,8 +319,8 @@ export default function LoginPage() {
       <div style={styles.bottomBrand}>
         Powered by TruckZen &bull; Your Shop. Powered.
         <div style={{ marginTop: 8, display: 'flex', gap: 16, justifyContent: 'center' }}>
-          <a href="/privacy" style={{ color: '#7C8BA0', fontSize: 11, textDecoration: 'none' }}>Privacy Policy</a>
-          <a href="/terms" style={{ color: '#7C8BA0', fontSize: 11, textDecoration: 'none' }}>Terms of Service</a>
+          <a href="/privacy" style={{ color: _t.textSecondary, fontSize: 11, textDecoration: 'none' }}>Privacy Policy</a>
+          <a href="/terms" style={{ color: _t.textSecondary, fontSize: 11, textDecoration: 'none' }}>Terms of Service</a>
         </div>
       </div>
     </div>
@@ -330,7 +332,7 @@ export default function LoginPage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100vh',
-    background: '#0a0a10',
+    background: _t.bg,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -362,7 +364,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     width: '100%',
     maxWidth: '400px',
-    background: '#12131a',
+    background: _t.bgCard,
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '16px',
     padding: 'clamp(24px, 5vw, 48px) clamp(20px, 4vw, 40px)',
@@ -373,12 +375,12 @@ const styles: Record<string, React.CSSProperties> = {
   heading: {
     fontSize: '22px',
     fontWeight: 700,
-    color: '#FFFFFF',
+    color: _t.text,
     marginBottom: '6px',
   },
   subheading: {
     fontSize: '13px',
-    color: '#7C8BA0',
+    color: _t.textSecondary,
     marginBottom: '28px',
   },
   form: {
@@ -394,7 +396,7 @@ const styles: Record<string, React.CSSProperties> = {
   label: {
     fontSize: '11px',
     fontWeight: 600,
-    color: '#7C8BA0',
+    color: _t.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     fontFamily: "'IBM Plex Mono', monospace",
@@ -406,7 +408,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '8px',
     fontSize: '14px',
-    color: '#DDE3EE',
+    color: _t.text,
     outline: 'none',
     fontFamily: "'Instrument Sans', sans-serif",
     transition: 'border-color 0.15s',
@@ -424,7 +426,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: '#48536A',
+    color: _t.textTertiary,
     padding: '4px',
     display: 'flex',
     alignItems: 'center',
@@ -439,13 +441,13 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid rgba(217,79,79,0.2)',
     borderRadius: '8px',
     fontSize: '12px',
-    color: '#D94F4F',
+    color: _t.danger,
     lineHeight: 1.4,
   },
   btn: {
     width: '100%',
     padding: '13px',
-    background: '#1D6FE8',
+    background: _t.accent,
     border: 'none',
     borderRadius: '10px',
     fontSize: '14px',
@@ -466,7 +468,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '10px',
     fontSize: '14px',
     fontWeight: 600,
-    color: '#7C8BA0',
+    color: _t.textSecondary,
     cursor: 'not-allowed',
     marginTop: '4px',
     minHeight: '48px',
@@ -482,7 +484,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '14px',
     height: '14px',
     border: '2px solid rgba(124,139,160,0.3)',
-    borderTopColor: '#7C8BA0',
+    borderTopColor: _t.textSecondary,
     borderRadius: '50%',
     animation: 'spin 0.7s linear infinite',
     display: 'inline-block',
@@ -493,13 +495,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   forgotLink: {
     fontSize: '12px',
-    color: '#1D6FE8',
+    color: _t.accent,
     textDecoration: 'none',
   },
   footerNote: {
     textAlign: 'center',
     fontSize: '11px',
-    color: '#48536A',
+    color: _t.textTertiary,
     marginTop: '24px',
     paddingTop: '20px',
     borderTop: '1px solid rgba(255,255,255,0.05)',
@@ -508,14 +510,14 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'fixed',
     bottom: '16px',
     fontSize: '10px',
-    color: '#48536A',
+    color: _t.textTertiary,
     letterSpacing: '0.06em',
     zIndex: 1,
     fontFamily: "'IBM Plex Mono', monospace",
   },
   checkingWrap: {
     minHeight: '100vh',
-    background: '#0a0a10',
+    background: _t.bg,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -524,7 +526,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: '28px',
     height: '28px',
     border: '2px solid rgba(29,111,232,0.2)',
-    borderTopColor: '#1D6FE8',
+    borderTopColor: _t.accent,
     borderRadius: '50%',
     animation: 'spin 0.7s linear infinite',
   },

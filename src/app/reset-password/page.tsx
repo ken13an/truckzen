@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Logo from '@/components/Logo'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 export default function ResetPasswordPage() {
   const supabase = createClient()
@@ -44,20 +46,20 @@ export default function ResetPasswordPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { minHeight:'100vh', background:'#060708', display:'flex', alignItems:'center', justifyContent:'center', padding:20, fontFamily:"'Instrument Sans',sans-serif" },
-    card:  { width:'100%', maxWidth:400, background:'#161B24', border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'36px 32px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
-    title: { fontSize:22, fontWeight:700, color:'#F0F4FF', marginBottom:6 },
-    sub:   { fontSize:13, color:'#7C8BA0', marginBottom:24, lineHeight:1.5 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:'#7C8BA0', marginBottom:6, display:'block' },
-    input: { width:'100%', padding:'11px 14px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:14, color:'#DDE3EE', outline:'none', fontFamily:'inherit', minHeight:44, boxSizing:'border-box' as const, marginBottom:12 },
-    btn:   { width:'100%', padding:13, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:4, minHeight:48 },
-    error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#D94F4F', marginBottom:14 },
+    page:  { minHeight:'100vh', background:_t.bg, display:'flex', alignItems:'center', justifyContent:'center', padding:20, fontFamily:"'Instrument Sans',sans-serif" },
+    card:  { width:'100%', maxWidth:400, background:_t.bgCard, border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'36px 32px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
+    title: { fontSize:22, fontWeight:700, color:_t.text, marginBottom:6 },
+    sub:   { fontSize:13, color:_t.textSecondary, marginBottom:24, lineHeight:1.5 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:_t.textSecondary, marginBottom:6, display:'block' },
+    input: { width:'100%', padding:'11px 14px', background:_t.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:14, color:_t.text, outline:'none', fontFamily:'inherit', minHeight:44, boxSizing:'border-box' as const, marginBottom:12 },
+    btn:   { width:'100%', padding:13, background:'linear-gradient(135deg,${_t.accent},${_t.accentHover})', border:'none', borderRadius:9, fontSize:14, fontWeight:700, color:_t.bgLight, cursor:'pointer', fontFamily:'inherit', marginTop:4, minHeight:48 },
+    error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:_t.danger, marginBottom:14 },
   }
 
   if (checking) return (
     <div style={S.page}>
       <div style={{ ...S.card, textAlign:'center' as const }}>
-        <div style={{ fontSize: 14, color: '#7C8BA0' }}>Verifying reset link...</div>
+        <div style={{ fontSize: 14, color: _t.textSecondary }}>Verifying reset link...</div>
       </div>
     </div>
   )
@@ -76,7 +78,7 @@ export default function ResetPasswordPage() {
   if (done) return (
     <div style={S.page}>
       <div style={{ ...S.card, textAlign:'center' as const }}>
-        <div style={{ fontSize:16, fontWeight:700, color:'#1DB870', marginBottom:16 }}>Success</div>
+        <div style={{ fontSize:16, fontWeight:700, color:_t.success, marginBottom:16 }}>Success</div>
         <div style={S.title}>Password Updated</div>
         <div style={S.sub}>Redirecting you to login...</div>
       </div>

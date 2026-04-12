@@ -1,12 +1,14 @@
 'use client'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function OfflinePage() {
+  const { tokens: t } = useTheme()
   return (
-    <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans',sans-serif", padding: 20 }}>
+    <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans',sans-serif", padding: 20 }}>
       <div style={{ maxWidth: 440, textAlign: 'center' }}>
         <div style={{ fontSize: 60, marginBottom: 16 }}>📡</div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#F0F4FF', marginBottom: 8 }}>You're offline</div>
-        <div style={{ fontSize: 14, color: '#7C8BA0', lineHeight: 1.6, marginBottom: 24 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: t.text, marginBottom: 8 }}>You're offline</div>
+        <div style={{ fontSize: 14, color: t.textSecondary, lineHeight: 1.6, marginBottom: 24 }}>
           TruckZen needs an internet connection to sync with the shop database. Check your connection and try again.
         </div>
         <button

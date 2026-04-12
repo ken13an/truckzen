@@ -4,12 +4,14 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import DataTable from '@/components/DataTable'
 import { AlertTriangle, Clock } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
 
 export default function ContactRenewalsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [shopId, setShopId] = useState('')
   const [overdueCount, setOverdueCount] = useState(0)
@@ -31,14 +33,14 @@ export default function ContactRenewalsPage() {
     })
   }, [])
 
-  if (!shopId) return <div style={{ background: '#060708', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   function expiryColor(d: string) { if (!d) return MUTED; return d < today ? RED : d <= in30 ? AMBER : GREEN }
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Contact Renewals</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Contact Renewals</div>
         <a href="/maintenance/contact-renewals/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
@@ -47,7 +49,7 @@ export default function ContactRenewalsPage() {
       </div>
       <DataTable
         columns={[
-          { key: 'renewal_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: '#F0F4FF', textTransform: 'capitalize' }}>{r.custom_name || r.renewal_type?.replace(/_/g, ' ')}</span> },
+          { key: 'renewal_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: t.text, textTransform: 'capitalize' }}>{r.custom_name || r.renewal_type?.replace(/_/g, ' ')}</span> },
           { key: 'expiry_date', label: 'Expiry', render: (r: any) => <span style={{ color: expiryColor(r.expiry_date), fontFamily: MONO }}>{r.expiry_date ? new Date(r.expiry_date).toLocaleDateString() : '—'}</span> },
           { key: 'cost', label: 'Cost', render: (r: any) => r.cost ? `$${r.cost.toFixed(2)}` : '—' },
           { key: 'status', label: 'Status', render: (r: any) => { const expired = r.expiry_date && r.expiry_date < today; return <span style={{ fontSize: 9, fontWeight: 600, color: expired ? RED : GREEN, background: `${expired ? RED : GREEN}18`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>{expired ? 'EXPIRED' : r.status}</span> } },

@@ -1,5 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 const PRESETS = [
   { key: 'today', label: 'Today' },
@@ -117,7 +119,7 @@ export default function DateRangePicker({ onChange, defaultPreset = 'this_month'
               padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
               border: isActive ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)',
               background: isActive ? 'rgba(29,111,232,.1)' : 'transparent',
-              color: isActive ? '#4D9EFF' : '#7C8BA0',
+              color: isActive ? _t.accentLight : _t.textSecondary,
               fontFamily: 'inherit', whiteSpace: 'nowrap',
             }}>
               {p.label}
@@ -128,7 +130,7 @@ export default function DateRangePicker({ onChange, defaultPreset = 'this_month'
           padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
           border: active === 'custom' ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)',
           background: active === 'custom' ? 'rgba(29,111,232,.1)' : 'transparent',
-          color: active === 'custom' ? '#4D9EFF' : '#7C8BA0',
+          color: active === 'custom' ? _t.accentLight : _t.textSecondary,
           fontFamily: 'inherit',
         }}>
           Custom
@@ -138,21 +140,21 @@ export default function DateRangePicker({ onChange, defaultPreset = 'this_month'
       {/* Custom range inputs */}
       {showCustom && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: '#7C8BA0' }}>From:</span>
+          <span style={{ fontSize: 12, color: _t.textSecondary }}>From:</span>
           <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,.08)', background: '#1C2130', color: '#F0F4FF', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
-          <span style={{ fontSize: 12, color: '#7C8BA0' }}>To:</span>
+            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,.08)', background: _t.inputBg, color: _t.text, fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+          <span style={{ fontSize: 12, color: _t.textSecondary }}>To:</span>
           <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,.08)', background: '#1C2130', color: '#F0F4FF', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,.08)', background: _t.inputBg, color: _t.text, fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
           <button onClick={applyCustom} disabled={!customFrom || !customTo}
-            style={{ padding: '6px 16px', borderRadius: 6, background: '#1D6FE8', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: !customFrom || !customTo ? 0.4 : 1 }}>
+            style={{ padding: '6px 16px', borderRadius: 6, background: _t.accent, color: _t.bgLight, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: !customFrom || !customTo ? 0.4 : 1 }}>
             Apply
           </button>
         </div>
       )}
 
       {/* Selected range label */}
-      <div style={{ fontSize: 11, color: '#48536A' }}>
+      <div style={{ fontSize: 11, color: _t.textTertiary }}>
         Showing: {formatLabel(from || '', to || '')}
       </div>
     </div>

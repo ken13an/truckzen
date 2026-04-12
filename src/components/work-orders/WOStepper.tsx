@@ -1,6 +1,8 @@
 'use client'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
-const BLUE = '#1D6FE8', GREEN = '#16A34A', GRAY = '#9CA3AF', AMBER = '#D97706'
+const BLUE = _t.accent, GREEN = _t.success, GRAY = _t.textTertiary, AMBER = _t.warning
 const FONT = "'Inter', -apple-system, sans-serif"
 
 interface WOStepperProps {
@@ -63,7 +65,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
     const totalDuration = formatDuration(wo.submitted_at, wo.invoiced_at)
 
     return (
-      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '14px 20px', marginBottom: 12 }}>
+      <div style={{ background: _t.bgLight, border: `1px solid ${_t.cardBorder}`, borderRadius: 12, padding: '14px 20px', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 0 }}>
           {steps.map((s, i) => (
             <div key={s.label} style={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -71,8 +73,8 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace",
-                  background: s.done ? GREEN : s.skip ? 'rgba(22,163,74,.1)' : s.active ? BLUE : '#E5E7EB',
-                  color: s.done ? '#fff' : s.skip ? GREEN : s.active ? '#fff' : GRAY,
+                  background: s.done ? GREEN : s.skip ? 'rgba(22,163,74,.1)' : s.active ? BLUE : _t.border,
+                  color: s.done ? _t.bgLight : s.skip ? GREEN : s.active ? _t.bgLight : GRAY,
                 }}>
                   {s.done ? '\u2713' : s.skip ? 'N/A' : i + 1}
                 </div>
@@ -81,17 +83,17 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
                   <span style={{ fontSize: 8, color: s.active ? BLUE : GRAY, textAlign: 'center' }}>{s.progress}</span>
                 )}
                 {s.duration && s.done && (
-                  <span style={{ fontSize: 8, color: '#B0B0B0', textAlign: 'center' }}>{s.duration}</span>
+                  <span style={{ fontSize: 8, color: _t.textTertiary, textAlign: 'center' }}>{s.duration}</span>
                 )}
               </div>
               {i < steps.length - 1 && (
-                <div style={{ width: 20, height: 2, background: s.done ? GREEN : '#E5E7EB', margin: '13px 2px 0', flexShrink: 0 }} />
+                <div style={{ width: 20, height: 2, background: s.done ? GREEN : _t.border, margin: '13px 2px 0', flexShrink: 0 }} />
               )}
             </div>
           ))}
         </div>
         {totalDuration && (
-          <div style={{ textAlign: 'center', fontSize: 10, color: '#B0B0B0', marginTop: 6 }}>
+          <div style={{ textAlign: 'center', fontSize: 10, color: _t.textTertiary, marginTop: 6 }}>
             Total: {totalDuration}
           </div>
         )}
@@ -113,7 +115,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
   ]
 
   return (
-    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '12px 20px', marginBottom: 12 }}>
+    <div style={{ background: _t.bgLight, border: `1px solid ${_t.cardBorder}`, borderRadius: 12, padding: '12px 20px', marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0 }}>
         {oldSteps.map((s, i) => (
           <div key={s.label} style={{ display: 'flex', alignItems: 'center' }}>
@@ -121,15 +123,15 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace",
-                background: s.done ? GREEN : i === activeStep ? BLUE : '#E5E7EB',
-                color: s.done || i === activeStep ? '#fff' : GRAY,
+                background: s.done ? GREEN : i === activeStep ? BLUE : _t.border,
+                color: s.done || i === activeStep ? _t.bgLight : GRAY,
               }}>
                 {s.done ? '\u2713' : i + 1}
               </div>
               <span style={{ fontSize: 9, fontWeight: 600, color: s.done ? GREEN : i === activeStep ? BLUE : GRAY, textTransform: 'uppercase', letterSpacing: '.04em' }}>{s.label}</span>
             </div>
             {i < oldSteps.length - 1 && (
-              <div style={{ width: 40, height: 2, background: s.done ? GREEN : '#E5E7EB', margin: '0 4px', marginBottom: 16 }} />
+              <div style={{ width: 40, height: 2, background: s.done ? GREEN : _t.border, margin: '0 4px', marginBottom: 16 }} />
             )}
           </div>
         ))}

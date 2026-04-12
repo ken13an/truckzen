@@ -7,16 +7,19 @@ import { PARTS_PICKUP_STATUS, PARTS_READY_STATUS } from '@/lib/parts-status'
 import Logo from '@/components/Logo'
 import { ChevronRight, Wrench, Clock, CheckCircle2, XCircle, Package, Play, Square } from 'lucide-react'
 
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
+
 const FONT = "'Inter', -apple-system, sans-serif"
-const BG = '#0C0C12'
-const TEXT = '#EDEDF0'
-const CARD_BG = '#151520'
-const CARD_BORDER = 'rgba(255,255,255,0.08)'
-const BLUE = '#1D6FE8'
-const AMBER = '#F59E0B'
-const GREEN = '#22C55E'
-const RED = '#EF4444'
-const DIM = '#71717A'
+const BG = _t.bg
+const TEXT = _t.text
+const CARD_BG = _t.bgCard
+const CARD_BORDER = _t.cardBorder
+const BLUE = _t.accent
+const AMBER = _t.warning
+const GREEN = _t.success
+const RED = _t.danger
+const DIM = _t.textTertiary
 
 type Filter = 'all' | 'pending' | 'accepted' | 'in_progress' | 'completed'
 
@@ -304,6 +307,7 @@ export default function MechanicDashboardPage() {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
     let interval: ReturnType<typeof setInterval>
     async function load() {
       const profile = await getCurrentUser(supabase)
@@ -330,11 +334,12 @@ export default function MechanicDashboardPage() {
           await fetchActiveClock(profile.id)
         }
       } catch {}
+      if (cancelled) return
       setLoading(false)
       interval = setInterval(() => { if (document.visibilityState === 'visible') { fetchData(profile.id); fetchActiveClock(profile.id) } }, 15000)
     }
     load()
-    return () => clearInterval(interval)
+    return () => { cancelled = true; clearInterval(interval) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleJobAction = async (assignmentId: string, action: 'accept' | 'decline' | 'complete' | 'start', reason?: string) => {
@@ -442,7 +447,7 @@ export default function MechanicDashboardPage() {
             <button onClick={async () => {
               await fetch('/api/impersonate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'reset' }) })
               window.location.href = '/dashboard'
-            }} style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 8, padding: '4px 12px', color: '#F59E0B', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 4 }}>
+            }} style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 8, padding: '4px 12px', color: _t.warning, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 4 }}>
               Exit Impersonation
             </button>
           )}
@@ -502,10 +507,10 @@ export default function MechanicDashboardPage() {
         {overrideModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
             onClick={e => { if (e.target === e.currentTarget) setOverrideModal(false) }}>
-            <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+            <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: AMBER }}>Outside Shop Area</div>
               <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>You appear to be outside the shop geofence. Provide a reason to punch in for manager review.</div>
-              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#DDE3EE', fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: _t.text, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button onClick={() => setOverrideModal(false)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
                 <button disabled={!overrideReason.trim() || punchLoading} onClick={() => handleWorkPunch('punch_in', overrideReason.trim())} style={{ padding: '8px 16px', background: AMBER, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
@@ -1186,7 +1191,7 @@ export default function MechanicDashboardPage() {
       {declineModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) { setDeclineModal(null); setDeclineReason('') } }}>
-          <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+          <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Decline Job</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>Why are you declining this job? (optional)</div>
             <textarea
@@ -1209,7 +1214,7 @@ export default function MechanicDashboardPage() {
       {moreTimeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) setMoreTimeModal(null) }}>
-          <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+          <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Request More Time</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>
               {moreTimeModal.wo?.so_number} — {moreTimeModal.line?.description?.slice(0, 40)}
@@ -1250,7 +1255,7 @@ export default function MechanicDashboardPage() {
       {completeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) setCompleteModal(null) }}>
-          <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+          <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Complete Job?</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 8 }}>
               Are you sure you want to mark this job as complete?

@@ -231,7 +231,7 @@ export default function CustomersPage() {
 
   return (
     <div style={{
-      background: '#0C0C12',
+      background: t.bg,
       minHeight: '100vh',
       color: '#EDEDF0',
       fontFamily: "'Inter', sans-serif",

@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
 
 const font = "'Instrument Sans', sans-serif"
 
 export default function KioskAdminPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [shop, setShop] = useState<any>(null)
@@ -20,12 +22,12 @@ export default function KioskAdminPage() {
     })
   }, [])
 
-  if (!user || !shop) return <div style={{ minHeight: '100vh', background: '#0C0C12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1', fontFamily: font }}>Loading...</div>
+  if (!user || !shop) return <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1', fontFamily: font }}>Loading...</div>
 
   const kioskUrl = `${window.location.origin}/kiosk/${shop.kiosk_code || 'ugl'}`
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0C0C12', color: '#EDEDF0', fontFamily: font, padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: t.bg, color: '#EDEDF0', fontFamily: font, padding: 24 }}>
       <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Dashboard
 </a>
