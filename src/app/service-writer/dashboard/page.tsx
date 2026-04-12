@@ -75,12 +75,16 @@ export default function ServiceWriterDashboard() {
   if (loading) return <div style={{ background: t.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary }}>Loading...</div>
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Service</div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={() => toggleMetricView('grid')} style={{ background: metricView === 'grid' ? t.accentBg : 'transparent', color: metricView === 'grid' ? t.accent : t.textTertiary, border: `1px solid ${metricView === 'grid' ? t.borderAccent : t.cardBorder}`, borderRadius: 6, padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><LayoutGrid size={14} /></button>
-          <button onClick={() => toggleMetricView('compact')} style={{ background: metricView === 'compact' ? t.accentBg : 'transparent', color: metricView === 'compact' ? t.accent : t.textTertiary, border: `1px solid ${metricView === 'compact' ? t.borderAccent : t.cardBorder}`, borderRadius: 6, padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><List size={14} /></button>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: '32px clamp(20px, 4vw, 40px)' }}>
+      <div style={{ maxWidth: 1440, margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 32, letterSpacing: '.02em', color: t.text, lineHeight: 1 }}>Service</div>
+          <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 6 }}>Live shop activity &mdash; refreshes every 30s</div>
+        </div>
+        <div style={{ display: 'inline-flex', gap: 2, padding: 3, borderRadius: 8, background: t.bgCard, border: `1px solid ${t.cardBorder}` }}>
+          <button onClick={() => toggleMetricView('grid')} style={{ background: metricView === 'grid' ? t.accentBg : 'transparent', color: metricView === 'grid' ? t.accent : t.textTertiary, border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><LayoutGrid size={14} /></button>
+          <button onClick={() => toggleMetricView('compact')} style={{ background: metricView === 'compact' ? t.accentBg : 'transparent', color: metricView === 'compact' ? t.accent : t.textTertiary, border: 'none', borderRadius: 6, padding: '5px 9px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><List size={14} /></button>
         </div>
       </div>
 
@@ -274,6 +278,7 @@ export default function ServiceWriterDashboard() {
           </div>
         )
       })()}
+      </div>
     </div>
   )
 }

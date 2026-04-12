@@ -11,6 +11,7 @@ const OTHER_ROLES = ['parts_manager', 'fleet_manager', 'driver']
 
 export default function NewUserPage() {
   const { tokens: t } = useTheme()
+  const S = makeS(t)
   const router = useRouter()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -59,7 +60,7 @@ export default function NewUserPage() {
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12 }} onClick={() => { setDone(false); setForm({ full_name: '', email: '', role: 'technician', department: 'floor', team: 'A', language: 'en' }) }}>+ Invite Another</button>
-          <a href="/settings/users" style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12, background: 'transparent', border: '1px solid rgba(255,255,255,.08)', color: t.textSecondary, textDecoration: 'none', textAlign: 'center' }}>Back to Staff List</a>
+          <a href="/settings/users" style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12, background: 'transparent', border: `1px solid ${t.border}`, color: t.textSecondary, textDecoration: 'none', textAlign: 'center' }}>Back to Staff List</a>
         </div>
       </div>
     </div>
@@ -164,11 +165,15 @@ export default function NewUserPage() {
   )
 }
 
-const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 560, margin: '0 auto' },
-  card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
-  label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#48536A', marginBottom: 5, display: 'block' },
-  input: { width: '100%', padding: '9px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const, marginBottom: 10 },
-  btn: { width: '100%', padding: '12px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 },
-  error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 12 },
+type TT = { bg: string; text: string; bgCard: string; border: string; textTertiary: string; inputBg: string; accent: string; bgLight: string; danger: string; dangerBg: string }
+
+function makeS(t: TT): Record<string, React.CSSProperties> {
+  return {
+    page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 560, margin: '0 auto' },
+    card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 12 },
+    label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary, marginBottom: 5, display: 'block' },
+    input: { width: '100%', padding: '9px 12px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const, marginBottom: 10 },
+    btn: { width: '100%', padding: '12px 24px', background: t.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: t.bgLight, cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 },
+    error: { padding: '10px 12px', background: t.dangerBg, border: `1px solid ${t.danger}`, borderRadius: 8, fontSize: 12, color: t.danger, marginBottom: 12 },
+  }
 }

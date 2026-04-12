@@ -10,6 +10,7 @@ type Step = 'upload' | 'preview' | 'importing' | 'done'
 
 export default function StaffImportPage() {
   const { tokens: t } = useTheme()
+  const S = makeS(t)
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [step, setStep] = useState<Step>('upload')
@@ -339,14 +340,18 @@ export default function StaffImportPage() {
   )
 }
 
-const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 860, margin: '0 auto' },
-  card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
-  btn: { padding: '12px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
-  btnOutline: { padding: '10px 18px', background: 'transparent', border: '1px solid rgba(255,255,255,.08)', borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#7C8BA0', cursor: 'pointer', fontFamily: 'inherit' },
-  errorBox: { padding: '10px 14px', background: 'rgba(217,79,79,.06)', border: '1px solid rgba(217,79,79,.15)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 12, lineHeight: 1.6 },
-  badge: { padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,.06)', background: '#1C2130' },
-  th: { padding: '8px 10px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.05em', borderBottom: '1px solid rgba(255,255,255,.06)', fontFamily: "'IBM Plex Mono',monospace" },
-  td: { padding: '8px 10px', color: '#7C8BA0', borderBottom: '1px solid rgba(255,255,255,.03)' },
-  statCard: { flex: 1, background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 10, padding: '16px 20px', textAlign: 'center' as const, minWidth: 80 },
+type TT = { bg: string; text: string; bgCard: string; border: string; textTertiary: string; textSecondary: string; inputBg: string; accent: string; bgLight: string; danger: string; dangerBg: string }
+
+function makeS(t: TT): Record<string, React.CSSProperties> {
+  return {
+    page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 860, margin: '0 auto' },
+    card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 12 },
+    btn: { padding: '12px 24px', background: t.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: t.bgLight, cursor: 'pointer', fontFamily: 'inherit' },
+    btnOutline: { padding: '10px 18px', background: 'transparent', border: `1px solid ${t.border}`, borderRadius: 9, fontSize: 12, fontWeight: 600, color: t.textSecondary, cursor: 'pointer', fontFamily: 'inherit' },
+    errorBox: { padding: '10px 14px', background: t.dangerBg, border: `1px solid ${t.danger}`, borderRadius: 8, fontSize: 12, color: t.danger, marginBottom: 12, lineHeight: 1.6 },
+    badge: { padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, border: `1px solid ${t.border}`, background: t.inputBg },
+    th: { padding: '8px 10px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.05em', borderBottom: `1px solid ${t.border}`, fontFamily: "'IBM Plex Mono',monospace" },
+    td: { padding: '8px 10px', color: t.textSecondary, borderBottom: `1px solid ${t.border}` },
+    statCard: { flex: 1, background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: '16px 20px', textAlign: 'center' as const, minWidth: 80 },
+  }
 }
