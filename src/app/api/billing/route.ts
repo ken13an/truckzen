@@ -2,13 +2,14 @@ import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import Stripe from 'stripe'
+import { safeRoute } from '@/lib/api-handler'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!)
 }
 
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -44,7 +45,7 @@ export async function GET(req: Request) {
   })
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -97,3 +98,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
   }
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)

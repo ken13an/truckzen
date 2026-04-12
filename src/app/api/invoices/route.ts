@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { log } from '@/lib/security'
 import { logAction } from '@/lib/services/auditLog'
+import { safeRoute } from '@/lib/api-handler'
 
 // ── GET list + POST create ────────────────────────────────────
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -84,7 +85,7 @@ export async function GET(req: Request) {
   })
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -148,3 +149,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json(inv, { status: 201 })
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)

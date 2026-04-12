@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const from = url.searchParams.get('from')
   const to = url.searchParams.get('to')
   const user_id = url.searchParams.get('user_id')
-  const limit = parseInt(url.searchParams.get('limit') || '100', 10)
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 200)
 
   const s = createAdminSupabaseClient()
   let q = s.from('audit_log').select('*, users(full_name, email)').eq('shop_id', shopId).order('created_at', { ascending: false }).limit(limit)

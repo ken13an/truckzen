@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { fetchInvoices, extractCustomers, extractTrucks, extractParts, mapServiceOrder, mapInvoice } from '@/lib/fullbay/client'
 import { ADMIN_ROLES } from '@/lib/roles'
+import * as Sentry from '@sentry/nextjs'
 
 const ALLOWED_ROLES = ADMIN_ROLES
 
@@ -105,6 +106,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ type: s
 
     return NextResponse.json({ imported, updated, skipped, total_invoices: invoices.length, log_id: logId })
   } catch (err: any) {
+    Sentry.captureException(err, { extra: { sync_type: type, shop_id: shopId, log_id: logId } })
     if (logId) {
       await s.from('fullbay_sync_log').update({ status: 'failed', error_message: err.message, completed_at: new Date().toISOString() }).eq('id', logId)
     }

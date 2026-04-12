@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { safeRoute } from '@/lib/api-handler'
 
-export async function GET() {
+async function _GET() {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   if (!actor.shop_id) return jsonError('No shop context', 400)
@@ -30,3 +31,5 @@ export async function GET() {
 
   return NextResponse.json(active)
 }
+
+export const GET = safeRoute(_GET)

@@ -100,6 +100,8 @@ type ThemeTokenShape = {
   sidebarActiveBorder: string
   inputBg: string
   inputBorder: string
+  aiPurple: string
+  aiPurpleBg: string
 }
 
 export const THEME: Record<ThemeMode, ThemeTokenShape> = {
@@ -142,6 +144,8 @@ export const THEME: Record<ThemeMode, ThemeTokenShape> = {
     sidebarActiveBorder: 'rgba(27,110,230,0.18)',
     inputBg: 'rgba(255,255,255,0.04)',
     inputBorder: 'rgba(255,255,255,0.06)',
+    aiPurple: '#8B5CF6',
+    aiPurpleBg: 'rgba(139,92,246,0.08)',
   },
   light: {
     bg: '#faf8f4',
@@ -182,6 +186,8 @@ export const THEME: Record<ThemeMode, ThemeTokenShape> = {
     sidebarActiveBorder: 'rgba(194,97,59,0.15)',
     inputBg: '#ffffff',
     inputBorder: '#e8e2d8',
+    aiPurple: '#7C3AED',
+    aiPurpleBg: 'rgba(124,58,237,0.06)',
   },
 }
 

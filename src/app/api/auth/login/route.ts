@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { safeRoute } from '@/lib/api-handler'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_MINUTES = 15
@@ -11,7 +12,7 @@ function db() {
   )
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const { email, password } = await req.json()
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
@@ -103,3 +104,5 @@ export async function POST(req: Request) {
     requires2FA,
   })
 }
+
+export const POST = safeRoute(_POST)

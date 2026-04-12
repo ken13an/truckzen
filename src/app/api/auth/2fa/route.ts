@@ -3,12 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { verifySync, generateSecret, generateURI } from 'otplib'
 import * as QRCode from 'qrcode'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 const TWO_FA_ROLES = ['owner', 'gm', 'it_person', 'accountant', 'office_admin']
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const body = await req.json()
   const { action, code, user_id } = body
 
@@ -69,3 +70,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 }
+
+export const POST = safeRoute(_POST)

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -7,7 +8,7 @@ function db() {
 
 type P = { params: Promise<{ id: string }> }
 
-export async function GET(_req: Request, { params }: P) {
+async function _GET(_req: Request, { params }: P) {
   const { id } = await params
   const s = db()
 
@@ -67,3 +68,5 @@ export async function GET(_req: Request, { params }: P) {
   timeline.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
   return NextResponse.json({ so_number: so.so_number, timeline })
 }
+
+export const GET = safeRoute(_GET)

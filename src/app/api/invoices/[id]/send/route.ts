@@ -4,10 +4,11 @@ import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { sendInvoiceEmail } from '@/lib/integrations/resend'
 import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf'
 import { logAction } from '@/lib/services/auditLog'
+import { safeRoute } from '@/lib/api-handler'
 
 type P = { params: Promise<{ id: string }> }
 
-export async function POST(_req: Request, { params }: P) {
+async function _POST(_req: Request, { params }: P) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
@@ -58,3 +59,5 @@ export async function POST(_req: Request, { params }: P) {
 
   return NextResponse.json({ success: true, messageId: result.id })
 }
+
+export const POST = safeRoute(_POST)

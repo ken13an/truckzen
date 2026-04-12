@@ -1,5 +1,6 @@
 // app/api/stripe/webhook/route.ts
 import { NextResponse } from 'next/server'
+import { safeRoute } from '@/lib/api-handler'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getStaffEmails, getShopInfo } from '@/lib/services/email'
@@ -17,7 +18,7 @@ function getSupabase() {
   )
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const body = await req.text()
   const sig  = req.headers.get('stripe-signature') ?? ''
 
@@ -145,5 +146,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ received: true })
 }
+
+export const POST = safeRoute(_POST)
 
 // Stripe requires raw body — disable Next.js body parsing

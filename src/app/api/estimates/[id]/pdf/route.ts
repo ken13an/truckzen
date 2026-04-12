@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function GET(req: Request, { params }: Params) {
+async function _GET(req: Request, { params }: Params) {
   const { id } = await params
   const s = db()
 
@@ -115,3 +116,5 @@ export async function GET(req: Request, { params }: Params) {
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
   })
 }
+
+export const GET = safeRoute(_GET)

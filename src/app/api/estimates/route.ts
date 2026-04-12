@@ -6,24 +6,27 @@ import { INVOICE_ACTION_ROLES } from '@/lib/roles'
  */
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
+import { safeRoute } from '@/lib/api-handler'
+import { parsePageParams } from '@/lib/query-limits'
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
   const woId = searchParams.get('wo_id')
+  const { page, limit, offset } = parsePageParams(searchParams)
 
-  let q = ctx.admin.from('estimates').select('*, estimate_lines(*)').is('deleted_at', null).order('created_at', { ascending: false })
+  let q = ctx.admin.from('estimates').select('*, estimate_lines(*)', { count: 'exact' }).is('deleted_at', null).order('created_at', { ascending: false })
   if (!ctx.actor.is_platform_owner && ctx.shopId) q = q.eq('shop_id', ctx.shopId)
   if (status && status !== 'all') q = q.eq('status', status)
   if (woId) q = q.or(`wo_id.eq.${woId},repair_order_id.eq.${woId}`)
-  const { data, error } = await q.limit(100)
+  const { data, count, error } = await q.range(offset, offset + limit - 1)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data || [])
+  return NextResponse.json({ data: data || [], total: count || 0, page, limit, total_pages: Math.ceil((count || 0) / limit) })
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const ctx = await requireRouteContext([...INVOICE_ACTION_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { action, ...body } = await req.json().catch(() => ({}))
@@ -85,3 +88,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)

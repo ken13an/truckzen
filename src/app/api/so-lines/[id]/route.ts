@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
 
 import { isInvoiceHardLocked } from '@/lib/invoice-lock'
+import { safeRoute } from '@/lib/api-handler'
 
 async function recalcTotals(admin: any, soId: string) {
   const { data: allLines } = await admin.from('so_lines').select('line_type, quantity, unit_price, parts_sell_price, parts_status, billed_hours, actual_hours, estimated_hours').eq('so_id', soId)
@@ -30,7 +31,7 @@ async function recalcTotals(admin: any, soId: string) {
 
 type P = { params: Promise<{ id: string }> }
 
-export async function PATCH(req: Request, { params }: P) {
+async function _PATCH(req: Request, { params }: P) {
   const { id } = await params
   // Allow mechanics through for parts receipt only — full role check happens below
   const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES, ...MECHANIC_ROLES])
@@ -121,7 +122,7 @@ export async function PATCH(req: Request, { params }: P) {
   return NextResponse.json({ ...data, updated_grand_total: grandTotal })
 }
 
-export async function DELETE(_req: Request, { params }: P) {
+async function _DELETE(_req: Request, { params }: P) {
   const { id } = await params
   const ctx = await requireRouteContext([...SERVICE_WRITE_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -144,3 +145,6 @@ export async function DELETE(_req: Request, { params }: P) {
   if (soIdDel) await recalcTotals(ctx.admin, soIdDel)
   return NextResponse.json({ success: true })
 }
+
+export const PATCH = safeRoute(_PATCH)
+export const DELETE = safeRoute(_DELETE)

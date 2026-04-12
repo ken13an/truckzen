@@ -7,6 +7,7 @@ import { getMechanics } from '@/lib/services/users'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import AppPageShell from '@/components/layout/AppPageShell'
 import { THEME } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 const _t = THEME.dark
 
 const FONT = "'Inter', -apple-system, sans-serif"
@@ -33,6 +34,7 @@ function assignedDisplay(j: any): string {
 }
 
 export default function QuickViewPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)

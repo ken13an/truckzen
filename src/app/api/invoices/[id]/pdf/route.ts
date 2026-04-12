@@ -1,8 +1,9 @@
 import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf'
+import { safeRoute } from '@/lib/api-handler'
 
 type P = { params: Promise<{ id: string }> }
 
-export async function GET(_req: Request, { params }: P) {
+async function _GET(_req: Request, { params }: P) {
   const { id } = await params
   const result = await generateInvoicePdf(id)
   if (!result) return new Response('Not found', { status: 404 })
@@ -15,3 +16,5 @@ export async function GET(_req: Request, { params }: P) {
     },
   })
 }
+
+export const GET = safeRoute(_GET)

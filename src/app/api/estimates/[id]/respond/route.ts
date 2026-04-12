@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo, getStaffEmails } from '@/lib/services/email'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await req.json()
   const { action, token, reason } = body
@@ -156,3 +157,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const resultStatus = action === 'approve' ? 'approved' : action === 'approve_with_notes' ? 'approved_with_notes' : 'declined'
   return NextResponse.json({ success: true, status: resultStatus })
 }
+
+export const POST = safeRoute(_POST)

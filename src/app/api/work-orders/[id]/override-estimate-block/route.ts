@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -8,7 +9,7 @@ const OVERRIDE_ROLES = ['owner', 'gm', 'it_person', 'shop_manager']
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function POST(req: Request, { params }: Params) {
+async function _POST(req: Request, { params }: Params) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -36,3 +37,5 @@ export async function POST(req: Request, { params }: Params) {
 
   return NextResponse.json({ ok: true })
 }
+
+export const POST = safeRoute(_POST)

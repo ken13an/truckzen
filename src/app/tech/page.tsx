@@ -4,13 +4,15 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { THEME } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 const _t = THEME.dark
 
 type Tab = 'jobs' | 'floor' | 'parts' | 'dvir'
 type View = 'list' | 'detail'
 
 export default function TechMobilePageWrapper() {
-  return <Suspense fallback={<div style={{ minHeight: '100vh', background: _t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: _t.textSecondary }}>Loading...</div>}><TechMobilePage /></Suspense>
+  const { tokens: t } = useTheme()
+  return <Suspense fallback={<div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary }}>Loading...</div>}><TechMobilePage /></Suspense>
 }
 
 function TechMobilePage() {

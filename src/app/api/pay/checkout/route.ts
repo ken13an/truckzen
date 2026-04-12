@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createStripeCheckout } from '@/lib/payments/qr'
 import { checkRateLimit } from '@/lib/security'
+import { safeRoute } from '@/lib/api-handler'
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const ip    = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
   const limit = await checkRateLimit('api', `pay-checkout:${ip}`)
   if (!limit.allowed) {
@@ -19,3 +20,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: 'Checkout failed' }, { status: 500 })
   }
 }
+
+export const POST = safeRoute(_POST)

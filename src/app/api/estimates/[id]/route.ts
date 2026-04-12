@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { INVOICE_ACTION_ROLES } from '@/lib/roles'
+import { safeRoute } from '@/lib/api-handler'
 
 async function getEstimateForActor(admin: any, actor: any, id: string) {
   let q = admin.from('estimates').select('*').eq('id', id)
@@ -9,7 +10,7 @@ async function getEstimateForActor(admin: any, actor: any, id: string) {
   return { data, error }
 }
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -26,7 +27,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   return NextResponse.json({ ...estimate, lines: lines || [], service_order: serviceOrder, shop })
 }
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const ctx = await requireRouteContext([...INVOICE_ACTION_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -58,3 +59,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
   return NextResponse.json(data)
 }
+
+export const GET = safeRoute(_GET)
+export const PATCH = safeRoute(_PATCH)

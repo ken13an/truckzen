@@ -2,6 +2,7 @@ import { SERVICE_PARTS_ROLES } from '@/lib/roles'
 import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
+import { safeRoute } from '@/lib/api-handler'
 
 async function recalcTotals(admin: any, soId: string) {
   const { data: lines } = await admin.from('so_lines').select('line_type, quantity, unit_price, parts_sell_price, parts_status, billed_hours, actual_hours, estimated_hours').eq('so_id', soId)
@@ -24,7 +25,7 @@ async function recalcTotals(admin: any, soId: string) {
   await admin.from('service_orders').update({ labor_total: Math.round(laborTotal * 100) / 100, parts_total: Math.round(partsTotal * 100) / 100, grand_total: grandTotal }).eq('id', soId)
 }
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.shopId || !ctx.admin) return ctx.error!
   const { searchParams } = new URL(req.url)
@@ -58,7 +59,7 @@ export async function GET(req: Request) {
   return NextResponse.json(data)
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
   if (ctx.error || !ctx.shopId || !ctx.admin) return ctx.error!
   const body = await req.json()
@@ -101,3 +102,6 @@ export async function POST(req: Request) {
   await recalcTotals(ctx.admin, so_id)
   return NextResponse.json(data, { status: 201 })
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)

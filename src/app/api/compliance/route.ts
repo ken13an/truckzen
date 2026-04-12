@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { parsePageParams } from '@/lib/query-limits'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -9,6 +10,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const shopId   = searchParams.get('shop_id')
   const expiring = searchParams.get('expiring') === 'true'
+  const { page, limit, offset } = parsePageParams(searchParams)
 
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
@@ -18,13 +20,13 @@ export async function GET(req: Request) {
 
   let q = supabase
     .from('compliance_items')
-    .select('id, item_type, document_name, expiry_date, reminder_days, alert_sent, notes, asset_id, driver_id, assets(unit_number, make, model), drivers(full_name)')
+    .select('id, item_type, document_name, expiry_date, reminder_days, alert_sent, notes, asset_id, driver_id, assets(unit_number, make, model), drivers(full_name)', { count: 'exact' })
     .eq('shop_id', shopId)
     .order('expiry_date')
 
   if (expiring) q = q.lte('expiry_date', in30days)
 
-  const { data, error } = await q.limit(300)
+  const { data, count, error } = await q.range(offset, offset + limit - 1)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Annotate each item with days until expiry
@@ -36,7 +38,7 @@ export async function GET(req: Request) {
       : null,
   }))
 
-  return NextResponse.json(annotated)
+  return NextResponse.json({ data: annotated, total: count || 0, page, limit, total_pages: Math.ceil((count || 0) / limit) })
 }
 
 export async function POST(req: Request) {

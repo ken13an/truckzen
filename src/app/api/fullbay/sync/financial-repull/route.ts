@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { ADMIN_ROLES } from '@/lib/roles'
 import { fetchInvoices, mapServiceOrder, mapInvoice } from '@/lib/fullbay/client'
+import * as Sentry from '@sentry/nextjs'
 
 /**
  * Targeted financial-only re-pull from Fullbay.
@@ -50,6 +51,7 @@ export async function POST(req: Request) {
   try {
     allInvoices = await fetchInvoices(startDate, endDate)
   } catch (err: any) {
+    Sentry.captureException(err, { extra: { sync_type: 'financial_repull', shop_id: shopId } })
     return NextResponse.json({ error: `Fullbay fetch failed: ${err.message}` }, { status: 500 })
   }
 

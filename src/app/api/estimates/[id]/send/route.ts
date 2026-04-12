@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { INVOICE_ACTION_ROLES } from '@/lib/roles'
+import { safeRoute } from '@/lib/api-handler'
 
 async function getEstimateForActor(admin: any, actor: any, id: string) {
   let q = admin.from('estimates').select('*').eq('id', id)
@@ -10,7 +11,7 @@ async function getEstimateForActor(admin: any, actor: any, id: string) {
   return { data, error }
 }
 
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const ctx = await requireRouteContext([...INVOICE_ACTION_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -65,3 +66,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (sentVia.length > 0) await ctx.admin.from('estimates').update({ sent_via: sentVia.join(',') }).eq('id', id)
   return NextResponse.json({ success: true, sent_via: sentVia, portal_link: portalLink })
 }
+
+export const POST = safeRoute(_POST)

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPushToUser } from '@/lib/services/notifications'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -117,3 +118,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ idle_alerts: idleAlerts, overtime_alerts: overtimeAlerts })
 }
+
+export const POST = safeRoute(_POST)

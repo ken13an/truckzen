@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { parsePageParams } from '@/lib/query-limits'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -14,20 +15,21 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const search = searchParams.get('q')
+  const { page, limit, offset } = parsePageParams(searchParams)
 
   const supabase = db()
 
   let q = supabase
     .from('drivers')
-    .select('id, full_name, phone, email, cdl_number, cdl_class, cdl_expiry, medical_expiry, assigned_unit, active, hire_date, created_at')
+    .select('id, full_name, phone, email, cdl_number, cdl_class, cdl_expiry, medical_expiry, assigned_unit, active, hire_date, created_at', { count: 'exact' })
     .eq('shop_id', shopId)
     .order('full_name')
 
   if (search) q = q.or(`full_name.ilike.%${search}%,cdl_number.ilike.%${search}%`)
 
-  const { data, error } = await q.limit(200)
+  const { data, count, error } = await q.range(offset, offset + limit - 1)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  return NextResponse.json({ data: data || [], total: count || 0, page, limit, total_pages: Math.ceil((count || 0) / limit) })
 }
 
 export async function POST(req: Request) {

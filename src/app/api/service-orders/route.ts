@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server'
 import { notifyRole } from '@/lib/notify'
 import { insertServiceOrder } from '@/lib/generateWoNumber'
 import { requireRouteContext } from '@/lib/api-route-auth'
+import { safeRoute } from '@/lib/api-handler'
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor || !ctx.shopId) return ctx.error!
 
@@ -81,7 +82,7 @@ export async function GET(req: Request) {
   return NextResponse.json(data)
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const ctx = await requireRouteContext([...SERVICE_WRITE_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor || !ctx.shopId) return ctx.error!
 
@@ -121,3 +122,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json(so, { status: 201 })
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)

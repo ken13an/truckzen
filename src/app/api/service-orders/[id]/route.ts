@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { logAction } from '@/lib/services/auditLog'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -9,7 +10,7 @@ function db() {
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function GET(req: Request, { params }: Params) {
+async function _GET(req: Request, { params }: Params) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -36,7 +37,7 @@ export async function GET(req: Request, { params }: Params) {
   return NextResponse.json(so)
 }
 
-export async function PATCH(req: Request, { params }: Params) {
+async function _PATCH(req: Request, { params }: Params) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -95,7 +96,7 @@ export async function PATCH(req: Request, { params }: Params) {
   return NextResponse.json(updated)
 }
 
-export async function DELETE(req: Request, { params }: Params) {
+async function _DELETE(req: Request, { params }: Params) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -115,3 +116,7 @@ export async function DELETE(req: Request, { params }: Params) {
 
   return NextResponse.json({ success: true })
 }
+
+export const GET = safeRoute(_GET)
+export const PATCH = safeRoute(_PATCH)
+export const DELETE = safeRoute(_DELETE)

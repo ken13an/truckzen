@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server'
 import { scoreMechanics } from '@/lib/mechanic-skills'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { safeRoute } from '@/lib/api-handler'
 
 const SKILL_ADMIN_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'floor_manager', 'floor_supervisor', 'maintenance_manager', 'office_admin']
 
@@ -12,7 +13,7 @@ function canManageSkills(role: string) {
   return SKILL_ADMIN_ROLES.includes(role)
 }
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   if (!actor.shop_id) return jsonError('No shop context', 400)
@@ -53,7 +54,7 @@ export async function GET(req: Request) {
   return jsonError('Invalid type', 400)
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   if (!actor.shop_id) return jsonError('No shop context', 400)
@@ -126,3 +127,6 @@ export async function POST(req: Request) {
 
   return jsonError('Invalid action', 400)
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)

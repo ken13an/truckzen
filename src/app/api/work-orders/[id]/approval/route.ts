@@ -5,10 +5,11 @@ import { SERVICE_PARTS_ROLES } from '@/lib/roles'
  */
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
+import { safeRoute } from '@/lib/api-handler'
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function POST(req: Request, { params }: Params) {
+async function _POST(req: Request, { params }: Params) {
   const { id } = await params
   const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -70,3 +71,5 @@ export async function POST(req: Request, { params }: Params) {
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 }
+
+export const POST = safeRoute(_POST)

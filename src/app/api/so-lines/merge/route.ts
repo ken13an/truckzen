@@ -3,13 +3,14 @@ import { SERVICE_WRITE_ROLES } from '@/lib/roles'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { isInvoiceHardLocked } from '@/lib/invoice-lock'
 import { mergePersistedDescriptions } from '@/lib/merge-lines'
+import { safeRoute } from '@/lib/api-handler'
 
 /**
  * POST /api/so-lines/merge
  * Merge persisted WO lines — service writer controlled.
  * Only untouched lines with no downstream activity can be merged.
  */
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const ctx = await requireRouteContext([...SERVICE_WRITE_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
 
@@ -135,3 +136,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ ok: true, merged_description: mergedDesc })
 }
+
+export const POST = safeRoute(_POST)

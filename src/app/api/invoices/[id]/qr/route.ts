@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { generatePaymentQR } from '@/lib/payments/qr'
 import { log } from '@/lib/security'
+import { safeRoute } from '@/lib/api-handler'
 
 type P = { params: Promise<{ id: string }> }
 
-export async function GET(_req: Request, { params }: P) {
+async function _GET(_req: Request, { params }: P) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
@@ -22,3 +23,5 @@ export async function GET(_req: Request, { params }: P) {
     return NextResponse.json({ error: err.message }, { status: 400 })
   }
 }
+
+export const GET = safeRoute(_GET)

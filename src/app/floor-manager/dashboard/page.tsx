@@ -55,6 +55,7 @@ function PartStatusPill({ status }: { status: string }) {
 }
 
 export default function FloorManagerDashboardPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
 
   // -- All state at top --

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
+import { parsePageParams } from '@/lib/query-limits'
 
 export async function GET(req: Request) {
   const ctx = await requireRouteContext()
@@ -8,9 +9,10 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
   const soId = searchParams.get('so_id')
+  const { page, limit, offset } = parsePageParams(searchParams)
 
   let q = ctx.admin.from('parts_requests')
-    .select('*, service_orders:so_id(id, so_number, status, assigned_tech, assets(unit_number, year, make, model), customers(id, company_name, pricing_tier), users!assigned_tech(full_name)), requester:requested_by(full_name), submitter:submitted_by(full_name)')
+    .select('*, service_orders:so_id(id, so_number, status, assigned_tech, assets(unit_number, year, make, model), customers(id, company_name, pricing_tier), users!assigned_tech(full_name)), requester:requested_by(full_name), submitter:submitted_by(full_name)', { count: 'exact' })
     .eq('shop_id', ctx.shopId)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
@@ -20,7 +22,7 @@ export async function GET(req: Request) {
   }
   if (soId) q = q.eq('so_id', soId)
 
-  const { data, error } = await q.limit(200)
+  const { data, count, error } = await q.range(offset, offset + limit - 1)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data || [])
+  return NextResponse.json({ data: data || [], total: count || 0, page, limit, total_pages: Math.ceil((count || 0) / limit) })
 }

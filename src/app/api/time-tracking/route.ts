@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { safeRoute } from '@/lib/api-handler'
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -27,7 +28,7 @@ export async function GET(req: Request) {
 
   if (techId) q = q.eq('user_id', techId)
 
-  const { data: entries, error } = await q.limit(500)
+  const { data: entries, error } = await q.limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Aggregate by technician
@@ -55,3 +56,5 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ from, to, total_minutes, total_hours: (total_minutes / 60).toFixed(1), by_tech: summary })
 }
+
+export const GET = safeRoute(_GET)

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { parsePageParams } from '@/lib/query-limits'
 
 export async function GET(req: Request) {
   const supabase = await createServerSupabaseClient()
@@ -10,11 +11,11 @@ export async function GET(req: Request) {
   const assetId  = searchParams.get('asset_id')
   const overdue  = searchParams.get('overdue') === 'true'
   const today    = new Date().toISOString().split('T')[0]
-  const upcoming = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+  const { page, limit, offset } = parsePageParams(searchParams)
 
   let q = supabase
     .from('pm_schedules')
-    .select('*, assets(id, unit_number, year, make, model, odometer, customers(company_name))')
+    .select('*, assets(id, unit_number, year, make, model, odometer, customers(company_name))', { count: 'exact' })
     .eq('shop_id', user.shop_id)
     .eq('active', true)
     .order('next_due_date')
@@ -22,9 +23,9 @@ export async function GET(req: Request) {
   if (assetId) q = q.eq('asset_id', assetId)
   if (overdue) q = q.lt('next_due_date', today)
 
-  const { data, error } = await q.limit(200)
+  const { data, count, error } = await q.range(offset, offset + limit - 1)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  return NextResponse.json({ data: data || [], total: count || 0, page, limit, total_pages: Math.ceil((count || 0) / limit) })
 }
 
 export async function POST(req: Request) {

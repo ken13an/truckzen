@@ -6,6 +6,7 @@ import { MECHANIC_ROLES } from '@/lib/roles'
 import { PARTS_PICKUP_STATUS, PARTS_READY_STATUS } from '@/lib/parts-status'
 import Logo from '@/components/Logo'
 import { ChevronRight, Wrench, Clock, CheckCircle2, XCircle, Package, Play, Square } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 import { THEME } from '@/lib/config/colors'
 const _t = THEME.dark
@@ -63,6 +64,7 @@ function StatusPill({ status }: { status: string }) {
 }
 
 export default function MechanicDashboardPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -447,7 +449,7 @@ export default function MechanicDashboardPage() {
             <button onClick={async () => {
               await fetch('/api/impersonate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'reset' }) })
               window.location.href = '/dashboard'
-            }} style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 8, padding: '4px 12px', color: _t.warning, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 4 }}>
+            }} style={{ background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 8, padding: '4px 12px', color: t.warning, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 4 }}>
               Exit Impersonation
             </button>
           )}
@@ -507,10 +509,10 @@ export default function MechanicDashboardPage() {
         {overrideModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
             onClick={e => { if (e.target === e.currentTarget) setOverrideModal(false) }}>
-            <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+            <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: AMBER }}>Outside Shop Area</div>
               <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>You appear to be outside the shop geofence. Provide a reason to punch in for manager review.</div>
-              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: _t.text, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: t.text, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button onClick={() => setOverrideModal(false)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
                 <button disabled={!overrideReason.trim() || punchLoading} onClick={() => handleWorkPunch('punch_in', overrideReason.trim())} style={{ padding: '8px 16px', background: AMBER, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
@@ -1191,7 +1193,7 @@ export default function MechanicDashboardPage() {
       {declineModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) { setDeclineModal(null); setDeclineReason('') } }}>
-          <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+          <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Decline Job</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>Why are you declining this job? (optional)</div>
             <textarea
@@ -1214,7 +1216,7 @@ export default function MechanicDashboardPage() {
       {moreTimeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) setMoreTimeModal(null) }}>
-          <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+          <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Request More Time</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>
               {moreTimeModal.wo?.so_number} — {moreTimeModal.line?.description?.slice(0, 40)}
@@ -1255,7 +1257,7 @@ export default function MechanicDashboardPage() {
       {completeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) setCompleteModal(null) }}>
-          <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+          <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Complete Job?</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 8 }}>
               Are you sure you want to mark this job as complete?

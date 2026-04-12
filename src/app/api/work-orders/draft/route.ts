@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -10,7 +11,7 @@ function db() {
  * GET /api/work-orders/draft
  * Returns autosave drafts for the authenticated user
  */
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
  * POST /api/work-orders/draft
  * Upsert an autosave draft. One draft per user+asset combo.
  */
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shop_id = getActorShopId(actor)
@@ -102,7 +103,7 @@ export async function POST(req: Request) {
  * DELETE /api/work-orders/draft
  * Delete a specific draft by ID, or all drafts for a user+asset
  */
-export async function DELETE(req: Request) {
+async function _DELETE(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const shopId = getActorShopId(actor)
@@ -145,3 +146,7 @@ export async function DELETE(req: Request) {
 
   return NextResponse.json({ ok: true })
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)
+export const DELETE = safeRoute(_DELETE)

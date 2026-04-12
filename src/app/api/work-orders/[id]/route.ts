@@ -8,10 +8,11 @@ import { deriveWOAutomation, deriveLineAutomation } from '@/lib/wo-automation'
 import { deriveWOETC } from '@/lib/wo-etc'
 import { deriveWOAlerts, alertDedupKey } from '@/lib/wo-alerts'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
+import { safeRoute } from '@/lib/api-handler'
 
 type Params = { params: Promise<{ id: string }> }
 
-export async function GET(_req: Request, { params }: Params) {
+async function _GET(_req: Request, { params }: Params) {
   const { id } = await params
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -150,7 +151,7 @@ export async function GET(_req: Request, { params }: Params) {
   return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, service_writer_name, jobAssignments, woParts: woParts || [], automation, lineAutomation, etc })
 }
 
-export async function PATCH(req: Request, { params }: Params) {
+async function _PATCH(req: Request, { params }: Params) {
   const { id } = await params
   const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -257,7 +258,7 @@ export async function PATCH(req: Request, { params }: Params) {
   return NextResponse.json(data)
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+async function _DELETE(_req: Request, { params }: Params) {
   const { id } = await params
   const ctx = await requireRouteContext(['owner', 'gm', 'it_person', 'service_writer'])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -275,3 +276,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   logAction({ shop_id: (wo as any).shop_id, user_id: ctx.actor.id, action: 'wo.voided', entity_type: 'service_order', entity_id: id, details: { so_number: (wo as any).so_number, previous_status: (wo as any).status } }).catch(() => {})
   return NextResponse.json({ ok: true })
 }
+
+export const GET = safeRoute(_GET)
+export const PATCH = safeRoute(_PATCH)
+export const DELETE = safeRoute(_DELETE)

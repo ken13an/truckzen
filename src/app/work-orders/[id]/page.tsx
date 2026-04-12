@@ -1319,18 +1319,18 @@ export default function WorkOrderDetail() {
                 {!wo.is_historical && !isViewOnly && line.description && line.description.length >= 10 && (
                   <>
                     {!aiSuggestions[line.id] && aiLoadingLine !== line.id && (
-                      <button onClick={() => fetchAiSuggestions(line.id, line.description)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: _t.aiPurpleBg, border: '1px solid ${_t.aiPurple}', borderRadius: 8, color: _t.aiPurple, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                      <button onClick={() => fetchAiSuggestions(line.id, line.description)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: t.aiPurpleBg, border: '1px solid ${t.aiPurple}', borderRadius: 8, color: t.aiPurple, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
                         AI: Suggest parts for this job
                       </button>
                     )}
                     {aiLoadingLine === line.id && (
-                      <div style={{ padding: '8px 12px', marginBottom: 10, background: _t.aiPurpleBg, border: '1px solid ${_t.aiPurple}', borderRadius: 8, color: _t.aiPurple, fontSize: 11, fontWeight: 600 }}>
+                      <div style={{ padding: '8px 12px', marginBottom: 10, background: t.aiPurpleBg, border: '1px solid ${t.aiPurple}', borderRadius: 8, color: t.aiPurple, fontSize: 11, fontWeight: 600 }}>
                         Analyzing job description...
                       </div>
                     )}
                     {aiSuggestions[line.id] && !showAiPanel && (
-                      <button onClick={() => setShowAiPanel(line.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: _t.aiPurpleBg, border: '1px solid ${_t.aiPurple}', borderRadius: 8, color: _t.aiPurple, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                      <button onClick={() => setShowAiPanel(line.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: t.aiPurpleBg, border: '1px solid ${t.aiPurple}', borderRadius: 8, color: t.aiPurple, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
                         AI suggested {aiSuggestions[line.id].length} parts — tap to review
                       </button>
@@ -1338,14 +1338,14 @@ export default function WorkOrderDetail() {
                     {showAiPanel === line.id && aiSuggestions[line.id] && (() => {
                       const suggestions = aiSuggestions[line.id]
                       return (
-                        <div style={{ background: t.bgElevated, border: '1px solid ${_t.aiPurple}', borderRadius: 10, padding: 14, marginBottom: 10 }}>
+                        <div style={{ background: t.bgElevated, border: '1px solid ${t.aiPurple}', borderRadius: 10, padding: 14, marginBottom: 10 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: _t.aiPurple }}>AI Suggested Parts</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: t.aiPurple }}>AI Suggested Parts</span>
                             <button onClick={() => setShowAiPanel(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: GRAY, fontSize: 11 }}>Close</button>
                           </div>
                           {suggestions.map((s: any, si: number) => (
                             <label key={si} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: si < suggestions.length - 1 ? '1px solid ${t.border}' : 'none', cursor: 'pointer' }}>
-                              <input type="checkbox" defaultChecked style={{ accentColor: _t.aiPurple }} data-idx={si} />
+                              <input type="checkbox" defaultChecked style={{ accentColor: t.aiPurple }} data-idx={si} />
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary }}>{s.description}</div>
                                 <div style={{ fontSize: 10, color: GRAY }}>Qty: {s.quantity || 1}{s.part_number ? ` · ${s.part_number}` : ''}{s.reason ? ` · ${s.reason}` : ''}</div>
@@ -1357,7 +1357,7 @@ export default function WorkOrderDetail() {
                             const checks = document.querySelectorAll(`input[data-idx]`) as NodeListOf<HTMLInputElement>
                             const selected = suggestions.filter((_: any, i: number) => checks[i]?.checked)
                             if (selected.length) addAiParts(line.id, selected)
-                          }} style={{ marginTop: 10, padding: '8px 16px', background: _t.aiPurple, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, width: '100%' }}>
+                          }} style={{ marginTop: 10, padding: '8px 16px', background: t.aiPurple, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, width: '100%' }}>
                             Add Selected Parts
                           </button>
                         </div>

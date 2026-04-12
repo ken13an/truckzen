@@ -1,8 +1,9 @@
 import { WO_FULL_ACCESS_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
+import { safeRoute } from '@/lib/api-handler'
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const woId = new URL(req.url).searchParams.get('wo_id')
@@ -14,7 +15,7 @@ export async function GET(req: Request) {
   return NextResponse.json(data || [])
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const body = await req.json().catch(() => null)
@@ -28,3 +29,6 @@ export async function POST(req: Request) {
   await ctx.admin.from('wo_activity_log').insert({ wo_id: woId, user_id: ctx.actor.id, action: 'Added a note' })
   return NextResponse.json(data, { status: 201 })
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)

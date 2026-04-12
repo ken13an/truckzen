@@ -11,8 +11,9 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 type Params = { params: Promise<{ id: string }> }
 
 import { INVOICE_ACTION_ROLES, REOPEN_ROLES, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
+import { safeRoute } from '@/lib/api-handler'
 
-export async function POST(req: Request, { params }: Params) {
+async function _POST(req: Request, { params }: Params) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
   const actorShopId = getActorShopId(actor)
@@ -211,7 +212,7 @@ export async function POST(req: Request, { params }: Params) {
 }
 
 // GET — check invoice readiness
-export async function GET(req: Request, { params }: Params) {
+async function _GET(req: Request, { params }: Params) {
   const { id } = await params
   const s = db()
 
@@ -227,3 +228,6 @@ export async function GET(req: Request, { params }: Params) {
 
   return NextResponse.json({ checks, allPassed: checks.every(c => c.passed) })
 }
+
+export const POST = safeRoute(_POST)
+export const GET = safeRoute(_GET)

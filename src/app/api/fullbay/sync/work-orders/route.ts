@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { fetchInvoices, mapCustomer, mapTruck, mapServiceOrder } from '@/lib/fullbay/client'
 import { ADMIN_ROLES } from '@/lib/roles'
+import * as Sentry from '@sentry/nextjs'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -242,6 +243,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ imported, updated, skipped, total_pulled: invoices.length, errors: errors.slice(0, 20) })
   } catch (err: any) {
+    Sentry.captureException(err, { extra: { sync_type: 'work-orders' } })
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

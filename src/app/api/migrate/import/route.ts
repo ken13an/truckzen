@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 import type { RawCustomer, RawVehicle, RawServiceOrder, RawInvoice, RawPart, RawTechnician } from '@/lib/services/connectors/base'
 import { mapSOStatus, mapInvoiceStatus, parseMoney, parseDate } from '@/lib/services/connectors/csv'
 
@@ -664,9 +665,10 @@ async function importTechnicians(supabase: any, shopId: string, rows: RawTechnic
 // ── MAIN HANDLER ────────────────────────────────────────────
 export async function POST(req: Request) {
   const supabase = db()
+  let body: any = {}
 
   try {
-    const body = await req.json()
+    body = await req.json()
     const { shop_id, user_id, source, data_type, rows, options = {} } = body
 
     if (!shop_id || !data_type || !Array.isArray(rows)) {
@@ -719,6 +721,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result)
   } catch (err: any) {
+    Sentry.captureException(err, { extra: { shop_id: body?.shop_id, data_type: body?.data_type, row_count: body?.rows?.length } })
     return NextResponse.json({ error: err.message || 'Import failed' }, { status: 500 })
   }
 }

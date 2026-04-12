@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/services/email'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -28,7 +29,7 @@ function getPreviousWeekRange() {
   }
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const authHeader = req.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -166,3 +167,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ reports_generated: reportsGenerated })
 }
+
+export const POST = safeRoute(_POST)

@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { randomUUID } from 'crypto'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 // POST — called after successful login to create a session token
-export async function POST() {
+async function _POST() {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -30,7 +31,7 @@ export async function POST() {
 }
 
 // DELETE — called on logout to clear session token
-export async function DELETE() {
+async function _DELETE() {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
 
@@ -44,3 +45,6 @@ export async function DELETE() {
   response.cookies.delete('tz_session_checked')
   return response
 }
+
+export const POST = safeRoute(_POST)
+export const DELETE = safeRoute(_DELETE)

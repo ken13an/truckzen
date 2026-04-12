@@ -1,6 +1,7 @@
 import { ASSIGNMENT_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
+import { safeRoute } from '@/lib/api-handler'
 
 async function resolveAssignmentUsers(admin: any, assignments: any[]) {
   const userIds = [...new Set(assignments.map((a: any) => a.user_id).filter(Boolean))]
@@ -11,7 +12,7 @@ async function resolveAssignmentUsers(admin: any, assignments: any[]) {
   return assignments.map((a: any) => ({ ...a, users: map[a.user_id] || null }))
 }
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const searchParams = new URL(req.url).searchParams
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ error: 'line_id or wo_id required' }, { status: 400 })
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const ctx = await requireRouteContext([...ASSIGNMENT_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { line_id, assignments, wo_id } = await req.json().catch(() => ({}))
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true })
 }
 
-export async function DELETE(req: Request) {
+async function _DELETE(req: Request) {
   const ctx = await requireRouteContext([...ASSIGNMENT_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const id = new URL(req.url).searchParams.get('id')
@@ -108,3 +109,7 @@ export async function DELETE(req: Request) {
   await ctx.admin.from('wo_job_assignments').delete().eq('id', id)
   return NextResponse.json({ ok: true })
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)
+export const DELETE = safeRoute(_DELETE)

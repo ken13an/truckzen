@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { Check, Package } from 'lucide-react'
 import { THEME } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 const _t = THEME.dark
 
 const FONT = "'Instrument Sans',sans-serif"
@@ -23,6 +24,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
 }
 
 export default function PartsQueuePage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [requests, setRequests] = useState<any[]>([])
@@ -105,16 +107,16 @@ export default function PartsQueuePage() {
     const canMarkReady = pr.status === 'submitted' || pr.status === 'partial'
 
     return (
-      <div key={pr.id} style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 14, cursor: 'pointer', transition: 'all .12s' }}
-        onMouseEnter={e => (e.currentTarget.style.background = _t.bgHover)}
-        onMouseLeave={e => (e.currentTarget.style.background = _t.bgCard)}>
+      <div key={pr.id} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 14, cursor: 'pointer', transition: 'all .12s' }}
+        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
+        onMouseLeave={e => (e.currentTarget.style.background = t.bgCard)}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <a href={`/parts/wo/${wo.id || pr.so_id}`} style={{ textDecoration: 'none', flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{wo.so_number || '—'}</span>
               {getStatusBadge(pr.status)}
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: _t.text }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>
               #{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}
             </div>
             <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{cust.company_name || '—'}</div>
@@ -140,9 +142,9 @@ export default function PartsQueuePage() {
     const sourced = parts.filter((l: any) => l.real_name).length
     return (
       <a key={wo.id} href={`/parts/wo/${wo.id}`} style={{ textDecoration: 'none' }}>
-        <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 14, cursor: 'pointer', transition: 'all .12s' }}
-          onMouseEnter={e => (e.currentTarget.style.background = _t.bgHover)}
-          onMouseLeave={e => (e.currentTarget.style.background = _t.bgCard)}>
+        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 14, cursor: 'pointer', transition: 'all .12s' }}
+          onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
+          onMouseLeave={e => (e.currentTarget.style.background = t.bgCard)}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -151,7 +153,7 @@ export default function PartsQueuePage() {
                   <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: 'rgba(217,79,79,.12)', color: RED, textTransform: 'uppercase' }}>{wo.priority}</span>
                 ) : null}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: _t.text }}>#{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>#{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
               <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{cust.company_name || '—'}</div>
             </div>
             {parts.length > 0 && (
@@ -168,11 +170,11 @@ export default function PartsQueuePage() {
     )
   }
 
-  if (loading) return <div style={{ background: _t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   return (
-    <div style={{ background: _t.bg, minHeight: '100vh', color: _t.text, fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: _t.text, marginBottom: 4 }}>Parts Queue</div>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Parts Queue</div>
       <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>Work orders needing parts department attention</div>
 
       {/* Tabs */}
@@ -196,7 +198,7 @@ export default function PartsQueuePage() {
             {activeRequests.map(renderRequestRow)}
             {needsParts.map(renderWORow)}
             {activeRequests.length === 0 && needsParts.length === 0 && (
-              <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>
+              <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>
                 <Package size={24} style={{ marginBottom: 8, opacity: 0.3 }} /><br />No active parts requests
               </div>
             )}
@@ -207,7 +209,7 @@ export default function PartsQueuePage() {
             {orderedRequests.map(renderRequestRow)}
             {onOrder.map(renderWORow)}
             {orderedRequests.length === 0 && onOrder.length === 0 && (
-              <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>No parts on order</div>
+              <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>No parts on order</div>
             )}
           </>
         )}
@@ -215,7 +217,7 @@ export default function PartsQueuePage() {
           <>
             {readyRequests.map(renderRequestRow)}
             {readyRequests.length === 0 && (
-              <div style={{ background: _t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>No parts marked as ready</div>
+              <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>No parts marked as ready</div>
             )}
           </>
         )}
@@ -224,8 +226,8 @@ export default function PartsQueuePage() {
       {/* Confirm dialog */}
       {confirmReady && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setConfirmReady(null)}>
-          <div style={{ background: _t.bgElevated, borderRadius: 16, padding: 24, maxWidth: 380, width: '90%', border: '1px solid rgba(255,255,255,.08)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: _t.text, marginBottom: 12 }}>Mark Parts Ready?</div>
+          <div style={{ background: t.bgElevated, borderRadius: 16, padding: 24, maxWidth: 380, width: '90%', border: '1px solid rgba(255,255,255,.08)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: t.text, marginBottom: 12 }}>Mark Parts Ready?</div>
             <p style={{ fontSize: 13, color: MUTED, marginBottom: 20 }}>Mechanic will be notified that parts are ready for pickup.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setConfirmReady(null)} style={{ padding: '8px 16px', background: 'rgba(255,255,255,.06)', border: 'none', borderRadius: 8, color: MUTED, fontSize: 12, cursor: 'pointer' }}>Cancel</button>

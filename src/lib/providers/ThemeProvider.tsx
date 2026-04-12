@@ -27,8 +27,7 @@ function getInitialMode(): ThemeMode {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [requestedMode, setRequestedModeState] = useState<ThemeMode>(getInitialMode)
 
-  // Safety lock: force active rendered mode to dark until Phase 2D migrates all components
-  const mode: ThemeMode = 'dark'
+  const mode: ThemeMode = requestedMode
   const tokens = THEME[mode]
 
   useLayoutEffect(() => {
@@ -36,11 +35,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.body.style.backgroundColor = tokens.bg
     document.body.style.color = tokens.text
     try {
-      window.localStorage.setItem(STORAGE_KEY, requestedMode)
+      window.localStorage.setItem(STORAGE_KEY, mode)
     } catch {
       // ignore storage write failures
     }
-  }, [requestedMode, tokens])
+  }, [mode, tokens])
 
   const toggleMode = () => {
     setRequestedModeState(prev => (prev === 'dark' ? 'light' : 'dark'))

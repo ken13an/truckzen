@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { safeRoute } from '@/lib/api-handler'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const mechanicId = searchParams.get('mechanic_id')
   const from = searchParams.get('from')
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
   return NextResponse.json(data)
 }
 
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const body = await req.json()
   const { shop_id, mechanic_id, description, duration_minutes, category } = body
 
@@ -49,3 +50,6 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
+
+export const GET = safeRoute(_GET)
+export const POST = safeRoute(_POST)

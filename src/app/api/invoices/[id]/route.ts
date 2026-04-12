@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { log } from '@/lib/security'
+import { safeRoute } from '@/lib/api-handler'
 
 type P = { params: Promise<{ id: string }> }
 
-export async function GET(_req: Request, { params }: P) {
+async function _GET(_req: Request, { params }: P) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
@@ -21,7 +22,7 @@ export async function GET(_req: Request, { params }: P) {
   return NextResponse.json(data)
 }
 
-export async function PATCH(req: Request, { params }: P) {
+async function _PATCH(req: Request, { params }: P) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
@@ -50,3 +51,6 @@ export async function PATCH(req: Request, { params }: P) {
   }
   return NextResponse.json(data)
 }
+
+export const GET = safeRoute(_GET)
+export const PATCH = safeRoute(_PATCH)

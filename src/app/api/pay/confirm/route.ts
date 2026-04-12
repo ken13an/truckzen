@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { safeRoute } from '@/lib/api-handler'
 
 const stripe   = new Stripe(process.env.STRIPE_SECRET_KEY!)
-export async function POST(req: Request) {
+async function _POST(req: Request) {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   try {
     const { token, session_id } = await req.json()
@@ -34,3 +35,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Confirmation failed' }, { status: 500 })
   }
 }
+
+export const POST = safeRoute(_POST)
