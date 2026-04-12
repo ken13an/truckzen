@@ -61,9 +61,9 @@ export default function SetupPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page:    { minHeight:'100vh', background:th.bg, color:th.text, fontFamily:"'Instrument Sans',sans-serif", display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 },
-    card:    { width:'100%', maxWidth:560, background:'#161B24', border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'32px 28px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
+    card:    { width:'100%', maxWidth:560, background:th.bgCard, border:'1px solid rgba(255,255,255,.08)', borderRadius:16, padding:'32px 28px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
     steps:   { display:'flex', gap:6, marginBottom:28 },
-    stepDot: { flex:1, height:4, borderRadius:100, background:'rgba(255,255,255,.08)', transition:'all .2s' },
+    stepDot: { flex:1, height:4, borderRadius:100, background:th.border, transition:'all .2s' },
     stepOn:  { background:'#1D6FE8' },
     stepDone:{ background:'#1DB870' },
     title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:th.text, marginBottom:6 },

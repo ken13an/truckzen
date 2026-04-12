@@ -183,7 +183,7 @@ export default function PartsWOView() {
             <div style={{ fontSize: 12, fontWeight: 600, color: allSourced ? GREEN : AMBER, marginBottom: 4 }}>
               {sourcedCount}/{partLines.length} parts sourced
             </div>
-            <div style={{ width: '100%', height: 4, background: 'rgba(255,255,255,.08)', borderRadius: 2 }}>
+            <div style={{ width: '100%', height: 4, background: t.border, borderRadius: 2 }}>
               <div style={{ width: `${(sourcedCount / partLines.length) * 100}%`, height: '100%', background: allSourced ? GREEN : AMBER, borderRadius: 2, transition: 'width .3s' }} />
             </div>
           </div>

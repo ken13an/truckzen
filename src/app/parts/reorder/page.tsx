@@ -65,7 +65,7 @@ export default function PartsReorderPage() {
   const S: Record<string, React.CSSProperties> = {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:4 },
-    card:  { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden', marginBottom:14 },
+    card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden', marginBottom:14 },
     th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 12px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
     td:    { padding:'10px 12px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:12 },
   }
@@ -87,7 +87,7 @@ export default function PartsReorderPage() {
 
   return (
     <div style={S.page}>
-      <a href="/parts" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/parts" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Parts
 </a>
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>

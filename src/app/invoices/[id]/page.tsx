@@ -264,12 +264,12 @@ export default function InvoiceDetailPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page:   { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Inter', -apple-system, sans-serif", padding:24 },
-    card:   { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
+    card:   { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
     label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
     th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase' as const, letterSpacing:'.08em', padding:'7px 10px', textAlign:'left' as const, background:'#0B0D11' },
     td:     { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:12 },
     btn:    { padding:'9px 18px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
-    input:  { background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:4, color:t.text, padding:'4px 8px', fontSize:11, fontFamily:'inherit', outline:'none', width:'100%' },
+    input:  { background:t.border, border:'1px solid rgba(255,255,255,.1)', borderRadius:4, color:t.text, padding:'4px 8px', fontSize:11, fontFamily:'inherit', outline:'none', width:'100%' },
   }
 
   if (loading) return <div style={{ ...S.page, color:t.textSecondary, padding:60 }}>Loading...</div>
@@ -329,7 +329,7 @@ export default function InvoiceDetailPage() {
     if (!items.length) return null
     return (
       <>
-        <tr><td colSpan={isDraft ? 6 : 5} style={{ padding:'6px 10px', fontFamily:'monospace', fontSize:8, color, textTransform:'uppercase', letterSpacing:'.1em', background:'rgba(255,255,255,.02)', borderBottom:'1px solid rgba(255,255,255,.04)' }}>{title}</td></tr>
+        <tr><td colSpan={isDraft ? 6 : 5} style={{ padding:'6px 10px', fontFamily:'monospace', fontSize:8, color, textTransform:'uppercase', letterSpacing:'.1em', background:t.border, borderBottom:'1px solid rgba(255,255,255,.04)' }}>{title}</td></tr>
         {items.map((l: any, localIdx: number) => {
           const globalIdx = lines.indexOf(l)
           return (
@@ -393,7 +393,7 @@ export default function InvoiceDetailPage() {
         </div>
       )}
 
-      <a href="/accounting" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/accounting" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Accounting
 </a>
 

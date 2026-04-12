@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Wrench, Users2, Truck, Package, User, Building2, Loader2 } from 'lucide-react'
-import { THEME } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 import type { SearchResponse, SearchResult, SearchEntityType } from '@/types/search'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -33,7 +33,7 @@ const STATUS_COLORS: Record<string, (t: any) => string> = {
 }
 
 export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
-  const t = THEME.dark
+  const { tokens: t } = useTheme()
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)

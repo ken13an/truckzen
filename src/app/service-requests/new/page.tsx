@@ -130,7 +130,7 @@ export default function NewServiceRequestPage() {
     back: { fontSize: 12, color: th.textSecondary, textDecoration: 'none', display: 'block', marginBottom: 20 },
     title: { fontSize: 22, fontWeight: 700, color: th.text, marginBottom: 4 },
     sub: { fontSize: 13, color: th.textSecondary, marginBottom: 28 },
-    section: { background: '#161B24', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 20, marginBottom: 16 },
+    section: { background: th.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 20, marginBottom: 16 },
     sectionTitle: { fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 14 },
     label: { fontSize: 11, fontWeight: 600, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 6 },
     input: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
@@ -152,7 +152,7 @@ export default function NewServiceRequestPage() {
 
   return (
     <div style={S.page}>
-      <a href="/service-requests" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/service-requests" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Service Requests
 </a>
       <div style={S.title}>New Service Request</div>

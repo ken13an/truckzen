@@ -51,7 +51,7 @@ export default function InspectionDetailPage() {
   const responses = inspection.responses || []
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
+    card: { background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary },
   }
 

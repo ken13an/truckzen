@@ -66,7 +66,7 @@ export default function PlatformActivity() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-        <select value={actionFilter} onChange={e => { setActionFilter(e.target.value); if (user) fetchLogs(user.id, { action: e.target.value }) }} style={{ padding: '8px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit' }}>
+        <select value={actionFilter} onChange={e => { setActionFilter(e.target.value); if (user) fetchLogs(user.id, { action: e.target.value }) }} style={{ padding: '8px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit' }}>
           {ACTION_TYPES.map(t => (
             <option key={t} value={t}>{t === 'all' ? 'All Actions' : t.replace(/_/g, ' ')}</option>
           ))}
@@ -76,14 +76,14 @@ export default function PlatformActivity() {
           type="date"
           value={dateFrom}
           onChange={e => { setDateFrom(e.target.value); if (user) fetchLogs(user.id, { from: e.target.value }) }}
-          style={{ padding: '8px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit' }}
+          style={{ padding: '8px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit' }}
           placeholder="From"
         />
         <input
           type="date"
           value={dateTo}
           onChange={e => { setDateTo(e.target.value); if (user) fetchLogs(user.id, { to: e.target.value }) }}
-          style={{ padding: '8px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit' }}
+          style={{ padding: '8px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit' }}
           placeholder="To"
         />
 

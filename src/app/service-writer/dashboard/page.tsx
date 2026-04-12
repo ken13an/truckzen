@@ -155,7 +155,7 @@ export default function ServiceWriterDashboard() {
           {myWos.length === 0 ? <div style={{ color: t.textTertiary, fontSize: 12, padding: 20, textAlign: 'center' }}>No open WOs</div> : (
             <div>
               {/* Table header */}
-              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr 100px', gap: 8, padding: '6px 16px', background: 'rgba(255,255,255,0.01)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr 100px', gap: 8, padding: '6px 16px', background: t.border }}>
                 {['WO #', 'Customer', 'Status', 'Assigned'].map(h => (
                   <div key={h} style={{ fontSize: 9, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</div>
                 ))}
@@ -239,7 +239,7 @@ export default function ServiceWriterDashboard() {
                 <div style={{ fontSize: 36, fontWeight: 700, color: scoreColor }}>{healthScore}</div>
                 <span style={{ fontSize: 10, fontWeight: 600, color: labelColor, background: labelBg, padding: '3px 10px', borderRadius: 6 }}>{healthLabel}</span>
               </div>
-              <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.03)', marginBottom: 16 }}>
+              <div style={{ height: 6, borderRadius: 3, background: t.border, marginBottom: 16 }}>
                 <div style={{ height: '100%', borderRadius: 3, width: `${healthScore}%`, background: `linear-gradient(90deg, ${t.success}, ${t.accent})`, transition: 'width .3s' }} />
               </div>
               {[

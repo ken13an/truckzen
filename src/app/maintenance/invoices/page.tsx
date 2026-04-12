@@ -120,7 +120,7 @@ export default function MaintenanceInvoicesPage() {
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Flag Invoice Issue</div>
             <div style={{ fontSize: 13, color: MUTED, marginBottom: 16 }}>Describe the issue. Accounting will be notified.</div>
             <textarea value={flagNotes} onChange={e => setFlagNotes(e.target.value)} placeholder="What's wrong with this invoice?" rows={3}
-              style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: th.text, fontFamily: FONT, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+              style={{ width: '100%', padding: '10px 12px', background: th.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: th.text, fontFamily: FONT, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
               <button onClick={() => { setFlagModal(null); setFlagNotes('') }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
               <button onClick={() => doAction(flagModal, 'flag_issue', flagNotes)} disabled={!flagNotes.trim() || !!actionLoading}
@@ -180,7 +180,7 @@ export default function MaintenanceInvoicesPage() {
           const lastAction = actionsTaken[w.id]
 
           return (
-            <div key={w.id} style={{ background: th.bgCard, border: `1px solid ${isExpanded ? 'rgba(29,111,232,.3)' : 'rgba(255,255,255,.08)'}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div key={w.id} style={{ background: th.bgCard, border: `1px solid ${isExpanded ? 'rgba(29,111,232,.3)' : th.border}`, borderRadius: 12, overflow: 'hidden' }}>
               {/* Row header */}
               <div onClick={() => loadDetail(w.id)} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', cursor: 'pointer', gap: 12 }}
                 onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'rgba(255,255,255,.02)' }}
@@ -234,7 +234,7 @@ export default function MaintenanceInvoicesPage() {
                           const partsAmt = jobParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0)
 
                           return (
-                            <div key={job.id} style={{ marginBottom: 10, padding: '8px 12px', background: 'rgba(255,255,255,.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,.04)' }}>
+                            <div key={job.id} style={{ marginBottom: 10, padding: '8px 12px', background: th.border, borderRadius: 8, border: '1px solid rgba(255,255,255,.04)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                 <span style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>Job {idx + 1}: <span style={{ color: th.text, fontWeight: 600 }}>{(job.description || '').substring(0, 50)}</span></span>
                                 <span style={{ fontSize: 11, fontFamily: MONO, color: MUTED }}>{hrs}h {rate > 0 ? `@ ${fmt(rate)}/hr = ` : ''}<strong style={{ color: th.text }}>{fmt(laborAmt)}</strong></span>

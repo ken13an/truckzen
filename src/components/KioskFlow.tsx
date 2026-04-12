@@ -538,7 +538,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 }}
                 style={{
                   width: 80, height: 64, borderRadius: 14, border: 'none',
-                  background: digit === 'del' ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)',
+                  background: digit === 'del' ? 'rgba(255,255,255,0.04)' : th.border,
                   color: '#EDEDF0', fontSize: digit === 'del' ? 16 : 28, fontWeight: 600,
                   cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif",
                   transition: 'background 0.1s',
@@ -690,7 +690,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: i + 1 <= step ? '#1D6FE8' : 'rgba(255,255,255,0.2)',
+              background: i + 1 <= step ? '#1D6FE8' : th.border,
               transition: 'background .2s',
             }}
           />
@@ -777,7 +777,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
               ].map(l => (
                 <button key={l.code} onClick={() => setLang(l.code)} style={{
                   padding: '12px 24px', borderRadius: 12, fontSize: 16, fontWeight: 700, fontFamily: "'Instrument Sans', sans-serif",
-                  background: lang === l.code ? '#1D6FE8' : 'rgba(255,255,255,0.06)',
+                  background: lang === l.code ? '#1D6FE8' : th.border,
                   color: lang === l.code ? '#fff' : '#EDEDF0',
                   border: lang === l.code ? '2px solid #1D6FE8' : '2px solid rgba(255,255,255,0.1)',
                   cursor: 'pointer',
@@ -840,7 +840,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                         }}
                         style={{
                           padding: '16px 20px',
-                          background: 'rgba(255,255,255,0.06)',
+                          background: th.border,
                           border: '2px solid transparent',
                           borderRadius: 12,
                           cursor: 'pointer',
@@ -971,7 +971,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                         }}
                         style={{
                           padding: '16px 20px',
-                          background: 'rgba(255,255,255,0.06)',
+                          background: th.border,
                           border: '2px solid transparent',
                           borderRadius: 12,
                           cursor: 'pointer',
@@ -1260,7 +1260,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('review_title')}</div>
             <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 7 {t('of')} 7</div>
 
-            <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <div style={{ background: th.border, borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 0 }}>
               {[
                 [t('company_name'), selectedCustomer?.company_name || newCustomer.company_name || '—'],
                 [t('unit_number'), selectedUnit ? `#${selectedUnit.unit_number}` : newUnit.unit_number ? `#${newUnit.unit_number}` : '—'],
@@ -1409,7 +1409,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
             <Sparkles size={32} color="#1D6FE8" style={{ marginBottom: 12 }} />
             <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{lang === 'es' ? 'Asi registramos su solicitud' : lang === 'ru' ? 'Вот как мы записали вашу заявку' : lang === 'uz' ? "So'rovingiz shunday qayd qilindi" : "Here's how we recorded your request"}</div>
             <div style={{ fontSize: 14, color: '#9D9DA1', marginBottom: 24 }}>Our system cleaned up your description for the service team.</div>
-            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '20px 24px', textAlign: 'left', fontSize: 16, lineHeight: 1.6, marginBottom: 24, minHeight: 80 }}>
+            <div style={{ background: th.border, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '20px 24px', textAlign: 'left', fontSize: 16, lineHeight: 1.6, marginBottom: 24, minHeight: 80 }}>
               {aiRewrittenText}
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>

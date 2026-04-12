@@ -116,12 +116,12 @@ export default function PlatformShops() {
             value={search}
             onChange={e => handleSearch(e.target.value)}
             placeholder="Search by shop name or owner email..."
-            style={{ width: '100%', padding: '9px 12px 9px 34px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '9px 12px 9px 34px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
           />
         </div>
 
         {/* Status */}
-        <select value={statusFilter} onChange={e => handleFilterChange('status', e.target.value)} style={{ padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit' }}>
+        <select value={statusFilter} onChange={e => handleFilterChange('status', e.target.value)} style={{ padding: '9px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit' }}>
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="pending">Pending</option>
@@ -130,7 +130,7 @@ export default function PlatformShops() {
         </select>
 
         {/* Plan */}
-        <select value={planFilter} onChange={e => handleFilterChange('plan', e.target.value)} style={{ padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit' }}>
+        <select value={planFilter} onChange={e => handleFilterChange('plan', e.target.value)} style={{ padding: '9px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit' }}>
           <option value="all">All Plans</option>
           <option value="truckzen">TruckZen</option>
           <option value="truckzen_pro">TruckZen Pro</option>
@@ -165,11 +165,11 @@ export default function PlatformShops() {
                 <td style={{ padding: '10px', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
                   <div style={{ display: 'flex', gap: 4 }}>
                     <button onClick={() => handleEnterShop(shop)} style={{ background: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'none', borderRadius: 4, padding: '4px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>Enter</button>
-                    <button onClick={() => setEditShop({ ...shop })} style={{ background: 'rgba(255,255,255,.06)', color: t.textSecondary, border: 'none', borderRadius: 4, padding: '4px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+                    <button onClick={() => setEditShop({ ...shop })} style={{ background: t.border, color: t.textSecondary, border: 'none', borderRadius: 4, padding: '4px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
                     {shop.status === 'active' && (
                       <button onClick={() => handleSuspend(shop)} style={{ background: 'rgba(217,79,79,.08)', color: '#D94F4F', border: 'none', borderRadius: 4, padding: '4px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Suspend</button>
                     )}
-                    <a href={`/platform-admin/activity?shop_id=${shop.id}`} style={{ background: 'rgba(255,255,255,.04)', color: t.textTertiary, borderRadius: 4, padding: '4px 8px', fontSize: 10, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Log</a>
+                    <a href={`/platform-admin/activity?shop_id=${shop.id}`} style={{ background: t.border, color: t.textTertiary, borderRadius: 4, padding: '4px 8px', fontSize: 10, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Log</a>
                   </div>
                 </td>
               </tr>
@@ -203,14 +203,14 @@ export default function PlatformShops() {
                     type={f.type}
                     value={editShop[f.key] || ''}
                     onChange={e => setEditShop({ ...editShop, [f.key]: e.target.value })}
-                    style={{ width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '9px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
                   />
                 </div>
               ))}
 
               <div>
                 <label style={{ fontSize: 10, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 4 }}>Plan</label>
-                <select value={editShop.subscription_plan || 'truckzen'} onChange={e => setEditShop({ ...editShop, subscription_plan: e.target.value })} style={{ width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit' }}>
+                <select value={editShop.subscription_plan || 'truckzen'} onChange={e => setEditShop({ ...editShop, subscription_plan: e.target.value })} style={{ width: '100%', padding: '9px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit' }}>
                   <option value="truckzen">TruckZen</option>
                   <option value="truckzen_pro">TruckZen Pro</option>
                   <option value="enterprise">Enterprise</option>
@@ -219,7 +219,7 @@ export default function PlatformShops() {
 
               <div>
                 <label style={{ fontSize: 10, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 4 }}>Status</label>
-                <select value={editShop.status || 'active'} onChange={e => setEditShop({ ...editShop, status: e.target.value })} style={{ width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit' }}>
+                <select value={editShop.status || 'active'} onChange={e => setEditShop({ ...editShop, status: e.target.value })} style={{ width: '100%', padding: '9px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit' }}>
                   <option value="active">Active</option>
                   <option value="suspended">Suspended</option>
                   <option value="cancelled">Cancelled</option>
@@ -232,7 +232,7 @@ export default function PlatformShops() {
                   type="date"
                   value={editShop.trial_ends_at ? new Date(editShop.trial_ends_at).toISOString().split('T')[0] : ''}
                   onChange={e => setEditShop({ ...editShop, trial_ends_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                  style={{ width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '9px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -242,7 +242,7 @@ export default function PlatformShops() {
                   value={editShop.notes || ''}
                   onChange={e => setEditShop({ ...editShop, notes: e.target.value })}
                   rows={3}
-                  style={{ width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '9px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
                 />
               </div>
 

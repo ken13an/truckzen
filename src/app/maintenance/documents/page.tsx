@@ -29,7 +29,7 @@ export default function DocumentsPage() {
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Documents</div>
       </div>
 
-      <div style={{ background: '#161B24', border: '2px dashed rgba(255,255,255,.08)', borderRadius: 12, padding: 30, textAlign: 'center', marginBottom: 16 }}>
+      <div style={{ background: t.bgCard, border: '2px dashed rgba(255,255,255,.08)', borderRadius: 12, padding: 30, textAlign: 'center', marginBottom: 16 }}>
         <Upload size={28} color={t.textTertiary} style={{ marginBottom: 8 }} />
         <div style={{ color: t.textTertiary, fontSize: 13 }}>Upload files to the maintenance document library</div>
         <div style={{ color: t.textTertiary, fontSize: 11, marginTop: 4 }}>Drag & drop or click to upload. Uses maintenance-files storage.</div>

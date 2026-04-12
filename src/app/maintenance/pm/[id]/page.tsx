@@ -96,7 +96,7 @@ export default function PMDetailPage() {
   const stColor = isOver ? RED : isSoon ? AMBER : GREEN
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
+    card: { background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary },
     input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
   }
@@ -126,7 +126,7 @@ export default function PMDetailPage() {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={markComplete} disabled={saving} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? 'Saving...' : 'Confirm Complete'}</button>
-            <button onClick={() => setShowComplete(false)} style={{ padding: '8px 16px', background: 'rgba(255,255,255,.06)', border: 'none', borderRadius: 8, color: MUTED, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+            <button onClick={() => setShowComplete(false)} style={{ padding: '8px 16px', background: t.border, border: 'none', borderRadius: 8, color: MUTED, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
           </div>
         </div>
       )}

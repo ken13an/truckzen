@@ -159,7 +159,7 @@ export default function PartsQueuePage() {
             {parts.length > 0 && (
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 11, color: sourced === parts.length ? GREEN : AMBER, fontWeight: 600 }}>{sourced}/{parts.length} sourced</div>
-                <div style={{ width: 80, height: 4, background: 'rgba(255,255,255,.08)', borderRadius: 2, marginTop: 4 }}>
+                <div style={{ width: 80, height: 4, background: t.border, borderRadius: 2, marginTop: 4 }}>
                   <div style={{ width: `${(sourced / parts.length) * 100}%`, height: '100%', background: sourced === parts.length ? GREEN : AMBER, borderRadius: 2 }} />
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function PartsQueuePage() {
             <div style={{ fontSize: 15, fontWeight: 700, color: t.text, marginBottom: 12 }}>Mark Parts Ready?</div>
             <p style={{ fontSize: 13, color: MUTED, marginBottom: 20 }}>Mechanic will be notified that parts are ready for pickup.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmReady(null)} style={{ padding: '8px 16px', background: 'rgba(255,255,255,.06)', border: 'none', borderRadius: 8, color: MUTED, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setConfirmReady(null)} style={{ padding: '8px 16px', background: t.border, border: 'none', borderRadius: 8, color: MUTED, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
               <button onClick={() => quickMarkReady(confirmReady)} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Mark Ready</button>
             </div>
           </div>

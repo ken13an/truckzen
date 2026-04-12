@@ -159,7 +159,7 @@ export default function QuickViewPage() {
               <div style={{ fontSize: 20, fontWeight: 800 }}>Floor Manager</div>
               <div style={{ fontSize: 11, color: DIM }}>Assign jobs fast</div>
             </div>
-            <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: 2, marginLeft: 4 }}>
+            <div style={{ display: 'flex', gap: 2, background: t.border, borderRadius: 6, padding: 2, marginLeft: 4 }}>
               <a href="/shop-floor" style={{ padding: '4px 10px', borderRadius: 5, fontSize: 11, fontWeight: 600, background: 'transparent', color: DIM, textDecoration: 'none', cursor: 'pointer' }}>Full View</a>
               <span style={{ padding: '4px 10px', borderRadius: 5, fontSize: 11, fontWeight: 600, background: BLUE, color: '#fff', cursor: 'default' }}>Quick View</span>
             </div>
@@ -171,7 +171,7 @@ export default function QuickViewPage() {
           {FILTERS.map(f => (
             <button key={f.key} onClick={() => setFilter(f.key)} style={{
               padding: '5px 10px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer',
-              background: filter === f.key ? BLUE : 'rgba(255,255,255,0.06)',
+              background: filter === f.key ? BLUE : t.border,
               color: filter === f.key ? '#fff' : DIM,
             }}>
               {f.label} ({counts[f.key]})

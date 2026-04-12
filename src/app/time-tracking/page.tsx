@@ -33,7 +33,7 @@ export default function TimeTrackingPage() {
   const S: Record<string, React.CSSProperties> = {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:4 },
-    card:  { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
+    card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
     th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.1em', padding:'6px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
     td:    { padding:'8px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
     chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:'#1C2130', color:t.textSecondary, fontFamily:'inherit' },

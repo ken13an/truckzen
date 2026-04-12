@@ -471,7 +471,7 @@ export default function UnitProfilePage() {
                   height: 20,
                   borderRadius: 10,
                   border: 'none',
-                  background: editForm.is_owner_operator ? AMBER : 'rgba(255,255,255,0.12)',
+                  background: editForm.is_owner_operator ? AMBER : th.border,
                   cursor: 'pointer',
                   position: 'relative' as const,
                   transition: 'background 0.2s',
@@ -549,7 +549,7 @@ export default function UnitProfilePage() {
         {/* Back button */}
         <a
           href={'/customers/' + id}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 100, background: 'rgba(255,255,255,0.1)', color: '#EDEDF0', textDecoration: 'none', fontSize: 13, fontWeight: 500, marginBottom: 20 }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 100, background: th.border, color: '#EDEDF0', textDecoration: 'none', fontSize: 13, fontWeight: 500, marginBottom: 20 }}
         >
           <ChevronLeft size={14} />
           {customer?.company_name || 'Customer'}

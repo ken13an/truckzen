@@ -1,0 +1,73 @@
+[
+  {
+    "file": "src/app/shop-floor/page.tsx",
+    "status": "patched",
+    "replacements": 55
+  },
+  {
+    "file": "src/app/mechanic/dashboard/page.tsx",
+    "status": "patched",
+    "replacements": 6
+  },
+  {
+    "file": "src/app/floor-manager/dashboard/page.tsx",
+    "status": "patched",
+    "replacements": 0
+  },
+  {
+    "file": "src/app/floor-manager/quick-view/page.tsx",
+    "status": "patched",
+    "replacements": 0
+  },
+  {
+    "file": "src/app/tech/page.tsx",
+    "status": "patched",
+    "replacements": 2
+  },
+  {
+    "file": "src/app/parts/page.tsx",
+    "status": "no-change"
+  },
+  {
+    "file": "src/app/parts/[id]/page.tsx",
+    "status": "no-change"
+  },
+  {
+    "file": "src/app/parts/queue/page.tsx",
+    "status": "patched",
+    "replacements": 17
+  },
+  {
+    "file": "src/app/parts/cores/page.tsx",
+    "status": "patched",
+    "replacements": 13
+  },
+  {
+    "file": "src/app/work-orders/[id]/page.tsx",
+    "status": "patched",
+    "replacements": 13
+  },
+  {
+    "file": "src/components/CommandPalette.tsx",
+    "status": "no-frozen-t"
+  },
+  {
+    "file": "src/components/DateRangePicker.tsx",
+    "status": "patched",
+    "replacements": 13
+  },
+  {
+    "file": "src/components/ai-text-input.tsx",
+    "status": "patched",
+    "replacements": 23
+  },
+  {
+    "file": "src/components/work-orders/WOStepper.tsx",
+    "status": "patched",
+    "replacements": 13
+  },
+  {
+    "file": "src/components/layout/AppPageShell.tsx",
+    "status": "no-frozen-t"
+  }
+]

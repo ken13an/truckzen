@@ -1,0 +1,553 @@
+{
+  "touched": [
+    {
+      "file": "src/app/accounting/history/page.tsx",
+      "replacements": 11,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/accounting/page.tsx",
+      "replacements": 1,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/accounting/payroll/page.tsx",
+      "replacements": 21,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/accounting/payroll/punch-report/page.tsx",
+      "replacements": 2,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/admin/permissions/page.tsx",
+      "replacements": 17,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/admin/progress/page.tsx",
+      "replacements": 2,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/admin/roles-guide/page.tsx",
+      "replacements": 10,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/api-docs/page.tsx",
+      "replacements": 28,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/cleaning/page.tsx",
+      "replacements": 12,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/customers/[id]/page.tsx",
+      "replacements": 43,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/customers/[id]/units/[unitId]/page.tsx",
+      "replacements": 3,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/customers/new/page.tsx",
+      "replacements": 7,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/customers/page.tsx",
+      "replacements": 1,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/fleet/[id]/page.tsx",
+      "replacements": 49,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/fleet/new/page.tsx",
+      "replacements": 9,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/floor/page.tsx",
+      "replacements": 19,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/invoices/[id]/page.tsx",
+      "replacements": 53,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/kiosk/[code]/page.tsx",
+      "replacements": 3,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/kiosk-admin/page.tsx",
+      "replacements": 2,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/[id]/page.tsx",
+      "replacements": 16,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/activity/page.tsx",
+      "replacements": 10,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/contact-renewals/new/page.tsx",
+      "replacements": 5,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/contact-renewals/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/dashboard/page.tsx",
+      "replacements": 17,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/documents/page.tsx",
+      "replacements": 8,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/drivers/[id]/page.tsx",
+      "replacements": 14,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/drivers/new/page.tsx",
+      "replacements": 9,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/equipment/new/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/expenses/new/page.tsx",
+      "replacements": 5,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/faults/[id]/page.tsx",
+      "replacements": 9,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/faults/new/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/faults/page.tsx",
+      "replacements": 4,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/fuel/new/page.tsx",
+      "replacements": 7,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/fuel/page.tsx",
+      "replacements": 6,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/inspections/[id]/page.tsx",
+      "replacements": 13,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/inspections/new/page.tsx",
+      "replacements": 9,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/invoices/page.tsx",
+      "replacements": 1,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/issues/[id]/page.tsx",
+      "replacements": 12,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/issues/new/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/map/page.tsx",
+      "replacements": 13,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/meters/new/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/new/page.tsx",
+      "replacements": 11,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/page.tsx",
+      "replacements": 2,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/parts/new/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/places/new/page.tsx",
+      "replacements": 5,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/pm/[id]/page.tsx",
+      "replacements": 15,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/pm/new/page.tsx",
+      "replacements": 9,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/pm/page.tsx",
+      "replacements": 11,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/purchase-orders/[id]/page.tsx",
+      "replacements": 12,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/purchase-orders/new/page.tsx",
+      "replacements": 7,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/recalls/[id]/page.tsx",
+      "replacements": 9,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/recalls/new/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/repairs/[id]/page.tsx",
+      "replacements": 18,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/repairs/new/page.tsx",
+      "replacements": 9,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/reports/page.tsx",
+      "replacements": 24,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/service-programs/new/page.tsx",
+      "replacements": 6,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/service-reminders/new/page.tsx",
+      "replacements": 5,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/service-reminders/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/shop-network/new/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/vehicle-renewals/new/page.tsx",
+      "replacements": 5,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/vehicle-renewals/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/vendors/[id]/page.tsx",
+      "replacements": 8,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/vendors/new/page.tsx",
+      "replacements": 6,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/maintenance/warranties/new/page.tsx",
+      "replacements": 5,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/warranties/page.tsx",
+      "replacements": 5,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/maintenance/warranty-review/page.tsx",
+      "replacements": 9,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/offline/page.tsx",
+      "replacements": 3,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/parts/reorder/page.tsx",
+      "replacements": 18,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/parts/wo/[id]/page.tsx",
+      "replacements": 12,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/activity/page.tsx",
+      "replacements": 12,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/platform-admin/ai-usage/page.tsx",
+      "replacements": 17,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/autobots/page.tsx",
+      "replacements": 40,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/costs/page.tsx",
+      "replacements": 44,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/impersonate/page.tsx",
+      "replacements": 9,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/layout.tsx",
+      "replacements": 8,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/page.tsx",
+      "replacements": 20,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/registrations/page.tsx",
+      "replacements": 26,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/shops/page.tsx",
+      "replacements": 31,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/platform-admin/test-results/page.tsx",
+      "replacements": 30,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/portal/page.tsx",
+      "replacements": 13,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/service-requests/new/page.tsx",
+      "replacements": 19,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/service-requests/page.tsx",
+      "replacements": 25,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/settings/billing/page.tsx",
+      "replacements": 15,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/settings/bulk-skills/page.tsx",
+      "replacements": 12,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/settings/import/page.tsx",
+      "replacements": 19,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/settings/page.tsx",
+      "replacements": 5,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/settings/staff-import/page.tsx",
+      "replacements": 21,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/settings/users/new/page.tsx",
+      "replacements": 11,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/settings/users/page.tsx",
+      "replacements": 7,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/setup/page.tsx",
+      "replacements": 14,
+      "alias": "th"
+    },
+    {
+      "file": "src/app/time-tracking/page.tsx",
+      "replacements": 13,
+      "alias": "t"
+    },
+    {
+      "file": "src/app/waiting/page.tsx",
+      "replacements": 4,
+      "alias": "t"
+    },
+    {
+      "file": "src/components/KioskFlow.tsx",
+      "replacements": 3,
+      "alias": "th"
+    },
+    {
+      "file": "src/components/ui/SourceBadge.tsx",
+      "replacements": 1,
+      "alias": "t"
+    }
+  ],
+  "skipped": [
+    {
+      "file": "src/app/accounting/error.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/error.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/drivers/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/equipment/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/inspections/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/issues/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/maint-parts/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/parts/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/places/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/purchase-orders/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/recalls/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/repairs/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/service-programs/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/shop-network/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/maintenance/vendors/page.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/mechanic/error.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/settings/error.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/app/work-orders/error.tsx",
+      "reason": "no component body"
+    },
+    {
+      "file": "src/components/ServiceWorker.tsx",
+      "reason": "no component body"
+    }
+  ],
+  "totalReplacements": 1134
+}

@@ -209,7 +209,7 @@ export default function CostsPage() {
                     <span style={{ fontSize: 9, fontWeight: 600, color: svc.is_active ? '#22C55E' : '#D94F4F', background: svc.is_active ? 'rgba(34,197,94,.12)' : 'rgba(217,79,79,.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>{svc.is_active ? 'active' : 'inactive'}</span>
                   </td>
                   <td style={td}>
-                    <button onClick={() => setEditSvc({ ...svc })} style={{ background: 'rgba(255,255,255,.06)', color: t.textSecondary, border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
+                    <button onClick={() => setEditSvc({ ...svc })} style={{ background: t.border, color: t.textSecondary, border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Edit</button>
                   </td>
                 </tr>
               )
@@ -250,14 +250,14 @@ export default function CostsPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h2 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: 0 }}>Project Progress</h2>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <select value={newItemCat} onChange={e => setNewItemCat(e.target.value)} style={{ padding: '5px 8px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: t.text, fontFamily: 'inherit' }}>
+            <select value={newItemCat} onChange={e => setNewItemCat(e.target.value)} style={{ padding: '5px 8px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: t.text, fontFamily: 'inherit' }}>
               <option value="feature">Feature</option>
               <option value="integration">Integration</option>
               <option value="fix">Fix</option>
               <option value="database">Database</option>
             </select>
-            <input value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addProgressItem()} placeholder="Add new item..." style={{ padding: '5px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: t.text, outline: 'none', fontFamily: 'inherit', width: 200 }} />
-            <button onClick={addProgressItem} disabled={!newItem.trim()} style={{ padding: '5px 10px', background: newItem.trim() ? '#1D6FE8' : 'rgba(255,255,255,.06)', color: newItem.trim() ? '#fff' : t.textTertiary, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: newItem.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+            <input value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addProgressItem()} placeholder="Add new item..." style={{ padding: '5px 10px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: t.text, outline: 'none', fontFamily: 'inherit', width: 200 }} />
+            <button onClick={addProgressItem} disabled={!newItem.trim()} style={{ padding: '5px 10px', background: newItem.trim() ? '#1D6FE8' : t.border, color: newItem.trim() ? '#fff' : t.textTertiary, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: newItem.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
               <Plus size={12} />
             </button>
           </div>
@@ -275,7 +275,7 @@ export default function CostsPage() {
                 style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 12, minHeight: 200 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: headerColor, letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace" }}>{label}</span>
-                  <span style={{ fontSize: 9, color: t.textTertiary, background: 'rgba(255,255,255,.06)', padding: '1px 5px', borderRadius: 100 }}>{items.length}</span>
+                  <span style={{ fontSize: 9, color: t.textTertiary, background: t.border, padding: '1px 5px', borderRadius: 100 }}>{items.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {items.map(item => {
@@ -284,7 +284,7 @@ export default function CostsPage() {
                       <div key={item.id}
                         draggable
                         onDragStart={() => setDragItem(item.id)}
-                        style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '8px 10px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        style={{ background: t.border, border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '8px 10px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <GripVertical size={10} color={t.textTertiary} style={{ flexShrink: 0 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 11, color: t.text, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
@@ -322,7 +322,7 @@ export default function CostsPage() {
               <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 4 }}>{a.name}</div>
               <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 8, lineHeight: 1.4 }}>{a.desc}</div>
               <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{a.cost}</div>
-              <button style={{ padding: '4px 10px', background: 'rgba(255,255,255,.06)', color: t.textSecondary, border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
+              <button style={{ padding: '4px 10px', background: t.border, color: t.textSecondary, border: 'none', borderRadius: 4, fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
             </div>
           ))}
         </div>

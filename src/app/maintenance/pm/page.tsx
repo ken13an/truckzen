@@ -66,7 +66,7 @@ export default function PMSchedulesPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>PM Schedules</div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ display: 'flex', background: '#161B24', borderRadius: 8, border: '1px solid rgba(255,255,255,.08)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', background: t.bgCard, borderRadius: 8, border: '1px solid rgba(255,255,255,.08)', overflow: 'hidden' }}>
             <button onClick={() => setView('list')} style={{ padding: '6px 12px', background: view === 'list' ? 'rgba(29,111,232,.15)' : 'transparent', border: 'none', color: view === 'list' ? '#4D9EFF' : MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT }}><List size={14} /> List</button>
             <button onClick={() => setView('calendar')} style={{ padding: '6px 12px', background: view === 'calendar' ? 'rgba(29,111,232,.15)' : 'transparent', border: 'none', color: view === 'calendar' ? '#4D9EFF' : MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT }}><Calendar size={14} /> Calendar</button>
           </div>

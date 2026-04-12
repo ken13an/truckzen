@@ -118,7 +118,7 @@ export default function NewInspectionPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page: { background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24, maxWidth: 720, margin: '0 auto' },
-    card: { background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
+    card: { background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary, marginBottom: 5, display: 'block' },
     input: { width: '100%', padding: '9px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const },
     btn: { padding: '12px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
@@ -134,7 +134,7 @@ export default function NewInspectionPage() {
       {/* Step indicators */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         {[1, 2, 3].map(s => (
-          <div key={s} style={{ flex: 1, height: 3, borderRadius: 2, background: s <= step ? '#1B6EE6' : 'rgba(255,255,255,.08)' }} />
+          <div key={s} style={{ flex: 1, height: 3, borderRadius: 2, background: s <= step ? '#1B6EE6' : th.border }} />
         ))}
       </div>
 
@@ -175,7 +175,7 @@ export default function NewInspectionPage() {
         <div>
           {(selectedTemplate.checklist as Category[]).map(cat => (
             <div key={cat.category} style={{ ...S.card, padding: 0, overflow: 'hidden' }}>
-              <div onClick={() => setExpandedCats(e => ({ ...e, [cat.category]: !e[cat.category] }))} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', cursor: 'pointer', background: 'rgba(255,255,255,.02)' }}>
+              <div onClick={() => setExpandedCats(e => ({ ...e, [cat.category]: !e[cat.category] }))} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', cursor: 'pointer', background: th.border }}>
                 {expandedCats[cat.category] ? <ChevronDown size={14} color={MUTED} /> : <ChevronRight size={14} color={MUTED} />}
                 <span style={{ fontSize: 13, fontWeight: 700, color: th.text, flex: 1 }}>{cat.category}</span>
                 <span style={{ fontSize: 10, color: MUTED }}>{cat.items.length} items</span>
@@ -201,7 +201,7 @@ export default function NewInspectionPage() {
             </div>
           ))}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-            <button onClick={() => setStep(1)} style={{ ...S.btn, background: 'rgba(255,255,255,.06)' }}>Back</button>
+            <button onClick={() => setStep(1)} style={{ ...S.btn, background: th.border }}>Back</button>
             <button onClick={() => setStep(3)} style={S.btn}>Next: Review</button>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function NewInspectionPage() {
           </div>
 
           <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-            <button onClick={() => setStep(2)} style={{ ...S.btn, background: 'rgba(255,255,255,.06)' }}>Back</button>
+            <button onClick={() => setStep(2)} style={{ ...S.btn, background: th.border }}>Back</button>
             <button onClick={submit} disabled={saving} style={S.btn}>{saving ? 'Submitting...' : 'Submit Inspection'}</button>
           </div>
         </div>

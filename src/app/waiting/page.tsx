@@ -56,7 +56,7 @@ export default function WaitingPage() {
     }}>
       <div style={{
         maxWidth: '440px', textAlign: 'center',
-        background: '#161B24', border: '1px solid rgba(255,255,255,0.08)',
+        background: t.bgCard, border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: '16px', padding: '48px 36px',
       }}>
         {/* Logo */}

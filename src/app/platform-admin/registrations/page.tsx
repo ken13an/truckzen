@@ -118,7 +118,7 @@ export default function PlatformRegistrations() {
               </div>
 
               {reg.message && (
-                <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
+                <div style={{ background: t.border, border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
                   <div style={{ fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 4 }}>Message</div>
                   <div style={{ fontSize: 12, color: t.text, lineHeight: 1.5 }}>{reg.message}</div>
                 </div>
@@ -179,14 +179,14 @@ export default function PlatformRegistrations() {
               onChange={e => setRejectReason(e.target.value)}
               placeholder="Enter reason for rejection..."
               rows={4}
-              style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
               autoFocus
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-              <button onClick={handleReject} disabled={!rejectReason.trim()} style={{ flex: 1, padding: 10, background: rejectReason.trim() ? '#D94F4F' : 'rgba(255,255,255,.06)', color: rejectReason.trim() ? '#fff' : t.textTertiary, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: rejectReason.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>
+              <button onClick={handleReject} disabled={!rejectReason.trim()} style={{ flex: 1, padding: 10, background: rejectReason.trim() ? '#D94F4F' : t.border, color: rejectReason.trim() ? '#fff' : t.textTertiary, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: rejectReason.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>
                 Reject
               </button>
-              <button onClick={() => setRejectId(null)} style={{ padding: '10px 20px', background: 'rgba(255,255,255,.06)', color: t.textSecondary, border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setRejectId(null)} style={{ padding: '10px 20px', background: t.border, color: t.textSecondary, border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Cancel
               </button>
             </div>

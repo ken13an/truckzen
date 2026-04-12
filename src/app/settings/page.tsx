@@ -178,7 +178,7 @@ export default function SettingsPage() {
         {backBar}
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Labor Rates</div>
         <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 20 }}>Set hourly labor rates by truck type. These rates auto-fill when building estimates.</div>
-        <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
           {laborRates.length === 0 ? (
             <div style={{ color: t.textTertiary, fontSize: 13, textAlign: 'center', padding: 20 }}>No labor rates configured. Check database setup.</div>
           ) : laborRates.map((r: any) => {
@@ -215,7 +215,7 @@ export default function SettingsPage() {
         {/* Parts Pricing */}
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4, marginTop: 32 }}>Parts Pricing</div>
         <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 20 }}>Set parts markup by truck type. Applied automatically when adding parts to work orders.</div>
-        <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
           {laborRates.map((r: any) => {
             const cfg = RATE_LABELS[r.ownership_type] || { label: r.ownership_type, color: t.textSecondary }
             const costExample = 10
@@ -249,7 +249,7 @@ export default function SettingsPage() {
                         style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                     </div>
                   )}
-                  <div style={{ fontSize: 12, color: t.textSecondary, background: 'rgba(255,255,255,.03)', padding: '8px 12px', borderRadius: 8, fontFamily: "'IBM Plex Mono', monospace" }}>
+                  <div style={{ fontSize: 12, color: t.textSecondary, background: t.border, padding: '8px 12px', borderRadius: 8, fontFamily: "'IBM Plex Mono', monospace" }}>
                     Cost $10.00 → Sell <span style={{ fontWeight: 700, color: '#1DB870' }}>${(r.parts_pricing_mode === 'margin' ? marginSell : markupSell).toFixed(2)}</span>
                   </div>
                 </div>

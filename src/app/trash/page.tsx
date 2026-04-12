@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { Trash2, RotateCcw, AlertTriangle } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 const BG = '#060708', CARD = '#161B24', BORDER = 'rgba(255,255,255,.055)'
 const TEXT = '#DDE3EE', MUTED = '#7C8BA0', WHITE = '#F0F4FF', BLUE = '#4D9EFF'
@@ -36,6 +37,7 @@ interface TrashItem {
 }
 
 export default function TrashPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [items, setItems] = useState<TrashItem[]>([])
@@ -135,7 +137,7 @@ export default function TrashPage() {
           >
             {tab.label}
             {tabCounts[i] > 0 && (
-              <span style={{ background: 'rgba(255,255,255,.08)', color: MUTED, fontSize: 10, fontFamily: MONO, padding: '1px 6px', borderRadius: 100 }}>{tabCounts[i]}</span>
+              <span style={{ background: t.border, color: MUTED, fontSize: 10, fontFamily: MONO, padding: '1px 6px', borderRadius: 100 }}>{tabCounts[i]}</span>
             )}
           </button>
         ))}
@@ -167,7 +169,7 @@ export default function TrashPage() {
         <div style={{ textAlign: 'center', padding: 60, color: MUTED }}>Loading...</div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 80 }}>
-          <Trash2 size={48} color='rgba(255,255,255,.1)' style={{ marginBottom: 16 }} />
+          <Trash2 size={48} color={t.border} style={{ marginBottom: 16 }} />
           <div style={{ color: MUTED, fontSize: 14 }}>Trash is empty</div>
         </div>
       ) : (
@@ -199,7 +201,7 @@ export default function TrashPage() {
                 {item.details?.company_name && item.type !== 'Customer' && <div style={{ color: MUTED, fontSize: 11, marginTop: 2 }}>{item.details.company_name}</div>}
               </div>
               <div>
-                <span style={{ background: 'rgba(255,255,255,.06)', color: MUTED, fontSize: 10, padding: '3px 8px', borderRadius: 6, fontFamily: MONO }}>{item.type}</span>
+                <span style={{ background: t.border, color: MUTED, fontSize: 10, padding: '3px 8px', borderRadius: 6, fontFamily: MONO }}>{item.type}</span>
               </div>
               <div style={{ color: MUTED, fontSize: 12, fontFamily: MONO }}>
                 {new Date(item.deleted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -273,7 +275,7 @@ export default function TrashPage() {
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setConfirmDelete(null)}
-                style={{ background: 'rgba(255,255,255,.06)', color: MUTED, border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}
+                style={{ background: t.border, color: MUTED, border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 12, cursor: 'pointer' }}
               >
                 Cancel
               </button>

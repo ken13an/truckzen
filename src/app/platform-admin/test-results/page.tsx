@@ -84,7 +84,7 @@ export default function TestResultsPage() {
             </div>
 
             {/* Steps */}
-            <div style={{ background: 'rgba(255,255,255,.02)', borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ background: t.border, borderRadius: 8, overflow: 'hidden' }}>
               {(selectedResult.steps_detail as any[] || []).map((step: any, idx: number) => (
                 <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
                   <span style={{
@@ -101,7 +101,7 @@ export default function TestResultsPage() {
             </div>
 
             {/* Summary */}
-            <div style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(255,255,255,.02)', borderRadius: 8, display: 'flex', gap: 20 }}>
+            <div style={{ marginTop: 16, padding: '12px 14px', background: t.border, borderRadius: 8, display: 'flex', gap: 20 }}>
               <div>
                 <div style={{ fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Steps</div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: t.text, fontFamily: "'IBM Plex Mono', monospace" }}>{selectedResult.total_steps}</div>
@@ -209,7 +209,7 @@ export default function TestResultsPage() {
               style={{
                 padding: '6px 12px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
                 fontFamily: "'IBM Plex Mono', monospace", border: 'none',
-                background: p === page ? '#1D6FE8' : 'rgba(255,255,255,.06)',
+                background: p === page ? '#1D6FE8' : t.border,
                 color: p === page ? '#fff' : t.textSecondary,
                 fontWeight: p === page ? 700 : 400,
               }}

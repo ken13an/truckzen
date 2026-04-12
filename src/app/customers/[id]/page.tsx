@@ -256,7 +256,7 @@ export default function CustomerProfilePage() {
     if (t === 'net15') return { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
     if (t === 'net30') return { bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
     if (t === 'net60') return { bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
-    return { bg: 'rgba(255,255,255,0.06)', color: th.textSecondary }
+    return { bg: th.border, color: th.textSecondary }
   }
 
   const unitTypeBadge = (type: string) => {
@@ -264,7 +264,7 @@ export default function CustomerProfilePage() {
     if (t === 'tractor') return { label: 'TRACTOR', bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
     if (t.includes('reefer')) return { label: 'TRAILER-REEFER', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
     if (t.includes('trailer')) return { label: 'TRAILER', bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
-    return { label: t.toUpperCase(), bg: 'rgba(255,255,255,0.08)', color: th.textSecondary }
+    return { label: t.toUpperCase(), bg: th.border, color: th.textSecondary }
   }
 
   const woStatusColor = (s: string) => {
@@ -297,7 +297,7 @@ export default function CustomerProfilePage() {
       )}
 
       {/* Back button */}
-      <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={16} strokeWidth={2} /> Customers
       </a>
 
@@ -330,7 +330,7 @@ export default function CustomerProfilePage() {
                 fontSize: 11,
                 fontWeight: 600,
                 fontFamily: "'Inter', sans-serif",
-                background: 'rgba(255,255,255,0.06)',
+                background: th.border,
                 border: `1px solid ${statusColor(customer.customer_status || 'active')}40`,
                 borderRadius: 6,
                 color: statusColor(customer.customer_status || 'active'),
@@ -390,7 +390,7 @@ export default function CustomerProfilePage() {
             padding: '9px 20px',
             borderRadius: 8,
             border: '1px solid rgba(255,255,255,0.12)',
-            background: 'rgba(255,255,255,0.06)',
+            background: th.border,
             color: '#EDEDF0',
             fontSize: 13,
             fontWeight: 600,
@@ -451,7 +451,7 @@ export default function CustomerProfilePage() {
               onChange={e => setFleetSearch(e.target.value)}
               style={{
                 padding: '9px 14px',
-                background: 'rgba(255,255,255,0.06)',
+                background: th.border,
                 border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: 8,
                 fontSize: 12,
@@ -613,7 +613,7 @@ export default function CustomerProfilePage() {
                     <button
                       disabled={woPage <= 1}
                       onClick={() => setWoPage(p => Math.max(1, p - 1))}
-                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.06)', color: '#EDEDF0', cursor: woPage <= 1 ? 'default' : 'pointer', opacity: woPage <= 1 ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: th.border, color: '#EDEDF0', cursor: woPage <= 1 ? 'default' : 'pointer', opacity: woPage <= 1 ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
                     >
                       Prev
                     </button>
@@ -621,7 +621,7 @@ export default function CustomerProfilePage() {
                     <button
                       disabled={woPage >= totalPages}
                       onClick={() => setWoPage(p => Math.min(totalPages, p + 1))}
-                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.06)', color: '#EDEDF0', cursor: woPage >= totalPages ? 'default' : 'pointer', opacity: woPage >= totalPages ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: th.border, color: '#EDEDF0', cursor: woPage >= totalPages ? 'default' : 'pointer', opacity: woPage >= totalPages ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
                     >
                       Next
                     </button>
@@ -668,7 +668,7 @@ export default function CustomerProfilePage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {contacts.map((c: any) => (
-                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', background: th.border, borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>{c.name}</span>
@@ -725,7 +725,7 @@ export default function CustomerProfilePage() {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: 'rgba(255,255,255,0.06)',
+                  background: th.border,
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   fontSize: 13,
@@ -756,7 +756,7 @@ export default function CustomerProfilePage() {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: 'rgba(255,255,255,0.06)',
+                  background: th.border,
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   fontSize: 13,
@@ -775,7 +775,7 @@ export default function CustomerProfilePage() {
               <select
                 value={customer.default_ownership_type || 'fleet_asset'}
                 onChange={e => updateField('default_ownership_type', e.target.value)}
-                style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: "'Inter', sans-serif", appearance: 'none' as const, boxSizing: 'border-box' as const }}
+                style={{ width: '100%', padding: '10px 14px', background: th.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: "'Inter', sans-serif", appearance: 'none' as const, boxSizing: 'border-box' as const }}
               >
                 <option value="fleet_asset" style={{ background: '#151520' }}>Company Truck</option>
                 <option value="owner_operator" style={{ background: '#151520' }}>Owner Operator</option>
@@ -908,7 +908,7 @@ export default function CustomerProfilePage() {
               }}
               style={{
                 padding: '8px 14px', fontSize: 12, borderRadius: 8,
-                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                background: th.border, border: '1px solid rgba(255,255,255,0.1)',
                 color: '#EDEDF0', fontFamily: "'Inter', sans-serif", cursor: 'pointer', outline: 'none',
               }}
             >
@@ -970,7 +970,7 @@ export default function CustomerProfilePage() {
                     style={{
                       width: '100%',
                       padding: '9px 12px',
-                      background: 'rgba(255,255,255,0.06)',
+                      background: th.border,
                       border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: 8,
                       fontSize: 13,
@@ -992,7 +992,7 @@ export default function CustomerProfilePage() {
                 style={{
                   width: '100%',
                   padding: '9px 12px',
-                  background: 'rgba(255,255,255,0.06)',
+                  background: th.border,
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   fontSize: 13,
@@ -1013,7 +1013,7 @@ export default function CustomerProfilePage() {
                 style={{
                   width: '100%',
                   padding: '9px 12px',
-                  background: 'rgba(255,255,255,0.06)',
+                  background: th.border,
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   fontSize: 13,
@@ -1034,7 +1034,7 @@ export default function CustomerProfilePage() {
                   height: 20,
                   borderRadius: 10,
                   border: 'none',
-                  background: editForm.is_owner_operator ? '#D97706' : 'rgba(255,255,255,0.12)',
+                  background: editForm.is_owner_operator ? '#D97706' : th.border,
                   cursor: 'pointer',
                   position: 'relative' as const,
                   transition: 'background 0.2s',
@@ -1121,7 +1121,7 @@ export default function CustomerProfilePage() {
                     style={{
                       width: '100%',
                       padding: '9px 12px',
-                      background: 'rgba(255,255,255,0.06)',
+                      background: th.border,
                       border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: 8,
                       fontSize: 13,
@@ -1142,7 +1142,7 @@ export default function CustomerProfilePage() {
                     height: 20,
                     borderRadius: 10,
                     border: 'none',
-                    background: contactForm.is_primary ? '#3B82F6' : 'rgba(255,255,255,0.12)',
+                    background: contactForm.is_primary ? '#3B82F6' : th.border,
                     cursor: 'pointer',
                     position: 'relative' as const,
                     transition: 'background 0.2s',

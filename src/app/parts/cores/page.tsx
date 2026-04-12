@@ -106,7 +106,7 @@ export default function CorePartsPage() {
             const so = core.service_orders || {}
             const isOverdue = core.core_status === 'stored' && core.created_at && daysSince(core.created_at) > 30
             return (
-              <div key={core.id} style={{ background: t.bgCard, border: `1px solid ${isOverdue ? 'rgba(217,79,79,.3)' : 'rgba(255,255,255,.06)'}`, borderRadius: 12, padding: 14 }}>
+              <div key={core.id} style={{ background: t.bgCard, border: `1px solid ${isOverdue ? 'rgba(217,79,79,.3)' : t.border}`, borderRadius: 12, padding: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 2 }}>{core.core_part_name}</div>

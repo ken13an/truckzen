@@ -138,7 +138,7 @@ export default function NewUserPage() {
               </select>
             </>
           ) : (
-            <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,.03)', borderRadius: 8, fontSize: 11, color: t.textTertiary, marginBottom: 10 }}>
+            <div style={{ padding: '8px 12px', background: t.border, borderRadius: 8, fontSize: 11, color: t.textTertiary, marginBottom: 10 }}>
               {form.department === 'office' ? 'Office staff — no team assignment required' :
                form.department === 'parts' ? 'Parts department — independent of floor teams' :
                'Fleet/field role — no team assignment required'}

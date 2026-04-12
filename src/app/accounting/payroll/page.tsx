@@ -125,7 +125,7 @@ export default function PayrollPage() {
                   <tr key={e.id} style={{ background: 'rgba(29,111,232,0.04)' }}>
                     <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#EDEDF0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{e.full_name}</td>
                     <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: t.textSecondary, textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ')}</span>
+                      <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: t.border, color: t.textSecondary, textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ')}</span>
                     </td>
                     <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                       <select value={form.pay_type} onChange={ev => setForm(f => ({ ...f, pay_type: ev.target.value }))} style={{ padding: '4px 8px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 12, fontFamily: FONT }}>
@@ -166,7 +166,7 @@ export default function PayrollPage() {
                 <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#EDEDF0' }}>{e.full_name || '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
-                    <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: t.textSecondary, textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ') || '—'}</span>
+                    <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: t.border, color: t.textSecondary, textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ') || '—'}</span>
                   </td>
                   <td style={{ padding: '10px 14px' }}>
                     {badge ? <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: badge.bg, color: badge.color }}>{badge.label}</span> : <span style={{ color: t.textTertiary, fontSize: 12 }}>Not Set</span>}

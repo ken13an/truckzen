@@ -147,7 +147,7 @@ export default function StaffImportPage() {
               fontSize: 11, fontWeight: 700,
               background: step === s || (s === 'importing' && step === 'done') ? '#1D6FE8' : i < ['upload', 'preview', 'importing'].indexOf(step) || step === 'done' ? 'rgba(29,111,232,.2)' : '#1C2130',
               color: step === s || step === 'done' ? '#fff' : t.textTertiary,
-              border: `1px solid ${step === s ? '#1D6FE8' : 'rgba(255,255,255,.06)'}`,
+              border: `1px solid ${step === s ? '#1D6FE8' : t.border}`,
             }}>{i + 1}</div>
             <span style={{ fontSize: 11, color: step === s || (s === 'importing' && step === 'done') ? '#DDE3EE' : t.textTertiary }}>
               {s === 'upload' ? 'Upload' : s === 'preview' ? 'Preview' : 'Import'}
@@ -167,7 +167,7 @@ export default function StaffImportPage() {
             style={{
               ...S.card, textAlign: 'center', cursor: 'pointer', padding: '48px 24px',
               border: dragOver ? '2px dashed #1D6FE8' : '2px dashed rgba(255,255,255,.08)',
-              background: dragOver ? 'rgba(29,111,232,.04)' : '#161B24',
+              background: dragOver ? 'rgba(29,111,232,.04)' : t.bgCard,
             }}
           >
             <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>+</div>

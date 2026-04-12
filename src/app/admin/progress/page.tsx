@@ -43,7 +43,7 @@ export default function BuildProgressPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, color: '#EDEDF0', padding: 24 }}>
-      <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={16} strokeWidth={2} /> Dashboard
       </a>
 
@@ -51,7 +51,7 @@ export default function BuildProgressPage() {
       <div style={{ fontSize: 14, color: '#9CA3AF', marginBottom: 24 }}>{done} of {total} tasks complete ({pct}%)</div>
 
       {/* Overall progress bar */}
-      <div style={{ height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 4, marginBottom: 32, overflow: 'hidden' }}>
+      <div style={{ height: 8, background: th.border, borderRadius: 4, marginBottom: 32, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, #1D6FE8, #16A34A)`, borderRadius: 4, transition: 'width 0.5s' }} />
       </div>
 
@@ -68,7 +68,7 @@ export default function BuildProgressPage() {
               <div style={{ width: 4, height: 20, borderRadius: 2, background: phaseColor }} />
               <span style={{ fontSize: 16, fontWeight: 700 }}>{phase}</span>
               <span style={{ fontSize: 12, color: '#9CA3AF' }}>{phaseDone}/{phaseTotal}</span>
-              <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ flex: 1, height: 3, background: th.border, borderRadius: 2, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: phaseTotal > 0 ? `${(phaseDone / phaseTotal) * 100}%` : '0%', background: phaseColor, borderRadius: 2 }} />
               </div>
             </div>
@@ -78,12 +78,12 @@ export default function BuildProgressPage() {
                 <div key={t.id} onClick={() => toggle(t.id, t.done)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-                    background: t.done ? 'rgba(22,163,74,0.06)' : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${t.done ? 'rgba(22,163,74,0.15)' : 'rgba(255,255,255,0.06)'}`,
+                    background: t.done ? 'rgba(22,163,74,0.06)' : th.border,
+                    border: `1px solid ${t.done ? 'rgba(22,163,74,0.15)' : th.border}`,
                     borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = t.done ? 'rgba(22,163,74,0.1)' : 'rgba(255,255,255,0.06)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = t.done ? 'rgba(22,163,74,0.06)' : 'rgba(255,255,255,0.03)')}
+                  onMouseEnter={e => (e.currentTarget.style.background = t.done ? 'rgba(22,163,74,0.1)' : th.border)}
+                  onMouseLeave={e => (e.currentTarget.style.background = t.done ? 'rgba(22,163,74,0.06)' : th.border)}
                 >
                   <div style={{
                     width: 20, height: 20, borderRadius: 4, flexShrink: 0,

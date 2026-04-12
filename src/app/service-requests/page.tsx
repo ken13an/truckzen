@@ -177,7 +177,7 @@ export default function ServiceRequestsPage() {
 
       {/* Request cards */}
       {filtered.length === 0 ? (
-        <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: th.textSecondary, fontSize: 13 }}>
+        <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: th.textSecondary, fontSize: 13 }}>
           {srSearch || srDateFrom || srDateTo ? 'No results found. Try adjusting your filters.' : tab === 'new' ? 'No pending service requests' : `No ${tab} requests`}
         </div>
       ) : (
@@ -186,7 +186,7 @@ export default function ServiceRequestsPage() {
             const urg = URGENCY[r.urgency || r.priority || 'normal'] || URGENCY.normal
             const src = SOURCE[r.source || r.check_in_type || 'manual'] || SOURCE.manual
             return (
-              <div key={r.id} style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 16 }}>
+              <div key={r.id} style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 16 }}>
                 {/* Top row: badges + time */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -219,7 +219,7 @@ export default function ServiceRequestsPage() {
                 {r.status === 'new' || r.status === 'scheduled' ? (
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => convertToWO(r)} style={{ padding: '6px 14px', background: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Convert to WO</button>
-                    <a href={`/service-requests/new?edit=${r.id}`} style={{ padding: '6px 14px', background: 'rgba(255,255,255,.06)', color: th.textSecondary, borderRadius: 6, fontSize: 11, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Edit</a>
+                    <a href={`/service-requests/new?edit=${r.id}`} style={{ padding: '6px 14px', background: th.border, color: th.textSecondary, borderRadius: 6, fontSize: 11, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Edit</a>
                     <button onClick={() => { setRejectId(r.id); setRejectReason('') }} style={{ padding: '6px 14px', background: 'rgba(217,79,79,.08)', color: '#D94F4F', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Reject</button>
                   </div>
                 ) : r.status === 'converted' && r.converted_so_id ? (
@@ -240,10 +240,10 @@ export default function ServiceRequestsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setRejectId(null)}>
           <div style={{ background: '#12131a', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: 28, width: 400 }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: th.text, marginBottom: 12 }}>Reject Request</div>
-            <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason..." rows={3} autoFocus style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }} />
+            <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason..." rows={3} autoFocus style={{ width: '100%', padding: '10px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={rejectRequest} disabled={!rejectReason.trim()} style={{ flex: 1, padding: 10, background: rejectReason.trim() ? '#D94F4F' : 'rgba(255,255,255,.06)', color: rejectReason.trim() ? '#fff' : th.textTertiary, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: rejectReason.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>Reject</button>
-              <button onClick={() => setRejectId(null)} style={{ padding: '10px 20px', background: 'rgba(255,255,255,.06)', color: th.textSecondary, border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+              <button onClick={rejectRequest} disabled={!rejectReason.trim()} style={{ flex: 1, padding: 10, background: rejectReason.trim() ? '#D94F4F' : th.border, color: rejectReason.trim() ? '#fff' : th.textTertiary, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: rejectReason.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>Reject</button>
+              <button onClick={() => setRejectId(null)} style={{ padding: '10px 20px', background: th.border, color: th.textSecondary, border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
             </div>
           </div>
         </div>

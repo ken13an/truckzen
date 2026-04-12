@@ -102,7 +102,7 @@ export default function AIUsagePage() {
         <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 12 }}>Usage by Feature</div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {Object.entries(byFeature).sort((a, b) => b[1] - a[1]).map(([feature, count]) => (
-            <div key={feature} style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '8px 14px', textAlign: 'center' }}>
+            <div key={feature} style={{ background: t.border, border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '8px 14px', textAlign: 'center' }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: BLUE }}>{count}</div>
               <div style={{ fontSize: 10, color: MUTED }}>{FEATURE_LABELS[feature] || feature}</div>
             </div>
@@ -135,7 +135,7 @@ export default function AIUsagePage() {
                   <td style={{ padding: '10px 12px', fontSize: 11, color: MUTED }}>{limit}</td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 60, height: 6, background: 'rgba(255,255,255,.08)', borderRadius: 3 }}>
+                      <div style={{ width: 60, height: 6, background: t.border, borderRadius: 3 }}>
                         <div style={{ width: `${Math.min(pct, 100)}%`, height: '100%', background: statusColor, borderRadius: 3 }} />
                       </div>
                       <span style={{ fontSize: 10, color: statusColor, fontWeight: 700 }}>{pct}%</span>

@@ -512,7 +512,7 @@ export default function MechanicDashboardPage() {
             <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: AMBER }}>Outside Shop Area</div>
               <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>You appear to be outside the shop geofence. Provide a reason to punch in for manager review.</div>
-              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: t.text, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: t.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: t.text, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button onClick={() => setOverrideModal(false)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
                 <button disabled={!overrideReason.trim() || punchLoading} onClick={() => handleWorkPunch('punch_in', overrideReason.trim())} style={{ padding: '8px 16px', background: AMBER, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
@@ -572,7 +572,7 @@ export default function MechanicDashboardPage() {
               {(['all', 'pending', 'in_progress', 'completed'] as Filter[]).map(f => (
                 <button key={f} onClick={() => setFilter(f)} style={{
                   padding: '6px 14px', borderRadius: 999, border: 'none',
-                  background: filter === f ? BLUE : 'rgba(255,255,255,0.06)',
+                  background: filter === f ? BLUE : t.border,
                   color: filter === f ? '#fff' : DIM,
                   fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                   textTransform: 'capitalize', transition: 'all 0.15s',
@@ -678,7 +678,7 @@ export default function MechanicDashboardPage() {
                         {job.wo?.assets?.unit_number && (
                           <span style={{
                             padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                            background: 'rgba(255,255,255,0.06)', color: DIM,
+                            background: t.border, color: DIM,
                           }}>
                             {job.wo.assets.unit_type ? `${job.wo.assets.unit_type} — ` : ''}{job.wo.assets.unit_number}
                           </span>
@@ -706,7 +706,7 @@ export default function MechanicDashboardPage() {
                                 </span>
                               )}
                               {leftHrs !== null && leftHrs >= 0 && workedHrs > 0 && (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: leftHrs === 0 ? RED : DIM, background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 6 }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: leftHrs === 0 ? RED : DIM, background: t.border, padding: '2px 8px', borderRadius: 6 }}>
                                   Left: {leftHrs}h
                                 </span>
                               )}
@@ -753,7 +753,7 @@ export default function MechanicDashboardPage() {
                         if (matched.length === 0) return null
                         const readyParts = matched.filter((p: any) => p.parts_status === PARTS_READY_STATUS)
                         return (
-                          <div style={{ marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(255,255,255,0.06)` }}>
+                          <div style={{ marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: t.border, border: `1px solid rgba(255,255,255,0.06)` }}>
                             {matched.map((p: any) => {
                               const stColor = p.parts_status === 'ready_for_job' ? GREEN : p.parts_status === 'picked_up' ? GREEN : p.parts_status === 'received' ? BLUE : p.parts_status === 'ordered' ? AMBER : p.parts_status === 'installed' ? DIM : DIM
                               const stLabel = p.parts_status === 'ready_for_job' ? 'Ready for Pickup' : p.parts_status === 'picked_up' ? 'Picked Up' : p.parts_status === 'received' ? 'Preparing' : p.parts_status === 'ordered' ? 'Ordered' : p.parts_status === 'installed' ? 'Installed' : 'Pending'
@@ -1200,7 +1200,7 @@ export default function MechanicDashboardPage() {
               value={declineReason}
               onChange={e => setDeclineReason(e.target.value)}
               placeholder="Reason for declining..."
-              style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: TEXT, fontFamily: FONT, minHeight: 80, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 12px', background: t.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: TEXT, fontFamily: FONT, minHeight: 80, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
               <button onClick={() => { setDeclineModal(null); setDeclineReason('') }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
@@ -1262,7 +1262,7 @@ export default function MechanicDashboardPage() {
             <div style={{ fontSize: 13, color: DIM, marginBottom: 8 }}>
               Are you sure you want to mark this job as complete?
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+            <div style={{ background: t.border, borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: BLUE }}>{completeModal.wo?.so_number || 'WO'}</div>
               {completeModal.line?.description && (
                 <div style={{ fontSize: 13, color: TEXT, marginTop: 4 }}>{completeModal.line.description}</div>

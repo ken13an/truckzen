@@ -127,7 +127,7 @@ export default function BulkSkillsPage() {
       </div>
 
       {/* Mechanics table */}
-      <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>
             {['', 'Name', 'Role', 'Team', 'Skills', 'Top Category'].map(h =>
@@ -166,7 +166,7 @@ export default function BulkSkillsPage() {
         <div style={{ fontSize: 14, fontWeight: 700, color: th.text, marginBottom: 12 }}>Quick Templates</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
           {Object.entries(SKILL_TEMPLATES).map(([name, tmpl]) => (
-            <div key={name} style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.06)', borderRadius: 10, padding: 14 }}>
+            <div key={name} style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 10, padding: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 4 }}>{name}</div>
               <div style={{ fontSize: 10, color: MUTED, marginBottom: 8 }}>{tmpl.skills.length} skills</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 8 }}>

@@ -86,7 +86,7 @@ export default function CleaningPage() {
   const S: Record<string, React.CSSProperties> = {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:4 },
-    card:  { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:10 },
+    card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:10 },
   }
 
   // Active zone checklist view
@@ -106,8 +106,8 @@ export default function CleaningPage() {
 
         {zone.checklist.map(item => (
           <div key={item} onClick={() => setChecks(c => ({ ...c, [item]: !c[item] }))}
-            style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', background: checks[item]?'rgba(29,184,112,.06)':'#161B24', border:`1px solid ${checks[item]?'rgba(29,184,112,.2)':'rgba(255,255,255,.06)'}`, borderRadius:10, marginBottom:8, cursor:'pointer' }}>
-            <div style={{ width:24, height:24, borderRadius:'50%', border:`2px solid ${checks[item]?'#1DB870':'rgba(255,255,255,.2)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: checks[item]?'#1DB870':'transparent', color:'#fff', fontSize:12, fontWeight:700 }}>
+            style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', background: checks[item]?'rgba(29,184,112,.06)':t.bgCard, border:`1px solid ${checks[item]?'rgba(29,184,112,.2)':t.border}`, borderRadius:10, marginBottom:8, cursor:'pointer' }}>
+            <div style={{ width:24, height:24, borderRadius:'50%', border:`2px solid ${checks[item]?'#1DB870':t.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: checks[item]?'#1DB870':'transparent', color:'#fff', fontSize:12, fontWeight:700 }}>
               {checks[item] ? '✓' : ''}
             </div>
             <span style={{ fontSize:13, color: checks[item]?'#DDE3EE':t.textSecondary, textDecoration: checks[item]?'line-through':'none' }}>{item}</span>
@@ -147,7 +147,7 @@ export default function CleaningPage() {
           const done = completedToday(zone.name)
           const session = sessions.find(s => s.cleaning_zones?.name === zone.name)
           return (
-            <div key={zone.name} style={{ ...S.card, border:`1px solid ${done?'rgba(29,184,112,.2)':'rgba(255,255,255,.055)'}`, background: done?'rgba(29,184,112,.04)':'#161B24' }}>
+            <div key={zone.name} style={{ ...S.card, border:`1px solid ${done?'rgba(29,184,112,.2)':t.border}`, background: done?'rgba(29,184,112,.04)':t.bgCard }}>
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
                 <div>
                   <div style={{ fontSize:20, marginBottom:4 }}>{zone.icon}</div>

@@ -62,7 +62,7 @@ export default function PlatformImpersonate() {
           onChange={e => handleSearch(e.target.value)}
           placeholder="Search shop by name or owner email..."
           autoFocus
-          style={{ width: '100%', padding: '12px 14px 12px 38px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+          style={{ width: '100%', padding: '12px 14px 12px 38px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
         />
       </div>
 

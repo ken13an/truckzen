@@ -183,7 +183,7 @@ export default function AutoBotsPage() {
   if (loading) return <div style={{ color: t.textSecondary, fontSize: 13, padding: 40 }}>Loading...</div>
 
   const inputStyle: React.CSSProperties = {
-    padding: '8px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)',
+    padding: '8px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)',
     borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', width: '100%',
   }
 
@@ -211,7 +211,7 @@ export default function AutoBotsPage() {
               This will delete all AutoBot auth accounts and user entries. AutoBots will need to be re-deployed after reset.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmReset(false)} style={{ padding: '8px 16px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.textSecondary, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setConfirmReset(false)} style={{ padding: '8px 16px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.textSecondary, cursor: 'pointer' }}>Cancel</button>
               <button onClick={resetAll} disabled={resetting} style={{ padding: '8px 16px', background: '#D94F4F', border: 'none', borderRadius: 8, fontSize: 12, color: '#fff', fontWeight: 600, cursor: 'pointer', opacity: resetting ? 0.5 : 1 }}>
                 {resetting ? 'Resetting...' : 'Reset All'}
               </button>
@@ -252,7 +252,7 @@ export default function AutoBotsPage() {
                   fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
                   fontFamily: "'IBM Plex Mono', monospace",
                   color: bot.status === 'active' ? '#22C55E' : t.textTertiary,
-                  background: bot.status === 'active' ? 'rgba(34,197,94,.12)' : 'rgba(255,255,255,.04)',
+                  background: bot.status === 'active' ? 'rgba(34,197,94,.12)' : t.border,
                 }}>
                   {bot.status === 'active' ? 'DEPLOYED' : 'NOT DEPLOYED'}
                 </span>
@@ -335,7 +335,7 @@ export default function AutoBotsPage() {
           ))}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-            <button onClick={addStep} style={{ padding: '6px 14px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 11, color: t.textSecondary, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button onClick={addStep} style={{ padding: '6px 14px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 11, color: t.textSecondary, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Plus size={12} /> Add Step
             </button>
             <button onClick={saveScenario} disabled={savingScenario || !scenarioName.trim()} style={{ padding: '6px 14px', background: '#1D6FE8', border: 'none', borderRadius: 8, fontSize: 11, color: '#fff', fontWeight: 600, cursor: 'pointer', opacity: savingScenario || !scenarioName.trim() ? 0.5 : 1 }}>
@@ -377,7 +377,7 @@ export default function AutoBotsPage() {
           {/* Progress */}
           {running && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ height: 4, background: 'rgba(255,255,255,.06)', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ height: 4, background: t.border, borderRadius: 2, overflow: 'hidden' }}>
                 <div style={{ height: '100%', background: '#1D6FE8', borderRadius: 2, width: '60%', animation: 'pulse 1.5s ease-in-out infinite', transition: 'width .3s' }} />
               </div>
               <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 6 }}>Running test steps...</div>

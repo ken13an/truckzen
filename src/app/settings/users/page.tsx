@@ -184,7 +184,7 @@ export default function UsersPage() {
   }
 
   const S = {
-    input: { width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: font, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '9px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: font, boxSizing: 'border-box' as const },
     label: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', textTransform: 'uppercase' as const, display: 'block', marginBottom: 4, letterSpacing: '.04em' } as React.CSSProperties,
     select: { padding: '8px 12px', background: '#151520', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#EDEDF0', outline: 'none', fontFamily: font, appearance: 'auto' as const, cursor: 'pointer', minWidth: 120 },
   }
@@ -199,7 +199,7 @@ export default function UsersPage() {
       {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: '#1D6FE8', color: '#fff', padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
 
       {/* Back */}
-      <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.06)', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#9D9DA1', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#9D9DA1', textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={14} strokeWidth={2} /> Settings
       </a>
 
@@ -288,7 +288,7 @@ export default function UsersPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{
                           width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: u.active ? 'rgba(29,111,232,.12)' : 'rgba(255,255,255,.06)',
+                          background: u.active ? 'rgba(29,111,232,.12)' : th.border,
                           color: u.active ? '#4D9EFF' : '#9D9DA1', fontSize: 11, fontWeight: 700, fontFamily: mono, flexShrink: 0,
                         }}>
                           {getInitials(u.full_name)}
@@ -303,7 +303,7 @@ export default function UsersPage() {
                     <td style={{ padding: '10px 14px', fontSize: 12 }}>{ROLE_LABEL[u.role] || u.role?.replace(/_/g, ' ')}</td>
                     {/* Department */}
                     <td style={{ padding: '10px 14px' }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'capitalize', color: th.textSecondary, padding: '3px 8px', background: 'rgba(255,255,255,.04)', borderRadius: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'capitalize', color: th.textSecondary, padding: '3px 8px', background: th.border, borderRadius: 4 }}>
                         {u.department || '—'}
                       </span>
                     </td>

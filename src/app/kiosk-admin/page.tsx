@@ -28,7 +28,7 @@ export default function KioskAdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: t.bg, color: '#EDEDF0', fontFamily: font, padding: 24 }}>
-      <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Dashboard
 </a>
       <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>Kiosk</div>
@@ -47,7 +47,7 @@ export default function KioskAdminPage() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <code style={{ fontSize: 11, color: '#4D9EFF', background: 'rgba(29,111,232,.08)', padding: '6px 10px', borderRadius: 6, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{kioskUrl}</code>
             <button onClick={() => { navigator.clipboard.writeText(kioskUrl); alert('Copied!') }}
-              style={{ padding: '6px 14px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, color: '#EDEDF0', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: font, whiteSpace: 'nowrap' }}>Copy</button>
+              style={{ padding: '6px 14px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, color: '#EDEDF0', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: font, whiteSpace: 'nowrap' }}>Copy</button>
           </div>
         </div>
 

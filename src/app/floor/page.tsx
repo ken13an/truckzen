@@ -99,7 +99,7 @@ export default function FloorPage() {
         <div style={{ textAlign:'center', padding:60, color:t.textSecondary }}>Loading floor...</div>
       ) : view === 'table' ? (
         // TABLE VIEW
-        <div style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
+        <div style={{ background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden' }}>
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', minWidth:600 }}>
               <thead>
@@ -152,7 +152,7 @@ export default function FloorPage() {
             const cfg        = STATUS_CFG[status]
             const statusJobs = jobs.filter(j => j.status === status)
             return (
-              <div key={status} style={{ background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:11, overflow:'hidden' }}>
+              <div key={status} style={{ background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:11, overflow:'hidden' }}>
                 <div style={{ padding:'10px 12px', borderBottom:'1px solid rgba(255,255,255,.055)', display:'flex', alignItems:'center', gap:7 }}>
                   <div style={{ width:8, height:8, borderRadius:'50%', background:cfg.dot, flexShrink:0 }}/>
                   <span style={{ fontSize:11, fontWeight:700, color:t.text }}>{cfg.label}</span>

@@ -345,7 +345,7 @@ export default function FloorManagerDashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Logo size="sm" />
             <span style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>Floor Manager</span>
-            <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 6, padding: 2, marginLeft: 2 }}>
+            <div style={{ display: 'flex', gap: 2, background: t.border, borderRadius: 6, padding: 2, marginLeft: 2 }}>
               <a href="/shop-floor" style={{ padding: '5px 12px', borderRadius: 5, fontSize: 11, fontWeight: 600, background: 'transparent', color: DIM, textDecoration: 'none', cursor: 'pointer' }}>Shop Floor</a>
               <a href="/floor-manager/quick-view" style={{ padding: '5px 12px', borderRadius: 5, fontSize: 11, fontWeight: 600, background: 'transparent', color: DIM, textDecoration: 'none', cursor: 'pointer' }}>Quick View</a>
             </div>
@@ -360,7 +360,7 @@ export default function FloorManagerDashboardPage() {
           </button>
         </div>
         {/* Row 2: Dashboard Tabs */}
-        <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 3, width: 'fit-content' }}>
+        <div style={{ display: 'flex', gap: 4, background: t.border, borderRadius: 8, padding: 3, width: 'fit-content' }}>
           {tabLabels.map((label, i) => (
             <button key={i} onClick={() => setTab(i)} style={{
               padding: '6px 14px', borderRadius: 6, border: 'none',
@@ -386,7 +386,7 @@ export default function FloorManagerDashboardPage() {
               return (
                 <div key={col.key} style={{
                   display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
-                  background: 'rgba(255,255,255,0.03)', borderRadius: 8,
+                  background: t.border, borderRadius: 8,
                   border: `1px solid ${CARD_BORDER}`,
                 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: colColor }} />
@@ -420,7 +420,7 @@ export default function FloorManagerDashboardPage() {
                   {idleMechanics.map((m: any, i: number) => (
                     <div key={i} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '6px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: 6,
+                      padding: '6px 10px', background: t.border, borderRadius: 6,
                     }}>
                       <span style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{m.full_name || m.user_name || 'Unknown'}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -493,7 +493,7 @@ export default function FloorManagerDashboardPage() {
                   onDrop={e => handleDrop(e, col.key)}
                   style={{
                     flex: 1, minWidth: 260,
-                    background: isOver ? 'rgba(29,111,232,0.06)' : 'rgba(255,255,255,0.03)',
+                    background: isOver ? 'rgba(29,111,232,0.06)' : t.border,
                     border: isOver ? `1px solid ${BLUE}` : `1px solid ${CARD_BORDER}`,
                     borderRadius: 12, display: 'flex', flexDirection: 'column',
                     transition: 'background 0.15s, border-color 0.15s',
@@ -615,7 +615,7 @@ export default function FloorManagerDashboardPage() {
                                 <span style={{
                                   display: 'flex', alignItems: 'center', gap: 3,
                                   padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-                                  background: 'rgba(255,255,255,0.06)', color: DIM,
+                                  background: t.border, color: DIM,
                                 }}>
                                   <Clock size={10} /> {job.expected_hours}h
                                 </span>
@@ -623,7 +623,7 @@ export default function FloorManagerDashboardPage() {
                               {job.unit_type && (
                                 <span style={{
                                   padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 600,
-                                  background: 'rgba(255,255,255,0.06)', color: DIM,
+                                  background: t.border, color: DIM,
                                 }}>
                                   {job.unit_type}
                                 </span>
@@ -714,7 +714,7 @@ export default function FloorManagerDashboardPage() {
                 {(['all', 'pending', 'approved', 'rejected'] as PartFilter[]).map(f => (
                   <button key={f} onClick={() => setPartsFilter(f)} style={{
                     padding: '5px 12px', borderRadius: 999, border: 'none',
-                    background: partsFilter === f ? BLUE : 'rgba(255,255,255,0.06)',
+                    background: partsFilter === f ? BLUE : t.border,
                     color: partsFilter === f ? '#fff' : DIM,
                     fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                     textTransform: 'capitalize', transition: 'all 0.15s',
@@ -735,7 +735,7 @@ export default function FloorManagerDashboardPage() {
               <div className="fm-parts-table" style={{ borderRadius: 12, border: `1px solid ${CARD_BORDER}`, overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
-                    <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <tr style={{ background: t.border }}>
                       {['Mechanic', 'Part', 'Qty', 'Notes', 'WO #', 'Status', 'Requested', 'Actions'].map(h => (
                         <th key={h} style={{
                           padding: '10px 14px', textAlign: 'left', fontWeight: 600,
@@ -752,7 +752,7 @@ export default function FloorManagerDashboardPage() {
                     {filteredParts.map((pr: any, idx: number) => (
                       <tr key={pr.id || idx} style={{
                         borderBottom: `1px solid ${CARD_BORDER}`,
-                        background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
+                        background: idx % 2 === 0 ? 'transparent' : t.border,
                       }}>
                         <td style={{ padding: '10px 14px', fontWeight: 600, color: TEXT, whiteSpace: 'nowrap' }}>
                           {pr.mechanic_name || pr.requested_by_name || 'Unknown'}
@@ -872,7 +872,7 @@ export default function FloorManagerDashboardPage() {
 
             <div style={{ padding: 20 }}>
               {/* Job info */}
-              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: `1px solid ${CARD_BORDER}` }}>
+              <div style={{ marginBottom: 16, padding: 12, background: t.border, borderRadius: 8, border: `1px solid ${CARD_BORDER}` }}>
                 <div style={{ fontSize: 11, color: BLUE, fontFamily: 'monospace', fontWeight: 600, marginBottom: 4 }}>
                   {assignModal.wo_number || assignModal.so_number || `WO-${assignModal.id?.slice(0, 6)}`}
                 </div>
@@ -901,7 +901,7 @@ export default function FloorManagerDashboardPage() {
                         <div key={s.user_id} onClick={() => setSelectedMechanic(s.user_id)}
                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8,
                             border: `1px solid ${selectedMechanic === s.user_id ? BLUE : CARD_BORDER}`,
-                            background: selectedMechanic === s.user_id ? 'rgba(29,111,232,0.08)' : 'rgba(255,255,255,0.03)', cursor: 'pointer' }}
+                            background: selectedMechanic === s.user_id ? 'rgba(29,111,232,0.08)' : t.border, cursor: 'pointer' }}
                           onMouseEnter={e => { if (selectedMechanic !== s.user_id) (e.currentTarget.style.background = 'rgba(255,255,255,0.06)') }}
                           onMouseLeave={e => { if (selectedMechanic !== s.user_id) (e.currentTarget.style.background = 'rgba(255,255,255,0.03)') }}>
                           <div style={{ flex: 1 }}>
@@ -912,7 +912,7 @@ export default function FloorManagerDashboardPage() {
                             </div>
                           </div>
                           <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4,
-                            background: s.score >= 50 ? `${GREEN}22` : s.score >= 20 ? `${AMBER}22` : 'rgba(255,255,255,0.06)',
+                            background: s.score >= 50 ? `${GREEN}22` : s.score >= 20 ? `${AMBER}22` : t.border,
                             color: s.score >= 50 ? GREEN : s.score >= 20 ? AMBER : DIM }}>
                             {s.score >= 50 ? 'Strong' : s.score >= 20 ? 'Fair' : 'Low'}
                           </span>
@@ -1026,7 +1026,7 @@ export default function FloorManagerDashboardPage() {
 
             <div style={{ padding: 20 }}>
               {/* Part info */}
-              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: `1px solid ${CARD_BORDER}` }}>
+              <div style={{ marginBottom: 16, padding: 12, background: t.border, borderRadius: 8, border: `1px solid ${CARD_BORDER}` }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>{approveModal.part_name}</div>
                 <div style={{ fontSize: 12, color: DIM, marginTop: 4 }}>
                   Qty: {approveModal.quantity} | Requested by: {approveModal.mechanic_name || approveModal.requested_by_name || 'Unknown'}
@@ -1037,7 +1037,7 @@ export default function FloorManagerDashboardPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
                 <label style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-                  background: approveType === 'in_stock' ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.03)',
+                  background: approveType === 'in_stock' ? 'rgba(34,197,94,0.08)' : t.border,
                   border: approveType === 'in_stock' ? `1px solid ${GREEN}` : `1px solid ${CARD_BORDER}`,
                   borderRadius: 10, cursor: 'pointer', transition: 'all 0.15s',
                 }}>
@@ -1057,7 +1057,7 @@ export default function FloorManagerDashboardPage() {
 
                 <label style={{
                   display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-                  background: approveType === 'ordered' ? 'rgba(29,111,232,0.08)' : 'rgba(255,255,255,0.03)',
+                  background: approveType === 'ordered' ? 'rgba(29,111,232,0.08)' : t.border,
                   border: approveType === 'ordered' ? `1px solid ${BLUE}` : `1px solid ${CARD_BORDER}`,
                   borderRadius: 10, cursor: 'pointer', transition: 'all 0.15s',
                 }}>
@@ -1135,7 +1135,7 @@ export default function FloorManagerDashboardPage() {
 
             <div style={{ padding: 20 }}>
               {/* Part info */}
-              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: `1px solid ${CARD_BORDER}` }}>
+              <div style={{ marginBottom: 16, padding: 12, background: t.border, borderRadius: 8, border: `1px solid ${CARD_BORDER}` }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>{denyModal.part_name}</div>
                 <div style={{ fontSize: 12, color: DIM, marginTop: 4 }}>
                   Qty: {denyModal.quantity} | Requested by: {denyModal.mechanic_name || denyModal.requested_by_name || 'Unknown'}

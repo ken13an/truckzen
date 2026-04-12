@@ -87,7 +87,7 @@ export default function RolesGuidePage() {
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                         {denied.map(m => (
-                          <span key={m.key} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: 'rgba(255,255,255,.03)', color: t.textTertiary }}>
+                          <span key={m.key} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: t.border, color: t.textTertiary }}>
                             {m.label}
                           </span>
                         ))}

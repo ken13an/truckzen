@@ -62,7 +62,7 @@ export default function NewPMPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page:  { background:th.bg, minHeight:'100vh', color:th.text, fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:640, margin:'0 auto' },
-    card:  { background:'#161B24', border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:20, marginBottom:12 },
+    card:  { background:th.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:20, marginBottom:12 },
     label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:th.textTertiary, marginBottom:5, display:'block' },
     input: { width:'100%', padding:'9px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:th.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
@@ -73,7 +73,7 @@ export default function NewPMPage() {
 
   return (
     <div style={S.page}>
-      <a href="/maintenance" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/maintenance" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Maintenance
 </a>
       <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:th.text, marginBottom:4 }}>New PM Schedule</div>
