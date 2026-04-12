@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -85,7 +86,7 @@ export default function WarrantyReviewPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <a href={`/work-orders/${wo.id}`} style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE, textDecoration: 'none' }}>{wo.so_number}</a>
+                      <a href={getWorkorderRoute(wo.id, undefined, 'warranty')} style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE, textDecoration: 'none' }}>{wo.so_number}</a>
                       {isUrgent && <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: 'rgba(245,158,11,.12)', color: AMBER }}>{age}d OLD — NEEDS ATTENTION</span>}
                     </div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#F0F4FF' }}>#{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>

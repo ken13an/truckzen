@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { Check, ChevronRight } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
+import { shouldRedirectFromDashboard } from '@/lib/navigation/role-landing'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
@@ -32,18 +33,12 @@ export default function DashboardPage() {
   useEffect(() => {
     getCurrentUser(supabase).then(async (p) => {
       if (!p) { window.location.href = '/login'; return }
-      // If impersonating a department role, redirect to that department's landing
+      // If this role has a role-specific landing, redirect to it.
+      // Canonical source: src/lib/navigation/role-landing.ts (wraps ROLE_REDIRECT).
       const effectiveRole = p.impersonate_role || p.role
-      const DEPT_REDIRECTS: Record<string, string> = {
-        technician: '/mechanic/dashboard', lead_tech: '/mechanic/dashboard', maintenance_technician: '/mechanic/dashboard',
-        fleet_manager: '/fleet', dispatcher: '/fleet',
-        maintenance_manager: '/maintenance',
-        parts_manager: '/parts',
-        accountant: '/accounting',
-        shop_manager: '/shop-floor', service_writer: '/work-orders',
-      }
-      if (DEPT_REDIRECTS[effectiveRole]) {
-        window.location.href = DEPT_REDIRECTS[effectiveRole]
+      const redirect = shouldRedirectFromDashboard(effectiveRole)
+      if (redirect) {
+        window.location.href = redirect
         return
       }
       setUser(p)

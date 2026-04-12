@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { useTheme } from '@/hooks/useTheme'
 import { LayoutGrid, List } from 'lucide-react'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -106,7 +107,7 @@ export default function ServiceWriterDashboard() {
             const wo = myWos.find((w: any) => w.bay && Number(w.bay) === bay)
             const occupied = !!wo
             return (
-              <div key={bay} style={{ background: occupied ? t.accentBg : t.bgCard, border: `1px solid ${occupied ? t.borderAccent : t.cardBorder}`, borderRadius: 8, padding: '10px 8px', textAlign: 'center', cursor: occupied ? 'pointer' : 'default' }} onClick={() => { if (wo) window.location.href = `/work-orders/${wo.id}` }}>
+              <div key={bay} style={{ background: occupied ? t.accentBg : t.bgCard, border: `1px solid ${occupied ? t.borderAccent : t.cardBorder}`, borderRadius: 8, padding: '10px 8px', textAlign: 'center', cursor: occupied ? 'pointer' : 'default' }} onClick={() => { if (wo) window.location.href = getWorkorderRoute(wo.id) }}>
                 <div style={{ fontSize: 8, color: t.textSecondary, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 4 }}>Bay {bay}</div>
                 <div style={{ fontSize: 11, fontWeight: 600, fontFamily: MONO, color: occupied ? t.accent : t.textTertiary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {occupied ? `#${(wo.assets as any)?.unit_number || wo.so_number}` : 'Empty'}
@@ -161,7 +162,7 @@ export default function ServiceWriterDashboard() {
               </div>
               {/* Table rows */}
               {myWos.slice(0, 10).map(wo => (
-                <div key={wo.id} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr 100px', gap: 8, padding: '8px 16px', borderTop: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background .1s' }} onClick={() => window.location.href = `/work-orders/${wo.id}`}
+                <div key={wo.id} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 1fr 100px', gap: 8, padding: '8px 16px', borderTop: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background .1s' }} onClick={() => window.location.href = getWorkorderRoute(wo.id)}
                   onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: t.accent }}>{wo.so_number}</span>
                   <div>
@@ -182,7 +183,7 @@ export default function ServiceWriterDashboard() {
         <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 10, padding: 16, marginTop: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 12 }}>Pending Estimate Approvals</div>
           {pendingEstimates.map(est => (
-            <div key={est.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }} onClick={() => est.wo_id && (window.location.href = `/work-orders/${est.wo_id}`)}
+            <div key={est.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }} onClick={() => est.wo_id && (window.location.href = getWorkorderRoute(est.wo_id))}
               onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
               <div style={{ fontSize: 12, color: t.text }}>{est.customer_name || '—'} · {est.estimate_number}</div>
               <div style={{ fontSize: 12, fontWeight: 700, color: t.warning }}>${(est.grand_total || 0).toFixed(0)}</div>
@@ -222,8 +223,8 @@ export default function ServiceWriterDashboard() {
         const activityDotColor: Record<string, string> = { request: t.accent, wo: t.success, estimate: t.warning, hours: t.danger }
         const activityEntries: { type: string; time: string; title: string; meta: string; href: string | null; id: string }[] = []
         requests.forEach(r => { if (r.created_at) activityEntries.push({ type: 'request', time: r.created_at, title: 'New service request', meta: r.company_name || 'Walk-in', href: '/service-requests', id: `req-${r.id}` }) })
-        myWos.forEach(wo => { const ts = wo.updated_at || wo.created_at; if (ts) activityEntries.push({ type: 'wo', time: ts, title: 'Work order updated', meta: `${wo.so_number}${(wo.customers as any)?.company_name ? ' · ' + (wo.customers as any).company_name : ''}`, href: `/work-orders/${wo.id}`, id: `wo-${wo.id}` }) })
-        pendingEstimates.forEach(est => { const ts = est.updated_at || est.created_at; if (ts) activityEntries.push({ type: 'estimate', time: ts, title: 'Estimate pending approval', meta: est.estimate_number || est.customer_name || '—', href: est.wo_id ? `/work-orders/${est.wo_id}` : null, id: `est-${est.id}` }) })
+        myWos.forEach(wo => { const ts = wo.updated_at || wo.created_at; if (ts) activityEntries.push({ type: 'wo', time: ts, title: 'Work order updated', meta: `${wo.so_number}${(wo.customers as any)?.company_name ? ' · ' + (wo.customers as any).company_name : ''}`, href: getWorkorderRoute(wo.id), id: `wo-${wo.id}` }) })
+        pendingEstimates.forEach(est => { const ts = est.updated_at || est.created_at; if (ts) activityEntries.push({ type: 'estimate', time: ts, title: 'Estimate pending approval', meta: est.estimate_number || est.customer_name || '—', href: est.wo_id ? getWorkorderRoute(est.wo_id) : null, id: `est-${est.id}` }) })
         hoursRequests.forEach((r: any) => { if (r.created_at) activityEntries.push({ type: 'hours', time: r.created_at, title: r.title || 'More time requested', meta: r.body || '', href: r.link || null, id: `hrs-${r.id}` }) })
         activityEntries.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
         const recentActivity = activityEntries.slice(0, 6)

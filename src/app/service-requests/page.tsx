@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import Pagination from '@/components/Pagination'
 import FilterBar from '@/components/FilterBar'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const URGENCY: Record<string, { label: string; color: string; bg: string }> = {
   low:      { label: 'LOW',      color: '#48536A', bg: 'rgba(72,83,106,.1)' },
@@ -99,7 +100,7 @@ export default function ServiceRequestsPage() {
     })
     if (res.ok) {
       const data = await res.json()
-      window.location.href = `/work-orders/${data.so_id || data.id}`
+      window.location.href = getWorkorderRoute(data.so_id || data.id, undefined, 'service-request')
     } else flash('Failed to convert')
   }
 
@@ -220,7 +221,7 @@ export default function ServiceRequestsPage() {
                     <button onClick={() => { setRejectId(r.id); setRejectReason('') }} style={{ padding: '6px 14px', background: 'rgba(217,79,79,.08)', color: '#D94F4F', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Reject</button>
                   </div>
                 ) : r.status === 'converted' && r.converted_so_id ? (
-                  <a href={`/work-orders/${r.converted_so_id}`} style={{ fontSize: 11, color: '#4D9EFF', textDecoration: 'none' }}>View Work Order →</a>
+                  <a href={getWorkorderRoute(r.converted_so_id, undefined, 'service-request')} style={{ fontSize: 11, color: '#4D9EFF', textDecoration: 'none' }}>View Work Order →</a>
                 ) : r.status === 'rejected' ? (
                   <div style={{ fontSize: 11, color: '#D94F4F' }}>Rejected{r.reject_reason ? `: ${r.reject_reason}` : ''}</div>
                 ) : null}

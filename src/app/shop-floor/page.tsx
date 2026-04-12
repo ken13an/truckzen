@@ -2,26 +2,30 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { useTheme } from '@/hooks/useTheme'
+import { THEME } from '@/lib/config/colors'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
+const _t = THEME.dark
 
 type View = 'table' | 'kanban' | 'monitor'
 
 const STATUS_GROUPS = [
-  { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: '#7C8BA0' },
-  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: '#F59E0B' },
-  { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: '#F59E0B' },
-  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection'], color: '#06B6D4' },
-  { key: 'completed', label: 'Completed', statuses: ['done'], color: '#22C55E' },
-  { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: '#22C55E' },
-  { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: '#EF4444' },
+  { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: _t.textSecondary },
+  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: _t.warning },
+  { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: _t.warning },
+  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection'], color: _t.accentLight },
+  { key: 'completed', label: 'Completed', statuses: ['done'], color: _t.success },
+  { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: _t.success },
+  { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: _t.danger },
 ]
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: '#7C8BA0', not_approved: '#8B5CF6', waiting_approval: '#F59E0B',
-  in_progress: '#F59E0B', waiting_parts: '#F59E0B', done: '#22C55E',
-  ready_final_inspection: '#06B6D4', good_to_go: '#22C55E', failed_inspection: '#EF4444',
+  draft: _t.textSecondary, not_approved: _t.aiPurple, waiting_approval: _t.warning,
+  in_progress: _t.warning, waiting_parts: _t.warning, done: _t.success,
+  ready_final_inspection: _t.accentLight, good_to_go: _t.success, failed_inspection: _t.danger,
 }
 
-const PRIORITY_COLOR: Record<string, string> = { low: '#48536A', normal: '#7C8BA0', high: '#F59E0B', critical: '#EF4444' }
+const PRIORITY_COLOR: Record<string, string> = { low: _t.textTertiary, normal: _t.textSecondary, high: _t.warning, critical: _t.danger }
 
 function timeAgo(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000)
@@ -82,7 +86,8 @@ export default function ShopFloorPage() {
       })
       setMechanics(mechs)
       setActiveClocks(clocks)
-      const prsData = prsRes.ok ? await prsRes.json() : []
+      const prsRaw = prsRes.ok ? await prsRes.json() : []
+      const prsData = Array.isArray(prsRaw) ? prsRaw : (prsRaw?.data || [])
       const activePrs = (prsData || []).filter((pr: any) => pr.status !== 'delivered' && pr.status !== 'picked_up')
       if (activePrs.length) {
         const map: Record<string, string> = {}
@@ -132,43 +137,43 @@ export default function ShopFloorPage() {
     total: jobs.length,
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#060708', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C8BA0' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: _t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: _t.textSecondary }}>Loading...</div>
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: view === 'monitor' ? 16 : 24 }}>
+    <div style={{ background: _t.bg, minHeight: '100vh', color: _t.text, fontFamily: "'Instrument Sans',sans-serif", padding: view === 'monitor' ? 16 : 24 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: view === 'monitor' ? 22 : 28, color: '#F0F4FF', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: view === 'monitor' ? 22 : 28, color: _t.text, display: 'flex', alignItems: 'center', gap: 10 }}>
             Shop Floor
-            {view === 'monitor' && <span style={{ fontSize: 10, background: '#22C55E', color: '#000', padding: '3px 8px', borderRadius: 10, fontFamily: "'Instrument Sans'", fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: '#000', animation: 'pulse 2s infinite' }} />LIVE</span>}
+            {view === 'monitor' && <span style={{ fontSize: 10, background: _t.success, color: '#000', padding: '3px 8px', borderRadius: 10, fontFamily: "'Instrument Sans'", fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: '#000', animation: 'pulse 2s infinite' }} />LIVE</span>}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {/* View tabs */}
-          <div style={{ display: 'flex', gap: 4, background: '#0D0F12', borderRadius: 8, padding: 3 }}>
+          <div style={{ display: 'flex', gap: 4, background: _t.bgCard, borderRadius: 8, padding: 3 }}>
             {(['table', 'kanban', 'monitor'] as const).map(v => (
-              <button key={v} onClick={() => setView(v)} style={{ padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: view === v ? '#1A1D23' : 'transparent', color: view === v ? '#F0F4FF' : '#48536A', textTransform: 'capitalize' }}>{v}</button>
+              <button key={v} onClick={() => setView(v)} style={{ padding: '7px 14px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: view === v ? _t.border : 'transparent', color: view === v ? _t.text : _t.textTertiary, textTransform: 'capitalize' }}>{v}</button>
             ))}
           </div>
           {/* Quick View shortcut */}
-          <a href="/floor-manager/quick-view" style={{ padding: '7px 14px', borderRadius: 6, background: 'rgba(29,111,232,0.12)', border: '1px solid rgba(29,111,232,0.3)', color: '#1D6FE8', fontSize: 12, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>Quick View</a>
+          <a href="/floor-manager/quick-view" style={{ padding: '7px 14px', borderRadius: 6, background: 'rgba(29,111,232,0.12)', border: '1px solid rgba(29,111,232,0.3)', color: _t.accent, fontSize: 12, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>Quick View</a>
         </div>
       </div>
 
       {/* Stats bar */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {[
-          { label: 'Active', value: stats.active, color: '#F59E0B' },
-          { label: 'Waiting Parts', value: stats.waiting, color: '#F59E0B' },
-          { label: 'Inspection', value: stats.inspection, color: '#06B6D4' },
-          { label: 'Completed', value: stats.completed, color: '#22C55E' },
-          { label: 'Failed', value: stats.failed, color: '#EF4444' },
-          { label: 'Total', value: stats.total, color: '#7C8BA0' },
+          { label: 'Active', value: stats.active, color: _t.warning },
+          { label: 'Waiting Parts', value: stats.waiting, color: _t.warning },
+          { label: 'Inspection', value: stats.inspection, color: _t.accentLight },
+          { label: 'Completed', value: stats.completed, color: _t.success },
+          { label: 'Failed', value: stats.failed, color: _t.danger },
+          { label: 'Total', value: stats.total, color: _t.textSecondary },
         ].map(s => (
-          <div key={s.label} style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div key={s.label} style={{ background: _t.bgCard, border: `1px solid ${_t.border}`, borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{s.value}</span>
-            <span style={{ fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.05em' }}>{s.label}</span>
+            <span style={{ fontSize: 10, color: _t.textTertiary, textTransform: 'uppercase', letterSpacing: '.05em' }}>{s.label}</span>
           </div>
         ))}
       </div>
@@ -177,8 +182,8 @@ export default function ShopFloorPage() {
       {showMechPanel && mechanics.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono',monospace" }}>Mechanic Status</span>
-            <button onClick={() => setShowMechPanel(false)} style={{ background: 'none', border: 'none', color: '#48536A', fontSize: 10, cursor: 'pointer' }}>Hide</button>
+            <span style={{ fontSize: 11, fontWeight: 700, color: _t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono',monospace" }}>Mechanic Status</span>
+            <button onClick={() => setShowMechPanel(false)} style={{ background: 'none', border: 'none', color: _t.textTertiary, fontSize: 10, cursor: 'pointer' }}>Hide</button>
           </div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
             {mechanics.map(m => {
@@ -186,29 +191,29 @@ export default function ShopFloorPage() {
               const isWorking = !!clock
               const so = clock?.service_orders as any
               const elapsed = clock ? Math.floor((Date.now() - new Date(clock.clock_in).getTime()) / 60000) : 0
-              const statusColor = isWorking ? (elapsed > 360 ? '#F59E0B' : '#22C55E') : '#48536A'
+              const statusColor = isWorking ? (elapsed > 360 ? _t.warning : _t.success) : _t.textTertiary
               const statusLabel = isWorking ? (elapsed > 360 ? 'Finishing Soon' : 'Working') : 'Off'
               const assignedCount = jobs.filter(j => j.assigned_tech === m.id || (j.so_lines || []).some((l: any) => l.assigned_to === m.id)).length
 
               return (
-                <div key={m.id} style={{ background: '#0D0F12', border: `1px solid ${isWorking ? statusColor + '40' : '#1A1D23'}`, borderRadius: 10, padding: '10px 14px', minWidth: 140, flexShrink: 0 }}>
+                <div key={m.id} style={{ background: _t.bgCard, border: `1px solid ${isWorking ? statusColor + '40' : _t.border}`, borderRadius: 10, padding: '10px 14px', minWidth: 140, flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', background: statusColor + '20', color: statusColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>
                       {m.full_name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#F0F4FF', whiteSpace: 'nowrap' }}>{m.full_name?.split(' ')[0]}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: _t.text, whiteSpace: 'nowrap' }}>{m.full_name?.split(' ')[0]}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor }} />
                     <span style={{ fontSize: 9, fontWeight: 600, color: statusColor, textTransform: 'uppercase' }}>{statusLabel}</span>
                   </div>
                   {isWorking && so?.so_number && (
-                    <div style={{ fontSize: 9, color: '#7C8BA0', marginTop: 2 }}>
+                    <div style={{ fontSize: 9, color: _t.textSecondary, marginTop: 2 }}>
                       {so.so_number} · #{so.assets?.unit_number || '—'} · {elapsed}m
                     </div>
                   )}
                   {assignedCount > 0 && (
-                    <div style={{ fontSize: 9, color: '#48536A', marginTop: 2 }}>{assignedCount} job{assignedCount !== 1 ? 's' : ''} in queue</div>
+                    <div style={{ fontSize: 9, color: _t.textTertiary, marginTop: 2 }}>{assignedCount} job{assignedCount !== 1 ? 's' : ''} in queue</div>
                   )}
                 </div>
               )
@@ -217,7 +222,7 @@ export default function ShopFloorPage() {
         </div>
       )}
       {!showMechPanel && mechanics.length > 0 && (
-        <button onClick={() => setShowMechPanel(true)} style={{ fontSize: 10, color: '#48536A', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 8 }}>Show Mechanic Status</button>
+        <button onClick={() => setShowMechPanel(true)} style={{ fontSize: 10, color: _t.textTertiary, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 8 }}>Show Mechanic Status</button>
       )}
 
       {/* Filters (not in monitor view) */}
@@ -256,8 +261,8 @@ export default function ShopFloorPage() {
               <div key={group.key} style={{ marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: group.color }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{group.label}</span>
-                  <span style={{ fontSize: 10, color: '#48536A' }}>({groupJobs.length})</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: _t.text }}>{group.label}</span>
+                  <span style={{ fontSize: 10, color: _t.textTertiary }}>({groupJobs.length})</span>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
                   <thead><tr>
@@ -267,16 +272,16 @@ export default function ShopFloorPage() {
                   </tr></thead>
                   <tbody>
                     {groupJobs.map(j => (
-                      <tr key={j.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/work-orders/${j.id}`}>
-                        <td style={{ ...S.td, fontWeight: 700, color: '#4D9EFF' }}>#{(j.assets as any)?.unit_number || '—'}</td>
+                      <tr key={j.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(j.id, undefined, 'shop-floor')}>
+                        <td style={{ ...S.td, fontWeight: 700, color: _t.accentLight }}>#{(j.assets as any)?.unit_number || '—'}</td>
                         <td style={S.td}>{j.team ? `Team ${j.team}` : '—'}{j.bay ? ` · ${j.bay}` : ''}</td>
                         <td style={S.td}>{(j.customers as any)?.company_name || '—'}</td>
                         <td style={{ ...S.td, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.complaint || '—'}</td>
-                        <td style={S.td}><span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: STATUS_COLOR[j.status] || '#7C8BA0', background: `${STATUS_COLOR[j.status] || '#7C8BA0'}15` }}>{j.status?.replace(/_/g, ' ')}</span></td>
-                        <td style={S.td}>{partsStatusMap[j.id] ? <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: partsStatusMap[j.id] === 'ready' ? '#22C55E' : partsStatusMap[j.id] === 'submitted' || partsStatusMap[j.id] === 'partial' ? '#F59E0B' : '#7C8BA0', background: `${partsStatusMap[j.id] === 'ready' ? '#22C55E' : partsStatusMap[j.id] === 'submitted' || partsStatusMap[j.id] === 'partial' ? '#F59E0B' : '#7C8BA0'}15` }}>{partsStatusMap[j.id] === 'ready' ? 'Parts Ready' : partsStatusMap[j.id] === 'partial' ? 'Partial' : partsStatusMap[j.id] === 'submitted' ? 'Preparing' : partsStatusMap[j.id]}</span> : <span style={{ color: '#48536A', fontSize: 9 }}>—</span>}</td>
-                        <td style={S.td}><span style={{ color: PRIORITY_COLOR[j.priority] || '#7C8BA0', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' }}>{j.priority}</span></td>
-                        <td style={S.td}>{getMechName(j) || <span style={{ color: '#48536A' }}>Unassigned</span>}</td>
-                        <td style={{ ...S.td, color: '#48536A', fontSize: 10 }}>{timeAgo(j.updated_at || j.created_at)}</td>
+                        <td style={S.td}><span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: STATUS_COLOR[j.status] || _t.textSecondary, background: `${STATUS_COLOR[j.status] || _t.textSecondary}15` }}>{j.status?.replace(/_/g, ' ')}</span></td>
+                        <td style={S.td}>{partsStatusMap[j.id] ? <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: partsStatusMap[j.id] === 'ready' ? _t.success : partsStatusMap[j.id] === 'submitted' || partsStatusMap[j.id] === 'partial' ? _t.warning : _t.textSecondary, background: `${partsStatusMap[j.id] === 'ready' ? _t.success : partsStatusMap[j.id] === 'submitted' || partsStatusMap[j.id] === 'partial' ? _t.warning : _t.textSecondary}15` }}>{partsStatusMap[j.id] === 'ready' ? 'Parts Ready' : partsStatusMap[j.id] === 'partial' ? 'Partial' : partsStatusMap[j.id] === 'submitted' ? 'Preparing' : partsStatusMap[j.id]}</span> : <span style={{ color: _t.textTertiary, fontSize: 9 }}>—</span>}</td>
+                        <td style={S.td}><span style={{ color: PRIORITY_COLOR[j.priority] || _t.textSecondary, fontWeight: 600, fontSize: 10, textTransform: 'uppercase' }}>{j.priority}</span></td>
+                        <td style={S.td}>{getMechName(j) || <span style={{ color: _t.textTertiary }}>Unassigned</span>}</td>
+                        <td style={{ ...S.td, color: _t.textTertiary, fontSize: 10 }}>{timeAgo(j.updated_at || j.created_at)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -295,10 +300,10 @@ export default function ShopFloorPage() {
               const groupJobs = filtered.filter(j => group.statuses.includes(j.status))
               return (
                 <div key={group.key} style={{ minWidth: 260, maxWidth: 300, flex: '0 0 280px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: '#0D0F12', borderRadius: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: _t.bgCard, borderRadius: 8 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: group.color }} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{group.label}</span>
-                    <span style={{ fontSize: 10, color: '#48536A', marginLeft: 'auto' }}>{groupJobs.length}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: _t.text }}>{group.label}</span>
+                    <span style={{ fontSize: 10, color: _t.textTertiary, marginLeft: 'auto' }}>{groupJobs.length}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {groupJobs.map(j => <KanbanCard key={j.id} job={j} mechanics={mechanics} />)}
@@ -312,9 +317,9 @@ export default function ShopFloorPage() {
               if (!teamJobs.length && team) return null
               return (
                 <div key={team || 'unassigned'} style={{ minWidth: 260, maxWidth: 300, flex: '0 0 280px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: '#0D0F12', borderRadius: 8 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{team ? `Team ${team}` : 'Unassigned'}</span>
-                    <span style={{ fontSize: 10, color: '#48536A', marginLeft: 'auto' }}>{teamJobs.length}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, padding: '8px 12px', background: _t.bgCard, borderRadius: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: _t.text }}>{team ? `Team ${team}` : 'Unassigned'}</span>
+                    <span style={{ fontSize: 10, color: _t.textTertiary, marginLeft: 'auto' }}>{teamJobs.length}</span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {teamJobs.map(j => <KanbanCard key={j.id} job={j} mechanics={mechanics} />)}
@@ -330,13 +335,13 @@ export default function ShopFloorPage() {
       {view === 'monitor' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
           {filtered.map(j => (
-            <div key={j.id} style={{ background: '#0D0F12', border: `2px solid ${STATUS_COLOR[j.status] || '#1A1D23'}30`, borderLeft: `4px solid ${PRIORITY_COLOR[j.priority] || '#7C8BA0'}`, borderRadius: 12, padding: 16 }}>
+            <div key={j.id} style={{ background: _t.bgCard, border: `2px solid ${STATUS_COLOR[j.status] || _t.border}30`, borderLeft: `4px solid ${PRIORITY_COLOR[j.priority] || _t.textSecondary}`, borderRadius: 12, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#F0F4FF', fontFamily: "'IBM Plex Mono'" }}>#{(j.assets as any)?.unit_number || '—'}</div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: _t.text, fontFamily: "'IBM Plex Mono'" }}>#{(j.assets as any)?.unit_number || '—'}</div>
                 <span style={{ padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: STATUS_COLOR[j.status], background: `${STATUS_COLOR[j.status]}15` }}>{j.status?.replace(/_/g, ' ')}</span>
               </div>
-              <div style={{ fontSize: 14, color: '#DDE3EE', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#7C8BA0' }}>
+              <div style={{ fontSize: 14, color: _t.text, marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: _t.textSecondary }}>
                 <span>{j.team ? `Team ${j.team}` : '—'}{j.bay ? ` · ${j.bay}` : ''}</span>
                 <span>{getMechName(j) || 'Unassigned'}</span>
               </div>
@@ -357,15 +362,15 @@ function KanbanCard({ job: j, mechanics }: { job: any; mechanics: any[] }) {
     return null
   })()
   return (
-    <div onClick={() => window.location.href = `/work-orders/${j.id}`}
-      style={{ background: '#0D0F12', border: '1px solid #1A1D23', borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || '#7C8BA0'}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
+    <div onClick={() => window.location.href = getWorkorderRoute(j.id, undefined, 'shop-floor')}
+      style={{ background: _t.bgCard, border: `1px solid ${_t.border}`, borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || _t.textSecondary}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: '#4D9EFF' }}>#{(j.assets as any)?.unit_number || '—'}</span>
+        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: _t.accentLight }}>#{(j.assets as any)?.unit_number || '—'}</span>
         <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: PRIORITY_COLOR[j.priority], padding: '2px 6px', borderRadius: 4, background: `${PRIORITY_COLOR[j.priority]}15` }}>{j.priority}</span>
       </div>
-      <div style={{ fontSize: 12, color: '#DDE3EE', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
-      {j.complaint && <div style={{ fontSize: 11, color: '#7C8BA0', lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: '#48536A' }}>
+      <div style={{ fontSize: 12, color: _t.text, marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
+      {j.complaint && <div style={{ fontSize: 11, color: _t.textSecondary, lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: _t.textTertiary }}>
         <span>{mechName || 'Unassigned'}</span>
         <span>{j.team ? `Team ${j.team}` : ''}{j.bay ? ` · ${j.bay}` : ''}</span>
       </div>
@@ -374,7 +379,7 @@ function KanbanCard({ job: j, mechanics }: { job: any; mechanics: any[] }) {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  input: { padding: '8px 12px', background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 8, color: '#DDE3EE', fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' },
+  input: { padding: '8px 12px', background: _t.bgCard, border: `1px solid ${_t.border}`, borderRadius: 8, color: _t.text, fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: _t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: _t.bg, whiteSpace: 'nowrap' as const },
+  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: _t.textSecondary },
 }

@@ -13,6 +13,7 @@ import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import SourceBadge from '@/components/ui/SourceBadge'
 import FilterBar from '@/components/FilterBar'
 import { useTheme } from '@/hooks/useTheme'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 type DateRange = 'today' | 'week' | 'month' | '3months' | 'all'
 type ViewFilter = 'all' | 'active' | 'historical' | 'dealer' | 'drafts'
@@ -32,17 +33,17 @@ export default function WorkOrdersPage() {
   const { tokens: t } = useTheme()
 
   const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-    draft:            { label: 'Draft',          bg: '#F3F4F6', color: t.textLightSecondary },
-    not_started:      { label: 'Unassigned',     bg: '#FEF2F2', color: '#DC2626' },
-    in_progress:      { label: 'In Progress',    bg: '#EFF6FF', color: t.accent },
-    waiting_parts:    { label: 'Waiting Parts',  bg: '#FFF7ED', color: '#EA580C' },
-    waiting_approval: { label: 'Pending Review', bg: '#FFFBEB', color: '#D97706' },
-    authorized:       { label: 'Approved',       bg: '#F0FDF4', color: '#16A34A' },
-    done:             { label: 'Completed',      bg: '#ECFDF5', color: '#059669' },
-    good_to_go:       { label: 'Completed',      bg: '#ECFDF5', color: '#059669' },
-    completed:        { label: 'Completed',      bg: '#ECFDF5', color: '#059669' },
-    invoiced:         { label: 'Invoiced',       bg: '#EFF6FF', color: t.accent },
-    closed:           { label: 'Closed',         bg: '#F3F4F6', color: t.textLightSecondary },
+    draft:            { label: 'Draft',          bg: t.surfaceMuted, color: t.textSecondary },
+    not_started:      { label: 'Unassigned',     bg: t.dangerBg, color: t.danger },
+    in_progress:      { label: 'In Progress',    bg: t.accentBg, color: t.accent },
+    waiting_parts:    { label: 'Waiting Parts',  bg: t.warningBg, color: t.warning },
+    waiting_approval: { label: 'Pending Review', bg: t.warningBg, color: t.warning },
+    authorized:       { label: 'Approved',       bg: t.successBg, color: t.success },
+    done:             { label: 'Completed',      bg: t.successBg, color: t.success },
+    good_to_go:       { label: 'Completed',      bg: t.successBg, color: t.success },
+    completed:        { label: 'Completed',      bg: t.successBg, color: t.success },
+    invoiced:         { label: 'Invoiced',       bg: t.accentBg, color: t.accent },
+    closed:           { label: 'Closed',         bg: t.surfaceMuted, color: t.textSecondary },
   }
 
   const supabase = createClient()
@@ -155,23 +156,23 @@ export default function WorkOrdersPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F4F5F7', fontFamily: "'Instrument Sans', sans-serif", padding: 'clamp(12px, 3vw, 24px)' }}>
+    <div style={{ minHeight: '100vh', background: t.bg, fontFamily: "'Instrument Sans', sans-serif", padding: 'clamp(12px, 3vw, 24px)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A' }}>Work Orders</div>
-          <div style={{ fontSize: 13, color: t.textLightSecondary }}>{total.toLocaleString()} work order{total !== 1 ? 's' : ''} {viewFilter !== 'all' ? `(${viewFilter})` : ''}</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: t.text }}>Work Orders</div>
+          <div style={{ fontSize: 13, color: t.textSecondary }}>{total.toLocaleString()} work order{total !== 1 ? 's' : ''} {viewFilter !== 'all' ? `(${viewFilter})` : ''}</div>
         </div>
         {user && SERVICE_WRITE_ROLES.includes(user.impersonate_role || user.role) && (
-          <a href="/work-orders/new" style={{ padding: '10px 20px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Work Order</a>
+          <a href="/work-orders/new" style={{ padding: '10px 20px', background: t.accent, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Work Order</a>
         )}
       </div>
 
       {/* View filter: All / Active / Historical */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.borderLight}`, marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.border}`, marginBottom: 12 }}>
         {([['active', 'Active'], ['all', 'All'], ['drafts', 'Drafts'], ['historical', 'Historical'], ['dealer', 'Sent to Dealer']] as [ViewFilter, string][]).map(([v, l]) => (
           <button key={v} onClick={() => { setViewFilter(v); setPage(1) }} style={{
             padding: '10px 18px', background: 'none', border: 'none', borderBottom: viewFilter === v ? `2px solid ${t.accent}` : '2px solid transparent',
-            color: viewFilter === v ? t.accent : '#9CA3AF', fontWeight: viewFilter === v ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginBottom: -2,
+            color: viewFilter === v ? t.accent : t.textTertiary, fontWeight: viewFilter === v ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginBottom: -2,
           }}>{l}</button>
         ))}
       </div>
@@ -195,35 +196,34 @@ export default function WorkOrdersPage() {
         dateTo={dateTo}
         onDateFromChange={val => { setDateFrom(val); setDateRange('all'); setPage(1) }}
         onDateToChange={val => { setDateTo(val); setDateRange('all'); setPage(1) }}
-        theme="light"
       />
 
       {/* Bulk void bar */}
       {canBulkVoid && selected.size > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#DC2626' }}>{selected.size} selected</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px', background: t.dangerBg, border: `1px solid ${t.danger}`, borderRadius: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: t.danger }}>{selected.size} selected</span>
           <div style={{ flex: 1 }} />
-          <button onClick={() => setSelected(new Set())} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
-          <button onClick={() => setShowDeleteModal(true)} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: '#DC2626', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Void Selected ({selected.size})</button>
+          <button onClick={() => setSelected(new Set())} style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${t.border}`, background: t.bgCard, color: t.text, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Clear</button>
+          <button onClick={() => setShowDeleteModal(true)} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: t.danger, color: t.bgLight, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Void Selected ({selected.size})</button>
         </div>
       )}
 
       {/* Table */}
-      <div style={{ background: '#fff', border: `1px solid ${t.borderLight}`, borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+          <div style={{ padding: 48, textAlign: 'center', color: t.textSecondary }}>Loading...</div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>
+          <div style={{ padding: 48, textAlign: 'center', color: t.textSecondary, fontSize: 13 }}>
             {search || statusFilter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : viewFilter === 'active' ? 'No active work orders. Create your first work order or view historical records.' : 'No work orders found'}
           </div>
         ) : (
           <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
             <thead>
-              <tr style={{ borderBottom: `1px solid ${t.borderLight}` }}>
+              <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                 {canBulkVoid && <th style={{ padding: '8px 6px 8px 12px', width: 32 }}><input type="checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={toggleAll} style={{ cursor: 'pointer', accentColor: t.accent }} /></th>}
                 {['WO #', 'Date', 'Customer', 'Unit', 'Work Description', 'Status', 'Tech', 'Total'].map(h => (
-                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textLightSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                  <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -232,27 +232,27 @@ export default function WorkOrdersPage() {
                 const st = STATUS_MAP[o.status] || STATUS_MAP.draft
                 const isHist = o.is_historical
                 return (
-                  <tr key={o.id} style={{ borderBottom: '1px solid #F3F4F6', cursor: 'pointer', opacity: isHist ? 0.7 : 1, background: selected.has(o.id) ? '#EFF6FF' : '' }} onClick={() => window.location.href = `/work-orders/${o.id}`}
-                    onMouseEnter={e => { if (!selected.has(o.id)) e.currentTarget.style.background = '#F9FAFB' }} onMouseLeave={e => { if (!selected.has(o.id)) e.currentTarget.style.background = '' }}>
+                  <tr key={o.id} style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', opacity: isHist ? 0.7 : 1, background: selected.has(o.id) ? t.accentBg : '' }} onClick={() => window.location.href = getWorkorderRoute(o.id)}
+                    onMouseEnter={e => { if (!selected.has(o.id)) e.currentTarget.style.background = t.bgHover }} onMouseLeave={e => { if (!selected.has(o.id)) e.currentTarget.style.background = '' }}>
                     {canBulkVoid && <td style={{ padding: '10px 6px 10px 12px', width: 32 }} onClick={e => e.stopPropagation()}><input type="checkbox" checked={selected.has(o.id)} onChange={() => toggleSelect(o.id)} style={{ cursor: 'pointer', accentColor: t.accent }} /></td>}
                     <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: t.accent, whiteSpace: 'nowrap' }}>
                       {o.so_number || '—'}
-                      {isHist && <span style={{ marginLeft: 4, padding: '1px 5px', borderRadius: 3, background: 'rgba(124,139,160,0.1)', color: t.textSecondary, fontSize: 8, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical</span>}
+                      {isHist && <span style={{ marginLeft: 4, padding: '1px 5px', borderRadius: 3, background: t.surfaceMuted, color: t.textSecondary, fontSize: 8, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical</span>}
                     </td>
-                    <td style={{ padding: '10px 12px', fontSize: 11, color: '#9CA3AF', fontFamily: 'monospace' }}>{o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: '#1A1A1A', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(o.customers as any)?.company_name || '—'}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: t.textLightSecondary }}>
+                    <td style={{ padding: '10px 12px', fontSize: 11, color: t.textTertiary, fontFamily: 'monospace' }}>{o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: t.text, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(o.customers as any)?.company_name || '—'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>
                       #{(o.assets as any)?.unit_number || '—'}
                       {o.ownership_type && o.ownership_type !== 'fleet_asset' && <div style={{ marginTop: 2 }}><OwnershipTypeBadge type={o.ownership_type} size="sm" /></div>}
                     </td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: t.textLightSecondary, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.complaint || '—'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.complaint || '—'}</td>
                     <td style={{ padding: '10px 12px' }}>
                       <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: st.bg, color: st.color }}>{st.label}</span>
-                      {o.automation?.is_overdue && <span style={{ marginLeft: 4, padding: '1px 5px', borderRadius: 3, background: '#FEF2F2', color: '#DC2626', fontSize: 8, fontWeight: 700, textTransform: 'uppercase' }}>Overdue</span>}
-                      {o.automation?.exception && <div style={{ fontSize: 9, color: '#D97706', marginTop: 2 }}>{o.automation.next_action}</div>}
+                      {o.automation?.is_overdue && <span style={{ marginLeft: 4, padding: '1px 5px', borderRadius: 3, background: t.dangerBg, color: t.danger, fontSize: 8, fontWeight: 700, textTransform: 'uppercase' }}>Overdue</span>}
+                      {o.automation?.exception && <div style={{ fontSize: 9, color: t.warning, marginTop: 2 }}>{o.automation.next_action}</div>}
                     </td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: '#374151' }}>{(o.users as any)?.full_name || '—'}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, fontFamily: 'monospace', fontWeight: 600, color: '#1A1A1A' }}>{fmt(o.grand_total)}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{(o.users as any)?.full_name || '—'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, fontFamily: 'monospace', fontWeight: 600, color: t.text }}>{fmt(o.grand_total)}</td>
                   </tr>
                 )
               })}
@@ -262,25 +262,25 @@ export default function WorkOrdersPage() {
         )}
       </div>
       {/* Pagination */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', fontSize: 13, color: t.textLightSecondary }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', fontSize: 13, color: t.textSecondary }}>
         <span>{total.toLocaleString()} total</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-            style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #D1D5DB', background: page <= 1 ? '#F3F4F6' : '#fff', color: page <= 1 ? '#9CA3AF' : '#374151', fontSize: 12, fontWeight: 600, cursor: page <= 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>Previous</button>
-          <span style={{ fontSize: 12, fontWeight: 600 }}>Page {page} of {totalPages.toLocaleString()}</span>
+            style={{ padding: '6px 14px', borderRadius: 6, border: `1px solid ${t.border}`, background: page <= 1 ? t.bg : t.bgCard, color: page <= 1 ? t.textTertiary : t.textSecondary, fontSize: 12, fontWeight: 600, cursor: page <= 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>Previous</button>
+          <span style={{ fontSize: 12, fontWeight: 600, color: t.text }}>Page {page} of {totalPages.toLocaleString()}</span>
           <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
-            style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid #D1D5DB', background: page >= totalPages ? '#F3F4F6' : '#fff', color: page >= totalPages ? '#9CA3AF' : '#374151', fontSize: 12, fontWeight: 600, cursor: page >= totalPages ? 'default' : 'pointer', fontFamily: 'inherit' }}>Next</button>
+            style={{ padding: '6px 14px', borderRadius: 6, border: `1px solid ${t.border}`, background: page >= totalPages ? t.bg : t.bgCard, color: page >= totalPages ? t.textTertiary : t.textSecondary, fontSize: 12, fontWeight: 600, cursor: page >= totalPages ? 'default' : 'pointer', fontFamily: 'inherit' }}>Next</button>
         </div>
       </div>
       {/* Delete confirmation modal */}
       {showDeleteModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowDeleteModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#1A1A1A', marginBottom: 8 }}>Void Work Orders</div>
-            <div style={{ fontSize: 13, color: t.textLightSecondary, marginBottom: 16 }}>Are you sure you want to void {selected.size} work order{selected.size !== 1 ? 's' : ''}? They will be removed from the active list but preserved in records.</div>
+          <div style={{ background: t.bgElevated, borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw', border: `1px solid ${t.border}` }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 8 }}>Void Work Orders</div>
+            <div style={{ fontSize: 13, color: t.textSecondary, marginBottom: 16 }}>Are you sure you want to void {selected.size} work order{selected.size !== 1 ? 's' : ''}? They will be removed from the active list but preserved in records.</div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowDeleteModal(false)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleBulkDelete} disabled={deleting} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#DC2626', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.6 : 1 }}>{deleting ? 'Voiding...' : `Void ${selected.size} WO${selected.size !== 1 ? 's' : ''}`}</button>
+              <button onClick={() => setShowDeleteModal(false)} style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard, color: t.text, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleBulkDelete} disabled={deleting} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: t.danger, color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleting ? 0.6 : 1 }}>{deleting ? 'Voiding...' : `Void ${selected.size} WO${selected.size !== 1 ? 's' : ''}`}</button>
             </div>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function WorkOrdersPage() {
 
       {/* Toast */}
       {toastMsg && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#1A1A1A', color: '#fff', padding: '12px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 2000, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: t.bgElevated, color: t.text, padding: '12px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 2000, boxShadow: '0 4px 12px rgba(0,0,0,0.4)', border: `1px solid ${t.border}` }}>
           {toastMsg}
         </div>
       )}

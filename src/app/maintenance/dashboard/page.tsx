@@ -6,6 +6,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -69,7 +70,7 @@ export default function MaintenanceDashboard() {
       <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Fleet Trucks In Shop</div>
         {fleetInShop.length === 0 ? <div style={{ padding: 20, textAlign: 'center', color: '#48536A', fontSize: 12 }}>No fleet trucks currently in shop</div> : fleetInShop.map(wo => (
-          <div key={wo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }} onClick={() => window.location.href = `/work-orders/${wo.id}`}>
+          <div key={wo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id, undefined, 'maintenance')}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>#{(wo.assets as any)?.unit_number || '—'}</span>
@@ -99,7 +100,7 @@ export default function MaintenanceDashboard() {
         {warrantyPending.length > 0 && <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#F0F4FF', marginBottom: 12 }}>Warranty Checks Pending ({warrantyPending.length})</div>
           {warrantyPending.map(wo => (
-            <div key={wo.id} style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }} onClick={() => window.location.href = `/work-orders/${wo.id}`}>
+            <div key={wo.id} style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id, undefined, 'maintenance')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: BLUE }}>{wo.so_number}</span>
                 <span style={{ fontSize: 11, color: '#F0F4FF' }}>#{(wo.assets as any)?.unit_number}</span>

@@ -4,17 +4,22 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { useEmployeePermission } from '@/hooks/useEmployeePermission'
 import FilterBar from '@/components/FilterBar'
+import { useTheme } from '@/hooks/useTheme'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 const FONT = "'Instrument Sans', sans-serif"
 const MONO = "'IBM Plex Mono', monospace"
-const BLUE = '#1B6EE6'
-const PAGE_BG = '#F4F5F7'
+const BLUE = _t.accent
+const PAGE_BG = _t.bg
 
 type SortField = 'part_number' | 'description' | 'uom' | 'on_hand' | 'allocated' | 'average_cost' | 'price_ugl_company' | 'price_ugl_owner_operator' | 'price_outside' | 'min_qty' | 'max_qty' | 'default_location' | 'preferred_vendor' | 'part_category' | 'status'
 type SortDir = 'asc' | 'desc'
 type SubTab = 'overview' | 'inventory' | 'reorder' | 'vendors' | 'history' | 'purchase_orders'
 
 export default function PartsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [parts, setParts] = useState<any[]>([])
@@ -98,11 +103,12 @@ export default function PartsPage() {
         fetch(`/api/so-lines?line_type=part&parts_status=received&updated_since=${today}&limit=500`),
         fetch('/api/so-lines?line_type=part&parts_status=rough,sourced&limit=500'),
       ])
-      const reqs = reqRes.ok ? await reqRes.json() : []
+      const reqsRaw = reqRes.ok ? await reqRes.json() : []
       const low = lowRes.ok ? await lowRes.json() : { data: [] }
       const ord = ordRes.ok ? await ordRes.json() : []
       const ful = fulRes.ok ? await fulRes.json() : []
       const rough = roughRes.ok ? await roughRes.json() : []
+      const reqs = Array.isArray(reqsRaw) ? reqsRaw : (reqsRaw?.data || [])
       const reqList = Array.isArray(reqs) ? reqs : []
       const roughList = Array.isArray(rough) ? rough : []
       const lowList = (low.data || []) as any[]
@@ -281,10 +287,10 @@ export default function PartsPage() {
     const onHand = p.on_hand ?? 0
     const inTransit = p.in_transit ?? 0
     const reorder = p.reorder_point ?? 0
-    if (onHand === 0 && inTransit > 0) return { label: 'On Order', bg: 'rgba(29,111,232,.1)', color: '#4D9EFF' }
-    if (onHand === 0) return { label: 'Out of Stock', bg: 'rgba(239,68,68,.1)', color: '#EF4444' }
-    if (onHand > 0 && reorder > 0 && onHand <= reorder) return { label: 'Low Stock', bg: 'rgba(245,158,11,.1)', color: '#F59E0B' }
-    return { label: 'In Stock', bg: 'rgba(22,163,74,.1)', color: '#16A34A' }
+    if (onHand === 0 && inTransit > 0) return { label: 'On Order', bg: 'rgba(29,111,232,.1)', color: t.accentLight }
+    if (onHand === 0) return { label: 'Out of Stock', bg: 'rgba(239,68,68,.1)', color: t.danger }
+    if (onHand > 0 && reorder > 0 && onHand <= reorder) return { label: 'Low Stock', bg: 'rgba(245,158,11,.1)', color: t.warning }
+    return { label: 'In Stock', bg: 'rgba(22,163,74,.1)', color: t.success }
   }
   function getLocation(p: any) { return p.default_location || p.bin_location || '--' }
   function getStatus(p: any) { return p.status || 'active' }
@@ -338,11 +344,11 @@ export default function PartsPage() {
 
   function Pagination({ currentPage, totalPg, totalCount, onPrev, onNext }: { currentPage: number; totalPg: number; totalCount: number; onPrev: () => void; onNext: () => void }) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', fontSize: 13, color: '#6B7280' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', fontSize: 13, color: t.textSecondary }}>
         <span>{totalCount.toLocaleString()} total</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button disabled={currentPage <= 1} onClick={onPrev} style={paginationBtn(currentPage <= 1)}>Previous</button>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Page {currentPage} of {totalPg.toLocaleString()}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary }}>Page {currentPage} of {totalPg.toLocaleString()}</span>
           <button disabled={currentPage >= totalPg} onClick={onNext} style={paginationBtn(currentPage >= totalPg)}>Next</button>
         </div>
       </div>
@@ -354,22 +360,22 @@ export default function PartsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A' }}>Parts</div>
-          <div style={{ fontSize: 13, color: '#6B7280' }}>{total.toLocaleString()} part{total !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: t.text }}>Parts</div>
+          <div style={{ fontSize: 13, color: t.textSecondary }}>{total.toLocaleString()} part{total !== 1 ? 's' : ''}</div>
         </div>
-        <a href="/parts/new" style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>+ Add Part</a>
+        <a href="/parts/new" style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>+ Add Part</a>
       </div>
 
       {/* Sub-tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 16 }}>
-        {SUB_TABS.map(t => (
-          <button key={t.key} onClick={() => { setSubTab(t.key); if (t.key === 'reorder') setPoDone(null) }} style={{
+      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.border}`, marginBottom: 16 }}>
+        {SUB_TABS.map(tab => (
+          <button key={tab.key} onClick={() => { setSubTab(tab.key); if (tab.key === 'reorder') setPoDone(null) }} style={{
             padding: '10px 18px', background: 'none', border: 'none',
-            borderBottom: subTab === t.key ? `2px solid ${BLUE}` : '2px solid transparent',
-            color: subTab === t.key ? BLUE : '#9CA3AF',
-            fontWeight: subTab === t.key ? 700 : 500, fontSize: 13, cursor: 'pointer',
+            borderBottom: subTab === tab.key ? `2px solid ${BLUE}` : '2px solid transparent',
+            color: subTab === tab.key ? BLUE : t.textTertiary,
+            fontWeight: subTab === tab.key ? 700 : 500, fontSize: 13, cursor: 'pointer',
             fontFamily: 'inherit', marginBottom: -2,
-          }}>{t.label}</button>
+          }}>{tab.label}</button>
         ))}
       </div>
 
@@ -379,56 +385,56 @@ export default function PartsPage() {
           {/* Stats cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
             {[
-              { label: 'Parts Requests', value: overviewStats.pending, color: '#D97706' },
-              { label: 'On Order', value: overviewStats.onOrder, color: '#D97706' },
-              { label: 'Low Stock Alerts', value: overviewStats.lowStockCount, color: '#DC2626' },
-              { label: 'Fulfilled Today', value: overviewStats.fulfilledToday, color: '#16A34A' },
+              { label: 'Parts Requests', value: overviewStats.pending, color: t.warning },
+              { label: 'On Order', value: overviewStats.onOrder, color: t.warning },
+              { label: 'Low Stock Alerts', value: overviewStats.lowStockCount, color: t.danger },
+              { label: 'Fulfilled Today', value: overviewStats.fulfilledToday, color: t.success },
             ].map(s => (
-              <div key={s.label} style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '16px 18px' }}>
-                <div style={{ fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{s.label}</div>
+              <div key={s.label} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: '16px 18px' }}>
+                <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{s.label}</div>
                 <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
               </div>
             ))}
           </div>
 
           {/* Pending Parts Requests */}
-          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16, marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', marginBottom: 12 }}>Pending Parts Requests ({pendingParts.length})</div>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 12 }}>Pending Parts Requests ({pendingParts.length})</div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead><tr>{['Time', 'WO #', 'Truck', 'Part Requested', 'Status'].map(h => <th key={h} style={{ textAlign: 'left', padding: '6px 8px', fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', fontFamily: MONO, borderBottom: '1px solid #F3F4F6' }}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Time', 'WO #', 'Truck', 'Part Requested', 'Status'].map(h => <th key={h} style={{ textAlign: 'left', padding: '6px 8px', fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', fontFamily: MONO, borderBottom: `1px solid ${t.border}` }}>{h}</th>)}</tr></thead>
               <tbody>
                 {pendingParts.map((p: any) => {
                   const so = p.service_orders as any
                   const mins = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 60000)
                   const timeStr = mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.floor(mins / 60)}h` : `${Math.floor(mins / 1440)}d`
                   return (
-                    <tr key={p.id} style={{ borderBottom: '1px solid #F8F9FA', cursor: 'pointer' }} onClick={() => so?.id && (window.location.href = `/work-orders/${so.id}`)}>
-                      <td style={{ padding: '8px', color: mins > 120 ? '#D97706' : '#9CA3AF', fontFamily: MONO, fontSize: 10 }}>{timeStr}</td>
+                    <tr key={p.id} style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }} onClick={() => so?.id && (window.location.href = getWorkorderRoute(so.id, undefined, 'parts'))}>
+                      <td style={{ padding: '8px', color: mins > 120 ? t.warning : t.textTertiary, fontFamily: MONO, fontSize: 10 }}>{timeStr}</td>
                       <td style={{ padding: '8px', fontFamily: MONO, color: BLUE, fontWeight: 700 }}>{so?.so_number || '—'}</td>
-                      <td style={{ padding: '8px', color: '#6B7280' }}>#{so?.assets?.unit_number || '—'}</td>
-                      <td style={{ padding: '8px', color: '#1E293B', fontWeight: 600 }}>{p.rough_name || p.description}</td>
-                      <td style={{ padding: '8px' }}><span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: p.parts_status === 'ordered' ? '#FFFBEB' : '#F3F4F6', color: p.parts_status === 'ordered' ? '#D97706' : '#6B7280' }}>{p.parts_status}</span></td>
+                      <td style={{ padding: '8px', color: t.textSecondary }}>#{so?.assets?.unit_number || '—'}</td>
+                      <td style={{ padding: '8px', color: t.text, fontWeight: 600 }}>{p.rough_name || p.description}</td>
+                      <td style={{ padding: '8px' }}><span style={{ fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: p.parts_status === 'ordered' ? t.warningBg : t.surfaceMuted, color: p.parts_status === 'ordered' ? t.warning : t.textSecondary }}>{p.parts_status}</span></td>
                     </tr>
                   )
                 })}
-                {pendingParts.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#9CA3AF' }}>No pending parts requests</td></tr>}
+                {pendingParts.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: t.textTertiary }}>No pending parts requests</td></tr>}
               </tbody>
             </table>
           </div>
 
           {/* Low Stock */}
           {lowStock.length > 0 && (
-            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', marginBottom: 12 }}>Low Stock Alerts ({lowStock.length})</div>
+            <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 12 }}>Low Stock Alerts ({lowStock.length})</div>
               {lowStock.slice(0, 10).map((p: any) => (
-                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #F8F9FA' }}>
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${t.border}` }}>
                   <div>
-                    <div style={{ fontSize: 12, color: '#1E293B' }}>{p.description}</div>
-                    {p.part_number && <div style={{ fontSize: 10, color: '#9CA3AF', fontFamily: MONO }}>{p.part_number}</div>}
+                    <div style={{ fontSize: 12, color: t.text }}>{p.description}</div>
+                    {p.part_number && <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: MONO }}>{p.part_number}</div>}
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontFamily: MONO, fontSize: 14, fontWeight: 700, color: p.on_hand === 0 ? '#DC2626' : '#D97706' }}>{p.on_hand}</span>
-                    <span style={{ fontSize: 10, color: '#9CA3AF' }}> / {p.reorder_point || 2}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 14, fontWeight: 700, color: p.on_hand === 0 ? t.danger : t.warning }}>{p.on_hand}</span>
+                    <span style={{ fontSize: 10, color: t.textTertiary }}> / {p.reorder_point || 2}</span>
                   </div>
                 </div>
               ))}
@@ -437,8 +443,8 @@ export default function PartsPage() {
 
           {/* Quick links */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button onClick={() => setSubTab('inventory')} style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid #E5E7EB', background: '#fff', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>View Inventory</button>
-            <a href="/parts/queue" style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid #E5E7EB', background: '#fff', color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>Parts Queue</a>
+            <button onClick={() => setSubTab('inventory')} style={{ padding: '10px 20px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard, color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>View Inventory</button>
+            <a href="/parts/queue" style={{ padding: '10px 20px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard, color: BLUE, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none' }}>Parts Queue</a>
           </div>
         </div>
       )}
@@ -482,20 +488,20 @@ export default function PartsPage() {
           </div>
 
           {/* Table */}
-          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
             {loading ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+              <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary }}>Loading...</div>
             ) : sorted.length === 0 ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>{search || statusFilter !== 'active' || stockFilter !== 'all' || categoryFilter || vendorFilter || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No parts found'}</div>
+              <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>{search || statusFilter !== 'active' || stockFilter !== 'all' || categoryFilter || vendorFilter || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No parts found'}</div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1200 }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                       {COLUMNS.map(col => (
                         <th key={col.key} onClick={() => handleSort(col.key)} style={{
                           padding: '8px 10px', textAlign: (col.align as any) || 'left', fontSize: 10, fontWeight: 600,
-                          color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', cursor: 'pointer',
+                          color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', cursor: 'pointer',
                           whiteSpace: 'nowrap', userSelect: 'none', minWidth: col.width,
                         }}>
                           {col.label}
@@ -511,30 +517,30 @@ export default function PartsPage() {
                       const stockStatus = getStockStatus(p)
                       return (
                         <tr key={p.id} onClick={() => window.location.href = `/parts/${p.id}`}
-                          style={{ borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }}
-                          onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
+                          style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
                           onMouseLeave={e => (e.currentTarget.style.background = '')}>
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE, whiteSpace: 'nowrap' }}>{p.part_number || '--'}</td>
-                          <td style={{ padding: '10px 10px', fontSize: 12, fontWeight: 500, color: '#1A1A1A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description ? (p.description.length > 40 ? p.description.slice(0, 40) + '...' : p.description) : '--'}</td>
-                          <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{p.uom || '--'}</td>
+                          <td style={{ padding: '10px 10px', fontSize: 12, fontWeight: 500, color: t.text, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description ? (p.description.length > 40 ? p.description.slice(0, 40) + '...' : p.description) : '--'}</td>
+                          <td style={{ padding: '10px 10px', fontSize: 11, color: t.textSecondary }}>{p.uom || '--'}</td>
                           <td style={{ padding: '10px 10px', textAlign: 'right' }}>
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                              <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: onHand > 0 ? '#1A1A1A' : '#9CA3AF' }}>{fmtQty(onHand)}</span>
+                              <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: onHand > 0 ? t.text : t.textTertiary }}>{fmtQty(onHand)}</span>
                               <span style={{ padding: '1px 6px', borderRadius: 100, fontSize: 9, fontWeight: 700, background: stockStatus.bg, color: stockStatus.color, whiteSpace: 'nowrap' }}>{stockStatus.label}</span>
                             </span>
                           </td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{fmtQty(getAllocated(p))}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{canViewCostPrice ? fmt(getAvgCost(p)) : '***'}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>{fmt(getPriceUgl(p))}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>{fmt(getPriceOwnerOp(p))}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#1A1A1A', fontWeight: 600 }}>{fmt(getPriceOutside(p))}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{fmtQty(p.min_qty)}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: '#6B7280' }}>{fmtQty(p.max_qty)}</td>
-                          <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{getLocation(p)}</td>
-                          <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{canViewVendorInfo ? getVendor(p) : '***'}</td>
-                          <td style={{ padding: '10px 10px', fontSize: 11, color: '#6B7280' }}>{getPartCategory(p)}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: t.textSecondary }}>{fmtQty(getAllocated(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: t.textSecondary }}>{canViewCostPrice ? fmt(getAvgCost(p)) : '***'}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: t.text, fontWeight: 600 }}>{fmt(getPriceUgl(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: t.text, fontWeight: 600 }}>{fmt(getPriceOwnerOp(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: t.text, fontWeight: 600 }}>{fmt(getPriceOutside(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: t.textSecondary }}>{fmtQty(p.min_qty)}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: t.textSecondary }}>{fmtQty(p.max_qty)}</td>
+                          <td style={{ padding: '10px 10px', fontSize: 11, color: t.textSecondary }}>{getLocation(p)}</td>
+                          <td style={{ padding: '10px 10px', fontSize: 11, color: t.textSecondary, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{canViewVendorInfo ? getVendor(p) : '***'}</td>
+                          <td style={{ padding: '10px 10px', fontSize: 11, color: t.textSecondary }}>{getPartCategory(p)}</td>
                           <td style={{ padding: '10px 10px' }}>
-                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: partStatus === 'active' ? '#F0FDF4' : '#F3F4F6', color: partStatus === 'active' ? '#16A34A' : '#9CA3AF' }}>
+                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: partStatus === 'active' ? t.successBg : t.surfaceMuted, color: partStatus === 'active' ? t.success : t.textTertiary }}>
                               {partStatus === 'active' ? 'Active' : partStatus === 'inactive' ? 'Inactive' : partStatus || 'Active'}
                             </span>
                           </td>
@@ -554,32 +560,32 @@ export default function PartsPage() {
       {subTab === 'reorder' && (
         <>
           {poDone ? (
-            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 64, textAlign: 'center' }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#16A34A', marginBottom: 12 }}>Purchase Order Created</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#1A1A1A', marginBottom: 8 }}>{poDone.po_number}</div>
-              <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 24 }}>{selectedReorder.size} parts selected</div>
-              <button onClick={() => { setPoDone(null); setSelectedReorder(new Set()) }} style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Back to Reorder</button>
+            <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 64, textAlign: 'center' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: t.success, marginBottom: 12 }}>Purchase Order Created</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: t.text, marginBottom: 8 }}>{poDone.po_number}</div>
+              <div style={{ fontSize: 13, color: t.textSecondary, marginBottom: 24 }}>{selectedReorder.size} parts selected</div>
+              <button onClick={() => { setPoDone(null); setSelectedReorder(new Set()) }} style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Back to Reorder</button>
             </div>
           ) : (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-                <div style={{ fontSize: 13, color: '#6B7280' }}>{reorderTotal} parts below reorder point</div>
+                <div style={{ fontSize: 13, color: t.textSecondary }}>{reorderTotal} parts below reorder point</div>
                 {selectedReorder.size > 0 && (
-                  <button onClick={createPO} disabled={creatingPO} style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: creatingPO ? 0.5 : 1 }}>
+                  <button onClick={createPO} disabled={creatingPO} style={{ padding: '10px 20px', background: BLUE, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: creatingPO ? 0.5 : 1 }}>
                     {creatingPO ? 'Creating...' : `Create PO (${selectedReorder.size} parts)`}
                   </button>
                 )}
               </div>
-              <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
                 {reorderLoading ? (
-                  <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+                  <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary }}>Loading...</div>
                 ) : reorderParts.length === 0 ? (
-                  <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>All parts are above reorder point</div>
+                  <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>All parts are above reorder point</div>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                       <thead>
-                        <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                        <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                           <th style={{ ...thStyle, width: 40 }}>
                             <input type="checkbox" checked={selectedReorder.size === reorderParts.length && reorderParts.length > 0}
                               onChange={() => { if (selectedReorder.size === reorderParts.length) setSelectedReorder(new Set()); else setSelectedReorder(new Set(reorderParts.map(p => p.id))) }}
@@ -594,19 +600,19 @@ export default function PartsPage() {
                           const lineCost = (p.cost_price || 0) * orderQty
                           const isOut = (p.on_hand ?? 0) === 0
                           return (
-                            <tr key={p.id} style={{ cursor: 'pointer', background: selectedReorder.has(p.id) ? '#F0F9FF' : '' }}
+                            <tr key={p.id} style={{ cursor: 'pointer', background: selectedReorder.has(p.id) ? t.accentBg : '' }}
                               onClick={() => setSelectedReorder(s => { const n = new Set(s); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n })}>
                               <td style={{ ...tdStyle, textAlign: 'center' }}>
                                 <input type="checkbox" checked={selectedReorder.has(p.id)} onChange={() => {}} style={{ cursor: 'pointer' }} />
                               </td>
                               <td style={{ ...tdStyle, fontFamily: MONO, fontSize: 11, color: BLUE, fontWeight: 700 }}>{p.part_number || '--'}</td>
                               <td style={{ ...tdStyle, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description || '--'}</td>
-                              <td style={{ ...tdStyle, fontFamily: MONO, fontWeight: 700, color: isOut ? '#DC2626' : '#D97706', textAlign: 'center' }}>{p.on_hand ?? 0}</td>
-                              <td style={{ ...tdStyle, fontFamily: MONO, color: '#6B7280', textAlign: 'center' }}>{p.reorder_point ?? 2}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, fontWeight: 700, color: isOut ? t.danger : t.warning, textAlign: 'center' }}>{p.on_hand ?? 0}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, color: t.textSecondary, textAlign: 'center' }}>{p.reorder_point ?? 2}</td>
                               <td style={{ ...tdStyle, fontFamily: MONO, fontWeight: 700, color: BLUE, textAlign: 'center' }}>{orderQty}</td>
-                              <td style={{ ...tdStyle, fontFamily: MONO, color: '#6B7280' }}>{fmt(p.cost_price)}</td>
-                              <td style={{ ...tdStyle, fontFamily: MONO, fontWeight: 700, color: '#1A1A1A' }}>{fmt(lineCost)}</td>
-                              <td style={{ ...tdStyle, fontSize: 11, color: '#6B7280' }}>{p.vendor || p.preferred_vendor || '--'}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, color: t.textSecondary }}>{fmt(p.cost_price)}</td>
+                              <td style={{ ...tdStyle, fontFamily: MONO, fontWeight: 700, color: t.text }}>{fmt(lineCost)}</td>
+                              <td style={{ ...tdStyle, fontSize: 11, color: t.textSecondary }}>{p.vendor || p.preferred_vendor || '--'}</td>
                             </tr>
                           )
                         })}
@@ -626,49 +632,49 @@ export default function PartsPage() {
         <>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
             <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: 320 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.textTertiary} strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
               <input value={vendorSearch} onChange={e => { setVendorSearch(e.target.value); setVendorPage(1) }} placeholder="Search vendors..."
-                style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
+                style={{ width: '100%', padding: '8px 12px 8px 32px', border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, fontFamily: 'inherit', outline: 'none', background: t.bgCard, boxSizing: 'border-box' }} />
             </div>
-            <span style={{ fontSize: 13, color: '#6B7280' }}>
+            <span style={{ fontSize: 13, color: t.textSecondary }}>
               {vendorTotal.toLocaleString()} vendors
             </span>
           </div>
-          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
             {vendorLoading ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+              <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary }}>Loading...</div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                       {['Name', 'Type', 'Phone', 'Email', 'City/State'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {vendorList.map(v => (
-                      <tr key={v.id} style={{ borderBottom: '1px solid #F3F4F6' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
+                      <tr key={v.id} style={{ borderBottom: `1px solid ${t.border}` }}
+                        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                        <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{v.name || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: t.text }}>{v.name || '-'}</td>
                         <td style={{ padding: '10px 12px', fontSize: 11 }}>
                           {v.vendor_type ? (
                             <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: 'rgba(29,111,232,0.1)', color: BLUE, textTransform: 'capitalize' }}>
                               {v.vendor_type.replace(/_/g, ' ')}
                             </span>
-                          ) : <span style={{ color: '#9CA3AF' }}>-</span>}
+                          ) : <span style={{ color: t.textTertiary }}>-</span>}
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{v.phone || '-'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{v.email || '-'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#6B7280' }}>{[v.city, v.state].filter(Boolean).join(', ') || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{v.phone || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{v.email || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{[v.city, v.state].filter(Boolean).join(', ') || '-'}</td>
                       </tr>
                     ))}
                     {vendorList.length === 0 && (
-                      <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No vendors found</td></tr>
+                      <tr><td colSpan={5} style={{ padding: 48, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No vendors found</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -684,39 +690,39 @@ export default function PartsPage() {
         <>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
             <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: 320 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.textTertiary} strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
               <input value={historySearch} onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }} placeholder="Search part #, description..."
-                style={{ width: '100%', padding: '8px 12px 8px 32px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12, color: '#1A1A1A', fontFamily: 'inherit', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
+                style={{ width: '100%', padding: '8px 12px 8px 32px', border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, fontFamily: 'inherit', outline: 'none', background: t.bgCard, boxSizing: 'border-box' }} />
             </div>
-            <span style={{ fontSize: 13, color: '#6B7280' }}>{historyTotal.toLocaleString()} records</span>
+            <span style={{ fontSize: 13, color: t.textSecondary }}>{historyTotal.toLocaleString()} records</span>
           </div>
-          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
             {historyLoading ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+              <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary }}>Loading...</div>
             ) : historyData.length === 0 ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No part history found</div>
+              <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No part history found</div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                       {['Date', 'PO #', 'Vendor', 'Description', 'Qty', 'Unit Cost', 'Total'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', textAlign: h === 'Qty' || h === 'Unit Cost' || h === 'Total' ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                        <th key={h} style={{ padding: '8px 12px', textAlign: h === 'Qty' || h === 'Unit Cost' || h === 'Total' ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {historyData.map((r: any) => (
-                      <tr key={r.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{r.date ? new Date(r.date).toLocaleDateString() : '-'}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: '#6B7280' }}>{r.po_number || '-'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{r.vendor || '-'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || '-'}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: '#1A1A1A', textAlign: 'right' }}>{r.quantity ?? 0}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280', textAlign: 'right' }}>{r.cost_price != null ? '$' + Number(r.cost_price).toFixed(2) : '-'}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: '#1A1A1A', textAlign: 'right' }}>{r.cost_price != null && r.quantity != null ? '$' + (Number(r.cost_price) * Number(r.quantity)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00'}</td>
+                      <tr key={r.id} style={{ borderBottom: `1px solid ${t.border}` }}>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: t.textSecondary }}>{r.date ? new Date(r.date).toLocaleDateString() : '-'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: t.textSecondary }}>{r.po_number || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: t.textSecondary }}>{r.vendor || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.text, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: t.text, textAlign: 'right' }}>{r.quantity ?? 0}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: t.textSecondary, textAlign: 'right' }}>{r.cost_price != null ? '$' + Number(r.cost_price).toFixed(2) : '-'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: t.text, textAlign: 'right' }}>{r.cost_price != null && r.quantity != null ? '$' + (Number(r.cost_price) * Number(r.quantity)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -731,37 +737,37 @@ export default function PartsPage() {
       {/* ==================== PURCHASE ORDERS TAB ==================== */}
       {subTab === 'purchase_orders' && (
         <>
-          <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>{poTotal.toLocaleString()} purchase orders</div>
-          <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ fontSize: 13, color: t.textSecondary, marginBottom: 16 }}>{poTotal.toLocaleString()} purchase orders</div>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
             {poLoading ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF' }}>Loading...</div>
+              <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary }}>Loading...</div>
             ) : poData.length === 0 ? (
-              <div style={{ padding: 48, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No purchase orders found</div>
+              <div style={{ padding: 48, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No purchase orders found</div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                       {['PO #', 'Vendor', 'Date', 'Status', 'Line Items', 'Total'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', textAlign: h === 'Line Items' ? 'center' : h === 'Total' ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
+                        <th key={h} style={{ padding: '8px 12px', textAlign: h === 'Line Items' ? 'center' : h === 'Total' ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {poData.map((po: any) => (
-                      <tr key={po.id} style={{ borderBottom: '1px solid #F3F4F6' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = '#F9FAFB')}
+                      <tr key={po.id} style={{ borderBottom: `1px solid ${t.border}` }}
+                        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE }}>{po.po_number || '-'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#1A1A1A', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{po.vendor_name || '-'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 11, color: '#6B7280' }}>{po.received_date ? new Date(po.received_date).toLocaleDateString() : po.created_at ? new Date(po.created_at).toLocaleDateString() : '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.text, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{po.vendor_name || '-'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 11, color: t.textSecondary }}>{po.received_date ? new Date(po.received_date).toLocaleDateString() : po.created_at ? new Date(po.created_at).toLocaleDateString() : '-'}</td>
                         <td style={{ padding: '10px 12px' }}>
-                          <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: po.status === 'paid' ? '#F0FDF4' : po.status === 'received' ? '#EFF6FF' : '#F3F4F6', color: po.status === 'paid' ? '#16A34A' : po.status === 'received' ? BLUE : '#6B7280' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: po.status === 'paid' ? t.successBg : po.status === 'received' ? t.accentBg : t.surfaceMuted, color: po.status === 'paid' ? t.success : po.status === 'received' ? BLUE : t.textSecondary }}>
                             {po.status || 'draft'}
                           </span>
                         </td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: '#6B7280', textAlign: 'center' }}>{po.line_count}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: '#1A1A1A', textAlign: 'right' }}>${(po.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: t.textSecondary, textAlign: 'center' }}>{po.line_count}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600, color: t.text, textAlign: 'right' }}>${(po.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -777,24 +783,24 @@ export default function PartsPage() {
 }
 
 const dropdownStyle: React.CSSProperties = {
-  padding: '7px 12px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 12,
-  color: '#374151', fontFamily: "'Instrument Sans', sans-serif", outline: 'none',
-  background: '#fff', cursor: 'pointer', minWidth: 120,
+  padding: '7px 12px', border: `1px solid ${_t.inputBorder}`, borderRadius: 8, fontSize: 12,
+  color: _t.textSecondary, fontFamily: "'Instrument Sans', sans-serif", outline: 'none',
+  background: _t.inputBg, cursor: 'pointer', minWidth: 120,
 }
 
 const paginationBtn = (disabled: boolean): React.CSSProperties => ({
-  padding: '6px 14px', borderRadius: 6, border: '1px solid #D1D5DB',
-  background: disabled ? '#F3F4F6' : '#fff', color: disabled ? '#9CA3AF' : '#374151',
+  padding: '6px 14px', borderRadius: 6, border: `1px solid ${_t.border}`,
+  background: disabled ? _t.surfaceMuted : _t.bgCard, color: disabled ? _t.textTertiary : _t.textSecondary,
   fontSize: 12, fontWeight: 600, cursor: disabled ? 'default' : 'pointer',
   fontFamily: "'Instrument Sans', sans-serif",
 })
 
 const thStyle: React.CSSProperties = {
   padding: '8px 10px', textAlign: 'left', fontSize: 10, fontWeight: 600,
-  color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em',
+  color: _t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em',
   whiteSpace: 'nowrap',
 }
 
 const tdStyle: React.CSSProperties = {
-  padding: '10px 10px', borderBottom: '1px solid #F3F4F6', fontSize: 12, color: '#1A1A1A',
+  padding: '10px 10px', borderBottom: `1px solid ${_t.border}`, fontSize: 12, color: _t.text,
 }

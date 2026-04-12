@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 interface LineItem {
   id?: string
@@ -490,7 +491,7 @@ export default function InvoiceDetailPage() {
                       {lines.length === 0 && !so?.labor_total && !so?.parts_total && (
                         <tr>
                           <td colSpan={5} style={{ ...S.td, textAlign: 'center', color: '#7C8BA0', padding: 24, fontSize: 12 }}>
-                            Imported historical invoice — <a href={`/work-orders/${so?.id}`} style={{ color: '#4D9EFF', textDecoration: 'none' }}>see Work Order for details</a>
+                            Imported historical invoice — <a href={so?.id ? getWorkorderRoute(so.id, undefined, 'invoice') : '#'} style={{ color: '#4D9EFF', textDecoration: 'none' }}>see Work Order for details</a>
                           </td>
                         </tr>
                       )}
@@ -574,7 +575,7 @@ export default function InvoiceDetailPage() {
                 Print Invoice
               </button>
               {so?.id && (
-                <a href={`/work-orders/${so.id}`} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
+                <a href={getWorkorderRoute(so.id, undefined, 'invoice')} style={{ ...S.btn, background:'transparent', color:'#7C8BA0', border:'1px solid rgba(255,255,255,.08)', textDecoration:'none', textAlign:'center', display:'block' }}>
                   View Work Order
                 </a>
               )}

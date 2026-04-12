@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { ChevronLeft } from 'lucide-react'
 import { VinInput } from '@/components/shared/VinInput'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
+import { getWorkorderRoute, getNewWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = '#6B7280'
@@ -260,7 +261,7 @@ export default function UnitProfilePage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 12, color: GRAY }}>{fmtDate(wo.created_at)}</span>
               <a
-                href={'/work-orders/' + wo.id}
+                href={getWorkorderRoute(wo.id, undefined, 'customer')}
                 onClick={(e) => e.stopPropagation()}
                 style={{ fontSize: 13, fontWeight: 600, color: BLUE, textDecoration: 'none' }}
               >
@@ -317,7 +318,7 @@ export default function UnitProfilePage() {
               </div>
               <div style={{ fontSize: 12, color: GRAY }}>
                 {item.lastWO ? (
-                  <>Last performed: {fmtDate(item.lastWO.created_at)} — WO <a href={'/work-orders/' + item.lastWO.id} style={{ color: BLUE, textDecoration: 'none' }}>{item.lastWO.so_number}</a>{item.lastWO.mileage_at_checkin ? ` at ${Number(item.lastWO.mileage_at_checkin).toLocaleString()} mi` : ''}</>
+                  <>Last performed: {fmtDate(item.lastWO.created_at)} — WO <a href={getWorkorderRoute(item.lastWO.id, undefined, 'customer')} style={{ color: BLUE, textDecoration: 'none' }}>{item.lastWO.so_number}</a>{item.lastWO.mileage_at_checkin ? ` at ${Number(item.lastWO.mileage_at_checkin).toLocaleString()} mi` : ''}</>
                 ) : (
                   'No records found'
                 )}
@@ -368,7 +369,7 @@ export default function UnitProfilePage() {
                   <td style={{ padding: '8px 10px', color: GRAY }}>{p.service_orders ? fmtDate(p.service_orders.created_at) : '—'}</td>
                   <td style={{ padding: '8px 10px' }}>
                     {p.service_orders ? (
-                      <a href={'/work-orders/' + p.wo_id} style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>{p.service_orders.so_number}</a>
+                      <a href={getWorkorderRoute(p.wo_id, undefined, 'customer')} style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>{p.service_orders.so_number}</a>
                     ) : '—'}
                   </td>
                   <td style={{ padding: '8px 10px', color: '#EDEDF0', fontFamily: 'monospace' }}>{p.part_number || '—'}</td>
@@ -581,7 +582,7 @@ export default function UnitProfilePage() {
           <div style={{ ...cardStyle, background: 'rgba(29,111,232,0.1)', border: '1px solid rgba(29,111,232,0.25)', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
               <span style={{ color: '#EDEDF0', fontWeight: 600 }}>Active Work Order:</span>
-              <a href={'/work-orders/' + activeWO.id} style={{ color: BLUE, fontWeight: 600, textDecoration: 'none' }}>
+              <a href={getWorkorderRoute(activeWO.id, undefined, 'customer')} style={{ color: BLUE, fontWeight: 600, textDecoration: 'none' }}>
                 {activeWO.so_number}
               </a>
               <span style={{ color: GRAY }}>—</span>
@@ -592,7 +593,7 @@ export default function UnitProfilePage() {
           </div>
         ) : (
           <a
-            href={`/work-orders/new?customer=${id}&unit=${unitId}`}
+            href={getNewWorkorderRoute({ customer: id as string, unit: unitId as string })}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, background: BLUE, color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}
           >
             + Create Work Order

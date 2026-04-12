@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 type PageTab = 'overview' | 'history'
 
@@ -299,7 +300,7 @@ export default function FleetDetailPage() {
               <div style={{ ...S.card, borderColor:'rgba(29,111,232,.2)' }}>
                 <div style={{ fontSize:12, fontWeight:700, color:'#4D9EFF', marginBottom:10 }}>Active Work Orders ({activeWos.length})</div>
                 {activeWos.map((wo:any) => (
-                  <a key={wo.id} href={`/work-orders/${wo.id}`} style={{ display:'block', textDecoration:'none', padding:'8px 10px', borderLeft:'3px solid #1D6FE8', background:'rgba(29,111,232,.04)', borderRadius:6, marginBottom:6 }}>
+                  <a key={wo.id} href={getWorkorderRoute(wo.id, undefined, 'fleet')} style={{ display:'block', textDecoration:'none', padding:'8px 10px', borderLeft:'3px solid #1D6FE8', background:'rgba(29,111,232,.04)', borderRadius:6, marginBottom:6 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                       <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color:'#4D9EFF' }}>{wo.so_number}</span>
                       <span style={{ fontSize:9, fontWeight:600, color:'#D4882A', background:'rgba(212,136,42,.1)', padding:'2px 6px', borderRadius:4, textTransform:'uppercase' }}>{wo.status?.replace(/_/g,' ')}</span>
@@ -446,7 +447,7 @@ export default function FleetDetailPage() {
                     {historyData.map((row: any) => (
                       <tr key={`${row.source}-${row.id}`} style={{ cursor:'pointer' }}
                         onClick={() => {
-                          if (row.source === 'inhouse') window.location.href = `/work-orders/${row.id}`
+                          if (row.source === 'inhouse') window.location.href = getWorkorderRoute(row.id, undefined, 'fleet')
                           else window.location.href = `/maintenance/repairs/${row.id}`
                         }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.02)')}

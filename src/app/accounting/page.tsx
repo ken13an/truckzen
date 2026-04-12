@@ -6,6 +6,7 @@ import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { PageFooter } from '@/components/ui/PageControls'
 import FilterBar from '@/components/FilterBar'
 import { useTheme } from '@/hooks/useTheme'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
@@ -104,7 +105,7 @@ export default function AccountingPage() {
 
   const S = {
     page: { fontFamily: FONT, background: '#0C0C12', minHeight: '100vh', color: '#EDEDF0', padding: 24 } as React.CSSProperties,
-    card: { background: '#151520', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16, marginBottom: 12 } as React.CSSProperties,
+    card: { background: t.bgElevated, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16, marginBottom: 12 } as React.CSSProperties,
     label: { fontSize: 10, fontWeight: 700, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.04em' } as React.CSSProperties,
     pill: (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: bg, color }),
     btn: (bg: string, color: string, outline?: boolean): React.CSSProperties => ({
@@ -169,7 +170,7 @@ export default function AccountingPage() {
         const customer = wo.customers as any
         const asset = wo.assets as any
         return (
-          <div key={wo.id} style={{ ...S.card, cursor: 'pointer' }} onClick={() => window.location.href = `/work-orders/${wo.id}`}
+          <div key={wo.id} style={{ ...S.card, cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id)}
             onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,.15)')}
             onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)')}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>

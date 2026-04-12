@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/auth'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
 import { validateFile, sanitizeFilename, DOC_EXTENSIONS, DOC_MIMES, MAX_DOC_SIZE } from '@/lib/upload-safety'
+import { getWorkorderRoute, getNewWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 type Tab = 'fleet' | 'work-orders' | 'contacts' | 'billing' | 'documents' | 'parts'
 
@@ -520,7 +521,7 @@ export default function CustomerProfilePage() {
                       </td>
                       <td style={{ padding: '10px 12px', textAlign: 'right' as const }}>
                         <a
-                          href={`/work-orders/new?customer=${id}&unit=${u.id}`}
+                          href={getNewWorkorderRoute({ customer: id, unit: u.id })}
                           style={{ fontSize: 11, color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}
                         >
                           Create WO
@@ -541,7 +542,7 @@ export default function CustomerProfilePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Service History ({woCount})</div>
             <a
-              href={`/work-orders/new?customer=${id}`}
+              href={getNewWorkorderRoute({ customer: id as string })}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -578,9 +579,9 @@ export default function CustomerProfilePage() {
                   </thead>
                   <tbody>
                     {paginated.map((wo: any) => (
-                      <tr key={wo.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }} onClick={() => router.push(`/work-orders/${wo.id}`)}>
+                      <tr key={wo.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }} onClick={() => router.push(getWorkorderRoute(wo.id, undefined, 'customer'))}>
                         <td style={{ padding: '10px 12px', fontSize: 13 }}>
-                          <a href={`/work-orders/${wo.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>
+                          <a href={getWorkorderRoute(wo.id, undefined, 'customer')} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>
                             {wo.so_number}
                           </a>
                           {wo.is_historical && (

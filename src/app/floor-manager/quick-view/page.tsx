@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { getPermissions } from '@/lib/getPermissions'
 import { getMechanics } from '@/lib/services/users'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BG = '#0C0C12'
@@ -248,7 +249,7 @@ export default function QuickViewPage() {
                     >
                       Add Time
                     </button>
-                    <a href={`/work-orders/${j.wo_id}`} style={{ ...btnBase, border: `1px solid ${CARD_BORDER}`, color: DIM, background: 'transparent', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                    <a href={getWorkorderRoute(j.wo_id, undefined, 'floor-manager')} style={{ ...btnBase, border: `1px solid ${CARD_BORDER}`, color: DIM, background: 'transparent', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
                       Open WO
                     </a>
                   </div>

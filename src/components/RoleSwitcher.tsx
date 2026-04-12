@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { ROLE_LABEL, ROLE_COLOR } from '@/lib/permissions'
+import { useTheme } from '@/hooks/useTheme'
+import { getRoleLandingRoute } from '@/lib/navigation/role-landing'
 
 const IMPERSONATE_ROLES = [
   { key: 'owner', label: 'Owner', team: null },
@@ -20,6 +22,7 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
   actualRole: string
   impersonateRole: string | null
 }) {
+  const { tokens: t } = useTheme()
   const [open, setOpen] = useState(false)
   const [current, setCurrent] = useState(impersonateRole)
   const [switching, setSwitching] = useState(false)
@@ -33,16 +36,6 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  // Role → landing page map (must match dashboard DEPT_REDIRECTS)
-  const ROLE_LANDINGS: Record<string, string> = {
-    technician: '/mechanic/dashboard', lead_tech: '/mechanic/dashboard', maintenance_technician: '/mechanic/dashboard',
-    fleet_manager: '/fleet', dispatcher: '/fleet',
-    maintenance_manager: '/maintenance',
-    parts_manager: '/parts',
-    accountant: '/accounting',
-    shop_manager: '/shop-floor', service_writer: '/work-orders',
-  }
-
   async function switchRole(role: string | null) {
     setSwitching(true)
     const res = await fetch('/api/impersonate', {
@@ -53,8 +46,10 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
     if (!res.ok) { setSwitching(false); return }
     // Small delay to ensure DB write is committed before the new page reads it
     await new Promise(r => setTimeout(r, 300))
-    const effectiveRole = role === actualRole ? null : role
-    const landing = effectiveRole ? (ROLE_LANDINGS[effectiveRole] || '/dashboard') : '/dashboard'
+    // Effective role: when reset or impersonating own actual role, use actual role
+    const effectiveRole = (!role || role === actualRole) ? actualRole : role
+    const landing = getRoleLandingRoute(effectiveRole)
+    // Full-page navigation to purge all stale in-memory role/nav state
     window.location.href = landing
   }
 
@@ -62,36 +57,36 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
   const displayLabel = current
     ? IMPERSONATE_ROLES.find(r => r.key === current)?.label || ROLE_LABEL[current] || current
     : ROLE_LABEL[actualRole] || actualRole
-  const color = ROLE_COLOR[displayRole] || '#7C8BA0'
+  const color = ROLE_COLOR[displayRole] || t.textSecondary
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(!open)} style={{
         display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px',
-        background: current ? 'rgba(245,158,11,.08)' : '#0D0F12',
-        border: current ? '1px solid rgba(245,158,11,.3)' : '1px solid #1A1D23',
+        background: current ? t.warningBg : t.bgCard,
+        border: current ? `1px solid ${t.warning}` : `1px solid ${t.cardBorder}`,
         borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-        color: current ? '#F59E0B' : color,
+        color: current ? t.warning : color,
       }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
         {current ? `Impersonating: ${displayLabel}` : displayLabel}
-        <span style={{ fontSize: 8, color: '#48536A', marginLeft: 2 }}>▼</span>
+        <span style={{ fontSize: 8, color: t.textTertiary, marginLeft: 2 }}>&#9660;</span>
       </button>
 
       {open && (
         <div style={{
           position: 'absolute', top: 36, right: 0, width: 220,
-          background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 10,
+          background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 10,
           boxShadow: '0 8px 32px rgba(0,0,0,.5)', zIndex: 999, overflow: 'hidden',
         }}>
-          <div style={{ padding: '8px 12px', borderBottom: '1px solid #1A1D23', fontSize: 9, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+          <div style={{ padding: '8px 12px', borderBottom: `1px solid ${t.border}`, fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em' }}>
             Switch Role
           </div>
 
           {/* Reset to actual role */}
           {current && (
             <button onClick={() => switchRole(null)} disabled={switching}
-              style={{ ...S.item, color: '#22C55E', fontWeight: 700, borderBottom: '1px solid #1A1D23' }}>
+              style={{ ...S.item, color: t.success, fontWeight: 700, borderBottom: `1px solid ${t.border}` }}>
               ↩ Back to {ROLE_LABEL[actualRole]}
             </button>
           )}
@@ -100,8 +95,8 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
             const isActive = displayRole === r.key && (!r.team || r.label.includes(r.team || ''))
             return (
               <button key={i} onClick={() => switchRole(r.key)} disabled={switching}
-                style={{ ...S.item, color: isActive ? '#4D9EFF' : '#DDE3EE', background: isActive ? 'rgba(29,111,232,.06)' : 'transparent' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ROLE_COLOR[r.key] || '#7C8BA0', flexShrink: 0 }} />
+                style={{ ...S.item, color: isActive ? t.accentLight : t.text, background: isActive ? t.accentBg : 'transparent' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ROLE_COLOR[r.key] || t.textSecondary, flexShrink: 0 }} />
                 {r.label}
               </button>
             )

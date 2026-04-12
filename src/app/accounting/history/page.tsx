@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { PageFooter } from '@/components/ui/PageControls'
 import FilterBar from '@/components/FilterBar'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
@@ -60,11 +61,11 @@ export default function ImportedHistoryPage() {
     <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Imported History</div>
-        <div style={{ fontSize: 12, color: MUTED }}>{total.toLocaleString()} imported work orders (Fullbay / external systems) &mdash; read-only</div>
+        <div style={{ fontSize: 12, color: MUTED }}>{total.toLocaleString()} imported work orders &mdash; read-only</div>
       </div>
 
       <div style={{ background: 'rgba(139,92,246,.06)', border: '1px solid rgba(139,92,246,.2)', borderRadius: 10, padding: '10px 16px', marginBottom: 16, fontSize: 12, color: '#A78BFA', fontWeight: 600 }}>
-        These records were imported from Fullbay and other external systems. They are read-only historical records.
+        These are imported historical records. They are read-only.
       </div>
 
       <FilterBar
@@ -104,11 +105,11 @@ export default function ImportedHistoryPage() {
                 const cust = wo.customers as any
                 const asset = wo.assets as any
                 const src = wo.source || 'imported'
-                const srcLabel = src === 'fullbay' ? 'Fullbay' : src === 'csv_import' ? 'CSV' : 'Imported'
+                const srcLabel = src === 'csv_import' ? 'CSV' : 'Imported'
                 const st = wo.invoice_status || wo.status || '—'
                 return (
                   <tr key={wo.id} style={{ borderBottom: '1px solid rgba(255,255,255,.04)', cursor: 'pointer' }}
-                    onClick={() => window.location.href = `/work-orders/${wo.id}`}
+                    onClick={() => window.location.href = getWorkorderRoute(wo.id, undefined, 'accounting-history')}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.02)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <td style={{ padding: '10px 14px', fontFamily: MONO, fontWeight: 700, color: BLUE }}>{wo.so_number || '—'}</td>

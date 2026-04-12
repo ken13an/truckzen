@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { getPermissions } from '@/lib/getPermissions'
 import { getMechanics } from '@/lib/services/users'
+import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
@@ -181,7 +182,7 @@ export default function QuickAssignPage() {
                     </select>
                   </td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                    <a href={`/work-orders/${j.wo_id}`} style={{ color: '#1D6FE8', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>Open</a>
+                    <a href={getWorkorderRoute(j.wo_id, undefined, 'floor-manager')} style={{ color: '#1D6FE8', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>Open</a>
                   </td>
                 </tr>
               )
