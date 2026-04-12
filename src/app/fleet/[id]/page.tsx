@@ -89,12 +89,12 @@ export default function FleetDetailPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
+    card:  { background:t.bgCard, border: `1px solid ${t.border}`, borderRadius:12, padding:16, marginBottom:12 },
     label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'8px 11px', background:t.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
+    input: { width:'100%', padding:'8px 11px', background:t.inputBg, border: `1px solid ${t.border}`, borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background:'#0B0D11' },
-    td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
+    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background: t.bgInput },
+    td:    { padding:'9px 10px', borderBottom: `1px solid ${t.border}`, fontSize:11 },
     btn:   { padding:'8px 16px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
   }
 
@@ -130,7 +130,7 @@ export default function FleetDetailPage() {
 
       {/* OWNERSHIP & DRIVER */}
       {(asset.owner_name || asset.driver_name) && (
-        <div style={{ background:t.border, border:'1px solid rgba(255,255,255,.08)', borderRadius:10, padding:'12px 16px', marginBottom:16, display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, fontSize:12 }}>
+        <div style={{ background:t.border, border: `1px solid ${t.border}`, borderRadius:10, padding:'12px 16px', marginBottom:16, display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, fontSize:12 }}>
           <div>
             <div style={{ fontSize:9, fontWeight:700, color:t.textSecondary, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Owner</div>
             <div style={{ color:t.text, fontWeight:600 }}>
@@ -161,12 +161,12 @@ export default function FleetDetailPage() {
       )}
 
       {/* Tab bar */}
-      <div style={{ display:'flex', gap:0, borderBottom:'1px solid rgba(255,255,255,.08)', marginBottom:16 }}>
+      <div style={{ display:'flex', gap:0, borderBottom: `1px solid ${t.border}`, marginBottom:16 }}>
         {([['overview', 'Overview'], ['history', 'Full History']] as const).map(([key, label]) => (
           <button key={key} onClick={() => setPageTab(key)} style={{
             padding:'10px 20px', background:'none', border:'none',
             borderBottom: pageTab === key ? '2px solid #1D6FE8' : '2px solid transparent',
-            color: pageTab === key ? '#F0F4FF' : t.textSecondary,
+            color: pageTab === key ? t.text : t.textSecondary,
             fontWeight: pageTab === key ? 700 : 500, fontSize:13, cursor:'pointer',
             fontFamily:'inherit', marginBottom:-1,
           }}>{label}</button>
@@ -229,8 +229,8 @@ export default function FleetDetailPage() {
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                 <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Warranty</div>
                 <div style={{ display:'flex', gap:4 }}>
-                  <button onClick={() => { setWarrantyMode('none'); setEdit((a:any) => ({...a, warranty_provider:null, warranty_start:null, warranty_expiry:null, warranty_mileage_limit:null, warranty_notes:null, warranty_coverage_type:null})) }} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='none' ? 'rgba(124,139,160,.12)' : 'transparent', color: warrantyMode==='none' ? '#7C8BA0' : t.textTertiary, border: warrantyMode==='none' ? '1px solid rgba(124,139,160,.2)' : '1px solid rgba(255,255,255,.06)' }}>No Warranty</button>
-                  <button onClick={() => setWarrantyMode('has')} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='has' ? 'rgba(29,184,112,.1)' : 'transparent', color: warrantyMode==='has' ? '#1DB870' : t.textTertiary, border: warrantyMode==='has' ? '1px solid rgba(29,184,112,.2)' : '1px solid rgba(255,255,255,.06)' }}>Has Warranty</button>
+                  <button onClick={() => { setWarrantyMode('none'); setEdit((a:any) => ({...a, warranty_provider:null, warranty_start:null, warranty_expiry:null, warranty_mileage_limit:null, warranty_notes:null, warranty_coverage_type:null})) }} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='none' ? 'rgba(124,139,160,.12)' : 'transparent', color: warrantyMode==='none' ? '#7C8BA0' : t.textTertiary, border: warrantyMode==='none' ? '1px solid rgba(124,139,160,.2)' : `1px solid ${t.border}` }}>No Warranty</button>
+                  <button onClick={() => setWarrantyMode('has')} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='has' ? 'rgba(29,184,112,.1)' : 'transparent', color: warrantyMode==='has' ? '#1DB870' : t.textTertiary, border: warrantyMode==='has' ? '1px solid rgba(29,184,112,.2)' : `1px solid ${t.border}` }}>Has Warranty</button>
                 </div>
               </div>
               {warrantyMode === 'none' ? (
@@ -353,7 +353,7 @@ export default function FleetDetailPage() {
               const isOver  = pm.next_due_date < today
               const color   = isOver ? '#D94F4F' : '#1DB870'
               return (
-                <div key={pm.id} style={{ padding:'10px 0', borderBottom:'1px solid rgba(255,255,255,.04)' }}>
+                <div key={pm.id} style={{ padding:'10px 0', borderBottom: `1px solid ${t.border}` }}>
                   <div style={{ fontSize:12, fontWeight:600, color:t.text }}>{pm.service_name}</div>
                   <div style={{ fontSize:10, color:color, marginTop:3, fontFamily:'monospace' }}>{isOver?'OVERDUE — ':''}{pm.next_due_date}</div>
                   {pm.interval_miles && <div style={{ fontSize:10, color:t.textTertiary }}>Every {pm.interval_miles.toLocaleString()} miles</div>}
@@ -452,7 +452,7 @@ export default function FleetDetailPage() {
                           if (row.source === 'inhouse') window.location.href = getWorkorderRoute(row.id, undefined, 'fleet')
                           else window.location.href = `/maintenance/repairs/${row.id}`
                         }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.02)')}
+                        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                       >
                         <td style={{ ...S.td, color:t.textSecondary, whiteSpace:'nowrap' }}>
@@ -497,10 +497,10 @@ export default function FleetDetailPage() {
           {historyTotal > 50 && (
             <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12, padding:'16px 0' }}>
               <button disabled={historyPage <= 1} onClick={() => setHistoryPage(p => p - 1)}
-                style={{ ...S.btn, background: historyPage <= 1 ? 'rgba(255,255,255,.03)' : t.border, color: historyPage <= 1 ? '#48536A' : t.text, cursor: historyPage <= 1 ? 'default' : 'pointer' }}>Previous</button>
+                style={{ ...S.btn, background: historyPage <= 1 ? t.surfaceMuted : t.border, color: historyPage <= 1 ? t.textTertiary : t.text, cursor: historyPage <= 1 ? 'default' : 'pointer' }}>Previous</button>
               <span style={{ fontSize:12, fontWeight:600, color:t.textSecondary }}>Page {historyPage} of {historyTotalPages}</span>
               <button disabled={historyPage >= historyTotalPages} onClick={() => setHistoryPage(p => p + 1)}
-                style={{ ...S.btn, background: historyPage >= historyTotalPages ? 'rgba(255,255,255,.03)' : t.border, color: historyPage >= historyTotalPages ? '#48536A' : t.text, cursor: historyPage >= historyTotalPages ? 'default' : 'pointer' }}>Next</button>
+                style={{ ...S.btn, background: historyPage >= historyTotalPages ? t.surfaceMuted : t.border, color: historyPage >= historyTotalPages ? t.textTertiary : t.text, cursor: historyPage >= historyTotalPages ? 'default' : 'pointer' }}>Next</button>
             </div>
           )}
         </div>
