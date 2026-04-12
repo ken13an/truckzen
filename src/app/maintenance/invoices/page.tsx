@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { ChevronRight, ChevronDown, Send } from 'lucide-react'
+import { useTheme } from '@/hooks/useTheme'
 
 
 const FONT = "'Instrument Sans',sans-serif"
@@ -22,6 +23,7 @@ const STATUS_DISPLAY: Record<string, { label: string; color: string }> = {
 const MAINTAINED_TYPES = new Set(['fleet_asset', 'owner_operator'])
 
 export default function MaintenanceInvoicesPage() {
+  const { tokens: th } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [wos, setWos] = useState<any[]>([])
@@ -106,23 +108,23 @@ export default function MaintenanceInvoicesPage() {
   const closed = wos.filter(w => w.invoice_status === 'closed')
   const display = tab === 'unpaid' ? unpaid : tab === 'paid' ? paid : closed
 
-  if (loading) return <div style={{ background: '#060708', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
+  if (loading) return <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24 }}>
       {/* Flag Issue Modal */}
       {flagModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={e => { if (e.target === e.currentTarget) { setFlagModal(null); setFlagNotes('') } }}>
-          <div style={{ background: '#1A1A26', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+          <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Flag Invoice Issue</div>
             <div style={{ fontSize: 13, color: MUTED, marginBottom: 16 }}>Describe the issue. Accounting will be notified.</div>
             <textarea value={flagNotes} onChange={e => setFlagNotes(e.target.value)} placeholder="What's wrong with this invoice?" rows={3}
-              style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#DDE3EE', fontFamily: FONT, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+              style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: th.text, fontFamily: FONT, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
               <button onClick={() => { setFlagModal(null); setFlagNotes('') }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
               <button onClick={() => doAction(flagModal, 'flag_issue', flagNotes)} disabled={!flagNotes.trim() || !!actionLoading}
-                style={{ padding: '8px 16px', background: RED, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                style={{ padding: '8px 16px', background: RED, color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                 Submit Issue
               </button>
             </div>
@@ -130,7 +132,7 @@ export default function MaintenanceInvoicesPage() {
         </div>
       )}
 
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 }}>Maintenance Invoices</div>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text, marginBottom: 4 }}>Maintenance Invoices</div>
       <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>Invoices for fleet and owner-operator units only</div>
 
       {/* Stats */}
@@ -141,8 +143,8 @@ export default function MaintenanceInvoicesPage() {
           { label: 'Closed', value: String(closed.length), color: MUTED },
           { label: 'Outstanding', value: fmt(unpaid.reduce((s, w) => s + (w.invoice_total ?? w.grand_total ?? 0), 0)), color: RED },
         ].map(s => (
-          <div key={s.label} style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px' }}>
-            <div style={{ fontSize: 9, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 4 }}>{s.label}</div>
+          <div key={s.label} style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ fontSize: 9, color: th.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 4 }}>{s.label}</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
         ))}
@@ -165,7 +167,7 @@ export default function MaintenanceInvoicesPage() {
       {/* Invoice List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {display.length === 0 && (
-          <div style={{ background: '#0D0F12', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 40, textAlign: 'center', color: '#48536A', fontSize: 13 }}>
+          <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 40, textAlign: 'center', color: th.textTertiary, fontSize: 13 }}>
             {tab === 'unpaid' ? 'No unpaid invoices for maintained units' : tab === 'paid' ? 'No paid invoices yet' : 'No closed invoices'}
           </div>
         )}
@@ -178,7 +180,7 @@ export default function MaintenanceInvoicesPage() {
           const lastAction = actionsTaken[w.id]
 
           return (
-            <div key={w.id} style={{ background: '#0D0F12', border: `1px solid ${isExpanded ? 'rgba(29,111,232,.3)' : 'rgba(255,255,255,.08)'}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div key={w.id} style={{ background: th.bgCard, border: `1px solid ${isExpanded ? 'rgba(29,111,232,.3)' : 'rgba(255,255,255,.08)'}`, borderRadius: 12, overflow: 'hidden' }}>
               {/* Row header */}
               <div onClick={() => loadDetail(w.id)} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', cursor: 'pointer', gap: 12 }}
                 onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'rgba(255,255,255,.02)' }}
@@ -201,7 +203,7 @@ export default function MaintenanceInvoicesPage() {
 
               {/* Expanded detail — read-only invoice summary + maintenance actions */}
               {isExpanded && (
-                <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '16px 20px', background: '#0A0C10' }}>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '16px 20px', background: th.bg }}>
                   {detailLoading ? (
                     <div style={{ color: MUTED, fontSize: 12 }}>Loading...</div>
                   ) : detail ? (() => {
@@ -216,12 +218,12 @@ export default function MaintenanceInvoicesPage() {
                         {/* Invoice header */}
                         {invRecord && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{invRecord.invoice_number}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: th.text }}>{invRecord.invoice_number}</div>
                             <div style={{ fontSize: 11, color: MUTED }}>{invRecord.due_date ? `Due: ${invRecord.due_date}` : ''}</div>
                           </div>
                         )}
 
-                        {detail.complaint && <div style={{ fontSize: 11, color: MUTED, marginBottom: 10 }}>Complaint: <span style={{ color: '#DDE3EE' }}>{detail.complaint}</span></div>}
+                        {detail.complaint && <div style={{ fontSize: 11, color: MUTED, marginBottom: 10 }}>Complaint: <span style={{ color: th.text }}>{detail.complaint}</span></div>}
 
                         {/* Job-grouped summary — uses stored line values, not recalculated */}
                         {jobLines.map((job: any, idx: number) => {
@@ -234,8 +236,8 @@ export default function MaintenanceInvoicesPage() {
                           return (
                             <div key={job.id} style={{ marginBottom: 10, padding: '8px 12px', background: 'rgba(255,255,255,.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,.04)' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                <span style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>Job {idx + 1}: <span style={{ color: '#DDE3EE', fontWeight: 600 }}>{(job.description || '').substring(0, 50)}</span></span>
-                                <span style={{ fontSize: 11, fontFamily: MONO, color: MUTED }}>{hrs}h {rate > 0 ? `@ ${fmt(rate)}/hr = ` : ''}<strong style={{ color: '#DDE3EE' }}>{fmt(laborAmt)}</strong></span>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>Job {idx + 1}: <span style={{ color: th.text, fontWeight: 600 }}>{(job.description || '').substring(0, 50)}</span></span>
+                                <span style={{ fontSize: 11, fontFamily: MONO, color: MUTED }}>{hrs}h {rate > 0 ? `@ ${fmt(rate)}/hr = ` : ''}<strong style={{ color: th.text }}>{fmt(laborAmt)}</strong></span>
                               </div>
                               {jobParts.length > 0 && jobParts.map((p: any) => {
                                 const sell = p.parts_sell_price || p.unit_price || 0
@@ -247,7 +249,7 @@ export default function MaintenanceInvoicesPage() {
                                   </div>
                                 )
                               })}
-                              <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: '#DDE3EE', marginTop: 4 }}>Job Total: {fmt(laborAmt + partsAmt)}</div>
+                              <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: th.text, marginTop: 4 }}>Job Total: {fmt(laborAmt + partsAmt)}</div>
                             </div>
                           )
                         })}

@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import Pagination from '@/components/Pagination'
+import { useTheme } from '@/hooks/useTheme'
 
 const URGENCY: Record<string, { label: string; color: string; bg: string }> = {
   low:      { label: 'LOW',      color: '#48536A', bg: 'rgba(72,83,106,.1)' },
@@ -24,6 +25,7 @@ const STATUS: Record<string, { label: string; color: string; bg: string }> = {
 }
 
 export default function MaintenanceServiceRequestsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [requests, setRequests] = useState<any[]>([])
@@ -60,11 +62,11 @@ export default function MaintenanceServiceRequestsPage() {
   if (!user) return null
 
   return (
-    <div style={{ padding: 32, maxWidth: 1200 }}>
+    <div style={{ padding: 32, maxWidth: 1200, background: t.bg, minHeight: '100vh', color: t.text }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#F0F4FF', margin: 0 }}>Service Requests</h1>
-          <p style={{ fontSize: 13, color: '#7C8BA0', margin: '4px 0 0' }}>Maintenance department service requests</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: t.text, margin: 0 }}>Service Requests</h1>
+          <p style={{ fontSize: 13, color: t.textSecondary, margin: '4px 0 0' }}>Maintenance department service requests</p>
         </div>
         <a href="/service-requests/new" style={{
           background: '#F59E0B', color: '#0B0D11', padding: '8px 16px', borderRadius: 8,
@@ -73,17 +75,17 @@ export default function MaintenanceServiceRequestsPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: '#7C8BA0' }}>Loading...</p>
+        <p style={{ color: t.textSecondary }}>Loading...</p>
       ) : requests.length === 0 ? (
-        <p style={{ color: '#7C8BA0' }}>No service requests found.</p>
+        <p style={{ color: t.textSecondary }}>No service requests found.</p>
       ) : (
         <>
-          <div style={{ background: '#12141A', borderRadius: 12, border: '1px solid rgba(255,255,255,.06)', overflow: 'hidden' }}>
+          <div style={{ background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,.06)' }}>
                   {['Request', 'Unit', 'Urgency', 'Status', 'Created'].map(h => (
-                    <th key={h} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: '#48536A', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '.05em' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textAlign: 'left', textTransform: 'uppercase', letterSpacing: '.05em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -93,15 +95,15 @@ export default function MaintenanceServiceRequestsPage() {
                   const st = STATUS[r.status] || STATUS.pending
                   return (
                     <tr key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,.03)' }}>
-                      <td style={{ padding: '10px 16px', fontSize: 13, color: '#F0F4FF' }}>{r.title || r.description?.slice(0, 50) || '—'}</td>
-                      <td style={{ padding: '10px 16px', fontSize: 13, color: '#7C8BA0' }}>{r.unit_number || '—'}</td>
+                      <td style={{ padding: '10px 16px', fontSize: 13, color: t.text }}>{r.title || r.description?.slice(0, 50) || '—'}</td>
+                      <td style={{ padding: '10px 16px', fontSize: 13, color: t.textSecondary }}>{r.unit_number || '—'}</td>
                       <td style={{ padding: '10px 16px' }}>
                         <span style={{ fontSize: 10, fontWeight: 700, color: urg.color, background: urg.bg, padding: '2px 8px', borderRadius: 4 }}>{urg.label}</span>
                       </td>
                       <td style={{ padding: '10px 16px' }}>
                         <span style={{ fontSize: 10, fontWeight: 700, color: st.color, background: st.bg, padding: '2px 8px', borderRadius: 4 }}>{st.label}</span>
                       </td>
-                      <td style={{ padding: '10px 16px', fontSize: 12, color: '#48536A' }}>{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: '10px 16px', fontSize: 12, color: t.textTertiary }}>{new Date(r.created_at).toLocaleDateString()}</td>
                     </tr>
                   )
                 })}

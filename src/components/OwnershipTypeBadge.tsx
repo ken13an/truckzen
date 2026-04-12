@@ -1,16 +1,10 @@
 'use client'
+import { useTheme } from '@/hooks/useTheme'
 
-const CONFIG: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  fleet_asset:       { label: 'Company Truck',     bg: '#EFF6FF', color: '#1D6FE8', border: '#BFDBFE' },
-  owner_operator:    { label: 'Owner Operator',    bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' },
-  outside_customer:  { label: 'Outside Customer',  bg: '#F3F4F6', color: '#6B7280', border: '#D1D5DB' },
-}
-
-// Dark theme variant
-const CONFIG_DARK: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  fleet_asset:       { label: 'Company Truck',     bg: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'rgba(29,111,232,.25)' },
-  owner_operator:    { label: 'Owner Operator',    bg: 'rgba(217,119,6,.12)',  color: '#F59E0B', border: 'rgba(217,119,6,.25)' },
-  outside_customer:  { label: 'Outside Customer',  bg: 'rgba(107,114,128,.12)', color: '#9CA3AF', border: 'rgba(107,114,128,.25)' },
+const LABELS: Record<string, string> = {
+  fleet_asset: 'Company Truck',
+  owner_operator: 'Owner Operator',
+  outside_customer: 'Outside Customer',
 }
 
 interface Props {
@@ -19,9 +13,17 @@ interface Props {
   dark?: boolean
 }
 
-export default function OwnershipTypeBadge({ type, size = 'md', dark = false }: Props) {
-  const cfg = dark ? CONFIG_DARK : CONFIG
-  const c = cfg[type || 'fleet_asset'] || cfg.fleet_asset
+export default function OwnershipTypeBadge({ type, size = 'md' }: Props) {
+  const { tokens: t } = useTheme()
+  const key = type || 'fleet_asset'
+
+  const config: Record<string, { bg: string; color: string; border: string }> = {
+    fleet_asset:      { bg: t.accentBg, color: t.accentLight, border: t.borderAccent },
+    owner_operator:   { bg: t.warningBg, color: t.warning, border: t.warning },
+    outside_customer: { bg: t.surfaceMuted, color: t.textSecondary, border: t.border },
+  }
+  const c = config[key] || config.fleet_asset
+  const label = LABELS[key] || 'Company Truck'
 
   const fontSize = size === 'sm' ? 9 : size === 'lg' ? 13 : 11
   const padding = size === 'sm' ? '2px 6px' : size === 'lg' ? '5px 14px' : '3px 10px'
@@ -35,11 +37,11 @@ export default function OwnershipTypeBadge({ type, size = 'md', dark = false }: 
       border: `1px solid ${c.border}`,
       whiteSpace: 'nowrap',
     }}>
-      {c.label}
+      {label}
     </span>
   )
 }
 
 export function ownershipTypeLabel(type: string | null | undefined): string {
-  return CONFIG[type || 'fleet_asset']?.label || 'Company Truck'
+  return LABELS[type || 'fleet_asset'] || 'Company Truck'
 }

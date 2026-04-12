@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import DataTable from '@/components/DataTable'
 import FilterBar from '@/components/FilterBar'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 
@@ -29,6 +30,7 @@ interface MaintListConfig {
 
 export function MaintListPage(config: MaintListConfig) {
   return function Page() {
+    const { tokens: t } = useTheme()
     const supabase = createClient()
     const [shopId, setShopId] = useState('')
     const [filter, setFilter] = useState('all')
@@ -43,13 +45,13 @@ export function MaintListPage(config: MaintListConfig) {
       })
     }, [])
 
-    if (!shopId) return <div style={{ background: '#060708', minHeight: '100vh', color: '#7C8BA0', fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+    if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: t.textSecondary, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
     return (
-      <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+      <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>{config.title}</div>
-          {config.newHref && <a href={config.newHref} style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>}
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>{config.title}</div>
+          {config.newHref && <a href={config.newHref} style={{ padding: '8px 16px', background: t.accent, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>}
         </div>
 
         <FilterBar
@@ -63,7 +65,6 @@ export function MaintListPage(config: MaintListConfig) {
           dateTo={dateTo}
           onDateFromChange={setDateFrom}
           onDateToChange={setDateTo}
-          theme="dark"
         />
 
         <DataTable

@@ -86,7 +86,7 @@ export default function FleetPage() {
   }
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
@@ -94,13 +94,13 @@ export default function FleetPage() {
           <div style={{ fontSize: 12, color: t.textSecondary }}>{total.toLocaleString()} vehicles</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search unit, make, VIN, owner, driver..." style={{ padding: '7px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#DDE3EE', fontSize: 11, fontFamily: 'inherit', outline: 'none', width: 260 }} />
-          <button onClick={() => window.location.href = '/fleet/new'} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Vehicle</button>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search unit, make, VIN, owner, driver..." style={{ padding: '7px 12px', background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, color: t.text, fontSize: 11, fontFamily: 'inherit', outline: 'none', width: 260 }} />
+          <button onClick={() => window.location.href = '/fleet/new'} style={{ padding: '7px 14px', background: t.accent, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+ Add Vehicle</button>
         </div>
       </div>
 
       {/* 4 Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${t.border}`, marginBottom: 12 }}>
         {TABS.map(tb => (
           <button key={tb.key} onClick={() => switchTab(tb.key)} style={{
             padding: '10px 16px', background: 'none', border: 'none',
@@ -125,14 +125,14 @@ export default function FleetPage() {
           <button key={v} onClick={() => { setStatusFilter(v); setPage(1) }} style={{
             padding: '4px 12px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
             background: statusFilter === v ? 'rgba(29,111,232,.1)' : 'transparent',
-            border: statusFilter === v ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)',
+            border: statusFilter === v ? '1px solid rgba(29,111,232,.3)' : `1px solid ${t.border}`,
             color: statusFilter === v ? t.accentLight : t.textSecondary,
           }}>{l}</button>
         ))}
       </div>
 
       {/* Table */}
-      <div style={{ background: '#161B24', border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
             <thead><tr>{['Unit #', 'Year', 'Make / Model', 'VIN', 'Plate', 'Owner', 'Driver', 'Company', 'Type', 'Status'].map(h =>
@@ -145,8 +145,8 @@ export default function FleetPage() {
                 const st = a.asset_status || a.status || 'active'
                 const sc = STATUS_COLORS[st] || t.textSecondary
                 return (
-                  <tr key={a.id} style={{ cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.025)' }} onClick={() => window.location.href = '/fleet/' + a.id}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.03)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                  <tr key={a.id} style={{ cursor: 'pointer', borderBottom: `1px solid ${t.border}` }} onClick={() => window.location.href = '/fleet/' + a.id}
+                    onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)} onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: t.accentLight, fontWeight: 700 }}>
                       {a.unit_number} <SourceBadge source={a.source} />
                     </td>
@@ -154,8 +154,8 @@ export default function FleetPage() {
                     <td style={{ padding: '9px 10px', fontSize: 12, color: t.text, fontWeight: 600 }}>{a.make || '—'} {a.model || ''}</td>
                     <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: t.textTertiary, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={a.vin || ''}>{a.vin ? '...' + a.vin.slice(-6) : '—'}</td>
                     <td style={{ padding: '9px 10px', fontSize: 10, color: t.textSecondary }}>{a.license_plate || '—'}</td>
-                    <td style={{ padding: '9px 10px', fontSize: 11, color: '#DDE3EE', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.owner_name || '—'}</td>
-                    <td style={{ padding: '9px 10px', fontSize: 11, color: '#DDE3EE', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.driver_name || '—'}</td>
+                    <td style={{ padding: '9px 10px', fontSize: 11, color: t.text, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.owner_name || '—'}</td>
+                    <td style={{ padding: '9px 10px', fontSize: 11, color: t.text, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.driver_name || '—'}</td>
                     <td style={{ padding: '9px 10px', fontSize: 11, color: t.textSecondary, maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(a.customers as any)?.company_name || '—'}</td>
                     <td style={{ padding: '9px 10px' }}><OwnershipTypeBadge type={a.is_owner_operator ? 'owner_operator' : a.ownership_type} size="sm" dark /></td>
                     <td style={{ padding: '9px 10px' }}>

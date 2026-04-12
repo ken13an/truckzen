@@ -100,22 +100,19 @@ function detectSheetType(name: string, headers: string[]): ImportType {
 
 import AppPageShell from '@/components/layout/AppPageShell'
 import { useTheme } from '@/hooks/useTheme'
-import { THEME } from '@/lib/config/colors'
-const _t = THEME.dark
 
 const FONT = "'Instrument Sans', sans-serif"
-// Interior card palette kept dark — smart-drop is a heavy dark operational tool.
-// Outer shell now follows theme toggle via AppPageShell.
-const CARD_BG = _t.bgCard
-const BORDER = _t.border
-const TEXT = _t.text
-const DIM = _t.textSecondary
-const BLUE = _t.accent
-const GREEN = _t.success
-const AMBER = _t.warning
-const RED = _t.danger
 
 export default function SmartDropPage() {
+  const { tokens: _t } = useTheme()
+  const CARD_BG = _t.bgCard
+  const BORDER = _t.border
+  const TEXT = _t.text
+  const DIM = _t.textSecondary
+  const BLUE = _t.accent
+  const GREEN = _t.success
+  const AMBER = _t.warning
+  const RED = _t.danger
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1)
