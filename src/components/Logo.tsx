@@ -24,9 +24,11 @@ export function LogoIcon({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
 
 export function LogoWordmark({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const fontSize = size === 'sm' ? '14px' : size === 'lg' ? '18px' : '16px'
+  // "truck" inherits theme color (currentColor) so it adapts to warm/dark mode.
+  // "zen." stays brand blue — canonical brand color, never themed.
   return (
-    <span style={{ fontSize, fontWeight: 700, letterSpacing: '0.02em', fontFamily: "'Instrument Sans', -apple-system, sans-serif" }}>
-      <span style={{ color: '#EDEDF0' }}>truck</span>
+    <span style={{ fontSize, fontWeight: 700, letterSpacing: '0.02em', fontFamily: "'Instrument Sans', -apple-system, sans-serif", color: 'currentColor' }}>
+      <span>truck</span>
       <span style={{ color: '#1D6FE8' }}>zen.</span>
     </span>
   )

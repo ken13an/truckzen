@@ -5,17 +5,21 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { getPermissions } from '@/lib/getPermissions'
 import { getMechanics } from '@/lib/services/users'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
+import AppPageShell from '@/components/layout/AppPageShell'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
 
 const FONT = "'Inter', -apple-system, sans-serif"
-const BG = '#0C0C12'
-const TEXT = '#EDEDF0'
-const CARD_BG = '#151520'
-const CARD_BORDER = 'rgba(255,255,255,0.08)'
-const BLUE = '#1D6FE8'
-const AMBER = '#F59E0B'
-const GREEN = '#22C55E'
-const RED = '#EF4444'
-const DIM = '#71717A'
+// Interior palette kept dark — quick-view is a dark operational surface.
+// Outer shell now follows theme toggle via AppPageShell.
+const TEXT = _t.text
+const CARD_BG = _t.bgElevated
+const CARD_BORDER = _t.cardBorder
+const BLUE = _t.accent
+const AMBER = _t.warning
+const GREEN = _t.success
+const RED = _t.danger
+const DIM = _t.textTertiary
 
 type Filter = 'unassigned' | 'assigned' | 'waiting_parts' | 'in_progress'
 
@@ -120,7 +124,11 @@ export default function QuickViewPage() {
     in_progress: jobs.filter(j => j.status === 'in_progress').length,
   }
 
-  if (loading) return <div style={{ fontFamily: FONT, background: BG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: DIM }}>Loading...</div>
+  if (loading) return (
+    <AppPageShell width="wide" style={{ fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ color: DIM }}>Loading...</div>
+    </AppPageShell>
+  )
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'unassigned', label: 'Unassigned' },
@@ -139,7 +147,7 @@ export default function QuickViewPage() {
   const btnBase: React.CSSProperties = { padding: '6px 12px', borderRadius: 6, border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer' }
 
   return (
-    <div style={{ fontFamily: FONT, background: BG, minHeight: '100vh', color: TEXT, padding: 'clamp(10px, 3vw, 20px)' }}>
+    <AppPageShell width="full" padding="clamp(10px, 3vw, 20px)" style={{ fontFamily: FONT, color: TEXT }}>
       <div style={{ maxWidth: 600, margin: '0 auto' }}>
 
         {/* Header */}
@@ -314,6 +322,6 @@ export default function QuickViewPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppPageShell>
   )
 }

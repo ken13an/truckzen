@@ -183,18 +183,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             </a>
           </div>
-          {/* Right: role badge + avatar + notifications */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
-            {user?.can_impersonate && (
+          {/* Right: identity cluster — one role indicator (RoleSwitcher OR plain badge), avatar, bell */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-end' }}>
+            {user?.can_impersonate ? (
               <RoleSwitcher userId={user.id} actualRole={user.role} impersonateRole={user.impersonate_role} />
-            )}
-            {user && effectiveRole && (
-              <span style={{ fontSize: 10, fontWeight: 600, color: t.textSecondary, background: t.bgHover, borderRadius: 4, padding: '2px 8px', textTransform: 'capitalize' }}>
+            ) : user && effectiveRole ? (
+              <span style={{ fontSize: 10, fontWeight: 600, color: t.textSecondary, background: t.bgHover, borderRadius: 6, padding: '4px 10px', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
                 {effectiveRole.replace(/_/g, ' ')}
               </span>
-            )}
+            ) : null}
             {user && (
-              <div style={{ width: 28, height: 28, borderRadius: 14, background: t.accent, color: t.bgLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+              <div title={user.full_name || ''} style={{ width: 28, height: 28, borderRadius: 14, background: t.accent, color: t.bgLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
                 {(user.full_name || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
               </div>
             )}

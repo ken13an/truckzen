@@ -98,16 +98,22 @@ function detectSheetType(name: string, headers: string[]): ImportType {
   return 'trucks'
 }
 
+import AppPageShell from '@/components/layout/AppPageShell'
+import { useTheme } from '@/hooks/useTheme'
+import { THEME } from '@/lib/config/colors'
+const _t = THEME.dark
+
 const FONT = "'Instrument Sans', sans-serif"
-const BG = '#060708'
-const CARD_BG = '#0D0F12'
-const BORDER = '#1A1D23'
-const TEXT = '#F0F4FF'
-const DIM = '#7C8BA0'
-const BLUE = '#1D6FE8'
-const GREEN = '#22C55E'
-const AMBER = '#F59E0B'
-const RED = '#EF4444'
+// Interior card palette kept dark — smart-drop is a heavy dark operational tool.
+// Outer shell now follows theme toggle via AppPageShell.
+const CARD_BG = _t.bgCard
+const BORDER = _t.border
+const TEXT = _t.text
+const DIM = _t.textSecondary
+const BLUE = _t.accent
+const GREEN = _t.success
+const AMBER = _t.warning
+const RED = _t.danger
 
 export default function SmartDropPage() {
   const supabase = createClient()
@@ -519,7 +525,7 @@ export default function SmartDropPage() {
   const allFields = importType === 'parts' ? Object.keys(PARTS_ALIASES) : importType === 'trucks' ? Object.keys(TRUCK_ALIASES) : Object.keys(COLUMN_ALIASES)
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', color: TEXT, fontFamily: FONT, padding: 24, maxWidth: 1000, margin: '0 auto' }}>
+    <AppPageShell width="wide" style={{ fontFamily: FONT }}>
       {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: BLUE, color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: TEXT, marginBottom: 4 }}>Smart Drop</div>
@@ -994,7 +1000,7 @@ export default function SmartDropPage() {
       )}
 
       </>}
-    </div>
+    </AppPageShell>
   )
 }
 

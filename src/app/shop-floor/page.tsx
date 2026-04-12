@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { useTheme } from '@/hooks/useTheme'
 import { THEME } from '@/lib/config/colors'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
+import AppPageShell from '@/components/layout/AppPageShell'
 const _t = THEME.dark
 
 type View = 'table' | 'kanban' | 'monitor'
@@ -137,10 +138,14 @@ export default function ShopFloorPage() {
     total: jobs.length,
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: _t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: _t.textSecondary }}>Loading...</div>
+  if (loading) return (
+    <AppPageShell width="full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ color: _t.textSecondary }}>Loading...</div>
+    </AppPageShell>
+  )
 
   return (
-    <div style={{ background: _t.bg, minHeight: '100vh', color: _t.text, fontFamily: "'Instrument Sans',sans-serif", padding: view === 'monitor' ? 16 : 24 }}>
+    <AppPageShell width="full" padding={view === 'monitor' ? 16 : 24} style={{ fontFamily: "'Instrument Sans',sans-serif" }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
@@ -351,7 +356,7 @@ export default function ShopFloorPage() {
       )}
 
       <style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }`}</style>
-    </div>
+    </AppPageShell>
   )
 }
 

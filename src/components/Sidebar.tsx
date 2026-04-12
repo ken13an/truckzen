@@ -298,11 +298,12 @@ export default function Sidebar() {
   }
 
   return (
-    <aside style={{ width: W, minHeight: '100vh', background: t.sidebarBg, borderRight: `1px solid ${t.sidebarBorder}`, display: 'flex', flexDirection: 'column', transition: 'width .2s ease', flexShrink: 0, position: 'sticky', top: 0 }}>
-      {/* Logo */}
-      <div style={{ padding: collapsed ? '16px 14px' : '16px 18px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', minHeight: 56 }}>
-        {collapsed ? <LogoIcon size="sm" /> : <Logo size="sm" showWordmark={true} />}
-        <button onClick={() => setCollapsed(c => !c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary, fontSize: 16, padding: 4, lineHeight: 1 }}>{collapsed ? '\u00BB' : '\u00AB'}</button>
+    <aside style={{ width: W, height: '100vh', background: t.sidebarBg, borderRight: `1px solid ${t.sidebarBorder}`, display: 'flex', flexDirection: 'column', transition: 'width .2s ease', flexShrink: 0, position: 'sticky', top: 0, overflow: 'hidden' }}>
+      {/* Logo / brand */}
+      <div style={{ padding: collapsed ? '18px 14px' : '18px 20px', borderBottom: `1px solid ${t.sidebarBorder}`, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', minHeight: 62, color: t.text }}>
+        {collapsed ? <LogoIcon size="md" /> : <Logo size="md" showWordmark={true} />}
+        <button onClick={() => setCollapsed(c => !c)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary, fontSize: 16, padding: 6, lineHeight: 1, borderRadius: 4 }}
+          onMouseEnter={e => (e.currentTarget.style.color = t.text)} onMouseLeave={e => (e.currentTarget.style.color = t.textTertiary)}>{collapsed ? '\u00BB' : '\u00AB'}</button>
       </div>
 
       {/* Platform Admin */}

@@ -5,12 +5,15 @@ import { getCurrentUser } from '@/lib/auth'
 import { PageFooter } from '@/components/ui/PageControls'
 import FilterBar from '@/components/FilterBar'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
+import AppPageShell from '@/components/layout/AppPageShell'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
 const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', MUTED = '#7C8BA0'
 
 export default function ImportedHistoryPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [records, setRecords] = useState<any[]>([])
   const [total, setTotal] = useState(0)
@@ -55,13 +58,17 @@ export default function ImportedHistoryPage() {
 
   const statusColor = (s: string) => s === 'paid' || s === 'closed' ? GREEN : s === 'sent' ? BLUE : s === 'in_progress' ? AMBER : MUTED
 
-  if (loading && records.length === 0) return <div style={{ background: '#060708', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
+  if (loading && records.length === 0) return (
+    <AppPageShell width="wide" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+      <div style={{ color: t.textSecondary }}>Loading...</div>
+    </AppPageShell>
+  )
 
   return (
-    <div style={{ background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: FONT, padding: 24 }}>
+    <AppPageShell width="wide" style={{ fontFamily: FONT }}>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF' }}>Imported History</div>
-        <div style={{ fontSize: 12, color: MUTED }}>{total.toLocaleString()} imported work orders &mdash; read-only</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Imported History</div>
+        <div style={{ fontSize: 12, color: t.textSecondary }}>{total.toLocaleString()} imported work orders &mdash; read-only</div>
       </div>
 
       <div style={{ background: 'rgba(139,92,246,.06)', border: '1px solid rgba(139,92,246,.2)', borderRadius: 10, padding: '10px 16px', marginBottom: 16, fontSize: 12, color: '#A78BFA', fontWeight: 600 }}>
@@ -136,6 +143,6 @@ export default function ImportedHistoryPage() {
       )}
 
       <PageFooter total={total} page={page} perPage={perPage} onPageChange={setPage} onPerPageChange={setPerPage} />
-    </div>
+    </AppPageShell>
   )
 }
