@@ -490,7 +490,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   // Show loading while checking sessionStorage for PIN
   if (!pinChecked && kioskCode) {
     return (
-      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif" }}>
+      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: th.text, fontFamily: "'Instrument Sans', sans-serif" }}>
         <p style={{ color: '#71717A' }}>Loading...</p>
       </div>
     )
@@ -498,7 +498,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
   if (!pinAuthed && kioskCode) {
     return (
-      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", padding: 24 }}>
+      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: th.text, fontFamily: "'Instrument Sans', sans-serif", padding: 24 }}>
         <div style={{ textAlign: 'center', maxWidth: 340 }}>
           <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: 2, marginBottom: 8 }}>TRUCKZEN</div>
           <div style={{ fontSize: 15, color: '#71717A', marginBottom: 32 }}>Enter PIN to activate kiosk</div>
@@ -539,7 +539,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 style={{
                   width: 80, height: 64, borderRadius: 14, border: 'none',
                   background: digit === 'del' ? 'rgba(255,255,255,0.04)' : th.border,
-                  color: '#EDEDF0', fontSize: digit === 'del' ? 16 : 28, fontWeight: 600,
+                  color: th.text, fontSize: digit === 'del' ? 16 : 28, fontWeight: 600,
                   cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif",
                   transition: 'background 0.1s',
                 }}
@@ -704,7 +704,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 640, marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Logo size="md" />
-          {shopName && <span style={{ fontSize: 16, color: '#9D9DA1', fontWeight: 500 }}>{shopName}</span>}
+          {shopName && <span style={{ fontSize: 16, color: th.textSecondary, fontWeight: 500 }}>{shopName}</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {step >= 1 && step <= 7 && renderStepDots()}
@@ -726,7 +726,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
             fontWeight: 700,
             background: 'transparent',
             border: '1px solid rgba(255,255,255,0.1)',
-            color: '#9D9DA1',
+            color: th.textSecondary,
             cursor: 'pointer',
             fontFamily: "'Instrument Sans', sans-serif",
           }}
@@ -752,7 +752,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   return (
     <>
     <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
-    <div style={{ minHeight: '100vh', background: '#151520', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 24px 100px', fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
+    <div style={{ minHeight: '100vh', background: '#151520', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 24px 100px', fontFamily: "'Instrument Sans', sans-serif", color: th.text }}>
       {renderHeader()}
 
       <div style={{ width: '100%', maxWidth: 640, flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -762,10 +762,10 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {/* ================================================================ */}
         {step === 0 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 20 }}>
-            <div style={{ fontSize: 36, fontWeight: 700, lineHeight: 1.2, color: '#EDEDF0' }}>
+            <div style={{ fontSize: 36, fontWeight: 700, lineHeight: 1.2, color: th.text }}>
               {t('welcome_title')} {shopName || 'Our Shop'}
             </div>
-            <div style={{ fontSize: 20, color: '#9D9DA1', maxWidth: 400 }}>
+            <div style={{ fontSize: 20, color: th.textSecondary, maxWidth: 400 }}>
               {t('welcome_sub')}
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24 }}>
@@ -778,7 +778,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 <button key={l.code} onClick={() => setLang(l.code)} style={{
                   padding: '12px 24px', borderRadius: 12, fontSize: 16, fontWeight: 700, fontFamily: "'Instrument Sans', sans-serif",
                   background: lang === l.code ? '#1D6FE8' : th.border,
-                  color: lang === l.code ? '#fff' : '#EDEDF0',
+                  color: lang === l.code ? '#fff' : th.text,
                   border: lang === l.code ? '2px solid #1D6FE8' : '2px solid rgba(255,255,255,0.1)',
                   cursor: 'pointer',
                 }}>
@@ -801,7 +801,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {step === 1 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>{t('find_company')}</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 1 {t('of')} 7</div>
+            <div style={{ fontSize: 15, color: th.textSecondary, marginBottom: 24 }}>{t('step')} 1 {t('of')} 7</div>
 
             {!showNewCustomer ? (
               <>
@@ -818,7 +818,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                   <div style={{ marginTop: 16, padding: '16px 20px', background: 'rgba(29,111,232,0.1)', border: '2px solid #1D6FE8', borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontSize: 18, fontWeight: 700 }}>{selectedCustomer.company_name}</div>
-                      {selectedCustomer.phone && <div style={{ fontSize: 14, color: '#9D9DA1', marginTop: 4 }}>{selectedCustomer.phone}</div>}
+                      {selectedCustomer.phone && <div style={{ fontSize: 14, color: th.textSecondary, marginTop: 4 }}>{selectedCustomer.phone}</div>}
                     </div>
                     <button onClick={() => { setSelectedCustomer(null); setCustomerSearch('') }} style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>Change</button>
                   </div>
@@ -848,7 +848,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                       >
                         <div style={{ fontSize: 18, fontWeight: 700 }}>{c.company_name}</div>
                         {(c.contact_name || c.phone) && (
-                          <div style={{ fontSize: 14, color: '#9D9DA1', marginTop: 4 }}>
+                          <div style={{ fontSize: 14, color: th.textSecondary, marginTop: 4 }}>
                             {c.contact_name}{c.contact_name && c.phone ? ' — ' : ''}{c.phone}
                           </div>
                         )}
@@ -862,7 +862,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                     <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Not finding your company?</div>
                     <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                       <button onClick={() => { setCustomerSearch('') }}
-                        style={{ padding: '14px 24px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#EDEDF0', fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                        style={{ padding: '14px 24px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: th.text, fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
                         Try Different Name
                       </button>
                       <button onClick={() => { setShowNewCustomer(true); setCustomerType('outside_customer') }}
@@ -929,7 +929,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {step === 2 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('find_unit')}</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>
+            <div style={{ fontSize: 15, color: th.textSecondary, marginBottom: 24 }}>
               {t('step')} 2 {t('of')} 7 — {selectedCustomer?.company_name || newCustomer.company_name || 'Company'}
             </div>
 
@@ -948,7 +948,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                   <div style={{ marginTop: 16, padding: '16px 20px', background: 'rgba(29,111,232,0.1)', border: '2px solid #1D6FE8', borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontSize: 18, fontWeight: 700 }}>#{selectedUnit.unit_number}</div>
-                      <div style={{ fontSize: 14, color: '#9D9DA1', marginTop: 4 }}>
+                      <div style={{ fontSize: 14, color: th.textSecondary, marginTop: 4 }}>
                         {[selectedUnit.year, selectedUnit.make, selectedUnit.model].filter(Boolean).join(' ')}
                         {selectedUnit.vin ? ` — ...${selectedUnit.vin.slice(-6)}` : ''}
                       </div>
@@ -978,7 +978,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                         }}
                       >
                         <div style={{ fontSize: 18, fontWeight: 700 }}>#{u.unit_number}</div>
-                        <div style={{ fontSize: 14, color: '#9D9DA1', marginTop: 4 }}>
+                        <div style={{ fontSize: 14, color: th.textSecondary, marginTop: 4 }}>
                           {[u.year, u.make, u.model].filter(Boolean).join(' ')}
                           {u.vin ? ` — ...${u.vin.slice(-6)}` : ''}
                         </div>
@@ -1056,7 +1056,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {step === 3 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('concern_title')}</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>
+            <div style={{ fontSize: 15, color: th.textSecondary, marginBottom: 24 }}>
               {t('step')} 3 {t('of')} 7
             </div>
             <div style={{ fontSize: 13, color: '#71717A', marginBottom: 16 }}>
@@ -1093,7 +1093,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {step === 4 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('details_title')}</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 4 {t('of')} 7</div>
+            <div style={{ fontSize: 15, color: th.textSecondary, marginBottom: 24 }}>{t('step')} 4 {t('of')} 7</div>
 
             <label style={labelStyle}>{t('parked_label')}</label>
             <input
@@ -1134,7 +1134,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {step === 5 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('when_title')}</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 5 {t('of')} 7</div>
+            <div style={{ fontSize: 15, color: th.textSecondary, marginBottom: 24 }}>{t('step')} 5 {t('of')} 7</div>
 
             <label style={labelStyle}>{t('when_pick_date')}</label>
             <input
@@ -1170,7 +1170,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {step === 6 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('auth_title')}</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 6 {t('of')} 7</div>
+            <div style={{ fontSize: 15, color: th.textSecondary, marginBottom: 24 }}>{t('step')} 6 {t('of')} 7</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div
@@ -1184,7 +1184,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 }}
               >
                 <div style={{ fontSize: 20, fontWeight: 700 }}>{t('auth_estimate')}</div>
-                <div style={{ fontSize: 14, color: '#9D9DA1', marginTop: 4, fontWeight: 400 }}>We will diagnose and send you a quote before starting work.</div>
+                <div style={{ fontSize: 14, color: th.textSecondary, marginTop: 4, fontWeight: 400 }}>We will diagnose and send you a quote before starting work.</div>
               </div>
 
               <div
@@ -1198,7 +1198,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 }}
               >
                 <div style={{ fontSize: 20, fontWeight: 700 }}>{t('auth_go_ahead')}</div>
-                <div style={{ fontSize: 14, color: '#9D9DA1', marginTop: 4, fontWeight: 400 }}>Authorize us to start work right away.</div>
+                <div style={{ fontSize: 14, color: th.textSecondary, marginTop: 4, fontWeight: 400 }}>Authorize us to start work right away.</div>
               </div>
             </div>
 
@@ -1258,7 +1258,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
         {step === 7 && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{t('review_title')}</div>
-            <div style={{ fontSize: 15, color: '#9D9DA1', marginBottom: 24 }}>{t('step')} 7 {t('of')} 7</div>
+            <div style={{ fontSize: 15, color: th.textSecondary, marginBottom: 24 }}>{t('step')} 7 {t('of')} 7</div>
 
             <div style={{ background: th.border, borderRadius: 16, padding: '24px', display: 'flex', flexDirection: 'column', gap: 0 }}>
               {[
@@ -1275,8 +1275,8 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 [t('phone_label'), contactPhone || '—'],
               ].map(([label, value], idx) => (
                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 0', borderBottom: idx < 10 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                  <span style={{ fontSize: 14, color: '#9D9DA1', minWidth: 100 }}>{label}</span>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: '#EDEDF0', textAlign: 'right', flex: 1, marginLeft: 16, wordBreak: 'break-word' }}>{value}</span>
+                  <span style={{ fontSize: 14, color: th.textSecondary, minWidth: 100 }}>{label}</span>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: th.text, textAlign: 'right', flex: 1, marginLeft: 16, wordBreak: 'break-word' }}>{value}</span>
                 </div>
               ))}
             </div>
@@ -1290,7 +1290,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 onChange={e => setPrivacyConsent(e.target.checked)}
                 style={{ width: 22, height: 22, marginTop: 2, accentColor: '#1D6FE8', flexShrink: 0 }}
               />
-              <span style={{ fontSize: 14, color: '#9D9DA1', lineHeight: 1.5 }}>
+              <span style={{ fontSize: 14, color: th.textSecondary, lineHeight: 1.5 }}>
                 I agree to the{' '}
                 <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#4D9EFF', textDecoration: 'underline' }}>Privacy Policy</a>
                 {' '}and{' '}
@@ -1309,7 +1309,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                   fontWeight: 700,
                   background: 'transparent',
                   border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#9D9DA1',
+                  color: th.textSecondary,
                   cursor: 'pointer',
                   fontFamily: "'Instrument Sans', sans-serif",
                 }}
@@ -1355,14 +1355,14 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
       {/* "Did you forget?" overlay */}
       {showForgetScreen && !showAiApproval && !aiRewriting && (
-        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
+        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans', sans-serif", color: th.text }}>
           <div style={{ textAlign: 'center', maxWidth: 500 }}>
             <ClipboardCheck size={48} color="#71717A" style={{ marginBottom: 16 }} />
             <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>{lang === 'es' ? 'Antes de enviar...' : lang === 'ru' ? 'Перед отправкой...' : lang === 'uz' ? 'Yuborishdan oldin...' : 'Before we submit...'}</div>
-            <div style={{ fontSize: 16, color: '#9D9DA1', marginBottom: 32 }}>Did you forget to mention anything about your truck?</div>
+            <div style={{ fontSize: 16, color: th.textSecondary, marginBottom: 32 }}>Did you forget to mention anything about your truck?</div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button onClick={() => { setShowForgetScreen(false); setStep(3) }}
-                style={{ padding: '16px 32px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#EDEDF0', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                style={{ padding: '16px 32px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: th.text, fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
                 {lang === 'es' ? 'Si, quiero agregar mas' : lang === 'ru' ? 'Да, хочу добавить' : lang === 'uz' ? "Ha, qo'shmoqchiman" : 'Yes, let me add more'}
               </button>
               <button onClick={async () => {
@@ -1396,19 +1396,19 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
       {/* AI Rewriting spinner */}
       {aiRewriting && (
-        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
+        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans', sans-serif", color: th.text }}>
           <Loader2 size={32} color="#1D6FE8" style={{ animation: 'spin 1s linear infinite', marginBottom: 16 }} />
-          <div style={{ fontSize: 16, color: '#9D9DA1' }}>Cleaning up your description...</div>
+          <div style={{ fontSize: 16, color: th.textSecondary }}>Cleaning up your description...</div>
         </div>
       )}
 
       {/* AI Approval screen */}
       {showAiApproval && (
-        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans', sans-serif", color: '#EDEDF0' }}>
+        <div style={{ position: 'fixed', inset: 0, background: '#151520', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Instrument Sans', sans-serif", color: th.text }}>
           <div style={{ maxWidth: 600, width: '100%', textAlign: 'center' }}>
             <Sparkles size={32} color="#1D6FE8" style={{ marginBottom: 12 }} />
             <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{lang === 'es' ? 'Asi registramos su solicitud' : lang === 'ru' ? 'Вот как мы записали вашу заявку' : lang === 'uz' ? "So'rovingiz shunday qayd qilindi" : "Here's how we recorded your request"}</div>
-            <div style={{ fontSize: 14, color: '#9D9DA1', marginBottom: 24 }}>Our system cleaned up your description for the service team.</div>
+            <div style={{ fontSize: 14, color: th.textSecondary, marginBottom: 24 }}>Our system cleaned up your description for the service team.</div>
             <div style={{ background: th.border, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '20px 24px', textAlign: 'left', fontSize: 16, lineHeight: 1.6, marginBottom: 24, minHeight: 80 }}>
               {aiRewrittenText}
             </div>
@@ -1419,7 +1419,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
                 setConcernText(originalConcernText)
                 setStep(3)
               }}
-                style={{ padding: '16px 32px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#EDEDF0', fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
+                style={{ padding: '16px 32px', borderRadius: 12, border: '2px solid rgba(255,255,255,0.1)', background: 'transparent', color: th.text, fontSize: 18, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>
                 Edit
               </button>
               <button onClick={() => {

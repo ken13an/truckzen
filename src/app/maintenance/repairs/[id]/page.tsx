@@ -95,7 +95,7 @@ export default function RepairDetailPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: `${stColor[repair.status] || MUTED}18`, color: stColor[repair.status] || MUTED, textTransform: 'uppercase' }}>{repair.status?.replace(/_/g, ' ')}</span>
           {nextStatus && (
-            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: th.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
               {saving ? '...' : `Mark ${nextStatus.replace(/_/g, ' ')}`}
             </button>
           )}

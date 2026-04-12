@@ -288,7 +288,7 @@ export default function CustomerProfilePage() {
   ]
 
   return (
-    <div style={{ background: th.bg, minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Inter', sans-serif", padding: 24 }}>
+    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: "'Inter', sans-serif", padding: 24 }}>
       {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
@@ -297,7 +297,7 @@ export default function CustomerProfilePage() {
       )}
 
       {/* Back button */}
-      <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: th.text, textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={16} strokeWidth={2} /> Customers
       </a>
 
@@ -305,7 +305,7 @@ export default function CustomerProfilePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#EDEDF0' }}>{customer.company_name || 'Unknown'}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: th.text }}>{customer.company_name || 'Unknown'}</div>
             <SourceBadge source={customer.source} />
             {customer.is_owner_operator && (
               <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(217,119,6,0.15)', color: '#D97706', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
@@ -339,9 +339,9 @@ export default function CustomerProfilePage() {
                 textTransform: 'uppercase' as const,
               }}
             >
-              <option value="active" style={{ background: '#151520', color: '#EDEDF0' }}>Active</option>
-              <option value="inactive" style={{ background: '#151520', color: '#EDEDF0' }}>Inactive</option>
-              <option value="blacklisted" style={{ background: '#151520', color: '#EDEDF0' }}>Blacklisted</option>
+              <option value="active" style={{ background: '#151520', color: th.text }}>Active</option>
+              <option value="inactive" style={{ background: '#151520', color: th.text }}>Inactive</option>
+              <option value="blacklisted" style={{ background: '#151520', color: th.text }}>Blacklisted</option>
             </select>
           </div>
 
@@ -391,7 +391,7 @@ export default function CustomerProfilePage() {
             borderRadius: 8,
             border: '1px solid rgba(255,255,255,0.12)',
             background: th.border,
-            color: '#EDEDF0',
+            color: th.text,
             fontSize: 13,
             fontWeight: 600,
             cursor: 'pointer',
@@ -411,7 +411,7 @@ export default function CustomerProfilePage() {
           { label: 'Avg WO Value', value: `$${avgWO.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
         ].map(s => (
           <div key={s.label} style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '16px 20px' }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#EDEDF0', fontFamily: "'Inter', sans-serif" }}>{s.value}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: th.text, fontFamily: "'Inter', sans-serif" }}>{s.value}</div>
             <div style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
@@ -455,7 +455,7 @@ export default function CustomerProfilePage() {
                 border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: 8,
                 fontSize: 12,
-                color: '#EDEDF0',
+                color: th.text,
                 outline: 'none',
                 width: 260,
                 fontFamily: "'Inter', sans-serif",
@@ -510,10 +510,10 @@ export default function CustomerProfilePage() {
                       <td style={{ padding: '10px 12px' }}>
                         <OwnershipTypeBadge type={u.is_owner_operator ? 'owner_operator' : u.ownership_type} size="sm" dark />
                       </td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
                         {[u.year, u.make, u.model].filter(Boolean).join(' ') || '\u2014'}
                       </td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF', fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
                         {u.odometer ? u.odometer.toLocaleString() : '\u2014'}
                       </td>
                       <td style={{ padding: '10px 12px' }}>
@@ -542,7 +542,7 @@ export default function CustomerProfilePage() {
       {tab === 'work-orders' && (
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Service History ({woCount})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: th.text }}>Service History ({woCount})</div>
             <a
               href={getNewWorkorderRoute({ customer: id as string })}
               style={{
@@ -590,7 +590,7 @@ export default function CustomerProfilePage() {
                             <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: th.textSecondary, fontSize: 9, fontWeight: 600, textTransform: 'uppercase' as const }}>Historical</span>
                           )}
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#A0AABF' }}>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
                           {(wo.assets as any)?.unit_number ? `#${(wo.assets as any).unit_number}` : '\u2014'}
                         </td>
                         <td style={{ padding: '10px 12px' }}>
@@ -601,7 +601,7 @@ export default function CustomerProfilePage() {
                         <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
                           {wo.created_at ? new Date(wo.created_at).toLocaleDateString() : '\u2014'}
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: '#EDEDF0', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: th.text, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                           ${(wo.grand_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
@@ -613,7 +613,7 @@ export default function CustomerProfilePage() {
                     <button
                       disabled={woPage <= 1}
                       onClick={() => setWoPage(p => Math.max(1, p - 1))}
-                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: th.border, color: '#EDEDF0', cursor: woPage <= 1 ? 'default' : 'pointer', opacity: woPage <= 1 ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: th.border, color: th.text, cursor: woPage <= 1 ? 'default' : 'pointer', opacity: woPage <= 1 ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
                     >
                       Prev
                     </button>
@@ -621,7 +621,7 @@ export default function CustomerProfilePage() {
                     <button
                       disabled={woPage >= totalPages}
                       onClick={() => setWoPage(p => Math.min(totalPages, p + 1))}
-                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: th.border, color: '#EDEDF0', cursor: woPage >= totalPages ? 'default' : 'pointer', opacity: woPage >= totalPages ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)', background: th.border, color: th.text, cursor: woPage >= totalPages ? 'default' : 'pointer', opacity: woPage >= totalPages ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
                     >
                       Next
                     </button>
@@ -637,7 +637,7 @@ export default function CustomerProfilePage() {
       {tab === 'contacts' && (
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Contacts ({contacts.length})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: th.text }}>Contacts ({contacts.length})</div>
             <button
               onClick={() => {
                 setContactForm({ name: '', role: '', phone: '', email: '', is_primary: false })
@@ -671,7 +671,7 @@ export default function CustomerProfilePage() {
                 <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', background: th.border, borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>{c.name}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: th.text }}>{c.name}</span>
                       {c.is_primary && (
                         <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(59,130,246,0.15)', color: '#3B82F6', textTransform: 'uppercase' as const }}>
                           Primary
@@ -714,7 +714,7 @@ export default function CustomerProfilePage() {
       {/* ==================== BILLING TAB ==================== */}
       {tab === 'billing' && (
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0', marginBottom: 20 }}>Billing Settings</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: th.text, marginBottom: 20 }}>Billing Settings</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
             <div>
@@ -729,7 +729,7 @@ export default function CustomerProfilePage() {
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   fontSize: 13,
-                  color: '#EDEDF0',
+                  color: th.text,
                   outline: 'none',
                   fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer',
@@ -760,7 +760,7 @@ export default function CustomerProfilePage() {
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   fontSize: 13,
-                  color: '#EDEDF0',
+                  color: th.text,
                   outline: 'none',
                   fontFamily: "'Inter', sans-serif",
                   boxSizing: 'border-box' as const,
@@ -775,7 +775,7 @@ export default function CustomerProfilePage() {
               <select
                 value={customer.default_ownership_type || 'fleet_asset'}
                 onChange={e => updateField('default_ownership_type', e.target.value)}
-                style={{ width: '100%', padding: '10px 14px', background: th.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: "'Inter', sans-serif", appearance: 'none' as const, boxSizing: 'border-box' as const }}
+                style={{ width: '100%', padding: '10px 14px', background: th.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: "'Inter', sans-serif", appearance: 'none' as const, boxSizing: 'border-box' as const }}
               >
                 <option value="fleet_asset" style={{ background: '#151520' }}>Company Truck</option>
                 <option value="owner_operator" style={{ background: '#151520' }}>Owner Operator</option>
@@ -791,7 +791,7 @@ export default function CustomerProfilePage() {
       {tab === 'documents' && (
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Documents ({documents.length})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: th.text }}>Documents ({documents.length})</div>
             <button
               onClick={() => fileInputRef.current?.click()}
               style={{
@@ -837,7 +837,7 @@ export default function CustomerProfilePage() {
               <tbody>
                 {documents.map((doc: any) => (
                   <tr key={doc.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <td style={{ padding: '10px 12px', fontSize: 13, color: '#EDEDF0', fontWeight: 600 }}>{doc.filename}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 13, color: th.text, fontWeight: 600 }}>{doc.filename}</td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>{doc.file_type || '\u2014'}</td>
                     <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
                       {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '\u2014'}
@@ -871,7 +871,7 @@ export default function CustomerProfilePage() {
       {/* ==================== PARTS TAB ==================== */}
       {tab === 'parts' && (
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0', marginBottom: 16 }}>Pricing Tier</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: th.text, marginBottom: 16 }}>Pricing Tier</div>
           <div style={{ fontSize: 12, color: th.textSecondary, marginBottom: 16, lineHeight: 1.6 }}>
             Determines which price level is used when parts are quoted for this customer&apos;s work orders.
           </div>
@@ -909,7 +909,7 @@ export default function CustomerProfilePage() {
               style={{
                 padding: '8px 14px', fontSize: 12, borderRadius: 8,
                 background: th.border, border: '1px solid rgba(255,255,255,0.1)',
-                color: '#EDEDF0', fontFamily: "'Inter', sans-serif", cursor: 'pointer', outline: 'none',
+                color: th.text, fontFamily: "'Inter', sans-serif", cursor: 'pointer', outline: 'none',
               }}
             >
               <option value="ugl_company" style={{ background: '#151520' }}>UGL Company</option>
@@ -932,7 +932,7 @@ export default function CustomerProfilePage() {
               }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#EDEDF0' }}>{t.label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: th.text }}>{t.label}</div>
                   <div style={{ fontSize: 11, color: th.textSecondary }}>{t.desc}</div>
                 </div>
                 {customer.pricing_tier === t.tier && (
@@ -949,7 +949,7 @@ export default function CustomerProfilePage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditModal(false)}>
           <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '85vh', overflowY: 'auto' as const }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>Edit Customer</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: th.text }}>Edit Customer</div>
               <button onClick={() => setEditModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}><X size={18} /></button>
             </div>
 
@@ -974,7 +974,7 @@ export default function CustomerProfilePage() {
                       border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: 8,
                       fontSize: 13,
-                      color: '#EDEDF0',
+                      color: th.text,
                       outline: 'none',
                       fontFamily: "'Inter', sans-serif",
                       boxSizing: 'border-box' as const,
@@ -996,7 +996,7 @@ export default function CustomerProfilePage() {
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   fontSize: 13,
-                  color: '#EDEDF0',
+                  color: th.text,
                   outline: 'none',
                   fontFamily: "'Inter', sans-serif",
                   boxSizing: 'border-box' as const,
@@ -1017,7 +1017,7 @@ export default function CustomerProfilePage() {
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 8,
                   fontSize: 13,
-                  color: '#EDEDF0',
+                  color: th.text,
                   outline: 'none',
                   fontFamily: "'Inter', sans-serif",
                   boxSizing: 'border-box' as const,
@@ -1051,7 +1051,7 @@ export default function CustomerProfilePage() {
                   transition: 'left 0.2s',
                 }} />
               </button>
-              <span style={{ fontSize: 12, color: '#EDEDF0' }}>Owner Operator</span>
+              <span style={{ fontSize: 12, color: th.text }}>Owner Operator</span>
             </div>
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -1078,7 +1078,7 @@ export default function CustomerProfilePage() {
         <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, marginTop: 12 }}>
           <button
             onClick={() => setShowExternalData(!showExternalData)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: '#EDEDF0', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: th.text, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
           >
             <span style={{ transform: showExternalData ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', display: 'inline-block' }}>&#9654;</span>
             Additional Info
@@ -1088,7 +1088,7 @@ export default function CustomerProfilePage() {
               {Object.entries(customer.external_data).map(([key, val]) => (
                 <div key={key} style={{ fontSize: 12 }}>
                   <span style={{ color: th.textSecondary, fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
-                  <span style={{ color: '#EDEDF0' }}>{val != null ? String(val) : '\u2014'}</span>
+                  <span style={{ color: th.text }}>{val != null ? String(val) : '\u2014'}</span>
                 </div>
               ))}
             </div>
@@ -1101,7 +1101,7 @@ export default function CustomerProfilePage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setContactModal(false)}>
           <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, width: 440, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#EDEDF0' }}>{editingContactId ? 'Edit Contact' : 'Add Contact'}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: th.text }}>{editingContactId ? 'Edit Contact' : 'Add Contact'}</div>
               <button onClick={() => setContactModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}><X size={18} /></button>
             </div>
 
@@ -1125,7 +1125,7 @@ export default function CustomerProfilePage() {
                       border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: 8,
                       fontSize: 13,
-                      color: '#EDEDF0',
+                      color: th.text,
                       outline: 'none',
                       fontFamily: "'Inter', sans-serif",
                       boxSizing: 'border-box' as const,
@@ -1159,7 +1159,7 @@ export default function CustomerProfilePage() {
                     transition: 'left 0.2s',
                   }} />
                 </button>
-                <span style={{ fontSize: 12, color: '#EDEDF0' }}>Primary contact</span>
+                <span style={{ fontSize: 12, color: th.text }}>Primary contact</span>
               </div>
             </div>
 

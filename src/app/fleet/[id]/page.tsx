@@ -91,7 +91,7 @@ export default function FleetDetailPage() {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
     label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'8px 11px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
+    input: { width:'100%', padding:'8px 11px', background:t.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
     th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background:'#0B0D11' },
     td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
@@ -108,7 +108,7 @@ export default function FleetDetailPage() {
 
   return (
     <div style={S.page}>
-      <a href="/fleet" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/fleet" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: t.text, textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Fleet
 </a>
 
@@ -221,7 +221,7 @@ export default function FleetDetailPage() {
                   </select>
                 </div>
               </div>
-              <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
+              <button style={{ ...S.btn, background:t.accent, color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
             </div>
 
             {/* Warranty section */}
@@ -288,7 +288,7 @@ export default function FleetDetailPage() {
                     <label style={S.label}>Notes</label>
                     <textarea style={{ ...S.input, minHeight:50, resize:'vertical' }} value={edit?.warranty_notes||''} onChange={e=>setEdit((a:any)=>({...a,warranty_notes:e.target.value}))} placeholder="Dealer contact, coverage details..."/>
                   </div>
-                  <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={async () => {
+                  <button style={{ ...S.btn, background:t.accent, color:'#fff' }} onClick={async () => {
                     setSaving(true)
                     await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ warranty_provider:edit.warranty_provider||null, warranty_start:edit.warranty_start||null, warranty_expiry:edit.warranty_expiry||null, warranty_mileage_limit:edit.warranty_mileage_limit||null, warranty_notes:edit.warranty_notes||null, warranty_coverage_type:edit.warranty_coverage_type||null }) })
                     setAsset(edit); setSaving(false)
@@ -414,12 +414,12 @@ export default function FleetDetailPage() {
               value={historySearch}
               onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }}
               placeholder="Search description, ref #, done by..."
-              style={{ ...S.input, maxWidth:280, background:'#1C2130' }}
+              style={{ ...S.input, maxWidth:280, background:t.inputBg }}
             />
             <select
               value={historySource}
               onChange={e => { setHistorySource(e.target.value); setHistoryPage(1) }}
-              style={{ ...S.input, width:'auto', minWidth:140, appearance:'auto', cursor:'pointer', background:'#1C2130' }}
+              style={{ ...S.input, width:'auto', minWidth:140, appearance:'auto', cursor:'pointer', background:t.inputBg }}
             >
               <option value="all">All Sources</option>
               <option value="inhouse">In-House Only</option>

@@ -133,17 +133,17 @@ export default function NewServiceRequestPage() {
     section: { background: th.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 20, marginBottom: 16 },
     sectionTitle: { fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 14 },
     label: { fontSize: 11, fontWeight: 600, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 6 },
-    input: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
-    textarea: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 100, resize: 'vertical' as const, boxSizing: 'border-box' as const },
-    select: { width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '10px 12px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
+    textarea: { width: '100%', padding: '10px 12px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 100, resize: 'vertical' as const, boxSizing: 'border-box' as const },
+    select: { width: '100%', padding: '10px 12px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
     row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
     field: { marginBottom: 12 },
     custCard: { padding: '10px 14px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    unitCard: { padding: '8px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, cursor: 'pointer', marginBottom: 6 },
+    unitCard: { padding: '8px 12px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, cursor: 'pointer', marginBottom: 6 },
     unitCardActive: { padding: '8px 12px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.25)', borderRadius: 8, cursor: 'pointer', marginBottom: 6 },
     secondaryBtn: { padding: '7px 14px', background: 'none', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, color: th.textSecondary, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
-    submitBtn: { width: '100%', padding: 14, background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', minHeight: 48, boxShadow: '0 0 16px rgba(29,111,232,.25)' },
-    submitDisabled: { width: '100%', padding: 14, background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 14, fontWeight: 600, color: th.textSecondary, cursor: 'not-allowed', fontFamily: 'inherit', minHeight: 48 },
+    submitBtn: { width: '100%', padding: 14, background: th.accent, border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', minHeight: 48, boxShadow: '0 0 16px rgba(29,111,232,.25)' },
+    submitDisabled: { width: '100%', padding: 14, background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 14, fontWeight: 600, color: th.textSecondary, cursor: 'not-allowed', fontFamily: 'inherit', minHeight: 48 },
     error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 16 },
     searchResult: { padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.04)' },
   }
@@ -152,7 +152,7 @@ export default function NewServiceRequestPage() {
 
   return (
     <div style={S.page}>
-      <a href="/service-requests" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/service-requests" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: th.text, textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Service Requests
 </a>
       <div style={S.title}>New Service Request</div>
@@ -213,7 +213,7 @@ export default function NewServiceRequestPage() {
                 {searching && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: th.textSecondary }}>Searching...</div>}
               </div>
               {customerResults.length > 0 && (
-                <div style={{ background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, marginTop: 6, maxHeight: 200, overflowY: 'auto' }}>
+                <div style={{ background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, marginTop: 6, maxHeight: 200, overflowY: 'auto' }}>
                   {customerResults.map(c => (
                     <div key={c.id} style={S.searchResult}
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}

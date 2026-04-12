@@ -145,7 +145,7 @@ export default function StaffImportPage() {
             <div style={{
               width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontWeight: 700,
-              background: step === s || (s === 'importing' && step === 'done') ? '#1D6FE8' : i < ['upload', 'preview', 'importing'].indexOf(step) || step === 'done' ? 'rgba(29,111,232,.2)' : '#1C2130',
+              background: step === s || (s === 'importing' && step === 'done') ? '#1D6FE8' : i < ['upload', 'preview', 'importing'].indexOf(step) || step === 'done' ? 'rgba(29,111,232,.2)' : t.inputBg,
               color: step === s || step === 'done' ? '#fff' : t.textTertiary,
               border: `1px solid ${step === s ? '#1D6FE8' : t.border}`,
             }}>{i + 1}</div>
@@ -187,7 +187,7 @@ export default function StaffImportPage() {
             </div>
             <div style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, letterSpacing: '.05em', textTransform: 'uppercase', marginTop: 14, marginBottom: 10 }}>Optional Columns</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {['Team', 'Language', 'Phone', 'Skills', 'Employee ID', 'Notes'].map(c => <span key={c} style={{ padding: '4px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.06)', borderRadius: 6, fontSize: 11, color: t.textSecondary }}>{c}</span>)}
+              {['Team', 'Language', 'Phone', 'Skills', 'Employee ID', 'Notes'].map(c => <span key={c} style={{ padding: '4px 10px', background: t.inputBg, border: '1px solid rgba(255,255,255,.06)', borderRadius: 6, fontSize: 11, color: t.textSecondary }}>{c}</span>)}
             </div>
             <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 12, lineHeight: 1.6 }}>
               Valid roles: Technician, Service Writer, Shop Manager, Parts Manager, Accountant, Office Admin, GM, Dispatcher, Driver, Fleet Manager, Maintenance Technician, Maintenance Manager, Owner<br />
@@ -282,7 +282,7 @@ export default function StaffImportPage() {
               <span>{step === 'done' ? 'Import complete' : 'Creating accounts...'}</span>
               <span>{importProgress} / {importable.length}</span>
             </div>
-            <div style={{ height: 6, background: '#1C2130', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ height: 6, background: t.inputBg, borderRadius: 3, overflow: 'hidden' }}>
               <div style={{
                 height: '100%', borderRadius: 3, transition: 'width .3s',
                 width: `${(importProgress / Math.max(importable.length, 1)) * 100}%`,

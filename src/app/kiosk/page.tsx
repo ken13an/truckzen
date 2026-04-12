@@ -52,21 +52,21 @@ export default function KioskPage() {
   }, [])
 
   if (status === 'loading') {
-    return <div style={{ background: '#151520', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif" }}>
+    return <div style={{ background: '#151520', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.text, fontFamily: "'Instrument Sans', sans-serif" }}>
       <p>Loading...</p>
     </div>
   }
 
   if (status === 'enter_code') {
     return <div style={{ minHeight: '100vh', background: '#151520', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans', sans-serif" }}>
-      <div style={{ textAlign: 'center', color: '#EDEDF0', maxWidth: 400, padding: '0 24px' }}>
+      <div style={{ textAlign: 'center', color: t.text, maxWidth: 400, padding: '0 24px' }}>
         <Logo size="lg" style={{ justifyContent: 'center', marginBottom: 24 }} />
         <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Check-In Kiosk</div>
-        <div style={{ fontSize: 14, color: '#9D9DA1', marginBottom: 24 }}>Enter your shop's kiosk code or scan the QR code at the front desk.</div>
+        <div style={{ fontSize: 14, color: t.textSecondary, marginBottom: 24 }}>Enter your shop's kiosk code or scan the QR code at the front desk.</div>
         <form onSubmit={e => { e.preventDefault(); const code = (e.currentTarget.elements.namedItem('code') as HTMLInputElement)?.value?.trim(); if (code) window.location.href = `/kiosk/${code}` }}
           style={{ display: 'flex', gap: 8 }}>
           <input name="code" placeholder="e.g. ugl" autoFocus
-            style={{ flex: 1, padding: '14px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: t.border, color: '#EDEDF0', fontSize: 18, fontFamily: "'Instrument Sans', sans-serif", outline: 'none', textAlign: 'center', letterSpacing: 2 }} />
+            style={{ flex: 1, padding: '14px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', background: t.border, color: t.text, fontSize: 18, fontFamily: "'Instrument Sans', sans-serif", outline: 'none', textAlign: 'center', letterSpacing: 2 }} />
           <button type="submit" style={{ padding: '14px 24px', borderRadius: 12, background: '#1D6FE8', color: '#fff', border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>Go</button>
         </form>
       </div>
@@ -74,10 +74,10 @@ export default function KioskPage() {
   }
 
   if (status === 'error') {
-    return <div style={{ background: '#151520', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif" }}>
+    return <div style={{ background: '#151520', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.text, fontFamily: "'Instrument Sans', sans-serif" }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Shop Not Found</div>
-        <p style={{ color: '#9D9DA1' }}>The shop ID is invalid.</p>
+        <p style={{ color: t.textSecondary }}>The shop ID is invalid.</p>
       </div>
     </div>
   }

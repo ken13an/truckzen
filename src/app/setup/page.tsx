@@ -69,8 +69,8 @@ export default function SetupPage() {
     title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:th.text, marginBottom:6 },
     sub:     { fontSize:12, color:th.textSecondary, marginBottom:20, lineHeight:1.5 },
     label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:th.textSecondary, marginBottom:4, display:'block' },
-    input:   { width:'100%', padding:'9px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:th.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
-    btn:     { padding:'12px 24px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:8 },
+    input:   { width:'100%', padding:'9px 12px', background:th.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:th.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
+    btn:     { padding:'12px 24px', background:th.accent, border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', marginTop:8 },
     grid2:   { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   }
 
@@ -87,7 +87,7 @@ export default function SetupPage() {
       <div style={S.card}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24 }}>
-          <div style={{ width:28, height:28, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ width:28, height:28, background:th.accent, borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
           <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:th.text }}>
@@ -134,7 +134,7 @@ export default function SetupPage() {
               { team:'C', bays:'Bays 9–10', dept:'Body & Chassis', color:'#E8692A' },
               { team:'D', bays:'Bays 11–12', dept:'Inspection', color:'#1DB870' },
             ].map(t => (
-              <div key={t.team} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:9, marginBottom:8 }}>
+              <div key={t.team} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:th.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:9, marginBottom:8 }}>
                 <div style={{ width:28, height:28, borderRadius:7, background:`${t.color}20`, border:`1px solid ${t.color}33`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Bebas Neue',sans-serif", fontSize:14, color:t.color }}>{t.team}</div>
                 <div>
                   <div style={{ fontSize:12, fontWeight:700, color:th.text }}>Team {t.team} — {t.dept}</div>
@@ -200,7 +200,7 @@ export default function SetupPage() {
                 { icon:'', label:'Add parts manually', sub:'Add parts one by one in Parts → Inventory' },
                 { icon:'', label:'Skip — add parts later', sub:'Start using TruckZen now, import parts when ready' },
               ].map(opt => (
-                <div key={opt.label} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'12px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:9, cursor:'pointer' }}
+                <div key={opt.label} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'12px', background:th.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:9, cursor:'pointer' }}
                   onClick={() => setStep(4)}>
                   <span style={{ fontSize:18 }}>{opt.icon}</span>
                   <div>

@@ -79,7 +79,7 @@ export default function PartsReorderPage() {
         <div style={{ fontSize:13, color:t.textSecondary, marginBottom:24 }}>{selectedParts.length} parts · ${totalCost.toFixed(0)} estimated cost</div>
         <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
           <button onClick={() => { setDone(null); setSelected(new Set()) }} style={{ padding:'10px 20px', background:'transparent', border:'1px solid rgba(255,255,255,.1)', borderRadius:9, color:t.textSecondary, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>Back to Reorder</button>
-          <a href="/parts" style={{ padding:'10px 20px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none' }}>View Parts</a>
+          <a href="/parts" style={{ padding:'10px 20px', background:t.accent, borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none' }}>View Parts</a>
         </div>
       </div>
     </div>
@@ -87,7 +87,7 @@ export default function PartsReorderPage() {
 
   return (
     <div style={S.page}>
-      <a href="/parts" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/parts" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: t.text, textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Parts
 </a>
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
@@ -102,7 +102,7 @@ export default function PartsReorderPage() {
               <div style={{ fontFamily:'monospace', fontSize:14, fontWeight:700, color:'#4D9EFF' }}>~${totalCost.toFixed(0)} cost</div>
             </div>
             <button onClick={createPO} disabled={creating}
-              style={{ padding:'10px 20px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+              style={{ padding:'10px 20px', background:t.accent, border:'none', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
               {creating ? 'Creating...' : 'Create Purchase Order'}
             </button>
           </div>

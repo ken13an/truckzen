@@ -63,9 +63,9 @@ export default function ActivityFeedPage() {
       {/* Post comment */}
       <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-end' }}>
         <div style={{ flex: 1 }}>
-          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Post a comment or update..." style={{ width: '100%', padding: '10px 12px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, minHeight: 48, resize: 'vertical' as const, boxSizing: 'border-box' }} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); postComment() } }} />
+          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Post a comment or update..." style={{ width: '100%', padding: '10px 12px', background: t.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, minHeight: 48, resize: 'vertical' as const, boxSizing: 'border-box' }} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); postComment() } }} />
         </div>
-        <button onClick={postComment} disabled={posting || !comment.trim()} style={{ padding: '10px 16px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, fontFamily: FONT, minHeight: 40 }}>
+        <button onClick={postComment} disabled={posting || !comment.trim()} style={{ padding: '10px 16px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, fontFamily: FONT, minHeight: 40 }}>
           <Send size={14} /> Post
         </button>
       </div>

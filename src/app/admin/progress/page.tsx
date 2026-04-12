@@ -42,8 +42,8 @@ export default function BuildProgressPage() {
   if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>Loading...</div>
 
   return (
-    <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, color: '#EDEDF0', padding: 24 }}>
-      <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+    <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, color: th.text, padding: 24 }}>
+      <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 700, color: th.text, textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={16} strokeWidth={2} /> Dashboard
       </a>
 
@@ -95,7 +95,7 @@ export default function BuildProgressPage() {
                     {t.done && '✓'}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: t.done ? '#9CA3AF' : '#EDEDF0', textDecoration: t.done ? 'line-through' : 'none' }}>{t.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: t.done ? '#9CA3AF' : th.text, textDecoration: t.done ? 'line-through' : 'none' }}>{t.label}</div>
                     {t.note && <div style={{ fontSize: 10, color: '#6B7280', marginTop: 2 }}>{t.note}</div>}
                   </div>
                 </div>

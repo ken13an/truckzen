@@ -71,7 +71,7 @@ export default function PayrollPage() {
   if (loading) return <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary, fontFamily: FONT }}>Loading...</div>
 
   return (
-    <div style={{ minHeight: '100vh', background: t.bg, color: '#EDEDF0', fontFamily: FONT, padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 4px' }}>Payroll</h1>
@@ -99,7 +99,7 @@ export default function PayrollPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search employee..." style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#151520', color: '#EDEDF0', fontSize: 13, fontFamily: FONT, outline: 'none', width: 220 }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search employee..." style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#151520', color: t.text, fontSize: 13, fontFamily: FONT, outline: 'none', width: 220 }} />
         {['all', 'hourly', 'salaried'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: filter === f ? `1px solid ${BLUE}` : '1px solid rgba(255,255,255,0.08)', background: filter === f ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f ? '#4D9EFF' : t.textSecondary, fontFamily: FONT, textTransform: 'capitalize' }}>{f}</button>
         ))}
@@ -123,12 +123,12 @@ export default function PayrollPage() {
               if (isEditing) {
                 return (
                   <tr key={e.id} style={{ background: 'rgba(29,111,232,0.04)' }}>
-                    <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#EDEDF0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{e.full_name}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: t.text, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{e.full_name}</td>
                     <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                       <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: t.border, color: t.textSecondary, textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ')}</span>
                     </td>
                     <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <select value={form.pay_type} onChange={ev => setForm(f => ({ ...f, pay_type: ev.target.value }))} style={{ padding: '4px 8px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 12, fontFamily: FONT }}>
+                      <select value={form.pay_type} onChange={ev => setForm(f => ({ ...f, pay_type: ev.target.value }))} style={{ padding: '4px 8px', borderRadius: 6, background: t.inputBg, border: '1px solid rgba(255,255,255,0.08)', color: t.text, fontSize: 12, fontFamily: FONT }}>
                         <option value="hourly">Hourly</option>
                         <option value="weekly_salary">Weekly Salary</option>
                         <option value="biweekly_salary">Bi-Weekly Salary</option>
@@ -139,15 +139,15 @@ export default function PayrollPage() {
                       {form.pay_type === 'hourly' ? (
                         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                           <span style={{ color: t.textSecondary, fontSize: 12 }}>$</span>
-                          <input value={form.hourly_rate} onChange={ev => setForm(f => ({ ...f, hourly_rate: ev.target.value }))} style={{ width: 70, padding: '4px 6px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                          <input value={form.hourly_rate} onChange={ev => setForm(f => ({ ...f, hourly_rate: ev.target.value }))} style={{ width: 70, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: '1px solid rgba(255,255,255,0.08)', color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                           <span style={{ color: t.textSecondary, fontSize: 11 }}>/hr x</span>
-                          <input value={form.weekly_hours} onChange={ev => setForm(f => ({ ...f, weekly_hours: ev.target.value }))} style={{ width: 40, padding: '4px 6px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                          <input value={form.weekly_hours} onChange={ev => setForm(f => ({ ...f, weekly_hours: ev.target.value }))} style={{ width: 40, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: '1px solid rgba(255,255,255,0.08)', color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                           <span style={{ color: t.textSecondary, fontSize: 11 }}>hrs</span>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                           <span style={{ color: t.textSecondary, fontSize: 12 }}>$</span>
-                          <input value={form.salary_amount} onChange={ev => setForm(f => ({ ...f, salary_amount: ev.target.value }))} style={{ width: 90, padding: '4px 6px', borderRadius: 6, background: '#1C2130', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDF0', fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                          <input value={form.salary_amount} onChange={ev => setForm(f => ({ ...f, salary_amount: ev.target.value }))} style={{ width: 90, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: '1px solid rgba(255,255,255,0.08)', color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                         </div>
                       )}
                     </td>
@@ -164,7 +164,7 @@ export default function PayrollPage() {
 
               return (
                 <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#EDEDF0' }}>{e.full_name || '—'}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: t.text }}>{e.full_name || '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: t.border, color: t.textSecondary, textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ') || '—'}</span>
                   </td>
@@ -177,10 +177,10 @@ export default function PayrollPage() {
                   <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 700, color: weekly > 0 ? BLUE : t.textTertiary }}>
                     {weekly > 0 ? '$' + weekly.toFixed(2) : '—'}
                   </td>
-                  <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#EDEDF0' }}>
+                  <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: t.text }}>
                     {e.punchStats?.minutes > 0 ? <><span style={{ fontWeight: 700 }}>{+(e.punchStats.minutes / 60).toFixed(1)}h</span> <span style={{ color: t.textSecondary, fontSize: 10 }}>({e.punchStats.count})</span></> : <span style={{ color: t.textTertiary }}>—</span>}
                   </td>
-                  <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: '#EDEDF0' }}>
+                  <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: t.text }}>
                     {e.jobStats?.minutes > 0 ? <><span style={{ fontWeight: 700 }}>{+(e.jobStats.minutes / 60).toFixed(1)}h</span> <span style={{ color: t.textSecondary, fontSize: 10 }}>({e.jobStats.count})</span></> : <span style={{ color: t.textTertiary }}>—</span>}
                   </td>
                   <td style={{ padding: '10px 14px' }}>

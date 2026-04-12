@@ -98,7 +98,7 @@ export default function PMDetailPage() {
   const S: Record<string, React.CSSProperties> = {
     card: { background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary },
-    input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '8px 11px', background: t.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
   }
 
   return (

@@ -118,13 +118,13 @@ export default function SettingsPage() {
   }
 
   const S = {
-    page: { background: t.bg, minHeight: '100vh', color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", padding: 24 } as React.CSSProperties,
+    page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans', sans-serif", padding: 24 } as React.CSSProperties,
     card: { background: t.bgElevated, border: `1px solid ${t.bgActive}`, borderRadius: 12, padding: 20, maxWidth: 560, marginBottom: 16 } as React.CSSProperties,
-    label: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', textTransform: 'uppercase' as const, letterSpacing: '.04em', display: 'block', marginBottom: 4, marginTop: 10 } as React.CSSProperties,
-    input: { width: '100%', padding: '9px 12px', background: t.border, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const } as React.CSSProperties,
-    val: { fontSize: 13, color: '#EDEDF0', padding: '6px 0' } as React.CSSProperties,
+    label: { fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.04em', display: 'block', marginBottom: 4, marginTop: 10 } as React.CSSProperties,
+    input: { width: '100%', padding: '9px 12px', background: t.border, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const } as React.CSSProperties,
+    val: { fontSize: 13, color: t.text, padding: '6px 0' } as React.CSSProperties,
     btn: { padding: '8px 18px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' } as React.CSSProperties,
-    menuItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${t.bgHover}`, cursor: 'pointer', fontSize: 14, color: '#EDEDF0', fontWeight: 500 } as React.CSSProperties,
+    menuItem: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: `1px solid ${t.bgHover}`, cursor: 'pointer', fontSize: 14, color: t.text, fontWeight: 500 } as React.CSSProperties,
   }
 
   function handleSectionClick(s: typeof SECTIONS[0]) {
@@ -143,7 +143,7 @@ export default function SettingsPage() {
               onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
               <span>{s.label}</span>
-              <span style={{ color: '#9D9DA1' }}>&rarr;</span>
+              <span style={{ color: t.textSecondary }}>&rarr;</span>
             </div>
           ))}
         </div>
@@ -152,7 +152,7 @@ export default function SettingsPage() {
   }
 
   const backBar = (
-    <div onClick={() => setActiveSection(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#9D9DA1', cursor: 'pointer', marginBottom: 20 }}>
+    <div onClick={() => setActiveSection(null)} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: t.textSecondary, cursor: 'pointer', marginBottom: 20 }}>
       <span>&larr;</span> Settings
     </div>
   )
@@ -195,7 +195,7 @@ export default function SettingsPage() {
                     type="number" step="0.01" min="0"
                     value={r.rate_per_hour}
                     onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, rate_per_hour: parseFloat(e.target.value) || 0 } : x))}
-                    style={{ width: 100, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }}
+                    style={{ width: 100, padding: '8px 10px', background: t.inputBg, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }}
                   />
                   <span style={{ fontSize: 12, color: t.textSecondary }}>/hr</span>
                 </div>
@@ -207,7 +207,7 @@ export default function SettingsPage() {
               Warning: One or more labor rates are $0 — estimates will show $0 labor charges.
             </div>
           )}
-          <button onClick={saveLaborRates} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={saveLaborRates} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {laborSaving ? 'Saving...' : 'Save Rates'}
           </button>
         </div>
@@ -228,7 +228,7 @@ export default function SettingsPage() {
                   <div>
                     <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Mode</label>
                     <select value={r.parts_pricing_mode || 'markup'} onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_pricing_mode: e.target.value } : x))}
-                      style={{ padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+                      style={{ padding: '8px 10px', background: t.inputBg, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
                       <option value="markup">Markup %</option>
                       <option value="margin">Margin %</option>
                     </select>
@@ -238,7 +238,7 @@ export default function SettingsPage() {
                       <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Markup %</label>
                       <input type="number" step="0.1" min="0" value={r.parts_markup_pct ?? 0}
                         onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_markup_pct: parseFloat(e.target.value) || 0 } : x))}
-                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                        style={{ width: 80, padding: '8px 10px', background: t.inputBg, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                     </div>
                   )}
                   {r.parts_pricing_mode === 'margin' && (
@@ -246,7 +246,7 @@ export default function SettingsPage() {
                       <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 4 }}>Margin %</label>
                       <input type="number" step="0.1" min="0" max="99" value={r.parts_margin_pct ?? 0}
                         onChange={e => setLaborRates(prev => prev.map(x => x.id === r.id ? { ...x, parts_margin_pct: parseFloat(e.target.value) || 0 } : x))}
-                        style={{ width: 80, padding: '8px 10px', background: '#1C2130', border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                        style={{ width: 80, padding: '8px 10px', background: t.inputBg, border: `1px solid ${t.bgActive}`, borderRadius: 8, fontSize: 14, color: t.text, outline: 'none', fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                     </div>
                   )}
                   <div style={{ fontSize: 12, color: t.textSecondary, background: t.border, padding: '8px 12px', borderRadius: 8, fontFamily: "'IBM Plex Mono', monospace" }}>
@@ -260,7 +260,7 @@ export default function SettingsPage() {
             setLaborSaving(true)
             await fetch('/api/settings/labor-rates', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rates: laborRates.map(r => ({ id: r.id, parts_margin_pct: r.parts_margin_pct, parts_markup_pct: r.parts_markup_pct, parts_pricing_mode: r.parts_pricing_mode })), user_id: user?.id }) })
             setLaborSaving(false)
-          }} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          }} disabled={laborSaving} style={{ marginTop: 16, padding: '10px 24px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {laborSaving ? 'Saving...' : 'Save Parts Pricing'}
           </button>
         </div>
@@ -280,7 +280,7 @@ export default function SettingsPage() {
             <div><label style={S.label}>County / City</label><input style={S.input} value={editShop.county || ''} onChange={e => setEditShop({ ...editShop, county: e.target.value })} placeholder="Cook" /></div>
             <div><label style={S.label}>Tax Rate %</label><input style={S.input} type="number" step="0.01" value={editShop.tax_rate || ''} onChange={e => setEditShop({ ...editShop, tax_rate: e.target.value })} placeholder="10.25" /></div>
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#EDEDF0', cursor: 'pointer', marginBottom: 16 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: t.text, cursor: 'pointer', marginBottom: 16 }}>
             <input type="checkbox" checked={editShop.tax_labor || false} onChange={e => setEditShop({ ...editShop, tax_labor: e.target.checked })} style={{ width: 16, height: 16 }} />
             Tax labor (default: off)
           </label>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
               <label style={S.label}>Default Labor Rate ($/hr)</label><input style={S.input} type="number" step="0.01" value={editShop.labor_rate || ''} onChange={e => setEditShop({ ...editShop, labor_rate: e.target.value })} placeholder="125.00" />
               <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
                 <button style={S.btn} onClick={saveShop} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-                <button style={{ ...S.btn, background: 'transparent', border: '1px solid rgba(255,255,255,.1)', color: '#9D9DA1' }} onClick={() => setEditing(false)}>Cancel</button>
+                <button style={{ ...S.btn, background: 'transparent', border: '1px solid rgba(255,255,255,.1)', color: t.textSecondary }} onClick={() => setEditing(false)}>Cancel</button>
               </div>
             </>
           ) : (
@@ -348,7 +348,7 @@ export default function SettingsPage() {
             { name: 'Samsara GPS', desc: 'Fleet tracking' },
           ].map(int => (
             <div key={int.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${t.bgHover}` }}>
-              <div><div style={{ fontSize: 13, fontWeight: 600 }}>{int.name}</div><div style={{ fontSize: 11, color: '#9D9DA1' }}>{int.desc}</div></div>
+              <div><div style={{ fontSize: 13, fontWeight: 600 }}>{int.name}</div><div style={{ fontSize: 11, color: t.textSecondary }}>{int.desc}</div></div>
               <button style={{ padding: '5px 14px', borderRadius: 7, background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.25)', color: t.accentLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Connect</button>
             </div>
           ))}
@@ -367,7 +367,7 @@ export default function SettingsPage() {
       setKioskSaving(false)
     }
     return (
-      <div style={{ padding: 24, maxWidth: 700, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", color: '#EDEDF0' }}>
+      <div style={{ padding: 24, maxWidth: 700, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", color: t.text }}>
         <button onClick={() => setActiveSection(null)} style={{ background: 'none', border: 'none', color: t.textSecondary, fontSize: 13, cursor: 'pointer', marginBottom: 16, fontFamily: 'inherit' }}>&larr; Back to Settings</button>
         <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700 }}>Kiosk Mode</h2>
 
@@ -390,7 +390,7 @@ export default function SettingsPage() {
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk Code</label>
             <input value={kioskCode} onChange={e => setKioskCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-              placeholder="e.g. ugl" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bg, color: '#EDEDF0', fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+              placeholder="e.g. ugl" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bg, color: t.text, fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
             <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 4 }}>Lowercase letters, numbers, and dashes only. This becomes your kiosk URL.</div>
           </div>
 
@@ -405,7 +405,7 @@ export default function SettingsPage() {
             <label style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk PIN</label>
             <input value={kioskPin} onChange={e => setKioskPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="0000" maxLength={6}
-              style={{ width: 120, padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bg, color: '#EDEDF0', fontSize: 18, fontFamily: 'monospace', outline: 'none', letterSpacing: 4, textAlign: 'center' }} />
+              style={{ width: 120, padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bg, color: t.text, fontSize: 18, fontFamily: 'monospace', outline: 'none', letterSpacing: 4, textAlign: 'center' }} />
             <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 4 }}>4-6 digits. Staff enters PIN once to activate the kiosk tablet. Customers never see it.</div>
           </div>
 
@@ -417,7 +417,7 @@ export default function SettingsPage() {
 
         <div style={{ background: t.bgCard, border: '1px solid #1A1D23', borderRadius: 12, padding: 20 }}>
           <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Tablet Setup Instructions</h3>
-          <ol style={{ margin: 0, padding: '0 0 0 20px', fontSize: 13, color: '#9D9DA1', lineHeight: 2 }}>
+          <ol style={{ margin: 0, padding: '0 0 0 20px', fontSize: 13, color: t.textSecondary, lineHeight: 2 }}>
             <li>Open Safari or Chrome on the tablet</li>
             <li>Go to: <strong style={{ color: t.accentLight }}>{kioskUrl || 'truckzen.pro/kiosk/your-code'}</strong></li>
             <li>Tap Share then "Add to Home Screen"</li>
@@ -471,7 +471,7 @@ export default function SettingsPage() {
             {brandingShop.logo_url ? (
               <img src={brandingShop.logo_url} alt="Logo" style={{ maxHeight: 50, maxWidth: 200, borderRadius: 6, background: t.border, padding: 4 }} />
             ) : (
-              <div style={{ width: 80, height: 50, background: t.border, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#9D9DA1' }}>No logo</div>
+              <div style={{ width: 80, height: 50, background: t.border, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: t.textSecondary }}>No logo</div>
             )}
             <label style={{ ...S.btn, fontSize: 11, opacity: logoUploading ? 0.5 : 1, cursor: logoUploading ? 'wait' : 'pointer' }}>
               {logoUploading ? 'Uploading...' : 'Upload Logo'}
@@ -540,7 +540,7 @@ export default function SettingsPage() {
           <button style={{ ...S.btn, marginTop: 16 }} onClick={saveRetentionPolicy} disabled={retentionSaving}>
             {retentionSaving ? 'Saving...' : 'Save Retention Policy'}
           </button>
-          <div style={{ fontSize: 11, color: '#9D9DA1', marginTop: 12, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 12, lineHeight: 1.5 }}>
             These settings define your shop&#39;s data retention policy. Actual archival runs automatically based on these rules.
           </div>
         </div>
@@ -583,7 +583,7 @@ export default function SettingsPage() {
         <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>Two-Factor Authentication</div>
         {!canSetup2FA ? (
           <div style={S.card}>
-            <div style={{ color: '#9D9DA1', fontSize: 13, padding: 20, textAlign: 'center' }}>
+            <div style={{ color: t.textSecondary, fontSize: 13, padding: 20, textAlign: 'center' }}>
               2FA is available for Owner and Accounting roles only.
             </div>
           </div>
@@ -609,7 +609,7 @@ export default function SettingsPage() {
 
             {tfaQR && (
               <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', paddingTop: 16 }}>
-                <div style={{ fontSize: 13, color: '#EDEDF0', marginBottom: 12 }}>
+                <div style={{ fontSize: 13, color: t.text, marginBottom: 12 }}>
                   Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):
                 </div>
                 <div style={{ textAlign: 'center', marginBottom: 16 }}>
@@ -618,7 +618,7 @@ export default function SettingsPage() {
                 <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 16, textAlign: 'center' }}>
                   Or enter manually: <code style={{ fontFamily: "'IBM Plex Mono', monospace", background: t.border, padding: '2px 6px', borderRadius: 4, fontSize: 11, letterSpacing: '.05em' }}>{tfaSecret}</code>
                 </div>
-                <div style={{ fontSize: 13, color: '#EDEDF0', marginBottom: 8 }}>Enter the 6-digit code to verify:</div>
+                <div style={{ fontSize: 13, color: t.text, marginBottom: 8 }}>Enter the 6-digit code to verify:</div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input value={tfaCode} onChange={e => setTfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" maxLength={6}
                     style={{ ...S.input, width: 120, textAlign: 'center', letterSpacing: '.2em', fontFamily: "'IBM Plex Mono', monospace", fontSize: 18, fontWeight: 700 }} />
@@ -721,7 +721,7 @@ export default function SettingsPage() {
       {backBar}
       <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 16 }}>{SECTIONS.find(s => s.key === activeSection)?.label}</div>
       <div style={S.card}>
-        <div style={{ color: '#9D9DA1', fontSize: 13, padding: 20, textAlign: 'center' }}>Coming soon</div>
+        <div style={{ color: t.textSecondary, fontSize: 13, padding: 20, textAlign: 'center' }}>Coming soon</div>
       </div>
     </div>
   )

@@ -50,7 +50,7 @@ export default function PunchReportPage() {
     const jobTotal = (detail.entries || []).reduce((s: number, e: any) => s + (e.duration_minutes || 0), 0)
 
     return (
-      <div style={{ minHeight: '100vh', background: t.bg, color: '#EDEDF0', fontFamily: FONT, padding: 24 }}>
+      <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: FONT, padding: 24 }}>
         <button onClick={() => { setSelected(null); setDetail(null) }} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: BLUE, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, marginBottom: 16 }}>
           <ChevronLeft size={16} /> Back to Mechanics
         </button>
@@ -139,7 +139,7 @@ export default function PunchReportPage() {
 
   // Mechanic list view
   return (
-    <div style={{ minHeight: '100vh', background: t.bg, color: '#EDEDF0', fontFamily: FONT, padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: FONT, padding: 24 }}>
       <a href="/accounting/payroll" style={{ display: 'flex', alignItems: 'center', gap: 4, color: BLUE, fontSize: 13, textDecoration: 'none', fontWeight: 600, marginBottom: 12 }}><ChevronLeft size={16} /> Payroll</a>
       <h1 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 4px' }}>Mechanic Punch Report</h1>
       <p style={{ fontSize: 13, color: DIM, margin: '0 0 16px' }}>Shift attendance vs job activity — {periodLabel}{periodInfo?.tz ? ` (${periodInfo.tz})` : ''}</p>
@@ -155,7 +155,7 @@ export default function PunchReportPage() {
         ))}
       </div>
 
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search mechanic..." style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#151520', color: '#EDEDF0', fontSize: 13, fontFamily: FONT, outline: 'none', width: 220, marginBottom: 12 }} />
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search mechanic..." style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#151520', color: t.text, fontSize: 13, fontFamily: FONT, outline: 'none', width: 220, marginBottom: 12 }} />
 
       {(() => {
         const filtered = search ? mechanics.filter(m => (m.full_name || '').toLowerCase().includes(search.toLowerCase())) : mechanics

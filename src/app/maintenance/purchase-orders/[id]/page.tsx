@@ -80,7 +80,7 @@ export default function PODetailPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: `${stColor[po.status] || MUTED}18`, color: stColor[po.status] || MUTED, textTransform: 'uppercase' }}>{po.status}</span>
           {nextStatus && (
-            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: th.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
               {saving ? '...' : `Mark ${nextStatus}`}
             </button>
           )}
@@ -145,7 +145,7 @@ export default function PODetailPage() {
                 <div style={{ fontSize: 10, color: MUTED }}>Ordered: {l.quantity_ordered ?? l.quantity} · Received: {l.quantity_received || 0}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="number" defaultValue={l.quantity_received || 0} min={0} max={l.quantity_ordered ?? l.quantity} style={{ width: 60, padding: '4px 8px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 12, color: th.text, textAlign: 'center', fontFamily: MONO }} onBlur={e => receiveLine(l.id, parseFloat(e.target.value) || 0)} />
+                <input type="number" defaultValue={l.quantity_received || 0} min={0} max={l.quantity_ordered ?? l.quantity} style={{ width: 60, padding: '4px 8px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 12, color: th.text, textAlign: 'center', fontFamily: MONO }} onBlur={e => receiveLine(l.id, parseFloat(e.target.value) || 0)} />
                 {(l.quantity_received || 0) >= (l.quantity_ordered ?? l.quantity) && <span style={{ fontSize: 9, color: GREEN, fontWeight: 700 }}>FULL</span>}
               </div>
             </div>

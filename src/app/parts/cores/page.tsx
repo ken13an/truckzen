@@ -82,14 +82,14 @@ export default function CorePartsPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: 20 }}>
-        {tabs.map((t, i) => (
-          <button key={t.label} onClick={() => setTab(i)} style={{
+        {tabs.map((tt, i) => (
+          <button key={tt.label} onClick={() => setTab(i)} style={{
             padding: '10px 18px', fontSize: 12, fontWeight: tab === i ? 700 : 400,
             color: tab === i ? BLUE : MUTED, background: 'none', border: 'none',
             borderBottom: tab === i ? `2px solid ${BLUE}` : '2px solid transparent',
             cursor: 'pointer', fontFamily: FONT,
           }}>
-            {t.label} ({t.count})
+            {tt.label} ({tt.count})
           </button>
         ))}
       </div>

@@ -51,7 +51,7 @@ export default function VendorDetailPage() {
   const S: Record<string, React.CSSProperties> = {
     card: { background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary, marginBottom: 4, display: 'block' },
-    input: { width: '100%', padding: '8px 11px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '8px 11px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
   }
 

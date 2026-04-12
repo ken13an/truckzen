@@ -147,7 +147,7 @@ export default function UnitProfilePage() {
     return (
       <>
         <span style={{ color: GRAY }}>{vin.slice(0, -6)}</span>
-        <span style={{ fontWeight: 700, color: '#EDEDF0' }}>{vin.slice(-6)}</span>
+        <span style={{ fontWeight: 700, color: th.text }}>{vin.slice(-6)}</span>
       </>
     )
   }
@@ -271,7 +271,7 @@ export default function UnitProfilePage() {
               </a>
               <span style={pillStyle(sc.bg, sc.fg)}>{(wo.wo_status || wo.status || 'unknown').replace(/_/g, ' ').toUpperCase()}</span>
             </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#EDEDF0' }}>{fmtMoney(wo.grand_total)}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: th.text }}>{fmtMoney(wo.grand_total)}</span>
           </div>
           {firstLine && (
             <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{firstLine.description || firstLine.concern || '—'}</div>
@@ -280,7 +280,7 @@ export default function UnitProfilePage() {
             <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
               {lines.map((line: any, i: number) => (
                 <div key={line.id || i} style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#EDEDF0', marginBottom: 2 }}>{line.description || 'Line ' + (i + 1)}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: th.text, marginBottom: 2 }}>{line.description || 'Line ' + (i + 1)}</div>
                   {line.concern && <div style={{ fontSize: 11, color: GRAY }}><span style={{ fontWeight: 600, color: AMBER }}>Concern:</span> {line.concern}</div>}
                   {line.finding && <div style={{ fontSize: 11, color: GRAY }}><span style={{ fontWeight: 600, color: BLUE }}>Finding:</span> {line.finding}</div>}
                   {line.resolution && <div style={{ fontSize: 11, color: GRAY }}><span style={{ fontWeight: 600, color: GREEN }}>Resolution:</span> {line.resolution}</div>}
@@ -315,7 +315,7 @@ export default function UnitProfilePage() {
           return (
             <div key={i} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#EDEDF0' }}>{item.label}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: th.text }}>{item.label}</span>
                 <span style={pillStyle(statusBg, statusFg)}>{statusLabel}</span>
               </div>
               <div style={{ fontSize: 12, color: GRAY }}>
@@ -326,7 +326,7 @@ export default function UnitProfilePage() {
                 )}
               </div>
               {item.nextDue && (
-                <div style={{ fontSize: 12, color: '#EDEDF0', marginTop: 4 }}>Next due: {item.nextDue}</div>
+                <div style={{ fontSize: 12, color: th.text, marginTop: 4 }}>Next due: {item.nextDue}</div>
               )}
             </div>
           )
@@ -374,10 +374,10 @@ export default function UnitProfilePage() {
                       <a href={getWorkorderRoute(p.wo_id, undefined, 'customer')} style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>{p.service_orders.so_number}</a>
                     ) : '—'}
                   </td>
-                  <td style={{ padding: '8px 10px', color: '#EDEDF0', fontFamily: 'monospace' }}>{p.part_number || '—'}</td>
-                  <td style={{ padding: '8px 10px', color: '#EDEDF0' }}>{p.so_lines?.description || p.description || '—'}</td>
-                  <td style={{ padding: '8px 10px', color: '#EDEDF0' }}>{p.quantity ?? '—'}</td>
-                  <td style={{ padding: '8px 10px', color: '#EDEDF0' }}>{p.cost != null ? fmtMoney(p.cost) : '—'}</td>
+                  <td style={{ padding: '8px 10px', color: th.text, fontFamily: 'monospace' }}>{p.part_number || '—'}</td>
+                  <td style={{ padding: '8px 10px', color: th.text }}>{p.so_lines?.description || p.description || '—'}</td>
+                  <td style={{ padding: '8px 10px', color: th.text }}>{p.quantity ?? '—'}</td>
+                  <td style={{ padding: '8px 10px', color: th.text }}>{p.cost != null ? fmtMoney(p.cost) : '—'}</td>
                   <td style={{ padding: '8px 10px' }}><span style={pillStyle(sc.bg, sc.fg)}>{(p.status || 'unknown').replace(/_/g, ' ').toUpperCase()}</span></td>
                 </tr>
               )
@@ -394,7 +394,7 @@ export default function UnitProfilePage() {
     return (
       <div>
         <div style={cardStyle}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0', marginBottom: 4 }}>Unit Information</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: th.text, marginBottom: 4 }}>Unit Information</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
             <div>
               <label style={labelStyle}>Unit Number</label>
@@ -489,7 +489,7 @@ export default function UnitProfilePage() {
                   transition: 'left 0.2s',
                 }} />
               </button>
-              <span style={{ fontSize: 12, color: '#EDEDF0' }}>Owner Operator Truck</span>
+              <span style={{ fontSize: 12, color: th.text }}>Owner Operator Truck</span>
             </div>
             <div>
               <label style={labelStyle}>Odometer</label>
@@ -500,7 +500,7 @@ export default function UnitProfilePage() {
 
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#EDEDF0' }}>Warranty</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: th.text }}>Warranty</span>
             {isUnderWarranty && <span style={pillStyle('rgba(22,163,74,0.15)', GREEN)}>Under Warranty</span>}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
@@ -543,13 +543,13 @@ export default function UnitProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: th.bg, color: '#EDEDF0', fontFamily: FONT }}>
+    <div style={{ minHeight: '100vh', background: th.bg, color: th.text, fontFamily: FONT }}>
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
 
         {/* Back button */}
         <a
           href={'/customers/' + id}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 100, background: th.border, color: '#EDEDF0', textDecoration: 'none', fontSize: 13, fontWeight: 500, marginBottom: 20 }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 100, background: th.border, color: th.text, textDecoration: 'none', fontSize: 13, fontWeight: 500, marginBottom: 20 }}
         >
           <ChevronLeft size={14} />
           {customer?.company_name || 'Customer'}
@@ -558,13 +558,13 @@ export default function UnitProfilePage() {
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 700, color: '#EDEDF0' }}>{unit.unit_number || '—'}</span>
+            <span style={{ fontSize: 24, fontWeight: 700, color: th.text }}>{unit.unit_number || '—'}</span>
             <span style={pillStyle(isTrailer ? 'rgba(217,119,6,0.15)' : 'rgba(29,111,232,0.15)', typeBadgeColor)}>{typeLabel}</span>
             {unit.is_owner_operator && (
               <span style={pillStyle('rgba(217,119,6,0.15)', AMBER)}>OWNER OPERATOR</span>
             )}
           </div>
-          <div style={{ fontSize: 16, color: '#EDEDF0', marginBottom: 4 }}>
+          <div style={{ fontSize: 16, color: th.text, marginBottom: 4 }}>
             {[unit.year, unit.make, unit.model].filter(Boolean).join(' ') || '—'}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, fontSize: 12, color: GRAY, marginTop: 6 }}>
@@ -583,7 +583,7 @@ export default function UnitProfilePage() {
         {activeWO ? (
           <div style={{ ...cardStyle, background: 'rgba(29,111,232,0.1)', border: '1px solid rgba(29,111,232,0.25)', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-              <span style={{ color: '#EDEDF0', fontWeight: 600 }}>Active Work Order:</span>
+              <span style={{ color: th.text, fontWeight: 600 }}>Active Work Order:</span>
               <a href={getWorkorderRoute(activeWO.id, undefined, 'customer')} style={{ color: BLUE, fontWeight: 600, textDecoration: 'none' }}>
                 {activeWO.so_number}
               </a>
@@ -606,15 +606,15 @@ export default function UnitProfilePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
           <div style={cardStyle}>
             <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Services</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#EDEDF0' }}>{workOrders.length}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: th.text }}>{workOrders.length}</div>
           </div>
           <div style={cardStyle}>
             <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Spend</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#EDEDF0' }}>{fmtMoney(totalSpend)}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: th.text }}>{fmtMoney(totalSpend)}</div>
           </div>
           <div style={cardStyle}>
             <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Last Service</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#EDEDF0' }}>{lastService ? fmtDate(lastService) : 'Never'}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: th.text }}>{lastService ? fmtDate(lastService) : 'Never'}</div>
           </div>
         </div>
 

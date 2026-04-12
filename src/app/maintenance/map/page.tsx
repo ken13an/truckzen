@@ -56,7 +56,7 @@ export default function FleetMapPage() {
         {/* Vehicle List */}
         <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#1C2130', borderRadius: 8, padding: '6px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: t.inputBg, borderRadius: 8, padding: '6px 10px' }}>
               <Search size={13} color={t.textTertiary} />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search trucks..." style={{ background: 'none', border: 'none', color: t.text, fontSize: 12, outline: 'none', fontFamily: FONT, width: '100%' }} />
             </div>

@@ -111,7 +111,7 @@ export default function ImportPage() {
     }),
     btn: (disabled: boolean) => ({
       padding: '12px 28px', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, cursor: disabled ? 'not-allowed' : 'pointer',
-      background: disabled ? '#1A1D23' : 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: disabled ? '#48536A' : '#fff',
+      background: disabled ? '#1A1D23' : th.accent, color: disabled ? '#48536A' : '#fff',
       opacity: disabled ? 0.6 : 1,
     }),
     dropzone: {
@@ -120,7 +120,7 @@ export default function ImportPage() {
     },
     table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 },
     th: { padding: '8px 10px', borderBottom: '1px solid #1A1D23', color: th.textSecondary, textAlign: 'left' as const, fontWeight: 600 },
-    td: { padding: '8px 10px', borderBottom: '1px solid #0D0F12', color: '#A0AABF', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
+    td: { padding: '8px 10px', borderBottom: '1px solid #0D0F12', color: th.textSecondary, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const },
     stat: (color: string) => ({ textAlign: 'center' as const, padding: '16px 20px', borderRadius: 9, background: th.bgCard, border: '1px solid #1A1D23', flex: 1, minWidth: 100 }),
     statNum: (color: string) => ({ fontSize: 28, fontWeight: 700, color, lineHeight: 1 }),
     statLabel: { fontSize: 11, color: th.textSecondary, marginTop: 4, textTransform: 'uppercase' as const, letterSpacing: '.05em' },
@@ -139,7 +139,7 @@ export default function ImportPage() {
             <div key={t.key} style={sty.typeBtn(selectedType === t.key)} onClick={() => { setSelectedType(t.key); reset() }}>
               <span style={{ fontSize: 22 }}>{t.icon}</span>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: selectedType === t.key ? '#F0F4FF' : '#A0AABF' }}>{t.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: selectedType === t.key ? '#F0F4FF' : th.textSecondary }}>{t.label}</div>
                 <div style={{ fontSize: 11, color: th.textTertiary, marginTop: 2 }}>{t.desc}</div>
               </div>
             </div>
@@ -203,7 +203,7 @@ export default function ImportPage() {
       {error && (
         <div style={{ ...sty.card, borderColor: '#E8441D' }}>
           <div style={{ color: '#E8441D', fontWeight: 600, marginBottom: 4 }}>Import Error</div>
-          <div style={{ fontSize: 13, color: '#A0AABF' }}>{error}</div>
+          <div style={{ fontSize: 13, color: th.textSecondary }}>{error}</div>
         </div>
       )}
 
@@ -234,7 +234,7 @@ export default function ImportPage() {
             <div style={{ background: th.bg, borderRadius: 9, padding: 16, maxHeight: 200, overflowY: 'auto' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: th.textSecondary, marginBottom: 8 }}>DETAILS</div>
               {result.details.slice(0, 50).map((d, i) => (
-                <div key={i} style={{ fontSize: 12, color: '#A0AABF', padding: '3px 0', borderBottom: '1px solid #0D0F12' }}>{d}</div>
+                <div key={i} style={{ fontSize: 12, color: th.textSecondary, padding: '3px 0', borderBottom: '1px solid #0D0F12' }}>{d}</div>
               ))}
               {result.details.length > 50 && <div style={{ fontSize: 11, color: th.textTertiary, marginTop: 8 }}>...and {result.details.length - 50} more</div>}
             </div>

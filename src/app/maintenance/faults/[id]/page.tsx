@@ -64,7 +64,7 @@ export default function FaultDetailPage() {
           {!fault.resolved && (
             <div style={{ ...S.card, border: `1px solid ${GREEN}33` }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: GREEN, marginBottom: 10 }}>Resolve Fault</div>
-              <textarea value={resolveNotes} onChange={e => setResolveNotes(e.target.value)} placeholder="Resolution notes..." style={{ width: '100%', padding: '8px 10px', background: '#1C2130', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, fontFamily: FONT, minHeight: 48, resize: 'vertical' as const, boxSizing: 'border-box', marginBottom: 8 }} />
+              <textarea value={resolveNotes} onChange={e => setResolveNotes(e.target.value)} placeholder="Resolution notes..." style={{ width: '100%', padding: '8px 10px', background: t.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, fontFamily: FONT, minHeight: 48, resize: 'vertical' as const, boxSizing: 'border-box', marginBottom: 8 }} />
               <button onClick={resolve} disabled={saving} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? 'Saving...' : 'Mark Resolved'}</button>
             </div>
           )}

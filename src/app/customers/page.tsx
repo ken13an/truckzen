@@ -233,7 +233,7 @@ export default function CustomersPage() {
     <div style={{
       background: t.bg,
       minHeight: '100vh',
-      color: '#EDEDF0',
+      color: t.text,
       fontFamily: "'Inter', sans-serif",
       padding: 24,
     }}>
@@ -250,7 +250,7 @@ export default function CustomersPage() {
           <h1 style={{
             fontSize: 24,
             fontWeight: 700,
-            color: '#EDEDF0',
+            color: t.text,
             margin: 0,
             lineHeight: 1.2,
           }}>

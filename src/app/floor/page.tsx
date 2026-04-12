@@ -65,7 +65,7 @@ export default function FloorPage() {
     page:    { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     header:  { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 },
     title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:'.02em', color:t.text },
-    viewBtn: { padding:'6px 14px', borderRadius:7, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:'#1C2130', color:t.textSecondary, fontFamily:'inherit' },
+    viewBtn: { padding:'6px 14px', borderRadius:7, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:t.inputBg, color:t.textSecondary, fontFamily:'inherit' },
     viewOn:  { background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.3)' },
   }
 
@@ -165,7 +165,7 @@ export default function FloorPage() {
                     const asset = j.assets as any
                     const cust  = j.customers as any
                     return (
-                      <div key={j.id} style={{ background:'#1C2130', border:'1px solid rgba(255,255,255,.055)', borderRadius:8, padding:10, cursor:'pointer' }}
+                      <div key={j.id} style={{ background:t.inputBg, border:'1px solid rgba(255,255,255,.055)', borderRadius:8, padding:10, cursor:'pointer' }}
                         onClick={() => window.location.href = `/orders/${j.id}`}>
                         <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'#4D9EFF', marginBottom:3 }}>{j.so_number}</div>
                         <div style={{ fontSize:12, fontWeight:700, color:t.text }}>#{asset?.unit_number}</div>

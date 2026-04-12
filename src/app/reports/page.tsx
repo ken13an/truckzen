@@ -129,12 +129,12 @@ export default function ReportsPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 20 }}>
-        {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)} style={{
+        {TABS.map((tt, i) => (
+          <button key={tt} onClick={() => setTab(i)} style={{
             padding: '10px 20px', fontSize: 13, fontWeight: tab === i ? 700 : 500, cursor: 'pointer', fontFamily: FONT,
             background: 'none', border: 'none', borderBottom: tab === i ? `2px solid ${BLUE}` : '2px solid transparent',
             color: tab === i ? BLUE : GRAY, marginBottom: -2,
-          }}>{t}</button>
+          }}>{tt}</button>
         ))}
       </div>
 
@@ -344,13 +344,13 @@ export default function ReportsPage() {
               <tr>{['Unit #', 'Company', 'Visits', 'Total Spend', 'Last Service'].map(h => <th key={h} style={thStyle}>{h}</th>)}</tr>
             </thead>
             <tbody>
-              {trucksData.map((t, i) => (
+              {trucksData.map((tt, i) => (
                 <tr key={i}>
-                  <td style={{ ...tdStyle, fontWeight: 700 }}>{t.unit_number}</td>
-                  <td style={tdStyle}>{t.company}</td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>{t.visits}</td>
-                  <td style={{ ...tdStyle, fontWeight: 600 }}>{fmt(t.spend)}</td>
-                  <td style={{ ...tdStyle, color: GRAY, fontSize: 12 }}>{t.last_service ? fmtDate(t.last_service) : '—'}</td>
+                  <td style={{ ...tdStyle, fontWeight: 700 }}>{tt.unit_number}</td>
+                  <td style={tdStyle}>{tt.company}</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>{tt.visits}</td>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>{fmt(tt.spend)}</td>
+                  <td style={{ ...tdStyle, color: GRAY, fontSize: 12 }}>{tt.last_service ? fmtDate(tt.last_service) : '—'}</td>
                 </tr>
               ))}
               {trucksData.length === 0 && <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', color: GRAY }}>No data</td></tr>}

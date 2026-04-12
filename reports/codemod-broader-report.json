@@ -1,0 +1,9 @@
+{
+  "touched": [
+    {
+      "file": "src/app/accounting/page.tsx",
+      "replacements": 10
+    }
+  ],
+  "total": 10
+}

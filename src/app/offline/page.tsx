@@ -13,7 +13,7 @@ export default function OfflinePage() {
         </div>
         <button
           onClick={() => window.location.reload()}
-          style={{ padding: '12px 28px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 9, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+          style={{ padding: '12px 28px', background: t.accent, border: 'none', borderRadius: 9, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
         >
           Retry
         </button>

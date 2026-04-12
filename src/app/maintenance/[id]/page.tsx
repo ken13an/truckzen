@@ -63,7 +63,7 @@ export default function PMDetailPage() {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:680, margin:'0 auto' },
     card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
     label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'8px 11px', background:'#1C2130', border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
+    input: { width:'100%', padding:'8px 11px', background:t.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
     th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', padding:'6px 10px', textAlign:'left', background:'#0B0D11' },
     td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
@@ -80,7 +80,7 @@ export default function PMDetailPage() {
 
   return (
     <div style={S.page}>
-      <a href="/maintenance" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/maintenance" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: t.text, textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Maintenance
 </a>
 
@@ -114,7 +114,7 @@ export default function PMDetailPage() {
             </div>
             <div style={{ marginBottom:10 }}><label style={S.label}>Notes</label><textarea style={{ ...S.input, minHeight:64, resize:'vertical' as const }} value={edit?.notes||''} onChange={e=>setEdit((p:any)=>({...p,notes:e.target.value}))}/></div>
             <div style={{ display:'flex', gap:8 }}>
-              <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
+              <button style={{ ...S.btn, background:t.accent, color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
               <a href={`/orders/new`} style={{ ...S.btn, background:'rgba(29,184,112,.1)', color:'#1DB870', border:'1px solid rgba(29,184,112,.2)', textDecoration:'none', display:'inline-flex', alignItems:'center' }}>
                 Create Service Order
               </a>

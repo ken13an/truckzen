@@ -62,7 +62,7 @@ export default function WaitingPage() {
         {/* Logo */}
         <div style={{
           width: '56px', height: '56px', borderRadius: '14px',
-          background: 'linear-gradient(135deg,#1D6FE8,#1248B0)',
+          background: t.accent,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 24px', boxShadow: '0 0 24px rgba(29,111,232,0.3)',
         }}>

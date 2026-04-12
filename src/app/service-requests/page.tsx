@@ -146,7 +146,7 @@ export default function ServiceRequestsPage() {
           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text }}>Service Requests</div>
           <div style={{ fontSize: 12, color: th.textSecondary }}>Intake requests from Fleet, Maintenance, and Kiosk</div>
         </div>
-        <a href="/service-requests/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Request</a>
+        <a href="/service-requests/new" style={{ padding: '8px 16px', background: th.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Request</a>
       </div>
 
       {/* Tabs */}

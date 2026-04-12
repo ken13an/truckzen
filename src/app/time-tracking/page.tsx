@@ -36,7 +36,7 @@ export default function TimeTrackingPage() {
     card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
     th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.1em', padding:'6px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
     td:    { padding:'8px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
-    chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:'#1C2130', color:t.textSecondary, fontFamily:'inherit' },
+    chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:t.inputBg, color:t.textSecondary, fontFamily:'inherit' },
     on:    { background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.3)' },
   }
 
@@ -69,7 +69,7 @@ export default function TimeTrackingPage() {
           </div>
 
           {/* Bar showing proportion */}
-          <div style={{ height:4, background:'#1C2130', borderRadius:100, marginBottom:10, overflow:'hidden' }}>
+          <div style={{ height:4, background:t.inputBg, borderRadius:100, marginBottom:10, overflow:'hidden' }}>
             <div style={{ height:'100%', width:`${Math.min(100, tech.total_minutes / (data.total_minutes / data.by_tech.length) * 50)}%`, background:'linear-gradient(90deg,#1D6FE8,#4D9EFF)', borderRadius:100, transition:'width .3s' }}/>
           </div>
 

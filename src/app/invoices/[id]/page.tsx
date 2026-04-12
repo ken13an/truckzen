@@ -364,7 +364,7 @@ export default function InvoiceDetailPage() {
       {/* Record Payment Modal */}
       {showPaidModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
-          <div style={{ background:'#1C2130', border:'1px solid rgba(255,255,255,.1)', borderRadius:14, padding:28, minWidth:380, maxWidth:440 }}>
+          <div style={{ background:t.inputBg, border:'1px solid rgba(255,255,255,.1)', borderRadius:14, padding:28, minWidth:380, maxWidth:440 }}>
             <div style={{ fontSize:16, fontWeight:700, color:t.text, marginBottom:4 }}>Record Payment</div>
             <div style={{ fontSize:12, color:t.textSecondary, marginBottom:20 }}>
               Invoice Total: ${(invoice.total || 0).toFixed(2)} | Balance Due: ${(invoice.balance_due ?? invoice.total ?? 0).toFixed(2)}
@@ -393,7 +393,7 @@ export default function InvoiceDetailPage() {
         </div>
       )}
 
-      <a href="/accounting" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: '#EDEDF0', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/accounting" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: t.text, textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Accounting
 </a>
 
@@ -448,7 +448,7 @@ export default function InvoiceDetailPage() {
                     + Add Line
                   </button>
                   {isEditing && (
-                    <button onClick={saveLines} disabled={saving} style={{ ...S.btn, padding:'5px 12px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff', fontSize:10 }}>
+                    <button onClick={saveLines} disabled={saving} style={{ ...S.btn, padding:'5px 12px', background:t.accent, color:'#fff', fontSize:10 }}>
                       {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                   )}
@@ -539,7 +539,7 @@ export default function InvoiceDetailPage() {
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {!isPaid && invoice.status !== 'voided' && (
                 <>
-                  <button style={{ ...S.btn, background:'linear-gradient(135deg,#1D6FE8,#1248B0)', color:'#fff', width:'100%' }}
+                  <button style={{ ...S.btn, background:t.accent, color:'#fff', width:'100%' }}
                     onClick={sendInvoice} disabled={sending}>
                     {sending ? 'Sending...' : invoice.status === 'draft' ? 'Send to Customer' : 'Resend Invoice'}
                   </button>

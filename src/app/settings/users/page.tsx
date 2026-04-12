@@ -184,22 +184,22 @@ export default function UsersPage() {
   }
 
   const S = {
-    input: { width: '100%', padding: '9px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: font, boxSizing: 'border-box' as const },
-    label: { fontSize: 11, fontWeight: 600, color: '#9D9DA1', textTransform: 'uppercase' as const, display: 'block', marginBottom: 4, letterSpacing: '.04em' } as React.CSSProperties,
-    select: { padding: '8px 12px', background: '#151520', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#EDEDF0', outline: 'none', fontFamily: font, appearance: 'auto' as const, cursor: 'pointer', minWidth: 120 },
+    input: { width: '100%', padding: '9px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: font, boxSizing: 'border-box' as const },
+    label: { fontSize: 11, fontWeight: 600, color: th.textSecondary, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4, letterSpacing: '.04em' } as React.CSSProperties,
+    select: { padding: '8px 12px', background: '#151520', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: font, appearance: 'auto' as const, cursor: 'pointer', minWidth: 120 },
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9D9DA1' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, display: 'flex', alignItems: 'center', justifyContent: 'center', color: th.textSecondary }}>Loading...</div>
 
   const allCount = Object.values(deptCounts).reduce((a, b) => a + b, 0)
 
   return (
-    <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, padding: 24, color: '#EDEDF0' }}>
+    <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, padding: 24, color: th.text }}>
       {/* Toast */}
       {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: '#1D6FE8', color: '#fff', padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
 
       {/* Back */}
-      <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#9D9DA1', textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 600, color: th.textSecondary, textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={14} strokeWidth={2} /> Settings
       </a>
 
@@ -269,13 +269,13 @@ export default function UsersPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,.06)' }}>
                 {['Name', 'Role', 'Department', 'Status', 'Last Active', 'Actions'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: '#9D9DA1', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: mono }}>{h}</th>
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: th.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: mono }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {members.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#9D9DA1', fontSize: 13 }}>
+                <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: th.textSecondary, fontSize: 13 }}>
                   {hasFilters ? 'No members match your filters' : 'No team members yet'}
                 </td></tr>
               )}
@@ -289,7 +289,7 @@ export default function UsersPage() {
                         <div style={{
                           width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
                           background: u.active ? 'rgba(29,111,232,.12)' : th.border,
-                          color: u.active ? '#4D9EFF' : '#9D9DA1', fontSize: 11, fontWeight: 700, fontFamily: mono, flexShrink: 0,
+                          color: u.active ? '#4D9EFF' : th.textSecondary, fontSize: 11, fontWeight: 700, fontFamily: mono, flexShrink: 0,
                         }}>
                           {getInitials(u.full_name)}
                         </div>
@@ -370,7 +370,7 @@ export default function UsersPage() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => setEditing(null)} style={{ padding: '8px 18px', background: 'transparent', color: '#9D9DA1', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={() => setEditing(null)} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
               <button onClick={saveUser} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
@@ -405,7 +405,7 @@ export default function UsersPage() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => { setInviting(false); setInviteError('') }} style={{ padding: '8px 18px', background: 'transparent', color: '#9D9DA1', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={() => { setInviting(false); setInviteError('') }} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
               <button onClick={sendInvite} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Sending...' : 'Send Invite'}</button>
             </div>
           </div>
@@ -417,13 +417,13 @@ export default function UsersPage() {
         <div style={modalOverlay} onClick={e => { if (e.target === e.currentTarget) { setRemoving(null); setConfirmText('') } }}>
           <div style={modalBox}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Remove {removing.full_name}</div>
-            <div style={{ fontSize: 12, color: '#9D9DA1', marginBottom: 16 }}>Choose how to handle this user:</div>
+            <div style={{ fontSize: 12, color: th.textSecondary, marginBottom: 16 }}>Choose how to handle this user:</div>
             <div style={{ marginBottom: 16 }}>
               <label style={S.label}>Type CONFIRM to proceed</label>
               <input value={confirmText} onChange={e => setConfirmText(e.target.value.toUpperCase())} placeholder="CONFIRM" style={S.input} />
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={() => { setRemoving(null); setConfirmText('') }} style={{ padding: '8px 16px', background: 'transparent', color: '#9D9DA1', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={() => { setRemoving(null); setConfirmText('') }} style={{ padding: '8px 16px', background: 'transparent', color: th.textSecondary, border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
               <button onClick={() => disableUser(removing)} disabled={confirmText !== 'CONFIRM'}
                 style={{ padding: '8px 16px', background: 'rgba(217,119,6,.15)', color: '#F59E0B', border: '1px solid rgba(217,119,6,.3)', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: confirmText === 'CONFIRM' ? 'pointer' : 'not-allowed', fontFamily: font, opacity: confirmText === 'CONFIRM' ? 1 : 0.4 }}>
                 Deactivate
@@ -433,7 +433,7 @@ export default function UsersPage() {
                 Delete Permanently
               </button>
             </div>
-            <div style={{ fontSize: 10, color: '#9D9DA1', marginTop: 12 }}>
+            <div style={{ fontSize: 10, color: th.textSecondary, marginTop: 12 }}>
               Deactivate: blocks login, keeps name in historical records. Delete: removes from system, name stays in WO history.
             </div>
           </div>

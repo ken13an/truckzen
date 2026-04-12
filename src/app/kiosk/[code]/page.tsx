@@ -33,7 +33,7 @@ export default function KioskCodePage() {
   }, [code])
 
   if (status === 'loading') {
-    return <div style={{ background: t.bg, color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    return <div style={{ background: t.bg, color: t.text, fontFamily: "'Instrument Sans', sans-serif", minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: 2, marginBottom: 12 }}>TRUCKZEN</div>
         <p style={{ fontSize: 14, color: '#71717A' }}>Loading kiosk...</p>
@@ -42,7 +42,7 @@ export default function KioskCodePage() {
   }
 
   if (status === 'error') {
-    return <div style={{ background: t.bg, color: '#EDEDF0', fontFamily: "'Instrument Sans', sans-serif", minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    return <div style={{ background: t.bg, color: t.text, fontFamily: "'Instrument Sans', sans-serif", minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', maxWidth: 400, padding: 40 }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 8px' }}>Kiosk Not Available</h1>
         <p style={{ fontSize: 14, color: '#71717A', margin: '0 0 24px' }}>{errorMsg}</p>

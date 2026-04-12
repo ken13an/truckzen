@@ -100,7 +100,7 @@ export default function CleaningPage() {
         <div style={{ fontSize:12, color:t.textSecondary, marginBottom:20 }}>{done}/{zone.checklist.length} items complete</div>
 
         {/* Progress */}
-        <div style={{ height:6, background:'#1C2130', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
+        <div style={{ height:6, background:t.inputBg, borderRadius:100, marginBottom:20, overflow:'hidden' }}>
           <div style={{ height:'100%', width:`${done/zone.checklist.length*100}%`, background:'linear-gradient(90deg,#1D6FE8,#1DB870)', borderRadius:100, transition:'width .2s' }}/>
         </div>
 
@@ -115,7 +115,7 @@ export default function CleaningPage() {
         ))}
 
         <button onClick={() => completeZone(zone)} disabled={saving}
-          style={{ width:'100%', marginTop:12, padding:14, background: done===zone.checklist.length?'linear-gradient(135deg,#1DB870,#14875A)':'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:12, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', opacity:saving?0.7:1 }}>
+          style={{ width:'100%', marginTop:12, padding:14, background: done===zone.checklist.length?'linear-gradient(135deg,#1DB870,#14875A)':t.accent, border:'none', borderRadius:12, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', opacity:saving?0.7:1 }}>
           {saving ? 'Saving...' : done===zone.checklist.length ? 'Mark Zone Clean' : `Submit (${done}/${zone.checklist.length} done)`}
         </button>
       </div>
@@ -138,7 +138,7 @@ export default function CleaningPage() {
       </div>
 
       {/* Overall progress bar */}
-      <div style={{ height:6, background:'#1C2130', borderRadius:100, marginBottom:20, overflow:'hidden' }}>
+      <div style={{ height:6, background:t.inputBg, borderRadius:100, marginBottom:20, overflow:'hidden' }}>
         <div style={{ height:'100%', width:`${completedCount/totalZones*100}%`, background:'linear-gradient(90deg,#1D6FE8,#1DB870)', borderRadius:100, transition:'width .3s' }}/>
       </div>
 
