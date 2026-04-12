@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
 ]
 
 function isPublicPath(pathname: string) {
+  if (pathname === '/') return true
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
 

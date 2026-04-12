@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Log In',
-  description: 'Log in to TruckZen — truck repair shop management software. Access service orders, invoices, parts inventory, and fleet tracking.',
+  title: 'Log In — TruckZen',
+  description: 'Log in to your TruckZen account.',
+  robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
   openGraph: {
     title: 'Log In — TruckZen',
-    description: 'Access your truck shop management dashboard.',
+    description: 'Access your TruckZen dashboard.',
     url: 'https://truckzen.pro/login',
   },
 }

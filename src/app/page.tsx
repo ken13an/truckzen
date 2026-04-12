@@ -2,13 +2,21 @@ import type { Metadata } from 'next'
 import StarfieldCanvas from '@/components/StarfieldCanvas'
 
 export const metadata: Metadata = {
-  title: 'TruckZen — The Whole Operation',
-  description: 'One platform for your entire heavy-duty operation. Shop, fleet, parts, and people — connected.',
+  title: 'TruckZen — Truck Repair Shop & Fleet Operations Platform',
+  description: 'TruckZen is the platform for truck repair shops and fleet operations: work orders, parts, invoices, shop floor, and maintenance in one system.',
+  alternates: { canonical: 'https://truckzen.pro' },
+  robots: { index: true, follow: true },
   openGraph: {
-    title: 'TruckZen — The Whole Operation',
+    title: 'TruckZen — Truck Repair Shop & Fleet Operations Platform',
     description: 'One platform. Every department. Every language.',
     url: 'https://truckzen.pro',
     type: 'website',
+    siteName: 'TruckZen',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TruckZen — Truck Repair Shop & Fleet Operations Platform',
+    description: 'One platform. Every department. Every language.',
   },
 }
 
