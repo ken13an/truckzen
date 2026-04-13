@@ -175,22 +175,22 @@ export default function CustomersPage() {
   }
 
   function paymentBadge(terms: string | null) {
-    const t = (terms || '').toLowerCase()
-    let bg = 'rgba(255,255,255,0.06)'
-    let color = '#8A8F9E'
+    const term = (terms || '').toLowerCase()
+    let bg = t.surfaceMuted
+    let color = t.textSecondary
     let label = terms || '—'
 
-    if (t === 'cod') {
-      bg = 'rgba(239,68,68,0.12)'
-      color = '#F87171'
+    if (term === 'cod') {
+      bg = t.dangerBg
+      color = t.danger
       label = 'COD'
-    } else if (t === 'net15' || t === 'net_15') {
-      bg = 'rgba(245,158,11,0.12)'
-      color = '#FBBF24'
+    } else if (term === 'net15' || term === 'net_15') {
+      bg = t.warningBg
+      color = t.warning
       label = 'Net 15'
-    } else if (t === 'net30' || t === 'net_30') {
-      bg = 'rgba(29,111,232,0.12)'
-      color = '#60A5FA'
+    } else if (term === 'net30' || term === 'net_30') {
+      bg = t.accentBg
+      color = t.accentLight
       label = 'Net 30'
     }
 
@@ -220,8 +220,8 @@ export default function CustomersPage() {
         borderRadius: 999,
         fontSize: 11,
         fontWeight: 600,
-        background: isActive ? 'rgba(34,197,94,0.12)' : t.border,
-        color: isActive ? '#4ADE80' : t.textLightSecondary,
+        background: isActive ? t.successBg : t.surfaceMuted,
+        color: isActive ? t.success : t.textSecondary,
         whiteSpace: 'nowrap',
       }}>
         {isActive ? 'Active' : 'Inactive'}
@@ -266,7 +266,7 @@ export default function CustomersPage() {
             style={{
               padding: '8px 14px',
               background: 'transparent',
-              border: '1px solid rgba(29,111,232,0.3)',
+              border: `1px solid ${t.borderAccent}`,
               borderRadius: 8,
               color: t.accent,
               fontSize: 13,
@@ -284,7 +284,7 @@ export default function CustomersPage() {
               background: t.accent,
               border: 'none',
               borderRadius: 8,
-              color: '#fff',
+              color: t.bgLight,
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
@@ -318,13 +318,13 @@ export default function CustomersPage() {
       {/* Error */}
       {error && (
         <div style={{
-          background: 'rgba(239,68,68,0.1)',
-          border: '1px solid rgba(239,68,68,0.3)',
+          background: t.dangerBg,
+          border: `1px solid ${t.danger}`,
           borderRadius: 8,
           padding: 12,
           marginBottom: 16,
           fontSize: 13,
-          color: '#EF4444',
+          color: t.danger,
         }}>
           {error}
         </div>
@@ -378,7 +378,7 @@ export default function CustomersPage() {
                   key={c.id}
                   onClick={() => router.push(`/customers/${c.id}`)}
                   style={{ cursor: 'pointer' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = t.bgHover }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
                   <td style={{
@@ -395,7 +395,7 @@ export default function CustomersPage() {
                     borderBottom: `1px solid ${t.bgHover}`,
                     fontSize: 13,
                     fontFamily: "'IBM Plex Mono', monospace",
-                    color: '#9CA3AF',
+                    color: t.textSecondary,
                   }}>
                     {c.dot_number || '—'}
                   </td>
@@ -403,7 +403,7 @@ export default function CustomersPage() {
                     padding: '11px 14px',
                     borderBottom: `1px solid ${t.bgHover}`,
                     fontSize: 13,
-                    color: '#9CA3AF',
+                    color: t.textSecondary,
                   }}>
                     {c.phone || '—'}
                   </td>
