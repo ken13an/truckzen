@@ -14,6 +14,8 @@ import DateRangePicker from '@/components/DateRangePicker'
 
 export default function ReportsPage() {
   const { tokens: t } = useTheme()
+
+  const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontSize: 10, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, borderBottom: '1px solid #E5E7EB' }
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [tab, setTab] = useState(0)
@@ -231,7 +233,7 @@ export default function ReportsPage() {
                       <div style={{ width: 120, fontSize: 12, fontWeight: 600, textAlign: 'right' }}>{m.name}</div>
                       <div style={{ flex: 1, height: 24, background: t.surfaceMuted, borderRadius: 4 }}>
                         <div style={{ width: `${w}%`, height: '100%', background: BLUE, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8 }}>
-                          <span style={{ fontSize: 10, color: '#fff', fontWeight: 700 }}>{m.hours.toFixed(1)}h</span>
+                          <span style={{ fontSize: 10, color: t.bgLight, fontWeight: 700 }}>{m.hours.toFixed(1)}h</span>
                         </div>
                       </div>
                     </div>
@@ -280,7 +282,7 @@ export default function ReportsPage() {
                       <div style={{ width: 180, fontSize: 11, fontWeight: 500, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description}</div>
                       <div style={{ flex: 1, height: 20, background: t.surfaceMuted, borderRadius: 4 }}>
                         <div style={{ width: `${w}%`, height: '100%', background: GREEN, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 6 }}>
-                          <span style={{ fontSize: 9, color: '#fff', fontWeight: 700 }}>{p.qty}</span>
+                          <span style={{ fontSize: 9, color: t.bgLight, fontWeight: 700 }}>{p.qty}</span>
                         </div>
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 600, width: 70, textAlign: 'right' }}>{fmt(p.revenue)}</div>
@@ -394,5 +396,4 @@ export default function ReportsPage() {
   )
 }
 
-const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontSize: 10, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, borderBottom: '1px solid #E5E7EB' }
 const tdStyle: React.CSSProperties = { padding: '10px 12px', borderBottom: '1px solid #F3F4F6', fontSize: 13 }

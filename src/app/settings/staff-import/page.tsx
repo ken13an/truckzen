@@ -127,7 +127,7 @@ export default function StaffImportPage() {
   if (!user) return <div style={S.page}><div style={{ color: t.textTertiary, textAlign: 'center', paddingTop: 100 }}>Loading...</div></div>
 
   const ROLE_COLORS: Record<string, string> = {
-    technician: '#1D6FE8', maintenance_technician: '#1D6FE8', maintenance_manager: '#7C3AED',
+    technician: t.accent, maintenance_technician: t.accent, maintenance_manager: '#7C3AED',
     service_writer: '#059669', accountant: '#D97706', office_admin: '#EC4899', shop_manager: '#7C3AED',
     gm: '#DC2626', parts_manager: '#0891B2', fleet_manager: '#6366F1', dispatcher: '#84CC16', driver: '#78716C', owner: '#DC2626',
   }
@@ -146,11 +146,11 @@ export default function StaffImportPage() {
             <div style={{
               width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontWeight: 700,
-              background: step === s || (s === 'importing' && step === 'done') ? '#1D6FE8' : i < ['upload', 'preview', 'importing'].indexOf(step) || step === 'done' ? 'rgba(29,111,232,.2)' : t.inputBg,
-              color: step === s || step === 'done' ? '#fff' : t.textTertiary,
-              border: `1px solid ${step === s ? '#1D6FE8' : t.border}`,
+              background: step === s || (s === 'importing' && step === 'done') ? t.accent : i < ['upload', 'preview', 'importing'].indexOf(step) || step === 'done' ? 'rgba(29,111,232,.2)' : t.inputBg,
+              color: step === s || step === 'done' ? t.bgLight : t.textTertiary,
+              border: `1px solid ${step === s ? t.accent : t.border}`,
             }}>{i + 1}</div>
-            <span style={{ fontSize: 11, color: step === s || (s === 'importing' && step === 'done') ? '#DDE3EE' : t.textTertiary }}>
+            <span style={{ fontSize: 11, color: step === s || (s === 'importing' && step === 'done') ? t.text : t.textTertiary }}>
               {s === 'upload' ? 'Upload' : s === 'preview' ? 'Preview' : 'Import'}
             </span>
           </div>
@@ -167,7 +167,7 @@ export default function StaffImportPage() {
             onClick={() => fileRef.current?.click()}
             style={{
               ...S.card, textAlign: 'center', cursor: 'pointer', padding: '48px 24px',
-              border: dragOver ? '2px dashed #1D6FE8' : '2px dashed rgba(255,255,255,.08)',
+              border: dragOver ? `2px dashed ${t.accent}` : `2px dashed ${t.border}`,
               background: dragOver ? 'rgba(29,111,232,.04)' : t.bgCard,
             }}
           >
@@ -184,11 +184,11 @@ export default function StaffImportPage() {
           <div style={{ ...S.card, marginTop: 16, padding: 16 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 10 }}>Required Columns</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {['Full Name', 'Email', 'Role'].map(c => <span key={c} style={{ padding: '4px 10px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 6, fontSize: 11, color: '#4D9EFF' }}>{c}</span>)}
+              {['Full Name', 'Email', 'Role'].map(c => <span key={c} style={{ padding: '4px 10px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 6, fontSize: 11, color: t.accentLight }}>{c}</span>)}
             </div>
             <div style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, letterSpacing: '.05em', textTransform: 'uppercase', marginTop: 14, marginBottom: 10 }}>Optional Columns</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {['Team', 'Language', 'Phone', 'Skills', 'Employee ID', 'Notes'].map(c => <span key={c} style={{ padding: '4px 10px', background: t.inputBg, border: '1px solid rgba(255,255,255,.06)', borderRadius: 6, fontSize: 11, color: t.textSecondary }}>{c}</span>)}
+              {['Team', 'Language', 'Phone', 'Skills', 'Employee ID', 'Notes'].map(c => <span key={c} style={{ padding: '4px 10px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, fontSize: 11, color: t.textSecondary }}>{c}</span>)}
             </div>
             <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 12, lineHeight: 1.6 }}>
               Valid roles: Technician, Service Writer, Shop Manager, Parts Manager, Accountant, Office Admin, GM, Dispatcher, Driver, Fleet Manager, Maintenance Technician, Maintenance Manager, Owner<br />
@@ -233,7 +233,7 @@ export default function StaffImportPage() {
                     <td style={S.td}>{row.email || '—'}</td>
                     <td style={S.td}>
                       {row.role && (
-                        <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: `${ROLE_COLORS[row.role] || '#48536A'}20`, color: ROLE_COLORS[row.role] || '#48536A' }}>
+                        <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: `${ROLE_COLORS[row.role] || t.textTertiary}20`, color: ROLE_COLORS[row.role] || t.textTertiary }}>
                           {row.role.replace(/_/g, ' ')}
                         </span>
                       )}
@@ -313,7 +313,7 @@ export default function StaffImportPage() {
           {/* Live log */}
           <div style={{ ...S.card, padding: 0, maxHeight: 400, overflow: 'auto' }}>
             {importLog.map((entry, i) => (
-              <div key={i} style={{ padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,.03)', fontSize: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div key={i} style={{ padding: '8px 14px', borderBottom: `1px solid ${t.border}`, fontSize: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ width: 16, textAlign: 'center', flexShrink: 0 }}>
                   {entry.status === 'created' ? <span style={{ color: '#1DB870' }}>&#10003;</span> : entry.status === 'skipped' ? <span style={{ color: '#D9A706' }}>&#8212;</span> : <span style={{ color: '#D94F4F' }}>&#10007;</span>}
                 </span>

@@ -86,7 +86,7 @@ export default function CleaningPage() {
   const S: Record<string, React.CSSProperties> = {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:4 },
-    card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:10 },
+    card:  { background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:12, padding:16, marginBottom:10 },
   }
 
   // Active zone checklist view
@@ -107,15 +107,15 @@ export default function CleaningPage() {
         {zone.checklist.map(item => (
           <div key={item} onClick={() => setChecks(c => ({ ...c, [item]: !c[item] }))}
             style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', background: checks[item]?'rgba(29,184,112,.06)':t.bgCard, border:`1px solid ${checks[item]?'rgba(29,184,112,.2)':t.border}`, borderRadius:10, marginBottom:8, cursor:'pointer' }}>
-            <div style={{ width:24, height:24, borderRadius:'50%', border:`2px solid ${checks[item]?'#1DB870':t.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: checks[item]?'#1DB870':'transparent', color:'#fff', fontSize:12, fontWeight:700 }}>
+            <div style={{ width:24, height:24, borderRadius:'50%', border:`2px solid ${checks[item]?'#1DB870':t.border}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: checks[item]?'#1DB870':'transparent', color: t.bgLight, fontSize:12, fontWeight:700 }}>
               {checks[item] ? '✓' : ''}
             </div>
-            <span style={{ fontSize:13, color: checks[item]?'#DDE3EE':t.textSecondary, textDecoration: checks[item]?'line-through':'none' }}>{item}</span>
+            <span style={{ fontSize:13, color: checks[item]? t.text:t.textSecondary, textDecoration: checks[item]?'line-through':'none' }}>{item}</span>
           </div>
         ))}
 
         <button onClick={() => completeZone(zone)} disabled={saving}
-          style={{ width:'100%', marginTop:12, padding:14, background: done===zone.checklist.length?'linear-gradient(135deg,#1DB870,#14875A)':t.accent, border:'none', borderRadius:12, fontSize:14, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit', opacity:saving?0.7:1 }}>
+          style={{ width:'100%', marginTop:12, padding:14, background: done===zone.checklist.length?'linear-gradient(135deg,#1DB870,#14875A)':t.accent, border:'none', borderRadius:12, fontSize:14, fontWeight:700, color: t.bgLight, cursor:'pointer', fontFamily:'inherit', opacity:saving?0.7:1 }}>
           {saving ? 'Saving...' : done===zone.checklist.length ? 'Mark Zone Clean' : `Submit (${done}/${zone.checklist.length} done)`}
         </button>
       </div>
@@ -164,7 +164,7 @@ export default function CleaningPage() {
               <div style={{ fontSize:10, color:t.textSecondary, marginBottom:12 }}>{zone.checklist.length} items</div>
               {!done && (
                 <button onClick={() => startZone(zone)}
-                  style={{ width:'100%', padding:'9px 0', background:'rgba(29,111,232,.1)', border:'1px solid rgba(29,111,232,.25)', borderRadius:8, color:'#4D9EFF', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+                  style={{ width:'100%', padding:'9px 0', background:'rgba(29,111,232,.1)', border:'1px solid rgba(29,111,232,.25)', borderRadius:8, color: t.accentLight, fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
                   Start Cleaning
                 </button>
               )}

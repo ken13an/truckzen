@@ -56,7 +56,7 @@ export default function WaitingPage() {
     }}>
       <div style={{
         maxWidth: '440px', textAlign: 'center',
-        background: t.bgCard, border: '1px solid rgba(255,255,255,0.08)',
+        background: t.bgCard, border: `1px solid ${t.border}`,
         borderRadius: '16px', padding: '48px 36px',
       }}>
         {/* Logo */}
@@ -84,7 +84,7 @@ export default function WaitingPage() {
           {[0, 1, 2].map(i => (
             <div key={i} style={{
               width: '8px', height: '8px', borderRadius: '50%',
-              background: '#1D6FE8', opacity: 0.4,
+              background: t.accent, opacity: 0.4,
               animation: `pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
             }}/>
           ))}
@@ -93,7 +93,7 @@ export default function WaitingPage() {
         <div style={{
           padding: '12px 16px', background: 'rgba(29,111,232,0.06)',
           border: '1px solid rgba(29,111,232,0.15)', borderRadius: '9px',
-          fontSize: '12px', color: '#4D9EFF', lineHeight: 1.6, marginBottom: '24px',
+          fontSize: '12px', color: t.accentLight, lineHeight: 1.6, marginBottom: '24px',
         }}>
           Checking every 10 seconds for updates
         </div>
@@ -101,7 +101,7 @@ export default function WaitingPage() {
         <button
           onClick={handleSignOut}
           style={{
-            background: 'none', border: '1px solid rgba(255,255,255,0.08)',
+            background: 'none', border: `1px solid ${t.border}`,
             borderRadius: '8px', padding: '9px 20px', color: t.textTertiary,
             fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit',
             transition: 'all 0.14s',

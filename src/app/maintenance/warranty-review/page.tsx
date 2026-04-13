@@ -73,7 +73,7 @@ export default function WarrantyReviewPage() {
       <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>{wos.length} work order{wos.length !== 1 ? 's' : ''} pending warranty verification</div>
 
       {wos.length === 0 ? (
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>
           No work orders pending warranty review
         </div>
       ) : (
@@ -104,15 +104,15 @@ export default function WarrantyReviewPage() {
                 {/* Action buttons */}
                 {actionWo?.id === wo.id ? (
                   <div style={{ padding: 12, background: t.border, borderRadius: 8, marginTop: 8 }}>
-                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes..." rows={2} style={{ width: '100%', padding: '8px 10px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes..." rows={2} style={{ width: '100%', padding: '8px 10px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
                     {actionWo.decision === 'send_to_dealer' && (
                       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                        <input value={dealerName} onChange={e => setDealerName(e.target.value)} placeholder="Dealer name" style={{ flex: 1, padding: '8px 10px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT }} />
-                        <input value={dealerLocation} onChange={e => setDealerLocation(e.target.value)} placeholder="Location" style={{ flex: 1, padding: '8px 10px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT }} />
+                        <input value={dealerName} onChange={e => setDealerName(e.target.value)} placeholder="Dealer name" style={{ flex: 1, padding: '8px 10px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT }} />
+                        <input value={dealerLocation} onChange={e => setDealerLocation(e.target.value)} placeholder="Location" style={{ flex: 1, padding: '8px 10px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT }} />
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => resolveWarranty(wo.id, actionWo.decision)} disabled={saving} style={{ padding: '8px 16px', background: actionWo.decision === 'no_warranty' ? '#22C55E' : actionWo.decision === 'local_repair' ? '#1D6FE8' : RED, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                      <button onClick={() => resolveWarranty(wo.id, actionWo.decision)} disabled={saving} style={{ padding: '8px 16px', background: actionWo.decision === 'no_warranty' ? '#22C55E' : actionWo.decision === 'local_repair' ? t.accent : RED, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                         {saving ? 'Saving...' : 'Confirm'}
                       </button>
                       <button onClick={() => setActionWo(null)} style={{ padding: '8px 16px', background: t.border, color: MUTED, border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>

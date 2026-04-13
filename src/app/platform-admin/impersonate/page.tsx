@@ -62,20 +62,20 @@ export default function PlatformImpersonate() {
           onChange={e => handleSearch(e.target.value)}
           placeholder="Search shop by name or owner email..."
           autoFocus
-          style={{ width: '100%', padding: '12px 14px 12px 38px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+          style={{ width: '100%', padding: '12px 14px 12px 38px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 10, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
         />
       </div>
 
       {/* Results */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {shops.map(shop => (
-          <div key={shop.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 10 }}>
+          <div key={shop.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 18px', background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: t.text }}>{shop.name}</div>
               <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 2 }}>{shop.owner_name} &middot; {shop.owner_email}</div>
             </div>
             <span style={{ fontSize: 9, fontWeight: 600, color: shop.status === 'active' ? '#22C55E' : '#D94F4F', background: shop.status === 'active' ? 'rgba(34,197,94,.12)' : 'rgba(217,79,79,.12)', padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase' }}>{shop.status}</span>
-            <button onClick={() => handleEnter(shop)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={() => handleEnter(shop)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               <LogIn size={13} /> Enter as Owner
             </button>
           </div>

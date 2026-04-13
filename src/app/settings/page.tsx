@@ -178,7 +178,7 @@ export default function SettingsPage() {
         {backBar}
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Labor Rates</div>
         <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 20 }}>Set hourly labor rates by truck type. These rates auto-fill when building estimates.</div>
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 }}>
           {laborRates.length === 0 ? (
             <div style={{ color: t.textTertiary, fontSize: 13, textAlign: 'center', padding: 20 }}>No labor rates configured. Check database setup.</div>
           ) : laborRates.map((r: any) => {
@@ -215,7 +215,7 @@ export default function SettingsPage() {
         {/* Parts Pricing */}
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4, marginTop: 32 }}>Parts Pricing</div>
         <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 20 }}>Set parts markup by truck type. Applied automatically when adding parts to work orders.</div>
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 }}>
           {laborRates.map((r: any) => {
             const cfg = RATE_LABELS[r.ownership_type] || { label: r.ownership_type, color: t.textSecondary }
             const costExample = 10
@@ -311,7 +311,7 @@ export default function SettingsPage() {
               <label style={S.label}>Default Labor Rate ($/hr)</label><input style={S.input} type="number" step="0.01" value={editShop.labor_rate || ''} onChange={e => setEditShop({ ...editShop, labor_rate: e.target.value })} placeholder="125.00" />
               <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
                 <button style={S.btn} onClick={saveShop} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-                <button style={{ ...S.btn, background: 'transparent', border: '1px solid rgba(255,255,255,.1)', color: t.textSecondary }} onClick={() => setEditing(false)}>Cancel</button>
+                <button style={{ ...S.btn, background: 'transparent', border: `1px solid ${t.border}`, color: t.textSecondary }} onClick={() => setEditing(false)}>Cancel</button>
               </div>
             </>
           ) : (
@@ -371,18 +371,18 @@ export default function SettingsPage() {
         <button onClick={() => setActiveSection(null)} style={{ background: 'none', border: 'none', color: t.textSecondary, fontSize: 13, cursor: 'pointer', marginBottom: 16, fontFamily: 'inherit' }}>&larr; Back to Settings</button>
         <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700 }}>Kiosk Mode</h2>
 
-        <div style={{ background: t.bgCard, border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
           {kioskCode && (
             <div style={{ marginBottom: 20 }}>
               <label style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk URL</label>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <code style={{ flex: 1, padding: '10px 14px', background: t.bg, border: '1px solid #1A1D23', borderRadius: 8, fontSize: 14, color: t.accentLight }}>{kioskUrl}</code>
+                <code style={{ flex: 1, padding: '10px 14px', background: t.bg, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 14, color: t.accentLight }}>{kioskUrl}</code>
                 <button onClick={() => { navigator.clipboard.writeText(`https://${kioskUrl}`); setKioskCopied(true); setTimeout(() => setKioskCopied(false), 2000) }}
-                  style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #1A1D23', background: kioskCopied ? 'rgba(34,197,94,.1)' : t.bgCard, color: kioskCopied ? t.success : t.textSecondary, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ padding: '10px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: kioskCopied ? 'rgba(34,197,94,.1)' : t.bgCard, color: kioskCopied ? t.success : t.textSecondary, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {kioskCopied ? 'Copied' : 'Copy'}
                 </button>
                 <a href={`https://${kioskUrl}`} target="_blank" rel="noopener"
-                  style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bgCard, color: t.textSecondary, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Open</a>
+                  style={{ padding: '10px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard, color: t.textSecondary, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Open</a>
               </div>
             </div>
           )}
@@ -390,7 +390,7 @@ export default function SettingsPage() {
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk Code</label>
             <input value={kioskCode} onChange={e => setKioskCode(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-              placeholder="e.g. ugl" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bg, color: t.text, fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+              placeholder="e.g. ugl" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bg, color: t.text, fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
             <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 4 }}>Lowercase letters, numbers, and dashes only. This becomes your kiosk URL.</div>
           </div>
 
@@ -405,7 +405,7 @@ export default function SettingsPage() {
             <label style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Kiosk PIN</label>
             <input value={kioskPin} onChange={e => setKioskPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="0000" maxLength={6}
-              style={{ width: 120, padding: '10px 14px', borderRadius: 8, border: '1px solid #1A1D23', background: t.bg, color: t.text, fontSize: 18, fontFamily: 'monospace', outline: 'none', letterSpacing: 4, textAlign: 'center' }} />
+              style={{ width: 120, padding: '10px 14px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bg, color: t.text, fontSize: 18, fontFamily: 'monospace', outline: 'none', letterSpacing: 4, textAlign: 'center' }} />
             <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 4 }}>4-6 digits. Staff enters PIN once to activate the kiosk tablet. Customers never see it.</div>
           </div>
 
@@ -415,7 +415,7 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div style={{ background: t.bgCard, border: '1px solid #1A1D23', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 }}>
           <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Tablet Setup Instructions</h3>
           <ol style={{ margin: 0, padding: '0 0 0 20px', fontSize: 13, color: t.textSecondary, lineHeight: 2 }}>
             <li>Open Safari or Chrome on the tablet</li>
@@ -608,7 +608,7 @@ export default function SettingsPage() {
             </div>
 
             {tfaQR && (
-              <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', paddingTop: 16 }}>
+              <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 16 }}>
                 <div style={{ fontSize: 13, color: t.text, marginBottom: 12 }}>
                   Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):
                 </div>

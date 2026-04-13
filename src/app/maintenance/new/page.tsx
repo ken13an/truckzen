@@ -62,13 +62,13 @@ export default function NewPMPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page:  { background:th.bg, minHeight:'100vh', color:th.text, fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:640, margin:'0 auto' },
-    card:  { background:th.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:20, marginBottom:12 },
+    card:  { background:th.bgCard, border:`1px solid ${th.border}`, borderRadius:12, padding:20, marginBottom:12 },
     label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:th.textTertiary, marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'9px 12px', background:th.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:8, fontSize:12, color:th.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
+    input: { width:'100%', padding:'9px 12px', background:th.inputBg, border:`1px solid ${th.border}`, borderRadius:8, fontSize:12, color:th.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
-    btn:   { padding:'12px 24px', background:th.accent, border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'inherit' },
+    btn:   { padding:'12px 24px', background:th.accent, border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:th.bgLight, cursor:'pointer', fontFamily:'inherit' },
     error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#D94F4F', marginBottom:12 },
-    chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:th.inputBg, color:th.textSecondary, fontFamily:'inherit', transition:'all .13s', minHeight:30 },
+    chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:`1px solid ${th.border}`, background:th.inputBg, color:th.textSecondary, fontFamily:'inherit', transition:'all .13s', minHeight:30 },
   }
 
   return (

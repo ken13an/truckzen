@@ -83,12 +83,12 @@ export default function NewRepairPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24, maxWidth: 720, margin: '0 auto' },
-    card: { background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
+    card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary, marginBottom: 5, display: 'block' },
-    input: { width: '100%', padding: '9px 12px', background: t.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '9px 12px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
     row3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 },
-    btn: { padding: '12px 24px', background: t.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
+    btn: { padding: '12px 24px', background: t.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: t.bgLight, cursor: 'pointer', fontFamily: 'inherit' },
     error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 12 },
   }
 
@@ -142,7 +142,7 @@ export default function NewRepairPage() {
         <div style={S.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>Line Items</div>
-            <button type="button" onClick={() => setLines(l => [...l, { description: '', part_number: '', quantity: '1', unit_cost: '0', line_type: 'part' }])} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 6, color: '#4D9EFF', fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>
+            <button type="button" onClick={() => setLines(l => [...l, { description: '', part_number: '', quantity: '1', unit_cost: '0', line_type: 'part' }])} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 6, color: t.accentLight, fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>
               <Plus size={12} /> Add Line
             </button>
           </div>

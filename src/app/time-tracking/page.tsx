@@ -33,11 +33,11 @@ export default function TimeTrackingPage() {
   const S: Record<string, React.CSSProperties> = {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:4 },
-    card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.1em', padding:'6px 10px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
-    td:    { padding:'8px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
-    chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:'1px solid rgba(255,255,255,.08)', background:t.inputBg, color:t.textSecondary, fontFamily:'inherit' },
-    on:    { background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.3)' },
+    card:  { background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:12, padding:16, marginBottom:12 },
+    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.1em', padding:'6px 10px', textAlign:'left', background:t.bgInput, whiteSpace:'nowrap' },
+    td:    { padding:'8px 10px', borderBottom:`1px solid ${t.border}`, fontSize:11 },
+    chip:  { padding:'5px 12px', borderRadius:100, fontSize:10, fontWeight:600, cursor:'pointer', border:`1px solid ${t.border}`, background:t.inputBg, color:t.textSecondary, fontFamily:'inherit' },
+    on:    { background:'rgba(29,111,232,.1)', color:t.accentLight, border:'1px solid rgba(29,111,232,.3)' },
   }
 
   return (
@@ -65,7 +65,7 @@ export default function TimeTrackingPage() {
               <div style={{ fontSize:13, fontWeight:700, color:t.text }}>{tech.name}</div>
               {tech.team && <div style={{ fontSize:10, color:t.textSecondary }}>Team {tech.team}</div>}
             </div>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, color:'#4D9EFF' }}>{fmtMin(tech.total_minutes)}</div>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:24, color:t.accentLight }}>{fmtMin(tech.total_minutes)}</div>
           </div>
 
           {/* Bar showing proportion */}
@@ -80,7 +80,7 @@ export default function TimeTrackingPage() {
                 {tech.entries.map((e: any, i: number) => (
                   <tr key={i}>
                     <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:t.textTertiary }}>{e.date}</td>
-                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>{e.so_number || '—'}</td>
+                    <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:t.accentLight }}>{e.so_number || '—'}</td>
                     <td style={{ ...S.td, color:t.text }}>{e.truck || '—'}</td>
                     <td style={{ ...S.td, color:t.textSecondary }}>{e.customer || '—'}</td>
                     <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:'#1DB870' }}>{fmtMin(e.minutes)}</td>

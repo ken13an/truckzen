@@ -20,6 +20,24 @@ const statusOptions: Record<string, { label: string; color: string }> = {
 
 export default function PartsWOView() {
   const { tokens: t } = useTheme()
+
+  const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 9, fontWeight: 700, color: t.textTertiary,
+  textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4,
+  fontFamily: "'IBM Plex Mono',monospace",
+}
+  const inputStyle: React.CSSProperties = {
+  background: t.border,
+  border: `1px solid ${t.border}`,
+  borderRadius: 6,
+  padding: '6px 8px',
+  fontSize: 11,
+  color: t.text,
+  fontFamily: "'Instrument Sans',sans-serif",
+  outline: 'none',
+  width: '100%',
+  boxSizing: 'border-box',
+}
   const params = useParams()
   const woId = params.id as string
   const supabase = createClient()
@@ -148,14 +166,14 @@ export default function PartsWOView() {
 
   return (
     <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: GREEN, color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: GREEN, color: t.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <a href="/parts/queue" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: MUTED, textDecoration: 'none', fontSize: 12, marginBottom: 16 }}>
         <ChevronLeft size={14} /> Back to Parts Queue
       </a>
 
       {/* Header */}
-      <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -177,7 +195,7 @@ export default function PartsWOView() {
 
       {/* Progress bar */}
       {partLines.length > 0 && (
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
           <Package size={16} color={allSourced ? GREEN : AMBER} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: allSourced ? GREEN : AMBER, marginBottom: 4 }}>
@@ -198,7 +216,7 @@ export default function PartsWOView() {
       )}
 
       {/* Part Lines from so_lines */}
-      <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 16 }}>
           Parts ({partLines.length})
         </div>
@@ -210,7 +228,7 @@ export default function PartsWOView() {
         {partLines.map((p: any) => {
           const st = statusOptions[p.parts_status || 'rough'] || statusOptions.rough
           return (
-            <div key={p.id} style={{ border: '1px solid rgba(255,255,255,.06)', borderRadius: 10, padding: 14, marginBottom: 10, background: p.parts_status === 'rough' || !p.real_name ? '#0A0C10' : t.bgCard }}>
+            <div key={p.id} style={{ border: `1px solid ${t.border}`, borderRadius: 10, padding: 14, marginBottom: 10, background: p.parts_status === 'rough' || !p.real_name ? '#0A0C10' : t.bgCard }}>
               {/* Top row: rough name + status */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <div style={{ fontSize: 12, color: MUTED }}>
@@ -245,12 +263,12 @@ export default function PartsWOView() {
                     style={inputStyle}
                   />
                   {searchResults[p.id]?.length > 0 && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1A1F2B', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.4)', maxHeight: 180, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1A1F2B', border: `1px solid ${t.border}`, borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.4)', maxHeight: 180, overflowY: 'auto' }}>
                       {searchResults[p.id].map((inv: any) => (
                         <div
                           key={inv.id}
                           onMouseDown={() => { dropdownClicked.current = true; autoFillFromInventory(p.id, inv) }}
-                          style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,.06)', fontSize: 12 }}
+                          style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${t.border}`, fontSize: 12 }}
                           onMouseEnter={e => (e.currentTarget.style.background = '#242A38')}
                           onMouseLeave={e => (e.currentTarget.style.background = '')}
                         >
@@ -331,21 +349,4 @@ export default function PartsWOView() {
   )
 }
 
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 9, fontWeight: 700, color: '#48536A',
-  textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4,
-  fontFamily: "'IBM Plex Mono',monospace",
-}
 
-const inputStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,.04)',
-  border: '1px solid rgba(255,255,255,.08)',
-  borderRadius: 6,
-  padding: '6px 8px',
-  fontSize: 11,
-  color: '#F0F4FF',
-  fontFamily: "'Instrument Sans',sans-serif",
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-}

@@ -158,7 +158,7 @@ export default function PlatformAdminShopDetail() {
       {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', top: 20, right: 20, background: t.accent, color: '#fff',
+          position: 'fixed', top: 20, right: 20, background: t.accent, color: t.bgLight,
           padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999,
           boxShadow: '0 4px 20px rgba(0,0,0,.4)',
         }}>{toast}</div>
@@ -328,7 +328,7 @@ export default function PlatformAdminShopDetail() {
                 }}
                 disabled={clearing}
                 style={{
-                  background: t.danger, color: '#fff', border: 'none', borderRadius: 8,
+                  background: t.danger, color: t.bgLight, border: 'none', borderRadius: 8,
                   padding: '10px 24px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                   opacity: clearing ? 0.6 : 1,
                 }}

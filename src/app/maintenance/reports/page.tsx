@@ -47,9 +47,9 @@ export default function MaintReportsPage() {
   }, [shopId, tab, preset])
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: th.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '16px 18px' },
-    th: { fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', padding: '6px 10px', textAlign: 'left', background: '#0B0D11' },
-    td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 12 },
+    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: '16px 18px' },
+    th: { fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', padding: '6px 10px', textAlign: 'left', background: th.bgInput },
+    td: { padding: '9px 10px', borderBottom: `1px solid ${th.border}`, fontSize: 12 },
   }
 
   return (
@@ -61,19 +61,19 @@ export default function MaintReportsPage() {
         {DATE_PRESETS.map((p, i) => (
           <button key={p.label} onClick={() => setPreset(i)} style={{
             padding: '5px 12px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-            border: preset === i ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)',
+            border: preset === i ? '1px solid rgba(29,111,232,.3)' : `1px solid ${th.border}`,
             background: preset === i ? 'rgba(29,111,232,.1)' : 'transparent',
-            color: preset === i ? '#4D9EFF' : MUTED,
+            color: preset === i ? th.accentLight : MUTED,
           }}>{p.label}</button>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,.08)', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: `1px solid ${th.border}`, overflowX: 'auto' }}>
         {TABS.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 18px', background: 'none', border: 'none', borderBottom: tab === t ? '2px solid #1B6EE6' : '2px solid transparent',
-            color: tab === t ? '#F0F4FF' : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
+            padding: '10px 18px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${th.accent}` : '2px solid transparent',
+            color: tab === t ? th.text : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
           }}>{t}</button>
         ))}
       </div>
@@ -100,7 +100,7 @@ export default function MaintReportsPage() {
           )}
 
           {tab === 'Cost Per Truck' && (
-            <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead><tr>{['Truck', 'Repairs', 'Fuel', 'Expenses', 'Total'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                 <tbody>
@@ -108,7 +108,7 @@ export default function MaintReportsPage() {
                     <tr><td colSpan={5} style={{ ...S.td, textAlign: 'center', color: th.textTertiary }}>No data for this period</td></tr>
                   ) : (data.trucks || []).map((t: any) => (
                     <tr key={t.unit_number}>
-                      <td style={{ ...S.td, fontFamily: MONO, color: '#4D9EFF', fontWeight: 700 }}>#{t.unit_number}</td>
+                      <td style={{ ...S.td, fontFamily: MONO, color: th.accentLight, fontWeight: 700 }}>#{t.unit_number}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>${(t.repairs || 0).toFixed(0)}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>${(t.fuel || 0).toFixed(0)}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>${(t.expenses || 0).toFixed(0)}</td>
@@ -153,12 +153,12 @@ export default function MaintReportsPage() {
                 </div>
               </div>
               {(data.overdueList || []).length > 0 && (
-                <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead><tr>{['Truck', 'Service', 'Days Overdue'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                     <tbody>{(data.overdueList || []).map((p: any, i: number) => (
                       <tr key={i}>
-                        <td style={{ ...S.td, fontFamily: MONO, color: '#4D9EFF' }}>#{p.unit_number || '—'}</td>
+                        <td style={{ ...S.td, fontFamily: MONO, color: th.accentLight }}>#{p.unit_number || '—'}</td>
                         <td style={S.td}>{p.service_type}</td>
                         <td style={{ ...S.td, color: RED, fontWeight: 700 }}>{p.days_overdue}d</td>
                       </tr>
@@ -170,7 +170,7 @@ export default function MaintReportsPage() {
           )}
 
           {tab === 'Driver' && (
-            <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead><tr>{['Driver', 'Inspections', 'Defects', 'Fuel Entries', 'Repairs'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                 <tbody>
@@ -191,7 +191,7 @@ export default function MaintReportsPage() {
           )}
 
           {tab === 'Vendor Spend' && (
-            <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead><tr>{['Vendor', 'Total Spent', 'Repairs', 'Avg Repair Cost'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                 <tbody>
@@ -222,7 +222,7 @@ export default function MaintReportsPage() {
                 ))}
               </div>
               {(data.topFaults || []).length > 0 && (
-                <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
                   <div style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: th.text }}>Top Fault Codes</div>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr>{['Code', 'Count', 'Severity'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                     <tbody>{(data.topFaults || []).map((f: any, i: number) => (<tr key={i}><td style={{ ...S.td, fontFamily: MONO, color: BLUE }}>{f.fault_code}</td><td style={{ ...S.td, fontFamily: MONO, fontWeight: 700 }}>{f.count}</td><td style={S.td}>{f.severity}</td></tr>))}</tbody>

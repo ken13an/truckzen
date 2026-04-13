@@ -51,7 +51,7 @@ export default function InspectionDetailPage() {
   const responses = inspection.responses || []
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
+    card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary },
   }
 
@@ -82,7 +82,7 @@ export default function InspectionDetailPage() {
                   <div key={cat} style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: t.text, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>{cat}</div>
                     {items.map((item: any, i: number) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,.03)' }}>
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: `1px solid ${t.border}` }}>
                         {item.pass ? <CheckCircle size={14} color={GREEN} /> : <XCircle size={14} color={RED} />}
                         <span style={{ fontSize: 12, color: t.text, flex: 1 }}>{item.name}</span>
                         {item.notes && <span style={{ fontSize: 10, color: RED }}>{item.notes}</span>}
@@ -101,7 +101,7 @@ export default function InspectionDetailPage() {
             <div style={S.card}>
               <div style={{ fontSize: 12, fontWeight: 700, color: RED, marginBottom: 12 }}>Defects ({defects.length})</div>
               {defects.map(d => (
-                <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${t.border}` }}>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{d.item_name}</div>
                     <div style={{ fontSize: 11, color: MUTED }}>{d.category} · {d.severity}</div>
@@ -128,7 +128,7 @@ export default function InspectionDetailPage() {
             { label: 'Odometer', val: inspection.odometer ? `${inspection.odometer.toLocaleString()} mi` : '—' },
             { label: 'Status', val: inspection.status },
           ].map(r => (
-            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 12 }}>
+            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${t.border}`, fontSize: 12 }}>
               <span style={{ color: t.textTertiary }}>{r.label}</span><span style={{ color: t.text }}>{r.val}</span>
             </div>
           ))}

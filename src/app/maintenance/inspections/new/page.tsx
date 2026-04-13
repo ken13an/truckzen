@@ -118,10 +118,10 @@ export default function NewInspectionPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page: { background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24, maxWidth: 720, margin: '0 auto' },
-    card: { background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 20, marginBottom: 12 },
+    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 20, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary, marginBottom: 5, display: 'block' },
-    input: { width: '100%', padding: '9px 12px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const },
-    btn: { padding: '12px 24px', background: th.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' },
+    input: { width: '100%', padding: '9px 12px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const },
+    btn: { padding: '12px 24px', background: th.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: th.bgLight, cursor: 'pointer', fontFamily: 'inherit' },
     error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: RED, marginBottom: 12 },
   }
 
@@ -134,7 +134,7 @@ export default function NewInspectionPage() {
       {/* Step indicators */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         {[1, 2, 3].map(s => (
-          <div key={s} style={{ flex: 1, height: 3, borderRadius: 2, background: s <= step ? '#1B6EE6' : th.border }} />
+          <div key={s} style={{ flex: 1, height: 3, borderRadius: 2, background: s <= step ? th.accent : th.border }} />
         ))}
       </div>
 
@@ -184,13 +184,13 @@ export default function NewInspectionPage() {
                 const key = `${cat.category}::${item.name}`
                 const resp = responses[key]
                 return (
-                  <div key={key} style={{ padding: '10px 16px', borderTop: '1px solid rgba(255,255,255,.04)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div key={key} style={{ padding: '10px 16px', borderTop: `1px solid ${th.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, color: th.text }}>{item.name}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <button onClick={() => setItemResult(key, true)} style={{ padding: '4px 12px', borderRadius: 6, border: resp?.pass === true ? `1px solid ${GREEN}` : '1px solid rgba(255,255,255,.08)', background: resp?.pass === true ? `${GREEN}18` : 'transparent', color: resp?.pass === true ? GREEN : MUTED, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>PASS</button>
-                      <button onClick={() => setItemResult(key, false)} style={{ padding: '4px 12px', borderRadius: 6, border: resp?.pass === false ? `1px solid ${RED}` : '1px solid rgba(255,255,255,.08)', background: resp?.pass === false ? `${RED}18` : 'transparent', color: resp?.pass === false ? RED : MUTED, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>FAIL</button>
+                      <button onClick={() => setItemResult(key, true)} style={{ padding: '4px 12px', borderRadius: 6, border: resp?.pass === true ? `1px solid ${GREEN}` : `1px solid ${th.border}`, background: resp?.pass === true ? `${GREEN}18` : 'transparent', color: resp?.pass === true ? GREEN : MUTED, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>PASS</button>
+                      <button onClick={() => setItemResult(key, false)} style={{ padding: '4px 12px', borderRadius: 6, border: resp?.pass === false ? `1px solid ${RED}` : `1px solid ${th.border}`, background: resp?.pass === false ? `${RED}18` : 'transparent', color: resp?.pass === false ? RED : MUTED, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>FAIL</button>
                     </div>
                     {resp?.pass === false && (
                       <input style={{ ...S.input, maxWidth: 200, minHeight: 30, padding: '4px 8px', fontSize: 11 }} value={resp.notes} onChange={e => setItemNotes(key, e.target.value)} placeholder="Describe issue..." />

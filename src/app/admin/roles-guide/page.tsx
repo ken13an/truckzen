@@ -8,6 +8,15 @@ import { useTheme } from '@/hooks/useTheme'
 
 export default function RolesGuidePage() {
   const { tokens: t } = useTheme()
+
+  const S: Record<string, React.CSSProperties> = {
+  page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, letterSpacing: '.03em' },
+  card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 },
+  table: { width: '100%', borderCollapse: 'collapse' as const },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.06em', padding: '8px 6px', textAlign: 'left' as const, background: t.bgInput },
+  td: { padding: '6px 6px', borderBottom: `1px solid ${t.border}`, fontSize: 11 },
+}
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -40,7 +49,7 @@ export default function RolesGuidePage() {
           <div style={S.title}>Role & Permissions Guide</div>
           <div style={{ fontSize: 12, color: t.textSecondary }}>Complete reference for all {ALL_ROLES.length} roles and {MODULES.length} modules</div>
         </div>
-        <button onClick={() => window.print()} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: t.accent, color: '#fff' }}>
+        <button onClick={() => window.print()} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: t.accent, color: t.bgLight }}>
           Print / Save PDF
         </button>
       </div>
@@ -139,11 +148,3 @@ export default function RolesGuidePage() {
   )
 }
 
-const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', letterSpacing: '.03em' },
-  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20 },
-  table: { width: '100%', borderCollapse: 'collapse' as const },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.06em', padding: '8px 6px', textAlign: 'left' as const, background: '#0B0D11' },
-  td: { padding: '6px 6px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11 },
-}

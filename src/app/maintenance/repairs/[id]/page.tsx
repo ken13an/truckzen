@@ -77,7 +77,7 @@ export default function RepairDetailPage() {
   const nextStatus = STATUS_FLOW[STATUS_FLOW.indexOf(repair.status) + 1]
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
+    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary },
     val: { fontSize: 13, color: th.text, fontWeight: 600 },
   }
@@ -95,7 +95,7 @@ export default function RepairDetailPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: `${stColor[repair.status] || MUTED}18`, color: stColor[repair.status] || MUTED, textTransform: 'uppercase' }}>{repair.status?.replace(/_/g, ' ')}</span>
           {nextStatus && (
-            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: th.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: th.accent, border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
               {saving ? '...' : `Mark ${nextStatus.replace(/_/g, ' ')}`}
             </button>
           )}
@@ -103,11 +103,11 @@ export default function RepairDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid rgba(255,255,255,.08)' }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: `1px solid ${th.border}` }}>
         {tabs.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? '2px solid #1B6EE6' : '2px solid transparent',
-            color: tab === t ? '#F0F4FF' : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
+            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${th.accent}` : '2px solid transparent',
+            color: tab === t ? th.text : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
           }}>{t === 'lines' ? 'Line Items' : t}</button>
         ))}
       </div>
@@ -133,9 +133,9 @@ export default function RepairDetailPage() {
               { label: 'Labor', val: repair.labor_cost },
               { label: 'Total', val: repair.total_cost },
             ].map(r => (
-              <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 12 }}>
+              <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${th.border}`, fontSize: 12 }}>
                 <span style={{ color: th.textTertiary }}>{r.label}</span>
-                <span style={{ fontFamily: MONO, fontWeight: r.label === 'Total' ? 700 : 400, color: r.label === 'Total' ? '#F0F4FF' : th.text }}>${(r.val || 0).toFixed(2)}</span>
+                <span style={{ fontFamily: MONO, fontWeight: r.label === 'Total' ? 700 : 400, color: r.label === 'Total' ? th.text : th.text }}>${(r.val || 0).toFixed(2)}</span>
               </div>
             ))}
             <div style={{ marginTop: 12 }}><div style={S.label}>Reported</div><div style={{ fontSize: 12, color: MUTED }}>{repair.reported_date ? new Date(repair.reported_date).toLocaleDateString() : '—'}</div></div>
@@ -148,7 +148,7 @@ export default function RepairDetailPage() {
         <div style={S.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: th.text }}>Line Items ({lines.length})</div>
-            <button onClick={addLine} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 6, color: '#4D9EFF', fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>
+            <button onClick={addLine} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 6, color: th.accentLight, fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>
               <Plus size={12} /> Add
             </button>
           </div>
@@ -158,7 +158,7 @@ export default function RepairDetailPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>{['Type', 'Description', 'Part #', 'Qty', 'Unit Cost', 'Total', ''].map(h => (
-                  <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
+                  <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: th.bgInput }}>{h}</th>
                 ))}</tr>
               </thead>
               <tbody>
@@ -184,7 +184,7 @@ export default function RepairDetailPage() {
       {tab === 'files' && (
         <div style={S.card}>
           <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 12 }}>Files & Invoices</div>
-          <div style={{ textAlign: 'center', padding: 30, color: th.textTertiary, fontSize: 12, border: '2px dashed rgba(255,255,255,.08)', borderRadius: 8 }}>
+          <div style={{ textAlign: 'center', padding: 30, color: th.textTertiary, fontSize: 12, border: `2px dashed ${th.border}`, borderRadius: 8 }}>
             <Upload size={24} color={th.textTertiary} style={{ marginBottom: 8 }} />
             <div>Upload vendor invoices and photos</div>
             <div style={{ fontSize: 11, marginTop: 4 }}>Drag & drop or click to upload</div>

@@ -7,6 +7,13 @@ import { useTheme } from '@/hooks/useTheme'
 
 export default function BillingPage() {
   const { tokens: t } = useTheme()
+
+  const S: Record<string, React.CSSProperties> = {
+  page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 },
+  card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 16 },
+  btn: { padding: '8px 16px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: t.bgLight },
+}
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [billing, setBilling] = useState<any>(null)
@@ -56,7 +63,7 @@ export default function BillingPage() {
 
   return (
     <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: t.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: t.accent, color: t.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={S.title}>Billing & Subscription</div>
       <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 24 }}>{billing?.shop_name}</div>
@@ -80,7 +87,7 @@ export default function BillingPage() {
         </div>
         {plan === 'free' && (
           <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(29,111,232,.06)', borderRadius: 8, border: '1px solid rgba(29,111,232,.15)' }}>
-            <div style={{ fontSize: 12, color: '#4D9EFF', fontWeight: 600 }}>Beta Access</div>
+            <div style={{ fontSize: 12, color: t.accentLight, fontWeight: 600 }}>Beta Access</div>
             <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 4 }}>You have full access to all TruckZen features during the beta period. Add a payment method to be ready when paid plans launch.</div>
           </div>
         )}
@@ -99,7 +106,7 @@ export default function BillingPage() {
           </div>
         ) : (
           methods.map((m: any) => (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+            <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${t.border}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 40, height: 28, background: t.border, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase' }}>
                   {m.brand}
@@ -128,9 +135,3 @@ export default function BillingPage() {
   )
 }
 
-const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', marginBottom: 4 },
-  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20, marginBottom: 16 },
-  btn: { padding: '8px 16px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: '#fff' },
-}

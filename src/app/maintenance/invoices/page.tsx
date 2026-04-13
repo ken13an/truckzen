@@ -116,13 +116,13 @@ export default function MaintenanceInvoicesPage() {
       {flagModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
           onClick={e => { if (e.target === e.currentTarget) { setFlagModal(null); setFlagNotes('') } }}>
-          <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Flag Invoice Issue</div>
             <div style={{ fontSize: 13, color: MUTED, marginBottom: 16 }}>Describe the issue. Accounting will be notified.</div>
             <textarea value={flagNotes} onChange={e => setFlagNotes(e.target.value)} placeholder="What's wrong with this invoice?" rows={3}
-              style={{ width: '100%', padding: '10px 12px', background: th.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: th.text, fontFamily: FONT, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+              style={{ width: '100%', padding: '10px 12px', background: th.border, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, fontFamily: FONT, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
-              <button onClick={() => { setFlagModal(null); setFlagNotes('') }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => { setFlagModal(null); setFlagNotes('') }} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${th.border}`, borderRadius: 8, color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
               <button onClick={() => doAction(flagModal, 'flag_issue', flagNotes)} disabled={!flagNotes.trim() || !!actionLoading}
                 style={{ padding: '8px 16px', background: RED, color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                 Submit Issue
@@ -143,7 +143,7 @@ export default function MaintenanceInvoicesPage() {
           { label: 'Closed', value: String(closed.length), color: MUTED },
           { label: 'Outstanding', value: fmt(unpaid.reduce((s, w) => s + (w.invoice_total ?? w.grand_total ?? 0), 0)), color: RED },
         ].map(s => (
-          <div key={s.label} style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px' }}>
+          <div key={s.label} style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: '14px 16px' }}>
             <div style={{ fontSize: 9, color: th.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 4 }}>{s.label}</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
@@ -151,7 +151,7 @@ export default function MaintenanceInvoicesPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: `1px solid ${th.border}` }}>
         {([['unpaid', `Unpaid (${unpaid.length})`], ['paid', `Paid (${paid.length})`], ['closed', `Closed (${closed.length})`]] as [Tab, string][]).map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '10px 20px', background: 'none', border: 'none',
@@ -167,7 +167,7 @@ export default function MaintenanceInvoicesPage() {
       {/* Invoice List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {display.length === 0 && (
-          <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 40, textAlign: 'center', color: th.textTertiary, fontSize: 13 }}>
+          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 40, textAlign: 'center', color: th.textTertiary, fontSize: 13 }}>
             {tab === 'unpaid' ? 'No unpaid invoices for maintained units' : tab === 'paid' ? 'No paid invoices yet' : 'No closed invoices'}
           </div>
         )}
@@ -183,7 +183,7 @@ export default function MaintenanceInvoicesPage() {
             <div key={w.id} style={{ background: th.bgCard, border: `1px solid ${isExpanded ? 'rgba(29,111,232,.3)' : th.border}`, borderRadius: 12, overflow: 'hidden' }}>
               {/* Row header */}
               <div onClick={() => loadDetail(w.id)} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', cursor: 'pointer', gap: 12 }}
-                onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'rgba(255,255,255,.02)' }}
+                onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = th.border }}
                 onMouseLeave={e => (e.currentTarget.style.background = '')}>
                 <span style={{ color: MUTED }}>{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</span>
                 <span style={{ fontFamily: MONO, color: BLUE, fontWeight: 700, fontSize: 13, minWidth: 70 }}>{w.so_number}</span>
@@ -203,7 +203,7 @@ export default function MaintenanceInvoicesPage() {
 
               {/* Expanded detail — read-only invoice summary + maintenance actions */}
               {isExpanded && (
-                <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '16px 20px', background: th.bg }}>
+                <div style={{ borderTop: `1px solid ${th.border}`, padding: '16px 20px', background: th.bg }}>
                   {detailLoading ? (
                     <div style={{ color: MUTED, fontSize: 12 }}>Loading...</div>
                   ) : detail ? (() => {
@@ -234,7 +234,7 @@ export default function MaintenanceInvoicesPage() {
                           const partsAmt = jobParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0)
 
                           return (
-                            <div key={job.id} style={{ marginBottom: 10, padding: '8px 12px', background: th.border, borderRadius: 8, border: '1px solid rgba(255,255,255,.04)' }}>
+                            <div key={job.id} style={{ marginBottom: 10, padding: '8px 12px', background: th.border, borderRadius: 8, border: `1px solid ${th.border}` }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                 <span style={{ fontSize: 12, fontWeight: 700, color: BLUE }}>Job {idx + 1}: <span style={{ color: th.text, fontWeight: 600 }}>{(job.description || '').substring(0, 50)}</span></span>
                                 <span style={{ fontSize: 11, fontFamily: MONO, color: MUTED }}>{hrs}h {rate > 0 ? `@ ${fmt(rate)}/hr = ` : ''}<strong style={{ color: th.text }}>{fmt(laborAmt)}</strong></span>
@@ -255,12 +255,12 @@ export default function MaintenanceInvoicesPage() {
                         })}
 
                         {/* Totals from canonical invoice record — single source of truth */}
-                        <div style={{ borderTop: '1px solid rgba(255,255,255,.08)', paddingTop: 8, marginTop: 4 }}>
+                        <div style={{ borderTop: `1px solid ${th.border}`, paddingTop: 8, marginTop: 4 }}>
                           {invRecord ? (
                             <>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: MUTED }}><span>Subtotal</span><span>{fmt(invRecord.subtotal || 0)}</span></div>
                               {(invRecord.tax_amount || 0) > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: MUTED }}><span>Tax</span><span>{fmt(invRecord.tax_amount)}</span></div>}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0', borderTop: '1px solid rgba(255,255,255,.06)', marginTop: 4 }}><span>Total</span><span style={{ color: GREEN }}>{fmt(invRecord.total || 0)}</span></div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, padding: '6px 0', borderTop: `1px solid ${th.border}`, marginTop: 4 }}><span>Total</span><span style={{ color: GREEN }}>{fmt(invRecord.total || 0)}</span></div>
                               {invRecord.amount_paid > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: GREEN }}><span>Paid</span><span>{fmt(invRecord.amount_paid)}</span></div>}
                               {invRecord.balance_due > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0', color: AMBER }}><span>Balance Due</span><span>{fmt(invRecord.balance_due)}</span></div>}
                             </>
@@ -270,7 +270,7 @@ export default function MaintenanceInvoicesPage() {
                         </div>
 
                         {/* Maintenance actions */}
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,.06)' }}>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: `1px solid ${th.border}` }}>
                           {tab === 'unpaid' && !lastAction && (
                             <button disabled={!!actionLoading} onClick={() => doAction(w.id, 'payment_sent')}
                               style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${BLUE}33`, background: 'transparent', color: BLUE, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6, opacity: actionLoading ? 0.6 : 1 }}>
@@ -283,7 +283,7 @@ export default function MaintenanceInvoicesPage() {
                             </div>
                           )}
                           {invoiceId && (
-                            <a href={`/api/invoices/${invoiceId}/pdf`} target="_blank" rel="noopener" style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'transparent', color: MUTED, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <a href={`/api/invoices/${invoiceId}/pdf`} target="_blank" rel="noopener" style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${th.border}`, background: 'transparent', color: MUTED, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
                               Download PDF
                             </a>
                           )}

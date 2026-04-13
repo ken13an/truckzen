@@ -76,7 +76,7 @@ export default function PlatformRegistrations() {
   return (
     <div>
       {toast && (
-        <div style={{ position: 'fixed', top: 20, right: 20, background: '#1D6FE8', color: '#fff', padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>{toast}</div>
+        <div style={{ position: 'fixed', top: 20, right: 20, background: t.accent, color: t.bgLight, padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>{toast}</div>
       )}
 
       <h1 style={{ fontSize: 22, fontWeight: 700, color: t.text, margin: '0 0 24px' }}>Shop Registrations</h1>
@@ -87,17 +87,17 @@ export default function PlatformRegistrations() {
       </h2>
 
       {pending.length === 0 ? (
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 12, marginBottom: 32 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 12, marginBottom: 32 }}>
           No pending registrations
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
           {pending.map(reg => (
-            <div key={reg.id} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20 }}>
+            <div key={reg.id} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: t.text, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Building2 size={16} color="#1D6FE8" /> {reg.shop_name}
+                    <Building2 size={16} color={t.accent} /> {reg.shop_name}
                   </div>
                   <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 4 }}>{reg.owner_name} &middot; {reg.owner_email}{reg.owner_phone ? ` · ${reg.owner_phone}` : ''}</div>
                 </div>
@@ -118,14 +118,14 @@ export default function PlatformRegistrations() {
               </div>
 
               {reg.message && (
-                <div style={{ background: t.border, border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
+                <div style={{ background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
                   <div style={{ fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 4 }}>Message</div>
                   <div style={{ fontSize: 12, color: t.text, lineHeight: 1.5 }}>{reg.message}</div>
                 </div>
               )}
 
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => handleApprove(reg)} disabled={processing === reg.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 20px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: processing === reg.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                <button onClick={() => handleApprove(reg)} disabled={processing === reg.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 20px', background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: processing === reg.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
                   <Check size={14} /> {processing === reg.id ? 'Processing...' : 'Approve'}
                 </button>
                 <button onClick={() => { setRejectId(reg.id); setRejectReason('') }} disabled={processing === reg.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 20px', background: 'rgba(217,79,79,.12)', color: '#D94F4F', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -139,26 +139,26 @@ export default function PlatformRegistrations() {
 
       {/* Reviewed */}
       <h2 style={{ fontSize: 13, fontWeight: 600, color: t.textSecondary, margin: '0 0 12px' }}>Reviewed ({reviewed.length})</h2>
-      <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               {['Shop', 'Owner', 'Email', 'Status', 'Date', 'Reason'].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '10px 12px', fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: '1px solid rgba(255,255,255,.06)', fontWeight: 600 }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '10px 12px', fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: `1px solid ${t.border}`, fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {reviewed.map(reg => (
               <tr key={reg.id}>
-                <td style={{ padding: '10px 12px', fontSize: 13, color: t.text, borderBottom: '1px solid rgba(255,255,255,.04)' }}>{reg.shop_name}</td>
-                <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary, borderBottom: '1px solid rgba(255,255,255,.04)' }}>{reg.owner_name}</td>
-                <td style={{ padding: '10px 12px', fontSize: 11, color: t.textTertiary, borderBottom: '1px solid rgba(255,255,255,.04)', fontFamily: "'IBM Plex Mono', monospace" }}>{reg.owner_email}</td>
-                <td style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                <td style={{ padding: '10px 12px', fontSize: 13, color: t.text, borderBottom: `1px solid ${t.border}` }}>{reg.shop_name}</td>
+                <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary, borderBottom: `1px solid ${t.border}` }}>{reg.owner_name}</td>
+                <td style={{ padding: '10px 12px', fontSize: 11, color: t.textTertiary, borderBottom: `1px solid ${t.border}`, fontFamily: "'IBM Plex Mono', monospace" }}>{reg.owner_email}</td>
+                <td style={{ padding: '10px 12px', borderBottom: `1px solid ${t.border}` }}>
                   <span style={{ fontSize: 9, fontWeight: 600, color: reg.status === 'approved' ? '#22C55E' : '#D94F4F', background: reg.status === 'approved' ? 'rgba(34,197,94,.12)' : 'rgba(217,79,79,.12)', padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase' }}>{reg.status}</span>
                 </td>
-                <td style={{ padding: '10px 12px', fontSize: 11, color: t.textTertiary, borderBottom: '1px solid rgba(255,255,255,.04)' }}>{fmtDate(reg.reviewed_at || reg.created_at)}</td>
-                <td style={{ padding: '10px 12px', fontSize: 11, color: t.textSecondary, borderBottom: '1px solid rgba(255,255,255,.04)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{reg.reject_reason || '—'}</td>
+                <td style={{ padding: '10px 12px', fontSize: 11, color: t.textTertiary, borderBottom: `1px solid ${t.border}` }}>{fmtDate(reg.reviewed_at || reg.created_at)}</td>
+                <td style={{ padding: '10px 12px', fontSize: 11, color: t.textSecondary, borderBottom: `1px solid ${t.border}`, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{reg.reject_reason || '—'}</td>
               </tr>
             ))}
             {reviewed.length === 0 && (
@@ -171,7 +171,7 @@ export default function PlatformRegistrations() {
       {/* Reject Reason Modal */}
       {rejectId && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setRejectId(null)}>
-          <div style={{ background: '#12131a', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: 32, width: 400 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: '#12131a', border: `1px solid ${t.border}`, borderRadius: 16, padding: 32, width: 400 }} onClick={e => e.stopPropagation()}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: t.text, margin: '0 0 16px' }}>Rejection Reason</h3>
             <p style={{ fontSize: 12, color: t.textSecondary, margin: '0 0 12px' }}>This will be sent to the applicant.</p>
             <textarea
@@ -179,11 +179,11 @@ export default function PlatformRegistrations() {
               onChange={e => setRejectReason(e.target.value)}
               placeholder="Enter reason for rejection..."
               rows={4}
-              style={{ width: '100%', padding: '10px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 12px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
               autoFocus
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-              <button onClick={handleReject} disabled={!rejectReason.trim()} style={{ flex: 1, padding: 10, background: rejectReason.trim() ? '#D94F4F' : t.border, color: rejectReason.trim() ? '#fff' : t.textTertiary, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: rejectReason.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>
+              <button onClick={handleReject} disabled={!rejectReason.trim()} style={{ flex: 1, padding: 10, background: rejectReason.trim() ? '#D94F4F' : t.border, color: rejectReason.trim() ? t.bgLight : t.textTertiary, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: rejectReason.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>
                 Reject
               </button>
               <button onClick={() => setRejectId(null)} style={{ padding: '10px 20px', background: t.border, color: t.textSecondary, border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>

@@ -96,9 +96,9 @@ export default function PMDetailPage() {
   const stColor = isOver ? RED : isSoon ? AMBER : GREEN
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
+    card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary },
-    input: { width: '100%', padding: '8px 11px', background: t.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '8px 11px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 7, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
   }
 
   return (
@@ -109,7 +109,7 @@ export default function PMDetailPage() {
           <div style={{ fontSize: 13, color: MUTED }}>#{asset.unit_number} {asset.year} {asset.make} {asset.model}</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, background: `${stColor}18`, color: stColor }}>{isOver ? 'OVERDUE' : isSoon ? 'DUE SOON' : 'OK'} {pm.next_due_date ? `· ${pm.next_due_date}` : ''}</span>
-            {pm.next_due_miles && <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, background: 'rgba(29,111,232,.1)', color: '#4D9EFF' }}>{pm.next_due_miles.toLocaleString()} mi</span>}
+            {pm.next_due_miles && <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, background: 'rgba(29,111,232,.1)', color: t.accentLight }}>{pm.next_due_miles.toLocaleString()} mi</span>}
           </div>
         </div>
         <button onClick={() => setShowComplete(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: `${GREEN}18`, border: `1px solid ${GREEN}33`, borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
@@ -125,7 +125,7 @@ export default function PMDetailPage() {
             <div><label style={S.label}>Notes</label><input style={S.input} value={completeNotes} onChange={e => setCompleteNotes(e.target.value)} placeholder="Any notes..." /></div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={markComplete} disabled={saving} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? 'Saving...' : 'Confirm Complete'}</button>
+            <button onClick={markComplete} disabled={saving} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? 'Saving...' : 'Confirm Complete'}</button>
             <button onClick={() => setShowComplete(false)} style={{ padding: '8px 16px', background: t.border, border: 'none', borderRadius: 8, color: MUTED, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function PMDetailPage() {
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr>{['Date', 'Miles', 'Notes'].map(h => <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: t.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>)}</tr>
+                  <tr>{['Date', 'Miles', 'Notes'].map(h => <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: t.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: t.bgInput }}>{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {history.map(h => (
@@ -182,7 +182,7 @@ export default function PMDetailPage() {
             { label: 'Model', val: asset.model },
             { label: 'Odometer', val: asset.odometer ? `${asset.odometer.toLocaleString()} mi` : '—' },
           ].filter(r => r.val).map(r => (
-            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 12 }}>
+            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${t.border}`, fontSize: 12 }}>
               <span style={{ color: t.textTertiary }}>{r.label}</span><span style={{ color: t.text }}>{r.val}</span>
             </div>
           ))}

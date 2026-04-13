@@ -72,7 +72,7 @@ export default function DashboardPage() {
   // Notifications are handled by the NotificationBell component (per-user only).
   // The dashboard does not display or manage notifications directly.
 
-  if (loading) return <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading...</div>
+  if (loading) return <div style={{ background: t.bgLight, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading...</div>
 
   const stats = data?.stats || {}
   const actionItems = data?.actionItems || []
@@ -96,7 +96,7 @@ export default function DashboardPage() {
     color: key.includes('pending') || key.includes('unassigned') || key.includes('overdue') ? AMBER : key.includes('revenue') || key.includes('approved') || key.includes('completed') ? GREEN : BLUE,
   }))
 
-  const card: React.CSSProperties = { background: '#fff', border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16 }
+  const card: React.CSSProperties = { background: t.bgLight, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16 }
 
   return (
     <div style={{ background: '#F9FAFB', minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
@@ -136,7 +136,7 @@ export default function DashboardPage() {
                 {item.wo_number && <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, marginTop: 2 }}>{item.wo_number}{item.unit ? ` · #${item.unit}` : ''}</div>}
                 {item.description && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{item.description}</div>}
               </div>
-              <a href={item.link} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: BLUE, color: '#fff', borderRadius: 6, fontSize: 11, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', height: 'fit-content' }}>
+              <a href={item.link} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: BLUE, color: t.bgLight, borderRadius: 6, fontSize: 11, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', height: 'fit-content' }}>
                 {item.action || 'View'} <ChevronRight size={12} />
               </a>
             </div>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#D1D5DB', marginTop: 6, flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 12, color: '#374151' }}>{a.action}</div>
-              <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 1 }}>{timeAgo(a.created_at)}</div>
+              <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 1 }}>{timeAgo(a.created_at)}</div>
             </div>
           </div>
         ))}

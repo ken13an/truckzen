@@ -111,7 +111,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
           ) : (
             notifications.map(n => (
               <div key={n.id} style={{
-                display: 'flex', alignItems: 'flex-start', padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,.03)',
+                display: 'flex', alignItems: 'flex-start', padding: '10px 16px', borderBottom: `1px solid ${t.border}`,
                 background: n.read ? 'transparent' : 'rgba(29,111,232,.04)',
               }}>
                 <a href={n.link || '#'} onClick={() => markRead(n.id)} style={{

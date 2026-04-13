@@ -10,6 +10,16 @@ type View = 'roles' | 'users' | 'audit'
 
 export default function PermissionsPage() {
   const { tokens: t } = useTheme()
+
+  const S: Record<string, React.CSSProperties> = {
+  page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, letterSpacing: '.03em' },
+  card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 },
+  sectionLabel: { fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 },
+  table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '8px 6px', textAlign: 'left' as const, background: t.bgInput, whiteSpace: 'nowrap' as const },
+  td: { padding: '6px 6px', borderBottom: `1px solid ${t.border}`, fontSize: 11, color: t.textSecondary },
+}
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [view, setView] = useState<View>('roles')
@@ -121,7 +131,7 @@ export default function PermissionsPage() {
 
   return (
     <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: t.accent, color: t.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={{ marginBottom: 20 }}>
         <div style={S.title}>Permissions & Access Control</div>
@@ -132,7 +142,7 @@ export default function PermissionsPage() {
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: t.bgCard, borderRadius: 10, padding: 4 }}>
         {([['roles', 'Role Permissions'], ['users', 'User Overrides'], ['audit', 'Audit Log']] as const).map(([k, l]) => (
           <button key={k} onClick={() => { setView(k); if (k === 'audit') loadAudit(user.shop_id) }}
-            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: view === k ? '#1A1D23' : 'transparent', color: view === k ? '#F0F4FF' : t.textTertiary }}>{l}</button>
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: view === k ? t.border : 'transparent', color: view === k ? t.text : t.textTertiary }}>{l}</button>
         ))}
       </div>
 
@@ -142,7 +152,7 @@ export default function PermissionsPage() {
           <table style={S.table}>
             <thead>
               <tr>
-                <th style={{ ...S.th, position: 'sticky', left: 0, zIndex: 2, background: '#0B0D11', minWidth: 140 }}>Module</th>
+                <th style={{ ...S.th, position: 'sticky', left: 0, zIndex: 2, background: t.bgInput, minWidth: 140 }}>Module</th>
                 {ALL_ROLES.map(r => (
                   <th key={r} style={{ ...S.th, textAlign: 'center', minWidth: 70 }}>
                     <div style={{ color: ROLE_COLOR[r], fontSize: 8 }}>{ROLE_LABEL[r]}</div>
@@ -173,7 +183,7 @@ export default function PermissionsPage() {
                             position: 'relative',
                           }}>
                           <div style={{
-                            width: 14, height: 14, borderRadius: '50%', background: '#fff',
+                            width: 14, height: 14, borderRadius: '50%', background: t.bgLight,
                             position: 'absolute', top: 4, left: allowed ? 14 : 4, transition: 'left .15s',
                           }} />
                         </button>
@@ -198,9 +208,9 @@ export default function PermissionsPage() {
               <button key={u.id} onClick={() => setSelectedUser(u)}
                 style={{
                   padding: '8px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                  border: selectedUser?.id === u.id ? '1px solid #1D6FE8' : '1px solid #1A1D23',
+                  border: selectedUser?.id === u.id ? `1px solid ${t.accent}` : `1px solid ${t.border}`,
                   background: selectedUser?.id === u.id ? 'rgba(29,111,232,.1)' : t.bgCard,
-                  color: selectedUser?.id === u.id ? '#F0F4FF' : t.textSecondary,
+                  color: selectedUser?.id === u.id ? t.text : t.textSecondary,
                 }}>
                 {u.full_name}
                 <span style={{ fontSize: 9, color: ROLE_COLOR[u.role], marginLeft: 6 }}>{ROLE_LABEL[u.role]}</span>
@@ -226,15 +236,15 @@ export default function PermissionsPage() {
                     <div key={m.key} onClick={() => toggleUserPerm(selectedUser.id, m.key)}
                       style={{
                         padding: '10px 12px', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        border: hasOvr ? '1px solid #1D6FE8' : '1px solid #1A1D23',
+                        border: hasOvr ? `1px solid ${t.accent}` : `1px solid ${t.border}`,
                         background: hasOvr ? 'rgba(29,111,232,.06)' : t.bgCard,
                       }}>
-                      <span style={{ fontSize: 12, color: effective ? '#F0F4FF' : t.textTertiary }}>{m.icon} {m.label}</span>
+                      <span style={{ fontSize: 12, color: effective ? t.text : t.textTertiary }}>{m.icon} {m.label}</span>
                       <div style={{
                         width: 28, height: 16, borderRadius: 8, background: effective ? '#22C55E' : t.border,
                         position: 'relative',
                       }}>
-                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: effective ? 14 : 4, transition: 'left .15s' }} />
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: t.bgLight, position: 'absolute', top: 3, left: effective ? 14 : 4, transition: 'left .15s' }} />
                       </div>
                     </div>
                   )
@@ -277,12 +287,3 @@ export default function PermissionsPage() {
   )
 }
 
-const S: Record<string, React.CSSProperties> = {
-  page: { background: '#060708', minHeight: '100vh', color: '#DDE3EE', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#F0F4FF', letterSpacing: '.03em' },
-  card: { background: '#0D0F12', border: '1px solid #1A1D23', borderRadius: 12, padding: 20 },
-  sectionLabel: { fontSize: 11, fontWeight: 600, color: '#7C8BA0', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 },
-  table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: '#48536A', textTransform: 'uppercase' as const, letterSpacing: '.08em', padding: '8px 6px', textAlign: 'left' as const, background: '#0B0D11', whiteSpace: 'nowrap' as const },
-  td: { padding: '6px 6px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' },
-}

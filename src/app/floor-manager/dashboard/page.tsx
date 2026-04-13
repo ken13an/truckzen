@@ -42,7 +42,7 @@ const PARTS_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 }
 
 function PartStatusPill({ status }: { status: string }) {
-  const c = PARTS_STATUS_COLORS[status] || { bg: 'rgba(255,255,255,0.08)', text: DIM }
+  const c = PARTS_STATUS_COLORS[status] || { bg: _t.surfaceMuted, text: DIM }
   return (
     <span style={{
       display: 'inline-block', padding: '3px 10px', borderRadius: 999,
@@ -365,7 +365,7 @@ export default function FloorManagerDashboardPage() {
             <button key={i} onClick={() => setTab(i)} style={{
               padding: '6px 14px', borderRadius: 6, border: 'none',
               background: tab === i ? BLUE : 'transparent',
-              color: tab === i ? '#fff' : DIM,
+              color: tab === i ? t.bgLight : DIM,
               fontFamily: FONT, fontSize: 12, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s',
             }}>
@@ -463,7 +463,7 @@ export default function FloorManagerDashboardPage() {
                   <span key={b.key} onClick={() => setExceptionFilter(exceptionFilter === b.key ? null : b.key)}
                     style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer',
                       background: exceptionFilter === b.key ? b.color : `${b.color}18`,
-                      color: exceptionFilter === b.key ? '#fff' : b.color,
+                      color: exceptionFilter === b.key ? t.bgLight : b.color,
                       border: `1px solid ${exceptionFilter === b.key ? b.color : b.color + '30'}`,
                     }}>
                     {b.label}
@@ -551,7 +551,7 @@ export default function FloorManagerDashboardPage() {
                             transition: 'border-color 0.15s, box-shadow 0.15s',
                           }}
                           onMouseEnter={e => {
-                            (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.16)'
+                            (e.currentTarget as HTMLDivElement).style.borderColor = t.border
                             ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'
                           }}
                           onMouseLeave={e => {
@@ -715,7 +715,7 @@ export default function FloorManagerDashboardPage() {
                   <button key={f} onClick={() => setPartsFilter(f)} style={{
                     padding: '5px 12px', borderRadius: 999, border: 'none',
                     background: partsFilter === f ? BLUE : t.border,
-                    color: partsFilter === f ? '#fff' : DIM,
+                    color: partsFilter === f ? t.bgLight : DIM,
                     fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                     textTransform: 'capitalize', transition: 'all 0.15s',
                   }}>
@@ -784,7 +784,7 @@ export default function FloorManagerDashboardPage() {
                                 onClick={() => { setApproveModal(pr); setApproveType('in_stock') }}
                                 style={{
                                   padding: '5px 12px', borderRadius: 6, border: 'none',
-                                  background: GREEN, color: '#fff', fontSize: 11, fontWeight: 700,
+                                  background: GREEN, color: t.bgLight, fontSize: 11, fontWeight: 700,
                                   cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
                                 }}
                               >
@@ -794,7 +794,7 @@ export default function FloorManagerDashboardPage() {
                                 onClick={() => { setDenyModal(pr); setDenyReason('') }}
                                 style={{
                                   padding: '5px 12px', borderRadius: 6, border: 'none',
-                                  background: RED, color: '#fff', fontSize: 11, fontWeight: 700,
+                                  background: RED, color: t.bgLight, fontSize: 11, fontWeight: 700,
                                   cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
                                 }}
                               >
@@ -902,8 +902,8 @@ export default function FloorManagerDashboardPage() {
                           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8,
                             border: `1px solid ${selectedMechanic === s.user_id ? BLUE : CARD_BORDER}`,
                             background: selectedMechanic === s.user_id ? 'rgba(29,111,232,0.08)' : t.border, cursor: 'pointer' }}
-                          onMouseEnter={e => { if (selectedMechanic !== s.user_id) (e.currentTarget.style.background = 'rgba(255,255,255,0.06)') }}
-                          onMouseLeave={e => { if (selectedMechanic !== s.user_id) (e.currentTarget.style.background = 'rgba(255,255,255,0.03)') }}>
+                          onMouseEnter={e => { if (selectedMechanic !== s.user_id) (e.currentTarget.style.background = t.border) }}
+                          onMouseLeave={e => { if (selectedMechanic !== s.user_id) (e.currentTarget.style.background = t.border) }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 12, fontWeight: 600, color: TEXT }}>{s.name}</div>
                             <div style={{ fontSize: 10, color: DIM }}>
@@ -984,7 +984,7 @@ export default function FloorManagerDashboardPage() {
                   disabled={!selectedMechanic || actionLoading}
                   style={{
                     padding: '9px 18px', borderRadius: 10, border: 'none',
-                    background: BLUE, color: '#fff', fontWeight: 700, fontSize: 13,
+                    background: BLUE, color: t.bgLight, fontWeight: 700, fontSize: 13,
                     cursor: selectedMechanic && !actionLoading ? 'pointer' : 'not-allowed',
                     fontFamily: FONT, opacity: !selectedMechanic || actionLoading ? 0.5 : 1,
                   }}
@@ -1093,7 +1093,7 @@ export default function FloorManagerDashboardPage() {
                   disabled={actionLoading}
                   style={{
                     padding: '9px 18px', borderRadius: 10, border: 'none',
-                    background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
+                    background: GREEN, color: t.bgLight, fontWeight: 700, fontSize: 13,
                     cursor: actionLoading ? 'not-allowed' : 'pointer',
                     fontFamily: FONT, opacity: actionLoading ? 0.5 : 1,
                   }}
@@ -1176,7 +1176,7 @@ export default function FloorManagerDashboardPage() {
                   disabled={actionLoading}
                   style={{
                     padding: '9px 18px', borderRadius: 10, border: 'none',
-                    background: RED, color: '#fff', fontWeight: 700, fontSize: 13,
+                    background: RED, color: t.bgLight, fontWeight: 700, fontSize: 13,
                     cursor: actionLoading ? 'not-allowed' : 'pointer',
                     fontFamily: FONT, opacity: actionLoading ? 0.5 : 1,
                   }}

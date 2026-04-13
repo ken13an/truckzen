@@ -139,23 +139,23 @@ export default function ServiceRequestsPage() {
 
   return (
     <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: '#1D6FE8', color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: th.accent, color: th.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text }}>Service Requests</div>
           <div style={{ fontSize: 12, color: th.textSecondary }}>Intake requests from Fleet, Maintenance, and Kiosk</div>
         </div>
-        <a href="/service-requests/new" style={{ padding: '8px 16px', background: th.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Request</a>
+        <a href="/service-requests/new" style={{ padding: '8px 16px', background: th.accent, border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: 'inherit' }}>+ New Request</a>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${th.border}`, marginBottom: 20 }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => { setTab(t.key); setPage(1) }} style={{
             padding: '10px 18px', fontSize: 12, fontWeight: tab === t.key ? 700 : 400,
-            color: tab === t.key ? '#4D9EFF' : th.textSecondary, background: 'none', border: 'none',
-            borderBottom: tab === t.key ? '2px solid #4D9EFF' : '2px solid transparent',
+            color: tab === t.key ? th.accentLight : th.textSecondary, background: 'none', border: 'none',
+            borderBottom: tab === t.key ? `2px solid ${th.accentLight}` : '2px solid transparent',
             cursor: 'pointer', fontFamily: 'inherit',
           }}>
             {t.label} ({t.count})
@@ -177,7 +177,7 @@ export default function ServiceRequestsPage() {
 
       {/* Request cards */}
       {filtered.length === 0 ? (
-        <div style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: th.textSecondary, fontSize: 13 }}>
+        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 40, textAlign: 'center', color: th.textSecondary, fontSize: 13 }}>
           {srSearch || srDateFrom || srDateTo ? 'No results found. Try adjusting your filters.' : tab === 'new' ? 'No pending service requests' : `No ${tab} requests`}
         </div>
       ) : (
@@ -186,7 +186,7 @@ export default function ServiceRequestsPage() {
             const urg = URGENCY[r.urgency || r.priority || 'normal'] || URGENCY.normal
             const src = SOURCE[r.source || r.check_in_type || 'manual'] || SOURCE.manual
             return (
-              <div key={r.id} style={{ background: th.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 16 }}>
+              <div key={r.id} style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16 }}>
                 {/* Top row: badges + time */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -218,12 +218,12 @@ export default function ServiceRequestsPage() {
                 {/* Actions */}
                 {r.status === 'new' || r.status === 'scheduled' ? (
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => convertToWO(r)} style={{ padding: '6px 14px', background: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Convert to WO</button>
+                    <button onClick={() => convertToWO(r)} style={{ padding: '6px 14px', background: 'rgba(29,111,232,.12)', color: th.accentLight, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Convert to WO</button>
                     <a href={`/service-requests/new?edit=${r.id}`} style={{ padding: '6px 14px', background: th.border, color: th.textSecondary, borderRadius: 6, fontSize: 11, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Edit</a>
                     <button onClick={() => { setRejectId(r.id); setRejectReason('') }} style={{ padding: '6px 14px', background: 'rgba(217,79,79,.08)', color: '#D94F4F', border: 'none', borderRadius: 6, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Reject</button>
                   </div>
                 ) : r.status === 'converted' && r.converted_so_id ? (
-                  <a href={getWorkorderRoute(r.converted_so_id, undefined, 'service-request')} style={{ fontSize: 11, color: '#4D9EFF', textDecoration: 'none' }}>View Work Order →</a>
+                  <a href={getWorkorderRoute(r.converted_so_id, undefined, 'service-request')} style={{ fontSize: 11, color: th.accentLight, textDecoration: 'none' }}>View Work Order →</a>
                 ) : r.status === 'rejected' ? (
                   <div style={{ fontSize: 11, color: '#D94F4F' }}>Rejected{r.reject_reason ? `: ${r.reject_reason}` : ''}</div>
                 ) : null}
@@ -238,11 +238,11 @@ export default function ServiceRequestsPage() {
       {/* Reject modal */}
       {rejectId && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setRejectId(null)}>
-          <div style={{ background: '#12131a', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: 28, width: 400 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: '#12131a', border: `1px solid ${th.border}`, borderRadius: 16, padding: 28, width: 400 }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: th.text, marginBottom: 12 }}>Reject Request</div>
-            <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason..." rows={3} autoFocus style={{ width: '100%', padding: '10px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }} />
+            <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason..." rows={3} autoFocus style={{ width: '100%', padding: '10px 12px', background: th.border, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={rejectRequest} disabled={!rejectReason.trim()} style={{ flex: 1, padding: 10, background: rejectReason.trim() ? '#D94F4F' : th.border, color: rejectReason.trim() ? '#fff' : th.textTertiary, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: rejectReason.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>Reject</button>
+              <button onClick={rejectRequest} disabled={!rejectReason.trim()} style={{ flex: 1, padding: 10, background: rejectReason.trim() ? '#D94F4F' : th.border, color: rejectReason.trim() ? th.bgLight : th.textTertiary, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: rejectReason.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>Reject</button>
               <button onClick={() => setRejectId(null)} style={{ padding: '10px 20px', background: th.border, color: th.textSecondary, border: 'none', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
             </div>
           </div>

@@ -61,11 +61,11 @@ export default function ActivityFeedPage() {
       <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 16 }}>Activity Feed</div>
 
       {/* Post comment */}
-      <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 20, display: 'flex', gap: 10, alignItems: 'flex-end' }}>
         <div style={{ flex: 1 }}>
-          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Post a comment or update..." style={{ width: '100%', padding: '10px 12px', background: t.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, minHeight: 48, resize: 'vertical' as const, boxSizing: 'border-box' }} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); postComment() } }} />
+          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Post a comment or update..." style={{ width: '100%', padding: '10px 12px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, minHeight: 48, resize: 'vertical' as const, boxSizing: 'border-box' }} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); postComment() } }} />
         </div>
-        <button onClick={postComment} disabled={posting || !comment.trim()} style={{ padding: '10px 16px', background: t.accent, border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, fontFamily: FONT, minHeight: 40 }}>
+        <button onClick={postComment} disabled={posting || !comment.trim()} style={{ padding: '10px 16px', background: t.accent, border: 'none', borderRadius: 8, color: t.bgLight, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, fontFamily: FONT, minHeight: 40 }}>
           <Send size={14} /> Post
         </button>
       </div>
@@ -73,12 +73,12 @@ export default function ActivityFeedPage() {
       {/* Feed */}
       {loading ? <div style={{ textAlign: 'center', padding: 40, color: t.textTertiary }}>Loading...</div> :
       activities.length === 0 ? (
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 40, textAlign: 'center' }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 40, textAlign: 'center' }}>
           <MessageSquare size={28} color={t.textTertiary} style={{ marginBottom: 8 }} />
           <div style={{ color: t.textTertiary, fontSize: 13 }}>No activity yet. Post a comment or start working!</div>
         </div>
       ) : activities.map(a => (
-        <div key={a.id} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.04)', borderRadius: 10, padding: '12px 16px', marginBottom: 6 }}>
+        <div key={a.id} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: '12px 16px', marginBottom: 6 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: `${typeColor[a.activity_type] || BLUE}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: typeColor[a.activity_type] || BLUE }}>

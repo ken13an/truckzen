@@ -75,11 +75,11 @@ export default function PartsReorderPage() {
       <div style={{ textAlign:'center', maxWidth:400 }}>
         <div style={{ fontSize:16, fontWeight:700, color:'#1DB870', marginBottom:16 }}>Success</div>
         <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:8 }}>PO Created</div>
-        <div style={{ fontSize:13, color:t.textSecondary, marginBottom:4 }}>Purchase Order <strong style={{ color:'#4D9EFF' }}>{done.po_number}</strong></div>
+        <div style={{ fontSize:13, color:t.textSecondary, marginBottom:4 }}>Purchase Order <strong style={{ color:t.accentLight }}>{done.po_number}</strong></div>
         <div style={{ fontSize:13, color:t.textSecondary, marginBottom:24 }}>{selectedParts.length} parts · ${totalCost.toFixed(0)} estimated cost</div>
         <div style={{ display:'flex', gap:8, justifyContent:'center' }}>
-          <button onClick={() => { setDone(null); setSelected(new Set()) }} style={{ padding:'10px 20px', background:'transparent', border:'1px solid rgba(255,255,255,.1)', borderRadius:9, color:t.textSecondary, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>Back to Reorder</button>
-          <a href="/parts" style={{ padding:'10px 20px', background:t.accent, borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none' }}>View Parts</a>
+          <button onClick={() => { setDone(null); setSelected(new Set()) }} style={{ padding:'10px 20px', background:'transparent', border:`1px solid ${t.border}`, borderRadius:9, color:t.textSecondary, fontSize:12, cursor:'pointer', fontFamily:'inherit' }}>Back to Reorder</button>
+          <a href="/parts" style={{ padding:'10px 20px', background:t.accent, borderRadius:9, color:t.bgLight, fontSize:12, fontWeight:700, textDecoration:'none' }}>View Parts</a>
         </div>
       </div>
     </div>
@@ -99,10 +99,10 @@ export default function PartsReorderPage() {
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             <div style={{ textAlign:'right' }}>
               <div style={{ fontSize:12, color:t.textSecondary }}>{selected.size} selected</div>
-              <div style={{ fontFamily:'monospace', fontSize:14, fontWeight:700, color:'#4D9EFF' }}>~${totalCost.toFixed(0)} cost</div>
+              <div style={{ fontFamily:'monospace', fontSize:14, fontWeight:700, color:t.accentLight }}>~${totalCost.toFixed(0)} cost</div>
             </div>
             <button onClick={createPO} disabled={creating}
-              style={{ padding:'10px 20px', background:t.accent, border:'none', borderRadius:9, color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+              style={{ padding:'10px 20px', background:t.accent, border:'none', borderRadius:9, color:t.bgLight, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
               {creating ? 'Creating...' : 'Create Purchase Order'}
             </button>
           </div>
@@ -139,11 +139,11 @@ export default function PartsReorderPage() {
                       <td style={{ ...S.td, textAlign:'center' }}>
                         <input type="checkbox" checked={selected.has(p.id)} onChange={() => {}} style={{ cursor:'pointer' }}/>
                       </td>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>{p.part_number || '—'}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:t.accentLight }}>{p.part_number || '—'}</td>
                       <td style={{ ...S.td, color:t.text, maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.description}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color: isOut?'#D94F4F':'#D4882A', textAlign:'center' }}>{p.on_hand}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', color:t.textSecondary, textAlign:'center' }}>{p.reorder_point}</td>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:'#4D9EFF', textAlign:'center' }}>{orderQty}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:t.accentLight, textAlign:'center' }}>{orderQty}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', color:t.textSecondary }}>${(p.cost_price||0).toFixed(2)}</td>
                       <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color:t.text }}>${lineCost.toFixed(2)}</td>
                       <td style={{ ...S.td, fontSize:11, color:t.textTertiary }}>{p.vendor || '—'}</td>

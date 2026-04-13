@@ -39,7 +39,7 @@ export default function BuildProgressPage() {
     grouped[t.phase].push(t)
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF' }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', color: th.textSecondary }}>Loading...</div>
 
   return (
     <div style={{ minHeight: '100vh', background: th.bg, fontFamily: FONT, color: th.text, padding: 24 }}>
@@ -48,7 +48,7 @@ export default function BuildProgressPage() {
       </a>
 
       <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 4 }}>TruckZen Build Progress</div>
-      <div style={{ fontSize: 14, color: '#9CA3AF', marginBottom: 24 }}>{done} of {total} tasks complete ({pct}%)</div>
+      <div style={{ fontSize: 14, color: th.textSecondary, marginBottom: 24 }}>{done} of {total} tasks complete ({pct}%)</div>
 
       {/* Overall progress bar */}
       <div style={{ height: 8, background: th.border, borderRadius: 4, marginBottom: 32, overflow: 'hidden' }}>
@@ -60,14 +60,14 @@ export default function BuildProgressPage() {
         const items = grouped[phase]
         const phaseDone = items.filter((t: any) => t.done).length
         const phaseTotal = items.length
-        const phaseColor = PHASE_COLOR[phase] || '#6B7280'
+        const phaseColor = PHASE_COLOR[phase] || th.textSecondary
 
         return (
           <div key={phase} style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 4, height: 20, borderRadius: 2, background: phaseColor }} />
               <span style={{ fontSize: 16, fontWeight: 700 }}>{phase}</span>
-              <span style={{ fontSize: 12, color: '#9CA3AF' }}>{phaseDone}/{phaseTotal}</span>
+              <span style={{ fontSize: 12, color: th.textSecondary }}>{phaseDone}/{phaseTotal}</span>
               <div style={{ flex: 1, height: 3, background: th.border, borderRadius: 2, overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: phaseTotal > 0 ? `${(phaseDone / phaseTotal) * 100}%` : '0%', background: phaseColor, borderRadius: 2 }} />
               </div>
@@ -88,15 +88,15 @@ export default function BuildProgressPage() {
                   <div style={{
                     width: 20, height: 20, borderRadius: 4, flexShrink: 0,
                     background: t.done ? '#16A34A' : 'transparent',
-                    border: t.done ? 'none' : '2px solid rgba(255,255,255,0.15)',
+                    border: t.done ? 'none' : `2px solid ${th.border}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 12, color: '#fff', fontWeight: 700,
+                    fontSize: 12, color: th.bgLight, fontWeight: 700,
                   }}>
                     {t.done && '✓'}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: t.done ? '#9CA3AF' : th.text, textDecoration: t.done ? 'line-through' : 'none' }}>{t.label}</div>
-                    {t.note && <div style={{ fontSize: 10, color: '#6B7280', marginTop: 2 }}>{t.note}</div>}
+                    <div style={{ fontSize: 13, fontWeight: 600, color: t.done ? th.textSecondary : th.text, textDecoration: t.done ? 'line-through' : 'none' }}>{t.label}</div>
+                    {t.note && <div style={{ fontSize: 10, color: th.textSecondary, marginTop: 2 }}>{t.note}</div>}
                   </div>
                 </div>
               ))}
@@ -105,7 +105,7 @@ export default function BuildProgressPage() {
         )
       })}
 
-      <div style={{ textAlign: 'center', fontSize: 11, color: '#6B7280', marginTop: 32 }}>Click any task to toggle its status. Changes save immediately.</div>
+      <div style={{ textAlign: 'center', fontSize: 11, color: th.textSecondary, marginTop: 32 }}>Click any task to toggle its status. Changes save immediately.</div>
     </div>
   )
 }

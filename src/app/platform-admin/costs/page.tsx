@@ -36,6 +36,10 @@ const ADDONS = [
 
 export default function CostsPage() {
   const { tokens: t } = useTheme()
+
+  const td: React.CSSProperties = { padding: '8px 8px', fontSize: 12, color: t.textSecondary, borderBottom: `1px solid ${t.border}` }
+  const labelStyle: React.CSSProperties = { fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 3 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [services, setServices] = useState<any[]>([])
@@ -150,18 +154,18 @@ export default function CostsPage() {
 
   return (
     <div>
-      {toast && <div style={{ position: 'fixed', top: 20, right: 20, background: '#1D6FE8', color: '#fff', padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 20, right: 20, background: t.accent, color: t.bgLight, padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>{toast}</div>}
 
       <h1 style={{ fontSize: 22, fontWeight: 700, color: t.text, margin: '0 0 24px' }}>Costs & Services</h1>
 
       {/* ═══ Section 1: Stats ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 28 }}>
         {[
-          { label: 'Monthly Fixed Costs', value: fmt(fixedCosts), color: '#1D6FE8' },
+          { label: 'Monthly Fixed Costs', value: fmt(fixedCosts), color: t.accent },
           { label: 'Variable Costs (This Month)', value: fmt(variableCosts), color: '#F59E0B' },
           { label: 'Total Monthly Spend', value: fmt(totalMonthly), color: '#22C55E' },
         ].map(c => (
-          <div key={c.label} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '20px 18px' }}>
+          <div key={c.label} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: '20px 18px' }}>
             <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{c.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: c.color }}>{c.value}</div>
           </div>
@@ -169,10 +173,10 @@ export default function CostsPage() {
       </div>
 
       {/* ═══ Section 2: Subscriptions ═══ */}
-      <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 28 }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h2 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: 0 }}>Subscriptions & Services</h2>
-          <button onClick={openNewSvc} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', background: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={openNewSvc} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px', background: 'rgba(29,111,232,.12)', color: t.accentLight, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             <Plus size={12} /> Add Service
           </button>
         </div>
@@ -180,7 +184,7 @@ export default function CostsPage() {
           <thead>
             <tr>
               {['Service', 'Provider', 'Category', 'Monthly Cost', 'Billing', 'Start', 'Renewal', 'Dashboard', 'Status', ''].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '8px 8px', fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: '1px solid rgba(255,255,255,.06)', fontWeight: 600 }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '8px 8px', fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: `1px solid ${t.border}`, fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -203,7 +207,7 @@ export default function CostsPage() {
                     ) : '—'}
                   </td>
                   <td style={td}>
-                    {svc.dashboard_url && <a href={svc.dashboard_url} target="_blank" rel="noreferrer" style={{ color: '#4D9EFF' }}><ExternalLink size={12} /></a>}
+                    {svc.dashboard_url && <a href={svc.dashboard_url} target="_blank" rel="noreferrer" style={{ color: t.accentLight }}><ExternalLink size={12} /></a>}
                   </td>
                   <td style={td}>
                     <span style={{ fontSize: 9, fontWeight: 600, color: svc.is_active ? '#22C55E' : '#D94F4F', background: svc.is_active ? 'rgba(34,197,94,.12)' : 'rgba(217,79,79,.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>{svc.is_active ? 'active' : 'inactive'}</span>
@@ -219,13 +223,13 @@ export default function CostsPage() {
       </div>
 
       {/* ═══ Section 3: Per-Shop Usage ═══ */}
-      <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 20, marginBottom: 28 }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 28 }}>
         <h2 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: '0 0 14px' }}>Per-Shop Usage This Month</h2>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               {['Shop', 'SMS', 'Calls', 'AI Requests', 'Emails', 'Est. Cost'].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '8px 8px', fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: '1px solid rgba(255,255,255,.06)', fontWeight: 600 }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '8px 8px', fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", borderBottom: `1px solid ${t.border}`, fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -250,14 +254,14 @@ export default function CostsPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <h2 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: 0 }}>Project Progress</h2>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <select value={newItemCat} onChange={e => setNewItemCat(e.target.value)} style={{ padding: '5px 8px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: t.text, fontFamily: 'inherit' }}>
+            <select value={newItemCat} onChange={e => setNewItemCat(e.target.value)} style={{ padding: '5px 8px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 6, fontSize: 11, color: t.text, fontFamily: 'inherit' }}>
               <option value="feature">Feature</option>
               <option value="integration">Integration</option>
               <option value="fix">Fix</option>
               <option value="database">Database</option>
             </select>
-            <input value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addProgressItem()} placeholder="Add new item..." style={{ padding: '5px 10px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 11, color: t.text, outline: 'none', fontFamily: 'inherit', width: 200 }} />
-            <button onClick={addProgressItem} disabled={!newItem.trim()} style={{ padding: '5px 10px', background: newItem.trim() ? '#1D6FE8' : t.border, color: newItem.trim() ? '#fff' : t.textTertiary, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: newItem.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+            <input value={newItem} onChange={e => setNewItem(e.target.value)} onKeyDown={e => e.key === 'Enter' && addProgressItem()} placeholder="Add new item..." style={{ padding: '5px 10px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 6, fontSize: 11, color: t.text, outline: 'none', fontFamily: 'inherit', width: 200 }} />
+            <button onClick={addProgressItem} disabled={!newItem.trim()} style={{ padding: '5px 10px', background: newItem.trim() ? t.accent : t.border, color: newItem.trim() ? t.bgLight : t.textTertiary, border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: newItem.trim() ? 'pointer' : 'default', fontFamily: 'inherit' }}>
               <Plus size={12} />
             </button>
           </div>
@@ -267,12 +271,12 @@ export default function CostsPage() {
           {(['done', 'in_progress', 'planned'] as const).map(status => {
             const items = progress.filter(p => p.status === status)
             const label = status === 'done' ? 'DONE' : status === 'in_progress' ? 'IN PROGRESS' : 'PLANNED'
-            const headerColor = status === 'done' ? '#22C55E' : status === 'in_progress' ? '#1D6FE8' : t.textSecondary
+            const headerColor = status === 'done' ? '#22C55E' : status === 'in_progress' ? t.accent : t.textSecondary
             return (
               <div key={status}
                 onDragOver={e => e.preventDefault()}
                 onDrop={() => handleDrop(status)}
-                style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 12, minHeight: 200 }}>
+                style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 12, minHeight: 200 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: headerColor, letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace" }}>{label}</span>
                   <span style={{ fontSize: 9, color: t.textTertiary, background: t.border, padding: '1px 5px', borderRadius: 100 }}>{items.length}</span>
@@ -284,7 +288,7 @@ export default function CostsPage() {
                       <div key={item.id}
                         draggable
                         onDragStart={() => setDragItem(item.id)}
-                        style={{ background: t.border, border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, padding: '8px 10px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        style={{ background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, padding: '8px 10px', cursor: 'grab', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <GripVertical size={10} color={t.textTertiary} style={{ flexShrink: 0 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 11, color: t.text, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
@@ -307,18 +311,18 @@ export default function CostsPage() {
         <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 10, fontWeight: 600 }}>Near Term</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
           {ADDONS.filter(a => a.phase === 'near').map(a => (
-            <div key={a.name} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: 14 }}>
+            <div key={a.name} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 4 }}>{a.name}</div>
               <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 8, lineHeight: 1.4 }}>{a.desc}</div>
               <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{a.cost}</div>
-              <button style={{ padding: '4px 10px', background: 'rgba(29,111,232,.12)', color: '#4D9EFF', border: 'none', borderRadius: 4, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
+              <button style={{ padding: '4px 10px', background: 'rgba(29,111,232,.12)', color: t.accentLight, border: 'none', borderRadius: 4, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Add</button>
             </div>
           ))}
         </div>
         <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 10, fontWeight: 600 }}>Growth Phase</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           {ADDONS.filter(a => a.phase === 'growth').map(a => (
-            <div key={a.name} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 10, padding: 14 }}>
+            <div key={a.name} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 4 }}>{a.name}</div>
               <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 8, lineHeight: 1.4 }}>{a.desc}</div>
               <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>{a.cost}</div>
@@ -331,7 +335,7 @@ export default function CostsPage() {
       {/* ═══ Edit/Add Service Modal ═══ */}
       {editSvc && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={closeModal}>
-          <div style={{ background: '#12131a', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: 28, width: 440, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: '#12131a', border: `1px solid ${t.border}`, borderRadius: 16, padding: 28, width: 440, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: t.text, margin: 0 }}>{newSvc ? 'Add Service' : 'Edit Service'}</h3>
               <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary }}><X size={18} /></button>
@@ -386,7 +390,7 @@ export default function CostsPage() {
                 </label>
               </div>
 
-              <button onClick={() => saveSvc(editSvc)} disabled={saving} style={{ width: '100%', padding: 11, background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 4 }}>
+              <button onClick={() => saveSvc(editSvc)} disabled={saving} style={{ width: '100%', padding: 11, background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 4 }}>
                 {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
@@ -397,6 +401,3 @@ export default function CostsPage() {
   )
 }
 
-const td: React.CSSProperties = { padding: '8px 8px', fontSize: 12, color: '#7C8BA0', borderBottom: '1px solid rgba(255,255,255,.04)' }
-const labelStyle: React.CSSProperties = { fontSize: 10, color: '#48536A', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 3 }
-const inputStyle: React.CSSProperties = { width: '100%', padding: '8px 10px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: '#DDE3EE', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }

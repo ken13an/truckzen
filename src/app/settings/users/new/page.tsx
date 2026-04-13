@@ -119,8 +119,8 @@ export default function NewUserPage() {
               <div key={d.key} style={{
                 padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
                 background: form.department === d.key ? 'rgba(29,111,232,.1)' : t.inputBg,
-                color: form.department === d.key ? '#4D9EFF' : t.textTertiary,
-                border: form.department === d.key ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.06)',
+                color: form.department === d.key ? t.accentLight : t.textTertiary,
+                border: form.department === d.key ? '1px solid rgba(29,111,232,.3)' : `1px solid ${t.border}`,
               }}>
                 {d.icon} {d.label}
               </div>

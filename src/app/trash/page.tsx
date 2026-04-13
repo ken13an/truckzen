@@ -154,7 +154,7 @@ export default function TrashPage() {
             setItems(prev => prev.filter(i => !selected.has(`${i.table}::${i.id}`)))
             setSelected(new Set())
             setActionLoading(null)
-          }} disabled={actionLoading === 'bulk'} style={{ background: t.danger, color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+          }} disabled={actionLoading === 'bulk'} style={{ background: t.danger, color: t.bgLight, border: 'none', padding: '6px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
             {actionLoading === 'bulk' ? 'Deleting...' : `Delete ${selected.size} Forever`}
           </button>
           <button onClick={() => setSelected(new Set())} style={{ background: 'transparent', color: t.textSecondary, border: `1px solid ${t.border}`, padding: '6px 14px', borderRadius: 6, fontSize: 11, cursor: 'pointer' }}>Clear</button>
@@ -279,7 +279,7 @@ export default function TrashPage() {
               <button
                 onClick={() => permanentDelete(confirmDelete)}
                 disabled={actionLoading === confirmDelete.id}
-                style={{ background: t.danger, color: '#fff', border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: actionLoading === confirmDelete.id ? 0.5 : 1 }}
+                style={{ background: t.danger, color: t.bgLight, border: 'none', padding: '8px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: actionLoading === confirmDelete.id ? 0.5 : 1 }}
               >
                 {actionLoading === confirmDelete.id ? 'Deleting...' : 'Delete Forever'}
               </button>

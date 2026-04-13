@@ -63,22 +63,22 @@ export default function PunchReportPage() {
           {(['daily', 'weekly', 'monthly'] as View[]).map(v => (
             <button key={v} onClick={() => setView(v)} style={{
               padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
-              border: view === v ? `1px solid ${BLUE}` : '1px solid rgba(255,255,255,0.08)',
+              border: view === v ? `1px solid ${BLUE}` : `1px solid ${t.border}`,
               background: view === v ? 'rgba(29,111,232,.1)' : 'transparent',
-              color: view === v ? '#4D9EFF' : DIM,
+              color: view === v ? t.accentLight : DIM,
             }}>{v}</button>
           ))}
         </div>
 
         {/* Summary — completed counts only, active-now separate */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-          <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={12} /> Workplace Sessions</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: BLUE }}>{fmtHrs(shiftTotal)}</div>
             <div style={{ fontSize: 11, color: DIM, marginTop: 2 }}>{detail.punches?.length || 0} completed session{detail.punches?.length !== 1 ? 's' : ''}</div>
             <div style={{ fontSize: 11, marginTop: 4, fontWeight: 600, color: detail.shiftActiveNow ? GREEN : DIM }}>Active Now: {detail.shiftActiveNow ? 'Yes' : 'No'}</div>
           </div>
-          <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}><Wrench size={12} /> Job Sessions</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: GREEN }}>{fmtHrs(jobTotal)}</div>
             <div style={{ fontSize: 11, color: DIM, marginTop: 2 }}>{detail.entries?.length || 0} completed session{detail.entries?.length !== 1 ? 's' : ''}</div>
@@ -88,15 +88,15 @@ export default function PunchReportPage() {
 
         {/* Workplace sessions table */}
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14} color={BLUE} /> Workplace Sessions</h3>
-        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 20 }}>
           {(detail.punches || []).length === 0 ? (
             <div style={{ padding: 20, textAlign: 'center', color: DIM, fontSize: 12 }}>No completed shift sessions in this period</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead><tr>{['Date', 'In', 'Out', 'Duration', 'Geofence'].map(h => <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, color: DIM, textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#12121A' }}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Date', 'In', 'Out', 'Duration', 'Geofence'].map(h => <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, color: DIM, textTransform: 'uppercase', borderBottom: `1px solid ${t.border}`, background: t.bgCard }}>{h}</th>)}</tr></thead>
               <tbody>
                 {(detail.punches || []).map((p: any) => (
-                  <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <tr key={p.id} style={{ borderBottom: `1px solid ${t.border}` }}>
                     <td style={{ padding: '8px 12px' }}>{fmtDate(p.punch_in_at)}</td>
                     <td style={{ padding: '8px 12px', fontFamily: MONO }}>{fmtTime(p.punch_in_at)}</td>
                     <td style={{ padding: '8px 12px', fontFamily: MONO }}>{fmtTime(p.punch_out_at)}</td>
@@ -113,15 +113,15 @@ export default function PunchReportPage() {
 
         {/* Job sessions table */}
         <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 6 }}><Wrench size={14} color={GREEN} /> Job Sessions</h3>
-        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, overflow: 'hidden' }}>
           {(detail.entries || []).length === 0 ? (
             <div style={{ padding: 20, textAlign: 'center', color: DIM, fontSize: 12 }}>No completed job sessions in this period</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead><tr>{['Date', 'In', 'Out', 'Duration', 'Job'].map(h => <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, color: DIM, textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#12121A' }}>{h}</th>)}</tr></thead>
+              <thead><tr>{['Date', 'In', 'Out', 'Duration', 'Job'].map(h => <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, color: DIM, textTransform: 'uppercase', borderBottom: `1px solid ${t.border}`, background: t.bgCard }}>{h}</th>)}</tr></thead>
               <tbody>
                 {(detail.entries || []).map((e: any) => (
-                  <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <tr key={e.id} style={{ borderBottom: `1px solid ${t.border}` }}>
                     <td style={{ padding: '8px 12px' }}>{fmtDate(e.clocked_in_at)}</td>
                     <td style={{ padding: '8px 12px', fontFamily: MONO }}>{fmtTime(e.clocked_in_at)}</td>
                     <td style={{ padding: '8px 12px', fontFamily: MONO }}>{fmtTime(e.clocked_out_at)}</td>
@@ -148,14 +148,14 @@ export default function PunchReportPage() {
         {(['daily', 'weekly', 'monthly'] as View[]).map(v => (
           <button key={v} onClick={() => setView(v)} style={{
             padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
-            border: view === v ? `1px solid ${BLUE}` : '1px solid rgba(255,255,255,0.08)',
+            border: view === v ? `1px solid ${BLUE}` : `1px solid ${t.border}`,
             background: view === v ? 'rgba(29,111,232,.1)' : 'transparent',
-            color: view === v ? '#4D9EFF' : DIM,
+            color: view === v ? t.accentLight : DIM,
           }}>{v}</button>
         ))}
       </div>
 
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search mechanic..." style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#151520', color: t.text, fontSize: 13, fontFamily: FONT, outline: 'none', width: 220, marginBottom: 12 }} />
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search mechanic..." style={{ padding: '8px 12px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard, color: t.text, fontSize: 13, fontFamily: FONT, outline: 'none', width: 220, marginBottom: 12 }} />
 
       {(() => {
         const filtered = search ? mechanics.filter(m => (m.full_name || '').toLowerCase().includes(search.toLowerCase())) : mechanics
@@ -164,18 +164,18 @@ export default function PunchReportPage() {
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 60, color: DIM }}>{search ? 'No mechanics match search' : 'No active mechanics found'}</div>
       ) : (
-        <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>{['Mechanic', 'Team', 'Shift Hrs', 'Shift #', 'Shift Now', 'Job Hrs', 'Job #', 'Job Now', ''].map(h => (
-                <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '.04em', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#12121A' }}>{h}</th>
+                <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '.04em', borderBottom: `1px solid ${t.border}`, background: t.bgCard }}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
               {filtered.map((m: any) => (
-                <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }}
+                <tr key={m.id} style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }}
                   onClick={() => loadDetail(m.id)}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+                  onMouseEnter={e => (e.currentTarget.style.background = t.border)}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}>
                   <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600 }}>{m.full_name}</td>
                   <td style={{ padding: '10px 12px', fontSize: 12, color: DIM }}>{m.team || '—'}</td>

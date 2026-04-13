@@ -64,7 +64,7 @@ export default function PODetailPage() {
   const nextStatus = STATUS_FLOW[STATUS_FLOW.indexOf(po.status) + 1]
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
+    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary },
   }
 
@@ -80,18 +80,18 @@ export default function PODetailPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: `${stColor[po.status] || MUTED}18`, color: stColor[po.status] || MUTED, textTransform: 'uppercase' }}>{po.status}</span>
           {nextStatus && (
-            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: th.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: th.accent, border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
               {saving ? '...' : `Mark ${nextStatus}`}
             </button>
           )}
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid rgba(255,255,255,.08)' }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: `1px solid ${th.border}` }}>
         {tabs.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? '2px solid #1B6EE6' : '2px solid transparent',
-            color: tab === t ? '#F0F4FF' : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
+            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${th.accent}` : '2px solid transparent',
+            color: tab === t ? th.text : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
           }}>{t}</button>
         ))}
       </div>
@@ -119,7 +119,7 @@ export default function PODetailPage() {
           {lines.length === 0 ? <div style={{ textAlign: 'center', padding: 20, color: th.textTertiary, fontSize: 12 }}>No items</div> : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr>{['Description', 'Part #', 'Qty', 'Unit Cost', 'Total'].map(h => (
-                <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
+                <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: th.bgInput }}>{h}</th>
               ))}</tr></thead>
               <tbody>{lines.map(l => (
                 <tr key={l.id}>
@@ -139,13 +139,13 @@ export default function PODetailPage() {
         <div style={S.card}>
           <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 12 }}>Receive Items</div>
           {lines.map(l => (
-            <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+            <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${th.border}` }}>
               <div>
                 <div style={{ fontSize: 12, color: th.text }}>{l.description}</div>
                 <div style={{ fontSize: 10, color: MUTED }}>Ordered: {l.quantity_ordered ?? l.quantity} · Received: {l.quantity_received || 0}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input type="number" defaultValue={l.quantity_received || 0} min={0} max={l.quantity_ordered ?? l.quantity} style={{ width: 60, padding: '4px 8px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, fontSize: 12, color: th.text, textAlign: 'center', fontFamily: MONO }} onBlur={e => receiveLine(l.id, parseFloat(e.target.value) || 0)} />
+                <input type="number" defaultValue={l.quantity_received || 0} min={0} max={l.quantity_ordered ?? l.quantity} style={{ width: 60, padding: '4px 8px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 6, fontSize: 12, color: th.text, textAlign: 'center', fontFamily: MONO }} onBlur={e => receiveLine(l.id, parseFloat(e.target.value) || 0)} />
                 {(l.quantity_received || 0) >= (l.quantity_ordered ?? l.quantity) && <span style={{ fontSize: 9, color: GREEN, fontWeight: 700 }}>FULL</span>}
               </div>
             </div>

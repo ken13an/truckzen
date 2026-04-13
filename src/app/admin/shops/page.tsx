@@ -114,7 +114,7 @@ export default function PlatformAdminShops() {
       {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', top: 20, right: 20, background: t.accent, color: '#fff',
+          position: 'fixed', top: 20, right: 20, background: t.accent, color: t.bgLight,
           padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999,
           boxShadow: '0 4px 20px rgba(0,0,0,.4)',
         }}>{toast}</div>
@@ -129,7 +129,7 @@ export default function PlatformAdminShops() {
         <button
           onClick={() => setShowCreate(true)}
           style={{
-            background: t.accent, color: '#fff', border: 'none', borderRadius: 8,
+            background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8,
             padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
           }}
         >
@@ -157,7 +157,7 @@ export default function PlatformAdminShops() {
                   key={shop.id}
                   onClick={() => window.location.href = `/admin/shops/${shop.id}`}
                   style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background .12s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.03)')}
+                  onMouseEnter={e => (e.currentTarget.style.background = t.border)}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <td style={{ padding: '14px 16px' }}>
@@ -286,7 +286,7 @@ export default function PlatformAdminShops() {
                   type="submit"
                   disabled={creating}
                   style={{
-                    background: t.accent, color: '#fff', border: 'none', borderRadius: 8,
+                    background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8,
                     padding: '10px 24px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                     opacity: creating ? 0.6 : 1,
                   }}

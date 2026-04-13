@@ -123,7 +123,7 @@ export default function PermissionsPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 256, fontFamily: FONT }}>
-        <span style={{ color: '#9CA3AF', fontSize: 14 }}>Loading...</span>
+        <span style={{ color: t.textSecondary, fontSize: 14 }}>Loading...</span>
       </div>
     )
   }
@@ -133,7 +133,7 @@ export default function PermissionsPage() {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A' }}>Employee Permissions</div>
-        <div style={{ fontSize: 13, color: '#6B7280', marginTop: 4 }}>Control what each team member can see and do</div>
+        <div style={{ fontSize: 13, color: t.textSecondary, marginTop: 4 }}>Control what each team member can see and do</div>
       </div>
 
       {/* Department Tabs */}
@@ -145,7 +145,7 @@ export default function PermissionsPage() {
             style={{
               padding: '10px 18px', background: 'none', border: 'none',
               borderBottom: activeDept === dept.department ? `2px solid ${BLUE}` : '2px solid transparent',
-              color: activeDept === dept.department ? BLUE : '#9CA3AF',
+              color: activeDept === dept.department ? BLUE : t.textSecondary,
               fontWeight: activeDept === dept.department ? 700 : 500,
               fontSize: 13, cursor: 'pointer', fontFamily: FONT, marginBottom: -2,
             }}
@@ -160,14 +160,14 @@ export default function PermissionsPage() {
         <div style={{ width: 256, flexShrink: 0 }}>
           <div style={{ background: t.bgLight, border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>
                 {activeDeptDef?.label} Team
               </span>
             </div>
             {loadingEmployees ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: '#9CA3AF' }}>Loading...</div>
+              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: t.textSecondary }}>Loading...</div>
             ) : employees.length === 0 ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: '#9CA3AF' }}>
+              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: t.textSecondary }}>
                 No employees in this department
               </div>
             ) : (
@@ -184,10 +184,10 @@ export default function PermissionsPage() {
                       transition: 'all .12s',
                     }}
                     onMouseEnter={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = '#F9FAFB' }}
-                    onMouseLeave={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = '#fff' }}
+                    onMouseLeave={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = t.bgLight }}
                   >
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{emp.full_name}</div>
-                    <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>{emp.role}</div>
+                    <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 2 }}>{emp.role}</div>
                   </div>
                 ))}
               </div>
@@ -202,7 +202,7 @@ export default function PermissionsPage() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               height: 256, border: '2px dashed #E5E7EB', borderRadius: 12,
             }}>
-              <span style={{ color: '#9CA3AF', fontSize: 13 }}>Select an employee to manage their permissions</span>
+              <span style={{ color: t.textSecondary, fontSize: 13 }}>Select an employee to manage their permissions</span>
             </div>
           ) : (
             <div style={{ background: t.bgLight, border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
@@ -213,7 +213,7 @@ export default function PermissionsPage() {
               }}>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: '#1A1A1A' }}>{selectedEmployee.full_name}</div>
-                  <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{selectedEmployee.email}</div>
+                  <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 2 }}>{selectedEmployee.email}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {saveStatus === 'saved' && (
@@ -248,7 +248,7 @@ export default function PermissionsPage() {
                   >
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{perm.label}</div>
-                      <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>{perm.description}</div>
+                      <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 2 }}>{perm.description}</div>
                     </div>
                     <button
                       onClick={() => togglePermission(perm.key)}

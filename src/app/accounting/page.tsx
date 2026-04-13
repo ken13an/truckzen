@@ -105,7 +105,7 @@ export default function AccountingPage() {
 
   const S = {
     page: { fontFamily: FONT, background: t.bg, minHeight: '100vh', color: t.text, padding: 24 } as React.CSSProperties,
-    card: { background: t.bgElevated, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 16, marginBottom: 12 } as React.CSSProperties,
+    card: { background: t.bgElevated, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 12 } as React.CSSProperties,
     label: { fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.04em' } as React.CSSProperties,
     pill: (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: bg, color }),
     btn: (bg: string, color: string, outline?: boolean): React.CSSProperties => ({
@@ -113,7 +113,7 @@ export default function AccountingPage() {
       border: outline ? `1px solid ${color}` : 'none',
       borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
     }),
-    input: { width: '100%', padding: '9px 12px', background: t.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' as const, minHeight: 80, resize: 'vertical' as const } as React.CSSProperties,
+    input: { width: '100%', padding: '9px 12px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' as const, minHeight: 80, resize: 'vertical' as const } as React.CSSProperties,
   }
 
   if (loading) {
@@ -133,7 +133,7 @@ export default function AccountingPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${t.border}`, marginBottom: 20 }}>
         {TABS.map((tt, i) => (
           <button key={tt} onClick={() => setTab(i)} style={{
             padding: '10px 20px', background: 'transparent', border: 'none',
@@ -171,8 +171,8 @@ export default function AccountingPage() {
         const asset = wo.assets as any
         return (
           <div key={wo.id} style={{ ...S.card, cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id)}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,.15)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)')}>
+            onMouseEnter={e => (e.currentTarget.style.borderColor = t.border)}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = t.border)}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -190,7 +190,7 @@ export default function AccountingPage() {
             </div>
             {wo.invoice_status === 'accounting_review' && (
               <div style={{ marginTop: 10 }}>
-                <button style={{ ...S.btn(BLUE, '#fff'), fontSize: 12, padding: '6px 14px' }}>Review</button>
+                <button style={{ ...S.btn(BLUE, t.bgLight), fontSize: 12, padding: '6px 14px' }}>Review</button>
               </div>
             )}
           </div>

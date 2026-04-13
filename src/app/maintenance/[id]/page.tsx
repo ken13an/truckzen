@@ -61,12 +61,12 @@ export default function PMDetailPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:680, margin:'0 auto' },
-    card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, padding:16, marginBottom:12 },
+    card:  { background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:12, padding:16, marginBottom:12 },
     label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'8px 11px', background:t.inputBg, border:'1px solid rgba(255,255,255,.08)', borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
+    input: { width:'100%', padding:'8px 11px', background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', padding:'6px 10px', textAlign:'left', background:'#0B0D11' },
-    td:    { padding:'9px 10px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:11 },
+    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', padding:'6px 10px', textAlign:'left', background:t.bgInput },
+    td:    { padding:'9px 10px', borderBottom:`1px solid ${t.border}`, fontSize:11 },
     btn:   { padding:'8px 16px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
   }
 
@@ -92,7 +92,7 @@ export default function PMDetailPage() {
             {isOver?'OVERDUE':isSoon?'DUE SOON':'OK'} · {pm.next_due_date||'No date set'}
           </span>
           {pm.next_due_reading && (
-            <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:'rgba(29,111,232,.1)', color:'#4D9EFF', border:'1px solid rgba(29,111,232,.2)' }}>
+            <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:'rgba(29,111,232,.1)', color:t.accentLight, border:'1px solid rgba(29,111,232,.2)' }}>
               {pm.next_due_reading.toLocaleString()} mi
             </span>
           )}
@@ -114,7 +114,7 @@ export default function PMDetailPage() {
             </div>
             <div style={{ marginBottom:10 }}><label style={S.label}>Notes</label><textarea style={{ ...S.input, minHeight:64, resize:'vertical' as const }} value={edit?.notes||''} onChange={e=>setEdit((p:any)=>({...p,notes:e.target.value}))}/></div>
             <div style={{ display:'flex', gap:8 }}>
-              <button style={{ ...S.btn, background:t.accent, color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
+              <button style={{ ...S.btn, background:t.accent, color:t.bgLight }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
               <a href={`/orders/new`} style={{ ...S.btn, background:'rgba(29,184,112,.1)', color:'#1DB870', border:'1px solid rgba(29,184,112,.2)', textDecoration:'none', display:'inline-flex', alignItems:'center' }}>
                 Create Service Order
               </a>
@@ -131,7 +131,7 @@ export default function PMDetailPage() {
                 <tbody>
                   {history.map(h => (
                     <tr key={h.id} style={{ cursor:'pointer' }} onClick={()=>window.location.href=`/orders/${h.id}`}>
-                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>{h.so_number}</td>
+                      <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:t.accentLight }}>{h.so_number}</td>
                       <td style={{ ...S.td, color:t.textSecondary }}>{new Date(h.created_at).toLocaleDateString()}</td>
                       <td style={{ ...S.td, fontFamily:'monospace' }}>{h.grand_total?`$${h.grand_total.toFixed(0)}`:'—'}</td>
                       <td style={{ ...S.td, fontSize:9, color:t.textSecondary, fontFamily:'monospace' }}>{h.status?.replace(/_/g,' ')}</td>
@@ -154,12 +154,12 @@ export default function PMDetailPage() {
             { label:'Engine', val: asset?.engine },
             { label:'Current Odometer', val: asset?.odometer ? asset.odometer.toLocaleString()+' mi' : null },
           ].filter(r=>r.val).map(r => (
-            <div key={r.label} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,.04)', fontSize:12 }}>
+            <div key={r.label} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:`1px solid ${t.border}`, fontSize:12 }}>
               <span style={{ color:t.textTertiary }}>{r.label}</span>
               <span style={{ color:t.text }}>{r.val}</span>
             </div>
           ))}
-          <a href={`/fleet`} style={{ display:'block', marginTop:12, fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>View full truck profile →</a>
+          <a href={`/fleet`} style={{ display:'block', marginTop:12, fontSize:11, color:t.accentLight, textDecoration:'none' }}>View full truck profile →</a>
         </div>
       </div>
     </div>

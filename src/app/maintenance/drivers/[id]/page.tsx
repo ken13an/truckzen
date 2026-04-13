@@ -82,9 +82,9 @@ export default function DriverDetailPage() {
   if (loading) return <div style={{ background: th.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
+    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary, marginBottom: 4, display: 'block' },
-    input: { width: '100%', padding: '8px 11px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '8px 11px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 7, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
   }
 
@@ -105,11 +105,11 @@ export default function DriverDetailPage() {
         </span>
       </div>
 
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid rgba(255,255,255,.08)' }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: `1px solid ${th.border}` }}>
         {tabs.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? '2px solid #1B6EE6' : '2px solid transparent',
-            color: tab === t ? '#F0F4FF' : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
+            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${th.accent}` : '2px solid transparent',
+            color: tab === t ? th.text : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
           }}>{t}</button>
         ))}
       </div>
@@ -177,7 +177,7 @@ export default function DriverDetailPage() {
                 {assets.map(a => <option key={a.id} value={a.id}>#{a.unit_number} {a.year} {a.make} {a.model}</option>)}
               </select>
             </div>
-            <button onClick={assignTruck} style={{ padding: '8px 16px', background: th.accent, border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, minHeight: 36 }}>Assign</button>
+            <button onClick={assignTruck} style={{ padding: '8px 16px', background: th.accent, border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, minHeight: 36 }}>Assign</button>
           </div>
           {assignments.length === 0 ? (
             <div style={{ ...S.card, textAlign: 'center', color: th.textTertiary, fontSize: 12 }}>No assignments yet</div>
@@ -202,7 +202,7 @@ export default function DriverDetailPage() {
 
       {tab === 'documents' && (
         <div>
-          <div style={{ ...S.card, textAlign: 'center', padding: 30, border: '2px dashed rgba(255,255,255,.08)' }}>
+          <div style={{ ...S.card, textAlign: 'center', padding: 30, border: `2px dashed ${th.border}` }}>
             <Upload size={24} color={th.textTertiary} style={{ marginBottom: 8 }} />
             <div style={{ color: th.textTertiary, fontSize: 12 }}>Upload CDL, medical card, drug test results, MVR report</div>
           </div>

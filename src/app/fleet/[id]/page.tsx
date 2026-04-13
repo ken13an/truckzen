@@ -101,7 +101,7 @@ export default function FleetDetailPage() {
   if (loading) return <div style={{ ...S.page, color:t.textSecondary, padding:60 }}>Loading...</div>
 
   const UNIT_TYPE_LABEL: Record<string, string> = { tractor: 'Tractor', trailer_dry_van: 'Dry Van', trailer_reefer: 'Reefer', trailer_flatbed: 'Flatbed', trailer_tanker: 'Tanker', trailer_lowboy: 'Lowboy', trailer_other: 'Trailer' }
-  const statusColor: Record<string, string> = { active:'#1DB870', in_shop:'#4D9EFF', inactive:t.textSecondary, decommissioned:'#D94F4F' }
+  const statusColor: Record<string, string> = { active:'#1DB870', in_shop: t.accentLight, inactive:t.textSecondary, decommissioned:'#D94F4F' }
 
   const fmt = (n: number | null | undefined) => n != null ? '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '$0'
   const historyTotalPages = Math.ceil(historyTotal / 50) || 1
@@ -121,7 +121,7 @@ export default function FleetDetailPage() {
           <div style={{ marginTop:6 }}><OwnershipTypeBadge type={asset.is_owner_operator ? 'owner_operator' : asset.ownership_type} dark /></div>
         </div>
         <div style={{ display:'flex', gap:8, flexDirection:'column', alignItems:'flex-end' }}>
-          <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]||'#7C8BA0')+'18', color:statusColor[asset.status]||'#7C8BA0', border:`1px solid ${statusColor[asset.status]||'#7C8BA0'}33` }}>
+          <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]|| t.textSecondary)+'18', color:statusColor[asset.status]|| t.textSecondary, border:`1px solid ${statusColor[asset.status]|| t.textSecondary}33` }}>
             {(asset.status||'active').replace(/_/g,' ').toUpperCase()}
           </span>
           <div style={{ fontFamily:'monospace', fontSize:12, color:t.textSecondary }}>{asset.odometer?.toLocaleString()} mi</div>
@@ -136,14 +136,14 @@ export default function FleetDetailPage() {
             <div style={{ color:t.text, fontWeight:600 }}>
               {asset.owner_name || <span style={{ color:t.textSecondary, fontStyle:'italic' }}>Not assigned</span>}
             </div>
-            {asset.owner_phone && <a href={`tel:${asset.owner_phone}`} style={{ color:'#1D6FE8', textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.owner_phone}</a>}
+            {asset.owner_phone && <a href={`tel:${asset.owner_phone}`} style={{ color: t.accent, textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.owner_phone}</a>}
           </div>
           <div>
             <div style={{ fontSize:9, fontWeight:700, color:t.textSecondary, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Driver</div>
             <div style={{ color:t.text, fontWeight:600 }}>
               {asset.driver_name || <span style={{ color:t.textSecondary, fontStyle:'italic' }}>Not assigned</span>}
             </div>
-            {asset.driver_phone && <a href={`tel:${asset.driver_phone}`} style={{ color:'#1D6FE8', textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.driver_phone}</a>}
+            {asset.driver_phone && <a href={`tel:${asset.driver_phone}`} style={{ color: t.accent, textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.driver_phone}</a>}
           </div>
           {asset.lease_info && (
             <div>
@@ -165,7 +165,7 @@ export default function FleetDetailPage() {
         {([['overview', 'Overview'], ['history', 'Full History']] as const).map(([key, label]) => (
           <button key={key} onClick={() => setPageTab(key)} style={{
             padding:'10px 20px', background:'none', border:'none',
-            borderBottom: pageTab === key ? '2px solid #1D6FE8' : '2px solid transparent',
+            borderBottom: pageTab === key ? `2px solid ${t.accent}` : '2px solid transparent',
             color: pageTab === key ? t.text : t.textSecondary,
             fontWeight: pageTab === key ? 700 : 500, fontSize:13, cursor:'pointer',
             fontFamily:'inherit', marginBottom:-1,
@@ -221,7 +221,7 @@ export default function FleetDetailPage() {
                   </select>
                 </div>
               </div>
-              <button style={{ ...S.btn, background:t.accent, color:'#fff' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
+              <button style={{ ...S.btn, background:t.accent, color: t.bgLight }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
             </div>
 
             {/* Warranty section */}
@@ -229,7 +229,7 @@ export default function FleetDetailPage() {
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                 <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Warranty</div>
                 <div style={{ display:'flex', gap:4 }}>
-                  <button onClick={() => { setWarrantyMode('none'); setEdit((a:any) => ({...a, warranty_provider:null, warranty_start:null, warranty_expiry:null, warranty_mileage_limit:null, warranty_notes:null, warranty_coverage_type:null})) }} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='none' ? 'rgba(124,139,160,.12)' : 'transparent', color: warrantyMode==='none' ? '#7C8BA0' : t.textTertiary, border: warrantyMode==='none' ? '1px solid rgba(124,139,160,.2)' : `1px solid ${t.border}` }}>No Warranty</button>
+                  <button onClick={() => { setWarrantyMode('none'); setEdit((a:any) => ({...a, warranty_provider:null, warranty_start:null, warranty_expiry:null, warranty_mileage_limit:null, warranty_notes:null, warranty_coverage_type:null})) }} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='none' ? 'rgba(124,139,160,.12)' : 'transparent', color: warrantyMode==='none' ? t.textSecondary : t.textTertiary, border: warrantyMode==='none' ? '1px solid rgba(124,139,160,.2)' : `1px solid ${t.border}` }}>No Warranty</button>
                   <button onClick={() => setWarrantyMode('has')} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='has' ? 'rgba(29,184,112,.1)' : 'transparent', color: warrantyMode==='has' ? '#1DB870' : t.textTertiary, border: warrantyMode==='has' ? '1px solid rgba(29,184,112,.2)' : `1px solid ${t.border}` }}>Has Warranty</button>
                 </div>
               </div>
@@ -288,7 +288,7 @@ export default function FleetDetailPage() {
                     <label style={S.label}>Notes</label>
                     <textarea style={{ ...S.input, minHeight:50, resize:'vertical' }} value={edit?.warranty_notes||''} onChange={e=>setEdit((a:any)=>({...a,warranty_notes:e.target.value}))} placeholder="Dealer contact, coverage details..."/>
                   </div>
-                  <button style={{ ...S.btn, background:t.accent, color:'#fff' }} onClick={async () => {
+                  <button style={{ ...S.btn, background:t.accent, color: t.bgLight }} onClick={async () => {
                     setSaving(true)
                     await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ warranty_provider:edit.warranty_provider||null, warranty_start:edit.warranty_start||null, warranty_expiry:edit.warranty_expiry||null, warranty_mileage_limit:edit.warranty_mileage_limit||null, warranty_notes:edit.warranty_notes||null, warranty_coverage_type:edit.warranty_coverage_type||null }) })
                     setAsset(edit); setSaving(false)
@@ -300,11 +300,11 @@ export default function FleetDetailPage() {
             {/* Active Work Orders */}
             {activeWos.length > 0 && (
               <div style={{ ...S.card, borderColor:'rgba(29,111,232,.2)' }}>
-                <div style={{ fontSize:12, fontWeight:700, color:'#4D9EFF', marginBottom:10 }}>Active Work Orders ({activeWos.length})</div>
+                <div style={{ fontSize:12, fontWeight:700, color: t.accentLight, marginBottom:10 }}>Active Work Orders ({activeWos.length})</div>
                 {activeWos.map((wo:any) => (
-                  <a key={wo.id} href={getWorkorderRoute(wo.id, undefined, 'fleet')} style={{ display:'block', textDecoration:'none', padding:'8px 10px', borderLeft:'3px solid #1D6FE8', background:'rgba(29,111,232,.04)', borderRadius:6, marginBottom:6 }}>
+                  <a key={wo.id} href={getWorkorderRoute(wo.id, undefined, 'fleet')} style={{ display:'block', textDecoration:'none', padding:'8px 10px', borderLeft:`3px solid ${t.accent}`, background:'rgba(29,111,232,.04)', borderRadius:6, marginBottom:6 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                      <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color:'#4D9EFF' }}>{wo.so_number}</span>
+                      <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color: t.accentLight }}>{wo.so_number}</span>
                       <span style={{ fontSize:9, fontWeight:600, color:'#D4882A', background:'rgba(212,136,42,.1)', padding:'2px 6px', borderRadius:4, textTransform:'uppercase' }}>{wo.status?.replace(/_/g,' ')}</span>
                     </div>
                     <div style={{ fontSize:11, color:t.text, marginTop:2 }}>{wo.complaint?.slice(0,60) || '—'}</div>
@@ -317,7 +317,7 @@ export default function FleetDetailPage() {
             <div style={S.card}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                 <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Service History ({history.length})</div>
-                <a href={`/orders/new`} style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>+ New SO</a>
+                <a href={`/orders/new`} style={{ fontSize:11, color: t.accentLight, textDecoration:'none' }}>+ New SO</a>
               </div>
               {history.length === 0 ? (
                 <div style={{ textAlign:'center', padding:20, color:t.textTertiary, fontSize:12 }}>No service history</div>
@@ -327,7 +327,7 @@ export default function FleetDetailPage() {
                   <tbody>
                     {history.map(so => (
                       <tr key={so.id} style={{ cursor:'pointer' }} onClick={() => window.location.href=`/orders/${so.id}`}>
-                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>{so.so_number}</td>
+                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: t.accentLight }}>{so.so_number}</td>
                         <td style={{ ...S.td, color:t.textSecondary }}>{new Date(so.created_at).toLocaleDateString()}</td>
                         <td style={{ ...S.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{so.complaint}</td>
                         <td style={{ ...S.td, fontFamily:'monospace' }}>{so.grand_total?`$${so.grand_total.toFixed(0)}`:'—'}</td>
@@ -344,7 +344,7 @@ export default function FleetDetailPage() {
           <div style={S.card}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
               <div style={{ fontSize:12, fontWeight:700, color:t.text }}>PM Schedules</div>
-              <a href="/maintenance/new" style={{ fontSize:11, color:'#4D9EFF', textDecoration:'none' }}>+ Add</a>
+              <a href="/maintenance/new" style={{ fontSize:11, color: t.accentLight, textDecoration:'none' }}>+ Add</a>
             </div>
             {pms.length === 0 ? (
               <div style={{ textAlign:'center', padding:20, color:t.textTertiary, fontSize:12 }}>No PM schedules</div>
@@ -382,7 +382,7 @@ export default function FleetDetailPage() {
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:12, marginBottom:12 }}>
                   {[
                     { label: 'Total Records', value: historySummary ? String(ihCount + ohCount) : '—', color: t.text },
-                    { label: 'In-House Jobs', value: String(ihCount), sub: canSeeCost ? fmt(ihTotal) : '***', color: '#1D6FE8' },
+                    { label: 'In-House Jobs', value: String(ihCount), sub: canSeeCost ? fmt(ihTotal) : '***', color: t.accent },
                     { label: 'Outside Repairs', value: String(ohCount), sub: canSeeCost ? fmt(ohTotal) : '***', color: '#D4882A' },
                     { label: 'Total Spent', value: canSeeCost ? fmt(totalCost) : '***', color: '#1DB870' },
                   ].map(c => (
@@ -400,7 +400,7 @@ export default function FleetDetailPage() {
                       <span>Outside {100 - ihPct}%</span>
                     </div>
                     <div style={{ height:8, borderRadius:4, background:'rgba(212,136,42,.2)', overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${ihPct}%`, background:'#1D6FE8', borderRadius:4, transition:'width .3s' }} />
+                      <div style={{ height:'100%', width:`${ihPct}%`, background: t.accent, borderRadius:4, transition:'width .3s' }} />
                     </div>
                   </div>
                 )}
@@ -458,7 +458,7 @@ export default function FleetDetailPage() {
                         <td style={{ ...S.td, color:t.textSecondary, whiteSpace:'nowrap' }}>
                           {row.date ? new Date(row.date).toLocaleDateString() : '—'}
                         </td>
-                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'#4D9EFF' }}>
+                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: t.accentLight }}>
                           {row.reference_number || '—'}
                         </td>
                         <td style={{ ...S.td, fontSize:10, color:t.textSecondary }}>
@@ -480,7 +480,7 @@ export default function FleetDetailPage() {
                             display:'inline-block', padding:'2px 8px', borderRadius:100,
                             fontSize:9, fontWeight:700, letterSpacing:'.04em',
                             background: row.source === 'inhouse' ? 'rgba(29,111,232,.15)' : 'rgba(212,136,42,.15)',
-                            color: row.source === 'inhouse' ? '#4D9EFF' : '#D4882A',
+                            color: row.source === 'inhouse' ? t.accentLight : '#D4882A',
                           }}>
                             {row.source === 'inhouse' ? 'In-House' : 'Outside'}
                           </span>

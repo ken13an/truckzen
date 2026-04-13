@@ -29,7 +29,7 @@ export default function DocumentsPage() {
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Documents</div>
       </div>
 
-      <div style={{ background: t.bgCard, border: '2px dashed rgba(255,255,255,.08)', borderRadius: 12, padding: 30, textAlign: 'center', marginBottom: 16 }}>
+      <div style={{ background: t.bgCard, border: `2px dashed ${t.border}`, borderRadius: 12, padding: 30, textAlign: 'center', marginBottom: 16 }}>
         <Upload size={28} color={t.textTertiary} style={{ marginBottom: 8 }} />
         <div style={{ color: t.textTertiary, fontSize: 13 }}>Upload files to the maintenance document library</div>
         <div style={{ color: t.textTertiary, fontSize: 11, marginTop: 4 }}>Drag & drop or click to upload. Uses maintenance-files storage.</div>
@@ -37,7 +37,7 @@ export default function DocumentsPage() {
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
         {[{ value: 'all', label: 'All' }, { value: 'invoice', label: 'Invoices' }, { value: 'photo', label: 'Photos' }, { value: 'repair_order', label: 'Repair Orders' }].map(f => (
-          <button key={f.value} onClick={() => setFilter(f.value)} style={{ padding: '5px 12px', borderRadius: 100, border: filter === f.value ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.08)', background: filter === f.value ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f.value ? '#4D9EFF' : MUTED, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{f.label}</button>
+          <button key={f.value} onClick={() => setFilter(f.value)} style={{ padding: '5px 12px', borderRadius: 100, border: filter === f.value ? '1px solid rgba(29,111,232,.3)' : `1px solid ${t.border}`, background: filter === f.value ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f.value ? t.accentLight : MUTED, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{f.label}</button>
         ))}
       </div>
 

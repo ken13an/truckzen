@@ -54,8 +54,8 @@ export default function FleetMapPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 16, minHeight: 'calc(100vh - 120px)' }}>
         {/* Vehicle List */}
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '10px 12px', borderBottom: `1px solid ${t.border}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: t.inputBg, borderRadius: 8, padding: '6px 10px' }}>
               <Search size={13} color={t.textTertiary} />
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search trucks..." style={{ background: 'none', border: 'none', color: t.text, fontSize: 12, outline: 'none', fontFamily: FONT, width: '100%' }} />
@@ -68,7 +68,7 @@ export default function FleetMapPage() {
               const asset = v.assets || {}
               const c = statusColor(v)
               return (
-                <div key={v.asset_id} style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,.03)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div key={v.asset_id} style={{ padding: '8px 12px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: c, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: t.text }}>#{asset.unit_number || '—'} <span style={{ fontWeight: 400, color: MUTED }}>{asset.make} {asset.model}</span></div>
@@ -82,7 +82,7 @@ export default function FleetMapPage() {
         </div>
 
         {/* Map placeholder */}
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <MapPin size={40} color={t.textTertiary} style={{ marginBottom: 12 }} />
           <div style={{ color: t.textTertiary, fontSize: 14, fontWeight: 600 }}>Fleet Map</div>
           <div style={{ color: t.textTertiary, fontSize: 12, marginTop: 4, maxWidth: 300, textAlign: 'center' }}>

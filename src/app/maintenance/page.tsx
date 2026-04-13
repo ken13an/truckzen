@@ -10,7 +10,7 @@ const MONO = "'IBM Plex Mono',monospace"
 
 export default function MaintenanceDashboard() {
   const { tokens: t } = useTheme()
-  const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = t.warning, RED = t.danger, MUTED = t.textSecondary
+  const BLUE = t.accent, GREEN = '#1DB870', AMBER = t.warning, RED = t.danger, MUTED = t.textSecondary
   const supabase = createClient()
   const [stats, setStats] = useState<any>({})
   const [activities, setActivities] = useState<any[]>([])
@@ -87,7 +87,7 @@ export default function MaintenanceDashboard() {
         <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO, marginBottom: 10 }}>Quick Actions</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {quickActions.map(a => (
-            <a key={a.label} href={a.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>
+            <a key={a.label} href={a.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>
               <Plus size={12} /> {a.label}
             </a>
           ))}
@@ -108,7 +108,7 @@ export default function MaintenanceDashboard() {
         ) : (
           <div style={{ maxHeight: 300, overflowY: 'auto' }}>
             {activities.map(a => (
-              <div key={a.id} style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.03)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div key={a.id} style={{ padding: '8px 0', borderBottom: `1px solid ${t.border}`, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <div style={{ width: 24, height: 24, borderRadius: '50%', background: `${typeColor[a.activity_type] || BLUE}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: typeColor[a.activity_type] || BLUE, flexShrink: 0 }}>
                   {(a.user_name || 'S')[0].toUpperCase()}
                 </div>

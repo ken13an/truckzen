@@ -37,6 +37,12 @@ function timeAgo(d: string) {
 
 export default function ShopFloorPage() {
   const { tokens: t } = useTheme()
+
+  const S: Record<string, React.CSSProperties> = {
+  input: { padding: '8px 12px', background: _t.bgCard, border: `1px solid ${_t.border}`, borderRadius: 8, color: _t.text, fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: _t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: _t.bg, whiteSpace: 'nowrap' as const },
+  td: { padding: '9px 10px', borderBottom: `1px solid ${t.border}`, fontSize: 11, color: _t.textSecondary },
+}
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [view, setView] = useState<View>('table')
@@ -384,8 +390,3 @@ function KanbanCard({ job: j, mechanics }: { job: any; mechanics: any[] }) {
   )
 }
 
-const S: Record<string, React.CSSProperties> = {
-  input: { padding: '8px 12px', background: _t.bgCard, border: `1px solid ${_t.border}`, borderRadius: 8, color: _t.text, fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: _t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: _t.bg, whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: _t.textSecondary },
-}

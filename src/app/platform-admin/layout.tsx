@@ -57,7 +57,7 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
   if (!user) {
     return (
       <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 28, height: 28, border: '2px solid rgba(29,111,232,0.2)', borderTopColor: '#1D6FE8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <div style={{ width: 28, height: 28, border: '2px solid rgba(29,111,232,0.2)', borderTopColor: t.accent, borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       </div>
     )
   }
@@ -66,20 +66,20 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
     <div style={{ display: 'flex', minHeight: '100vh', background: t.bg }}>
       {/* Platform Admin Sidebar */}
       <aside style={{
-        width: 240, minHeight: '100vh', background: '#0B0D11',
-        borderRight: '1px solid rgba(255,255,255,.06)',
+        width: 240, minHeight: '100vh', background: t.bgInput,
+        borderRight: `1px solid ${t.border}`,
         display: 'flex', flexDirection: 'column', flexShrink: 0,
         position: 'sticky', top: 0,
       }}>
         {/* Header */}
-        <div style={{ padding: '20px 18px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+        <div style={{ padding: '20px 18px', borderBottom: `1px solid ${t.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <Shield size={18} color="#1D6FE8" />
+            <Shield size={18} color={t.accent} />
             <span style={{ fontSize: 14, fontWeight: 700, color: t.text, letterSpacing: '0.02em' }}>TruckZen Platform</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
             <span style={{ fontSize: 11, color: t.textSecondary }}>{user.full_name}</span>
-            <span style={{ fontSize: 9, fontWeight: 700, color: '#1D6FE8', background: 'rgba(29,111,232,.12)', padding: '2px 6px', borderRadius: 4, fontFamily: "'IBM Plex Mono', monospace" }}>PLATFORM OWNER</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: t.accent, background: 'rgba(29,111,232,.12)', padding: '2px 6px', borderRadius: 4, fontFamily: "'IBM Plex Mono', monospace" }}>PLATFORM OWNER</span>
           </div>
         </div>
 
@@ -94,17 +94,17 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '10px 18px', margin: '1px 6px', borderRadius: 8,
                   background: active ? 'rgba(29,111,232,.12)' : 'transparent',
-                  borderLeft: active ? '2px solid #1D6FE8' : '2px solid transparent',
+                  borderLeft: active ? `2px solid ${t.accent}` : '2px solid transparent',
                   cursor: 'pointer', transition: 'all .12s',
                 }}
-                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)' }}
+                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = t.border }}
                 onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
-                  <Icon size={15} strokeWidth={1.5} color={active ? '#4D9EFF' : t.textSecondary} />
-                  <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? '#F0F4FF' : t.textSecondary, flex: 1 }}>
+                  <Icon size={15} strokeWidth={1.5} color={active ? t.accentLight : t.textSecondary} />
+                  <span style={{ fontSize: 12, fontWeight: active ? 700 : 400, color: active ? t.text : t.textSecondary, flex: 1 }}>
                     {item.label}
                   </span>
                   {item.label === 'Registrations' && pendingCount > 0 && (
-                    <span style={{ background: '#D94F4F', color: '#fff', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>
+                    <span style={{ background: '#D94F4F', color: t.bgLight, fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>
                       {pendingCount}
                     </span>
                   )}
@@ -115,14 +115,14 @@ export default function PlatformAdminLayout({ children }: { children: React.Reac
         </nav>
 
         {/* Bottom */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '8px 0' }}>
+        <div style={{ borderTop: `1px solid ${t.border}`, padding: '8px 0' }}>
           <div style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 18px', margin: '1px 6px', borderRadius: 8,
               cursor: 'pointer', transition: 'all .12s',
             }}
             onClick={() => { window.location.href = '/dashboard' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.04)'}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = t.border}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
               <ChevronLeft size={15} strokeWidth={1.5} color={t.textSecondary} />
               <span style={{ fontSize: 12, color: t.textSecondary }}>Back to Dashboard</span>

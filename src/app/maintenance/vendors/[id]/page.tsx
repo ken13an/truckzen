@@ -49,9 +49,9 @@ export default function VendorDetailPage() {
   if (loading) return <div style={{ background: th.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: th.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 },
+    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginBottom: 12 },
     label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary, marginBottom: 4, display: 'block' },
-    input: { width: '100%', padding: '8px 11px', background: th.inputBg, border: '1px solid rgba(255,255,255,.08)', borderRadius: 7, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '8px 11px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 7, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
   }
 
@@ -70,11 +70,11 @@ export default function VendorDetailPage() {
         </span>
       </div>
 
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: '1px solid rgba(255,255,255,.08)' }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: `1px solid ${th.border}` }}>
         {(['profile', 'repairs'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? '2px solid #1B6EE6' : '2px solid transparent',
-            color: tab === t ? '#F0F4FF' : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
+            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${th.accent}` : '2px solid transparent',
+            color: tab === t ? th.text : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
           }}>{t === 'repairs' ? 'Repair History' : t}</button>
         ))}
       </div>
@@ -100,7 +100,7 @@ export default function VendorDetailPage() {
               <label style={S.label}>Specialties</label>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
                 {vendor.specialties.map((s: string) => (
-                  <span key={s} style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10, background: 'rgba(29,111,232,.1)', color: '#4D9EFF', border: '1px solid rgba(29,111,232,.2)', textTransform: 'capitalize' }}>{s.replace(/_/g, ' ')}</span>
+                  <span key={s} style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10, background: 'rgba(29,111,232,.1)', color: th.accentLight, border: '1px solid rgba(29,111,232,.2)', textTransform: 'capitalize' }}>{s.replace(/_/g, ' ')}</span>
                 ))}
               </div>
             </div>
@@ -118,7 +118,7 @@ export default function VendorDetailPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>{['Repair #', 'Truck', 'Description', 'Status', 'Cost', 'Date'].map(h => (
-                  <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: '#0B0D11' }}>{h}</th>
+                  <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: th.bgInput }}>{h}</th>
                 ))}</tr>
               </thead>
               <tbody>

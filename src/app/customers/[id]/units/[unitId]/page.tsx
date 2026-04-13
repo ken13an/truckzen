@@ -21,13 +21,14 @@ const UNIT_TYPE_LABEL: Record<string, string> = {
   trailer_lowboy: 'TRAILER — Lowboy',
   trailer_other: 'TRAILER — Other',
 }
-const cardStyle: React.CSSProperties = { background: '#151520', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, marginBottom: 12 }
-const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: '#EDEDF0', outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box' }
 const labelStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4, marginTop: 10 }
 const pillStyle = (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: bg, color })
 
 export default function UnitProfilePage() {
   const { tokens: th } = useTheme()
+
+  const cardStyle: React.CSSProperties = { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginBottom: 12 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: th.border, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box' }
   const params = useParams()
   const id = params.id as string
   const unitId = params.unitId as string
@@ -277,7 +278,7 @@ export default function UnitProfilePage() {
             <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{firstLine.description || firstLine.concern || '—'}</div>
           )}
           {isExpanded && lines.length > 0 && (
-            <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+            <div style={{ marginTop: 12, borderTop: `1px solid ${th.border}`, paddingTop: 10 }}>
               {lines.map((line: any, i: number) => (
                 <div key={line.id || i} style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: th.text, marginBottom: 2 }}>{line.description || 'Line ' + (i + 1)}</div>
@@ -357,7 +358,7 @@ export default function UnitProfilePage() {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <tr style={{ borderBottom: `1px solid ${th.border}` }}>
               {['Date', 'WO #', 'Part #', 'Description', 'Qty', 'Cost', 'Status'].map((h) => (
                 <th key={h} style={{ textAlign: 'left', padding: '8px 10px', color: GRAY, fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
               ))}
@@ -367,7 +368,7 @@ export default function UnitProfilePage() {
             {woParts.map((p: any, i: number) => {
               const sc = statusColor(p.status)
               return (
-                <tr key={p.id || i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <tr key={p.id || i} style={{ borderBottom: `1px solid ${th.border}` }}>
                   <td style={{ padding: '8px 10px', color: GRAY }}>{p.service_orders ? fmtDate(p.service_orders.created_at) : '—'}</td>
                   <td style={{ padding: '8px 10px' }}>
                     {p.service_orders ? (
@@ -482,7 +483,7 @@ export default function UnitProfilePage() {
                   width: 14,
                   height: 14,
                   borderRadius: 7,
-                  background: '#fff',
+                  background: th.bgLight,
                   position: 'absolute' as const,
                   top: 3,
                   left: editForm.is_owner_operator ? 19 : 3,
@@ -533,7 +534,7 @@ export default function UnitProfilePage() {
           <button
             onClick={saveDetails}
             disabled={saving}
-            style={{ padding: '9px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', background: BLUE, color: '#fff', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, fontFamily: FONT }}
+            style={{ padding: '9px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', background: BLUE, color: th.bgLight, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, fontFamily: FONT }}
           >
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
@@ -596,7 +597,7 @@ export default function UnitProfilePage() {
         ) : (
           <a
             href={getNewWorkorderRoute({ customer: id as string, unit: unitId as string })}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, background: BLUE, color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, background: BLUE, color: th.bgLight, fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}
           >
             + Create Work Order
           </a>
@@ -619,7 +620,7 @@ export default function UnitProfilePage() {
         </div>
 
         {/* Tab Bar */}
-        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${th.border}`, marginBottom: 16 }}>
           {TABS.map((t, i) => (
             <button
               key={t}

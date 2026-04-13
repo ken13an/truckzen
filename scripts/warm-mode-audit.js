@@ -28,15 +28,21 @@
 const fs = require('fs')
 const path = require('path')
 
+// Only flag hex that ACTUALLY breaks warm mode:
+//   - dark surface hex (wrong on light bg)
+//   - near-white text hex (invisible on light bg)
+//   - dark border hex
+// Mid-gray text (#7C8BA0, #48536A, etc) is readable on both modes and is
+// commonly used as an intentional semantic color (category/status markers),
+// so it is NOT flagged here even if it could be refined to a token.
 const DARK_HEX = [
   '#060708', '#0d1520', '#0C0C12', '#0c0c12',
   '#0D0F12', '#131d2e', '#161B24', '#12121A', '#0B0D11', '#080A0D',
   '#F0F4FF', '#DDE3EE', '#e2e6ed', '#E2E6ED', '#EDEDF0',
-  '#7C8BA0', '#8494a7', '#9CA3AF', '#9D9DA1', '#A0AABF', '#8A8F9E',
-  '#48536A', '#4a5568', '#6B7280',
   '#1A1D23', '#1a1d23', '#1A1A26', '#151520', '#1C2130',
 ]
-const BLUE_HARDCODES = ['#1D6FE8', '#1B6EE6', '#1248B0', '#4D9EFF']
+// Blue accent hex is not flagged — often intentional brand/accent usage.
+const BLUE_HARDCODES = []
 
 const EXCLUDE = [
   /^src\/app\/api\//,

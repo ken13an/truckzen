@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { COLORS, FONT, FONT_MONO } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function AuditLogPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [entries, setEntries] = useState<any[]>([])
@@ -78,7 +80,7 @@ export default function AuditLogPage() {
   const btnStyle: React.CSSProperties = {
     padding: '8px 16px',
     background: COLORS.blue,
-    color: '#fff',
+    color: t.bgLight,
     border: 'none',
     borderRadius: 8,
     fontSize: 13,

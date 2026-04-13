@@ -346,7 +346,7 @@ function TechMobilePage() {
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               {['0.5', '1', '2', '4'].map(h => (
                 <button key={h} onClick={() => setActionHours(h)}
-                  style={{ ...S.actionBtn, flex: 1, padding: '10px 8px', background: actionHours === h ? _t.accent : _t.border, color: actionHours === h ? '#fff' : _t.textSecondary, fontWeight: 700 }}>
+                  style={{ ...S.actionBtn, flex: 1, padding: '10px 8px', background: actionHours === h ? _t.accent : _t.border, color: actionHours === h ? _t.bgLight : _t.textSecondary, fontWeight: 700 }}>
                   {h}h
                 </button>
               ))}

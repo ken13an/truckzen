@@ -90,7 +90,7 @@ export default function PayrollPage() {
           { label: 'Hourly Staff', value: String(hourlyCount), color: BLUE },
           { label: 'Salaried Staff', value: String(salariedCount), color: AMBER },
         ].map(c => (
-          <div key={c.label} style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px' }}>
+          <div key={c.label} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: '14px 16px' }}>
             <div style={{ fontSize: 11, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{c.label}</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: c.color }}>{c.value}</div>
           </div>
@@ -99,18 +99,18 @@ export default function PayrollPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search employee..." style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#151520', color: t.text, fontSize: 13, fontFamily: FONT, outline: 'none', width: 220 }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search employee..." style={{ padding: '8px 12px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard, color: t.text, fontSize: 13, fontFamily: FONT, outline: 'none', width: 220 }} />
         {['all', 'hourly', 'salaried'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: filter === f ? `1px solid ${BLUE}` : '1px solid rgba(255,255,255,0.08)', background: filter === f ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f ? '#4D9EFF' : t.textSecondary, fontFamily: FONT, textTransform: 'capitalize' }}>{f}</button>
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: filter === f ? `1px solid ${BLUE}` : `1px solid ${t.border}`, background: filter === f ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f ? t.accentLight : t.textSecondary, fontFamily: FONT, textTransform: 'capitalize' }}>{f}</button>
         ))}
       </div>
 
       {/* Table */}
-      <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>{['Employee', 'Role', 'Pay Type', 'Rate', 'Est. Weekly Cost', 'Shift Hrs', 'Job Hrs', 'Actions'].map(h => (
-              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#12121A' }}>{h}</th>
+              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${t.border}`, background: t.bgCard }}>{h}</th>
             ))}</tr>
           </thead>
           <tbody>
@@ -123,39 +123,39 @@ export default function PayrollPage() {
               if (isEditing) {
                 return (
                   <tr key={e.id} style={{ background: 'rgba(29,111,232,0.04)' }}>
-                    <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: t.text, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>{e.full_name}</td>
-                    <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: t.text, borderBottom: `1px solid ${t.border}` }}>{e.full_name}</td>
+                    <td style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}` }}>
                       <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: t.border, color: t.textSecondary, textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ')}</span>
                     </td>
-                    <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <select value={form.pay_type} onChange={ev => setForm(f => ({ ...f, pay_type: ev.target.value }))} style={{ padding: '4px 8px', borderRadius: 6, background: t.inputBg, border: '1px solid rgba(255,255,255,0.08)', color: t.text, fontSize: 12, fontFamily: FONT }}>
+                    <td style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}` }}>
+                      <select value={form.pay_type} onChange={ev => setForm(f => ({ ...f, pay_type: ev.target.value }))} style={{ padding: '4px 8px', borderRadius: 6, background: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 12, fontFamily: FONT }}>
                         <option value="hourly">Hourly</option>
                         <option value="weekly_salary">Weekly Salary</option>
                         <option value="biweekly_salary">Bi-Weekly Salary</option>
                         <option value="monthly_salary">Monthly Salary</option>
                       </select>
                     </td>
-                    <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <td style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}` }}>
                       {form.pay_type === 'hourly' ? (
                         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                           <span style={{ color: t.textSecondary, fontSize: 12 }}>$</span>
-                          <input value={form.hourly_rate} onChange={ev => setForm(f => ({ ...f, hourly_rate: ev.target.value }))} style={{ width: 70, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: '1px solid rgba(255,255,255,0.08)', color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                          <input value={form.hourly_rate} onChange={ev => setForm(f => ({ ...f, hourly_rate: ev.target.value }))} style={{ width: 70, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                           <span style={{ color: t.textSecondary, fontSize: 11 }}>/hr x</span>
-                          <input value={form.weekly_hours} onChange={ev => setForm(f => ({ ...f, weekly_hours: ev.target.value }))} style={{ width: 40, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: '1px solid rgba(255,255,255,0.08)', color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                          <input value={form.weekly_hours} onChange={ev => setForm(f => ({ ...f, weekly_hours: ev.target.value }))} style={{ width: 40, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                           <span style={{ color: t.textSecondary, fontSize: 11 }}>hrs</span>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                           <span style={{ color: t.textSecondary, fontSize: 12 }}>$</span>
-                          <input value={form.salary_amount} onChange={ev => setForm(f => ({ ...f, salary_amount: ev.target.value }))} style={{ width: 90, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: '1px solid rgba(255,255,255,0.08)', color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
+                          <input value={form.salary_amount} onChange={ev => setForm(f => ({ ...f, salary_amount: ev.target.value }))} style={{ width: 90, padding: '4px 6px', borderRadius: 6, background: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 13, fontFamily: "'IBM Plex Mono', monospace", textAlign: 'right' as const }} />
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }} />
-                    <td style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <td style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}` }} />
+                    <td style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}` }}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => save(e.id)} disabled={saving} style={{ padding: '4px 12px', borderRadius: 6, background: BLUE, color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? '...' : 'Save'}</button>
-                        <button onClick={() => setEditing(null)} style={{ padding: '4px 12px', borderRadius: 6, background: 'transparent', color: t.textSecondary, border: '1px solid rgba(255,255,255,0.08)', fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+                        <button onClick={() => save(e.id)} disabled={saving} style={{ padding: '4px 12px', borderRadius: 6, background: BLUE, color: t.bgLight, border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? '...' : 'Save'}</button>
+                        <button onClick={() => setEditing(null)} style={{ padding: '4px 12px', borderRadius: 6, background: 'transparent', color: t.textSecondary, border: `1px solid ${t.border}`, fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
                       </div>
                     </td>
                   </tr>
@@ -163,7 +163,7 @@ export default function PayrollPage() {
               }
 
               return (
-                <tr key={e.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <tr key={e.id} style={{ borderBottom: `1px solid ${t.border}` }}>
                   <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, color: t.text }}>{e.full_name || '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: t.border, color: t.textSecondary, textTransform: 'capitalize' }}>{e.role?.replace(/_/g, ' ') || '—'}</span>
@@ -171,7 +171,7 @@ export default function PayrollPage() {
                   <td style={{ padding: '10px 14px' }}>
                     {badge ? <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: badge.bg, color: badge.color }}>{badge.label}</span> : <span style={{ color: t.textTertiary, fontSize: 12 }}>Not Set</span>}
                   </td>
-                  <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: p ? '#EDEDF0' : t.textTertiary }}>
+                  <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: p ? t.text : t.textTertiary }}>
                     {p ? (p.pay_type === 'hourly' ? `$${(p.hourly_rate || 0).toFixed(2)} / hr` : `$${(p.salary_amount || 0).toFixed(2)}`) : '—'}
                   </td>
                   <td style={{ padding: '10px 14px', fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, fontWeight: 700, color: weekly > 0 ? BLUE : t.textTertiary }}>
@@ -185,7 +185,7 @@ export default function PayrollPage() {
                   </td>
                   <td style={{ padding: '10px 14px' }}>
                     <button onClick={() => { setEditing(e.id); setForm(p ? { pay_type: p.pay_type, hourly_rate: String(p.hourly_rate || 0), salary_amount: String(p.salary_amount || 0), weekly_hours: String(p.weekly_hours || 40), effective_date: p.effective_date || '', notes: p.notes || '' } : { pay_type: 'hourly', hourly_rate: '0', salary_amount: '0', weekly_hours: '40', effective_date: '', notes: '' }) }}
-                      style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${p ? 'rgba(255,255,255,0.08)' : BLUE}`, background: p ? 'transparent' : 'rgba(29,111,232,.1)', color: p ? '#7C8BA0' : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                      style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${p ? t.border : BLUE}`, background: p ? 'transparent' : 'rgba(29,111,232,.1)', color: p ? t.textSecondary : BLUE, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
                       {p ? 'Edit' : '+ Set Pay'}
                     </button>
                   </td>

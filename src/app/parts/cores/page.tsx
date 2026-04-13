@@ -73,7 +73,7 @@ export default function CorePartsPage() {
           { label: 'Shipped', value: String(shipped.length), color: t.aiPurple },
           { label: 'Recovered', value: fmt(totalCredit), color: GREEN },
         ].map(s => (
-          <div key={s.label} style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 10, padding: '10px 16px', flex: 1, textAlign: 'center' }}>
+          <div key={s.label} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 16px', flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO, marginBottom: 4 }}>{s.label}</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
@@ -81,7 +81,7 @@ export default function CorePartsPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,.08)', marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${t.border}`, marginBottom: 20 }}>
         {tabs.map((tt, i) => (
           <button key={tt.label} onClick={() => setTab(i)} style={{
             padding: '10px 18px', fontSize: 12, fontWeight: tab === i ? 700 : 400,
@@ -96,7 +96,7 @@ export default function CorePartsPage() {
 
       {/* Core list */}
       {tabs[tab].data.length === 0 ? (
-        <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>
+        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>
           No core parts in this category
         </div>
       ) : (

@@ -51,7 +51,7 @@ const LANGUAGES = [
 
 function StatusPill({ status }: { status: string }) {
   const label = status || 'pending'
-  const c = STATUS_COLORS[label] || { bg: 'rgba(255,255,255,0.08)', text: DIM }
+  const c = STATUS_COLORS[label] || { bg: _t.surfaceMuted, text: DIM }
   return (
     <span style={{
       display: 'inline-block', padding: '3px 10px', borderRadius: 999,
@@ -484,7 +484,7 @@ export default function MechanicDashboardPage() {
               <div style={{ fontSize: 11, color: DIM, marginTop: 2 }}>Punch in to start your shift before working on jobs</div>
             </div>
             <button onClick={() => handleWorkPunch('punch_in')} disabled={punchLoading}
-              style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT, opacity: punchLoading ? 0.5 : 1 }}>
+              style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: GREEN, color: t.bgLight, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT, opacity: punchLoading ? 0.5 : 1 }}>
               {punchLoading ? 'Locating...' : 'Punch In'}
             </button>
           </div>
@@ -509,13 +509,13 @@ export default function MechanicDashboardPage() {
         {overrideModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
             onClick={e => { if (e.target === e.currentTarget) setOverrideModal(false) }}>
-            <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+            <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: AMBER }}>Outside Shop Area</div>
               <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>You appear to be outside the shop geofence. Provide a reason to punch in for manager review.</div>
-              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: t.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: t.text, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 13, color: t.text, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button onClick={() => setOverrideModal(false)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
-                <button disabled={!overrideReason.trim() || punchLoading} onClick={() => handleWorkPunch('punch_in', overrideReason.trim())} style={{ padding: '8px 16px', background: AMBER, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                <button onClick={() => setOverrideModal(false)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${t.border}`, borderRadius: 8, color: DIM, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+                <button disabled={!overrideReason.trim() || punchLoading} onClick={() => handleWorkPunch('punch_in', overrideReason.trim())} style={{ padding: '8px 16px', background: AMBER, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                   {punchLoading ? 'Punching...' : 'Override & Punch In'}
                 </button>
               </div>
@@ -554,12 +554,12 @@ export default function MechanicDashboardPage() {
               disabled={clockLoading === 'clock-out'}
               style={{
                 padding: '10px 20px', borderRadius: 10, border: 'none',
-                background: RED, color: '#fff', fontWeight: 700, fontSize: 14,
+                background: RED, color: t.bgLight, fontWeight: 700, fontSize: 14,
                 cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
                 opacity: clockLoading === 'clock-out' ? 0.6 : 1,
               }}
             >
-              <Square size={14} fill="#fff" /> Pause
+              <Square size={14} fill={t.bgLight} /> Pause
             </button>
           </div>
         )}
@@ -573,7 +573,7 @@ export default function MechanicDashboardPage() {
                 <button key={f} onClick={() => setFilter(f)} style={{
                   padding: '6px 14px', borderRadius: 999, border: 'none',
                   background: filter === f ? BLUE : t.border,
-                  color: filter === f ? '#fff' : DIM,
+                  color: filter === f ? t.bgLight : DIM,
                   fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                   textTransform: 'capitalize', transition: 'all 0.15s',
                 }}>
@@ -606,7 +606,7 @@ export default function MechanicDashboardPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                           <span style={{ color: BLUE, fontWeight: 700, fontSize: 14 }}>{job.wo?.so_number || 'WO'}</span>
-                          {isActiveJob && <span style={{ padding: '2px 8px', borderRadius: 999, background: GREEN, color: '#fff', fontSize: 10, fontWeight: 700 }}>Working Now</span>}
+                          {isActiveJob && <span style={{ padding: '2px 8px', borderRadius: 999, background: GREEN, color: t.bgLight, fontSize: 10, fontWeight: 700 }}>Working Now</span>}
                           {isPaused && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 10, fontWeight: 700 }}>Paused</span>}
                           {job.status === 'completed' && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(34,197,94,0.15)', color: GREEN, fontSize: 10, fontWeight: 700 }}>Done</span>}
                           {job.status === 'pending' && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 10, fontWeight: 700 }}>Pending</span>}
@@ -753,7 +753,7 @@ export default function MechanicDashboardPage() {
                         if (matched.length === 0) return null
                         const readyParts = matched.filter((p: any) => p.parts_status === PARTS_READY_STATUS)
                         return (
-                          <div style={{ marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: t.border, border: `1px solid rgba(255,255,255,0.06)` }}>
+                          <div style={{ marginBottom: 8, padding: '6px 10px', borderRadius: 8, background: t.border, border: `1px solid ${t.border}` }}>
                             {matched.map((p: any) => {
                               const stColor = p.parts_status === 'ready_for_job' ? GREEN : p.parts_status === 'picked_up' ? GREEN : p.parts_status === 'received' ? BLUE : p.parts_status === 'ordered' ? AMBER : p.parts_status === 'installed' ? DIM : DIM
                               const stLabel = p.parts_status === 'ready_for_job' ? 'Ready for Pickup' : p.parts_status === 'picked_up' ? 'Picked Up' : p.parts_status === 'received' ? 'Preparing' : p.parts_status === 'ordered' ? 'Ordered' : p.parts_status === 'installed' ? 'Installed' : 'Pending'
@@ -813,12 +813,12 @@ export default function MechanicDashboardPage() {
                             onClick={() => handleClockIn(job)}
                             style={{
                               flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
-                              background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
+                              background: GREEN, color: t.bgLight, fontWeight: 700, fontSize: 13,
                               cursor: 'pointer', fontFamily: FONT, opacity: clockLoading === (job.line_id || job.id) ? 0.6 : 1,
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                             }}
                           >
-                            <Play size={14} fill="#fff" /> {clockedLines.has(job.line_id || job.line?.id) ? 'Resume' : 'Start'}
+                            <Play size={14} fill={t.bgLight} /> {clockedLines.has(job.line_id || job.line?.id) ? 'Resume' : 'Start'}
                           </button>
                         )}
                         {job.status === 'in_progress' && activeClock && hasHours && (
@@ -842,7 +842,7 @@ export default function MechanicDashboardPage() {
                             }}
                             style={{
                               flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
-                              background: AMBER, color: '#fff', fontWeight: 700, fontSize: 13,
+                              background: AMBER, color: t.bgLight, fontWeight: 700, fontSize: 13,
                               cursor: 'pointer', fontFamily: FONT,
                               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                             }}
@@ -859,7 +859,7 @@ export default function MechanicDashboardPage() {
                               onClick={() => setCompleteModal(job)}
                               style={{
                                 flex: 1, minWidth: 120, padding: '9px 16px', borderRadius: 10, border: 'none',
-                                background: GREEN, color: '#fff', fontWeight: 700, fontSize: 13,
+                                background: GREEN, color: t.bgLight, fontWeight: 700, fontSize: 13,
                                 cursor: 'pointer', fontFamily: FONT, opacity: actionLoading === job.id + 'complete' ? 0.6 : 1,
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                               }}
@@ -920,7 +920,7 @@ export default function MechanicDashboardPage() {
                   onClick={() => { setRequestModal(activeJobs[0]); setRequestForm({ part_name: '', quantity: '1', notes: '' }) }}
                   style={{
                     padding: '8px 16px', borderRadius: 10, border: 'none',
-                    background: BLUE, color: '#fff', fontWeight: 700, fontSize: 13,
+                    background: BLUE, color: t.bgLight, fontWeight: 700, fontSize: 13,
                     cursor: 'pointer', fontFamily: FONT,
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}
@@ -1037,7 +1037,7 @@ export default function MechanicDashboardPage() {
                   disabled={savingLang}
                   style={{
                     width: '100%', padding: '11px 20px', borderRadius: 10, border: 'none',
-                    background: BLUE, color: '#fff', fontWeight: 700, fontSize: 14,
+                    background: BLUE, color: t.bgLight, fontWeight: 700, fontSize: 14,
                     cursor: 'pointer', fontFamily: FONT, opacity: savingLang ? 0.6 : 1,
                   }}
                 >
@@ -1178,7 +1178,7 @@ export default function MechanicDashboardPage() {
                 disabled={!requestForm.part_name.trim() || actionLoading === 'parts-submit'}
                 style={{
                   width: '100%', padding: '11px 20px', borderRadius: 10, border: 'none',
-                  background: BLUE, color: '#fff', fontWeight: 700, fontSize: 14,
+                  background: BLUE, color: t.bgLight, fontWeight: 700, fontSize: 14,
                   cursor: requestForm.part_name.trim() ? 'pointer' : 'not-allowed',
                   fontFamily: FONT, opacity: !requestForm.part_name.trim() || actionLoading === 'parts-submit' ? 0.5 : 1,
                 }}
@@ -1193,19 +1193,19 @@ export default function MechanicDashboardPage() {
       {declineModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) { setDeclineModal(null); setDeclineReason('') } }}>
-          <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Decline Job</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>Why are you declining this job? (optional)</div>
             <textarea
               value={declineReason}
               onChange={e => setDeclineReason(e.target.value)}
               placeholder="Reason for declining..."
-              style={{ width: '100%', padding: '10px 12px', background: t.border, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, fontSize: 13, color: TEXT, fontFamily: FONT, minHeight: 80, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 12px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 13, color: TEXT, fontFamily: FONT, minHeight: 80, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
-              <button onClick={() => { setDeclineModal(null); setDeclineReason('') }} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => { setDeclineModal(null); setDeclineReason('') }} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${t.border}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
               <button onClick={() => handleJobAction(declineModal, 'decline', declineReason)} disabled={!!actionLoading}
-                style={{ padding: '8px 16px', background: RED, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                style={{ padding: '8px 16px', background: RED, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                 Confirm Decline
               </button>
             </div>
@@ -1216,7 +1216,7 @@ export default function MechanicDashboardPage() {
       {moreTimeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) setMoreTimeModal(null) }}>
-          <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Request More Time</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>
               {moreTimeModal.wo?.so_number} — {moreTimeModal.line?.description?.slice(0, 40)}
@@ -1224,14 +1224,14 @@ export default function MechanicDashboardPage() {
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               {[{ label: '30 min', val: '30' }, { label: '1 hr', val: '60' }, { label: '2 hr', val: '120' }].map(opt => (
                 <button key={opt.val} onClick={() => setMoreTimeAmount(opt.val)} style={{
-                  flex: 1, padding: '10px 8px', borderRadius: 8, border: moreTimeAmount === opt.val ? `2px solid ${AMBER}` : '1px solid rgba(255,255,255,0.1)',
+                  flex: 1, padding: '10px 8px', borderRadius: 8, border: moreTimeAmount === opt.val ? `2px solid ${AMBER}` : `1px solid ${t.border}`,
                   background: moreTimeAmount === opt.val ? `${AMBER}15` : 'transparent', color: moreTimeAmount === opt.val ? AMBER : DIM,
                   fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
                 }}>{opt.label}</button>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setMoreTimeModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => setMoreTimeModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${t.border}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
               <button disabled={actionLoading === 'more-time'} onClick={async () => {
                 setActionLoading('more-time')
                 const mins = parseInt(moreTimeAmount) || 60
@@ -1245,7 +1245,7 @@ export default function MechanicDashboardPage() {
                   else alert('Could not send request.')
                 } catch { alert('Could not send request.') }
                 setActionLoading(null)
-              }} style={{ padding: '8px 16px', background: AMBER, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+              }} style={{ padding: '8px 16px', background: AMBER, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                 {actionLoading === 'more-time' ? 'Sending...' : 'Request'}
               </button>
             </div>
@@ -1257,7 +1257,7 @@ export default function MechanicDashboardPage() {
       {completeModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) setCompleteModal(null) }}>
-          <div style={{ background: t.bgCard, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
+          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Complete Job?</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 8 }}>
               Are you sure you want to mark this job as complete?
@@ -1272,9 +1272,9 @@ export default function MechanicDashboardPage() {
               )}
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setCompleteModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => setCompleteModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${t.border}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
               <button onClick={async () => { await handleJobAction(completeModal.id, 'complete'); setCompleteModal(null) }} disabled={!!actionLoading}
-                style={{ padding: '8px 16px', background: GREEN, color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                style={{ padding: '8px 16px', background: GREEN, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                 Confirm Complete
               </button>
             </div>

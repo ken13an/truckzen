@@ -783,12 +783,12 @@ export default function WorkOrderDetail() {
             <div style={{ marginTop: 10 }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: editMode ? 10 : 0 }}>
                 {!editMode ? (
-                  <button onClick={() => { setEditMode(true); setEditDraft({ complaint: wo.complaint || '', priority: wo.priority || 'normal', cause: wo.cause || '', correction: wo.correction || '' }) }} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}`, padding: '6px 14px', fontSize: 12 }}>
+                  <button onClick={() => { setEditMode(true); setEditDraft({ complaint: wo.complaint || '', priority: wo.priority || 'normal', cause: wo.cause || '', correction: wo.correction || '' }) }} style={{ ...btnStyle( t.bgLight, BLUE), border: `1px solid ${BLUE}`, padding: '6px 14px', fontSize: 12 }}>
                     Edit
                   </button>
                 ) : (
                   <>
-                    <button onClick={() => { setEditMode(false); setEditDraft(null) }} style={{ ...btnStyle('#fff', GRAY), padding: '6px 14px', fontSize: 12 }}>
+                    <button onClick={() => { setEditMode(false); setEditDraft(null) }} style={{ ...btnStyle( t.bgLight, GRAY), padding: '6px 14px', fontSize: 12 }}>
                       Cancel
                     </button>
                     <button onClick={async () => {
@@ -811,7 +811,7 @@ export default function WorkOrderDetail() {
                         setToastMsg(err.error || 'Failed to save')
                         setTimeout(() => setToastMsg(''), 4000)
                       }
-                    }} style={btnStyle(BLUE, '#fff')}>
+                    }} style={btnStyle(BLUE, t.bgLight)}>
                       Submit
                     </button>
                   </>
@@ -1043,12 +1043,12 @@ export default function WorkOrderDetail() {
                   await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'respond', request_id: req.id, status: 'approved' }) })
                   setExtraTimeRequests(prev => prev.filter(r => r.id !== req.id))
-                }} style={{ ...btnStyle(GREEN, '#fff'), padding: '4px 12px', fontSize: 11 }}>Approve</button>
+                }} style={{ ...btnStyle(GREEN, t.bgLight), padding: '4px 12px', fontSize: 11 }}>Approve</button>
                 <button onClick={async () => {
                   await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'respond', request_id: req.id, status: 'denied' }) })
                   setExtraTimeRequests(prev => prev.filter(r => r.id !== req.id))
-                }} style={{ ...btnStyle(RED, '#fff'), padding: '4px 12px', fontSize: 11 }}>Deny</button>
+                }} style={{ ...btnStyle(RED, t.bgLight), padding: '4px 12px', fontSize: 11 }}>Deny</button>
               </div>
             </div>
           ))}
@@ -1249,7 +1249,7 @@ export default function WorkOrderDetail() {
                         return
                       }
                       openAssignModal(line.id, idx)
-                    }} style={{ ...btnStyle('#fff', BLUE), padding: '4px 10px', fontSize: 11 }}>
+                    }} style={{ ...btnStyle( t.bgLight, BLUE), padding: '4px 10px', fontSize: 11 }}>
                       <Users size={12} /> Assign
                     </button>
                   )}
@@ -1422,10 +1422,10 @@ export default function WorkOrderDetail() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => {
                       setNewPartForms(prev => ({ ...prev, [line.id]: prev[line.id] || { desc: '', pn: '', qty: '', cost: '' } }))
-                    }} style={{ ...btnStyle('#fff', BLUE), padding: '6px 12px', fontSize: 11 }}>
+                    }} style={{ ...btnStyle( t.bgLight, BLUE), padding: '6px 12px', fontSize: 11 }}>
                       <Plus size={12} /> Add Parts
                     </button>
-                    <button onClick={() => setHoursModal({ id: line.id, estimated_hours: line.estimated_hours || '', actual_hours: line.actual_hours || '', billed_hours: line.billed_hours || '' })} style={{ ...btnStyle('#fff', GRAY), padding: '6px 12px', fontSize: 11 }}>
+                    <button onClick={() => setHoursModal({ id: line.id, estimated_hours: line.estimated_hours || '', actual_hours: line.actual_hours || '', billed_hours: line.billed_hours || '' })} style={{ ...btnStyle( t.bgLight, GRAY), padding: '6px 12px', fontSize: 11 }}>
                       <Clock size={12} /> Log Hours
                     </button>
                     <button onClick={() => removeJobLine(line.id)} style={{ ...btnStyle('transparent', RED), padding: '6px 12px', fontSize: 11, border: 'none' }}>
@@ -1453,8 +1453,8 @@ export default function WorkOrderDetail() {
                       <span style={labelStyle}>Cost</span>
                       <input value={newPartForms[line.id].cost} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], cost: e.target.value } }))} style={inputStyle} placeholder="0.00" type="number" step="0.01" />
                     </div>
-                    <button onClick={() => addPart(line.id)} style={btnStyle(BLUE, '#fff')}>Add</button>
-                    <button onClick={() => setNewPartForms(p => { const n = { ...p }; delete n[line.id]; return n })} style={btnStyle('#fff', GRAY)}>Cancel</button>
+                    <button onClick={() => addPart(line.id)} style={btnStyle(BLUE, t.bgLight)}>Add</button>
+                    <button onClick={() => setNewPartForms(p => { const n = { ...p }; delete n[line.id]; return n })} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
                   </div>
                 )}
               </div>
@@ -1475,7 +1475,7 @@ export default function WorkOrderDetail() {
                   placeholder={newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText) ? 'What did you mean? Use repair terms like: oil change, brake, pm service...' : 'Describe the job concern...'}
                   style={{ ...inputStyle, flex: 1, minWidth: 200, borderColor: (newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText)) ? t.danger : undefined }}
                 />
-                <button onClick={addJobLine} disabled={addingJob || !newJobText.trim()} style={{ ...btnStyle(BLUE, '#fff'), opacity: addingJob || !newJobText.trim() ? 0.5 : 1 }}>
+                <button onClick={addJobLine} disabled={addingJob || !newJobText.trim()} style={{ ...btnStyle(BLUE, t.bgLight), opacity: addingJob || !newJobText.trim() ? 0.5 : 1 }}>
                   <Plus size={14} /> {addingJob ? 'Adding...' : 'Add Job Line'}
                 </button>
               </div>
@@ -1503,7 +1503,7 @@ export default function WorkOrderDetail() {
               <span style={{ fontSize: 12, fontWeight: 700, color: GRAY }}>Shop Charge:</span>
               <input value={newChargeDesc} onChange={e => setNewChargeDesc(e.target.value)} placeholder="Description" style={{ ...inputStyle, flex: 1, minWidth: 150 }} />
               <input value={newChargeAmt} onChange={e => setNewChargeAmt(e.target.value)} placeholder="Amount" type="number" step="0.01" style={{ ...inputStyle, width: 100 }} />
-              <button onClick={addShopCharge} disabled={!newChargeDesc.trim() || !newChargeAmt} style={{ ...btnStyle(GREEN, '#fff'), opacity: !newChargeDesc.trim() || !newChargeAmt ? 0.5 : 1 }}>
+              <button onClick={addShopCharge} disabled={!newChargeDesc.trim() || !newChargeAmt} style={{ ...btnStyle(GREEN, t.bgLight), opacity: !newChargeDesc.trim() || !newChargeAmt ? 0.5 : 1 }}>
                 <Plus size={14} /> Add Charge
               </button>
             </div>
@@ -1526,7 +1526,7 @@ export default function WorkOrderDetail() {
           {/* Get Approval — only show when estimate required and NOT yet approved */}
           {!wo.is_historical && wo.estimate_required && !wo.estimate_approved && (
             <div style={{ textAlign: 'right', marginTop: 8 }}>
-              <button onClick={() => setApprovalModal(true)} style={btnStyle(BLUE, '#fff')}>
+              <button onClick={() => setApprovalModal(true)} style={btnStyle(BLUE, t.bgLight)}>
                 <DollarSign size={14} /> Get Approval
               </button>
             </div>
@@ -1553,7 +1553,7 @@ export default function WorkOrderDetail() {
                 const name = prompt('Part name or description:')
                 if (!name?.trim()) return
                 fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) }).then(() => loadData())
-              }} style={{ ...btnStyle(BLUE, '#fff'), padding: '8px 20px' }}>
+              }} style={{ ...btnStyle(BLUE, t.bgLight), padding: '8px 20px' }}>
                 + Add Part
               </button>
             </div>
@@ -1567,7 +1567,7 @@ export default function WorkOrderDetail() {
                     const name = prompt('Part name or description:')
                     if (!name?.trim()) return
                     fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) }).then(() => loadData())
-                  }} style={{ ...btnStyle(BLUE, '#fff'), padding: '5px 12px', fontSize: 11 }}>
+                  }} style={{ ...btnStyle(BLUE, t.bgLight), padding: '5px 12px', fontSize: 11 }}>
                     + Add Part
                   </button>
                 )}
@@ -1588,7 +1588,7 @@ export default function WorkOrderDetail() {
                   }
                   const st = statusColors[p.parts_status || 'rough'] || statusColors.rough
                   return (
-                    <div key={p.id} style={{ border: `1px solid ${isConfirmed ? t.successBg : t.warning}`, borderRadius: 10, padding: 12, background: isConfirmed ? '#fff' : t.warningBg }}>
+                    <div key={p.id} style={{ border: `1px solid ${isConfirmed ? t.successBg : t.warning}`, borderRadius: 10, padding: 12, background: isConfirmed ? t.bgLight : t.warningBg }}>
                       {/* Request layer — always visible */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                         <div style={{ fontSize: 11, color: t.warning }}>
@@ -1709,7 +1709,7 @@ export default function WorkOrderDetail() {
                   })
                   input.value = ''
                   await loadData()
-                }} style={btnStyle(BLUE, '#fff')}>
+                }} style={btnStyle(BLUE, t.bgLight)}>
                   Request
                 </button>
               </div>
@@ -1729,7 +1729,7 @@ export default function WorkOrderDetail() {
                 <div style={{ ...cardStyle, marginTop: 12 }}>
                   <div style={{ textAlign: 'center', color: GREEN, fontSize: 13, fontWeight: 700, padding: 8 }}>All Parts Ready</div>
                   {!partsSubmitted && (
-                    <button onClick={submitParts} disabled={partsSubmitting} style={{ ...btnStyle(GREEN, '#fff'), width: '100%', justifyContent: 'center', marginTop: 8 }}>
+                    <button onClick={submitParts} disabled={partsSubmitting} style={{ ...btnStyle(GREEN, t.bgLight), width: '100%', justifyContent: 'center', marginTop: 8 }}>
                       {partsSubmitting ? 'Notifying...' : 'Notify Mechanic — Parts Ready'}
                     </button>
                   )}
@@ -1856,11 +1856,11 @@ export default function WorkOrderDetail() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
                       onClick={() => setApprovalModal(true)}
-                      style={btnStyle(BLUE, '#fff')}
+                      style={btnStyle(BLUE, t.bgLight)}
                     >
                       {estStatus === 'sent' ? 'Resend / Approve' : estStatus === 'declined' ? 'Resend Modified Estimate' : 'Send Estimate'}
                     </button>
-                    <button onClick={() => { setApprovalModal(true); setApprovalConfirmModal({ method: 'in_person', notes: '' }) }} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}` }}>
+                    <button onClick={() => { setApprovalModal(true); setApprovalConfirmModal({ method: 'in_person', notes: '' }) }} style={{ ...btnStyle( t.bgLight, BLUE), border: `1px solid ${BLUE}` }}>
                       Approve In Person
                     </button>
                   </div>
@@ -2107,7 +2107,7 @@ export default function WorkOrderDetail() {
                 Visible to customer
               </label>
               <div style={{ flex: 1 }} />
-              <button onClick={addNote} disabled={addingNote || !noteText.trim()} style={{ ...btnStyle(BLUE, '#fff'), opacity: addingNote || !noteText.trim() ? 0.5 : 1 }}>
+              <button onClick={addNote} disabled={addingNote || !noteText.trim()} style={{ ...btnStyle(BLUE, t.bgLight), opacity: addingNote || !noteText.trim() ? 0.5 : 1 }}>
                 {addingNote ? 'Saving...' : 'Add Note'}
               </button>
             </div>
@@ -2136,7 +2136,7 @@ export default function WorkOrderDetail() {
           <div style={cardStyle}>
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Files</span>
             <input ref={fileRef} type="file" multiple style={{ display: 'none' }} onChange={e => uploadFiles(e.target.files)} />
-            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={btnStyle('#fff', BLUE)}>
+            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={btnStyle( t.bgLight, BLUE)}>
               <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload Files'}
             </button>
           </div>
@@ -2513,7 +2513,7 @@ export default function WorkOrderDetail() {
             <div style={{ padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {wo.invoice_status === 'draft' && !isViewOnly && (
-                  <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>
+                  <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, t.bgLight), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>
                     {invoiceLoading ? 'Submitting...' : 'Send to Accounting'}
                   </button>
                 )}
@@ -2525,18 +2525,18 @@ export default function WorkOrderDetail() {
                       setInvoiceLoading(false)
                       if (res.ok) await loadData()
                       else { const err = await res.json(); alert(err.error || 'Approve failed') }
-                    }} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Approve & Send</button>
-                    <a href={wo.invoices?.[0]?.id ? `/invoices/${wo.invoices[0].id}` : getWorkorderRoute(wo.id)} style={{ ...btnStyle('#fff', BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, borderRadius: 8 }}>Edit Invoice</a>
+                    }} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, t.bgLight), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Approve & Send</button>
+                    <a href={wo.invoices?.[0]?.id ? `/invoices/${wo.invoices[0].id}` : getWorkorderRoute(wo.id)} style={{ ...btnStyle( t.bgLight, BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, borderRadius: 8 }}>Edit Invoice</a>
                   </>
                 )}
                 {wo.invoice_status === 'accounting_review' && !canEditPrices && (
                   <span style={{ fontSize: 12, color: AMBER, fontWeight: 600 }}>Awaiting accounting approval</span>
                 )}
                 {wo.invoice_status === 'sent' && canEditPrices && (
-                  <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, '#fff'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Record Payment</button>
+                  <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, t.bgLight), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Record Payment</button>
                 )}
                 {wo.invoice_status === 'paid' && !isViewOnly && (
-                  <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, '#fff'), padding: '8px 18px', fontSize: 13, borderRadius: 8 }}>Close Work Order</button>
+                  <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, t.bgLight), padding: '8px 18px', fontSize: 13, borderRadius: 8 }}>Close Work Order</button>
                 )}
                 {wo.invoice_status === 'closed' && (
                   <span style={{ color: t.textSecondary, fontWeight: 600, fontSize: 13 }}>Work Order Closed</span>
@@ -2653,8 +2653,8 @@ export default function WorkOrderDetail() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowTeamModal(false)} style={btnStyle('#fff', GRAY)}>Cancel</button>
-              <button onClick={saveTeamAssign} style={btnStyle(BLUE, '#fff')}>Save</button>
+              <button onClick={() => setShowTeamModal(false)} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
+              <button onClick={saveTeamAssign} style={btnStyle(BLUE, t.bgLight)}>Save</button>
             </div>
           </div>
         </div>
@@ -2743,8 +2743,8 @@ export default function WorkOrderDetail() {
             {assignList.length === 0 && <div style={{ fontSize: 13, color: GRAY, padding: 16, textAlign: 'center' }}>No mechanics assigned. Select one above.</div>}
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setAssignModal(null)} style={btnStyle('#fff', GRAY)}>Cancel</button>
-              <button onClick={saveAssignments} style={btnStyle(BLUE, '#fff')}>Save Assignments</button>
+              <button onClick={() => setAssignModal(null)} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
+              <button onClick={saveAssignments} style={btnStyle(BLUE, t.bgLight)}>Save Assignments</button>
             </div>
           </div>
         </div>
@@ -2776,8 +2776,8 @@ export default function WorkOrderDetail() {
               </div>
             ))}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-              <button onClick={() => setHoursModal(null)} style={btnStyle('#fff', GRAY)}>Cancel</button>
-              <button onClick={saveHours} style={btnStyle(BLUE, '#fff')}>Save Hours</button>
+              <button onClick={() => setHoursModal(null)} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
+              <button onClick={saveHours} style={btnStyle(BLUE, t.bgLight)}>Save Hours</button>
             </div>
           </div>
         </div>
@@ -2798,8 +2798,8 @@ export default function WorkOrderDetail() {
               style={{ ...inputStyle, marginBottom: 12 }}
             />
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => { setDeleteConfirm(false); setDeleteText('') }} style={btnStyle('#fff', GRAY)}>Cancel</button>
-              <button onClick={deleteWO} disabled={deleteText !== 'DELETE'} style={{ ...btnStyle(RED, '#fff'), opacity: deleteText !== 'DELETE' ? 0.5 : 1 }}>Void</button>
+              <button onClick={() => { setDeleteConfirm(false); setDeleteText('') }} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
+              <button onClick={deleteWO} disabled={deleteText !== 'DELETE'} style={{ ...btnStyle(RED, t.bgLight), opacity: deleteText !== 'DELETE' ? 0.5 : 1 }}>Void</button>
             </div>
           </div>
         </div>
@@ -2927,7 +2927,7 @@ export default function WorkOrderDetail() {
                 <button
                   onClick={sendEstimateEmail}
                   disabled={!hasContact}
-                  style={{ ...btnStyle(BLUE, '#fff'), width: '100%', justifyContent: 'center', opacity: hasContact ? 1 : 0.5, cursor: hasContact ? 'pointer' : 'not-allowed' }}
+                  style={{ ...btnStyle(BLUE, t.bgLight), width: '100%', justifyContent: 'center', opacity: hasContact ? 1 : 0.5, cursor: hasContact ? 'pointer' : 'not-allowed' }}
                 >
                   Send Estimate{contactEmail && contactPhone ? ' (Email + SMS)' : contactEmail ? ' (Email)' : contactPhone ? ' (SMS)' : ''}
                 </button>
@@ -2937,7 +2937,7 @@ export default function WorkOrderDetail() {
               <div style={{ marginBottom: 12, padding: '12px 14px', border: `1px solid ${t.border}`, borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Approve In Person</div>
                 <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>Customer has reviewed and verbally approved this estimate</div>
-                <button onClick={() => setApprovalConfirmModal({ method: 'in_person', notes: '' })} style={{ ...btnStyle('#fff', BLUE), width: '100%', justifyContent: 'center', border: `1px solid ${BLUE}` }}>
+                <button onClick={() => setApprovalConfirmModal({ method: 'in_person', notes: '' })} style={{ ...btnStyle( t.bgLight, BLUE), width: '100%', justifyContent: 'center', border: `1px solid ${BLUE}` }}>
                   Approve In Person
                 </button>
               </div>
@@ -2951,21 +2951,21 @@ export default function WorkOrderDetail() {
                       href={`/api/estimates/${estimateId}/pdf`}
                       target="_blank"
                       onClick={() => setPrintedReady(true)}
-                      style={{ ...btnStyle('#fff', GRAY), flex: 1, justifyContent: 'center', textDecoration: 'none', textAlign: 'center', border: '1px solid ${t.border}' }}
+                      style={{ ...btnStyle( t.bgLight, GRAY), flex: 1, justifyContent: 'center', textDecoration: 'none', textAlign: 'center', border: '1px solid ${t.border}' }}
                     >
                       Print Estimate
                     </a>
                   ) : (
-                    <button disabled style={{ ...btnStyle('#fff', GRAY), flex: 1, justifyContent: 'center', border: '1px solid ${t.border}', opacity: 0.5, cursor: 'not-allowed' }}>
+                    <button disabled style={{ ...btnStyle( t.bgLight, GRAY), flex: 1, justifyContent: 'center', border: '1px solid ${t.border}', opacity: 0.5, cursor: 'not-allowed' }}>
                       Build estimate first
                     </button>
                   )}
                   {printedReady ? (
-                    <button onClick={() => setApprovalConfirmModal({ method: 'printed_signed', notes: '' })} style={{ ...btnStyle(BLUE, '#fff'), flex: 1, justifyContent: 'center' }}>
+                    <button onClick={() => setApprovalConfirmModal({ method: 'printed_signed', notes: '' })} style={{ ...btnStyle(BLUE, t.bgLight), flex: 1, justifyContent: 'center' }}>
                       Mark as Signed &amp; Approved
                     </button>
                   ) : (
-                    <button disabled style={{ ...btnStyle('#fff', GRAY), flex: 1, justifyContent: 'center', border: '1px solid ${t.border}', opacity: 0.5, cursor: 'not-allowed' }}>
+                    <button disabled style={{ ...btnStyle( t.bgLight, GRAY), flex: 1, justifyContent: 'center', border: '1px solid ${t.border}', opacity: 0.5, cursor: 'not-allowed' }}>
                       Print first →
                     </button>
                   )}
@@ -2993,8 +2993,8 @@ export default function WorkOrderDetail() {
                     style={{ ...inputStyle, resize: 'vertical', marginBottom: 16 }}
                   />
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                    <button onClick={() => setApprovalConfirmModal(null)} style={btnStyle('#fff', GRAY)}>Cancel</button>
-                    <button onClick={() => approveEstimate(approvalConfirmModal.method as 'in_person' | 'printed_signed', approvalConfirmModal.notes)} style={btnStyle(BLUE, '#fff')}>
+                    <button onClick={() => setApprovalConfirmModal(null)} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
+                    <button onClick={() => approveEstimate(approvalConfirmModal.method as 'in_person' | 'printed_signed', approvalConfirmModal.notes)} style={btnStyle(BLUE, t.bgLight)}>
                       Confirm Approval
                     </button>
                   </div>

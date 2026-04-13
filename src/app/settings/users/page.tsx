@@ -52,6 +52,8 @@ const mono = "'IBM Plex Mono', monospace"
 
 export default function UsersPage() {
   const { tokens: th } = useTheme()
+
+  const modalBox: React.CSSProperties = { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 440 }
   const supabase = createClient()
   const [me, setMe] = useState<UserProfile | null>(null)
   const [members, setMembers] = useState<any[]>([])
@@ -172,7 +174,7 @@ export default function UsersPage() {
   }
 
   const getStatus = (u: any) => {
-    if (!u.active) return { label: 'Inactive', bg: 'rgba(150,150,150,.12)', color: '#9CA3AF' }
+    if (!u.active) return { label: 'Inactive', bg: 'rgba(150,150,150,.12)', color: th.textSecondary }
     if (!u.last_sign_in_at) return { label: 'Pending', bg: 'rgba(217,119,6,.12)', color: '#F59E0B' }
     return { label: 'Active', bg: 'rgba(29,184,112,.12)', color: '#1DB870' }
   }
@@ -184,9 +186,9 @@ export default function UsersPage() {
   }
 
   const S = {
-    input: { width: '100%', padding: '9px 12px', background: th.border, border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: font, boxSizing: 'border-box' as const },
+    input: { width: '100%', padding: '9px 12px', background: th.border, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: font, boxSizing: 'border-box' as const },
     label: { fontSize: 11, fontWeight: 600, color: th.textSecondary, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4, letterSpacing: '.04em' } as React.CSSProperties,
-    select: { padding: '8px 12px', background: '#151520', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: font, appearance: 'auto' as const, cursor: 'pointer', minWidth: 120 },
+    select: { padding: '8px 12px', background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: font, appearance: 'auto' as const, cursor: 'pointer', minWidth: 120 },
   }
 
   if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, display: 'flex', alignItems: 'center', justifyContent: 'center', color: th.textSecondary }}>Loading...</div>
@@ -196,7 +198,7 @@ export default function UsersPage() {
   return (
     <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, padding: 24, color: th.text }}>
       {/* Toast */}
-      {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: '#1D6FE8', color: th.bgLight, padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: th.accent, color: th.bgLight, padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
 
       {/* Back */}
       <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 600, color: th.textSecondary, textDecoration: 'none', marginBottom: 20 }}>
@@ -207,10 +209,10 @@ export default function UsersPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ fontSize: 24, fontWeight: 800 }}>Team Members</div>
-          <span style={{ padding: '4px 12px', background: 'rgba(29,111,232,.1)', color: '#4D9EFF', borderRadius: 100, fontSize: 12, fontWeight: 700, fontFamily: mono }}>{total} members</span>
+          <span style={{ padding: '4px 12px', background: 'rgba(29,111,232,.1)', color: th.accentLight, borderRadius: 100, fontSize: 12, fontWeight: 700, fontFamily: mono }}>{total} members</span>
         </div>
         <button onClick={() => setInviting(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: '#1D6FE8', border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: th.accent, border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>
           <UserPlus size={14} strokeWidth={2.5} /> Invite Member
         </button>
       </div>
@@ -250,8 +252,8 @@ export default function UsersPage() {
               style={{
                 padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: active ? 700 : 500,
                 background: active ? 'rgba(29,111,232,.12)' : 'transparent',
-                border: active ? '1px solid rgba(29,111,232,.3)' : '1px solid rgba(255,255,255,.06)',
-                color: active ? '#4D9EFF' : th.textSecondary,
+                border: active ? '1px solid rgba(29,111,232,.3)' : `1px solid ${th.border}`,
+                color: active ? th.accentLight : th.textSecondary,
                 cursor: 'pointer', fontFamily: font, whiteSpace: 'nowrap',
                 display: 'flex', alignItems: 'center', gap: 6,
               }}>
@@ -263,11 +265,11 @@ export default function UsersPage() {
       </div>
 
       {/* Staff table */}
-      <div style={{ background: '#151520', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+              <tr style={{ borderBottom: `1px solid ${th.border}` }}>
                 {['Name', 'Role', 'Department', 'Status', 'Last Active', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: th.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: mono }}>{h}</th>
                 ))}
@@ -282,14 +284,14 @@ export default function UsersPage() {
               {members.map(u => {
                 const st = getStatus(u)
                 return (
-                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,.04)', opacity: u.active ? 1 : 0.5 }}>
+                  <tr key={u.id} style={{ borderBottom: `1px solid ${th.border}`, opacity: u.active ? 1 : 0.5 }}>
                     {/* Avatar + Name */}
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{
                           width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
                           background: u.active ? 'rgba(29,111,232,.12)' : th.border,
-                          color: u.active ? '#4D9EFF' : th.textSecondary, fontSize: 11, fontWeight: 700, fontFamily: mono, flexShrink: 0,
+                          color: u.active ? th.accentLight : th.textSecondary, fontSize: 11, fontWeight: 700, fontFamily: mono, flexShrink: 0,
                         }}>
                           {getInitials(u.full_name)}
                         </div>
@@ -318,7 +320,7 @@ export default function UsersPage() {
                     {/* Actions */}
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => setEditing({ ...u })} style={btnStyle('#4D9EFF', 'rgba(29,111,232,.3)')}>Edit</button>
+                        <button onClick={() => setEditing({ ...u })} style={btnStyle( th.accentLight, 'rgba(29,111,232,.3)')}>Edit</button>
                         {!u.last_sign_in_at && u.active && (
                           <button onClick={() => resendInvite(u)} disabled={saving} style={btnStyle('#F59E0B', 'rgba(217,119,6,.3)')}>Resend</button>
                         )}
@@ -370,8 +372,8 @@ export default function UsersPage() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => setEditing(null)} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
-              <button onClick={saveUser} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Saving...' : 'Save'}</button>
+              <button onClick={() => setEditing(null)} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={saveUser} disabled={saving} style={{ padding: '8px 18px', background: th.accent, color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>
@@ -405,8 +407,8 @@ export default function UsersPage() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => { setInviting(false); setInviteError('') }} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
-              <button onClick={sendInvite} disabled={saving} style={{ padding: '8px 18px', background: '#1D6FE8', color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Sending...' : 'Send Invite'}</button>
+              <button onClick={() => { setInviting(false); setInviteError('') }} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={sendInvite} disabled={saving} style={{ padding: '8px 18px', background: th.accent, color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Sending...' : 'Send Invite'}</button>
             </div>
           </div>
         </div>
@@ -423,7 +425,7 @@ export default function UsersPage() {
               <input value={confirmText} onChange={e => setConfirmText(e.target.value.toUpperCase())} placeholder="CONFIRM" style={S.input} />
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={() => { setRemoving(null); setConfirmText('') }} style={{ padding: '8px 16px', background: 'transparent', color: th.textSecondary, border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={() => { setRemoving(null); setConfirmText('') }} style={{ padding: '8px 16px', background: 'transparent', color: th.textSecondary, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
               <button onClick={() => disableUser(removing)} disabled={confirmText !== 'CONFIRM'}
                 style={{ padding: '8px 16px', background: 'rgba(217,119,6,.15)', color: '#F59E0B', border: '1px solid rgba(217,119,6,.3)', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: confirmText === 'CONFIRM' ? 'pointer' : 'not-allowed', fontFamily: font, opacity: confirmText === 'CONFIRM' ? 1 : 0.4 }}>
                 Deactivate
@@ -448,4 +450,3 @@ function btnStyle(color: string, border: string): React.CSSProperties {
 }
 
 const modalOverlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }
-const modalBox: React.CSSProperties = { background: '#1A1A26', border: '1px solid rgba(255,255,255,.1)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 440 }

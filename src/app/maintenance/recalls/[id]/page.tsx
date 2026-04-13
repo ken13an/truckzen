@@ -39,7 +39,7 @@ export default function RecallDetailPage() {
 
   if (loading) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
   const asset = recall.assets || {}
-  const S: Record<string, React.CSSProperties> = { card: { background: t.bgCard, border: '1px solid rgba(255,255,255,.055)', borderRadius: 12, padding: 16, marginBottom: 12 }, label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary } }
+  const S: Record<string, React.CSSProperties> = { card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 12 }, label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary } }
 
   return (
     <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
@@ -50,7 +50,7 @@ export default function RecallDetailPage() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: recall.status === 'completed' ? `${GREEN}18` : `${RED}18`, color: recall.status === 'completed' ? GREEN : RED, textTransform: 'uppercase' }}>{recall.status}</span>
-          {recall.status !== 'completed' && <button onClick={markComplete} disabled={saving} style={{ padding: '6px 14px', background: GREEN, border: 'none', borderRadius: 8, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? '...' : 'Mark Completed'}</button>}
+          {recall.status !== 'completed' && <button onClick={markComplete} disabled={saving} style={{ padding: '6px 14px', background: GREEN, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? '...' : 'Mark Completed'}</button>}
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 14, alignItems: 'start' }}>
@@ -66,7 +66,7 @@ export default function RecallDetailPage() {
             { label: 'Created', val: new Date(recall.created_at).toLocaleDateString() },
             { label: 'Completed', val: recall.completed_date ? new Date(recall.completed_date).toLocaleDateString() : '—' },
           ].map(r => (
-            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 12 }}>
+            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${t.border}`, fontSize: 12 }}>
               <span style={{ color: t.textTertiary }}>{r.label}</span><span style={{ color: t.text }}>{r.val || '—'}</span>
             </div>
           ))}

@@ -69,7 +69,7 @@ export default function MaintenanceServiceRequestsPage() {
           <p style={{ fontSize: 13, color: t.textSecondary, margin: '4px 0 0' }}>Maintenance department service requests</p>
         </div>
         <a href="/service-requests/new" style={{
-          background: '#F59E0B', color: '#0B0D11', padding: '8px 16px', borderRadius: 8,
+          background: '#F59E0B', color: t.bgInput, padding: '8px 16px', borderRadius: 8,
           fontSize: 13, fontWeight: 600, textDecoration: 'none',
         }}>+ New Request</a>
       </div>
@@ -83,7 +83,7 @@ export default function MaintenanceServiceRequestsPage() {
           <div style={{ background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+                <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                   {['Request', 'Unit', 'Urgency', 'Status', 'Created'].map(h => (
                     <th key={h} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textAlign: 'left', textTransform: 'uppercase', letterSpacing: '.05em' }}>{h}</th>
                   ))}
@@ -94,7 +94,7 @@ export default function MaintenanceServiceRequestsPage() {
                   const urg = URGENCY[r.urgency] || URGENCY.normal
                   const st = STATUS[r.status] || STATUS.pending
                   return (
-                    <tr key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,.03)' }}>
+                    <tr key={r.id} style={{ borderBottom: `1px solid ${t.border}` }}>
                       <td style={{ padding: '10px 16px', fontSize: 13, color: t.text }}>{r.title || r.description?.slice(0, 50) || '—'}</td>
                       <td style={{ padding: '10px 16px', fontSize: 13, color: t.textSecondary }}>{r.unit_number || '—'}</td>
                       <td style={{ padding: '10px 16px' }}>
