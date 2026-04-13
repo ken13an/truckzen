@@ -148,7 +148,7 @@ export default function FleetPage() {
                 return (
                   <tr key={a.id} style={{ cursor: 'pointer', borderBottom: `1px solid ${'var(--tz-border)'}` }} onClick={() => window.location.href = '/fleet/' + a.id}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                    <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontSize: 11, color: 'var(--tz-accentLight)', fontWeight: 700 }}>
+                    <td style={{ padding: '9px 10px', fontFamily: "'IBM Plex Mono',monospace", fontVariantNumeric: 'tabular-nums', fontSize: 13, color: 'var(--tz-accentLight)', fontWeight: 700 }}>
                       {a.unit_number} <SourceBadge source={a.source} />
                     </td>
                     <td style={{ padding: '9px 10px', fontSize: 11, color: 'var(--tz-textSecondary)' }}>{a.year || '—'}</td>

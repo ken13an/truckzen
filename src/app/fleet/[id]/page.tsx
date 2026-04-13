@@ -114,7 +114,7 @@ export default function FleetDetailPage() {
 
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:'var(--tz-text)', letterSpacing:'.02em' }}>Unit #{asset.unit_number}</div>
+          <div style={{ fontFamily:"'Inter','SF Pro Text','Instrument Sans',sans-serif", fontVariantNumeric:'tabular-nums', fontSize:28, fontWeight:800, color:'var(--tz-text)', letterSpacing:'-.01em' }}>Unit #{asset.unit_number}</div>
           <div style={{ fontSize:14, color:'var(--tz-text)', marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
           {asset.unit_type && <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginTop:2 }}>{UNIT_TYPE_LABEL[asset.unit_type] || asset.unit_type}</div>}
           <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginTop:2 }}>{(asset.customers as any)?.company_name}</div>
