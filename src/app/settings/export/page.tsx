@@ -84,7 +84,7 @@ export default function ExportPage() {
   if (!user) return null
 
   return (
-    <div style={{ fontFamily: FONT, color: 'var(--tz-text)', background: 'var(--tz-bgLight)', minHeight: '100vh', maxWidth: 700, margin: '0 auto', padding: '24px' }}>
+    <div style={{ fontFamily: FONT, color: 'var(--tz-text)', background: 'var(--tz-bg)', minHeight: '100vh', maxWidth: 700, margin: '0 auto', padding: '24px' }}>
       <a href="/settings" style={{ fontSize: 13, color: 'var(--tz-textSecondary)', textDecoration: 'none' }}>&larr; Back to Settings</a>
       <h1 style={{ fontSize: 22, fontWeight: 800, margin: '12px 0 4px' }}>Data Export</h1>
       <p style={{ fontSize: 14, color: 'var(--tz-textSecondary)', margin: '0 0 24px' }}>Download all your shop's data in {format.toUpperCase()} format. Your data belongs to you — export anytime.</p>

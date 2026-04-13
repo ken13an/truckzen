@@ -483,7 +483,7 @@ export default function UnitProfilePage() {
                   width: 14,
                   height: 14,
                   borderRadius: 7,
-                  background: 'var(--tz-bgLight)',
+                  background: 'var(--tz-bgCard)',
                   position: 'absolute' as const,
                   top: 3,
                   left: editForm.is_owner_operator ? 19 : 3,

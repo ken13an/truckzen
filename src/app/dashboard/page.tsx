@@ -72,7 +72,7 @@ export default function DashboardPage() {
   // Notifications are handled by the NotificationBell component (per-user only).
   // The dashboard does not display or manage notifications directly.
 
-  if (loading) return <div style={{ background: 'var(--tz-bgLight)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading...</div>
+  if (loading) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading...</div>
 
   const stats = data?.stats || {}
   const actionItems = data?.actionItems || []
@@ -96,10 +96,10 @@ export default function DashboardPage() {
     color: key.includes('pending') || key.includes('unassigned') || key.includes('overdue') ? AMBER : key.includes('revenue') || key.includes('approved') || key.includes('completed') ? GREEN : BLUE,
   }))
 
-  const card: React.CSSProperties = { background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-borderLight)'}`, borderRadius: 12, padding: 16 }
+  const card: React.CSSProperties = { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-borderLight)'}`, borderRadius: 12, padding: 16 }
 
   return (
-    <div style={{ background: 'var(--tz-bgHover)', minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
