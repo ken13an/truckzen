@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import StarfieldCanvas from '@/components/StarfieldCanvas'
+import { LANDING } from '@/lib/config/colors'
 
 export const metadata: Metadata = {
   title: 'TruckZen — Truck Repair Shop & Fleet Operations Platform',
@@ -20,12 +21,15 @@ export const metadata: Metadata = {
   },
 }
 
-const BLUE = '#1B6EE6'
-const TEXT = '#e2e6ed'
-const DIM = '#6a7590'
-const DIM2 = '#3a4560'
-const BORDER = 'rgba(255,255,255,.06)'
-const GREEN = '#34d399'
+// Landing is a branded dark marketing page (not theme-toggled in the product
+// shell). All color values are sourced from the canonical LANDING palette
+// in @/lib/config/colors — no hardcoded literals in this file.
+const BLUE = LANDING.accent
+const TEXT = LANDING.text
+const DIM = LANDING.textMuted
+const DIM2 = LANDING.textDim
+const BORDER = LANDING.border
+const GREEN = LANDING.success
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
 
 const secStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 48px', textAlign: 'center', position: 'relative' }
@@ -34,25 +38,25 @@ const dividerStyle: React.CSSProperties = { height: 1, background: `linear-gradi
 function LogoMark({ size = 30 }: { size?: number }) {
   const ds = Math.round(size * 0.13)
   return (
-    <div style={{ width: size, height: size, background: '#e0deda', borderRadius: Math.round(size * 0.23), display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-      <span style={{ fontSize: Math.round(size * 0.4), fontWeight: 900, color: '#111' }}>TZ</span>
+    <div style={{ width: size, height: size, background: LANDING.logoTileBg, borderRadius: Math.round(size * 0.23), display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <span style={{ fontSize: Math.round(size * 0.4), fontWeight: 900, color: LANDING.logoTileFg }}>TZ</span>
       <span style={{ position: 'absolute', bottom: Math.round(size * 0.2), right: Math.round(size * 0.2), width: ds, height: ds, borderRadius: '50%', background: BLUE }} />
     </div>
   )
 }
 
 function Wordmark({ size = 17 }: { size?: number }) {
-  return <span style={{ fontSize: size, fontWeight: 700, color: '#fff' }}>truckzen<span style={{ color: BLUE }}>.</span></span>
+  return <span style={{ fontSize: size, fontWeight: 700, color: LANDING.white }}>truckzen<span style={{ color: BLUE }}>.</span></span>
 }
 
 function BrowserFrame({ children, url, accent }: { children: React.ReactNode; url: string; accent?: boolean }) {
   return (
-    <div style={{ border: `1px solid ${accent ? 'rgba(27,110,230,.15)' : BORDER}`, borderRadius: 12, overflow: 'hidden', background: accent ? 'rgba(27,110,230,.02)' : 'rgba(255,255,255,.02)', boxShadow: accent ? '0 0 60px rgba(27,110,230,.06)' : 'none' }}>
-      <div style={{ display: 'flex', gap: 6, padding: '8px 12px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,255,255,.02)', alignItems: 'center' }}>
+    <div style={{ border: `1px solid ${accent ? LANDING.accentBorder : BORDER}`, borderRadius: 12, overflow: 'hidden', background: accent ? LANDING.accentBg1 : LANDING.surface1, boxShadow: accent ? `0 0 60px ${LANDING.accentBlur}` : 'none' }}>
+      <div style={{ display: 'flex', gap: 6, padding: '8px 12px', borderBottom: `1px solid ${BORDER}`, background: LANDING.surface1, alignItems: 'center' }}>
         <div style={{ width: 7, height: 7, borderRadius: '50%', background: DIM2 }} />
         <div style={{ width: 7, height: 7, borderRadius: '50%', background: DIM2 }} />
         <div style={{ width: 7, height: 7, borderRadius: '50%', background: DIM2 }} />
-        <span style={{ marginLeft: 10, fontSize: 9, color: DIM, padding: '2px 8px', background: 'rgba(255,255,255,.03)', borderRadius: 4 }}>{url}</span>
+        <span style={{ marginLeft: 10, fontSize: 9, color: DIM, padding: '2px 8px', background: LANDING.surface2, borderRadius: 4 }}>{url}</span>
       </div>
       <div style={{ padding: 24 }}>{children}</div>
     </div>
@@ -65,39 +69,39 @@ function PlaceholderBar({ w, color }: { w: string; color: string }) {
 
 export default function HomePage() {
   return (
-    <div style={{ background: '#000', color: TEXT, fontFamily: FONT, overflowX: 'hidden', position: 'relative' }}>
+    <div style={{ background: LANDING.bg, color: TEXT, fontFamily: FONT, overflowX: 'hidden', position: 'relative' }}>
       <StarfieldCanvas />
 
       {/* NAV */}
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, padding: '16px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${BORDER}` }}>
+      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, padding: '16px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: LANDING.scrim, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${BORDER}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><LogoMark /><Wordmark /></div>
         <div style={{ display: 'flex', gap: 32 }}>
           {['Platform', 'Features', 'FAQ', 'Contact'].map(l => (
             <a key={l} href={`#${l.toLowerCase()}`} style={{ fontSize: 13, color: DIM, fontWeight: 500, textDecoration: 'none' }}>{l}</a>
           ))}
         </div>
-        <a href="/login" style={{ fontSize: 13, color: '#fff', fontWeight: 500, padding: '7px 20px', border: '1px solid rgba(255,255,255,.2)', borderRadius: 20, textDecoration: 'none' }}>Log In</a>
+        <a href="/login" style={{ fontSize: 13, color: LANDING.white, fontWeight: 500, padding: '7px 20px', border: `1px solid ${LANDING.buttonBorder}`, borderRadius: 20, textDecoration: 'none' }}>Log In</a>
       </nav>
 
       {/* ── S1: HERO ── */}
       <section style={{ ...secStyle, minHeight: '100vh', overflow: 'hidden' }}>
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 900 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 11, color: DIM, fontWeight: 500, marginBottom: 32, background: 'rgba(255,255,255,.02)' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 11, color: DIM, fontWeight: 500, marginBottom: 32, background: LANDING.surface1 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE, animation: 'tz-lp-pulse 2s infinite' }} />
             Now in production
           </div>
-          <h1 style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, letterSpacing: '-.04em', color: '#fff', marginBottom: 24 }}>
+          <h1 style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, letterSpacing: '-.04em', color: LANDING.white, marginBottom: 24 }}>
             You run the company.<br /><span style={{ color: BLUE }}>TruckZen runs everything&nbsp;else.</span>
           </h1>
           <p style={{ fontSize: 21, color: DIM, lineHeight: 1.6, maxWidth: 560, margin: '0 auto 24px' }}>One platform for your entire heavy-duty operation.</p>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
             {['Shop', 'Fleet', 'Parts', 'People'].map(t => (
-              <span key={t} style={{ padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: DIM, fontWeight: 500, background: 'rgba(255,255,255,.02)' }}>{t}</span>
+              <span key={t} style={{ padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: DIM, fontWeight: 500, background: LANDING.surface1 }}>{t}</span>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-            <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: '#fff', fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 24px rgba(27,110,230,.25)' }}>Book a demo</a>
-            <a href="#platform" style={{ padding: '14px 36px', color: '#fff', fontSize: 16, fontWeight: 600, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', textDecoration: 'none' }}>Learn more</a>
+            <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: LANDING.white, fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: `0 4px 24px ${LANDING.accentShadow}` }}>Book a demo</a>
+            <a href="#platform" style={{ padding: '14px 36px', color: LANDING.white, fontSize: 16, fontWeight: 600, borderRadius: 12, border: `1px solid ${LANDING.borderStrong}`, textDecoration: 'none' }}>Learn more</a>
           </div>
         </div>
         <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', color: DIM, fontSize: 11, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, animation: 'tz-lp-bob 2s infinite' }}>
@@ -108,12 +112,12 @@ export default function HomePage() {
 
       {/* Hero visual — browser frame */}
       <div style={{ padding: '0 48px 120px', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,.02)', boxShadow: '0 0 80px rgba(27,110,230,.06)' }}>
-          <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,255,255,.02)', alignItems: 'center' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', background: LANDING.surface1, boxShadow: `0 0 80px ${LANDING.accentBlur}` }}>
+          <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, background: LANDING.surface1, alignItems: 'center' }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
-            <span style={{ marginLeft: 12, fontSize: 10, color: DIM, padding: '3px 10px', background: 'rgba(255,255,255,.03)', borderRadius: 4 }}>truckzen.pro</span>
+            <span style={{ marginLeft: 12, fontSize: 10, color: DIM, padding: '3px 10px', background: LANDING.surface2, borderRadius: 4 }}>truckzen.pro</span>
           </div>
           <div style={{ padding: 32, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, minHeight: 300 }}>
             {[
@@ -122,7 +126,7 @@ export default function HomePage() {
               { t: 'Fleet', rows: [['Uptime', '—'], ['Utilization', '—'], ['PM Due', '—']] },
               { t: 'Warranty', rows: [['Active', '—'], ['Pending', '—']] },
             ].map(p => (
-              <div key={p.t} style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${BORDER}`, borderRadius: 8, padding: 16, textAlign: 'left' }}>
+              <div key={p.t} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 8, padding: 16, textAlign: 'left' }}>
                 <div style={{ fontSize: 9, color: DIM, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>{p.t}</div>
                 <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {p.rows.map(([l, v]) => (
@@ -142,14 +146,14 @@ export default function HomePage() {
       {/* ── S2: TWO PILLARS ── */}
       <section id="platform" style={{ ...secStyle, minHeight: 'auto' }}>
         <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>The Platform</div>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 8 }}>Two engines. One platform.</h2>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8 }}>Two engines. One platform.</h2>
         <p style={{ fontSize: 18, color: DIM, marginBottom: 48, maxWidth: 520 }}>AI is built into every step. Not bolted on top.</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, maxWidth: 1000, margin: '0 auto', background: BORDER, borderRadius: 16, overflow: 'hidden', textAlign: 'left' }}>
-          <div style={{ background: '#000', padding: '48px 40px' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: 'rgba(27,110,230,.08)' }}>
+          <div style={{ background: LANDING.bg, padding: '48px 40px' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: LANDING.accentBg4 }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={BLUE} strokeWidth="1.5"><path d="M3 15V8l7-5 7 5v7" /><path d="M8 15v-4h4v4" /></svg>
             </div>
-            <h3 style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Shop operations</h3>
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: LANDING.white, marginBottom: 8 }}>Shop operations</h3>
             <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, marginBottom: 20 }}>Everything from truck arrival to payment collected. AI writes service notes, classifies jobs, suggests parts.</p>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, padding: 0 }}>
               {['AI service writer (4 languages)', 'Work orders + estimates + invoicing', 'Parts tracking + auto reorder', 'Mechanic time clock + payroll', 'Kiosk check-in for walk-ins', 'Customer portal for approvals', 'Dynamic pricing by customer type', 'Telegram bot for remote updates'].map(i => (
@@ -159,11 +163,11 @@ export default function HomePage() {
               ))}
             </ul>
           </div>
-          <div style={{ background: '#000', padding: '48px 40px' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: 'rgba(52,211,153,.08)' }}>
+          <div style={{ background: LANDING.bg, padding: '48px 40px' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: LANDING.successBg }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={GREEN} strokeWidth="1.5"><rect x="2" y="8" width="16" height="7" rx="1.5" /><circle cx="5.5" cy="13.5" r="1.5" /><circle cx="14.5" cy="13.5" r="1.5" /><path d="M2 10l2.5-4h7l2.5 4" /></svg>
             </div>
-            <h3 style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Fleet intelligence</h3>
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: LANDING.white, marginBottom: 8 }}>Fleet intelligence</h3>
             <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, marginBottom: 20 }}>Know the health of every truck before it breaks down. Connected to your shop.</p>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, padding: 0 }}>
               {['Preventive maintenance scheduling', 'Inspections + DVIR tracking', 'Warranty + recall management', 'Fuel + expense tracking', 'Driver management', 'Telematics integration ready', 'GPS + vehicle location tracking', 'Compliance alerts + renewals'].map(i => (
@@ -189,20 +193,20 @@ export default function HomePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <div style={{ fontSize: 9, color: DIM2, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>Dashboard</div>
-                  <PlaceholderBar w="70%" color="rgba(255,255,255,.04)" />
-                  <PlaceholderBar w="50%" color="rgba(255,255,255,.04)" />
-                  <PlaceholderBar w="85%" color="rgba(255,255,255,.04)" />
+                  <PlaceholderBar w="70%" color={LANDING.surface3} />
+                  <PlaceholderBar w="50%" color={LANDING.surface3} />
+                  <PlaceholderBar w="85%" color={LANDING.surface3} />
                 </div>
                 <div>
                   <div style={{ fontSize: 9, color: DIM2, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>Work Orders</div>
-                  <PlaceholderBar w="60%" color="rgba(255,255,255,.04)" />
-                  <PlaceholderBar w="45%" color="rgba(255,255,255,.04)" />
-                  <PlaceholderBar w="75%" color="rgba(255,255,255,.04)" />
+                  <PlaceholderBar w="60%" color={LANDING.surface3} />
+                  <PlaceholderBar w="45%" color={LANDING.surface3} />
+                  <PlaceholderBar w="75%" color={LANDING.surface3} />
                 </div>
                 <div>
                   <div style={{ fontSize: 9, color: DIM2, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>Invoicing</div>
-                  <PlaceholderBar w="55%" color="rgba(255,255,255,.04)" />
-                  <PlaceholderBar w="40%" color="rgba(255,255,255,.04)" />
+                  <PlaceholderBar w="55%" color={LANDING.surface3} />
+                  <PlaceholderBar w="40%" color={LANDING.surface3} />
                 </div>
               </div>
             </BrowserFrame>
@@ -213,11 +217,11 @@ export default function HomePage() {
             <BrowserFrame url="truckzen.pro" accent>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {['Shop', 'Invoices', 'Fleet', 'Warranty'].map(label => (
-                  <div key={label} style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${BORDER}`, borderRadius: 6, padding: 12 }}>
+                  <div key={label} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 6, padding: 12 }}>
                     <div style={{ fontSize: 9, color: BLUE, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>{label}</div>
-                    <PlaceholderBar w="80%" color="rgba(27,110,230,.15)" />
-                    <PlaceholderBar w="55%" color="rgba(27,110,230,.10)" />
-                    <PlaceholderBar w="65%" color="rgba(27,110,230,.08)" />
+                    <PlaceholderBar w="80%" color={LANDING.accentBorder} />
+                    <PlaceholderBar w="55%" color={LANDING.accentBg5} />
+                    <PlaceholderBar w="65%" color={LANDING.accentBg4} />
                   </div>
                 ))}
               </div>
@@ -231,7 +235,7 @@ export default function HomePage() {
       {/* ── S4: FEATURES 2x2 ── */}
       <section id="features" style={{ ...secStyle, minHeight: 'auto' }}>
         <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>Built Different</div>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 8 }}>What you get that nobody else offers.</h2>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8 }}>What you get that nobody else offers.</h2>
         <p style={{ fontSize: 18, color: DIM, marginBottom: 48, maxWidth: 560 }}>Every feature built from real shop problems, not a product roadmap.</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 900, margin: '0 auto', textAlign: 'left' }}>
           {[
@@ -240,8 +244,8 @@ export default function HomePage() {
             { t: 'Free data migration', d: 'Complete history from your current platform. Zero cost. Days, not months.' },
             { t: 'Shop + fleet, connected', d: 'Repair history flows into fleet health. Fleet alerts create work orders. One system.' },
           ].map(f => (
-            <div key={f.t} style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${BORDER}`, borderRadius: 14, padding: '36px 32px' }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 8 }}>{f.t}</h3>
+            <div key={f.t} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '36px 32px' }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: LANDING.white, marginBottom: 8 }}>{f.t}</h3>
               <p style={{ fontSize: 14, color: DIM, lineHeight: 1.6, margin: 0 }}>{f.d}</p>
             </div>
           ))}
@@ -252,16 +256,16 @@ export default function HomePage() {
 
       {/* ── S5: GET STARTED ── */}
       <section style={{ ...secStyle, minHeight: 'auto' }}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 48 }}>Running in days, not months.</h2>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 48 }}>Running in days, not months.</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, maxWidth: 900, margin: '0 auto', textAlign: 'left' }}>
           {[
             { n: '1', t: 'We migrate your data', d: 'Complete history imported at no cost. Your team never has to re-enter anything.' },
             { n: '2', t: 'Set up your team', d: 'Bulk import staff. Assign roles. Configure bays. Your team is ready same day.' },
             { n: '3', t: 'Run your operation', d: 'Shop, fleet, parts, people. AI handles the paperwork. You run the business.' },
           ].map(s => (
-            <div key={s.n} style={{ background: 'rgba(255,255,255,.02)', border: `1px solid ${BORDER}`, borderRadius: 14, padding: '36px 28px' }}>
+            <div key={s.n} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '36px 28px' }}>
               <div style={{ fontSize: 48, fontWeight: 800, color: BLUE, lineHeight: 1, marginBottom: 12 }}>{s.n}</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 8 }}>{s.t}</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: LANDING.white, marginBottom: 8 }}>{s.t}</h3>
               <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, margin: 0 }}>{s.d}</p>
             </div>
           ))}
@@ -272,11 +276,11 @@ export default function HomePage() {
 
       {/* ── S6: APP STORE + TRUST ── */}
       <section style={{ ...secStyle, minHeight: 'auto' }}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 8 }}>Available everywhere.</h2>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8 }}>Available everywhere.</h2>
         <p style={{ fontSize: 18, color: DIM, marginBottom: 40, maxWidth: 520 }}>Your team accesses TruckZen from whatever device they have in hand.</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 48 }}>
           {['App Store', 'Google Play', 'Web Browser'].map(b => (
-            <div key={b} style={{ padding: '12px 28px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#fff', background: 'rgba(255,255,255,.02)' }}>{b}</div>
+            <div key={b} style={{ padding: '12px 28px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 14, fontWeight: 600, color: LANDING.white, background: LANDING.surface1 }}>{b}</div>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 32, justifyContent: 'center' }}>
@@ -292,8 +296,8 @@ export default function HomePage() {
 
       {/* ── S7: VISION ── */}
       <section style={{ ...secStyle, minHeight: 'auto' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', border: '1px solid rgba(27,110,230,.15)', borderRadius: 16, padding: 48, background: 'rgba(27,110,230,.03)', textAlign: 'left' }}>
-          <h3 style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 16 }}>Where we&apos;re headed</h3>
+        <div style={{ maxWidth: 800, margin: '0 auto', border: `1px solid ${LANDING.accentBorder}`, borderRadius: 16, padding: 48, background: LANDING.accentBg2, textAlign: 'left' }}>
+          <h3 style={{ fontSize: 28, fontWeight: 700, color: LANDING.white, marginBottom: 16 }}>Where we&apos;re headed</h3>
           <p style={{ fontSize: 16, color: DIM, lineHeight: 1.7, margin: 0 }}>TruckZen is building toward a future where trucks communicate directly with shops. Predictive maintenance before breakdowns happen. Automated repair authorization for autonomous fleets. The infrastructure for the next era of heavy-duty starts here.</p>
         </div>
       </section>
@@ -302,7 +306,7 @@ export default function HomePage() {
 
       {/* ── S8: FAQ ── */}
       <section id="faq" style={{ ...secStyle, minHeight: 'auto' }}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 48 }}>FAQ</h2>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 48 }}>FAQ</h2>
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'left' }}>
           {[
             { q: 'Is TruckZen only for repair shops?', a: 'No. TruckZen serves shops, fleets, and operations that run both. The platform connects repair operations to fleet management in one system.' },
@@ -313,7 +317,7 @@ export default function HomePage() {
             { q: 'Is there a long-term contract?', a: 'No. Month-to-month. Cancel anytime.' },
           ].map(f => (
             <div key={f.q} style={{ borderBottom: `1px solid ${BORDER}`, padding: '20px 0' }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 8 }}>{f.q}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: LANDING.white, marginBottom: 8 }}>{f.q}</div>
               <div style={{ fontSize: 14, color: DIM, lineHeight: 1.6 }}>{f.a}</div>
             </div>
           ))}
@@ -324,13 +328,13 @@ export default function HomePage() {
 
       {/* ── S9: BOTTOM CTA ── */}
       <section id="contact" style={secStyle}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: '#fff', marginBottom: 8, lineHeight: 1.1 }}>
+        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8, lineHeight: 1.1 }}>
           The future of heavy-duty<br /><span style={{ color: BLUE }}>starts here.</span>
         </h2>
         <p style={{ fontSize: 18, color: DIM, maxWidth: 520, margin: '0 auto 32px' }}>See how TruckZen connects your shop, your fleet, and your people.</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24 }}>
-          <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: '#fff', fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: '0 4px 24px rgba(27,110,230,.25)' }}>Book a demo</a>
-          <a href="mailto:info@truckzen.pro" style={{ padding: '14px 36px', color: '#fff', fontSize: 16, fontWeight: 600, borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', textDecoration: 'none' }}>Contact us</a>
+          <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: LANDING.white, fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: `0 4px 24px ${LANDING.accentShadow}` }}>Book a demo</a>
+          <a href="mailto:info@truckzen.pro" style={{ padding: '14px 36px', color: LANDING.white, fontSize: 16, fontWeight: 600, borderRadius: 12, border: `1px solid ${LANDING.borderStrong}`, textDecoration: 'none' }}>Contact us</a>
         </div>
         <div style={{ fontSize: 13, color: DIM }}>
           <a href="mailto:demo@truckzen.pro" style={{ color: BLUE, textDecoration: 'none' }}>demo@truckzen.pro</a>
@@ -364,18 +368,18 @@ export default function HomePage() {
             <div key={col.h} style={{ textAlign: 'left' }}>
               <h4 style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 16 }}>{col.h}</h4>
               {col.links.map(l => (
-                <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: '#8494a7', padding: '4px 0', textDecoration: 'none' }}>{l}</a>
+                <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: LANDING.textQuiet, padding: '4px 0', textDecoration: 'none' }}>{l}</a>
               ))}
-              {col.email && <a href={`mailto:${col.email}`} style={{ display: 'block', fontSize: 13, color: '#8494a7', padding: '4px 0', textDecoration: 'none' }}>{col.email}</a>}
+              {col.email && <a href={`mailto:${col.email}`} style={{ display: 'block', fontSize: 13, color: LANDING.textQuiet, padding: '4px 0', textDecoration: 'none' }}>{col.email}</a>}
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 24, borderTop: `1px solid ${BORDER}`, fontSize: 11, color: '#4a5568' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 24, borderTop: `1px solid ${BORDER}`, fontSize: 11, color: LANDING.textFaint }}>
           <span>&copy; 2026 TruckZen. All rights reserved.</span>
           <div>
-            <a href="/privacy" style={{ color: '#4a5568', marginLeft: 16, textDecoration: 'none' }}>Privacy</a>
-            <a href="/terms" style={{ color: '#4a5568', marginLeft: 16, textDecoration: 'none' }}>Terms</a>
-            <a href="#" style={{ color: '#4a5568', marginLeft: 16, textDecoration: 'none' }}>Security</a>
+            <a href="/privacy" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none' }}>Privacy</a>
+            <a href="/terms" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none' }}>Terms</a>
+            <a href="#" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none' }}>Security</a>
           </div>
         </div>
       </footer>

@@ -104,6 +104,39 @@ type ThemeTokenShape = {
   aiPurpleBg: string
 }
 
+// Marketing / landing page palette — branded dark surface, not theme-toggled.
+// Defined once here so the public landing can reference canonical tokens
+// instead of inlining hex literals.
+export const LANDING = {
+  bg: '#000',
+  text: '#e2e6ed',
+  textMuted: '#6a7590',
+  textDim: '#3a4560',
+  textQuiet: '#8494a7',
+  textFaint: '#4a5568',
+  logoTileBg: '#e0deda',
+  logoTileFg: '#111',
+  white: '#ffffff',
+  scrim: 'rgba(0,0,0,.6)',
+  surface1: 'rgba(255,255,255,.02)',
+  surface2: 'rgba(255,255,255,.03)',
+  surface3: 'rgba(255,255,255,.04)',
+  border: 'rgba(255,255,255,.06)',
+  borderStrong: 'rgba(255,255,255,.12)',
+  buttonBorder: 'rgba(255,255,255,.2)',
+  accent: '#1B6EE6',
+  accentBg1: 'rgba(27,110,230,.02)',
+  accentBg2: 'rgba(27,110,230,.03)',
+  accentBg3: 'rgba(27,110,230,.06)',
+  accentBg4: 'rgba(27,110,230,.08)',
+  accentBg5: 'rgba(27,110,230,.10)',
+  accentBorder: 'rgba(27,110,230,.15)',
+  accentShadow: 'rgba(27,110,230,.25)',
+  accentBlur: 'rgba(27,110,230,.06)',
+  success: '#34d399',
+  successBg: 'rgba(52,211,153,.08)',
+} as const
+
 export const THEME: Record<ThemeMode, ThemeTokenShape> = {
   dark: {
     bg: '#0d1520',
