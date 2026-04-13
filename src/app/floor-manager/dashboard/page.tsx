@@ -331,7 +331,7 @@ export default function FloorManagerDashboardPage() {
         }
         .fm-kanban-col::-webkit-scrollbar { width: 4px; }
         .fm-kanban-col::-webkit-scrollbar-track { background: transparent; }
-        .fm-kanban-col::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .fm-kanban-col::-webkit-scrollbar-thumb { background: ${t.border}; border-radius: 4px; }
       `}</style>
 
       {/* ===== HEADER ===== */}
