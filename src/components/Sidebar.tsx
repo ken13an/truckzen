@@ -3,7 +3,7 @@
  * Built independently by TruckZen development team
  */
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems, hasAccess } from '@/lib/permissions'
@@ -130,6 +130,7 @@ export default function Sidebar() {
   const [punchTime, setPunchTime] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState('')
   const [qaOpen, setQaOpen] = useState(false)
+  const punchInFlight = useRef(false)
 
   useEffect(() => {
     async function load() {
@@ -254,36 +255,54 @@ export default function Sidebar() {
     }
 
     // Clock In — attempt geolocation first to enable geofence check server-side
-    async function getCoords(): Promise<{ latitude: number; longitude: number } | 'denied' | 'unavailable'> {
+    async function getCoords(): Promise<{ lat: number; lng: number; accuracy?: number } | 'denied' | 'unavailable'> {
       if (typeof window === 'undefined' || !('geolocation' in navigator)) return 'unavailable'
       return new Promise(resolve => {
         navigator.geolocation.getCurrentPosition(
-          pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+          pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
           err => resolve(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable'),
           { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
         )
       })
     }
 
-    const coords = await getCoords()
-    const body: Record<string, unknown> = { action: 'punch_in' }
-    if (typeof coords === 'object') { body.latitude = coords.latitude; body.longitude = coords.longitude }
+    // Reentrancy guard — prevent stacked requests if the user clicks multiple times
+    // while we're waiting on geolocation or the server.
+    if (punchInFlight.current) return
+    punchInFlight.current = true
+    try {
+      const coords = await getCoords()
+      // Server expects { action, lat, lng, accuracy, override_reason? }
+      const body: Record<string, unknown> = { action: 'punch_in' }
+      if (typeof coords === 'object') { body.lat = coords.lat; body.lng = coords.lng; if (coords.accuracy != null) body.accuracy = coords.accuracy }
 
-    const { ok, status, data } = await send(body)
+      let { ok, status, data } = await send(body)
 
-    if (ok) {
-      setPunchedIn(true)
-      setPunchTime(data?.punch?.punch_in_at || new Date().toISOString())
-      toast(data?.insideGeofence === false ? 'Clocked in (outside shop area)' : 'Clocked in', 'success')
-      return
+      // If server asks for an override reason (self-override-capable role outside geofence),
+      // prompt the user inline and retry once with the reason included.
+      if (!ok && data?.outsideGeofence && typeof data?.error === 'string' && /override reason/i.test(data.error)) {
+        const reason = window.prompt('You are outside the shop area. Enter an override reason (at least 10 characters) to clock in anyway:', '') || ''
+        if (!reason || reason.trim().length < 10) { toast('Clock in cancelled — override reason must be at least 10 characters.', 'warning', 6000); return }
+        const retry = await send({ ...body, override_reason: reason.trim() })
+        ok = retry.ok; status = retry.status; data = retry.data
+      }
+
+      if (ok) {
+        setPunchedIn(true)
+        setPunchTime(data?.punch?.punch_in_at || new Date().toISOString())
+        toast(data?.insideGeofence === false ? 'Clocked in (outside shop area)' : 'Clocked in', 'success')
+        return
+      }
+
+      // Map the specific failure reason the API sent back
+      if (data?.outsideGeofence) { toast(data.error || 'You are outside the shop area. Move closer to the shop or ask a manager to override.', 'error', 7000); return }
+      if (status === 409) { toast(data?.error || 'You are already clocked in.', 'warning', 6000); return }
+      if (coords === 'denied') { toast('Location access was denied. Enable location in your browser to clock in.', 'error', 7000); return }
+      if (coords === 'unavailable') { toast('Location is unavailable. Clock in requires location access.', 'error', 7000); return }
+      toast(data?.error || 'Could not clock in. Please try again.', 'error', 6000)
+    } finally {
+      punchInFlight.current = false
     }
-
-    // Map the specific failure reason the API sent back
-    if (data?.outsideGeofence) { toast(data.error || 'You are outside the shop area. Move closer to the shop or ask a manager to override.', 'error', 7000); return }
-    if (status === 409) { toast(data?.error || 'You are already clocked in.', 'warning', 6000); return }
-    if (coords === 'denied') { toast('Location access was denied. Enable location in your browser to clock in.', 'error', 7000); return }
-    if (coords === 'unavailable') { toast('Location is unavailable. Clock in requires location access.', 'error', 7000); return }
-    toast(data?.error || 'Could not clock in. Please try again.', 'error', 6000)
   }
 
   const qaItems = [
