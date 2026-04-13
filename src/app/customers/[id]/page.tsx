@@ -254,14 +254,14 @@ export default function CustomerProfilePage() {
   const paymentTermsColor = (t: string) => {
     if (t === 'cod') return { bg: 'rgba(239,68,68,0.15)', color: '#EF4444' }
     if (t === 'net15') return { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
-    if (t === 'net30') return { bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
+    if (t === 'net30') return { bg: 'rgba(59,130,246,0.15)', color: 'var(--tz-accent)' }
     if (t === 'net60') return { bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
     return { bg: 'var(--tz-border)', color: 'var(--tz-textSecondary)' }
   }
 
   const unitTypeBadge = (type: string) => {
     const t = (type || 'tractor').toLowerCase()
-    if (t === 'tractor') return { label: 'TRACTOR', bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
+    if (t === 'tractor') return { label: 'TRACTOR', bg: 'rgba(59,130,246,0.15)', color: 'var(--tz-accent)' }
     if (t.includes('reefer')) return { label: 'TRAILER-REEFER', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
     if (t.includes('trailer')) return { label: 'TRAILER', bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
     return { label: t.toUpperCase(), bg: 'var(--tz-border)', color: 'var(--tz-textSecondary)' }
@@ -318,7 +318,7 @@ export default function CustomerProfilePage() {
               </span>
             )}
             {!customer.is_owner_operator && (!customer.customer_type || customer.customer_type === 'company') && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(59,130,246,0.15)', color: '#3B82F6', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(59,130,246,0.15)', color: 'var(--tz-accent)', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
                 Company
               </span>
             )}
@@ -431,7 +431,7 @@ export default function CustomerProfilePage() {
               background: 'none',
               border: 'none',
               borderBottom: tab === t.key ? '2px solid #3B82F6' : '2px solid transparent',
-              color: tab === t.key ? '#3B82F6' : 'var(--tz-textSecondary)',
+              color: tab === t.key ? 'var(--tz-accent)' : 'var(--tz-textSecondary)',
               fontFamily: "'Inter', sans-serif",
               marginBottom: -1,
             }}
@@ -468,7 +468,7 @@ export default function CustomerProfilePage() {
                 alignItems: 'center',
                 gap: 6,
                 padding: '9px 16px',
-                background: '#3B82F6',
+                background: 'var(--tz-accent)',
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
@@ -498,7 +498,7 @@ export default function CustomerProfilePage() {
                   return (
                     <tr key={u.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                       <td style={{ padding: '10px 12px', fontSize: 13 }}>
-                        <a href={`/customers/${id}/units/${u.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
+                        <a href={`/customers/${id}/units/${u.id}`} style={{ color: 'var(--tz-accent)', textDecoration: 'none', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
                           #{u.unit_number}
                         </a>
                       </td>
@@ -524,7 +524,7 @@ export default function CustomerProfilePage() {
                       <td style={{ padding: '10px 12px', textAlign: 'right' as const }}>
                         <a
                           href={getNewWorkorderRoute({ customer: id, unit: u.id })}
-                          style={{ fontSize: 11, color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}
+                          style={{ fontSize: 11, color: 'var(--tz-accent)', textDecoration: 'none', fontWeight: 600 }}
                         >
                           Create WO
                         </a>
@@ -550,7 +550,7 @@ export default function CustomerProfilePage() {
                 alignItems: 'center',
                 gap: 6,
                 padding: '9px 16px',
-                background: '#3B82F6',
+                background: 'var(--tz-accent)',
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
@@ -583,7 +583,7 @@ export default function CustomerProfilePage() {
                     {paginated.map((wo: any) => (
                       <tr key={wo.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer' }} onClick={() => router.push(getWorkorderRoute(wo.id, undefined, 'customer'))}>
                         <td style={{ padding: '10px 12px', fontSize: 13 }}>
-                          <a href={getWorkorderRoute(wo.id, undefined, 'customer')} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>
+                          <a href={getWorkorderRoute(wo.id, undefined, 'customer')} style={{ color: 'var(--tz-accent)', textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>
                             {wo.so_number}
                           </a>
                           {wo.is_historical && (
@@ -649,7 +649,7 @@ export default function CustomerProfilePage() {
                 alignItems: 'center',
                 gap: 6,
                 padding: '9px 16px',
-                background: '#3B82F6',
+                background: 'var(--tz-accent)',
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
@@ -673,7 +673,7 @@ export default function CustomerProfilePage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>{c.name}</span>
                       {c.is_primary && (
-                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(59,130,246,0.15)', color: '#3B82F6', textTransform: 'uppercase' as const }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(59,130,246,0.15)', color: 'var(--tz-accent)', textTransform: 'uppercase' as const }}>
                           Primary
                         </span>
                       )}
@@ -799,7 +799,7 @@ export default function CustomerProfilePage() {
                 alignItems: 'center',
                 gap: 6,
                 padding: '9px 16px',
-                background: '#3B82F6',
+                background: 'var(--tz-accent)',
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
@@ -846,7 +846,7 @@ export default function CustomerProfilePage() {
                       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                         <button
                           onClick={() => downloadDocument(doc)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3B82F6', padding: 4 }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-accent)', padding: 4 }}
                           title="Download"
                         >
                           <Download size={14} />
@@ -882,7 +882,7 @@ export default function CustomerProfilePage() {
             <span style={{
               padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 700,
               background: customer.pricing_tier === 'ugl_company' ? 'rgba(59,130,246,0.15)' : customer.pricing_tier === 'ugl_owner_operator' ? 'rgba(245,158,11,0.15)' : 'rgba(107,114,128,0.15)',
-              color: customer.pricing_tier === 'ugl_company' ? '#3B82F6' : customer.pricing_tier === 'ugl_owner_operator' ? '#F59E0B' : 'var(--tz-textSecondary)',
+              color: customer.pricing_tier === 'ugl_company' ? 'var(--tz-accent)' : customer.pricing_tier === 'ugl_owner_operator' ? '#F59E0B' : 'var(--tz-textSecondary)',
               textTransform: 'uppercase' as const, letterSpacing: '.03em',
             }}>
               {customer.pricing_tier === 'ugl_company' ? 'UGL Company' : customer.pricing_tier === 'ugl_owner_operator' ? 'UGL Owner Operator' : 'Outside Customer'}
@@ -921,7 +921,7 @@ export default function CustomerProfilePage() {
           {/* Tier descriptions */}
           <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
             {[
-              { tier: 'ugl_company', label: 'UGL Company', desc: 'Company-owned trucks on UGL account', color: '#3B82F6' },
+              { tier: 'ugl_company', label: 'UGL Company', desc: 'Company-owned trucks on UGL account', color: 'var(--tz-accent)' },
               { tier: 'ugl_owner_operator', label: 'UGL Owner Operator', desc: 'Independent operators under UGL', color: '#F59E0B' },
               { tier: 'outside', label: 'Outside Customer', desc: 'Standard outside customer pricing', color: 'var(--tz-textSecondary)' },
             ].map(t => (
@@ -1064,7 +1064,7 @@ export default function CustomerProfilePage() {
               <button
                 onClick={saveEdit}
                 disabled={saving}
-                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3B82F6', color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: saving ? 0.6 : 1 }}
+                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: saving ? 0.6 : 1 }}
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -1142,7 +1142,7 @@ export default function CustomerProfilePage() {
                     height: 20,
                     borderRadius: 10,
                     border: 'none',
-                    background: contactForm.is_primary ? '#3B82F6' : 'var(--tz-border)',
+                    background: contactForm.is_primary ? 'var(--tz-accent)' : 'var(--tz-border)',
                     cursor: 'pointer',
                     position: 'relative' as const,
                     transition: 'background 0.2s',
@@ -1173,7 +1173,7 @@ export default function CustomerProfilePage() {
               <button
                 onClick={saveContact}
                 disabled={saving || !contactForm.name}
-                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3B82F6', color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: (saving || !contactForm.name) ? 0.5 : 1 }}
+                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: (saving || !contactForm.name) ? 0.5 : 1 }}
               >
                 {saving ? 'Saving...' : editingContactId ? 'Update' : 'Add Contact'}
               </button>

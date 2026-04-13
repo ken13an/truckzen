@@ -171,7 +171,7 @@ export default function PlatformRegistrations() {
       {/* Reject Reason Modal */}
       {rejectId && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setRejectId(null)}>
-          <div style={{ background: '#12131a', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 32, width: 400 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 32, width: 400 }} onClick={e => e.stopPropagation()}>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', margin: '0 0 16px' }}>Rejection Reason</h3>
             <p style={{ fontSize: 12, color: 'var(--tz-textSecondary)', margin: '0 0 12px' }}>This will be sent to the applicant.</p>
             <textarea

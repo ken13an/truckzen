@@ -263,7 +263,7 @@ export default function PartsWOView() {
                     style={inputStyle}
                   />
                   {searchResults[p.id]?.length > 0 && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1A1F2B', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.4)', maxHeight: 180, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.4)', maxHeight: 180, overflowY: 'auto' }}>
                       {searchResults[p.id].map((inv: any) => (
                         <div
                           key={inv.id}

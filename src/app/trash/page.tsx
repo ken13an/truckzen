@@ -260,7 +260,7 @@ export default function TrashPage() {
       {/* Confirmation Modal */}
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ background: '#1A1F2B', borderRadius: 16, padding: 32, maxWidth: 420, width: '90%', border: `1px solid ${'var(--tz-border)'}` }}>
+          <div style={{ background: 'var(--tz-bgCard)', borderRadius: 16, padding: 32, maxWidth: 420, width: '90%', border: `1px solid ${'var(--tz-border)'}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
               <AlertTriangle size={22} color={'var(--tz-danger)'} />
               <h3 style={{ margin: 0, color: 'var(--tz-text)', fontSize: 16 }}>Permanently Delete?</h3>

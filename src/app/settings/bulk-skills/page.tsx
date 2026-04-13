@@ -191,7 +191,7 @@ export default function BulkSkillsPage() {
       {/* Modal: Assign Skills */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setShowModal(false)}>
-          <div style={{ background: '#12131a', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 28, width: 480, maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 28, width: 480, maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 16 }}>Assign Skills to {selected.size} Mechanic{selected.size !== 1 ? 's' : ''}</div>
 
             <div style={{ marginBottom: 12 }}>

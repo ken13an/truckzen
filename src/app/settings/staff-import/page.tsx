@@ -142,7 +142,7 @@ export default function StaffImportPage() {
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
         {(['upload', 'preview', 'importing'] as const).map((s, i) => (
           <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {i > 0 && <div style={{ width: 24, height: 1, background: '#2A3040' }} />}
+            {i > 0 && <div style={{ width: 24, height: 1, background: 'var(--tz-border)' }} />}
             <div style={{
               width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontWeight: 700,

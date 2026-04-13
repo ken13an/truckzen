@@ -238,7 +238,7 @@ export default function ServiceRequestsPage() {
       {/* Reject modal */}
       {rejectId && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setRejectId(null)}>
-          <div style={{ background: '#12131a', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 28, width: 400 }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 28, width: 400 }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Reject Request</div>
             <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Reason..." rows={3} autoFocus style={{ width: '100%', padding: '10px 12px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>

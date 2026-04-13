@@ -335,7 +335,7 @@ export default function CostsPage() {
       {/* ═══ Edit/Add Service Modal ═══ */}
       {editSvc && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={closeModal}>
-          <div style={{ background: '#12131a', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 28, width: 440, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 28, width: 440, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', margin: 0 }}>{newSvc ? 'Add Service' : 'Edit Service'}</h3>
               <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textTertiary)' }}><X size={18} /></button>
