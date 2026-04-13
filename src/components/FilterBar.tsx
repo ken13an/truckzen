@@ -113,7 +113,7 @@ export default function FilterBar({
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)' }}>From</span>
           <input type="date" value={dateFrom || ''} onChange={e => onDateFromChange(e.target.value)}
-            style={{ ...inputStyle, padding: '6px 10px', fontSize: 11, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties} />
+            style={{ ...inputStyle, padding: '6px 10px', fontSize: 11, cursor: 'pointer', colorScheme: 'light dark' } as React.CSSProperties} />
         </div>
       )}
 
@@ -122,7 +122,7 @@ export default function FilterBar({
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)' }}>To</span>
           <input type="date" value={dateTo || ''} onChange={e => onDateToChange(e.target.value)}
-            style={{ ...inputStyle, padding: '6px 10px', fontSize: 11, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties} />
+            style={{ ...inputStyle, padding: '6px 10px', fontSize: 11, cursor: 'pointer', colorScheme: 'light dark' } as React.CSSProperties} />
         </div>
       )}
 

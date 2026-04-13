@@ -1139,7 +1139,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
 
             <label style={labelStyle}>{t('when_pick_date')}</label>
             <input
-              style={{ ...inputStyle, colorScheme: 'dark' }}
+              style={{ ...inputStyle, colorScheme: 'light dark' }}
               type="date"
               value={needByDate}
               onChange={e => setNeedByDate(e.target.value)}
