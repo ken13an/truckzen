@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
-const GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', BLUE = '#1B6EE6', MUTED = '#7C8BA0'
+const GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', BLUE = '#1B6EE6', MUTED = 'var(--tz-textSecondary)'
 const stColor: Record<string, string> = { active: GREEN, on_time: GREEN, due_soon: AMBER, overdue: RED, paused: MUTED, completed: MUTED }
 
 export default function PMSchedulesPage() {

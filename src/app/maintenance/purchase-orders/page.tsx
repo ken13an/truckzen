@@ -1,6 +1,6 @@
 'use client'
 import { MaintListPage } from '@/lib/maint-page'
-const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
+const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = 'var(--tz-textSecondary)'
 const stColor: Record<string, string> = { draft: MUTED, sent: BLUE, partially_received: AMBER, received: GREEN, cancelled: RED }
 export default MaintListPage({
   title: 'Purchase Orders', table: 'maint_purchase_orders', label: 'purchase orders',

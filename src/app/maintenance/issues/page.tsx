@@ -1,6 +1,6 @@
 'use client'
 import { MaintListPage } from '@/lib/maint-page'
-const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
+const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = 'var(--tz-textSecondary)'
 const priColor: Record<string, string> = { low: MUTED, medium: BLUE, high: AMBER, critical: RED }
 const stColor: Record<string, string> = { open: BLUE, in_progress: AMBER, resolved: GREEN, closed: MUTED }
 export default MaintListPage({

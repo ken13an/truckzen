@@ -326,7 +326,7 @@ const s: Record<string, any> = {
   },
   invoiceRefLabel: {
     fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase',
-    color: '#48536A', fontFamily: 'monospace',
+    color: 'var(--tz-textTertiary)', fontFamily: 'monospace',
   },
   invoiceRefNum: {
     fontSize: '13px', fontWeight: 700, color: '#4D9EFF', fontFamily: 'monospace',
@@ -339,7 +339,7 @@ const s: Record<string, any> = {
   },
   workLabel: {
     fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase',
-    color: '#48536A', fontFamily: 'monospace', marginBottom: '6px',
+    color: 'var(--tz-textTertiary)', fontFamily: 'monospace', marginBottom: '6px',
   },
   workText: { fontSize: '12px', color: '#DDE3EE', lineHeight: 1.6 },
 
@@ -391,7 +391,7 @@ const s: Record<string, any> = {
 
   securityBadge: {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
-    fontSize: '11px', color: '#48536A', marginBottom: '20px',
+    fontSize: '11px', color: 'var(--tz-textTertiary)', marginBottom: '20px',
   },
 
   shopContact: {
@@ -399,12 +399,12 @@ const s: Record<string, any> = {
     textAlign: 'center',
   },
   shopContactName:   { fontSize: '12px', fontWeight: 600, color: '#DDE3EE' },
-  shopContactDetail: { fontSize: '11px', color: '#48536A', marginTop: '3px' },
+  shopContactDetail: { fontSize: '11px', color: 'var(--tz-textTertiary)', marginTop: '3px' },
   shopPhone:         { color: '#4D9EFF', textDecoration: 'none' },
-  techName:          { fontSize: '10px', color: '#48536A', marginTop: '3px' },
+  techName:          { fontSize: '10px', color: 'var(--tz-textTertiary)', marginTop: '3px' },
 
   poweredBy: {
-    marginTop: '20px', fontSize: '10px', color: '#48536A',
+    marginTop: '20px', fontSize: '10px', color: 'var(--tz-textTertiary)',
     fontFamily: 'monospace', letterSpacing: '0.06em',
     position: 'relative', zIndex: 1,
   },

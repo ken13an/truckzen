@@ -7,7 +7,7 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
-const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
+const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = 'var(--tz-textSecondary)'
 const priColor: Record<string, string> = { low: MUTED, medium: BLUE, high: AMBER, critical: RED }
 const stColor: Record<string, string> = { open: BLUE, in_progress: AMBER, resolved: GREEN, closed: MUTED }
 const STATUS_FLOW = ['open', 'in_progress', 'resolved', 'closed']

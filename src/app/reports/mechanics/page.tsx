@@ -93,7 +93,7 @@ export default function MechanicReportsPage() {
           ))}
           <button onClick={exportCSV} style={{
             padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-            border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgLight)', color: 'var(--tz-textSecondary)',
+            border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-textSecondary)',
           }}>Export CSV</button>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function MechanicReportsPage() {
           { label: 'Mechanics', value: String(summary.mechanic_count || 0), color: '#D97706' },
           { label: 'Avg Productivity', value: `${summary.avg_productivity || 0}%`, color: '#8B5CF6' },
         ].map(c => (
-          <div key={c.label} style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '16px 20px' }}>
+          <div key={c.label} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '16px 20px' }}>
             <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{c.label}</div>
             <div style={{ fontSize: 24, fontWeight: 800, color: c.color, fontFamily: MONO }}>{c.value}</div>
           </div>
@@ -122,7 +122,7 @@ export default function MechanicReportsPage() {
       </div>
 
       {/* Mechanic table */}
-      <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
@@ -160,7 +160,7 @@ export default function MechanicReportsPage() {
 
       {/* Detail panel for selected mechanic */}
       {selectedMech?.jobs && (
-        <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginTop: 16 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginTop: 16 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>{selectedMech.full_name} — Job Detail</div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>

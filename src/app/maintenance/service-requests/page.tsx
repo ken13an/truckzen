@@ -10,7 +10,7 @@ import Pagination from '@/components/Pagination'
 import { useTheme } from '@/hooks/useTheme'
 
 const URGENCY: Record<string, { label: string; color: string; bg: string }> = {
-  low:      { label: 'LOW',      color: '#48536A', bg: 'rgba(72,83,106,.1)' },
+  low:      { label: 'LOW',      color: 'var(--tz-textTertiary)', bg: 'rgba(72,83,106,.1)' },
   normal:   { label: 'NORMAL',   color: '#7C8BA0', bg: 'rgba(124,139,160,.1)' },
   high:     { label: 'HIGH',     color: '#D4882A', bg: 'rgba(212,136,42,.12)' },
   critical: { label: 'CRITICAL', color: '#D94F4F', bg: 'rgba(217,79,79,.12)' },
@@ -20,7 +20,7 @@ const STATUS: Record<string, { label: string; color: string; bg: string }> = {
   pending:     { label: 'PENDING',     color: '#F59E0B', bg: 'rgba(245,158,11,.12)' },
   approved:    { label: 'APPROVED',    color: '#22C55E', bg: 'rgba(34,197,94,.12)' },
   in_progress: { label: 'IN PROGRESS', color: '#4D9EFF', bg: 'rgba(29,111,232,.12)' },
-  completed:   { label: 'COMPLETED',   color: '#48536A', bg: 'rgba(72,83,106,.1)' },
+  completed:   { label: 'COMPLETED',   color: 'var(--tz-textTertiary)', bg: 'rgba(72,83,106,.1)' },
   rejected:    { label: 'REJECTED',    color: '#D94F4F', bg: 'rgba(217,79,79,.12)' },
 }
 

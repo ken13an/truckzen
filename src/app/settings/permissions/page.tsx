@@ -9,8 +9,8 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans', sans-serif"
 const MONO = "'IBM Plex Mono', monospace"
-const BLUE = '#1B6EE6'
-const PAGE_BG = '#F4F5F7'
+const BLUE = 'var(--tz-accent)'
+const PAGE_BG = 'var(--tz-bg)'
 const MANAGER_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'maintenance_manager', 'office_admin']
 
 export default function PermissionsPage() {
@@ -158,7 +158,7 @@ export default function PermissionsPage() {
       <div style={{ display: 'flex', gap: 24 }}>
         {/* Employee List */}
         <div style={{ width: 256, flexShrink: 0 }}>
-          <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', background: 'var(--tz-bgHover)', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>
                 {activeDeptDef?.label} Team
@@ -205,7 +205,7 @@ export default function PermissionsPage() {
               <span style={{ color: 'var(--tz-textSecondary)', fontSize: 13 }}>Select an employee to manage their permissions</span>
             </div>
           ) : (
-            <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
               {/* Employee Header */}
               <div style={{
                 padding: '16px 24px', background: 'var(--tz-bgHover)', borderBottom: `1px solid ${'var(--tz-border)'}`,

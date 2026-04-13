@@ -1,6 +1,6 @@
 'use client'
 import { MaintListPage } from '@/lib/maint-page'
-const GREEN = '#1DB870', AMBER = '#D4882A', MUTED = '#7C8BA0'
+const GREEN = '#1DB870', AMBER = '#D4882A', MUTED = 'var(--tz-textSecondary)'
 const stColor: Record<string, string> = { active: GREEN, in_repair: AMBER, retired: MUTED }
 export default MaintListPage({
   title: 'Equipment', table: 'maint_equipment', label: 'equipment',

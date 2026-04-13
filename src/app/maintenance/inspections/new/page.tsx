@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
-const GREEN = '#1DB870', RED = '#D94F4F', AMBER = '#D4882A', MUTED = '#7C8BA0'
+const GREEN = '#1DB870', RED = '#D94F4F', AMBER = '#D4882A', MUTED = 'var(--tz-textSecondary)'
 
 interface ChecklistItem { name: string; required: boolean; type: string }
 interface Category { category: string; items: ChecklistItem[] }

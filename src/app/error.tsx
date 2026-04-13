@@ -16,7 +16,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
         <div style={{ fontSize:13, color:'#7C8BA0', lineHeight:1.6, marginBottom:24 }}>
           An unexpected error occurred. Please contact your shop manager or IT admin to report this issue.
           {error?.message && <div style={{ fontFamily:'monospace', fontSize:10, color:'#D94F4F', marginTop:8, padding:'8px 12px', background:'rgba(217,79,79,.08)', borderRadius:6, textAlign:'left', wordBreak:'break-word' }}>{error.message}</div>}
-          {error?.digest && <div style={{ fontFamily:'monospace', fontSize:10, color:'#48536A', marginTop:4 }}>Error ID: {error.digest}</div>}
+          {error?.digest && <div style={{ fontFamily:'monospace', fontSize:10, color:'var(--tz-textTertiary)', marginTop:4 }}>Error ID: {error.digest}</div>}
         </div>
         <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
           <button onClick={reset} style={{ padding:'10px 20px', background:'linear-gradient(135deg,#1D6FE8,#1248B0)', border:'none', borderRadius:8, color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>

@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
-const BLUE = '#1B6EE6', MUTED = '#7C8BA0'
+const BLUE = '#1B6EE6', MUTED = 'var(--tz-textSecondary)'
 const typeColor: Record<string, string> = { invoice: '#F97316', photo: BLUE, repair_order: '#8B5CF6', other: MUTED }
 
 export default function DocumentsPage() {

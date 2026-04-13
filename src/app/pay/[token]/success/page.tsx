@@ -178,7 +178,7 @@ const s: Record<string, any> = {
   },
   sumKey: { fontSize: '12px', color: '#7C8BA0' },
   sumVal: { fontSize: '13px', fontWeight: 600, color: '#DDE3EE', fontFamily: 'monospace' },
-  receipt: { fontSize: '11px', color: '#48536A', margin: '0 0 20px' },
+  receipt: { fontSize: '11px', color: 'var(--tz-textTertiary)', margin: '0 0 20px' },
   callBtn: {
     display: 'block', padding: '12px',
     background: 'rgba(255,255,255,0.04)',
@@ -187,7 +187,7 @@ const s: Record<string, any> = {
     textDecoration: 'none', fontSize: '13px',
   },
   poweredBy: {
-    marginTop: '20px', fontSize: '10px', color: '#48536A',
+    marginTop: '20px', fontSize: '10px', color: 'var(--tz-textTertiary)',
     fontFamily: 'monospace', letterSpacing: '0.06em', zIndex: 1,
   },
 }

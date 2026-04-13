@@ -7,7 +7,7 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
-const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
+const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = 'var(--tz-textSecondary)'
 const typeColor: Record<string, string> = { comment: BLUE, status_change: AMBER, repair_created: GREEN, inspection_submitted: GREEN, fault_detected: RED, issue_reported: AMBER, reminder_triggered: RED }
 
 export default function ActivityFeedPage() {

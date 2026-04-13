@@ -5,7 +5,7 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const MONO = "'IBM Plex Mono', monospace"
-const BLUE = '#1D6FE8', GREEN = '#16A34A', AMBER = '#D97706', RED = '#DC2626', DIM = '#7C8BA0'
+const BLUE = '#1D6FE8', GREEN = '#16A34A', AMBER = '#D97706', RED = '#DC2626', DIM = 'var(--tz-textSecondary)'
 
 type View = 'daily' | 'weekly' | 'monthly'
 

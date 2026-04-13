@@ -12,7 +12,7 @@ import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import { useTheme } from '@/hooks/useTheme'
 
 const URGENCY: Record<string, { label: string; color: string; bg: string }> = {
-  low:      { label: 'LOW',      color: '#48536A', bg: 'rgba(72,83,106,.1)' },
+  low:      { label: 'LOW',      color: 'var(--tz-textTertiary)', bg: 'rgba(72,83,106,.1)' },
   normal:   { label: 'NORMAL',   color: '#7C8BA0', bg: 'rgba(124,139,160,.1)' },
   high:     { label: 'HIGH',     color: '#D4882A', bg: 'rgba(212,136,42,.12)' },
   critical: { label: 'CRITICAL', color: '#D94F4F', bg: 'rgba(217,79,79,.12)' },

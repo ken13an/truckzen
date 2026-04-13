@@ -110,8 +110,8 @@ export default function QuickAssignPage() {
           <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{filtered.length} job{filtered.length !== 1 ? 's' : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <a href="/floor-manager/dashboard" style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgLight)', color: 'var(--tz-textSecondary)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Kanban</a>
-          <button onClick={() => loadData()} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgLight)', color: 'var(--tz-textSecondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
+          <a href="/floor-manager/dashboard" style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-textSecondary)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Kanban</a>
+          <button onClick={() => loadData()} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-textSecondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
         </div>
       </div>
 
@@ -138,7 +138,7 @@ export default function QuickAssignPage() {
       {filtered.length === 0 ? (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--tz-textSecondary)', fontSize: 13 }}>No jobs match this filter.</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, overflow: 'hidden' }}>
           <thead>
             <tr style={{ background: 'var(--tz-bgHover)', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
               <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>WO</th>

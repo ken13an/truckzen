@@ -1,6 +1,6 @@
 'use client'
 import { MaintListPage } from '@/lib/maint-page'
-const GREEN = '#1DB870', MUTED = '#7C8BA0'
+const GREEN = '#1DB870', MUTED = 'var(--tz-textSecondary)'
 export default MaintListPage({
   title: 'Recalls', table: 'maint_recalls', label: 'recalls',
   newHref: '/maintenance/recalls/new',

@@ -1,6 +1,6 @@
 'use client'
 import { MaintListPage } from '@/lib/maint-page'
-const GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
+const GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = 'var(--tz-textSecondary)'
 function expiryColor(d: string | null) { if (!d) return RED; const days = Math.floor((new Date(d).getTime() - Date.now()) / 86400000); return days < 0 ? RED : days < 60 ? AMBER : GREEN }
 export default MaintListPage({
   title: 'Drivers', table: 'maint_drivers', label: 'drivers',

@@ -1,6 +1,6 @@
 'use client'
 import { MaintListPage } from '@/lib/maint-page'
-const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', MUTED = '#7C8BA0'
+const BLUE = '#1B6EE6', GREEN = '#1DB870', AMBER = '#D4882A', MUTED = 'var(--tz-textSecondary)'
 const typeColor: Record<string, string> = { yard: BLUE, shop: GREEN, customer: AMBER, fuel_stop: '#8B5CF6', weigh_station: MUTED, other: MUTED }
 export default MaintListPage({
   title: 'Places', table: 'maint_places', label: 'places',

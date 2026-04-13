@@ -10,7 +10,7 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
-const BLUE = '#4D9EFF', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = '#7C8BA0'
+const BLUE = '#4D9EFF', GREEN = '#1DB870', AMBER = '#D4882A', RED = '#D94F4F', MUTED = 'var(--tz-textSecondary)'
 
 const FEATURE_LABELS: Record<string, string> = {
   wo_creation: 'WO Creation', parts_suggest: 'Parts Suggest', service_writer: 'Service Writer', ai_review: 'AI Review', other: 'Other',

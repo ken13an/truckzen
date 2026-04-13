@@ -15,7 +15,7 @@ const CATEGORIES: Record<string, { label: string; color: string }> = {
   domain: { label: 'Domain', color: '#7C8BA0' },
   mobile: { label: 'Mobile', color: '#D94F4F' },
   api: { label: 'API', color: '#1DB870' },
-  other: { label: 'Other', color: '#48536A' },
+  other: { label: 'Other', color: 'var(--tz-textTertiary)' },
 }
 
 const CAT_BADGE: Record<string, { label: string; color: string }> = {

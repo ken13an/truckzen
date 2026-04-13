@@ -67,7 +67,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
     const totalDuration = formatDuration(wo.submitted_at, wo.invoiced_at)
 
     return (
-      <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: '14px 20px', marginBottom: 12 }}>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: '14px 20px', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 0 }}>
           {steps.map((s, i) => (
             <div key={s.label} style={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -117,7 +117,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
   ]
 
   return (
-    <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: '12px 20px', marginBottom: 12 }}>
+    <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: '12px 20px', marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0 }}>
         {oldSteps.map((s, i) => (
           <div key={s.label} style={{ display: 'flex', alignItems: 'center' }}>
