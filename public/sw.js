@@ -1,8 +1,11 @@
-// TruckZen Service Worker — offline support + caching
-const CACHE_NAME = 'truckzen-v3'
+// TruckZen Service Worker — offline support ONLY.
+// We deliberately do NOT cache JS/CSS/navigation so deploys take effect
+// immediately. Browser HTTP cache + Next.js' hashed asset filenames handle
+// revalidation correctly on their own; our previous stale-while-revalidate
+// strategy was serving mixed old+new chunks across deploys.
+const CACHE_NAME = 'truckzen-v4'
 const OFFLINE_URL = '/offline'
 
-// Static assets to precache on install
 const PRECACHE_URLS = [
   '/offline',
   '/manifest.json',
@@ -11,97 +14,48 @@ const PRECACHE_URLS = [
   '/apple-touch-icon.png',
 ]
 
-// Allow the client to force-activate a waiting worker after deploy
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting()
 })
 
-// Install: precache critical assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_URLS)
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
   )
   self.skipWaiting()
 })
 
-// Activate: clean old caches
+// Activate: delete ALL non-current caches, then claim clients immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.map((k) => (k === CACHE_NAME ? null : caches.delete(k)))))
+      .then(() => self.clients.claim())
   )
-  self.clients.claim()
 })
 
-// Fetch: network-first for API/navigation, cache-first for static assets
+// Fetch: only hijack requests we have a specific reason to serve from cache.
 self.addEventListener('fetch', (event) => {
   const { request } = event
-  const url = new URL(request.url)
-
-  // Skip non-GET requests
   if (request.method !== 'GET') return
-
-  // Skip chrome-extension, etc.
+  const url = new URL(request.url)
   if (!url.protocol.startsWith('http')) return
 
-  // API requests: network only (don't cache sensitive data)
-  if (url.pathname.startsWith('/api/')) return
-
-  // Navigation requests: network first, fall back to offline page
+  // Navigation requests: network-only, fall back to offline page if offline.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Cache successful navigation responses
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
-          return response
-        })
-        .catch(() => caches.match(OFFLINE_URL))
+      fetch(request).catch(() => caches.match(OFFLINE_URL) || Response.error())
     )
     return
   }
 
-  // Static assets (JS, CSS, images, fonts): stale-while-revalidate
-  if (
-    url.pathname.startsWith('/_next/static/') ||
-    url.pathname.startsWith('/icon-') ||
-    url.pathname.endsWith('.png') ||
-    url.pathname.endsWith('.woff2') ||
-    url.pathname.endsWith('.css') ||
-    url.pathname.endsWith('.js')
-  ) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const fetched = fetch(request).then((response) => {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
-          return response
-        })
-        return cached || fetched
-      })
-    )
+  // Precached static icons/manifest: serve from cache.
+  if (PRECACHE_URLS.some((u) => url.pathname === u)) {
+    event.respondWith(caches.match(request).then((r) => r || fetch(request)))
     return
   }
 
-  // Google Fonts: cache first
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        return cached || fetch(request).then((response) => {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
-          return response
-        })
-      })
-    )
-    return
-  }
+  // Everything else (JS, CSS, fonts, images, API): fall through to default.
+  // Letting the browser's normal HTTP cache handle it means Next.js' hashed
+  // chunk filenames always produce a fresh load after deploy.
 })
