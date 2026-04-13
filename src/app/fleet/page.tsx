@@ -86,12 +86,13 @@ export default function FleetPage() {
   }
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24 }}>
+    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: '32px clamp(20px, 4vw, 40px)' }}>
+      <div style={{ maxWidth: 1440, margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Trucks</div>
-          <div style={{ fontSize: 12, color: t.textSecondary }}>{total.toLocaleString()} vehicles</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 32, letterSpacing: '.02em', color: t.text, lineHeight: 1 }}>Trucks</div>
+          <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 6 }}>{total.toLocaleString()} vehicles in the fleet</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search unit, make, VIN, owner, driver..." style={{ padding: '7px 12px', background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, color: t.text, fontSize: 11, fontFamily: 'inherit', outline: 'none', width: 260 }} />
@@ -171,6 +172,7 @@ export default function FleetPage() {
         </div>
       </div>
       <Pagination page={page} totalPages={totalPages} total={total} label="vehicles" onPageChange={setPage} />
+      </div>
     </div>
   )
 }

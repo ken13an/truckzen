@@ -156,8 +156,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         )}
-        {/* Sticky top bar — uses sidebarBg so it anchors to the same surface as the sidebar in both modes */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 15, background: t.sidebarBg, borderBottom: `1px solid ${t.sidebarBorder}`, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))' }}>
+        {/* Sticky top bar — uses page bg so it blends with the body; seam provided by a subtle bottom border only */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 15, background: t.bg, borderBottom: `1px solid ${t.border}`, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))' }}>
           {/* Left: mobile menu or spacer */}
           <div>
             {isMobile && (
