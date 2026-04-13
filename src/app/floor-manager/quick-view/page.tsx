@@ -265,7 +265,7 @@ export default function QuickViewPage() {
 
                   {/* Searchable assign panel */}
                   {panelOpen && (
-                    <div style={{ marginTop: 8, background: '#1E1E2E', border: `1px solid ${CARD_BORDER}`, borderRadius: 8, padding: 8 }}>
+                    <div style={{ marginTop: 8, background: 'var(--tz-bgElevated)', border: `1px solid ${CARD_BORDER}`, borderRadius: 8, padding: 8 }}>
                       <input
                         value={mechSearch} onChange={e => setMechSearch(e.target.value)}
                         placeholder="Search mechanic..."
@@ -298,7 +298,7 @@ export default function QuickViewPage() {
         {timeModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 'max(60px, env(safe-area-inset-top, 60px))', zIndex: 1000 }}
             onClick={() => { setTimeModal(null); setTimeValue('') }}>
-            <div style={{ background: '#1E1E2E', border: `1px solid ${CARD_BORDER}`, borderRadius: 12, padding: 20, width: 320, maxWidth: '90vw' }}
+            <div style={{ background: 'var(--tz-bgElevated)', border: `1px solid ${CARD_BORDER}`, borderRadius: 12, padding: 20, width: 320, maxWidth: '90vw' }}
               onClick={e => e.stopPropagation()}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Book Hours</div>
               <div style={{ fontSize: 11, color: DIM, marginBottom: 12 }}>{timeModal.wo_number} — {timeModal.description?.slice(0, 40)}</div>
