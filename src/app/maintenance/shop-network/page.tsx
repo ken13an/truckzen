@@ -7,7 +7,7 @@ export default MaintListPage({
   searchCols: 'name,city,specialties',
   searchPlaceholder: 'Search by name, city...',
   columns: [
-    { key: 'name', label: 'Shop Name', render: r => <span style={{ fontWeight: 600, color: '#F0F4FF' }}>{r.name}</span> },
+    { key: 'name', label: 'Shop Name', render: r => <span style={{ fontWeight: 600 }}>{r.name}</span> },
     { key: 'city', label: 'City/State', render: r => [r.city, r.state].filter(Boolean).join(', ') || '—' },
     { key: 'phone', label: 'Phone' },
     { key: 'contact_person', label: 'Contact' },

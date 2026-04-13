@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { ADMIN_ROLES } from '@/lib/roles'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
@@ -21,6 +22,7 @@ const EXPORT_TABLES = [
 ]
 
 export default function ExportPage() {
+  const { tokens: th } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [counts, setCounts] = useState<Record<string, number>>({})
@@ -82,37 +84,37 @@ export default function ExportPage() {
   if (!user) return null
 
   return (
-    <div style={{ fontFamily: FONT, color: '#1A1A1A', background: '#fff', minHeight: '100vh', maxWidth: 700, margin: '0 auto', padding: '24px' }}>
-      <a href="/settings" style={{ fontSize: 13, color: '#6B7280', textDecoration: 'none' }}>&larr; Back to Settings</a>
+    <div style={{ fontFamily: FONT, color: th.text, background: th.bgLight, minHeight: '100vh', maxWidth: 700, margin: '0 auto', padding: '24px' }}>
+      <a href="/settings" style={{ fontSize: 13, color: th.textSecondary, textDecoration: 'none' }}>&larr; Back to Settings</a>
       <h1 style={{ fontSize: 22, fontWeight: 800, margin: '12px 0 4px' }}>Data Export</h1>
-      <p style={{ fontSize: 14, color: '#6B7280', margin: '0 0 24px' }}>Download all your shop's data in {format.toUpperCase()} format. Your data belongs to you — export anytime.</p>
+      <p style={{ fontSize: 14, color: th.textSecondary, margin: '0 0 24px' }}>Download all your shop's data in {format.toUpperCase()} format. Your data belongs to you — export anytime.</p>
 
       {/* Format selector */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <span style={{ fontSize: 13, color: '#6B7280', alignSelf: 'center' }}>Format:</span>
+        <span style={{ fontSize: 13, color: th.textSecondary, alignSelf: 'center' }}>Format:</span>
         {(['csv', 'json'] as const).map(f => (
           <button key={f} onClick={() => setFormat(f)} style={{
             padding: '6px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-            background: format === f ? '#1D6FE8' : '#F3F4F6', color: format === f ? '#fff' : '#6B7280', border: 'none',
+            background: format === f ? th.accent : th.bgHover, color: format === f ? th.bgLight : th.textSecondary, border: 'none',
           }}>{f.toUpperCase()}</button>
         ))}
       </div>
 
       {/* Table selection */}
-      <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+      <div style={{ background: th.bgHover, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <span style={{ fontSize: 14, fontWeight: 700 }}>Select what to export:</span>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => toggleAll(true)} style={{ fontSize: 12, color: '#1D6FE8', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontWeight: 600 }}>Select All</button>
-            <button onClick={() => toggleAll(false)} style={{ fontSize: 12, color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT }}>Deselect All</button>
+            <button onClick={() => toggleAll(true)} style={{ fontSize: 12, color: th.accent, background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontWeight: 600 }}>Select All</button>
+            <button onClick={() => toggleAll(false)} style={{ fontSize: 12, color: th.textSecondary, background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT }}>Deselect All</button>
           </div>
         </div>
 
         {EXPORT_TABLES.map(t => (
-          <label key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #F3F4F6', cursor: 'pointer' }}>
+          <label key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${th.bgHover}`, cursor: 'pointer' }}>
             <input type="checkbox" checked={selected.has(t.key)} onChange={() => toggle(t.key)} />
             <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>{t.label}</span>
-            <span style={{ fontSize: 12, color: '#9CA3AF', fontFamily: 'monospace' }}>
+            <span style={{ fontSize: 12, color: th.textSecondary, fontFamily: 'monospace' }}>
               {counts[t.key] !== undefined ? counts[t.key].toLocaleString() + ' records' : '...'}
             </span>
           </label>
@@ -122,7 +124,7 @@ export default function ExportPage() {
       {/* Export button */}
       <button onClick={runExport} disabled={exporting || selected.size === 0} style={{
         width: '100%', padding: '14px 0', borderRadius: 10, border: 'none', fontSize: 15, fontWeight: 700,
-        background: exporting || selected.size === 0 ? '#D1D5DB' : '#1D6FE8', color: '#fff',
+        background: exporting || selected.size === 0 ? th.border : th.accent, color: th.bgLight,
         cursor: exporting || selected.size === 0 ? 'not-allowed' : 'pointer', fontFamily: FONT,
       }}>
         {exporting ? 'Exporting... This may take a minute.' : `Export ${selected.size} Table${selected.size !== 1 ? 's' : ''} as ${format.toUpperCase()} ZIP`}
@@ -134,7 +136,7 @@ export default function ExportPage() {
         </div>
       )}
 
-      <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 16 }}>
+      <p style={{ fontSize: 11, color: th.textSecondary, marginTop: 16 }}>
         Note: Large exports may take a few minutes. Team member data excludes passwords and auth tokens. Export activity is logged.
       </p>
     </div>

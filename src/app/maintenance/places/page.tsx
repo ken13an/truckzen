@@ -8,7 +8,7 @@ export default MaintListPage({
   searchCols: 'name,city,place_type',
   searchPlaceholder: 'Search places...',
   columns: [
-    { key: 'name', label: 'Name', render: r => <span style={{ fontWeight: 600, color: '#F0F4FF' }}>{r.name}</span> },
+    { key: 'name', label: 'Name', render: r => <span style={{ fontWeight: 600 }}>{r.name}</span> },
     { key: 'place_type', label: 'Type', render: r => <span style={{ fontSize: 9, fontWeight: 600, color: typeColor[r.place_type] || MUTED, background: `${typeColor[r.place_type] || MUTED}18`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>{r.place_type?.replace(/_/g, ' ')}</span> },
     { key: 'city', label: 'City/State', render: r => [r.city, r.state].filter(Boolean).join(', ') || '—' },
     { key: 'phone', label: 'Phone' },

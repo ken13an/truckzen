@@ -5,6 +5,7 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { getPermissions } from '@/lib/getPermissions'
 import { getMechanics } from '@/lib/services/users'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
+import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
@@ -18,6 +19,7 @@ function isReadyForAssignment(j: any) {
 }
 
 export default function QuickAssignPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -89,7 +91,7 @@ export default function QuickAssignPage() {
     in_progress: jobs.filter(j => j.status === 'in_progress').length,
   }
 
-  if (loading) return <div style={{ fontFamily: FONT, padding: 40, textAlign: 'center', color: '#6B7280' }}>Loading...</div>
+  if (loading) return <div style={{ fontFamily: FONT, padding: 40, textAlign: 'center', color: t.textSecondary }}>Loading...</div>
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'unassigned', label: 'Unassigned' },
@@ -104,12 +106,12 @@ export default function QuickAssignPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#1E293B' }}>Quick Assign</div>
-          <div style={{ fontSize: 12, color: '#6B7280' }}>{filtered.length} job{filtered.length !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: t.text }}>Quick Assign</div>
+          <div style={{ fontSize: 12, color: t.textSecondary }}>{filtered.length} job{filtered.length !== 1 ? 's' : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <a href="/floor-manager/dashboard" style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Kanban</a>
-          <button onClick={() => loadData()} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #D1D5DB', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
+          <a href="/floor-manager/dashboard" style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgLight, color: t.textSecondary, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Kanban</a>
+          <button onClick={() => loadData()} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgLight, color: t.textSecondary, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
         </div>
       </div>
 
@@ -118,9 +120,9 @@ export default function QuickAssignPage() {
         {FILTERS.map(f => (
           <button key={f.key} onClick={() => setFilter(f.key)} style={{
             padding: '5px 12px', borderRadius: 6, border: '1px solid', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            background: filter === f.key ? '#1E293B' : '#fff',
-            color: filter === f.key ? '#fff' : '#374151',
-            borderColor: filter === f.key ? '#1E293B' : '#D1D5DB',
+            background: filter === f.key ? t.text : t.bgLight,
+            color: filter === f.key ? t.bgLight : t.textSecondary,
+            borderColor: filter === f.key ? t.text : t.border,
           }}>
             {f.label} ({counts[f.key]})
           </button>
@@ -128,25 +130,25 @@ export default function QuickAssignPage() {
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search WO, unit, customer, job..."
-          style={{ marginLeft: 'auto', padding: '5px 12px', borderRadius: 6, border: '1px solid #D1D5DB', fontSize: 12, width: 220, outline: 'none' }}
+          style={{ marginLeft: 'auto', padding: '5px 12px', borderRadius: 6, border: `1px solid ${t.border}`, fontSize: 12, width: 220, outline: 'none' }}
         />
       </div>
 
       {/* Job List */}
       {filtered.length === 0 ? (
-        <div style={{ padding: 40, textAlign: 'center', color: '#9CA3AF', fontSize: 13 }}>No jobs match this filter.</div>
+        <div style={{ padding: 40, textAlign: 'center', color: t.textSecondary, fontSize: 13 }}>No jobs match this filter.</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, background: t.bgLight, border: `1px solid ${t.border}`, borderRadius: 10, overflow: 'hidden' }}>
           <thead>
-            <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>WO</th>
-              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>Unit</th>
-              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>Customer</th>
-              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em' }}>Job</th>
-              <th style={{ textAlign: 'center', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', width: 50 }}>Hrs</th>
-              <th style={{ textAlign: 'center', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', width: 90 }}>Parts</th>
-              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', width: 160 }}>Mechanic</th>
-              <th style={{ textAlign: 'center', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '.04em', width: 50 }}></th>
+            <tr style={{ background: t.bgHover, borderBottom: `1px solid ${t.border}` }}>
+              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>WO</th>
+              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Unit</th>
+              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Customer</th>
+              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Job</th>
+              <th style={{ textAlign: 'center', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', width: 50 }}>Hrs</th>
+              <th style={{ textAlign: 'center', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', width: 90 }}>Parts</th>
+              <th style={{ textAlign: 'left', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', width: 160 }}>Mechanic</th>
+              <th style={{ textAlign: 'center', padding: '8px 10px', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', width: 50 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -154,16 +156,16 @@ export default function QuickAssignPage() {
               // Show raw truthful parts_status — no invented labels
               const ps = j.parts_status
               const psDisplay = ps ? ps.replace(/_/g, ' ') : null
-              const psColor = ps === 'rough' || ps === 'ordered' ? '#D97706' : ps === 'received' || ps === 'ready_for_job' ? '#16A34A' : ps === 'installed' ? '#6B7280' : '#9CA3AF'
+              const psColor = ps === 'rough' || ps === 'ordered' ? '#D97706' : ps === 'received' || ps === 'ready_for_job' ? '#16A34A' : ps === 'installed' ? t.textSecondary : t.textSecondary
               return (
-                <tr key={j.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                  <td style={{ padding: '8px 10px', fontWeight: 600, color: '#1E293B', whiteSpace: 'nowrap' }}>{j.wo_number}</td>
-                  <td style={{ padding: '8px 10px', color: '#374151', whiteSpace: 'nowrap' }}>#{j.unit_number || '—'}</td>
-                  <td style={{ padding: '8px 10px', color: '#374151', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.customer || '—'}</td>
-                  <td style={{ padding: '8px 10px', color: '#1E293B', fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.description?.slice(0, 50) || '—'}</td>
-                  <td style={{ padding: '8px 10px', textAlign: 'center', color: '#6B7280' }}>{j.estimated_hours || '—'}</td>
+                <tr key={j.id} style={{ borderBottom: `1px solid ${t.bgHover}` }}>
+                  <td style={{ padding: '8px 10px', fontWeight: 600, color: t.text, whiteSpace: 'nowrap' }}>{j.wo_number}</td>
+                  <td style={{ padding: '8px 10px', color: t.textSecondary, whiteSpace: 'nowrap' }}>#{j.unit_number || '—'}</td>
+                  <td style={{ padding: '8px 10px', color: t.textSecondary, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.customer || '—'}</td>
+                  <td style={{ padding: '8px 10px', color: t.text, fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.description?.slice(0, 50) || '—'}</td>
+                  <td style={{ padding: '8px 10px', textAlign: 'center', color: t.textSecondary }}>{j.estimated_hours || '—'}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                    {psDisplay ? <span style={{ fontSize: 10, fontWeight: 600, color: psColor, textTransform: 'capitalize' }}>{psDisplay}</span> : <span style={{ color: '#D1D5DB' }}>—</span>}
+                    {psDisplay ? <span style={{ fontSize: 10, fontWeight: 600, color: psColor, textTransform: 'capitalize' }}>{psDisplay}</span> : <span style={{ color: t.border }}>—</span>}
                   </td>
                   <td style={{ padding: '6px 10px' }}>
                     <select
@@ -173,7 +175,7 @@ export default function QuickAssignPage() {
                         const mech = mechanics.find((m: any) => m.id === e.target.value)
                         assignMechanic(j.id, j.wo_id, e.target.value, mech?.full_name || '')
                       }}
-                      style={{ width: '100%', padding: '4px 6px', borderRadius: 6, border: '1px solid #D1D5DB', fontSize: 12, background: j.mechanic_name ? '#F0FDF4' : '#FEF2F2', cursor: 'pointer' }}
+                      style={{ width: '100%', padding: '4px 6px', borderRadius: 6, border: `1px solid ${t.border}`, fontSize: 12, background: j.mechanic_name ? '#F0FDF4' : '#FEF2F2', cursor: 'pointer' }}
                     >
                       <option value="">— Unassigned —</option>
                       {mechanics.map((m: any) => (
@@ -182,7 +184,7 @@ export default function QuickAssignPage() {
                     </select>
                   </td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                    <a href={getWorkorderRoute(j.wo_id, undefined, 'floor-manager')} style={{ color: '#1D6FE8', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>Open</a>
+                    <a href={getWorkorderRoute(j.wo_id, undefined, 'floor-manager')} style={{ color: t.accent, fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>Open</a>
                   </td>
                 </tr>
               )

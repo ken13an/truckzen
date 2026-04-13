@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { COLORS, FONT } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   pending: { bg: COLORS.amberBg, color: COLORS.amber },
@@ -12,6 +13,7 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
 }
 
 export default function DataRequestsPage() {
+  const { tokens: t } = useTheme()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [requests, setRequests] = useState<any[]>([])
@@ -146,7 +148,7 @@ export default function DataRequestsPage() {
                           <button
                             onClick={() => processRequest(r.id)}
                             disabled={processing === r.id}
-                            style={btnStyle(COLORS.green, '#fff')}
+                            style={btnStyle(COLORS.green, t.bgLight)}
                           >
                             {processing === r.id ? '...' : 'Process'}
                           </button>
@@ -187,7 +189,7 @@ export default function DataRequestsPage() {
               <button onClick={() => { setDenyModal(null); setDenyReason('') }} style={{ ...btnStyle('transparent', COLORS.textSecondary), border: `1px solid ${COLORS.border}` }}>
                 Cancel
               </button>
-              <button onClick={denyRequest} disabled={!!processing} style={btnStyle(COLORS.red, '#fff')}>
+              <button onClick={denyRequest} disabled={!!processing} style={btnStyle(COLORS.red, t.bgLight)}>
                 {processing ? 'Denying...' : 'Deny Request'}
               </button>
             </div>

@@ -15,7 +15,9 @@ import DateRangePicker from '@/components/DateRangePicker'
 export default function ReportsPage() {
   const { tokens: t } = useTheme()
 
-  const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontSize: 10, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, borderBottom: '1px solid #E5E7EB' }
+  const tdStyle: React.CSSProperties = { padding: '10px 12px', borderBottom: `1px solid ${t.bgHover}`, fontSize: 13 }
+
+  const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontSize: 10, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, borderBottom: `1px solid ${t.border}` }
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [tab, setTab] = useState(0)
@@ -130,7 +132,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.border}`, marginBottom: 20 }}>
         {TABS.map((tt, i) => (
           <button key={tt} onClick={() => setTab(i)} style={{
             padding: '10px 20px', fontSize: 13, fontWeight: tab === i ? 700 : 500, cursor: 'pointer', fontFamily: FONT,
@@ -396,4 +398,3 @@ export default function ReportsPage() {
   )
 }
 
-const tdStyle: React.CSSProperties = { padding: '10px 12px', borderBottom: '1px solid #F3F4F6', fontSize: 13 }

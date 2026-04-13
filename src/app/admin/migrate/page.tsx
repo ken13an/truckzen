@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import * as XLSX from 'xlsx'
 import { COLORS, FONT, FONT_DISPLAY, FONT_MONO } from '@/lib/config/colors'
+import { useTheme } from '@/hooks/useTheme'
 
 // ── Column aliases ─────────────────────────────────────────
 const BASE_ALIASES: Record<string, string[]> = {
@@ -85,16 +86,18 @@ function fuzzyMatch(header: string, aliases: Record<string, string[]>): { field:
 
 // ── Styles ─────────────────────────────────────────────────
 const card: React.CSSProperties = { background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 14 }
-const btnPrimary: React.CSSProperties = { padding: '12px 24px', background: `linear-gradient(135deg, ${COLORS.blue}, #1248B0)`, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: FONT }
 const btnSecondary: React.CSSProperties = { padding: '10px 20px', background: 'transparent', border: `1px solid ${COLORS.border}`, borderRadius: 9, color: COLORS.textSecondary, fontSize: 12, cursor: 'pointer', fontFamily: FONT }
-const th: React.CSSProperties = { fontFamily: FONT_MONO, fontSize: 9, color: COLORS.textDim, textTransform: 'uppercase', letterSpacing: '.08em', padding: '8px 10px', textAlign: 'left', background: '#0B0D11', whiteSpace: 'nowrap' }
-const td: React.CSSProperties = { padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,.025)', fontSize: 11, color: '#A0AABF' }
 
 const COMING_SOON = ['Shop-Ware', 'TMT', 'Shopmonkey', 'Fleetio']
 const DATA_TYPE_LABELS: Record<DataType, string> = { customers: 'Customers', vehicles: 'Vehicles', service_orders: 'Service Orders', invoices: 'Invoices', parts: 'Parts' }
 const STEP_LABELS = ['Source', 'Connect', 'Map', 'Preview', 'Duplicates', 'Import', 'Complete']
 
 export default function MigrationHubPage() {
+  const { tokens: _tz } = useTheme()
+  const btnPrimary: React.CSSProperties = { padding: '12px 24px', background: `linear-gradient(135deg, ${COLORS.blue}, #1248B0)`, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: _tz.bgLight, cursor: 'pointer', fontFamily: FONT }
+  const th: React.CSSProperties = { fontFamily: FONT_MONO, fontSize: 9, color: COLORS.textDim, textTransform: 'uppercase', letterSpacing: '.08em', padding: '8px 10px', textAlign: 'left', background: _tz.bgInput, whiteSpace: 'nowrap' }
+  const td: React.CSSProperties = { padding: '8px 10px', borderBottom: `1px solid ${_tz.border}`, fontSize: 11, color: _tz.textSecondary }
+
   const supabase = createClient()
 
   // All state hooks at top
@@ -388,7 +391,7 @@ export default function MigrationHubPage() {
 
   return (
     <div style={{ background: COLORS.bg, minHeight: '100vh', color: COLORS.text, fontFamily: FONT, padding: 24, maxWidth: 1000, margin: '0 auto' }}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: COLORS.blue, color: '#fff', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: COLORS.blue, color: _tz.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={{ fontFamily: FONT_DISPLAY, fontSize: 28, marginBottom: 4 }}>Migration Hub</div>
       <div style={{ fontSize: 12, color: COLORS.textSecondary, marginBottom: 24 }}>Import data from other shop management systems or spreadsheets.</div>
@@ -447,7 +450,7 @@ export default function MigrationHubPage() {
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Connect to Fullbay</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Enter your Fullbay API key"
-              style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: `1px solid ${COLORS.border}`, background: '#080A0D', color: COLORS.text, fontSize: 13, fontFamily: FONT_MONO, outline: 'none' }} />
+              style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: `1px solid ${COLORS.border}`, background: _tz.bgInput, color: COLORS.text, fontSize: 13, fontFamily: FONT_MONO, outline: 'none' }} />
             <button onClick={testConnection} disabled={!apiKey || testingConnection}
               style={{ ...btnPrimary, opacity: !apiKey || testingConnection ? 0.5 : 1 }}>
               {testingConnection ? 'Testing...' : 'Test Connection'}
@@ -466,7 +469,7 @@ export default function MigrationHubPage() {
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>Select data to import:</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
                 {(['customers', 'vehicles', 'service_orders', 'invoices', 'parts'] as DataType[]).map(dt => (
-                  <label key={dt} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, background: '#080A0D', cursor: 'pointer' }}>
+                  <label key={dt} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, background: _tz.bgInput, cursor: 'pointer' }}>
                     <input type="checkbox" checked={selectedTypes.has(dt)} onChange={() => toggleType(dt)}
                       style={{ accentColor: COLORS.blue }} />
                     <span style={{ fontSize: 13, color: COLORS.text }}>{DATA_TYPE_LABELS[dt]}</span>
@@ -506,7 +509,7 @@ export default function MigrationHubPage() {
             <div style={card}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Uploaded Files</div>
               {uploadedFiles.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, background: '#080A0D', marginBottom: 6 }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, background: _tz.bgInput, marginBottom: 6 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{f.name}</div>
                     <div style={{ fontSize: 11, color: COLORS.textDim }}>{f.rows.length} rows, {f.headers.length} columns</div>
@@ -558,7 +561,7 @@ export default function MigrationHubPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {colMappings.map((cm, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: '#080A0D', borderRadius: 8 }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: _tz.bgInput, borderRadius: 8 }}>
                   <div style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{cm.header}</div>
                   <div style={{ fontSize: 11, color: COLORS.textDim }}>→</div>
                   <select value={cm.field} onChange={e => updateMapping(i, e.target.value)}
@@ -649,7 +652,7 @@ export default function MigrationHubPage() {
               <div style={{ padding: 32, textAlign: 'center', color: COLORS.textDim, fontSize: 13 }}>No duplicates detected.</div>
             ) : (
               duplicates.map((d, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 8, background: '#080A0D', marginBottom: 6 }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 8, background: _tz.bgInput, marginBottom: 6 }}>
                   <div style={{ flex: 1 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#F97316' }}>{d.a}</span>
                     <span style={{ fontSize: 11, color: COLORS.textDim, margin: '0 8px' }}>↔</span>
@@ -721,7 +724,7 @@ export default function MigrationHubPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 20 }}>
             {Object.entries(result).map(([dt, r]: [string, any]) => (
-              <div key={dt} style={{ background: '#080A0D', borderRadius: 10, padding: 16, textAlign: 'center' }}>
+              <div key={dt} style={{ background: _tz.bgInput, borderRadius: 10, padding: 16, textAlign: 'center' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textSecondary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>{DATA_TYPE_LABELS[dt as DataType] || dt}</div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
                   <div>
@@ -743,13 +746,13 @@ export default function MigrationHubPage() {
 
           {/* Summary stats */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-            <div style={{ flex: 1, background: '#080A0D', borderRadius: 8, padding: 14, textAlign: 'center' }}>
+            <div style={{ flex: 1, background: _tz.bgInput, borderRadius: 8, padding: 14, textAlign: 'center' }}>
               <div style={{ fontSize: 20, fontWeight: 700, color: COLORS.blueLight }}>
                 {Object.values(result).reduce((s: number, r: any) => s + r.imported + r.updated, 0)}
               </div>
               <div style={{ fontSize: 10, color: COLORS.textDim }}>Total Records Processed</div>
             </div>
-            <div style={{ flex: 1, background: '#080A0D', borderRadius: 8, padding: 14, textAlign: 'center' }}>
+            <div style={{ flex: 1, background: _tz.bgInput, borderRadius: 8, padding: 14, textAlign: 'center' }}>
               <div style={{ fontSize: 20, fontWeight: 700, color: COLORS.amber }}>
                 {Object.values(result).reduce((s: number, r: any) => s + r.skipped, 0)}
               </div>

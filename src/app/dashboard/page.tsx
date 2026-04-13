@@ -99,7 +99,7 @@ export default function DashboardPage() {
   const card: React.CSSProperties = { background: t.bgLight, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16 }
 
   return (
-    <div style={{ background: '#F9FAFB', minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
+    <div style={{ background: t.bgHover, minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
@@ -130,7 +130,7 @@ export default function DashboardPage() {
               <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>No action items right now</div>
             </div>
           ) : actionItems.map((item: any) => (
-            <div key={item.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid #F3F4F6', borderLeft: `3px solid ${PRIORITY_BORDER[item.priority] || BLUE}`, paddingLeft: 12 }}>
+            <div key={item.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: `1px solid ${t.bgHover}`, borderLeft: `3px solid ${PRIORITY_BORDER[item.priority] || BLUE}`, paddingLeft: 12 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: t.textLight }}>{item.title}</div>
                 {item.wo_number && <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, marginTop: 2 }}>{item.wo_number}{item.unit ? ` · #${item.unit}` : ''}</div>}
@@ -150,7 +150,7 @@ export default function DashboardPage() {
           <div style={{ fontSize: 14, fontWeight: 700, color: t.textLight, marginBottom: 12 }}>Team Status</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
             {teamStatus.map((m: any) => (
-              <div key={m.id} style={{ padding: '10px 14px', background: '#F9FAFB', borderRadius: 8, border: '1px solid #F3F4F6' }}>
+              <div key={m.id} style={{ padding: '10px 14px', background: t.bgHover, borderRadius: 8, border: `1px solid ${t.bgHover}` }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: t.textLight }}>{m.full_name}</div>
                 <div style={{ fontSize: 11, color: GRAY, marginTop: 2 }}>Team {m.team || '—'}</div>
               </div>
@@ -165,10 +165,10 @@ export default function DashboardPage() {
         {recentActivity.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 20, color: GRAY, fontSize: 12 }}>No recent activity</div>
         ) : recentActivity.map((a: any) => (
-          <div key={a.id} style={{ display: 'flex', gap: 8, padding: '6px 0', borderBottom: '1px solid #F3F4F6' }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#D1D5DB', marginTop: 6, flexShrink: 0 }} />
+          <div key={a.id} style={{ display: 'flex', gap: 8, padding: '6px 0', borderBottom: `1px solid ${t.bgHover}` }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: t.border, marginTop: 6, flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, color: '#374151' }}>{a.action}</div>
+              <div style={{ fontSize: 12, color: t.textSecondary }}>{a.action}</div>
               <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 1 }}>{timeAgo(a.created_at)}</div>
             </div>
           </div>

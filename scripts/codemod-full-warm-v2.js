@@ -30,6 +30,12 @@ const HEX = [
   ['#6B7280', 'textSecondary'], ['#B8C4D6', 'textSecondary'],
   ['#48536A', 'textTertiary'], ['#4a5568', 'textTertiary'],
   ['#1A1D23', 'border'], ['#1a1d23', 'border'],
+  // Light-mode hardcodes
+  ['#F4F5F7', 'bg'], ['#faf8f4', 'bg'],
+  ['#F9FAFB', 'bgHover'], ['#F3F4F6', 'bgHover'],
+  ['#E5E7EB', 'border'], ['#D1D5DB', 'border'], ['#e8e2d8', 'border'],
+  ['#1A1A1A', 'text'], ['#1E293B', 'text'], ['#2d2a26', 'text'],
+  ['#374151', 'textSecondary'],
 ]
 const BLUE = [
   ['#1D6FE8', 'accent'], ['#1B6EE6', 'accent'],
@@ -254,7 +260,7 @@ const report = { touched: [], totalReplacements: 0, movedBlocks: 0 }
 for (const f of files) {
   const original = fs.readFileSync(f, 'utf8')
   if (!/^'use client'|\n'use client'/.test(original)) continue
-  if (!/useTheme\s*\(\s*\)/.test(original)) continue // only PARTIAL pass
+  // (PARTIAL + UNTHEMED pass — add import+hook if missing)
 
   const alias = pickAlias(original)
   const start = findStart(original)
@@ -275,6 +281,22 @@ for (const f of files) {
   const totalChanges = bodyChanges + moved
   if (totalChanges === 0) continue
   if (src === original) continue
+
+  // Ensure useTheme import + hook call exist so the alias resolves.
+  if (!/from\s+['"]@\/hooks\/useTheme['"]/.test(src)) {
+    const m = src.match(/^(?:[ \t]*(?:'use client'|import[^\n]*)\n)+/m)
+    if (m) {
+      const endIdx = m.index + m[0].length
+      src = src.slice(0, endIdx) + "import { useTheme } from '@/hooks/useTheme'\n" + src.slice(endIdx)
+    } else {
+      src = "import { useTheme } from '@/hooks/useTheme'\n" + src
+    }
+  }
+  if (!new RegExp(`const\\s*\\{\\s*tokens\\s*:\\s*${alias}\\s*\\}\\s*=\\s*useTheme\\(\\s*\\)`).test(src)) {
+    const s2 = findStart(src)
+    if (s2 > 0) src = src.slice(0, s2) + `\n  const { tokens: ${alias} } = useTheme()` + src.slice(s2)
+  }
+
   fs.writeFileSync(f, src)
   report.touched.push({ file: f, replacements: bodyChanges, movedBlocks: moved })
   report.totalReplacements += bodyChanges

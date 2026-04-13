@@ -17,12 +17,12 @@ export default function AccountingPage() {
   const BLUE = t.accent, GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = t.textLightSecondary
 
   const INVOICE_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-    draft:                { label: 'Draft',            bg: '#F3F4F6', color: GRAY },
+    draft:                { label: 'Draft',            bg: t.bgHover, color: GRAY },
     quality_check_failed: { label: 'QC Failed',        bg: '#FEF2F2', color: RED },
     accounting_review:    { label: 'Pending Review',   bg: '#FFFBEB', color: AMBER },
     sent:                 { label: 'Sent',             bg: '#EFF6FF', color: BLUE },
     paid:                 { label: 'Paid',             bg: '#F0FDF4', color: GREEN },
-    closed:               { label: 'Closed',           bg: '#F3F4F6', color: GRAY },
+    closed:               { label: 'Closed',           bg: t.bgHover, color: GRAY },
   }
 
   const supabase = createClient()

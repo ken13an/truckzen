@@ -132,12 +132,12 @@ export default function PermissionsPage() {
     <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: FONT, padding: 24 }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 24, fontWeight: 800, color: '#1A1A1A' }}>Employee Permissions</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: t.text }}>Employee Permissions</div>
         <div style={{ fontSize: 13, color: t.textSecondary, marginTop: 4 }}>Control what each team member can see and do</div>
       </div>
 
       {/* Department Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #E5E7EB', marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.border}`, marginBottom: 24 }}>
         {visibleDepts.map(dept => (
           <button
             key={dept.department}
@@ -158,8 +158,8 @@ export default function PermissionsPage() {
       <div style={{ display: 'flex', gap: 24 }}>
         {/* Employee List */}
         <div style={{ width: 256, flexShrink: 0 }}>
-          <div style={{ background: t.bgLight, border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+          <div style={{ background: t.bgLight, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ padding: '12px 16px', background: t.bgHover, borderBottom: `1px solid ${t.border}` }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>
                 {activeDeptDef?.label} Team
               </span>
@@ -180,13 +180,13 @@ export default function PermissionsPage() {
                       padding: '12px 16px', cursor: 'pointer',
                       background: selectedEmployee?.id === emp.id ? 'rgba(27,110,230,.06)' : t.bgLight,
                       borderLeft: selectedEmployee?.id === emp.id ? `2px solid ${BLUE}` : '2px solid transparent',
-                      borderBottom: i < employees.length - 1 ? '1px solid #F3F4F6' : 'none',
+                      borderBottom: i < employees.length - 1 ? `1px solid ${t.bgHover}` : 'none',
                       transition: 'all .12s',
                     }}
-                    onMouseEnter={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = '#F9FAFB' }}
+                    onMouseEnter={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = t.bgHover }}
                     onMouseLeave={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = t.bgLight }}
                   >
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{emp.full_name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{emp.full_name}</div>
                     <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 2 }}>{emp.role}</div>
                   </div>
                 ))}
@@ -200,19 +200,19 @@ export default function PermissionsPage() {
           {!selectedEmployee ? (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              height: 256, border: '2px dashed #E5E7EB', borderRadius: 12,
+              height: 256, border: `2px dashed ${t.border}`, borderRadius: 12,
             }}>
               <span style={{ color: t.textSecondary, fontSize: 13 }}>Select an employee to manage their permissions</span>
             </div>
           ) : (
-            <div style={{ background: t.bgLight, border: '1px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: t.bgLight, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
               {/* Employee Header */}
               <div style={{
-                padding: '16px 24px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB',
+                padding: '16px 24px', background: t.bgHover, borderBottom: `1px solid ${t.border}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#1A1A1A' }}>{selectedEmployee.full_name}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: t.text }}>{selectedEmployee.full_name}</div>
                   <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 2 }}>{selectedEmployee.email}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -243,11 +243,11 @@ export default function PermissionsPage() {
                     key={perm.key}
                     style={{
                       padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      borderBottom: i < (activeDeptDef.permissions.length - 1) ? '1px solid #F3F4F6' : 'none',
+                      borderBottom: i < (activeDeptDef.permissions.length - 1) ? `1px solid ${t.bgHover}` : 'none',
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1A1A1A' }}>{perm.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{perm.label}</div>
                       <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 2 }}>{perm.description}</div>
                     </div>
                     <button
@@ -256,7 +256,7 @@ export default function PermissionsPage() {
                         position: 'relative', display: 'inline-flex', flexShrink: 0,
                         height: 24, width: 44, cursor: 'pointer',
                         borderRadius: 12, border: 'none', padding: 0,
-                        background: permissions[perm.key] ? BLUE : '#D1D5DB',
+                        background: permissions[perm.key] ? BLUE : t.border,
                         transition: 'background .2s',
                       }}
                     >

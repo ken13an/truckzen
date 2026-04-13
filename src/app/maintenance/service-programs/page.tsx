@@ -7,7 +7,7 @@ export default MaintListPage({
   searchCols: 'name,service_type',
   searchPlaceholder: 'Search programs...',
   columns: [
-    { key: 'name', label: 'Name', render: r => <span style={{ fontWeight: 600, color: '#F0F4FF' }}>{r.name}</span> },
+    { key: 'name', label: 'Name', render: r => <span style={{ fontWeight: 600 }}>{r.name}</span> },
     { key: 'service_type', label: 'Type', render: r => <span style={{ textTransform: 'capitalize' }}>{r.service_type?.replace(/_/g, ' ') || '—'}</span> },
     { key: 'interval_miles', label: 'Interval', render: r => [r.interval_miles ? `${r.interval_miles.toLocaleString()} mi` : null, r.interval_days ? `${r.interval_days}d` : null].filter(Boolean).join(' / ') || '—' },
     { key: 'vehicles_count', label: 'Vehicles', render: r => <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }}>{r.vehicles_count || 0}</span> },

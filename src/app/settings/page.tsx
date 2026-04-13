@@ -669,27 +669,27 @@ export default function SettingsPage() {
             <div style={{ fontSize: 12, color: t.textLightSecondary, marginBottom: 16 }}>This information appears on invoices, PDFs, and emails sent to customers.</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Company & Bank</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: t.text }}>Company & Bank</div>
                 {payField('Payee Name', 'payment_payee_name', 'Company name for invoices')}
                 {payField('Bank Name', 'payment_bank_name', 'e.g. Chase Bank')}
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>ACH Payment</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: t.text }}>ACH Payment</div>
                 {payField('Account Number', 'payment_ach_account')}
                 {payField('Routing Number', 'payment_ach_routing')}
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Wire Transfer</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: t.text }}>Wire Transfer</div>
                 {payField('Account Number', 'payment_wire_account')}
                 {payField('Routing Number', 'payment_wire_routing')}
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Zelle</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: t.text }}>Zelle</div>
                 {payField('Email 1', 'payment_zelle_email_1', 'Primary Zelle email')}
                 {payField('Email 2 (optional)', 'payment_zelle_email_2', 'Secondary Zelle email')}
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Mail Check To</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: t.text }}>Mail Check To</div>
                 {payField('Payee Name', 'payment_mail_payee', 'Name on check')}
                 {payField('Address', 'payment_mail_address')}
                 {payField('Address Line 2 (optional)', 'payment_mail_address_2')}
@@ -700,7 +700,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: '#1E293B' }}>Reference Note</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, color: t.text }}>Reference Note</div>
                 {payField('Payment Note (optional)', 'payment_note', 'e.g. Include invoice # with payment')}
               </div>
             </div>

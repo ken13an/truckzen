@@ -8,7 +8,7 @@ export default MaintListPage({
   searchCols: 'full_name,cdl_number,phone',
   searchPlaceholder: 'Search by name, CDL, or phone...',
   columns: [
-    { key: 'full_name', label: 'Name', render: r => <span style={{ fontWeight: 600, color: '#F0F4FF' }}>{r.full_name}</span> },
+    { key: 'full_name', label: 'Name', render: r => <span style={{ fontWeight: 600 }}>{r.full_name}</span> },
     { key: 'phone', label: 'Phone' },
     { key: 'cdl_class', label: 'CDL', render: r => `Class ${r.cdl_class || 'A'}` },
     { key: 'cdl_expiry', label: 'CDL Expiry', render: r => <span style={{ color: expiryColor(r.cdl_expiry) }}>{r.cdl_expiry ? new Date(r.cdl_expiry).toLocaleDateString() : 'Not set'}</span> },

@@ -6,7 +6,7 @@ export default MaintListPage({
   title: 'Equipment', table: 'maint_equipment', label: 'equipment',
   searchCols: 'name,serial_number,make',
   columns: [
-    { key: 'name', label: 'Name', render: r => <span style={{ fontWeight: 600, color: '#F0F4FF' }}>{r.name}</span> },
+    { key: 'name', label: 'Name', render: r => <span style={{ fontWeight: 600 }}>{r.name}</span> },
     { key: 'equipment_type', label: 'Type', render: r => <span style={{ textTransform: 'capitalize' }}>{r.equipment_type?.replace(/_/g, ' ') || '—'}</span> },
     { key: 'serial_number', label: 'Serial #', render: r => <span style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 10 }}>{r.serial_number || '—'}</span> },
     { key: 'make', label: 'Make/Model', render: r => [r.make, r.model].filter(Boolean).join(' ') || '—' },
