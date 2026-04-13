@@ -21,7 +21,6 @@ import { SERVICE_WRITE_ROLES, ACCOUNTING_ROLES } from '@/lib/roles'
 import { useTheme } from '@/hooks/useTheme'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import { THEME } from '@/lib/config/colors'
-const _t = THEME.dark
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
 
@@ -32,39 +31,39 @@ function isUnrecognizedJob(desc: string): boolean {
 }
 
 const FONT = "'Inter', -apple-system, sans-serif"
-const BLUE = _t.accent, GREEN = _t.success, RED = _t.danger, AMBER = _t.warning, GRAY = _t.textSecondary
+const BLUE = THEME.dark.accent, GREEN = THEME.dark.success, RED = THEME.dark.danger, AMBER = THEME.dark.warning, GRAY = THEME.dark.textSecondary
 
 const LINE_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  unassigned:     { label: 'Unassigned',     bg: _t.dangerBg, color: _t.danger },
-  approved:       { label: 'Approved',       bg: _t.successBg, color: _t.success },
-  pending_review: { label: 'Pending Review', bg: _t.warningBg, color: _t.warning },
-  in_progress:    { label: 'In Progress',    bg: _t.accentBg, color: _t.accent },
-  completed:      { label: 'Completed',      bg: _t.successBg, color: _t.success },
+  unassigned:     { label: 'Unassigned',     bg: THEME.dark.dangerBg, color: THEME.dark.danger },
+  approved:       { label: 'Approved',       bg: THEME.dark.successBg, color: THEME.dark.success },
+  pending_review: { label: 'Pending Review', bg: THEME.dark.warningBg, color: THEME.dark.warning },
+  in_progress:    { label: 'In Progress',    bg: THEME.dark.accentBg, color: THEME.dark.accent },
+  completed:      { label: 'Completed',      bg: THEME.dark.successBg, color: THEME.dark.success },
 }
 
 const WO_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  open:        { label: 'Open',        bg: _t.accentBg, color: BLUE },
-  in_progress: { label: 'In Progress', bg: _t.accentBg, color: BLUE },
-  completed:   { label: 'Completed',   bg: _t.successBg, color: GREEN },
-  invoiced:    { label: 'Invoiced',    bg: _t.successBg, color: _t.success },
-  closed:      { label: 'Closed',      bg: _t.surfaceMuted, color: GRAY },
+  open:        { label: 'Open',        bg: THEME.dark.accentBg, color: BLUE },
+  in_progress: { label: 'In Progress', bg: THEME.dark.accentBg, color: BLUE },
+  completed:   { label: 'Completed',   bg: THEME.dark.successBg, color: GREEN },
+  invoiced:    { label: 'Invoiced',    bg: THEME.dark.successBg, color: THEME.dark.success },
+  closed:      { label: 'Closed',      bg: THEME.dark.surfaceMuted, color: GRAY },
 }
 
 const PART_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  needed: { label: 'Needed', bg: _t.dangerBg, color: RED },
-  ordered: { label: 'Ordered', bg: _t.warningBg, color: AMBER },
-  received: { label: 'Received', bg: _t.accentBg, color: BLUE },
-  ready_for_job: { label: 'Ready for Pickup', bg: _t.successBg, color: GREEN },
-  picked_up: { label: 'Picked Up', bg: _t.successBg, color: GREEN },
-  installed: { label: 'Installed', bg: _t.successBg, color: _t.success },
+  needed: { label: 'Needed', bg: THEME.dark.dangerBg, color: RED },
+  ordered: { label: 'Ordered', bg: THEME.dark.warningBg, color: AMBER },
+  received: { label: 'Received', bg: THEME.dark.accentBg, color: BLUE },
+  ready_for_job: { label: 'Ready for Pickup', bg: THEME.dark.successBg, color: GREEN },
+  picked_up: { label: 'Picked Up', bg: THEME.dark.successBg, color: GREEN },
+  installed: { label: 'Installed', bg: THEME.dark.successBg, color: THEME.dark.success },
 }
 
 const TABS = ['Jobs', 'Parts', 'Estimate', 'Files & Notes', 'Activity', 'Invoice']
 
 const pillStyle = (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: bg, color })
-const inputStyle: React.CSSProperties = { padding: '8px 12px', border: `1px solid ${_t.inputBorder}`, borderRadius: 8, fontSize: 13, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', width: '100%', background: _t.inputBg, color: _t.text }
-const btnStyle = (bg: string, color: string): React.CSSProperties => ({ padding: '8px 16px', background: bg, color, border: bg === 'transparent' ? `1px solid ${_t.border}` : 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 })
-const cardStyle: React.CSSProperties = { background: _t.bgCard, border: `1px solid ${_t.cardBorder}`, borderRadius: 12, padding: 16, marginBottom: 12 }
+const inputStyle: React.CSSProperties = { padding: '8px 12px', border: `1px solid ${THEME.dark.inputBorder}`, borderRadius: 8, fontSize: 13, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', width: '100%', background: THEME.dark.inputBg, color: THEME.dark.text }
+const btnStyle = (bg: string, color: string): React.CSSProperties => ({ padding: '8px 16px', background: bg, color, border: bg === 'transparent' ? `1px solid ${THEME.dark.border}` : 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 })
+const cardStyle: React.CSSProperties = { background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.cardBorder}`, borderRadius: 12, padding: 16, marginBottom: 12 }
 const labelStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, display: 'block' }
 
 export default function WorkOrderDetail() {

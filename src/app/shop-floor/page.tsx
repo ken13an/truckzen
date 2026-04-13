@@ -6,27 +6,26 @@ import { useTheme } from '@/hooks/useTheme'
 import { THEME } from '@/lib/config/colors'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import AppPageShell from '@/components/layout/AppPageShell'
-const _t = THEME.dark
 
 type View = 'table' | 'kanban' | 'monitor'
 
 const STATUS_GROUPS = [
-  { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: _t.textSecondary },
-  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: _t.warning },
-  { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: _t.warning },
-  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection'], color: _t.accentLight },
-  { key: 'completed', label: 'Completed', statuses: ['done'], color: _t.success },
-  { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: _t.success },
-  { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: _t.danger },
+  { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: THEME.dark.textSecondary },
+  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: THEME.dark.warning },
+  { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: THEME.dark.warning },
+  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection'], color: THEME.dark.accentLight },
+  { key: 'completed', label: 'Completed', statuses: ['done'], color: THEME.dark.success },
+  { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: THEME.dark.success },
+  { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: THEME.dark.danger },
 ]
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: _t.textSecondary, not_approved: _t.aiPurple, waiting_approval: _t.warning,
-  in_progress: _t.warning, waiting_parts: _t.warning, done: _t.success,
-  ready_final_inspection: _t.accentLight, good_to_go: _t.success, failed_inspection: _t.danger,
+  draft: THEME.dark.textSecondary, not_approved: THEME.dark.aiPurple, waiting_approval: THEME.dark.warning,
+  in_progress: THEME.dark.warning, waiting_parts: THEME.dark.warning, done: THEME.dark.success,
+  ready_final_inspection: THEME.dark.accentLight, good_to_go: THEME.dark.success, failed_inspection: THEME.dark.danger,
 }
 
-const PRIORITY_COLOR: Record<string, string> = { low: _t.textTertiary, normal: _t.textSecondary, high: _t.warning, critical: _t.danger }
+const PRIORITY_COLOR: Record<string, string> = { low: THEME.dark.textTertiary, normal: THEME.dark.textSecondary, high: THEME.dark.warning, critical: THEME.dark.danger }
 
 function timeAgo(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000)
@@ -39,9 +38,9 @@ export default function ShopFloorPage() {
   const { tokens: t } = useTheme()
 
   const S: Record<string, React.CSSProperties> = {
-  input: { padding: '8px 12px', background: _t.bgCard, border: `1px solid ${_t.border}`, borderRadius: 8, color: _t.text, fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: _t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: _t.bg, whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: `1px solid ${t.border}`, fontSize: 11, color: _t.textSecondary },
+  input: { padding: '8px 12px', background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 8, color: THEME.dark.text, fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: THEME.dark.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: THEME.dark.bg, whiteSpace: 'nowrap' as const },
+  td: { padding: '9px 10px', borderBottom: `1px solid ${t.border}`, fontSize: 11, color: THEME.dark.textSecondary },
 }
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -375,14 +374,14 @@ function KanbanCard({ job: j, mechanics }: { job: any; mechanics: any[] }) {
   })()
   return (
     <div onClick={() => window.location.href = getWorkorderRoute(j.id, undefined, 'shop-floor')}
-      style={{ background: _t.bgCard, border: `1px solid ${_t.border}`, borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || _t.textSecondary}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
+      style={{ background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || THEME.dark.textSecondary}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: _t.accentLight }}>#{(j.assets as any)?.unit_number || '—'}</span>
+        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: THEME.dark.accentLight }}>#{(j.assets as any)?.unit_number || '—'}</span>
         <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: PRIORITY_COLOR[j.priority], padding: '2px 6px', borderRadius: 4, background: `${PRIORITY_COLOR[j.priority]}15` }}>{j.priority}</span>
       </div>
-      <div style={{ fontSize: 12, color: _t.text, marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
-      {j.complaint && <div style={{ fontSize: 11, color: _t.textSecondary, lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: _t.textTertiary }}>
+      <div style={{ fontSize: 12, color: THEME.dark.text, marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
+      {j.complaint && <div style={{ fontSize: 11, color: THEME.dark.textSecondary, lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: THEME.dark.textTertiary }}>
         <span>{mechName || 'Unassigned'}</span>
         <span>{j.team ? `Team ${j.team}` : ''}{j.bay ? ` · ${j.bay}` : ''}</span>
       </div>

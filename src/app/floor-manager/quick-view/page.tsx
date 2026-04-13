@@ -8,19 +8,18 @@ import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import AppPageShell from '@/components/layout/AppPageShell'
 import { THEME } from '@/lib/config/colors'
 import { useTheme } from '@/hooks/useTheme'
-const _t = THEME.dark
 
 const FONT = "'Inter', -apple-system, sans-serif"
 // Interior palette kept dark — quick-view is a dark operational surface.
 // Outer shell now follows theme toggle via AppPageShell.
-const TEXT = _t.text
-const CARD_BG = _t.bgElevated
-const CARD_BORDER = _t.cardBorder
-const BLUE = _t.accent
-const AMBER = _t.warning
-const GREEN = _t.success
-const RED = _t.danger
-const DIM = _t.textTertiary
+const TEXT = THEME.dark.text
+const CARD_BG = THEME.dark.bgElevated
+const CARD_BORDER = THEME.dark.cardBorder
+const BLUE = THEME.dark.accent
+const AMBER = THEME.dark.warning
+const GREEN = THEME.dark.success
+const RED = THEME.dark.danger
+const DIM = THEME.dark.textTertiary
 
 type Filter = 'unassigned' | 'assigned' | 'waiting_parts' | 'in_progress'
 

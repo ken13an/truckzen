@@ -9,18 +9,17 @@ import { ChevronRight, Wrench, Clock, CheckCircle2, XCircle, Package, Play, Squa
 import { useTheme } from '@/hooks/useTheme'
 
 import { THEME } from '@/lib/config/colors'
-const _t = THEME.dark
 
 const FONT = "'Inter', -apple-system, sans-serif"
-const BG = _t.bg
-const TEXT = _t.text
-const CARD_BG = _t.bgCard
-const CARD_BORDER = _t.cardBorder
-const BLUE = _t.accent
-const AMBER = _t.warning
-const GREEN = _t.success
-const RED = _t.danger
-const DIM = _t.textTertiary
+const BG = THEME.dark.bg
+const TEXT = THEME.dark.text
+const CARD_BG = THEME.dark.bgCard
+const CARD_BORDER = THEME.dark.cardBorder
+const BLUE = THEME.dark.accent
+const AMBER = THEME.dark.warning
+const GREEN = THEME.dark.success
+const RED = THEME.dark.danger
+const DIM = THEME.dark.textTertiary
 
 type Filter = 'all' | 'pending' | 'accepted' | 'in_progress' | 'completed'
 
@@ -51,7 +50,7 @@ const LANGUAGES = [
 
 function StatusPill({ status }: { status: string }) {
   const label = status || 'pending'
-  const c = STATUS_COLORS[label] || { bg: _t.surfaceMuted, text: DIM }
+  const c = STATUS_COLORS[label] || { bg: THEME.dark.surfaceMuted, text: DIM }
   return (
     <span style={{
       display: 'inline-block', padding: '3px 10px', borderRadius: 999,

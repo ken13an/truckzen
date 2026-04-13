@@ -8,17 +8,16 @@ import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { THEME } from '@/lib/config/colors'
 import { useTheme } from '@/hooks/useTheme'
-const _t = THEME.dark
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
-const BLUE = _t.accentLight, GREEN = _t.success, AMBER = _t.warning, RED = _t.danger, MUTED = _t.textSecondary
+const BLUE = THEME.dark.accentLight, GREEN = THEME.dark.success, AMBER = THEME.dark.warning, RED = THEME.dark.danger, MUTED = THEME.dark.textSecondary
 
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
   pending_removal: { label: 'Pending Removal', color: RED },
   removed: { label: 'Removed', color: AMBER },
   stored: { label: 'In Storage', color: BLUE },
-  shipped: { label: 'Shipped', color: _t.aiPurple },
+  shipped: { label: 'Shipped', color: THEME.dark.aiPurple },
   credit_received: { label: 'Credit Received', color: GREEN },
 }
 
