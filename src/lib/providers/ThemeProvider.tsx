@@ -16,7 +16,12 @@ const STORAGE_KEY = 'tz-theme-mode'
 
 function getInitialMode(): ThemeMode {
   if (typeof window === 'undefined') return 'dark'
+  // Prefer the data attribute set by the blocking script in layout.tsx — that
+  // matches the attribute the server output, so the first client render is
+  // consistent with the DOM produced by the pre-hydration script.
   try {
+    const attr = document.documentElement.getAttribute('data-tz-mode')
+    if (attr === 'light' || attr === 'dark') return attr
     const saved = window.localStorage.getItem(STORAGE_KEY)
     return saved === 'light' || saved === 'dark' ? saved : 'dark'
   } catch {
@@ -31,6 +36,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const tokens = THEME[mode]
 
   useLayoutEffect(() => {
+    document.documentElement.setAttribute('data-tz-mode', mode)
+    document.body.setAttribute('data-tz-mode', mode)
     document.body.style.background = tokens.bg
     document.body.style.backgroundColor = tokens.bg
     document.body.style.color = tokens.text

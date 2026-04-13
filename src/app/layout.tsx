@@ -138,7 +138,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body style={{ margin: 0, padding: 0, fontFamily: "'Instrument Sans',sans-serif" }}>
+      <body suppressHydrationWarning style={{ margin: 0, padding: 0, fontFamily: "'Instrument Sans',sans-serif" }}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=localStorage.getItem('tz-theme-mode');if(m!=='light'&&m!=='dark')m='dark';document.documentElement.setAttribute('data-tz-mode',m);document.body.setAttribute('data-tz-mode',m);}catch(e){}})();`,
+          }}
+        />
         <ThemeProvider>
           <ToastProvider>
             <AppShell>{children}</AppShell>

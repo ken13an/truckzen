@@ -178,7 +178,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <a href="/work-orders/new" style={{ textDecoration: 'none' }}>
-              <button style={{ background: t.accent, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+              <button style={{ background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
                 <Plus size={14} strokeWidth={2.5} /> New WO
               </button>
             </a>
