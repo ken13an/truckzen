@@ -9,6 +9,10 @@ const ToastContext = createContext<{ toast: (msg: string, type?: ToastType, dura
   toast: () => {},
 })
 
+export function useToast() {
+  return useContext(ToastContext)
+}
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { tokens: tk } = useTheme()
   const [toasts, setToasts] = useState<Toast[]>([])

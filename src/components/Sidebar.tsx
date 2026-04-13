@@ -12,6 +12,7 @@ import Logo, { LogoIcon } from '@/components/Logo'
 import { ADMIN_ROLES } from '@/lib/roles'
 import { Wrench, Package, Factory, Monitor, FileText, Truck, Users2, UserCircle, ShieldCheck, BarChart3, Cog, Calculator, Clock, Settings, LogOut, Shield, ChevronDown, Upload, BookOpen, ClipboardList, ShoppingCart, Box, Layers, LayoutDashboard, CalendarClock, ClipboardCheck, Fuel, Building2, Receipt, Gauge, AlertTriangle, Zap, Bell, AlarmClock, FileCheck, UserCheck, Repeat, Globe, MapPin, Map, MessageSquare, Trash2, Lock, Banknote, X } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
+import { useToast } from '@/components/Toast'
 import { COLORS } from '@/lib/config/colors'
 
 const UNLIMITED_ROLES = ADMIN_ROLES
@@ -111,6 +112,7 @@ function getDeptAccess(
 
 export default function Sidebar() {
   const { tokens: t, mode, toggleMode } = useTheme()
+  const { toast } = useToast()
   const pathname = usePathname()
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -236,14 +238,52 @@ export default function Sidebar() {
   }
 
   async function togglePunch() {
+    async function send(body: Record<string, unknown>) {
+      const res = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      let data: any = null
+      try { data = await res.json() } catch {}
+      return { ok: res.ok, status: res.status, data }
+    }
+
     if (punchedIn) {
       if (!confirm(`Clock out after ${elapsed || '0m'}?`)) return
-      const res = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'punch_out' }) })
-      if (res.ok) { setPunchedIn(false); setPunchTime(null); setElapsed('') }
-    } else {
-      const res = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'punch_in' }) })
-      if (res.ok) { const d = await res.json(); setPunchedIn(true); setPunchTime(d.punch?.punch_in_at || new Date().toISOString()) }
+      const { ok, data } = await send({ action: 'punch_out' })
+      if (ok) { setPunchedIn(false); setPunchTime(null); setElapsed(''); toast('Clocked out', 'success') }
+      else { toast(data?.error || 'Could not clock out. Please try again.', 'error', 6000) }
+      return
     }
+
+    // Clock In — attempt geolocation first to enable geofence check server-side
+    async function getCoords(): Promise<{ latitude: number; longitude: number } | 'denied' | 'unavailable'> {
+      if (typeof window === 'undefined' || !('geolocation' in navigator)) return 'unavailable'
+      return new Promise(resolve => {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+          err => resolve(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable'),
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+        )
+      })
+    }
+
+    const coords = await getCoords()
+    const body: Record<string, unknown> = { action: 'punch_in' }
+    if (typeof coords === 'object') { body.latitude = coords.latitude; body.longitude = coords.longitude }
+
+    const { ok, status, data } = await send(body)
+
+    if (ok) {
+      setPunchedIn(true)
+      setPunchTime(data?.punch?.punch_in_at || new Date().toISOString())
+      toast(data?.insideGeofence === false ? 'Clocked in (outside shop area)' : 'Clocked in', 'success')
+      return
+    }
+
+    // Map the specific failure reason the API sent back
+    if (data?.outsideGeofence) { toast(data.error || 'You are outside the shop area. Move closer to the shop or ask a manager to override.', 'error', 7000); return }
+    if (status === 409) { toast(data?.error || 'You are already clocked in.', 'warning', 6000); return }
+    if (coords === 'denied') { toast('Location access was denied. Enable location in your browser to clock in.', 'error', 7000); return }
+    if (coords === 'unavailable') { toast('Location is unavailable. Clock in requires location access.', 'error', 7000); return }
+    toast(data?.error || 'Could not clock in. Please try again.', 'error', 6000)
   }
 
   const qaItems = [

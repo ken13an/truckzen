@@ -332,7 +332,7 @@ export default function CustomersPage() {
 
       {/* Table */}
       <div style={{
-        background: '#151520',
+        background: t.bgCard,
         border: `1px solid ${t.bgActive}`,
         borderRadius: 12,
         overflow: 'hidden',
@@ -350,7 +350,7 @@ export default function CustomersPage() {
                     letterSpacing: '0.08em',
                     padding: '10px 14px',
                     textAlign: 'left',
-                    background: '#12121A',
+                    background: t.bgInput,
                     whiteSpace: 'nowrap',
                     borderBottom: `1px solid ${t.border}`,
                     fontWeight: 500,

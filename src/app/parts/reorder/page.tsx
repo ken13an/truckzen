@@ -65,9 +65,9 @@ export default function PartsReorderPage() {
   const S: Record<string, React.CSSProperties> = {
     page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:4 },
-    card:  { background:t.bgCard, border:'1px solid rgba(255,255,255,.055)', borderRadius:12, overflow:'hidden', marginBottom:14 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 12px', textAlign:'left', background:'#0B0D11', whiteSpace:'nowrap' },
-    td:    { padding:'10px 12px', borderBottom:'1px solid rgba(255,255,255,.025)', fontSize:12 },
+    card:  { background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:12, overflow:'hidden', marginBottom:14 },
+    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 12px', textAlign:'left', background:t.bgInput, whiteSpace:'nowrap' },
+    td:    { padding:'10px 12px', borderBottom:`1px solid ${t.border}`, fontSize:12 },
   }
 
   if (done) return (

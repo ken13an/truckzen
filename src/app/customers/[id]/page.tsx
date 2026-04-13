@@ -229,9 +229,9 @@ export default function CustomerProfilePage() {
 
   if (loadError) {
     return (
-      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: '#EF4444', gap: 16 }}>
+      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: th.danger, gap: 16 }}>
         <div style={{ fontSize: 15 }}>{loadError}</div>
-        <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', background: '#1D6FE8', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
+        <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', background: th.accent, color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
       </div>
     )
   }
