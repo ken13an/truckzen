@@ -1,7 +1,5 @@
 'use client'
-import { THEME } from '@/lib/config/colors'
 import { useTheme } from '@/hooks/useTheme'
-const _t = THEME.dark
 
 const BLUE = 'var(--tz-accent)', GREEN = 'var(--tz-success)', GRAY = 'var(--tz-textTertiary)', AMBER = 'var(--tz-warning)'
 const FONT = "'Inter', -apple-system, sans-serif"

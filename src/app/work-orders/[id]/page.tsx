@@ -2098,7 +2098,7 @@ export default function WorkOrderDetail() {
               userId={user?.id}
               placeholder="Write a note..."
               rows={3}
-              style={{ ...inputStyle, minHeight: 70, resize: 'vertical', marginBottom: 8, paddingRight: 48, background: 'var(--tz-bgCard)', color: '#111', border: `1px solid ${'var(--tz-border)'}` }}
+              style={{ ...inputStyle, minHeight: 70, resize: 'vertical', marginBottom: 8, paddingRight: 48, background: 'var(--tz-bgCard)', color: 'var(--tz-text)', border: `1px solid ${'var(--tz-border)'}` }}
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>

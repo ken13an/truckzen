@@ -2,9 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Sparkles, Loader2, Check, X } from 'lucide-react'
-import { THEME } from '@/lib/config/colors'
 import { useTheme } from '@/hooks/useTheme'
-const _t = THEME.dark
 
 interface AITextInputProps {
   value: string

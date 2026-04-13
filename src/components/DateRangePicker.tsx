@@ -1,8 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { THEME } from '@/lib/config/colors'
 import { useTheme } from '@/hooks/useTheme'
-const _t = THEME.dark
 
 const PRESETS = [
   { key: 'today', label: 'Today' },
