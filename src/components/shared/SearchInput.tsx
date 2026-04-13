@@ -27,14 +27,14 @@ export function SearchInput({ value, onChange, placeholder = 'Search...', deboun
 
   return (
     <div style={{ position: 'relative' }}>
-      <Search size={16} color={t.textSecondary} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+      <Search size={16} color={'var(--tz-textSecondary)'} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
       <input
         value={local}
         onChange={e => handleChange(e.target.value)}
         placeholder={placeholder}
         style={{
           width: '100%', padding: '10px 12px 10px 36px', borderRadius: 10,
-          border: `1px solid ${t.border}`, background: t.bgCard, color: t.text,
+          border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-text)',
           fontFamily: FONT, fontSize: 13, outline: 'none', boxSizing: 'border-box',
         }}
       />

@@ -344,14 +344,14 @@ type TT = { bg: string; text: string; bgCard: string; border: string; textTertia
 
 function makeS(t: TT): Record<string, React.CSSProperties> {
   return {
-    page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 860, margin: '0 auto' },
-    card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 12 },
-    btn: { padding: '12px 24px', background: t.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: t.bgLight, cursor: 'pointer', fontFamily: 'inherit' },
-    btnOutline: { padding: '10px 18px', background: 'transparent', border: `1px solid ${t.border}`, borderRadius: 9, fontSize: 12, fontWeight: 600, color: t.textSecondary, cursor: 'pointer', fontFamily: 'inherit' },
-    errorBox: { padding: '10px 14px', background: t.dangerBg, border: `1px solid ${t.danger}`, borderRadius: 8, fontSize: 12, color: t.danger, marginBottom: 12, lineHeight: 1.6 },
-    badge: { padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, border: `1px solid ${t.border}`, background: t.inputBg },
-    th: { padding: '8px 10px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.05em', borderBottom: `1px solid ${t.border}`, fontFamily: "'IBM Plex Mono',monospace" },
-    td: { padding: '8px 10px', color: t.textSecondary, borderBottom: `1px solid ${t.border}` },
-    statCard: { flex: 1, background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 10, padding: '16px 20px', textAlign: 'center' as const, minWidth: 80 },
+    page: { background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 860, margin: '0 auto' },
+    card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginBottom: 12 },
+    btn: { padding: '12px 24px', background: 'var(--tz-accent)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: 'var(--tz-bgLight)', cursor: 'pointer', fontFamily: 'inherit' },
+    btnOutline: { padding: '10px 18px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 9, fontSize: 12, fontWeight: 600, color: 'var(--tz-textSecondary)', cursor: 'pointer', fontFamily: 'inherit' },
+    errorBox: { padding: '10px 14px', background: 'var(--tz-dangerBg)', border: `1px solid ${'var(--tz-danger)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-danger)', marginBottom: 12, lineHeight: 1.6 },
+    badge: { padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-inputBg)' },
+    th: { padding: '8px 10px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, fontFamily: "'IBM Plex Mono',monospace" },
+    td: { padding: '8px 10px', color: 'var(--tz-textSecondary)', borderBottom: `1px solid ${'var(--tz-border)'}` },
+    statCard: { flex: 1, background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, padding: '16px 20px', textAlign: 'center' as const, minWidth: 80 },
   }
 }

@@ -1,0 +1,133 @@
+{
+  "touched": [
+    {
+      "file": "src/app/floor-manager/dashboard/page.tsx",
+      "replacements": 11
+    },
+    {
+      "file": "src/app/floor-manager/quick-view/page.tsx",
+      "replacements": 8
+    },
+    {
+      "file": "src/app/mechanic/dashboard/page.tsx",
+      "replacements": 10
+    },
+    {
+      "file": "src/app/parts/[id]/page.tsx",
+      "replacements": 9
+    },
+    {
+      "file": "src/app/parts/cores/page.tsx",
+      "replacements": 6
+    },
+    {
+      "file": "src/app/parts/page.tsx",
+      "replacements": 11
+    },
+    {
+      "file": "src/app/parts/queue/page.tsx",
+      "replacements": 5
+    },
+    {
+      "file": "src/app/settings/staff-import/page.tsx",
+      "replacements": 19
+    },
+    {
+      "file": "src/app/shop-floor/page.tsx",
+      "replacements": 33
+    },
+    {
+      "file": "src/app/smart-drop/page.tsx",
+      "replacements": 10
+    },
+    {
+      "file": "src/app/tech/page.tsx",
+      "replacements": 127
+    },
+    {
+      "file": "src/app/work-orders/[id]/page.tsx",
+      "replacements": 34
+    },
+    {
+      "file": "src/components/CommandPalette.tsx",
+      "replacements": 9
+    },
+    {
+      "file": "src/components/KioskFlow.tsx",
+      "replacements": 3
+    },
+    {
+      "file": "src/components/Sidebar.tsx",
+      "replacements": 52
+    },
+    {
+      "file": "src/components/Skeletons.tsx",
+      "replacements": 12
+    },
+    {
+      "file": "src/components/Toast.tsx",
+      "replacements": 14
+    },
+    {
+      "file": "src/components/layout/AppPageShell.tsx",
+      "replacements": 1
+    },
+    {
+      "file": "src/components/shared/Button.tsx",
+      "replacements": 5
+    },
+    {
+      "file": "src/components/shared/Card.tsx",
+      "replacements": 4
+    },
+    {
+      "file": "src/components/shared/ComingSoon.tsx",
+      "replacements": 6
+    },
+    {
+      "file": "src/components/shared/ConfirmDialog.tsx",
+      "replacements": 1
+    },
+    {
+      "file": "src/components/shared/EmptyState.tsx",
+      "replacements": 2
+    },
+    {
+      "file": "src/components/shared/LoadingState.tsx",
+      "replacements": 2
+    },
+    {
+      "file": "src/components/shared/Modal.tsx",
+      "replacements": 5
+    },
+    {
+      "file": "src/components/shared/PageHeader.tsx",
+      "replacements": 5
+    },
+    {
+      "file": "src/components/shared/SearchInput.tsx",
+      "replacements": 4
+    },
+    {
+      "file": "src/components/shared/StatusBadge.tsx",
+      "replacements": 39
+    },
+    {
+      "file": "src/components/shared/Tabs.tsx",
+      "replacements": 4
+    },
+    {
+      "file": "src/components/shared/VinInput.tsx",
+      "replacements": 15
+    },
+    {
+      "file": "src/components/ui/PageControls.tsx",
+      "replacements": 12
+    },
+    {
+      "file": "src/components/work-orders/WOStepper.tsx",
+      "replacements": 4
+    }
+  ],
+  "total": 482
+}

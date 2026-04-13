@@ -11,15 +11,15 @@ import { useTheme } from '@/hooks/useTheme'
 import { THEME } from '@/lib/config/colors'
 
 const FONT = "'Inter', -apple-system, sans-serif"
-const BG = THEME.dark.bg
-const TEXT = THEME.dark.text
-const CARD_BG = THEME.dark.bgCard
-const CARD_BORDER = THEME.dark.cardBorder
-const BLUE = THEME.dark.accent
-const AMBER = THEME.dark.warning
-const GREEN = THEME.dark.success
-const RED = THEME.dark.danger
-const DIM = THEME.dark.textTertiary
+const BG = 'var(--tz-bg)'
+const TEXT = 'var(--tz-text)'
+const CARD_BG = 'var(--tz-bgCard)'
+const CARD_BORDER = 'var(--tz-cardBorder)'
+const BLUE = 'var(--tz-accent)'
+const AMBER = 'var(--tz-warning)'
+const GREEN = 'var(--tz-success)'
+const RED = 'var(--tz-danger)'
+const DIM = 'var(--tz-textTertiary)'
 
 type Filter = 'all' | 'pending' | 'accepted' | 'in_progress' | 'completed'
 
@@ -50,7 +50,7 @@ const LANGUAGES = [
 
 function StatusPill({ status }: { status: string }) {
   const label = status || 'pending'
-  const c = STATUS_COLORS[label] || { bg: THEME.dark.surfaceMuted, text: DIM }
+  const c = STATUS_COLORS[label] || { bg: 'var(--tz-surfaceMuted)', text: DIM }
   return (
     <span style={{
       display: 'inline-block', padding: '3px 10px', borderRadius: 999,

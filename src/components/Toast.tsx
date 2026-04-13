@@ -18,10 +18,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const TOAST_COLORS: Record<ToastType, { bg: string; border: string; icon: string; text: string }> = {
-    success: { bg: tk.successBg, border: tk.success, icon: '\u2713', text: tk.success },
-    error:   { bg: tk.dangerBg,  border: tk.danger,  icon: '\u2717', text: tk.danger },
-    warning: { bg: tk.warningBg, border: tk.warning, icon: '\u26A0', text: tk.warning },
-    info:    { bg: tk.accentBg,  border: tk.accent,  icon: 'i',      text: tk.accentLight },
+    success: { bg: 'var(--tz-successBg)', border: 'var(--tz-success)', icon: '\u2713', text: 'var(--tz-success)' },
+    error:   { bg: 'var(--tz-dangerBg)',  border: 'var(--tz-danger)',  icon: '\u2717', text: 'var(--tz-danger)' },
+    warning: { bg: 'var(--tz-warningBg)', border: 'var(--tz-warning)', icon: '\u26A0', text: 'var(--tz-warning)' },
+    info:    { bg: 'var(--tz-accentBg)',  border: 'var(--tz-accent)',  icon: 'i',      text: 'var(--tz-accentLight)' },
   }
 
   const toast = useCallback((message: string, type: ToastType = 'info', duration = 3500) => {
@@ -43,7 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               background: c.bg, border: `1px solid ${c.border}`,
               boxShadow: '0 8px 32px rgba(0,0,0,.4)',
               fontFamily: "'Instrument Sans',sans-serif",
-              fontSize: 13, color: tk.text,
+              fontSize: 13, color: 'var(--tz-text)',
               pointerEvents: 'all',
               animation: 'slideIn .2s ease',
               maxWidth: 360, minWidth: 200,
@@ -51,7 +51,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <span style={{ fontSize: 12, fontWeight: 700, color: c.text, flexShrink: 0 }}>{c.icon}</span>
               <span style={{ flex: 1 }}>{item.message}</span>
               <button onClick={() => setToasts(prev => prev.filter(x => x.id !== item.id))}
-                style={{ background: 'none', border: 'none', color: tk.textTertiary, cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}>&times;</button>
+                style={{ background: 'none', border: 'none', color: 'var(--tz-textTertiary)', cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}>&times;</button>
             </div>
           )
         })}

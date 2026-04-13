@@ -69,8 +69,8 @@ export function PageFooter({
   }
 
   const navBtn = (disabled: boolean): React.CSSProperties => ({
-    padding: '4px 8px', background: t.inputBg, border: `1px solid ${t.inputBorder}`,
-    borderRadius: 4, fontSize: 10, color: disabled ? t.textTertiary : t.textSecondary, cursor: disabled ? 'default' : 'pointer',
+    padding: '4px 8px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-inputBorder)'}`,
+    borderRadius: 4, fontSize: 10, color: disabled ? 'var(--tz-textTertiary)' : 'var(--tz-textSecondary)', cursor: disabled ? 'default' : 'pointer',
     fontFamily: FONT, opacity: disabled ? 0.5 : 1,
   })
 
@@ -78,14 +78,14 @@ export function PageFooter({
 
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', marginTop: 8 }}>
-      <div style={{ fontSize: 11, color: t.textSecondary, fontFamily: MONO }}>
+      <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', fontFamily: MONO }}>
         Showing {start}–{end} of {total}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <select
           value={perPage}
           onChange={e => { onPerPageChange(parseInt(e.target.value)); onPageChange(1) }}
-          style={{ padding: '4px 8px', background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 6, fontSize: 10, color: t.textSecondary, fontFamily: MONO, outline: 'none' }}
+          style={{ padding: '4px 8px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 6, fontSize: 10, color: 'var(--tz-textSecondary)', fontFamily: MONO, outline: 'none' }}
         >
           {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}/page</option>)}
           <option value={0}>All</option>
@@ -96,9 +96,9 @@ export function PageFooter({
             <button onClick={() => onPageChange(Math.max(1, page - 1))} disabled={page <= 1}
               style={navBtn(page <= 1)}>Prev</button>
             {getPages().map((p, i) =>
-              p === '...' ? <span key={`e${i}`} style={{ color: t.textTertiary, fontSize: 10 }}>...</span> : (
+              p === '...' ? <span key={`e${i}`} style={{ color: 'var(--tz-textTertiary)', fontSize: 10 }}>...</span> : (
                 <button key={p} onClick={() => onPageChange(p as number)}
-                  style={{ ...navBtn(false), background: page === p ? t.accent : 'transparent', color: page === p ? t.bgLight : t.textSecondary, fontWeight: page === p ? 700 : 400 }}>
+                  style={{ ...navBtn(false), background: page === p ? 'var(--tz-accent)' : 'transparent', color: page === p ? 'var(--tz-bgLight)' : 'var(--tz-textSecondary)', fontWeight: page === p ? 700 : 400 }}>
                   {p}
                 </button>
               )

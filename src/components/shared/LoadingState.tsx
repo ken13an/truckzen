@@ -12,8 +12,8 @@ export function LoadingState({ message = 'Loading...' }: Props) {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '60px 20px', fontFamily: FONT,
     }}>
-      <Loader2 size={28} color={t.accent} style={{ animation: 'spin 1s linear infinite', marginBottom: 12 }} />
-      <p style={{ color: t.textSecondary, fontSize: 14 }}>{message}</p>
+      <Loader2 size={28} color={'var(--tz-accent)'} style={{ animation: 'spin 1s linear infinite', marginBottom: 12 }} />
+      <p style={{ color: 'var(--tz-textSecondary)', fontSize: 14 }}>{message}</p>
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   )

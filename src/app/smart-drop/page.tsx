@@ -1007,8 +1007,8 @@ export default function SmartDropPage() {
 }
 
 type SDT = { bgCard: string; bgInput: string; border: string; textSecondary: string; textTertiary: string; accent: string; bgLight: string }
-const makeCard = (t: SDT): React.CSSProperties => ({ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 14 })
-const makeTh = (t: SDT): React.CSSProperties => ({ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', padding: '8px 10px', textAlign: 'left', background: t.bgInput, whiteSpace: 'nowrap' })
-const makeTd = (t: SDT): React.CSSProperties => ({ padding: '8px 10px', borderBottom: `1px solid ${t.border}`, fontSize: 11, color: t.textSecondary })
-const makeBtnPrimary = (t: SDT): React.CSSProperties => ({ padding: '12px 24px', background: t.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: t.bgLight, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" })
-const makeBtnSecondary = (t: SDT): React.CSSProperties => ({ padding: '10px 20px', background: 'transparent', border: `1px solid ${t.border}`, borderRadius: 9, color: t.textSecondary, fontSize: 12, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" })
+const makeCard = (t: SDT): React.CSSProperties => ({ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginBottom: 14 })
+const makeTh = (t: SDT): React.CSSProperties => ({ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.08em', padding: '8px 10px', textAlign: 'left', background: 'var(--tz-bgInput)', whiteSpace: 'nowrap' })
+const makeTd = (t: SDT): React.CSSProperties => ({ padding: '8px 10px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 11, color: 'var(--tz-textSecondary)' })
+const makeBtnPrimary = (t: SDT): React.CSSProperties => ({ padding: '12px 24px', background: 'var(--tz-accent)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: 'var(--tz-bgLight)', cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" })
+const makeBtnSecondary = (t: SDT): React.CSSProperties => ({ padding: '10px 20px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 9, color: 'var(--tz-textSecondary)', fontSize: 12, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" })

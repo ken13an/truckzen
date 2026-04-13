@@ -31,39 +31,39 @@ function isUnrecognizedJob(desc: string): boolean {
 }
 
 const FONT = "'Inter', -apple-system, sans-serif"
-const BLUE = THEME.dark.accent, GREEN = THEME.dark.success, RED = THEME.dark.danger, AMBER = THEME.dark.warning, GRAY = THEME.dark.textSecondary
+const BLUE = 'var(--tz-accent)', GREEN = 'var(--tz-success)', RED = 'var(--tz-danger)', AMBER = 'var(--tz-warning)', GRAY = 'var(--tz-textSecondary)'
 
 const LINE_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  unassigned:     { label: 'Unassigned',     bg: THEME.dark.dangerBg, color: THEME.dark.danger },
-  approved:       { label: 'Approved',       bg: THEME.dark.successBg, color: THEME.dark.success },
-  pending_review: { label: 'Pending Review', bg: THEME.dark.warningBg, color: THEME.dark.warning },
-  in_progress:    { label: 'In Progress',    bg: THEME.dark.accentBg, color: THEME.dark.accent },
-  completed:      { label: 'Completed',      bg: THEME.dark.successBg, color: THEME.dark.success },
+  unassigned:     { label: 'Unassigned',     bg: 'var(--tz-dangerBg)', color: 'var(--tz-danger)' },
+  approved:       { label: 'Approved',       bg: 'var(--tz-successBg)', color: 'var(--tz-success)' },
+  pending_review: { label: 'Pending Review', bg: 'var(--tz-warningBg)', color: 'var(--tz-warning)' },
+  in_progress:    { label: 'In Progress',    bg: 'var(--tz-accentBg)', color: 'var(--tz-accent)' },
+  completed:      { label: 'Completed',      bg: 'var(--tz-successBg)', color: 'var(--tz-success)' },
 }
 
 const WO_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  open:        { label: 'Open',        bg: THEME.dark.accentBg, color: BLUE },
-  in_progress: { label: 'In Progress', bg: THEME.dark.accentBg, color: BLUE },
-  completed:   { label: 'Completed',   bg: THEME.dark.successBg, color: GREEN },
-  invoiced:    { label: 'Invoiced',    bg: THEME.dark.successBg, color: THEME.dark.success },
-  closed:      { label: 'Closed',      bg: THEME.dark.surfaceMuted, color: GRAY },
+  open:        { label: 'Open',        bg: 'var(--tz-accentBg)', color: BLUE },
+  in_progress: { label: 'In Progress', bg: 'var(--tz-accentBg)', color: BLUE },
+  completed:   { label: 'Completed',   bg: 'var(--tz-successBg)', color: GREEN },
+  invoiced:    { label: 'Invoiced',    bg: 'var(--tz-successBg)', color: 'var(--tz-success)' },
+  closed:      { label: 'Closed',      bg: 'var(--tz-surfaceMuted)', color: GRAY },
 }
 
 const PART_STATUS: Record<string, { label: string; bg: string; color: string }> = {
-  needed: { label: 'Needed', bg: THEME.dark.dangerBg, color: RED },
-  ordered: { label: 'Ordered', bg: THEME.dark.warningBg, color: AMBER },
-  received: { label: 'Received', bg: THEME.dark.accentBg, color: BLUE },
-  ready_for_job: { label: 'Ready for Pickup', bg: THEME.dark.successBg, color: GREEN },
-  picked_up: { label: 'Picked Up', bg: THEME.dark.successBg, color: GREEN },
-  installed: { label: 'Installed', bg: THEME.dark.successBg, color: THEME.dark.success },
+  needed: { label: 'Needed', bg: 'var(--tz-dangerBg)', color: RED },
+  ordered: { label: 'Ordered', bg: 'var(--tz-warningBg)', color: AMBER },
+  received: { label: 'Received', bg: 'var(--tz-accentBg)', color: BLUE },
+  ready_for_job: { label: 'Ready for Pickup', bg: 'var(--tz-successBg)', color: GREEN },
+  picked_up: { label: 'Picked Up', bg: 'var(--tz-successBg)', color: GREEN },
+  installed: { label: 'Installed', bg: 'var(--tz-successBg)', color: 'var(--tz-success)' },
 }
 
 const TABS = ['Jobs', 'Parts', 'Estimate', 'Files & Notes', 'Activity', 'Invoice']
 
 const pillStyle = (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: bg, color })
-const inputStyle: React.CSSProperties = { padding: '8px 12px', border: `1px solid ${THEME.dark.inputBorder}`, borderRadius: 8, fontSize: 13, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', width: '100%', background: THEME.dark.inputBg, color: THEME.dark.text }
-const btnStyle = (bg: string, color: string): React.CSSProperties => ({ padding: '8px 16px', background: bg, color, border: bg === 'transparent' ? `1px solid ${THEME.dark.border}` : 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 })
-const cardStyle: React.CSSProperties = { background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.cardBorder}`, borderRadius: 12, padding: 16, marginBottom: 12 }
+const inputStyle: React.CSSProperties = { padding: '8px 12px', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 8, fontSize: 13, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', width: '100%', background: 'var(--tz-inputBg)', color: 'var(--tz-text)' }
+const btnStyle = (bg: string, color: string): React.CSSProperties => ({ padding: '8px 16px', background: bg, color, border: bg === 'transparent' ? `1px solid ${'var(--tz-border)'}` : 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 })
+const cardStyle: React.CSSProperties = { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 16, marginBottom: 12 }
 const labelStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, display: 'block' }
 
 export default function WorkOrderDetail() {

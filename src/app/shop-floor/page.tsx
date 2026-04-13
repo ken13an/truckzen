@@ -10,22 +10,22 @@ import AppPageShell from '@/components/layout/AppPageShell'
 type View = 'table' | 'kanban' | 'monitor'
 
 const STATUS_GROUPS = [
-  { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: THEME.dark.textSecondary },
-  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: THEME.dark.warning },
-  { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: THEME.dark.warning },
-  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection'], color: THEME.dark.accentLight },
-  { key: 'completed', label: 'Completed', statuses: ['done'], color: THEME.dark.success },
-  { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: THEME.dark.success },
-  { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: THEME.dark.danger },
+  { key: 'todo', label: 'To-Do', statuses: ['draft', 'not_approved', 'waiting_approval'], color: 'var(--tz-textSecondary)' },
+  { key: 'in_progress', label: 'In Progress', statuses: ['in_progress'], color: 'var(--tz-warning)' },
+  { key: 'waiting_parts', label: 'Waiting Parts', statuses: ['waiting_parts'], color: 'var(--tz-warning)' },
+  { key: 'ready_inspection', label: 'Ready for Inspection', statuses: ['ready_final_inspection'], color: 'var(--tz-accentLight)' },
+  { key: 'completed', label: 'Completed', statuses: ['done'], color: 'var(--tz-success)' },
+  { key: 'good_to_go', label: 'Good to Go', statuses: ['good_to_go'], color: 'var(--tz-success)' },
+  { key: 'failed', label: 'Failed Inspection', statuses: ['failed_inspection'], color: 'var(--tz-danger)' },
 ]
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: THEME.dark.textSecondary, not_approved: THEME.dark.aiPurple, waiting_approval: THEME.dark.warning,
-  in_progress: THEME.dark.warning, waiting_parts: THEME.dark.warning, done: THEME.dark.success,
-  ready_final_inspection: THEME.dark.accentLight, good_to_go: THEME.dark.success, failed_inspection: THEME.dark.danger,
+  draft: 'var(--tz-textSecondary)', not_approved: 'var(--tz-aiPurple)', waiting_approval: 'var(--tz-warning)',
+  in_progress: 'var(--tz-warning)', waiting_parts: 'var(--tz-warning)', done: 'var(--tz-success)',
+  ready_final_inspection: 'var(--tz-accentLight)', good_to_go: 'var(--tz-success)', failed_inspection: 'var(--tz-danger)',
 }
 
-const PRIORITY_COLOR: Record<string, string> = { low: THEME.dark.textTertiary, normal: THEME.dark.textSecondary, high: THEME.dark.warning, critical: THEME.dark.danger }
+const PRIORITY_COLOR: Record<string, string> = { low: 'var(--tz-textTertiary)', normal: 'var(--tz-textSecondary)', high: 'var(--tz-warning)', critical: 'var(--tz-danger)' }
 
 function timeAgo(d: string) {
   const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000)
@@ -38,9 +38,9 @@ export default function ShopFloorPage() {
   const { tokens: t } = useTheme()
 
   const S: Record<string, React.CSSProperties> = {
-  input: { padding: '8px 12px', background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 8, color: THEME.dark.text, fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: THEME.dark.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: THEME.dark.bg, whiteSpace: 'nowrap' as const },
-  td: { padding: '9px 10px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 11, color: THEME.dark.textSecondary },
+  input: { padding: '8px 12px', background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: 'var(--tz-text)', fontSize: 12, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', flex: 1, minWidth: 160 },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, color: 'var(--tz-textTertiary)', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left' as const, background: 'var(--tz-bg)', whiteSpace: 'nowrap' as const },
+  td: { padding: '9px 10px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 11, color: 'var(--tz-textSecondary)' },
 }
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -374,14 +374,14 @@ function KanbanCard({ job: j, mechanics }: { job: any; mechanics: any[] }) {
   })()
   return (
     <div onClick={() => window.location.href = getWorkorderRoute(j.id, undefined, 'shop-floor')}
-      style={{ background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || THEME.dark.textSecondary}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
+      style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderLeft: `3px solid ${PRIORITY_COLOR[j.priority] || 'var(--tz-textSecondary)'}`, borderRadius: 10, padding: 12, cursor: 'pointer' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: THEME.dark.accentLight }}>#{(j.assets as any)?.unit_number || '—'}</span>
+        <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, fontWeight: 700, color: 'var(--tz-accentLight)' }}>#{(j.assets as any)?.unit_number || '—'}</span>
         <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: PRIORITY_COLOR[j.priority], padding: '2px 6px', borderRadius: 4, background: `${PRIORITY_COLOR[j.priority]}15` }}>{j.priority}</span>
       </div>
-      <div style={{ fontSize: 12, color: THEME.dark.text, marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
-      {j.complaint && <div style={{ fontSize: 11, color: THEME.dark.textSecondary, lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: THEME.dark.textTertiary }}>
+      <div style={{ fontSize: 12, color: 'var(--tz-text)', marginBottom: 4 }}>{(j.customers as any)?.company_name || '—'}</div>
+      {j.complaint && <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', lineHeight: 1.4, marginBottom: 6 }}>{j.complaint.slice(0, 80)}{j.complaint.length > 80 ? '...' : ''}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: 'var(--tz-textTertiary)' }}>
         <span>{mechName || 'Unassigned'}</span>
         <span>{j.team ? `Team ${j.team}` : ''}{j.bay ? ` · ${j.bay}` : ''}</span>
       </div>

@@ -18,10 +18,10 @@ interface Props {
 
 function getVariantStyles(t: { accent: string; textSecondary: string; border: string; danger: string }): Record<Variant, CSSProperties> {
   return {
-    primary: { background: t.accent, color: '#fff', border: 'none' },
-    secondary: { background: 'transparent', color: t.textSecondary, border: `1px solid ${t.border}` },
-    danger: { background: t.danger, color: '#fff', border: 'none' },
-    ghost: { background: 'transparent', color: t.accent, border: 'none' },
+    primary: { background: 'var(--tz-accent)', color: '#fff', border: 'none' },
+    secondary: { background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}` },
+    danger: { background: 'var(--tz-danger)', color: '#fff', border: 'none' },
+    ghost: { background: 'transparent', color: 'var(--tz-accent)', border: 'none' },
   }
 }
 

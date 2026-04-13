@@ -780,24 +780,24 @@ export default function PartsPage() {
 type T = { inputBorder: string; textSecondary: string; inputBg: string; border: string; surfaceMuted: string; bgCard: string; textTertiary: string; text: string }
 
 const dropdownStyle = (t: T): React.CSSProperties => ({
-  padding: '7px 12px', border: `1px solid ${t.inputBorder}`, borderRadius: 8, fontSize: 12,
-  color: t.textSecondary, fontFamily: "'Instrument Sans', sans-serif", outline: 'none',
-  background: t.inputBg, cursor: 'pointer', minWidth: 120,
+  padding: '7px 12px', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 8, fontSize: 12,
+  color: 'var(--tz-textSecondary)', fontFamily: "'Instrument Sans', sans-serif", outline: 'none',
+  background: 'var(--tz-inputBg)', cursor: 'pointer', minWidth: 120,
 })
 
 const paginationBtn = (t: T, disabled: boolean): React.CSSProperties => ({
-  padding: '6px 14px', borderRadius: 6, border: `1px solid ${t.border}`,
-  background: disabled ? t.surfaceMuted : t.bgCard, color: disabled ? t.textTertiary : t.textSecondary,
+  padding: '6px 14px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`,
+  background: disabled ? 'var(--tz-surfaceMuted)' : 'var(--tz-bgCard)', color: disabled ? 'var(--tz-textTertiary)' : 'var(--tz-textSecondary)',
   fontSize: 12, fontWeight: 600, cursor: disabled ? 'default' : 'pointer',
   fontFamily: "'Instrument Sans', sans-serif",
 })
 
 const thStyle = (t: T): React.CSSProperties => ({
   padding: '8px 10px', textAlign: 'left', fontSize: 10, fontWeight: 600,
-  color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em',
+  color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.04em',
   whiteSpace: 'nowrap',
 })
 
 const tdStyle = (t: T): React.CSSProperties => ({
-  padding: '10px 10px', borderBottom: `1px solid ${t.border}`, fontSize: 12, color: t.text,
+  padding: '10px 10px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 12, color: 'var(--tz-text)',
 })

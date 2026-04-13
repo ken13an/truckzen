@@ -439,12 +439,12 @@ function Field({ t, label, value, valueColor, children }: {
   return (
     <div>
       <div style={{
-        fontSize: 10, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase',
+        fontSize: 10, fontWeight: 600, color: 'var(--tz-textTertiary)', textTransform: 'uppercase',
         letterSpacing: '.06em', marginBottom: 4,
       }}>{label}</div>
       {children || (
         <div style={{
-          fontSize: 14, fontWeight: 500, color: valueColor || t.text,
+          fontSize: 14, fontWeight: 500, color: valueColor || 'var(--tz-text)',
           fontFamily: (label.includes('Cost') || label.includes('Price') || label.includes('Stock') || label.includes('Qty') || label.includes('Margin') || label.includes('Markup') || label.includes('Balance') || label.includes('Allocated') || label.includes('Transit'))
             ? "'IBM Plex Mono', monospace" : "'Instrument Sans', sans-serif",
         }}>{value}</div>
@@ -454,8 +454,8 @@ function Field({ t, label, value, valueColor, children }: {
 }
 
 const cardStyle = (t: T): React.CSSProperties => ({
-  background: t.bgCard,
-  border: `1px solid ${t.cardBorder}`,
+  background: 'var(--tz-bgCard)',
+  border: `1px solid ${'var(--tz-cardBorder)'}`,
   borderRadius: 12,
   padding: 20,
 })
@@ -463,21 +463,21 @@ const cardStyle = (t: T): React.CSSProperties => ({
 const sectionTitle = (t: T): React.CSSProperties => ({
   fontSize: 14,
   fontWeight: 700,
-  color: t.text,
+  color: 'var(--tz-text)',
   marginBottom: 16,
   paddingBottom: 10,
-  borderBottom: `1px solid ${t.border}`,
+  borderBottom: `1px solid ${'var(--tz-border)'}`,
 })
 
 const inputStyle = (t: T): React.CSSProperties => ({
   width: '100%',
   padding: '8px 10px',
-  border: `1px solid ${t.inputBorder}`,
+  border: `1px solid ${'var(--tz-inputBorder)'}`,
   borderRadius: 6,
   fontSize: 13,
-  color: t.text,
+  color: 'var(--tz-text)',
   fontFamily: "'Instrument Sans', sans-serif",
   outline: 'none',
-  background: t.inputBg,
+  background: 'var(--tz-inputBg)',
   boxSizing: 'border-box',
 })

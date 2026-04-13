@@ -16,8 +16,8 @@ export function Card({ children, style, theme = 'dark', onClick }: Props) {
     <div
       onClick={onClick}
       style={{
-        background: isDark ? t.bgCard : t.bgLight,
-        border: `1px solid ${isDark ? t.border : t.borderLight}`,
+        background: isDark ? 'var(--tz-bgCard)' : 'var(--tz-bgLight)',
+        border: `1px solid ${isDark ? 'var(--tz-border)' : 'var(--tz-borderLight)'}`,
         borderRadius: 12,
         padding: 16,
         ...(onClick ? { cursor: 'pointer' } : {}),

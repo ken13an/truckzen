@@ -276,7 +276,7 @@ const TOTAL_STEPS = 7 // steps 1-7 shown in dots
 
 
 const optionCardStyle = (selected: boolean): React.CSSProperties => ({
-  background: selected ? 'rgba(29,111,232,0.1)' : 'rgba(255,255,255,0.06)',
+  background: selected ? 'rgba(29,111,232,0.1)' : 'var(--tz-border)',
   border: selected ? '2px solid #1D6FE8' : '2px solid transparent',
   borderRadius: 12,
   padding: '16px 20px',
@@ -285,7 +285,7 @@ const optionCardStyle = (selected: boolean): React.CSSProperties => ({
   fontFamily: "'Instrument Sans', sans-serif",
   fontSize: 18,
   fontWeight: 600,
-  color: '#EDEDF0',
+  color: 'var(--tz-text)',
   transition: 'all .15s',
   flex: 1,
   minHeight: 56,
@@ -1469,7 +1469,7 @@ function KioskConfirmation({ woNumber, email, t, onReset, btnStyle }: {
         {woNumber}
       </div>
       <div style={{ fontSize: 18, color: '#9D9DA1', maxWidth: 400, lineHeight: 1.6, marginTop: 8 }}>
-        {t('confirmed_sub')} <strong style={{ color: '#EDEDF0' }}>{email}</strong>
+        {t('confirmed_sub')} <strong style={{ color: 'var(--tz-text)' }}>{email}</strong>
       </div>
       <button onClick={onReset} style={{ ...btnStyle, marginTop: 32, padding: '20px 48px', fontSize: 20 }}>
         {t('new_checkin')}

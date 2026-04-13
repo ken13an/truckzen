@@ -315,20 +315,20 @@ export default function Sidebar() {
           padding: collapsed ? '8px 0' : indent ? '7px 14px' : '8px 16px',
           justifyContent: collapsed ? 'center' : 'flex-start',
           margin: '1px 6px', borderRadius: 8, marginLeft: indent && !collapsed ? 16 : 6,
-          background: active ? t.sidebarActiveBg : 'transparent',
-          border: active ? `1px solid ${t.sidebarActiveBorder}` : '1px solid transparent',
+          background: active ? 'var(--tz-sidebarActiveBg)' : 'transparent',
+          border: active ? `1px solid ${'var(--tz-sidebarActiveBorder)'}` : '1px solid transparent',
           cursor: 'pointer', transition: 'all .12s',
         }}
-        onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = t.bgHover; (e.currentTarget as HTMLElement).style.color = t.text } }}
+        onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'var(--tz-bgHover)'; (e.currentTarget as HTMLElement).style.color = 'var(--tz-text)' } }}
         onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '' } }}>
           <span style={{ flexShrink: 0, width: indent ? 13 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon size={indent ? 13 : 15} strokeWidth={1.5} color={active ? t.sidebarTextActive : t.textTertiary} />
+            <Icon size={indent ? 13 : 15} strokeWidth={1.5} color={active ? 'var(--tz-sidebarTextActive)' : 'var(--tz-textTertiary)'} />
           </span>
           {!collapsed && (
             <>
-              <span style={{ fontSize: indent ? 11 : 12, fontWeight: active ? 600 : 400, color: active ? t.sidebarTextActive : t.textSecondary, flex: 1, whiteSpace: 'nowrap' }}>{item.label}</span>
+              <span style={{ fontSize: indent ? 11 : 12, fontWeight: active ? 600 : 400, color: active ? 'var(--tz-sidebarTextActive)' : 'var(--tz-textSecondary)', flex: 1, whiteSpace: 'nowrap' }}>{item.label}</span>
               {badge != null && badge > 0 && (
-                <span style={{ background: item.href === '/parts' ? t.danger : t.accent, color: t.bgLight, fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>{badge > 99 ? '99+' : badge}</span>
+                <span style={{ background: item.href === '/parts' ? 'var(--tz-danger)' : 'var(--tz-accent)', color: 'var(--tz-bgLight)', fontSize: 9, fontWeight: 700, fontFamily: 'monospace', padding: '1px 5px', borderRadius: 100, minWidth: 16, textAlign: 'center' }}>{badge > 99 ? '99+' : badge}</span>
               )}
             </>
           )}
@@ -338,17 +338,17 @@ export default function Sidebar() {
   }
 
   return (
-    <aside style={{ width: W, height: '100vh', background: t.sidebarBg, borderRight: `1px solid ${t.sidebarBorder}`, display: 'flex', flexDirection: 'column', transition: 'width .2s ease', flexShrink: 0, position: 'sticky', top: 0, overflow: 'hidden' }}>
+    <aside style={{ width: W, height: '100vh', background: 'var(--tz-sidebarBg)', borderRight: `1px solid ${'var(--tz-sidebarBorder)'}`, display: 'flex', flexDirection: 'column', transition: 'width .2s ease', flexShrink: 0, position: 'sticky', top: 0, overflow: 'hidden' }}>
       {/* Logo / brand */}
-      <div style={{ padding: collapsed ? '18px 14px' : '18px 20px', borderBottom: `1px solid ${t.sidebarBorder}`, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', minHeight: 62, color: t.text }}>
+      <div style={{ padding: collapsed ? '18px 14px' : '18px 20px', borderBottom: `1px solid ${'var(--tz-sidebarBorder)'}`, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', minHeight: 62, color: 'var(--tz-text)' }}>
         {collapsed ? <LogoIcon size="md" /> : <Logo size="md" showWordmark={true} />}
-        <button onClick={() => setCollapsed(c => !c)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary, fontSize: 16, padding: 6, lineHeight: 1, borderRadius: 4 }}
-          onMouseEnter={e => (e.currentTarget.style.color = t.text)} onMouseLeave={e => (e.currentTarget.style.color = t.textTertiary)}>{collapsed ? '\u00BB' : '\u00AB'}</button>
+        <button onClick={() => setCollapsed(c => !c)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textTertiary)', fontSize: 16, padding: 6, lineHeight: 1, borderRadius: 4 }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--tz-text)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--tz-textTertiary)')}>{collapsed ? '\u00BB' : '\u00AB'}</button>
       </div>
 
       {/* Platform Admin */}
       {isPlatformOwner && (
-        <div style={{ borderBottom: `1px solid ${t.border}`, padding: '6px 0' }}>
+        <div style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, padding: '6px 0' }}>
           {renderNavItem({ href: '/platform-admin', label: 'Platform Admin', icon: Shield })}
         </div>
       )}
@@ -360,13 +360,13 @@ export default function Sidebar() {
           padding: collapsed ? '8px 0' : '8px 12px',
           justifyContent: collapsed ? 'center' : 'flex-start',
           background: punchedIn ? 'rgba(92,184,138,0.04)' : 'transparent',
-          border: `1px solid ${punchedIn ? 'rgba(92,184,138,0.2)' : t.cardBorder}`,
+          border: `1px solid ${punchedIn ? 'rgba(92,184,138,0.2)' : 'var(--tz-cardBorder)'}`,
           borderRadius: 8, cursor: 'pointer', transition: 'all .15s',
         }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: punchedIn ? t.success : t.danger, flexShrink: 0, animation: 'tz-pulse 2s infinite' }} />
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: punchedIn ? 'var(--tz-success)' : 'var(--tz-danger)', flexShrink: 0, animation: 'tz-pulse 2s infinite' }} />
           {!collapsed && <>
-            <span style={{ fontSize: 11, fontWeight: 600, color: punchedIn ? t.success : t.textSecondary }}>{punchedIn ? 'Clocked In' : 'Clock In'}</span>
-            {punchedIn && elapsed && <span style={{ marginLeft: 'auto', fontSize: 10, fontFamily: "'IBM Plex Mono', monospace", color: t.textTertiary }}>{elapsed}</span>}
+            <span style={{ fontSize: 11, fontWeight: 600, color: punchedIn ? 'var(--tz-success)' : 'var(--tz-textSecondary)' }}>{punchedIn ? 'Clocked In' : 'Clock In'}</span>
+            {punchedIn && elapsed && <span style={{ marginLeft: 'auto', fontSize: 10, fontFamily: "'IBM Plex Mono', monospace", color: 'var(--tz-textTertiary)' }}>{elapsed}</span>}
           </>}
         </button>
       </div>
@@ -381,7 +381,7 @@ export default function Sidebar() {
         )}
 
         {/* Department sections */}
-        {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', padding: '8px 18px 4px', fontFamily: "'IBM Plex Mono', monospace" }}>Departments</div>}
+        {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.08em', padding: '8px 18px 4px', fontFamily: "'IBM Plex Mono', monospace" }}>Departments</div>}
 
         {DEPARTMENTS.filter(dept => deptAccess.includes(dept.label)).map(dept => {
           const DeptIcon = dept.icon
@@ -398,18 +398,18 @@ export default function Sidebar() {
                 padding: collapsed ? '8px 0' : '8px 16px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 margin: '1px 6px', borderRadius: 8,
-                background: hasDeptActive && !isExpanded ? t.bgHover : 'transparent',
+                background: hasDeptActive && !isExpanded ? 'var(--tz-bgHover)' : 'transparent',
                 cursor: 'pointer', transition: 'all .12s', userSelect: 'none',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
-              onMouseLeave={e => (e.currentTarget.style.background = hasDeptActive && !isExpanded ? t.bgHover : 'transparent')}>
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')}
+              onMouseLeave={e => (e.currentTarget.style.background = hasDeptActive && !isExpanded ? 'var(--tz-bgHover)' : 'transparent')}>
                 <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <DeptIcon size={14} strokeWidth={1.5} color={hasDeptActive ? dept.color : t.textSecondary} />
+                  <DeptIcon size={14} strokeWidth={1.5} color={hasDeptActive ? dept.color : 'var(--tz-textSecondary)'} />
                 </span>
                 {!collapsed && (
                   <>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: hasDeptActive ? t.text : t.textSecondary, flex: 1, textAlign: 'left' }}>{dept.label}</span>
-                    <ChevronDown size={12} color={t.textTertiary} style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: hasDeptActive ? 'var(--tz-text)' : 'var(--tz-textSecondary)', flex: 1, textAlign: 'left' }}>{dept.label}</span>
+                    <ChevronDown size={12} color={'var(--tz-textTertiary)'} style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }} />
                   </>
                 )}
               </div>
@@ -433,18 +433,18 @@ export default function Sidebar() {
           margin: '1px 0', borderRadius: 8,
           cursor: 'pointer', transition: 'all .12s',
         }}
-        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
+        onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')}
         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
           <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M11.5 2L4 12h5.5l-1 6L17 8h-5.5l1-6z" fill={t.warning} /></svg>
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M11.5 2L4 12h5.5l-1 6L17 8h-5.5l1-6z" fill={'var(--tz-warning)'} /></svg>
           </span>
-          {!collapsed && <span style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary }}>Quick Actions</span>}
+          {!collapsed && <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-textSecondary)' }}>Quick Actions</span>}
         </div>
       </div>
 
       {/* Bottom: Settings + Sign Out */}
-      <div style={{ borderTop: `1px solid ${t.border}`, padding: '6px 0' }}>
-        {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
+      <div style={{ borderTop: `1px solid ${'var(--tz-border)'}`, padding: '6px 0' }}>
+        {!collapsed && <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.08em', padding: '4px 18px 2px', fontFamily: "'IBM Plex Mono', monospace" }}>Platform</div>}
         {TRASH_ROLES.includes(effectiveRole) && renderNavItem({ href: '/trash', label: 'Trash', icon: Trash2 })}
         {hasAccess(effectiveRole, 'settings', rolePerms, userOverrides) && renderNavItem({ href: '/settings', label: 'Settings', icon: Settings })}
         {PERMISSIONS_ROLES.includes(effectiveRole) && renderNavItem({ href: '/settings/permissions', label: 'Permissions', icon: Lock })}
@@ -456,23 +456,23 @@ export default function Sidebar() {
           margin: '1px 6px', borderRadius: 8,
           cursor: 'pointer', transition: 'all .12s',
         }}
-        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
+        onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')}
         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
           <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {mode === 'dark' ? (
-              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke={t.textSecondary} strokeWidth="1.5"><circle cx="10" cy="10" r="4"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"/></svg>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke={'var(--tz-textSecondary)'} strokeWidth="1.5"><circle cx="10" cy="10" r="4"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"/></svg>
             ) : (
-              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke={t.textSecondary} strokeWidth="1.5"><path d="M17.3 14.3A7 7 0 015.7 2.7 8 8 0 1017.3 14.3z"/></svg>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke={'var(--tz-textSecondary)'} strokeWidth="1.5"><path d="M17.3 14.3A7 7 0 015.7 2.7 8 8 0 1017.3 14.3z"/></svg>
             )}
           </span>
-          {!collapsed && <span style={{ fontSize: 12, color: t.textSecondary }}>{mode === 'dark' ? 'Dark Mode' : 'Warm Mode'}</span>}
+          {!collapsed && <span style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{mode === 'dark' ? 'Dark Mode' : 'Warm Mode'}</span>}
         </div>
         <a href="#" onClick={async (e) => { e.preventDefault(); try { await fetch('/api/auth/session', { method: 'DELETE' }) } catch {}; await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,.08)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
-            <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LogOut size={15} strokeWidth={1.5} color={t.textSecondary} /></span>
-            {!collapsed && <span style={{ fontSize: 12, color: t.textSecondary }}>Sign Out</span>}
+            <span style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LogOut size={15} strokeWidth={1.5} color={'var(--tz-textSecondary)'} /></span>
+            {!collapsed && <span style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>Sign Out</span>}
           </div>
         </a>
       </div>
@@ -482,18 +482,18 @@ export default function Sidebar() {
       {qaOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setQaOpen(false)}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />
-          <div style={{ position: 'relative', width: 400, maxWidth: '90vw', background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 14, padding: 24, zIndex: 1 }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: 'relative', width: 400, maxWidth: '90vw', background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 14, padding: 24, zIndex: 1 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: t.text }}>Quick Actions</span>
-              <button onClick={() => setQaOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary, padding: 4 }}><X size={18} /></button>
+              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)' }}>Quick Actions</span>
+              <button onClick={() => setQaOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textTertiary)', padding: 4 }}><X size={18} /></button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
               {qaItems.map(g => (
                 <div key={g.group}>
-                  <div style={{ fontSize: 9, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{g.group}</div>
+                  <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 8 }}>{g.group}</div>
                   {g.items.map(item => (
-                    <div key={item.label} onClick={() => { if (item.href) { window.location.href = item.href } else { setQaOpen(false) } }} style={{ fontSize: 12, color: t.textSecondary, padding: '6px 0', cursor: 'pointer', opacity: item.href ? 1 : 0.5 }}
-                      onMouseEnter={e => (e.currentTarget.style.color = t.accent)} onMouseLeave={e => (e.currentTarget.style.color = t.textSecondary)}>{item.label}</div>
+                    <div key={item.label} onClick={() => { if (item.href) { window.location.href = item.href } else { setQaOpen(false) } }} style={{ fontSize: 12, color: 'var(--tz-textSecondary)', padding: '6px 0', cursor: 'pointer', opacity: item.href ? 1 : 0.5 }}
+                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--tz-accent)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--tz-textSecondary)')}>{item.label}</div>
                   ))}
                 </div>
               ))}

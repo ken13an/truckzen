@@ -18,7 +18,7 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, message, confir
   const { tokens: t } = useTheme()
   return (
     <Modal open={open} onClose={onClose} title={title} maxWidth={380}>
-      <p style={{ margin: '0 0 20px', fontSize: 14, color: t.textSecondary, lineHeight: 1.5 }}>{message}</p>
+      <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--tz-textSecondary)', lineHeight: 1.5 }}>{message}</p>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         <Button variant="secondary" onClick={onClose}>Cancel</Button>
         <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm} disabled={loading}>

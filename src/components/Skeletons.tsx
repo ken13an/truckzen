@@ -15,7 +15,7 @@ function Bone({ w = '100%', h = 16, radius = 6, style = {} }: {
   return (
     <div style={{
       width: w, height: h, borderRadius: radius,
-      background: t.surfaceMuted,
+      background: 'var(--tz-surfaceMuted)',
       animation: 'pulse 1.5s ease-in-out infinite',
       flexShrink: 0, ...style,
     }}/>
@@ -25,13 +25,13 @@ function Bone({ w = '100%', h = 16, radius = 6, style = {} }: {
 export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: number }) {
   const { tokens: t } = useTheme()
   return (
-    <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, overflow: 'hidden' }}>
       <style>{pulse}</style>
-      <div style={{ display: 'flex', gap: 12, padding: '10px 14px', background: t.bg, borderBottom: `1px solid ${t.border}` }}>
+      <div style={{ display: 'flex', gap: 12, padding: '10px 14px', background: 'var(--tz-bg)', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
         {Array.from({ length: cols }).map((_, i) => <Bone key={i} w={`${60 + Math.random() * 60}px`} h={8}/>)}
       </div>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderBottom: `1px solid ${t.border}`, alignItems: 'center' }}>
+        <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderBottom: `1px solid ${'var(--tz-border)'}`, alignItems: 'center' }}>
           {Array.from({ length: cols }).map((_, j) => (
             <Bone key={j} w={j === 0 ? '80px' : j === cols - 1 ? '60px' : `${40 + Math.random() * 100}%`} h={12}/>
           ))}
@@ -47,7 +47,7 @@ export function StatsSkeleton({ count = 6 }: { count?: number }) {
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 10, marginBottom: 20 }}>
       <style>{pulse}</style>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 10, padding: '12px 14px' }}>
+        <div key={i} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 10, padding: '12px 14px' }}>
           <Bone w="60%" h={8} style={{ marginBottom: 10 }}/>
           <Bone w="50%" h={28} radius={4}/>
         </div>
@@ -59,7 +59,7 @@ export function StatsSkeleton({ count = 6 }: { count?: number }) {
 export function CardSkeleton({ lines = 3 }: { lines?: number }) {
   const { tokens: t } = useTheme()
   return (
-    <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 16 }}>
+    <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 16 }}>
       <style>{pulse}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
         <Bone w="40%" h={16}/>
@@ -95,7 +95,7 @@ export function SOCardSkeleton({ count = 4 }: { count?: number }) {
     <>
       <style>{pulse}</style>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 14, marginBottom: 10 }}>
+        <div key={i} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 14, marginBottom: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ flex: 1 }}>
               <Bone w={80} h={10} style={{ marginBottom: 8 }}/>

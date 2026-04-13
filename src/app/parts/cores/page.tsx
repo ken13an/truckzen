@@ -11,13 +11,13 @@ import { useTheme } from '@/hooks/useTheme'
 
 const FONT = "'Instrument Sans',sans-serif"
 const MONO = "'IBM Plex Mono',monospace"
-const BLUE = THEME.dark.accentLight, GREEN = THEME.dark.success, AMBER = THEME.dark.warning, RED = THEME.dark.danger, MUTED = THEME.dark.textSecondary
+const BLUE = 'var(--tz-accentLight)', GREEN = 'var(--tz-success)', AMBER = 'var(--tz-warning)', RED = 'var(--tz-danger)', MUTED = 'var(--tz-textSecondary)'
 
 const STATUS_CFG: Record<string, { label: string; color: string }> = {
   pending_removal: { label: 'Pending Removal', color: RED },
   removed: { label: 'Removed', color: AMBER },
   stored: { label: 'In Storage', color: BLUE },
-  shipped: { label: 'Shipped', color: THEME.dark.aiPurple },
+  shipped: { label: 'Shipped', color: 'var(--tz-aiPurple)' },
   credit_received: { label: 'Credit Received', color: GREEN },
 }
 

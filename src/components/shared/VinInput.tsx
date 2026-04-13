@@ -41,9 +41,9 @@ export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
           maxLength={17}
           style={{
             flex: 1, padding: '10px 12px', borderRadius: 10, fontSize: 13, fontFamily: FONT,
-            border: `1px solid ${isDark ? t.border : t.borderLight}`,
-            background: isDark ? t.bgCard : '#fff',
-            color: isDark ? t.text : t.textLight,
+            border: `1px solid ${isDark ? 'var(--tz-border)' : 'var(--tz-borderLight)'}`,
+            background: isDark ? 'var(--tz-bgCard)' : '#fff',
+            color: isDark ? 'var(--tz-text)' : 'var(--tz-textLight)',
             outline: 'none', boxSizing: 'border-box',
             letterSpacing: '1px', textTransform: 'uppercase',
           }}
@@ -52,8 +52,8 @@ export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
           onClick={handleDecode}
           disabled={loading || value.length !== 17}
           style={{
-            padding: '10px 16px', borderRadius: 10, border: `1px solid ${t.accent}`,
-            background: 'transparent', color: t.accent, fontSize: 12, fontWeight: 700,
+            padding: '10px 16px', borderRadius: 10, border: `1px solid ${'var(--tz-accent)'}`,
+            background: 'transparent', color: 'var(--tz-accent)', fontSize: 12, fontWeight: 700,
             cursor: loading || value.length !== 17 ? 'not-allowed' : 'pointer',
             fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
             opacity: loading || value.length !== 17 ? 0.5 : 1,
@@ -63,11 +63,11 @@ export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
           Decode
         </button>
       </div>
-      <div style={{ fontSize: 11, color: isDark ? t.textTertiary : t.textLightSecondary, marginTop: 4 }}>
+      <div style={{ fontSize: 11, color: isDark ? 'var(--tz-textTertiary)' : 'var(--tz-textLightSecondary)', marginTop: 4 }}>
         {value.length}/17 characters
       </div>
 
-      {error && <div style={{ color: t.danger, fontSize: 12, marginTop: 6 }}>{error}</div>}
+      {error && <div style={{ color: 'var(--tz-danger)', fontSize: 12, marginTop: 6 }}>{error}</div>}
 
       {result && !error && (
         <div style={{
@@ -76,10 +76,10 @@ export function VinInput({ value, onChange, onDecode, theme = 'dark' }: Props) {
           border: `1px solid ${isDark ? 'rgba(34,197,94,0.2)' : '#bbf7d0'}`,
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
-          <CheckCircle2 size={16} color={t.success} />
-          <div style={{ fontSize: 13, color: isDark ? t.text : t.textLight }}>
+          <CheckCircle2 size={16} color={'var(--tz-success)'} />
+          <div style={{ fontSize: 13, color: isDark ? 'var(--tz-text)' : 'var(--tz-textLight)' }}>
             <strong>{result.year} {result.make} {result.model}</strong>
-            {result.engine && <span style={{ color: isDark ? t.textSecondary : t.textLightSecondary }}> — {result.engine}</span>}
+            {result.engine && <span style={{ color: isDark ? 'var(--tz-textSecondary)' : 'var(--tz-textLightSecondary)' }}> — {result.engine}</span>}
           </div>
         </div>
       )}

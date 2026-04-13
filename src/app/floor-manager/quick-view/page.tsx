@@ -12,14 +12,14 @@ import { useTheme } from '@/hooks/useTheme'
 const FONT = "'Inter', -apple-system, sans-serif"
 // Interior palette kept dark — quick-view is a dark operational surface.
 // Outer shell now follows theme toggle via AppPageShell.
-const TEXT = THEME.dark.text
-const CARD_BG = THEME.dark.bgElevated
-const CARD_BORDER = THEME.dark.cardBorder
-const BLUE = THEME.dark.accent
-const AMBER = THEME.dark.warning
-const GREEN = THEME.dark.success
-const RED = THEME.dark.danger
-const DIM = THEME.dark.textTertiary
+const TEXT = 'var(--tz-text)'
+const CARD_BG = 'var(--tz-bgElevated)'
+const CARD_BORDER = 'var(--tz-cardBorder)'
+const BLUE = 'var(--tz-accent)'
+const AMBER = 'var(--tz-warning)'
+const GREEN = 'var(--tz-success)'
+const RED = 'var(--tz-danger)'
+const DIM = 'var(--tz-textTertiary)'
 
 type Filter = 'unassigned' | 'assigned' | 'waiting_parts' | 'in_progress'
 

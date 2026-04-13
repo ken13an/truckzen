@@ -7,7 +7,7 @@
  * width, and padding MUST use this shell instead of its own inline `<div>`.
  *
  * Why it exists:
- *   Before this, each page painted its own `<div style={{ background: _t.bg, minHeight: '100vh' }}>`
+ *   Before this, each page painted its own `<div style={{ background: 'var(--tz-bg)', minHeight: '100vh' }}>`
  *   over the AppShell. Because `_t` was pinned to `THEME.dark`, the warm-mode toggle
  *   had no effect on page backgrounds. This component reads `useTheme()` so the
  *   surface responds to the mode toggle correctly.

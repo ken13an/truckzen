@@ -252,48 +252,48 @@ function TechMobilePage() {
   }
 
   const statusColor: Record<string, string> = {
-    draft: THEME.dark.textTertiary, in_progress: THEME.dark.accent, waiting_parts: THEME.dark.warning,
-    waiting_approval: THEME.dark.warning, done: THEME.dark.success, good_to_go: THEME.dark.success,
-    ready_final_inspection: THEME.dark.aiPurple, not_approved: THEME.dark.danger,
+    draft: 'var(--tz-textTertiary)', in_progress: 'var(--tz-accent)', waiting_parts: 'var(--tz-warning)',
+    waiting_approval: 'var(--tz-warning)', done: 'var(--tz-success)', good_to_go: 'var(--tz-success)',
+    ready_final_inspection: 'var(--tz-aiPurple)', not_approved: 'var(--tz-danger)',
   }
 
   const priorityIcon: Record<string, string> = { low: '', normal: '', high: '!', critical: '!!' }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: THEME.dark.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ color: THEME.dark.textSecondary, fontSize: 14 }}>Loading...</div>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ color: 'var(--tz-textSecondary)', fontSize: 14 }}>Loading...</div>
     </div>
   )
 
   // ── RENDER ───────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: THEME.dark.bg, color: THEME.dark.text, fontFamily: "'Instrument Sans',sans-serif", paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', color: 'var(--tz-text)', fontFamily: "'Instrument Sans',sans-serif", paddingBottom: 80 }}>
       {/* Header */}
-      <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${THEME.dark.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${'var(--tz-border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {view === 'detail' ? (
-          <button onClick={() => { setView('list'); setSelected(null); setShowParts(false) }} style={{ background: 'none', border: 'none', color: THEME.dark.accentLight, fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+          <button onClick={() => { setView('list'); setSelected(null); setShowParts(false) }} style={{ background: 'none', border: 'none', color: 'var(--tz-accentLight)', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0 }}>
             ← Back
           </button>
         ) : (
-          <div style={{ fontSize: 18, fontWeight: 700, color: THEME.dark.text }}>TruckZen</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--tz-text)' }}>TruckZen</div>
         )}
-        <div style={{ fontSize: 12, color: THEME.dark.textSecondary }}>{user?.full_name} · {user?.team ? `Team ${user.team}` : user?.role}</div>
+        <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{user?.full_name} · {user?.team ? `Team ${user.team}` : user?.role}</div>
       </div>
 
       {/* Clock banner */}
       {clockedIn && (
         <div style={{ background: 'rgba(29,111,232,.1)', borderBottom: '1px solid rgba(29,111,232,.2)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <span style={{ fontSize: 11, color: THEME.dark.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em' }}>Clocked in </span>
-            <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 16, fontWeight: 600, color: THEME.dark.accentLight }}>{fmtTime(elapsed)}</span>
+            <span style={{ fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Clocked in </span>
+            <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 16, fontWeight: 600, color: 'var(--tz-accentLight)' }}>{fmtTime(elapsed)}</span>
           </div>
-          <button onClick={clockOut} style={{ ...S.smallBtn, background: THEME.dark.border, color: THEME.dark.danger, borderColor: THEME.dark.danger }}>Clock Out</button>
+          <button onClick={clockOut} style={{ ...S.smallBtn, background: 'var(--tz-border)', color: 'var(--tz-danger)', borderColor: 'var(--tz-danger)' }}>Clock Out</button>
         </div>
       )}
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 16, left: 20, right: 20, zIndex: 100, background: THEME.dark.accent, color: THEME.dark.bgLight, padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
+        <div style={{ position: 'fixed', top: 16, left: 20, right: 20, zIndex: 100, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', padding: '12px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
           {toast}
         </div>
       )}
@@ -308,12 +308,12 @@ function TechMobilePage() {
       </div>
 
       {/* Bottom nav */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: THEME.dark.bgCard, borderTop: `1px solid ${THEME.dark.border}`, display: 'flex', zIndex: 50 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--tz-bgCard)', borderTop: `1px solid ${'var(--tz-border)'}`, display: 'flex', zIndex: 50 }}>
         {([['jobs', 'My Jobs', ''], ['floor', 'Floor', ''], ['parts', 'Parts', ''], ['dvir', 'DVIR', '']] as const).map(([k, label, icon]) => (
           <button key={k} onClick={() => { setTab(k); setView('list'); setSelected(null); setShowParts(false); setShowDVIR(false) }}
             style={{ flex: 1, padding: '10px 0 12px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center' }}>
             <div style={{ fontSize: 20 }}>{icon}</div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: tab === k ? THEME.dark.accentLight : THEME.dark.textTertiary, marginTop: 2 }}>{label}</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: tab === k ? 'var(--tz-accentLight)' : 'var(--tz-textTertiary)', marginTop: 2 }}>{label}</div>
           </button>
         ))}
       </div>
@@ -322,12 +322,12 @@ function TechMobilePage() {
       {showParts && selected && (
         <div style={S.modal}>
           <div style={S.modalCard}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: THEME.dark.text, marginBottom: 12 }}>Request Parts</div>
-            <div style={{ fontSize: 12, color: THEME.dark.textSecondary, marginBottom: 12 }}>{(selected.assets as any)?.unit_number} — {selected.so_number}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Request Parts</div>
+            <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 12 }}>{(selected.assets as any)?.unit_number} — {selected.so_number}</div>
             <textarea value={partsNote} onChange={e => setPartsNote(e.target.value)} placeholder="What parts do you need?"
               style={{ ...S.input, height: 100, resize: 'none' }} />
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-              <button onClick={() => setShowParts(false)} style={{ ...S.actionBtn, background: THEME.dark.border, color: THEME.dark.textSecondary, flex: 1 }}>Cancel</button>
+              <button onClick={() => setShowParts(false)} style={{ ...S.actionBtn, background: 'var(--tz-border)', color: 'var(--tz-textSecondary)', flex: 1 }}>Cancel</button>
               <button onClick={() => requestParts(selected.id)} disabled={saving || !partsNote.trim()}
                 style={{ ...S.actionBtn, flex: 1, opacity: saving || !partsNote.trim() ? 0.5 : 1 }}>Send Request</button>
             </div>
@@ -339,13 +339,13 @@ function TechMobilePage() {
       {showActionRequest && selected && (
         <div style={S.modal}>
           <div style={S.modalCard}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: THEME.dark.text, marginBottom: 12 }}>Request Extra Time</div>
-            <div style={{ fontSize: 12, color: THEME.dark.textSecondary, marginBottom: 12 }}>{(selected.assets as any)?.unit_number} — {selected.so_number}</div>
-            <div style={{ fontSize: 12, color: THEME.dark.text, marginBottom: 8 }}>How much extra time do you need?</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Request Extra Time</div>
+            <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 12 }}>{(selected.assets as any)?.unit_number} — {selected.so_number}</div>
+            <div style={{ fontSize: 12, color: 'var(--tz-text)', marginBottom: 8 }}>How much extra time do you need?</div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               {['0.5', '1', '2', '4'].map(h => (
                 <button key={h} onClick={() => setActionHours(h)}
-                  style={{ ...S.actionBtn, flex: 1, padding: '10px 8px', background: actionHours === h ? THEME.dark.accent : THEME.dark.border, color: actionHours === h ? THEME.dark.bgLight : THEME.dark.textSecondary, fontWeight: 700 }}>
+                  style={{ ...S.actionBtn, flex: 1, padding: '10px 8px', background: actionHours === h ? 'var(--tz-accent)' : 'var(--tz-border)', color: actionHours === h ? 'var(--tz-bgLight)' : 'var(--tz-textSecondary)', fontWeight: 700 }}>
                   {h}h
                 </button>
               ))}
@@ -354,7 +354,7 @@ function TechMobilePage() {
               placeholder="Why do you need more time? (required)"
               style={{ ...S.input, height: 80, resize: 'none' }} />
             <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-              <button onClick={() => setShowActionRequest(false)} style={{ ...S.actionBtn, background: THEME.dark.border, color: THEME.dark.textSecondary, flex: 1 }}>Cancel</button>
+              <button onClick={() => setShowActionRequest(false)} style={{ ...S.actionBtn, background: 'var(--tz-border)', color: 'var(--tz-textSecondary)', flex: 1 }}>Cancel</button>
               <button disabled={saving || !actionDesc.trim() || !actionHours} onClick={async () => {
                 setSaving(true)
                 await fetch('/api/mechanic-requests', {
@@ -381,47 +381,47 @@ function TechMobilePage() {
   // ── SUB-VIEWS ────────────────────────────────────────────
   function JobsList() {
     return <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: THEME.dark.textSecondary, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-textSecondary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
         My Jobs ({jobs.length})
       </div>
-      {jobs.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: THEME.dark.textTertiary, fontSize: 14 }}>No assigned jobs right now</div>}
+      {jobs.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: 'var(--tz-textTertiary)', fontSize: 14 }}>No assigned jobs right now</div>}
       {jobs.map(so => (
         <div key={so.id} onClick={() => { setSelected(so); setView('detail') }}
-          style={{ background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 12, padding: 16, marginBottom: 10, cursor: 'pointer' }}>
+          style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 10, cursor: 'pointer' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
             <div>
-              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 13, fontWeight: 600, color: THEME.dark.accentLight }}>{so.so_number}</span>
+              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 13, fontWeight: 600, color: 'var(--tz-accentLight)' }}>{so.so_number}</span>
               {so.priority === 'high' || so.priority === 'critical' ? (
-                <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: so.priority === 'critical' ? THEME.dark.danger : THEME.dark.warning, textTransform: 'uppercase' }}>
+                <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: so.priority === 'critical' ? 'var(--tz-danger)' : 'var(--tz-warning)', textTransform: 'uppercase' }}>
                   {priorityIcon[so.priority]} {so.priority}
                 </span>
               ) : null}
             </div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: statusColor[so.status] || THEME.dark.textTertiary, textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: statusColor[so.status] || 'var(--tz-textTertiary)', textTransform: 'uppercase' }}>
               {so.status?.replace(/_/g, ' ')}
             </span>
           </div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: THEME.dark.text, marginBottom: 4 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--tz-text)', marginBottom: 4 }}>
             {(so.assets as any)?.unit_number ? `#${(so.assets as any).unit_number}` : '—'}
-            <span style={{ fontSize: 12, color: THEME.dark.textSecondary, fontWeight: 400, marginLeft: 8 }}>
+            <span style={{ fontSize: 12, color: 'var(--tz-textSecondary)', fontWeight: 400, marginLeft: 8 }}>
               {(so.assets as any)?.year} {(so.assets as any)?.make} {(so.assets as any)?.model}
             </span>
           </div>
-          <div style={{ fontSize: 12, color: THEME.dark.textSecondary }}>{(so.customers as any)?.company_name || '—'}</div>
-          {so.complaint && <div style={{ fontSize: 12, color: THEME.dark.textSecondary, marginTop: 6, lineHeight: 1.5 }}>{so.complaint.slice(0, 100)}{so.complaint.length > 100 ? '...' : ''}</div>}
+          <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{(so.customers as any)?.company_name || '—'}</div>
+          {so.complaint && <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginTop: 6, lineHeight: 1.5 }}>{so.complaint.slice(0, 100)}{so.complaint.length > 100 ? '...' : ''}</div>}
           {/* Parts status banner */}
           {partsStatusMap[so.id] && (() => {
             const ps = partsStatusMap[so.id]
             const orderedCount = (ps.line_items || []).filter((l: any) => l.ordered && !l.in_stock).length
             const eta = (ps.line_items || []).find((l: any) => l.ordered && l.eta)?.eta
-            if (ps.status === 'ready') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(29,184,112,.12)', fontSize: 11, fontWeight: 600, color: THEME.dark.success }}>Parts ready — go pick up from parts dept</div>
-            if (ps.status === 'partial') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(212,136,42,.12)', fontSize: 11, fontWeight: 600, color: THEME.dark.warning }}>Some parts ready, {orderedCount} on order{eta ? ` until ${eta}` : ''}</div>
-            if (ps.status === 'submitted') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(212,136,42,.12)', fontSize: 11, fontWeight: 600, color: THEME.dark.warning }}>Parts being prepared</div>
-            if (['pending', 'requested'].includes(ps.status)) return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(124,139,160,.12)', fontSize: 11, fontWeight: 600, color: THEME.dark.textSecondary }}>Parts request pending</div>
+            if (ps.status === 'ready') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(29,184,112,.12)', fontSize: 11, fontWeight: 600, color: 'var(--tz-success)' }}>Parts ready — go pick up from parts dept</div>
+            if (ps.status === 'partial') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(212,136,42,.12)', fontSize: 11, fontWeight: 600, color: 'var(--tz-warning)' }}>Some parts ready, {orderedCount} on order{eta ? ` until ${eta}` : ''}</div>
+            if (ps.status === 'submitted') return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(212,136,42,.12)', fontSize: 11, fontWeight: 600, color: 'var(--tz-warning)' }}>Parts being prepared</div>
+            if (['pending', 'requested'].includes(ps.status)) return <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, background: 'rgba(124,139,160,.12)', fontSize: 11, fontWeight: 600, color: 'var(--tz-textSecondary)' }}>Parts request pending</div>
             return null
           })()}
           {clockedIn === so.id && (
-            <div style={{ marginTop: 8, fontSize: 12, color: THEME.dark.accentLight, fontWeight: 600 }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--tz-accentLight)', fontWeight: 600 }}>
               Clocked in — {fmtTime(elapsed)}
             </div>
           )}
@@ -439,13 +439,13 @@ function TechMobilePage() {
     return <>
       {/* Unit + customer */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: THEME.dark.text }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)' }}>
           {a?.unit_number ? `#${a.unit_number}` : so.so_number}
         </div>
-        <div style={{ fontSize: 13, color: THEME.dark.textSecondary, marginTop: 2 }}>
+        <div style={{ fontSize: 13, color: 'var(--tz-textSecondary)', marginTop: 2 }}>
           {a?.year} {a?.make} {a?.model} · {c?.company_name || '—'}
         </div>
-        <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: THEME.dark.textTertiary, marginTop: 4 }}>{so.so_number}</div>
+        <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: 'var(--tz-textTertiary)', marginTop: 4 }}>{so.so_number}</div>
       </div>
 
       {/* Status badge */}
@@ -459,7 +459,7 @@ function TechMobilePage() {
         const orderedItems = (ps.line_items || []).filter((l: any) => l.ordered && !l.in_stock)
         const eta = orderedItems.find((l: any) => l.eta)?.eta
         const bg = ps.status === 'ready' ? 'rgba(29,184,112,.12)' : ps.status === 'partial' || ps.status === 'submitted' ? 'rgba(212,136,42,.12)' : 'rgba(124,139,160,.12)'
-        const clr = ps.status === 'ready' ? THEME.dark.success : ps.status === 'partial' || ps.status === 'submitted' ? THEME.dark.warning : THEME.dark.textSecondary
+        const clr = ps.status === 'ready' ? 'var(--tz-success)' : ps.status === 'partial' || ps.status === 'submitted' ? 'var(--tz-warning)' : 'var(--tz-textSecondary)'
         const msg = ps.status === 'ready' ? 'Parts ready — go pick up from parts dept'
           : ps.status === 'partial' ? `Some parts ready, ${orderedItems.length} on order${eta ? ` until ${eta}` : ''}`
           : ps.status === 'submitted' ? 'Parts being prepared'
@@ -470,23 +470,23 @@ function TechMobilePage() {
       {/* Complaint / Cause / Correction */}
       <div style={S.section}>
         <div style={S.sectionLabel}>Complaint</div>
-        <div style={{ fontSize: 14, color: THEME.dark.text, lineHeight: 1.6 }}>{so.complaint || '—'}</div>
+        <div style={{ fontSize: 14, color: 'var(--tz-text)', lineHeight: 1.6 }}>{so.complaint || '—'}</div>
       </div>
-      {so.cause && <div style={S.section}><div style={S.sectionLabel}>Cause</div><div style={{ fontSize: 14, color: THEME.dark.text }}>{so.cause}</div></div>}
-      {so.correction && <div style={S.section}><div style={S.sectionLabel}>Correction</div><div style={{ fontSize: 14, color: THEME.dark.text }}>{so.correction}</div></div>}
+      {so.cause && <div style={S.section}><div style={S.sectionLabel}>Cause</div><div style={{ fontSize: 14, color: 'var(--tz-text)' }}>{so.cause}</div></div>}
+      {so.correction && <div style={S.section}><div style={S.sectionLabel}>Correction</div><div style={{ fontSize: 14, color: 'var(--tz-text)' }}>{so.correction}</div></div>}
 
       {/* Time tracking */}
       <div style={{ ...S.card, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 11, color: THEME.dark.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em' }}>Time</div>
+          <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Time</div>
           {isClockedHere ? (
-            <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 20, fontWeight: 700, color: THEME.dark.accentLight }}>{fmtTime(elapsed)}</div>
+            <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 20, fontWeight: 700, color: 'var(--tz-accentLight)' }}>{fmtTime(elapsed)}</div>
           ) : (
-            <div style={{ fontSize: 14, color: THEME.dark.textTertiary }}>{clockedIn ? 'On another job' : 'Not clocked in'}</div>
+            <div style={{ fontSize: 14, color: 'var(--tz-textTertiary)' }}>{clockedIn ? 'On another job' : 'Not clocked in'}</div>
           )}
         </div>
         {isClockedHere ? (
-          <button onClick={clockOut} style={{ ...S.actionBtn, background: THEME.dark.border, color: THEME.dark.danger, borderColor: THEME.dark.danger }}>Clock Out</button>
+          <button onClick={clockOut} style={{ ...S.actionBtn, background: 'var(--tz-border)', color: 'var(--tz-danger)', borderColor: 'var(--tz-danger)' }}>Clock Out</button>
         ) : (
           <button onClick={() => clockIn(so.id)} style={S.actionBtn} disabled={!!saving}>Clock In</button>
         )}
@@ -510,25 +510,25 @@ function TechMobilePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {so.status !== 'in_progress' && (
             <button onClick={() => updateStatus(so.id, 'in_progress')} disabled={saving}
-              style={{ ...S.bigBtn, background: `linear-gradient(135deg,${THEME.dark.accent},${THEME.dark.accentHover})` }}>
+              style={{ ...S.bigBtn, background: `linear-gradient(135deg,${'var(--tz-accent)'},${'var(--tz-accentHover)'})` }}>
               Start Work
             </button>
           )}
           {so.status === 'in_progress' && (
             <>
               <button onClick={() => updateStatus(so.id, 'waiting_parts')} disabled={saving}
-                style={{ ...S.bigBtn, background: THEME.dark.warning, color: THEME.dark.bg }}>
+                style={{ ...S.bigBtn, background: 'var(--tz-warning)', color: 'var(--tz-bg)' }}>
                 Waiting for Parts
               </button>
               <button onClick={() => { updateStatus(so.id, 'done'); if (isClockedHere) clockOut() }} disabled={saving}
-                style={{ ...S.bigBtn, background: THEME.dark.success, color: THEME.dark.bg }}>
+                style={{ ...S.bigBtn, background: 'var(--tz-success)', color: 'var(--tz-bg)' }}>
                 Complete Job
               </button>
             </>
           )}
           {so.status === 'waiting_parts' && (
             <button onClick={() => updateStatus(so.id, 'in_progress')} disabled={saving}
-              style={{ ...S.bigBtn, background: `linear-gradient(135deg,${THEME.dark.accent},${THEME.dark.accentHover})` }}>
+              style={{ ...S.bigBtn, background: `linear-gradient(135deg,${'var(--tz-accent)'},${'var(--tz-accentHover)'})` }}>
               Resume Work (Parts Received)
             </button>
           )}
@@ -538,9 +538,9 @@ function TechMobilePage() {
       {/* Totals */}
       {(so.labor_total > 0 || so.parts_total > 0) && (
         <div style={{ ...S.card, display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-          <div><div style={{ fontSize: 10, color: THEME.dark.textSecondary }}>LABOR</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.labor_total?.toFixed(0)}</div></div>
-          <div><div style={{ fontSize: 10, color: THEME.dark.textSecondary }}>PARTS</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.parts_total?.toFixed(0)}</div></div>
-          <div><div style={{ fontSize: 10, color: THEME.dark.textSecondary }}>TOTAL</div><div style={{ fontSize: 16, fontWeight: 700, color: THEME.dark.accentLight }}>${so.grand_total?.toFixed(0)}</div></div>
+          <div><div style={{ fontSize: 10, color: 'var(--tz-textSecondary)' }}>LABOR</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.labor_total?.toFixed(0)}</div></div>
+          <div><div style={{ fontSize: 10, color: 'var(--tz-textSecondary)' }}>PARTS</div><div style={{ fontSize: 16, fontWeight: 700 }}>${so.parts_total?.toFixed(0)}</div></div>
+          <div><div style={{ fontSize: 10, color: 'var(--tz-textSecondary)' }}>TOTAL</div><div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-accentLight)' }}>${so.grand_total?.toFixed(0)}</div></div>
         </div>
       )}
     </>
@@ -548,18 +548,18 @@ function TechMobilePage() {
 
   function FloorView() {
     return <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: THEME.dark.textSecondary, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-textSecondary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>
         Shop Floor ({floorJobs.length})
       </div>
       {floorJobs.map(so => (
-        <div key={so.id} style={{ background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 10, padding: 12, marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div key={so.id} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, padding: 12, marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: THEME.dark.accentLight }}>{so.so_number}</span>
-              {so.bay && <span style={{ fontSize: 10, color: THEME.dark.textTertiary, background: THEME.dark.border, padding: '2px 6px', borderRadius: 4 }}>Bay {so.bay}</span>}
+              <span style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: 'var(--tz-accentLight)' }}>{so.so_number}</span>
+              {so.bay && <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)', background: 'var(--tz-border)', padding: '2px 6px', borderRadius: 4 }}>Bay {so.bay}</span>}
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: THEME.dark.text, marginTop: 4 }}>#{(so.assets as any)?.unit_number || '—'}</div>
-            <div style={{ fontSize: 11, color: THEME.dark.textSecondary }}>{(so.customers as any)?.company_name} · {(so.users as any)?.full_name || 'Unassigned'}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)', marginTop: 4 }}>#{(so.assets as any)?.unit_number || '—'}</div>
+            <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)' }}>{(so.customers as any)?.company_name} · {(so.users as any)?.full_name || 'Unassigned'}</div>
           </div>
           <div style={{ fontSize: 10, fontWeight: 700, color: statusColor[so.status], textTransform: 'uppercase', textAlign: 'right' }}>
             {so.status?.replace(/_/g, ' ')}
@@ -585,22 +585,22 @@ function TechMobilePage() {
     )
 
     return <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: THEME.dark.textSecondary, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>Parts Lookup</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-textSecondary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>Parts Lookup</div>
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search part # or name..."
         style={{ ...S.input, marginBottom: 12 }} />
       {filtered.slice(0, 30).map(p => (
-        <div key={p.part_number} style={{ background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
+        <div key={p.part_number} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, padding: 12, marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: THEME.dark.accentLight }}>{p.part_number}</div>
-              <div style={{ fontSize: 14, color: THEME.dark.text, marginTop: 2 }}>{p.description}</div>
+              <div style={{ fontFamily: "'IBM Plex Mono'", fontSize: 12, color: 'var(--tz-accentLight)' }}>{p.part_number}</div>
+              <div style={{ fontSize: 14, color: 'var(--tz-text)', marginTop: 2 }}>{p.description}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: p.on_hand > 0 ? THEME.dark.success : THEME.dark.danger }}>{p.on_hand}</div>
-              <div style={{ fontSize: 10, color: THEME.dark.textTertiary }}>in stock</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: p.on_hand > 0 ? 'var(--tz-success)' : 'var(--tz-danger)' }}>{p.on_hand}</div>
+              <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)' }}>in stock</div>
             </div>
           </div>
-          {p.bin_location && <div style={{ fontSize: 11, color: THEME.dark.textSecondary, marginTop: 4 }}>Bin: {p.bin_location}</div>}
+          {p.bin_location && <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginTop: 4 }}>Bin: {p.bin_location}</div>}
         </div>
       ))}
     </>
@@ -616,7 +616,7 @@ function TechMobilePage() {
     }, [user])
 
     return <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: THEME.dark.textSecondary, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>DVIR Submission</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-textSecondary)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '.05em' }}>DVIR Submission</div>
 
       <div style={S.card}>
         <div style={S.fieldLabel}>Unit Number</div>
@@ -630,7 +630,7 @@ function TechMobilePage() {
         <div style={{ display: 'flex', gap: 10 }}>
           {(['pre_trip', 'post_trip'] as const).map(dt => (
             <button key={dt} onClick={() => setDvirType(dt)}
-              style={{ flex: 1, padding: '12px 0', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: dvirType === dt ? `1px solid ${THEME.dark.accent}` : `1px solid ${THEME.dark.border}`, background: dvirType === dt ? THEME.dark.accentBg : THEME.dark.bgCard, color: dvirType === dt ? THEME.dark.accentLight : THEME.dark.textSecondary }}>
+              style={{ flex: 1, padding: '12px 0', borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: 'pointer', border: dvirType === dt ? `1px solid ${'var(--tz-accent)'}` : `1px solid ${'var(--tz-border)'}`, background: dvirType === dt ? 'var(--tz-accentBg)' : 'var(--tz-bgCard)', color: dvirType === dt ? 'var(--tz-accentLight)' : 'var(--tz-textSecondary)' }}>
               {dt === 'pre_trip' ? 'Pre-Trip' : 'Post-Trip'}
             </button>
           ))}
@@ -655,15 +655,15 @@ function TechMobilePage() {
 
 // ── STYLES ─────────────────────────────────────────────────
 const S: Record<string, React.CSSProperties> = {
-  card: { background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 12, padding: 16, marginBottom: 16 },
+  card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 16 },
   section: { marginBottom: 20 },
-  sectionLabel: { fontSize: 11, fontWeight: 600, color: THEME.dark.textSecondary, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 },
-  fieldLabel: { fontSize: 12, fontWeight: 600, color: THEME.dark.textSecondary, marginBottom: 6 },
-  input: { width: '100%', padding: '12px 14px', background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 9, color: THEME.dark.text, fontSize: 14, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' },
-  actionBtn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: `linear-gradient(135deg,${THEME.dark.accent},${THEME.dark.accentHover})`, color: THEME.dark.bgLight, whiteSpace: 'nowrap' },
-  bigBtn: { padding: '16px 24px', borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', background: `linear-gradient(135deg,${THEME.dark.accent},${THEME.dark.accentHover})`, color: THEME.dark.bgLight, textAlign: 'center', width: '100%' },
-  tileBtn: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '16px 12px', background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 12, cursor: 'pointer', color: THEME.dark.text, fontSize: 13, fontWeight: 600, fontFamily: "'Instrument Sans',sans-serif" },
-  smallBtn: { padding: '6px 14px', borderRadius: 7, border: `1px solid ${THEME.dark.border}`, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'none' },
+  sectionLabel: { fontSize: 11, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 },
+  fieldLabel: { fontSize: 12, fontWeight: 600, color: 'var(--tz-textSecondary)', marginBottom: 6 },
+  input: { width: '100%', padding: '12px 14px', background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 9, color: 'var(--tz-text)', fontSize: 14, fontFamily: "'Instrument Sans',sans-serif", outline: 'none', boxSizing: 'border-box' },
+  actionBtn: { padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: `linear-gradient(135deg,${'var(--tz-accent)'},${'var(--tz-accentHover)'})`, color: 'var(--tz-bgLight)', whiteSpace: 'nowrap' },
+  bigBtn: { padding: '16px 24px', borderRadius: 12, border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', background: `linear-gradient(135deg,${'var(--tz-accent)'},${'var(--tz-accentHover)'})`, color: 'var(--tz-bgLight)', textAlign: 'center', width: '100%' },
+  tileBtn: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '16px 12px', background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, cursor: 'pointer', color: 'var(--tz-text)', fontSize: 13, fontWeight: 600, fontFamily: "'Instrument Sans',sans-serif" },
+  smallBtn: { padding: '6px 14px', borderRadius: 7, border: `1px solid ${'var(--tz-border)'}`, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: 'none' },
   modal: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', zIndex: 90, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: 16 },
-  modalCard: { background: THEME.dark.bgCard, border: `1px solid ${THEME.dark.border}`, borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 },
+  modalCard: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 16, padding: 24, width: '100%', maxWidth: 420 },
 }

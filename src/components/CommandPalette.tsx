@@ -21,15 +21,15 @@ const SECTION_ORDER: { key: SearchEntityType; label: string; icon: any }[] = [
 ]
 
 const STATUS_COLORS: Record<string, (t: any) => string> = {
-  draft: t => t.textSecondary,
-  open: t => t.accent,
-  in_progress: t => t.accent,
-  estimate: t => t.warning,
-  waiting_parts: t => t.warning,
-  done: t => t.success,
-  good_to_go: t => t.success,
-  void: t => t.danger,
-  cancelled: t => t.danger,
+  draft: t => 'var(--tz-textSecondary)',
+  open: t => 'var(--tz-accent)',
+  in_progress: t => 'var(--tz-accent)',
+  estimate: t => 'var(--tz-warning)',
+  waiting_parts: t => 'var(--tz-warning)',
+  done: t => 'var(--tz-success)',
+  good_to_go: t => 'var(--tz-success)',
+  void: t => 'var(--tz-danger)',
+  cancelled: t => 'var(--tz-danger)',
 }
 
 export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
