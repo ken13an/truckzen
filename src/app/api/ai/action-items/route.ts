@@ -8,69 +8,18 @@ import { logAIUsage, checkAILimit } from '@/lib/ai-usage'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-/**
- * Last-resort split when AI is unavailable/errored and the user did not use
- * any delimiters. Splits on strong delimiters first; if none, splits before
- * each action verb that is NOT the very first token. Preserves the raw blob
- * as a single item only when no split is safe.
- */
-function fallbackSplit(raw: string): { description: string; skills: never[] }[] {
-  const text = raw.trim()
-  if (!text) return [{ description: '', skills: [] }]
-
-  // 1. Strong delimiters (newline / + / ; / ,)
-  const strong = text.split(/\s*[,+;\n]\s*/).map(s => s.trim()).filter(s => s.length > 1)
-  if (strong.length >= 2) return strong.map(s => ({ description: s.toUpperCase(), skills: [] }))
-
-  // 2. Split before each action verb (not the first token). Known service-phrase
-  //    preambles like "oil change" / "tire replacement" are also treated as
-  //    boundaries when they appear mid-blob.
-  const actionVerbs = new Set(['replace', 'install', 'change', 'repair', 'fix', 'add', 'remove', 'check', 'inspect', 'service', 'perform', 'do'])
-  const servicePhrases: RegExp[] = [/\boil change\b/gi, /\btire replacement\b/gi, /\bpm service\b/gi, /\bpreventive maintenance\b/gi, /\bpreventative maintenance\b/gi]
-
-  // Mark boundary positions
-  const tokens = text.split(/\s+/)
-  const cutIndices: number[] = []
-  for (let i = 1; i < tokens.length; i++) {
-    if (actionVerbs.has(tokens[i].toLowerCase())) cutIndices.push(i)
-  }
-  // Service-phrase mid-blob boundaries (by token index of first word of the phrase)
-  const lowerTokens = tokens.map(t => t.toLowerCase())
-  for (let i = 1; i < tokens.length - 1; i++) {
-    const two = `${lowerTokens[i]} ${lowerTokens[i + 1]}`
-    if (two === 'oil change' || two === 'tire replacement' || two === 'pm service' || two === 'preventive maintenance' || two === 'preventative maintenance') {
-      if (!cutIndices.includes(i)) cutIndices.push(i)
-    }
-  }
-  cutIndices.sort((a, b) => a - b)
-
-  if (cutIndices.length === 0) return [{ description: text.toUpperCase(), skills: [] }]
-
-  const segments: string[] = []
-  let start = 0
-  for (const cut of cutIndices) {
-    const seg = tokens.slice(start, cut).join(' ').trim()
-    if (seg) segments.push(seg)
-    start = cut
-  }
-  const last = tokens.slice(start).join(' ').trim()
-  if (last) segments.push(last)
-
-  return segments.map(s => ({ description: s.toUpperCase(), skills: [] }))
-}
-
 const SKILLS = 'Engine Repair, Brake Service, Electrical/Diagnostics, Transmission, Suspension, HVAC/AC, Tire Service, Body/Frame, Trailer Repair, Welding, DOT Inspection, Preventive Maintenance, Diesel Fuel Systems, Exhaust/Aftertreatment, Hydraulics'
 
 const SYSTEM_PROMPT = `You are a professional semi truck repair service writer. Take the rough customer complaint and break it into separate professional action items. For each action item, identify which mechanic skills are needed from: ${SKILLS}. Each description should be clear, concise, and in uppercase.
 
-CRITICAL RULES — DO NOT MERGE DISTINCT CONCERNS:
-1. Every distinct concern the user mentions MUST become its own action item. If the user mentions oil change AND tire replacement AND hose replacement AND spare tire, return FOUR items — never one combined item.
-2. Only merge EXACT duplicates (e.g. the same service name literally repeated).
-3. PM SERVICE HIERARCHY: ONLY if the user wrote "PM SERVICE" alongside a sub-item (oil change, filter, etc.) AND the user did NOT also list separate unrelated work — collapse those sub-items into "PM SERVICE". Do NOT collapse unrelated services (tire, hose, body, etc.).
-4. TIRE JOBS: Keep distinct tire concerns as distinct items. "Replace tire" and "Replace spare tire" are TWO separate items. Do not auto-merge tire work unless the user used an explicit catch-all like "all tires".
-5. Keep description exactly as intended — do NOT auto-upgrade "oil change" to "PM Service" unless user explicitly wrote "PM Service".
+CRITICAL RULES:
+1. MERGE DUPLICATES: If the same service is listed multiple times, merge into ONE job line.
+2. PM SERVICE HIERARCHY: PM Service includes: oil change, oil filter, air filter, fuel filter, coolant check, belt inspection, tire inspection, brake inspection, DEF fluid, grease. If user lists "PM SERVICE" plus any individually, merge into just "PM SERVICE".
+3. OIL CHANGE: If listed multiple times, merge into one. If "oil change" + "PM Service" → just "PM SERVICE".
+4. TIRE JOBS: Keep separate ONLY if different positions specified. Otherwise merge.
+5. Keep description exactly as intended — do NOT auto-upgrade "oil change" to "PM Service" unless user wrote both.
 
-Return JSON only: {"action_items": [{"description": "OIL CHANGE", "skills": ["Preventive Maintenance"]}, {"description": "REPLACE TIRE", "skills": ["Tire Service"]}]}`
+Return JSON only: {"action_items": [{"description": "BRAKE SYSTEM INSPECTION", "skills": ["Brake Service"]}]}`
 
 export async function POST(req: Request) {
   const { complaint, shop_id, user_id } = await req.json()
@@ -78,7 +27,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ action_items: fallbackSplit(complaint) })
+    return NextResponse.json({ action_items: [{ description: complaint.trim().toUpperCase(), skills: [] }] })
   }
 
   // Check AI limit if shop_id provided
@@ -109,7 +58,7 @@ export async function POST(req: Request) {
         const s = db()
         await logAIUsage(s, { shopId: shop_id, userId: user_id, feature: 'wo_creation', tokensIn: 0, tokensOut: 0, durationMs: Date.now() - startTime, success: false, errorMessage: `HTTP ${res.status}` })
       }
-      return NextResponse.json({ action_items: fallbackSplit(complaint) })
+      return NextResponse.json({ action_items: [{ description: complaint.trim().toUpperCase(), skills: [] }] })
     }
 
     const data = await res.json()
@@ -135,12 +84,12 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ action_items: fallbackSplit(complaint) })
+    return NextResponse.json({ action_items: [{ description: complaint.trim().toUpperCase(), skills: [] }] })
   } catch (err: any) {
     if (shop_id) {
       const s = db()
       await logAIUsage(s, { shopId: shop_id, userId: user_id, feature: 'wo_creation', tokensIn: 0, tokensOut: 0, durationMs: Date.now() - startTime, success: false, errorMessage: err.message })
     }
-    return NextResponse.json({ action_items: fallbackSplit(complaint) })
+    return NextResponse.json({ action_items: [{ description: complaint.trim().toUpperCase(), skills: [] }] })
   }
 }

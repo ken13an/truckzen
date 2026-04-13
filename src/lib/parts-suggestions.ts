@@ -390,11 +390,8 @@ export type PreAiDecision = 'deterministic_simple' | 'ambiguous_noun_only' | 'se
  * Classify raw complaint text BEFORE sending to AI.
  * Returns whether the complaint can be handled deterministically or needs AI splitting.
  */
-// Known PM/Oil Change family phrases that are deterministic even without a
-// leading verb (TZBridge7A). End-anchored: must be the WHOLE trimmed input,
-// not a prefix — otherwise "oil change tire replacement ..." would match
-// `/^oil\s+change/i` and collapse into a single deterministic line.
-const PM_OIL_FAMILY_PHRASES = [/^pm$/i, /^pm\s+service\s*$/i, /^preventive\s+maint(enance)?\s*$/i, /^preventative\s+maint(enance)?\s*$/i, /^oil\s+change\s*$/i, /^engine\s+oil\s+change\s*$/i, /^perform\s+pm\s*$/i, /^do\s+pm\s*$/i, /^perform\s+preventive(\s+maint(enance)?)?\s*$/i, /^perform\s+preventative(\s+maint(enance)?)?\s*$/i, /^do\s+oil\s+change\s*$/i, /^perform\s+oil\s+change\s*$/i]
+// Known PM/Oil Change family phrases that are deterministic even without a leading verb (TZBridge7A)
+const PM_OIL_FAMILY_PHRASES = [/^pm$/i, /^pm\s+service/i, /^preventive\s+maint/i, /^preventative\s+maint/i, /^oil\s+change/i, /^engine\s+oil\s+change/i, /^perform\s+pm/i, /^do\s+pm/i, /^perform\s+preventive/i, /^perform\s+preventative/i, /^do\s+oil\s+change/i, /^perform\s+oil\s+change/i]
 
 function isPmOilFamilyPhrase(text: string): boolean {
   const lower = text.toLowerCase().trim()
@@ -480,13 +477,14 @@ export function splitComplaintIntoDeterministicSegments(rawComplaint: string): s
     const softCandidates = part.split(/\s*(?:,\s+|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
 
     if (softCandidates.length >= 2) {
-      // Split when every candidate is a complete segment (≥2 words). This still
-      // blocks bare-verb splits like "check and tighten fairings" ("check" is
-      // 1 word → fails isCompleteSegment) but allows noun-led concerns like
-      // "tire replacement" to stay separate — they render as distinct draft
-      // lines and the existing per-line clarification UI resolves them.
-      const allComplete = softCandidates.every(seg => isCompleteSegment(seg))
-      if (allComplete) {
+      // Only split if: left side is a complete segment AND right side starts with an action verb
+      // This prevents splitting "check and tighten fairings" or "remove and replace bumper"
+      let shouldSoftSplit = true
+      for (let i = 0; i < softCandidates.length; i++) {
+        if (i === 0 && !isCompleteSegment(softCandidates[i])) { shouldSoftSplit = false; break }
+        if (i > 0 && !startsWithActionVerb(softCandidates[i])) { shouldSoftSplit = false; break }
+      }
+      if (shouldSoftSplit) {
         result.push(...softCandidates)
       } else {
         result.push(part)
@@ -504,16 +502,7 @@ export function preRouteComplaintBeforeAi(rawComplaint: string): PreRouteResult 
   const trimmed = rawComplaint.trim()
   if (!trimmed) return { decision: 'send_to_ai', segments: [trimmed] }
 
-  // Strong-delimiter split runs first: the user explicitly separated concerns
-  // with newline/+/; — those boundaries MUST be preserved as separate draft
-  // lines, even if an individual segment classifies as ambiguous. Otherwise
-  // a single ambiguous segment collapses all concerns back into one line.
-  const strongSegments = trimmed.split(/\s*[+;\n]\s*/).map(s => s.trim()).filter(s => s.length > 2)
-  if (strongSegments.length >= 2) {
-    return { decision: 'deterministic_multi', segments: strongSegments }
-  }
-
-  // Long or multi-sentence without strong delimiters → AI
+  // Long or multi-sentence → AI
   if (trimmed.split(/\s+/).length > 12) return { decision: 'send_to_ai', segments: [trimmed] }
   if (/[.;]/.test(trimmed) && trimmed.split(/[.;]/).filter(s => s.trim().length > 3).length >= 2) {
     return { decision: 'send_to_ai', segments: [trimmed] }
@@ -529,15 +518,11 @@ export function preRouteComplaintBeforeAi(rawComplaint: string): PreRouteResult 
     return { decision: 'send_to_ai', segments: [trimmed] }
   }
 
-  // Multi-segment via soft delimiters ("and", "&", ","): require every segment
-  // to classify deterministic_simple OR ambiguous_noun_only — both render as
-  // distinct draft lines; ambiguous segments surface per-line clarification.
-  // Only bail to AI if a segment is fully unclassifiable.
-  const classifications = segments.map(seg => preClassifyComplaint(seg))
-  if (classifications.every(c => c === 'deterministic_simple' || c === 'ambiguous_noun_only')) {
-    return { decision: 'deterministic_multi', segments }
-  }
+  // Multi-segment — classify each
+  const allSimple = segments.every(seg => preClassifyComplaint(seg) === 'deterministic_simple')
+  if (allSimple) return { decision: 'deterministic_multi', segments }
 
+  // Not all segments are deterministic — fall back to AI
   return { decision: 'send_to_ai', segments: [trimmed] }
 }
 
