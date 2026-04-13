@@ -54,13 +54,13 @@ export default function NewUserPage() {
     <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
       <div style={{ ...S.card, textAlign: 'center', padding: 40 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: '#1DB870', marginBottom: 16 }}>Success</div>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, color: t.text, marginBottom: 8 }}>Invite Sent</div>
-        <div style={{ fontSize: 13, color: t.textSecondary, lineHeight: 1.6, marginBottom: 20 }}>
-          {form.full_name} will receive a welcome email at <strong style={{ color: t.text }}>{form.email}</strong> with instructions to set their password and log in.
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, color: 'var(--tz-text)', marginBottom: 8 }}>Invite Sent</div>
+        <div style={{ fontSize: 13, color: 'var(--tz-textSecondary)', lineHeight: 1.6, marginBottom: 20 }}>
+          {form.full_name} will receive a welcome email at <strong style={{ color: 'var(--tz-text)' }}>{form.email}</strong> with instructions to set their password and log in.
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12 }} onClick={() => { setDone(false); setForm({ full_name: '', email: '', role: 'technician', department: 'floor', team: 'A', language: 'en' }) }}>+ Invite Another</button>
-          <a href="/settings/users" style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12, background: 'transparent', border: `1px solid ${t.border}`, color: t.textSecondary, textDecoration: 'none', textAlign: 'center' }}>Back to Staff List</a>
+          <a href="/settings/users" style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12, background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, color: 'var(--tz-textSecondary)', textDecoration: 'none', textAlign: 'center' }}>Back to Staff List</a>
         </div>
       </div>
     </div>
@@ -68,15 +68,15 @@ export default function NewUserPage() {
 
   return (
     <div style={S.page}>
-      <a href="/settings/users" style={{ fontSize: 12, color: t.textSecondary, textDecoration: 'none', display: 'block', marginBottom: 20 }}>← Staff</a>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Invite Staff Member</div>
-      <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 20 }}>They'll receive a welcome email with a link to set their password.</div>
+      <a href="/settings/users" style={{ fontSize: 12, color: 'var(--tz-textSecondary)', textDecoration: 'none', display: 'block', marginBottom: 20 }}>← Staff</a>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', marginBottom: 4 }}>Invite Staff Member</div>
+      <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 20 }}>They'll receive a welcome email with a link to set their password.</div>
 
       {error && <div style={S.error}>{error}</div>}
 
       <form onSubmit={submit}>
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: t.text, marginBottom: 12 }}>Account Details</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Account Details</div>
           <label style={S.label}>Full Name</label>
           <input style={S.input} value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} placeholder="Carlos Martinez" autoFocus />
           <label style={S.label}>Work Email</label>
@@ -118,9 +118,9 @@ export default function NewUserPage() {
             ].map(d => (
               <div key={d.key} style={{
                 padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: form.department === d.key ? 'rgba(29,111,232,.1)' : t.inputBg,
-                color: form.department === d.key ? t.accentLight : t.textTertiary,
-                border: form.department === d.key ? '1px solid rgba(29,111,232,.3)' : `1px solid ${t.border}`,
+                background: form.department === d.key ? 'rgba(29,111,232,.1)' : 'var(--tz-inputBg)',
+                color: form.department === d.key ? 'var(--tz-accentLight)' : 'var(--tz-textTertiary)',
+                border: form.department === d.key ? '1px solid rgba(29,111,232,.3)' : `1px solid ${'var(--tz-border)'}`,
               }}>
                 {d.icon} {d.label}
               </div>
@@ -139,7 +139,7 @@ export default function NewUserPage() {
               </select>
             </>
           ) : (
-            <div style={{ padding: '8px 12px', background: t.border, borderRadius: 8, fontSize: 11, color: t.textTertiary, marginBottom: 10 }}>
+            <div style={{ padding: '8px 12px', background: 'var(--tz-border)', borderRadius: 8, fontSize: 11, color: 'var(--tz-textTertiary)', marginBottom: 10 }}>
               {form.department === 'office' ? 'Office staff — no team assignment required' :
                form.department === 'parts' ? 'Parts department — independent of floor teams' :
                'Fleet/field role — no team assignment required'}
@@ -155,7 +155,7 @@ export default function NewUserPage() {
           </select>
         </div>
 
-        <div style={{ background: 'rgba(29,111,232,.06)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 9, padding: '12px 14px', fontSize: 11, color: t.textSecondary, marginBottom: 12 }}>
+        <div style={{ background: 'rgba(29,111,232,.06)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 9, padding: '12px 14px', fontSize: 11, color: 'var(--tz-textSecondary)', marginBottom: 12 }}>
           A welcome email will be sent with a login link. They set their own password on first login.
         </div>
 
@@ -169,11 +169,11 @@ type TT = { bg: string; text: string; bgCard: string; border: string; textTertia
 
 function makeS(t: TT): Record<string, React.CSSProperties> {
   return {
-    page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 560, margin: '0 auto' },
-    card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 12 },
-    label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary, marginBottom: 5, display: 'block' },
-    input: { width: '100%', padding: '9px 12px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const, marginBottom: 10 },
-    btn: { width: '100%', padding: '12px 24px', background: t.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: t.bgLight, cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 },
-    error: { padding: '10px 12px', background: t.dangerBg, border: `1px solid ${t.danger}`, borderRadius: 8, fontSize: 12, color: t.danger, marginBottom: 12 },
+    page: { background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: "'Instrument Sans',sans-serif", padding: 24, maxWidth: 560, margin: '0 auto' },
+    card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginBottom: 12 },
+    label: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'var(--tz-textTertiary)', marginBottom: 5, display: 'block' },
+    input: { width: '100%', padding: '9px 12px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const, marginBottom: 10 },
+    btn: { width: '100%', padding: '12px 24px', background: 'var(--tz-accent)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: 'var(--tz-bgLight)', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 },
+    error: { padding: '10px 12px', background: 'var(--tz-dangerBg)', border: `1px solid ${'var(--tz-danger)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-danger)', marginBottom: 12 },
   }
 }

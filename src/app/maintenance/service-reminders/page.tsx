@@ -32,13 +32,13 @@ export default function ServiceRemindersPage() {
     })
   }, [])
 
-  if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Service Reminders</div>
-        <a href="/maintenance/service-reminders/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)' }}>Service Reminders</div>
+        <a href="/maintenance/service-reminders/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
@@ -52,13 +52,13 @@ export default function ServiceRemindersPage() {
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
         {[{ value: 'all', label: 'All' }, { value: 'active', label: 'Active' }, { value: 'overdue', label: 'Overdue' }].map(f => (
-          <button key={f.value} onClick={() => setFilter(f.value)} style={{ padding: '5px 12px', borderRadius: 100, border: filter === f.value ? '1px solid rgba(29,111,232,.3)' : `1px solid ${t.border}`, background: filter === f.value ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f.value ? t.accentLight : MUTED, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{f.label}</button>
+          <button key={f.value} onClick={() => setFilter(f.value)} style={{ padding: '5px 12px', borderRadius: 100, border: filter === f.value ? '1px solid rgba(29,111,232,.3)' : `1px solid ${'var(--tz-border)'}`, background: filter === f.value ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f.value ? 'var(--tz-accentLight)' : MUTED, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{f.label}</button>
         ))}
       </div>
 
       <DataTable
         columns={[
-          { key: 'reminder_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: t.text, textTransform: 'capitalize' }}>{r.custom_name || r.reminder_type?.replace(/_/g, ' ')}</span> },
+          { key: 'reminder_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: 'var(--tz-text)', textTransform: 'capitalize' }}>{r.custom_name || r.reminder_type?.replace(/_/g, ' ')}</span> },
           { key: 'interval_miles', label: 'Interval', render: (r: any) => [r.interval_miles ? `${r.interval_miles.toLocaleString()} mi` : null, r.interval_days ? `${r.interval_days}d` : null].filter(Boolean).join(' / ') || '—' },
           { key: 'last_completed_date', label: 'Last Done', render: (r: any) => r.last_completed_date ? new Date(r.last_completed_date).toLocaleDateString() : '—' },
           { key: 'next_due_date', label: 'Next Due', render: (r: any) => { const c = r.overdue ? RED : r.next_due_date && new Date(r.next_due_date) < new Date(Date.now() + 30 * 86400000) ? AMBER : GREEN; return <span style={{ color: c }}>{r.next_due_date ? new Date(r.next_due_date).toLocaleDateString() : '—'}</span> } },

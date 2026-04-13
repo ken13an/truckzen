@@ -84,12 +84,12 @@ export default function NotificationBell({ userId }: { userId: string }) {
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(!open)} style={{
-        background: 'none', border: 'none', cursor: 'pointer', padding: 6, position: 'relative', color: t.textSecondary, fontSize: 18,
+        background: 'none', border: 'none', cursor: 'pointer', padding: 6, position: 'relative', color: 'var(--tz-textSecondary)', fontSize: 18,
       }}>
         🔔
         {unreadCount > 0 && (
           <span style={{
-            position: 'absolute', top: 2, right: 0, background: t.danger, color: t.bgLight,
+            position: 'absolute', top: 2, right: 0, background: 'var(--tz-danger)', color: 'var(--tz-bgLight)',
             fontSize: 9, fontWeight: 700, borderRadius: 10, padding: '1px 5px', minWidth: 14, textAlign: 'center',
           }}>{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
@@ -98,40 +98,40 @@ export default function NotificationBell({ userId }: { userId: string }) {
       {open && (
         <div style={{
           position: 'absolute', top: 36, right: 0, width: 340, maxHeight: 420, overflowY: 'auto',
-          background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,.5)', zIndex: 999,
+          background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,.5)', zIndex: 999,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: `1px solid ${t.border}` }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: t.text }}>Notifications</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>Notifications</span>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} style={{ background: 'none', border: 'none', color: t.accentLight, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
+              <button onClick={markAllRead} style={{ background: 'none', border: 'none', color: 'var(--tz-accentLight)', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
             )}
           </div>
           {notifications.length === 0 ? (
-            <div style={{ padding: 24, textAlign: 'center', color: t.textTertiary, fontSize: 12 }}>No notifications</div>
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 12 }}>No notifications</div>
           ) : (
             notifications.map(n => (
               <div key={n.id} style={{
-                display: 'flex', alignItems: 'flex-start', padding: '10px 16px', borderBottom: `1px solid ${t.border}`,
+                display: 'flex', alignItems: 'flex-start', padding: '10px 16px', borderBottom: `1px solid ${'var(--tz-border)'}`,
                 background: n.read ? 'transparent' : 'rgba(29,111,232,.04)',
               }}>
                 <a href={n.link || '#'} onClick={() => markRead(n.id)} style={{
                   flex: 1, textDecoration: 'none', minWidth: 0,
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontSize: 12, fontWeight: n.read ? 400 : 600, color: n.read ? t.textSecondary : t.text, lineHeight: 1.4 }}>{n.title}</div>
-                    <span style={{ fontSize: 10, color: t.textTertiary, whiteSpace: 'nowrap', marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
+                    <div style={{ fontSize: 12, fontWeight: n.read ? 400 : 600, color: n.read ? 'var(--tz-textSecondary)' : 'var(--tz-text)', lineHeight: 1.4 }}>{n.title}</div>
+                    <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)', whiteSpace: 'nowrap', marginLeft: 8 }}>{timeAgo(n.created_at)}</span>
                   </div>
-                  {n.body && <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
-                  {!n.read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: t.accent, marginTop: 4 }} />}
+                  {n.body && <div style={{ fontSize: 11, color: 'var(--tz-textTertiary)', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
+                  {!n.read && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--tz-accent)', marginTop: 4 }} />}
                 </a>
                 <button onClick={e => { e.stopPropagation(); dismiss(n.id) }} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', color: t.textTertiary, fontSize: 14,
+                  background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textTertiary)', fontSize: 14,
                   padding: '2px 4px', marginLeft: 4, flexShrink: 0, lineHeight: 1,
                 }} title="Dismiss">&times;</button>
               </div>
             ))
           )}
-          <a href="/dashboard" style={{ display: 'block', padding: '10px 16px', textAlign: 'center', fontSize: 11, color: t.accentLight, textDecoration: 'none', borderTop: `1px solid ${t.border}`, fontWeight: 600 }}>
+          <a href="/dashboard" style={{ display: 'block', padding: '10px 16px', textAlign: 'center', fontSize: 11, color: 'var(--tz-accentLight)', textDecoration: 'none', borderTop: `1px solid ${'var(--tz-border)'}`, fontWeight: 600 }}>
             View all on dashboard
           </a>
         </div>

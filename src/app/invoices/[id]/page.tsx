@@ -263,16 +263,16 @@ export default function InvoiceDetailPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:   { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Inter', -apple-system, sans-serif", padding:24 },
-    card:   { background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:12, padding:16, marginBottom:12 },
-    label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
-    th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase' as const, letterSpacing:'.08em', padding:'7px 10px', textAlign:'left' as const, background: t.bgInput },
-    td:     { padding:'9px 10px', borderBottom:`1px solid ${t.border}`, fontSize:12 },
+    page:   { background:'var(--tz-bg)', minHeight:'100vh', color:'var(--tz-text)', fontFamily:"'Inter', -apple-system, sans-serif", padding:24 },
+    card:   { background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:12, padding:16, marginBottom:12 },
+    label:  { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'var(--tz-textTertiary)', marginBottom:5, display:'block' },
+    th:     { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'var(--tz-textTertiary)', textTransform:'uppercase' as const, letterSpacing:'.08em', padding:'7px 10px', textAlign:'left' as const, background: 'var(--tz-bgInput)' },
+    td:     { padding:'9px 10px', borderBottom:`1px solid ${'var(--tz-border)'}`, fontSize:12 },
     btn:    { padding:'9px 18px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
-    input:  { background:t.border, border:`1px solid ${t.border}`, borderRadius:4, color:t.text, padding:'4px 8px', fontSize:11, fontFamily:'inherit', outline:'none', width:'100%' },
+    input:  { background:'var(--tz-border)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:4, color:'var(--tz-text)', padding:'4px 8px', fontSize:11, fontFamily:'inherit', outline:'none', width:'100%' },
   }
 
-  if (loading) return <div style={{ ...S.page, color:t.textSecondary, padding:60 }}>Loading...</div>
+  if (loading) return <div style={{ ...S.page, color:'var(--tz-textSecondary)', padding:60 }}>Loading...</div>
 
   const so     = invoice.service_orders
   const asset  = so?.assets
@@ -293,8 +293,8 @@ export default function InvoiceDetailPage() {
   const displayBalance   = liveTotals ? liveTotals.balance_due : (invoice.balance_due || 0)
   const displayPaid      = invoice.amount_paid || 0
 
-  const statusColor: Record<string, string> = { draft:t.textSecondary, sent: t.accentLight, paid:'#1DB870', voided:t.textTertiary }
-  const stColor = statusColor[invoice.status] || t.textSecondary
+  const statusColor: Record<string, string> = { draft:'var(--tz-textSecondary)', sent: 'var(--tz-accentLight)', paid:'#1DB870', voided:'var(--tz-textTertiary)' }
+  const stColor = statusColor[invoice.status] || 'var(--tz-textSecondary)'
 
   function editableCell(lineIndex: number, field: keyof LineItem, value: any, type: 'text' | 'number' = 'text') {
     if (!isDraft) return <span>{type === 'number' ? (typeof value === 'number' ? value.toFixed(field === 'quantity' ? 0 : 2) : value) : value}</span>
@@ -317,7 +317,7 @@ export default function InvoiceDetailPage() {
             step={field === 'quantity' ? '1' : '0.01'}
           />
         ) : (
-          <span style={{ borderBottom: `1px dashed ${t.border}`, paddingBottom: 1 }}>
+          <span style={{ borderBottom: `1px dashed ${'var(--tz-border)'}`, paddingBottom: 1 }}>
             {type === 'number' ? (typeof value === 'number' ? (field === 'quantity' ? value : value.toFixed(2)) : value) : (value || '(click to edit)')}
           </span>
         )}
@@ -329,15 +329,15 @@ export default function InvoiceDetailPage() {
     if (!items.length) return null
     return (
       <>
-        <tr><td colSpan={isDraft ? 6 : 5} style={{ padding:'6px 10px', fontFamily:'monospace', fontSize:8, color, textTransform:'uppercase', letterSpacing:'.1em', background:t.border, borderBottom:`1px solid ${t.border}` }}>{title}</td></tr>
+        <tr><td colSpan={isDraft ? 6 : 5} style={{ padding:'6px 10px', fontFamily:'monospace', fontSize:8, color, textTransform:'uppercase', letterSpacing:'.1em', background:'var(--tz-border)', borderBottom:`1px solid ${'var(--tz-border)'}` }}>{title}</td></tr>
         {items.map((l: any, localIdx: number) => {
           const globalIdx = lines.indexOf(l)
           return (
             <tr key={l.id || l._tempId || localIdx}>
               <td style={S.td}>{editableCell(globalIdx, 'description', l.real_name || l.description)}</td>
-              <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:t.textTertiary }}>{l.part_number || '—'}</td>
+              <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color:'var(--tz-textTertiary)' }}>{l.part_number || '—'}</td>
               <td style={{ ...S.td, fontFamily:'monospace', textAlign:'center' }}>{editableCell(globalIdx, 'quantity', l.quantity, 'number')}</td>
-              <td style={{ ...S.td, fontFamily:'monospace', color:t.textSecondary }}>
+              <td style={{ ...S.td, fontFamily:'monospace', color:'var(--tz-textSecondary)' }}>
                 {isDraft ? editableCell(globalIdx, 'unit_price', l.parts_sell_price || l.unit_price || 0, 'number') : '$' + (l.parts_sell_price || l.unit_price || 0).toFixed(2)}
               </td>
               <td style={{ ...S.td, fontFamily:'monospace', fontWeight:700, color: color }}>${(l.total_price || (l.parts_sell_price || l.unit_price || 0) * (l.quantity || 1)).toFixed(2)}</td>
@@ -364,28 +364,28 @@ export default function InvoiceDetailPage() {
       {/* Record Payment Modal */}
       {showPaidModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
-          <div style={{ background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:14, padding:28, minWidth:380, maxWidth:440 }}>
-            <div style={{ fontSize:16, fontWeight:700, color:t.text, marginBottom:4 }}>Record Payment</div>
-            <div style={{ fontSize:12, color:t.textSecondary, marginBottom:20 }}>
+          <div style={{ background:'var(--tz-inputBg)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:14, padding:28, minWidth:380, maxWidth:440 }}>
+            <div style={{ fontSize:16, fontWeight:700, color:'var(--tz-text)', marginBottom:4 }}>Record Payment</div>
+            <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginBottom:20 }}>
               Invoice Total: ${(invoice.total || 0).toFixed(2)} | Balance Due: ${(invoice.balance_due ?? invoice.total ?? 0).toFixed(2)}
             </div>
             <label style={{ ...S.label, marginBottom:4 }}>Payment Method</label>
-            <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:13, marginBottom:12, fontFamily:'inherit' }}>
+            <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:8, color:'var(--tz-text)', fontSize:13, marginBottom:12, fontFamily:'inherit' }}>
               {['cash', 'zelle', 'card', 'bank_transfer', 'check', 'ach', 'other'].map(m => (
                 <option key={m} value={m}>{m.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</option>
               ))}
             </select>
             <label style={{ ...S.label, marginBottom:4 }}>Amount</label>
-            <input type="number" step="0.01" value={paymentAmount || (invoice.balance_due ?? invoice.total ?? 0)} onChange={e => setPaymentAmount(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:14, fontFamily:"'IBM Plex Mono',monospace", marginBottom:12, boxSizing:'border-box' }} />
+            <input type="number" step="0.01" value={paymentAmount || (invoice.balance_due ?? invoice.total ?? 0)} onChange={e => setPaymentAmount(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:8, color:'var(--tz-text)', fontSize:14, fontFamily:"'IBM Plex Mono',monospace", marginBottom:12, boxSizing:'border-box' }} />
             <label style={{ ...S.label, marginBottom:4 }}>Reference # (optional)</label>
-            <input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Check #, Zelle ID, etc." style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
+            <input value={paymentRef} onChange={e => setPaymentRef(e.target.value)} placeholder="Check #, Zelle ID, etc." style={{ width:'100%', padding:'8px 10px', background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:8, color:'var(--tz-text)', fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
             <label style={{ ...S.label, marginBottom:4 }}>Date Received</label>
-            <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
+            <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} style={{ width:'100%', padding:'8px 10px', background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:8, color:'var(--tz-text)', fontSize:12, marginBottom:12, fontFamily:'inherit', boxSizing:'border-box' }} />
             <label style={{ ...S.label, marginBottom:4 }}>Notes (optional)</label>
-            <textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} rows={2} style={{ width:'100%', padding:'8px 10px', background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:8, color:t.text, fontSize:12, marginBottom:16, fontFamily:'inherit', resize:'vertical', boxSizing:'border-box' }} />
+            <textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} rows={2} style={{ width:'100%', padding:'8px 10px', background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:8, color:'var(--tz-text)', fontSize:12, marginBottom:16, fontFamily:'inherit', resize:'vertical', boxSizing:'border-box' }} />
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
-              <button onClick={() => setShowPaidModal(false)} style={{ ...S.btn, background:'transparent', color:t.textSecondary, border:`1px solid ${t.border}` }}>Cancel</button>
-              <button onClick={recordPayment} disabled={markingPaid} style={{ ...S.btn, background:'linear-gradient(135deg,#1DB870,#15955a)', color: t.bgLight }}>
+              <button onClick={() => setShowPaidModal(false)} style={{ ...S.btn, background:'transparent', color:'var(--tz-textSecondary)', border:`1px solid ${'var(--tz-border)'}` }}>Cancel</button>
+              <button onClick={recordPayment} disabled={markingPaid} style={{ ...S.btn, background:'linear-gradient(135deg,#1DB870,#15955a)', color: 'var(--tz-bgLight)' }}>
                 {markingPaid ? 'Saving...' : 'Record Payment'}
               </button>
             </div>
@@ -393,30 +393,30 @@ export default function InvoiceDetailPage() {
         </div>
       )}
 
-      <a href="/accounting" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: t.text, textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/accounting" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--tz-border)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Accounting
 </a>
 
       {/* Header */}
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
-          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color: t.accentLight, fontWeight:700, marginBottom:4 }}>{invoice.invoice_number}</div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:t.text }}>{cust?.company_name || '—'}</div>
-          <div style={{ fontSize:12, color:t.textSecondary, marginTop:4 }}>
+          <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:12, color: 'var(--tz-accentLight)', fontWeight:700, marginBottom:4 }}>{invoice.invoice_number}</div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:26, color:'var(--tz-text)' }}>{cust?.company_name || '—'}</div>
+          <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginTop:4 }}>
             {asset?.unit_number ? `Unit #${asset.unit_number}` : ''}{asset?.unit_number && so?.so_number ? ' · ' : ''}{so?.so_number || ''}
           </div>
           {so?.is_historical && (
-            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: t.textSecondary, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical — Imported</span>
+            <span style={{ display: 'inline-block', marginTop: 4, padding: '2px 8px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: 'var(--tz-textSecondary)', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>Historical — Imported</span>
           )}
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8 }}>
           <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:stColor+'18', color:stColor, border:`1px solid ${stColor}33` }}>
             {(invoice.status || 'unknown').toUpperCase()}
           </span>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color: isPaid?'#1DB870': t.accentLight }}>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color: isPaid?'#1DB870': 'var(--tz-accentLight)' }}>
             ${displayTotal.toFixed(2)}
           </div>
-          {displayBalance > 0 && <div style={{ fontSize:12, color:t.textSecondary }}>Balance due: ${displayBalance.toFixed(2)}</div>}
+          {displayBalance > 0 && <div style={{ fontSize:12, color:'var(--tz-textSecondary)' }}>Balance due: ${displayBalance.toFixed(2)}</div>}
         </div>
       </div>
 
@@ -441,14 +441,14 @@ export default function InvoiceDetailPage() {
           {/* Line items */}
           <div style={S.card}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Line Items</div>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)' }}>Line Items</div>
               {isDraft && (
                 <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={addLine} style={{ ...S.btn, padding:'5px 12px', background:'rgba(29,111,232,.1)', color: t.accentLight, border:'1px solid rgba(29,111,232,.2)', fontSize:10 }}>
+                  <button onClick={addLine} style={{ ...S.btn, padding:'5px 12px', background:'rgba(29,111,232,.1)', color: 'var(--tz-accentLight)', border:'1px solid rgba(29,111,232,.2)', fontSize:10 }}>
                     + Add Line
                   </button>
                   {isEditing && (
-                    <button onClick={saveLines} disabled={saving} style={{ ...S.btn, padding:'5px 12px', background:t.accent, color: t.bgLight, fontSize:10 }}>
+                    <button onClick={saveLines} disabled={saving} style={{ ...S.btn, padding:'5px 12px', background:'var(--tz-accent)', color: 'var(--tz-bgLight)', fontSize:10 }}>
                       {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                   )}
@@ -465,7 +465,7 @@ export default function InvoiceDetailPage() {
                 <tbody>
                   {lines.length > 0 ? (
                     <>
-                      {lineSection('Labor', t.accentLight, laborLines, 0)}
+                      {lineSection('Labor', 'var(--tz-accentLight)', laborLines, 0)}
                       {lineSection('Parts', '#1DB870', partLines, laborLines.length)}
                       {lineSection('Other', '#D4882A', otherLines, laborLines.length + partLines.length)}
                     </>
@@ -475,25 +475,25 @@ export default function InvoiceDetailPage() {
                       {so?.labor_total > 0 && (
                         <tr>
                           <td style={S.td}>Labor (from Work Order)</td>
-                          <td style={{ ...S.td, color: t.textTertiary }}>—</td>
+                          <td style={{ ...S.td, color: 'var(--tz-textTertiary)' }}>—</td>
                           <td style={{ ...S.td, textAlign: 'center' }}>—</td>
-                          <td style={{ ...S.td, color: t.textSecondary }}>—</td>
-                          <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: t.accentLight }}>${(so.labor_total || 0).toFixed(2)}</td>
+                          <td style={{ ...S.td, color: 'var(--tz-textSecondary)' }}>—</td>
+                          <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: 'var(--tz-accentLight)' }}>${(so.labor_total || 0).toFixed(2)}</td>
                         </tr>
                       )}
                       {so?.parts_total > 0 && (
                         <tr>
                           <td style={S.td}>Parts (from Work Order)</td>
-                          <td style={{ ...S.td, color: t.textTertiary }}>—</td>
+                          <td style={{ ...S.td, color: 'var(--tz-textTertiary)' }}>—</td>
                           <td style={{ ...S.td, textAlign: 'center' }}>—</td>
-                          <td style={{ ...S.td, color: t.textSecondary }}>—</td>
+                          <td style={{ ...S.td, color: 'var(--tz-textSecondary)' }}>—</td>
                           <td style={{ ...S.td, fontFamily: 'monospace', fontWeight: 700, color: '#1DB870' }}>${(so.parts_total || 0).toFixed(2)}</td>
                         </tr>
                       )}
                       {lines.length === 0 && !so?.labor_total && !so?.parts_total && (
                         <tr>
-                          <td colSpan={5} style={{ ...S.td, textAlign: 'center', color: t.textSecondary, padding: 24, fontSize: 12 }}>
-                            Imported historical invoice — <a href={so?.id ? getWorkorderRoute(so.id, undefined, 'invoice') : '#'} style={{ color: t.accentLight, textDecoration: 'none' }}>see Work Order for details</a>
+                          <td colSpan={5} style={{ ...S.td, textAlign: 'center', color: 'var(--tz-textSecondary)', padding: 24, fontSize: 12 }}>
+                            Imported historical invoice — <a href={so?.id ? getWorkorderRoute(so.id, undefined, 'invoice') : '#'} style={{ color: 'var(--tz-accentLight)', textDecoration: 'none' }}>see Work Order for details</a>
                           </td>
                         </tr>
                       )}
@@ -503,20 +503,20 @@ export default function InvoiceDetailPage() {
               </table>
             </div>
             {/* Totals */}
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, paddingTop:12, marginTop:8, borderTop:`1px solid ${t.border}` }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, paddingTop:12, marginTop:8, borderTop:`1px solid ${'var(--tz-border)'}` }}>
               {[
-                { label:'Subtotal', val: displaySubtotal, color:t.text },
-                { label:'Tax',      val: displayTax, color:t.text },
+                { label:'Subtotal', val: displaySubtotal, color:'var(--tz-text)' },
+                { label:'Tax',      val: displayTax, color:'var(--tz-text)' },
                 ...(displayPaid > 0 ? [{ label:'Amount Paid', val: -displayPaid, color:'#1DB870' }] : []),
               ].map(r => (
                 <div key={r.label} style={{ display:'flex', gap:40 }}>
-                  <span style={{ fontSize:12, color:t.textSecondary }}>{r.label}</span>
+                  <span style={{ fontSize:12, color:'var(--tz-textSecondary)' }}>{r.label}</span>
                   <span style={{ fontFamily:'monospace', fontSize:12, color:r.color, minWidth:80, textAlign:'right' }}>{r.val < 0 ? '-' : ''}${Math.abs(r.val).toFixed(2)}</span>
                 </div>
               ))}
-              <div style={{ display:'flex', gap:40, paddingTop:8, marginTop:4, borderTop:`1px solid ${t.border}` }}>
-                <span style={{ fontSize:15, fontWeight:700, color:t.text }}>Total</span>
-                <span style={{ fontFamily:'monospace', fontSize:18, fontWeight:700, color: isPaid?'#1DB870': t.accentLight, minWidth:80, textAlign:'right' }}>${displayTotal.toFixed(2)}</span>
+              <div style={{ display:'flex', gap:40, paddingTop:8, marginTop:4, borderTop:`1px solid ${'var(--tz-border)'}` }}>
+                <span style={{ fontSize:15, fontWeight:700, color:'var(--tz-text)' }}>Total</span>
+                <span style={{ fontFamily:'monospace', fontSize:18, fontWeight:700, color: isPaid?'#1DB870': 'var(--tz-accentLight)', minWidth:80, textAlign:'right' }}>${displayTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -525,8 +525,8 @@ export default function InvoiceDetailPage() {
           {so?.cause && (
             <div style={S.card}>
               <label style={S.label}>Work Performed</label>
-              <div style={{ fontSize:12, color:t.textSecondary, marginBottom:8 }}>Cause: <span style={{ color:t.text }}>{so.cause}</span></div>
-              <div style={{ fontSize:12, color:t.textSecondary }}>Correction: <span style={{ color:t.text }}>{so.correction}</span></div>
+              <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginBottom:8 }}>Cause: <span style={{ color:'var(--tz-text)' }}>{so.cause}</span></div>
+              <div style={{ fontSize:12, color:'var(--tz-textSecondary)' }}>Correction: <span style={{ color:'var(--tz-text)' }}>{so.correction}</span></div>
             </div>
           )}
         </div>
@@ -539,7 +539,7 @@ export default function InvoiceDetailPage() {
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {!isPaid && invoice.status !== 'voided' && (
                 <>
-                  <button style={{ ...S.btn, background:t.accent, color: t.bgLight, width:'100%' }}
+                  <button style={{ ...S.btn, background:'var(--tz-accent)', color: 'var(--tz-bgLight)', width:'100%' }}
                     onClick={sendInvoice} disabled={sending}>
                     {sending ? 'Sending...' : invoice.status === 'draft' ? 'Send to Customer' : 'Resend Invoice'}
                   </button>
@@ -550,7 +550,7 @@ export default function InvoiceDetailPage() {
                   {qrUrl && (
                     <div style={{ textAlign:'center', padding:'12px 0' }}>
                       <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}&bgcolor=161B24&color=ffffff`} alt="QR Code" style={{ width:160, borderRadius:8 }}/>
-                      <div style={{ fontSize:10, color:t.textTertiary, marginTop:6 }}>Customer scans to pay</div>
+                      <div style={{ fontSize:10, color:'var(--tz-textTertiary)', marginTop:6 }}>Customer scans to pay</div>
                     </div>
                   )}
                   <button style={{ ...S.btn, background:'rgba(29,184,112,.15)', color:'#1DB870', border:'1px solid rgba(29,184,112,.25)', width:'100%' }}
@@ -566,18 +566,18 @@ export default function InvoiceDetailPage() {
               {isPaid && (
                 <div style={{ textAlign:'center', padding:'12px 0' }}>
                   <div style={{ fontSize:13, fontWeight:700, color:'#1DB870' }}>Paid</div>
-                  {invoice.payment_method && <div style={{ fontSize:11, color:t.textSecondary, marginTop:4 }}>via {invoice.payment_method}</div>}
-                  {invoice.paid_at && <div style={{ fontSize:10, color:t.textTertiary, marginTop:4 }}>{new Date(invoice.paid_at).toLocaleDateString()}</div>}
+                  {invoice.payment_method && <div style={{ fontSize:11, color:'var(--tz-textSecondary)', marginTop:4 }}>via {invoice.payment_method}</div>}
+                  {invoice.paid_at && <div style={{ fontSize:10, color:'var(--tz-textTertiary)', marginTop:4 }}>{new Date(invoice.paid_at).toLocaleDateString()}</div>}
                 </div>
               )}
-              <a href={`/api/invoices/${params.id}/pdf`} target="_blank" style={{ ...S.btn, background:'transparent', color:t.textSecondary, border:`1px solid ${t.border}`, textDecoration:'none', textAlign:'center', display:'block' }}>
+              <a href={`/api/invoices/${params.id}/pdf`} target="_blank" style={{ ...S.btn, background:'transparent', color:'var(--tz-textSecondary)', border:`1px solid ${'var(--tz-border)'}`, textDecoration:'none', textAlign:'center', display:'block' }}>
                 Download PDF
               </a>
-              <button onClick={() => window.print()} style={{ ...S.btn, background:'transparent', color:t.textSecondary, border:`1px solid ${t.border}`, width:'100%', cursor:'pointer' }}>
+              <button onClick={() => window.print()} style={{ ...S.btn, background:'transparent', color:'var(--tz-textSecondary)', border:`1px solid ${'var(--tz-border)'}`, width:'100%', cursor:'pointer' }}>
                 Print Invoice
               </button>
               {so?.id && (
-                <a href={getWorkorderRoute(so.id, undefined, 'invoice')} style={{ ...S.btn, background:'transparent', color:t.textSecondary, border:`1px solid ${t.border}`, textDecoration:'none', textAlign:'center', display:'block' }}>
+                <a href={getWorkorderRoute(so.id, undefined, 'invoice')} style={{ ...S.btn, background:'transparent', color:'var(--tz-textSecondary)', border:`1px solid ${'var(--tz-border)'}`, textDecoration:'none', textAlign:'center', display:'block' }}>
                   View Work Order
                 </a>
               )}
@@ -590,14 +590,14 @@ export default function InvoiceDetailPage() {
               <label style={S.label}>Payment History</label>
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {payments.map((p: any) => (
-                  <div key={p.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:`1px solid ${t.border}`, fontSize:12 }}>
+                  <div key={p.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:`1px solid ${'var(--tz-border)'}`, fontSize:12 }}>
                     <div>
-                      <div style={{ color:t.text, fontWeight:600 }}>${Number(p.amount).toFixed(2)}</div>
-                      <div style={{ color:t.textTertiary, fontSize:10, marginTop:2 }}>{p.payment_method?.replace(/_/g,' ')} {p.reference_number ? `- ${p.reference_number}` : ''}</div>
+                      <div style={{ color:'var(--tz-text)', fontWeight:600 }}>${Number(p.amount).toFixed(2)}</div>
+                      <div style={{ color:'var(--tz-textTertiary)', fontSize:10, marginTop:2 }}>{p.payment_method?.replace(/_/g,' ')} {p.reference_number ? `- ${p.reference_number}` : ''}</div>
                     </div>
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ color:t.textSecondary, fontSize:10 }}>{p.received_at ? new Date(p.received_at).toLocaleDateString() : ''}</div>
-                      <div style={{ color:t.textTertiary, fontSize:9 }}>{(p.users as any)?.full_name || ''}</div>
+                      <div style={{ color:'var(--tz-textSecondary)', fontSize:10 }}>{p.received_at ? new Date(p.received_at).toLocaleDateString() : ''}</div>
+                      <div style={{ color:'var(--tz-textTertiary)', fontSize:9 }}>{(p.users as any)?.full_name || ''}</div>
                     </div>
                   </div>
                 ))}
@@ -619,9 +619,9 @@ export default function InvoiceDetailPage() {
                 { label:'Technician', val: tech?.full_name },
                 { label:'Due Date',   val: invoice.due_date },
               ].filter(r => r.val).map(r => (
-                <div key={r.label} style={{ display:'flex', justifyContent:'space-between', paddingBottom:6, borderBottom:`1px solid ${t.border}` }}>
-                  <span style={{ color:t.textTertiary }}>{r.label}</span>
-                  <span style={{ color:t.text, textAlign:'right', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis' }}>{r.val}</span>
+                <div key={r.label} style={{ display:'flex', justifyContent:'space-between', paddingBottom:6, borderBottom:`1px solid ${'var(--tz-border)'}` }}>
+                  <span style={{ color:'var(--tz-textTertiary)' }}>{r.label}</span>
+                  <span style={{ color:'var(--tz-text)', textAlign:'right', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis' }}>{r.val}</span>
                 </div>
               ))}
             </div>

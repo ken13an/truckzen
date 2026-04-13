@@ -52,32 +52,32 @@ export default function KioskPage() {
   }, [])
 
   if (status === 'loading') {
-    return <div style={{ background: t.bgCard, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.text, fontFamily: "'Instrument Sans', sans-serif" }}>
+    return <div style={{ background: 'var(--tz-bgCard)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-text)', fontFamily: "'Instrument Sans', sans-serif" }}>
       <p>Loading...</p>
     </div>
   }
 
   if (status === 'enter_code') {
-    return <div style={{ minHeight: '100vh', background: t.bgCard, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans', sans-serif" }}>
-      <div style={{ textAlign: 'center', color: t.text, maxWidth: 400, padding: '0 24px' }}>
+    return <div style={{ minHeight: '100vh', background: 'var(--tz-bgCard)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Instrument Sans', sans-serif" }}>
+      <div style={{ textAlign: 'center', color: 'var(--tz-text)', maxWidth: 400, padding: '0 24px' }}>
         <Logo size="lg" style={{ justifyContent: 'center', marginBottom: 24 }} />
         <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Check-In Kiosk</div>
-        <div style={{ fontSize: 14, color: t.textSecondary, marginBottom: 24 }}>Enter your shop's kiosk code or scan the QR code at the front desk.</div>
+        <div style={{ fontSize: 14, color: 'var(--tz-textSecondary)', marginBottom: 24 }}>Enter your shop's kiosk code or scan the QR code at the front desk.</div>
         <form onSubmit={e => { e.preventDefault(); const code = (e.currentTarget.elements.namedItem('code') as HTMLInputElement)?.value?.trim(); if (code) window.location.href = `/kiosk/${code}` }}
           style={{ display: 'flex', gap: 8 }}>
           <input name="code" placeholder="e.g. ugl" autoFocus
-            style={{ flex: 1, padding: '14px 18px', borderRadius: 12, border: `1px solid ${t.border}`, background: t.border, color: t.text, fontSize: 18, fontFamily: "'Instrument Sans', sans-serif", outline: 'none', textAlign: 'center', letterSpacing: 2 }} />
-          <button type="submit" style={{ padding: '14px 24px', borderRadius: 12, background: t.accent, color: t.bgLight, border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>Go</button>
+            style={{ flex: 1, padding: '14px 18px', borderRadius: 12, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-border)', color: 'var(--tz-text)', fontSize: 18, fontFamily: "'Instrument Sans', sans-serif", outline: 'none', textAlign: 'center', letterSpacing: 2 }} />
+          <button type="submit" style={{ padding: '14px 24px', borderRadius: 12, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', border: 'none', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif" }}>Go</button>
         </form>
       </div>
     </div>
   }
 
   if (status === 'error') {
-    return <div style={{ background: t.bgCard, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.text, fontFamily: "'Instrument Sans', sans-serif" }}>
+    return <div style={{ background: 'var(--tz-bgCard)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-text)', fontFamily: "'Instrument Sans', sans-serif" }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Shop Not Found</div>
-        <p style={{ color: t.textSecondary }}>The shop ID is invalid.</p>
+        <p style={{ color: 'var(--tz-textSecondary)' }}>The shop ID is invalid.</p>
       </div>
     </div>
   }

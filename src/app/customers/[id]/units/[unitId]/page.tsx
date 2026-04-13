@@ -27,8 +27,8 @@ const pillStyle = (bg: string, color: string): React.CSSProperties => ({ display
 export default function UnitProfilePage() {
   const { tokens: th } = useTheme()
 
-  const cardStyle: React.CSSProperties = { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginBottom: 12 }
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: th.border, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box' }
+  const cardStyle: React.CSSProperties = { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 12 }
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box' }
   const params = useParams()
   const id = params.id as string
   const unitId = params.unitId as string
@@ -121,7 +121,7 @@ export default function UnitProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+      <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
         <div style={{ color: GRAY, fontSize: 14 }}>Loading…</div>
       </div>
     )
@@ -129,7 +129,7 @@ export default function UnitProfilePage() {
 
   if (!unit) {
     return (
-      <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+      <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
         <div style={{ color: GRAY, fontSize: 14 }}>Unit not found.</div>
       </div>
     )
@@ -148,7 +148,7 @@ export default function UnitProfilePage() {
     return (
       <>
         <span style={{ color: GRAY }}>{vin.slice(0, -6)}</span>
-        <span style={{ fontWeight: 700, color: th.text }}>{vin.slice(-6)}</span>
+        <span style={{ fontWeight: 700, color: 'var(--tz-text)' }}>{vin.slice(-6)}</span>
       </>
     )
   }
@@ -272,16 +272,16 @@ export default function UnitProfilePage() {
               </a>
               <span style={pillStyle(sc.bg, sc.fg)}>{(wo.wo_status || wo.status || 'unknown').replace(/_/g, ' ').toUpperCase()}</span>
             </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: th.text }}>{fmtMoney(wo.grand_total)}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)' }}>{fmtMoney(wo.grand_total)}</span>
           </div>
           {firstLine && (
             <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{firstLine.description || firstLine.concern || '—'}</div>
           )}
           {isExpanded && lines.length > 0 && (
-            <div style={{ marginTop: 12, borderTop: `1px solid ${th.border}`, paddingTop: 10 }}>
+            <div style={{ marginTop: 12, borderTop: `1px solid ${'var(--tz-border)'}`, paddingTop: 10 }}>
               {lines.map((line: any, i: number) => (
                 <div key={line.id || i} style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: th.text, marginBottom: 2 }}>{line.description || 'Line ' + (i + 1)}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-text)', marginBottom: 2 }}>{line.description || 'Line ' + (i + 1)}</div>
                   {line.concern && <div style={{ fontSize: 11, color: GRAY }}><span style={{ fontWeight: 600, color: AMBER }}>Concern:</span> {line.concern}</div>}
                   {line.finding && <div style={{ fontSize: 11, color: GRAY }}><span style={{ fontWeight: 600, color: BLUE }}>Finding:</span> {line.finding}</div>}
                   {line.resolution && <div style={{ fontSize: 11, color: GRAY }}><span style={{ fontWeight: 600, color: GREEN }}>Resolution:</span> {line.resolution}</div>}
@@ -316,7 +316,7 @@ export default function UnitProfilePage() {
           return (
             <div key={i} style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: th.text }}>{item.label}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)' }}>{item.label}</span>
                 <span style={pillStyle(statusBg, statusFg)}>{statusLabel}</span>
               </div>
               <div style={{ fontSize: 12, color: GRAY }}>
@@ -327,7 +327,7 @@ export default function UnitProfilePage() {
                 )}
               </div>
               {item.nextDue && (
-                <div style={{ fontSize: 12, color: th.text, marginTop: 4 }}>Next due: {item.nextDue}</div>
+                <div style={{ fontSize: 12, color: 'var(--tz-text)', marginTop: 4 }}>Next due: {item.nextDue}</div>
               )}
             </div>
           )
@@ -358,7 +358,7 @@ export default function UnitProfilePage() {
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
-            <tr style={{ borderBottom: `1px solid ${th.border}` }}>
+            <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
               {['Date', 'WO #', 'Part #', 'Description', 'Qty', 'Cost', 'Status'].map((h) => (
                 <th key={h} style={{ textAlign: 'left', padding: '8px 10px', color: GRAY, fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
               ))}
@@ -368,17 +368,17 @@ export default function UnitProfilePage() {
             {woParts.map((p: any, i: number) => {
               const sc = statusColor(p.status)
               return (
-                <tr key={p.id || i} style={{ borderBottom: `1px solid ${th.border}` }}>
+                <tr key={p.id || i} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                   <td style={{ padding: '8px 10px', color: GRAY }}>{p.service_orders ? fmtDate(p.service_orders.created_at) : '—'}</td>
                   <td style={{ padding: '8px 10px' }}>
                     {p.service_orders ? (
                       <a href={getWorkorderRoute(p.wo_id, undefined, 'customer')} style={{ color: BLUE, textDecoration: 'none', fontWeight: 600 }}>{p.service_orders.so_number}</a>
                     ) : '—'}
                   </td>
-                  <td style={{ padding: '8px 10px', color: th.text, fontFamily: 'monospace' }}>{p.part_number || '—'}</td>
-                  <td style={{ padding: '8px 10px', color: th.text }}>{p.so_lines?.description || p.description || '—'}</td>
-                  <td style={{ padding: '8px 10px', color: th.text }}>{p.quantity ?? '—'}</td>
-                  <td style={{ padding: '8px 10px', color: th.text }}>{p.cost != null ? fmtMoney(p.cost) : '—'}</td>
+                  <td style={{ padding: '8px 10px', color: 'var(--tz-text)', fontFamily: 'monospace' }}>{p.part_number || '—'}</td>
+                  <td style={{ padding: '8px 10px', color: 'var(--tz-text)' }}>{p.so_lines?.description || p.description || '—'}</td>
+                  <td style={{ padding: '8px 10px', color: 'var(--tz-text)' }}>{p.quantity ?? '—'}</td>
+                  <td style={{ padding: '8px 10px', color: 'var(--tz-text)' }}>{p.cost != null ? fmtMoney(p.cost) : '—'}</td>
                   <td style={{ padding: '8px 10px' }}><span style={pillStyle(sc.bg, sc.fg)}>{(p.status || 'unknown').replace(/_/g, ' ').toUpperCase()}</span></td>
                 </tr>
               )
@@ -395,7 +395,7 @@ export default function UnitProfilePage() {
     return (
       <div>
         <div style={cardStyle}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: th.text, marginBottom: 4 }}>Unit Information</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 4 }}>Unit Information</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
             <div>
               <label style={labelStyle}>Unit Number</label>
@@ -472,7 +472,7 @@ export default function UnitProfilePage() {
                   height: 20,
                   borderRadius: 10,
                   border: 'none',
-                  background: editForm.is_owner_operator ? AMBER : th.border,
+                  background: editForm.is_owner_operator ? AMBER : 'var(--tz-border)',
                   cursor: 'pointer',
                   position: 'relative' as const,
                   transition: 'background 0.2s',
@@ -483,14 +483,14 @@ export default function UnitProfilePage() {
                   width: 14,
                   height: 14,
                   borderRadius: 7,
-                  background: th.bgLight,
+                  background: 'var(--tz-bgLight)',
                   position: 'absolute' as const,
                   top: 3,
                   left: editForm.is_owner_operator ? 19 : 3,
                   transition: 'left 0.2s',
                 }} />
               </button>
-              <span style={{ fontSize: 12, color: th.text }}>Owner Operator Truck</span>
+              <span style={{ fontSize: 12, color: 'var(--tz-text)' }}>Owner Operator Truck</span>
             </div>
             <div>
               <label style={labelStyle}>Odometer</label>
@@ -501,7 +501,7 @@ export default function UnitProfilePage() {
 
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: th.text }}>Warranty</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Warranty</span>
             {isUnderWarranty && <span style={pillStyle('rgba(22,163,74,0.15)', GREEN)}>Under Warranty</span>}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
@@ -534,7 +534,7 @@ export default function UnitProfilePage() {
           <button
             onClick={saveDetails}
             disabled={saving}
-            style={{ padding: '9px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', background: BLUE, color: th.bgLight, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, fontFamily: FONT }}
+            style={{ padding: '9px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, border: 'none', background: BLUE, color: 'var(--tz-bgLight)', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, fontFamily: FONT }}
           >
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
@@ -544,13 +544,13 @@ export default function UnitProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: th.bg, color: th.text, fontFamily: FONT }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', color: 'var(--tz-text)', fontFamily: FONT }}>
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
 
         {/* Back button */}
         <a
           href={'/customers/' + id}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 100, background: th.border, color: th.text, textDecoration: 'none', fontSize: 13, fontWeight: 500, marginBottom: 20 }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 100, background: 'var(--tz-border)', color: 'var(--tz-text)', textDecoration: 'none', fontSize: 13, fontWeight: 500, marginBottom: 20 }}
         >
           <ChevronLeft size={14} />
           {customer?.company_name || 'Customer'}
@@ -559,13 +559,13 @@ export default function UnitProfilePage() {
         {/* Header */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <span style={{ fontSize: 24, fontWeight: 700, color: th.text }}>{unit.unit_number || '—'}</span>
+            <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--tz-text)' }}>{unit.unit_number || '—'}</span>
             <span style={pillStyle(isTrailer ? 'rgba(217,119,6,0.15)' : 'rgba(29,111,232,0.15)', typeBadgeColor)}>{typeLabel}</span>
             {unit.is_owner_operator && (
               <span style={pillStyle('rgba(217,119,6,0.15)', AMBER)}>OWNER OPERATOR</span>
             )}
           </div>
-          <div style={{ fontSize: 16, color: th.text, marginBottom: 4 }}>
+          <div style={{ fontSize: 16, color: 'var(--tz-text)', marginBottom: 4 }}>
             {[unit.year, unit.make, unit.model].filter(Boolean).join(' ') || '—'}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, fontSize: 12, color: GRAY, marginTop: 6 }}>
@@ -584,7 +584,7 @@ export default function UnitProfilePage() {
         {activeWO ? (
           <div style={{ ...cardStyle, background: 'rgba(29,111,232,0.1)', border: '1px solid rgba(29,111,232,0.25)', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-              <span style={{ color: th.text, fontWeight: 600 }}>Active Work Order:</span>
+              <span style={{ color: 'var(--tz-text)', fontWeight: 600 }}>Active Work Order:</span>
               <a href={getWorkorderRoute(activeWO.id, undefined, 'customer')} style={{ color: BLUE, fontWeight: 600, textDecoration: 'none' }}>
                 {activeWO.so_number}
               </a>
@@ -597,7 +597,7 @@ export default function UnitProfilePage() {
         ) : (
           <a
             href={getNewWorkorderRoute({ customer: id as string, unit: unitId as string })}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, background: BLUE, color: th.bgLight, fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 8, background: BLUE, color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginBottom: 16 }}
           >
             + Create Work Order
           </a>
@@ -607,20 +607,20 @@ export default function UnitProfilePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
           <div style={cardStyle}>
             <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Services</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: th.text }}>{workOrders.length}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)' }}>{workOrders.length}</div>
           </div>
           <div style={cardStyle}>
             <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Spend</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: th.text }}>{fmtMoney(totalSpend)}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)' }}>{fmtMoney(totalSpend)}</div>
           </div>
           <div style={cardStyle}>
             <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Last Service</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: th.text }}>{lastService ? fmtDate(lastService) : 'Never'}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)' }}>{lastService ? fmtDate(lastService) : 'Never'}</div>
           </div>
         </div>
 
         {/* Tab Bar */}
-        <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${th.border}`, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${'var(--tz-border)'}`, marginBottom: 16 }}>
           {TABS.map((t, i) => (
             <button
               key={t}

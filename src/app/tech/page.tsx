@@ -11,7 +11,7 @@ type View = 'list' | 'detail'
 
 export default function TechMobilePageWrapper() {
   const { tokens: t } = useTheme()
-  return <Suspense fallback={<div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary }}>Loading...</div>}><TechMobilePage /></Suspense>
+  return <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-textSecondary)' }}>Loading...</div>}><TechMobilePage /></Suspense>
 }
 
 function TechMobilePage() {

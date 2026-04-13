@@ -122,7 +122,7 @@ export default function AITextInput({
   return (
     <div style={{ position: 'relative' }}>
       {label && (
-        <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: 14, color: t.textSecondary }}>
+        <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: 14, color: 'var(--tz-textSecondary)' }}>
           {label}
         </label>
       )}
@@ -137,9 +137,9 @@ export default function AITextInput({
           padding: '12px 14px',
           paddingRight: 48,
           borderRadius: 10,
-          border: `1px solid ${t.inputBorder}`,
-          background: t.inputBg,
-          color: t.text,
+          border: `1px solid ${'var(--tz-inputBorder)'}`,
+          background: 'var(--tz-inputBg)',
+          color: 'var(--tz-text)',
           fontSize: 15,
           resize: 'vertical',
           outline: 'none',
@@ -157,7 +157,7 @@ export default function AITextInput({
           position: 'absolute',
           right: 10,
           top: label ? 38 : 10,
-          background: loading ? t.surfaceMuted : t.accent,
+          background: loading ? 'var(--tz-surfaceMuted)' : 'var(--tz-accent)',
           border: 'none',
           borderRadius: 8,
           width: 34,
@@ -171,15 +171,15 @@ export default function AITextInput({
         }}
       >
         {loading ? (
-          <Loader2 size={18} color={t.textSecondary} style={{ animation: 'spin 1s linear infinite' }} />
+          <Loader2 size={18} color={'var(--tz-textSecondary)'} style={{ animation: 'spin 1s linear infinite' }} />
         ) : (
-          <Sparkles size={18} color={t.bgLight} />
+          <Sparkles size={18} color={'var(--tz-bgLight)'} />
         )}
       </button>
 
       {/* Error */}
       {error && (
-        <div style={{ color: t.danger, fontSize: 13, marginTop: 4 }}>{error}</div>
+        <div style={{ color: 'var(--tz-danger)', fontSize: 13, marginTop: 4 }}>{error}</div>
       )}
 
       {/* Suggestion Card */}
@@ -187,26 +187,26 @@ export default function AITextInput({
         <div
           style={{
             marginTop: 8,
-            background: isDark ? t.bgCard : t.bgElevated,
-            border: `1px solid ${t.accent}`,
+            background: isDark ? 'var(--tz-bgCard)' : 'var(--tz-bgElevated)',
+            border: `1px solid ${'var(--tz-accent)'}`,
             borderRadius: 10,
             padding: '12px 14px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <Sparkles size={14} color={t.accent} />
-            <span style={{ fontSize: 12, color: t.accentLight, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Sparkles size={14} color={'var(--tz-accent)'} />
+            <span style={{ fontSize: 12, color: 'var(--tz-accentLight)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
               AI Suggestion
             </span>
           </div>
 
-          <div style={{ color: isDark ? t.text : t.text, fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+          <div style={{ color: isDark ? 'var(--tz-text)' : 'var(--tz-text)', fontSize: 14, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
             {getSuggestionPreview()}
           </div>
 
           {/* Native language translation if present */}
           {(suggestion.concern_native || suggestion.cause_native || suggestion.note_native) && (
-            <div style={{ color: t.textSecondary, fontSize: 13, marginTop: 8, fontStyle: 'italic' }}>
+            <div style={{ color: 'var(--tz-textSecondary)', fontSize: 13, marginTop: 8, fontStyle: 'italic' }}>
               {suggestion.concern_native || suggestion.cause_native || suggestion.note_native}
             </div>
           )}
@@ -219,8 +219,8 @@ export default function AITextInput({
                 alignItems: 'center',
                 gap: 6,
                 padding: '6px 16px',
-                background: t.success,
-                color: t.bgLight,
+                background: 'var(--tz-success)',
+                color: 'var(--tz-bgLight)',
                 border: 'none',
                 borderRadius: 8,
                 fontSize: 13,
@@ -237,8 +237,8 @@ export default function AITextInput({
                 alignItems: 'center',
                 gap: 6,
                 padding: '6px 16px',
-                background: isDark ? t.surfaceMuted : t.border,
-                color: t.textSecondary,
+                background: isDark ? 'var(--tz-surfaceMuted)' : 'var(--tz-border)',
+                color: 'var(--tz-textSecondary)',
                 border: 'none',
                 borderRadius: 8,
                 fontSize: 13,
@@ -253,7 +253,7 @@ export default function AITextInput({
       )}
 
       {/* AI Disclosure */}
-      <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 4, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginTop: 4, lineHeight: 1.4 }}>
         AI-assisted writing powered by TruckZen AI. Your input is processed to generate professional service notes. No data is shared with third parties.
       </div>
 

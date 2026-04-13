@@ -80,7 +80,7 @@ export default function AIUsagePage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: t.text, margin: '0 0 20px' }}>AI Usage</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)', margin: '0 0 20px' }}>AI Usage</h1>
 
       {/* Overview cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
@@ -90,19 +90,19 @@ export default function AIUsagePage() {
           { label: 'Most Active Shop', value: mostActiveShopName, color: AMBER },
           { label: 'Total Tokens', value: totalTokens.toLocaleString(), color: MUTED },
         ].map(c => (
-          <div key={c.label} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: '16px 18px' }}>
-            <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{c.label}</div>
+          <div key={c.label} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{c.label}</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{c.value}</div>
           </div>
         ))}
       </div>
 
       {/* By feature breakdown */}
-      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 24 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 12 }}>Usage by Feature</div>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 24 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Usage by Feature</div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {Object.entries(byFeature).sort((a, b) => b[1] - a[1]).map(([feature, count]) => (
-            <div key={feature} style={{ background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, padding: '8px 14px', textAlign: 'center' }}>
+            <div key={feature} style={{ background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, padding: '8px 14px', textAlign: 'center' }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: BLUE }}>{count}</div>
               <div style={{ fontSize: 10, color: MUTED }}>{FEATURE_LABELS[feature] || feature}</div>
             </div>
@@ -111,12 +111,12 @@ export default function AIUsagePage() {
       </div>
 
       {/* Per-shop table */}
-      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
-        <div style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: t.text }}>Per-Shop Usage</div>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>Per-Shop Usage</div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>
             {['Shop', 'Calls', 'Tokens', 'Cost', 'Limit', 'Usage %', 'Status'].map(h =>
-              <th key={h} style={{ textAlign: 'left', padding: '8px 12px', fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO, borderBottom: `1px solid ${t.border}`, fontWeight: 600 }}>{h}</th>
+              <th key={h} style={{ textAlign: 'left', padding: '8px 12px', fontSize: 9, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO, borderBottom: `1px solid ${'var(--tz-border)'}`, fontWeight: 600 }}>{h}</th>
             )}
           </tr></thead>
           <tbody>
@@ -126,23 +126,23 @@ export default function AIUsagePage() {
               const pct = Math.round((su.calls / limit) * 100)
               const statusColor = pct >= 90 ? RED : pct >= 70 ? AMBER : GREEN
               return (
-                <tr key={shop.id} style={{ cursor: 'pointer', borderBottom: `1px solid ${t.border}` }} onClick={() => loadShopDetail(shop.id)}
-                  onMouseEnter={e => (e.currentTarget.style.background = t.border)} onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                  <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: t.text }}>{shop.name}</td>
+                <tr key={shop.id} style={{ cursor: 'pointer', borderBottom: `1px solid ${'var(--tz-border)'}` }} onClick={() => loadShopDetail(shop.id)}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-border)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                  <td style={{ padding: '10px 12px', fontSize: 13, fontWeight: 600, color: 'var(--tz-text)' }}>{shop.name}</td>
                   <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: BLUE }}>{su.calls}</td>
                   <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: MUTED }}>{su.tokens.toLocaleString()}</td>
                   <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: GREEN }}>{fmt(su.cost)}</td>
                   <td style={{ padding: '10px 12px', fontSize: 11, color: MUTED }}>{limit}</td>
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 60, height: 6, background: t.border, borderRadius: 3 }}>
+                      <div style={{ width: 60, height: 6, background: 'var(--tz-border)', borderRadius: 3 }}>
                         <div style={{ width: `${Math.min(pct, 100)}%`, height: '100%', background: statusColor, borderRadius: 3 }} />
                       </div>
                       <span style={{ fontSize: 10, color: statusColor, fontWeight: 700 }}>{pct}%</span>
                     </div>
                   </td>
                   <td style={{ padding: '10px 12px' }}>
-                    <span style={{ fontSize: 9, fontWeight: 600, color: shop.ai_usage_enabled ? statusColor : t.textTertiary, background: `${shop.ai_usage_enabled ? statusColor : t.textTertiary}18`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: 9, fontWeight: 600, color: shop.ai_usage_enabled ? statusColor : 'var(--tz-textTertiary)', background: `${shop.ai_usage_enabled ? statusColor : 'var(--tz-textTertiary)'}18`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>
                       {!shop.ai_usage_enabled ? 'Disabled' : pct >= 100 ? 'Limit Hit' : pct >= 90 ? 'Critical' : pct >= 70 ? 'Warning' : 'Normal'}
                     </span>
                   </td>
@@ -155,23 +155,23 @@ export default function AIUsagePage() {
 
       {/* Shop detail drill-down */}
       {selectedShop && (
-        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: t.text }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>
               Recent Calls — {shops.find(s => s.id === selectedShop)?.name}
             </div>
-            <button onClick={() => setSelectedShop(null)} style={{ background: 'none', border: 'none', color: t.textTertiary, fontSize: 11, cursor: 'pointer' }}>Close</button>
+            <button onClick={() => setSelectedShop(null)} style={{ background: 'none', border: 'none', color: 'var(--tz-textTertiary)', fontSize: 11, cursor: 'pointer' }}>Close</button>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
             <thead><tr>
               {['Time', 'Feature', 'In', 'Out', 'Cost', 'Duration', 'Status'].map(h =>
-                <th key={h} style={{ textAlign: 'left', padding: '6px 8px', fontSize: 8, color: t.textTertiary, textTransform: 'uppercase', fontFamily: MONO, borderBottom: `1px solid ${t.border}` }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '6px 8px', fontSize: 8, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', fontFamily: MONO, borderBottom: `1px solid ${'var(--tz-border)'}` }}>{h}</th>
               )}
             </tr></thead>
             <tbody>
               {shopDetail.map(d => (
-                <tr key={d.id} style={{ borderBottom: `1px solid ${t.border}` }}>
-                  <td style={{ padding: '6px 8px', color: t.textTertiary, fontFamily: MONO, fontSize: 10 }}>{new Date(d.created_at).toLocaleString()}</td>
+                <tr key={d.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                  <td style={{ padding: '6px 8px', color: 'var(--tz-textTertiary)', fontFamily: MONO, fontSize: 10 }}>{new Date(d.created_at).toLocaleString()}</td>
                   <td style={{ padding: '6px 8px', color: BLUE, fontSize: 10 }}>{FEATURE_LABELS[d.feature] || d.feature}</td>
                   <td style={{ padding: '6px 8px', fontFamily: MONO, color: MUTED }}>{d.tokens_in || d.input_tokens || 0}</td>
                   <td style={{ padding: '6px 8px', fontFamily: MONO, color: MUTED }}>{d.tokens_out || d.output_tokens || 0}</td>
@@ -182,7 +182,7 @@ export default function AIUsagePage() {
                   </td>
                 </tr>
               ))}
-              {shopDetail.length === 0 && <tr><td colSpan={7} style={{ padding: 20, textAlign: 'center', color: t.textTertiary }}>No AI calls this month</td></tr>}
+              {shopDetail.length === 0 && <tr><td colSpan={7} style={{ padding: 20, textAlign: 'center', color: 'var(--tz-textTertiary)' }}>No AI calls this month</td></tr>}
             </tbody>
           </table>
         </div>

@@ -47,33 +47,33 @@ export default function MaintReportsPage() {
   }, [shopId, tab, preset])
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: '16px 18px' },
-    th: { fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', padding: '6px 10px', textAlign: 'left', background: th.bgInput },
-    td: { padding: '9px 10px', borderBottom: `1px solid ${th.border}`, fontSize: 12 },
+    card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '16px 18px' },
+    th: { fontFamily: MONO, fontSize: 8, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.08em', padding: '6px 10px', textAlign: 'left', background: 'var(--tz-bgInput)' },
+    td: { padding: '9px 10px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 12 },
   }
 
   return (
-    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text, marginBottom: 16 }}>Maintenance Reports</div>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', marginBottom: 16 }}>Maintenance Reports</div>
 
       {/* Date range picker */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
         {DATE_PRESETS.map((p, i) => (
           <button key={p.label} onClick={() => setPreset(i)} style={{
             padding: '5px 12px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-            border: preset === i ? '1px solid rgba(29,111,232,.3)' : `1px solid ${th.border}`,
+            border: preset === i ? '1px solid rgba(29,111,232,.3)' : `1px solid ${'var(--tz-border)'}`,
             background: preset === i ? 'rgba(29,111,232,.1)' : 'transparent',
-            color: preset === i ? th.accentLight : MUTED,
+            color: preset === i ? 'var(--tz-accentLight)' : MUTED,
           }}>{p.label}</button>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: `1px solid ${th.border}`, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: `1px solid ${'var(--tz-border)'}`, overflowX: 'auto' }}>
         {TABS.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 18px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${th.accent}` : '2px solid transparent',
-            color: tab === t ? th.text : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
+            padding: '10px 18px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${'var(--tz-accent)'}` : '2px solid transparent',
+            color: tab === t ? 'var(--tz-text)' : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
           }}>{t}</button>
         ))}
       </div>
@@ -92,7 +92,7 @@ export default function MaintReportsPage() {
                 { label: 'PM Compliance', value: data.pmCompliance ? `${data.pmCompliance}%` : '—', color: (data.pmCompliance || 0) >= 80 ? GREEN : RED },
               ].map(c => (
                 <div key={c.label} style={S.card}>
-                  <div style={{ fontSize: 10, color: th.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{c.label}</div>
+                  <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{c.label}</div>
                   <div style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</div>
                 </div>
               ))}
@@ -100,19 +100,19 @@ export default function MaintReportsPage() {
           )}
 
           {tab === 'Cost Per Truck' && (
-            <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead><tr>{['Truck', 'Repairs', 'Fuel', 'Expenses', 'Total'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                 <tbody>
                   {(data.trucks || []).length === 0 ? (
-                    <tr><td colSpan={5} style={{ ...S.td, textAlign: 'center', color: th.textTertiary }}>No data for this period</td></tr>
+                    <tr><td colSpan={5} style={{ ...S.td, textAlign: 'center', color: 'var(--tz-textTertiary)' }}>No data for this period</td></tr>
                   ) : (data.trucks || []).map((t: any) => (
                     <tr key={t.unit_number}>
-                      <td style={{ ...S.td, fontFamily: MONO, color: th.accentLight, fontWeight: 700 }}>#{t.unit_number}</td>
+                      <td style={{ ...S.td, fontFamily: MONO, color: 'var(--tz-accentLight)', fontWeight: 700 }}>#{t.unit_number}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>${(t.repairs || 0).toFixed(0)}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>${(t.fuel || 0).toFixed(0)}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>${(t.expenses || 0).toFixed(0)}</td>
-                      <td style={{ ...S.td, fontFamily: MONO, fontWeight: 700, color: th.text }}>${(t.total || 0).toFixed(0)}</td>
+                      <td style={{ ...S.td, fontFamily: MONO, fontWeight: 700, color: 'var(--tz-text)' }}>${(t.total || 0).toFixed(0)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -129,12 +129,12 @@ export default function MaintReportsPage() {
                   { label: 'Avg Cost/Gal', value: data.avgCpg ? `$${data.avgCpg.toFixed(3)}` : '—', color: AMBER },
                 ].map(c => (
                   <div key={c.label} style={S.card}>
-                    <div style={{ fontSize: 10, color: th.textTertiary, fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div>
+                    <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div>
                     <div style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{c.value}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ ...S.card, textAlign: 'center', color: th.textTertiary, fontSize: 12, padding: 30 }}>
+              <div style={{ ...S.card, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 12, padding: 30 }}>
                 Fuel trend charts will display once sufficient data is available.
               </div>
             </div>
@@ -144,21 +144,21 @@ export default function MaintReportsPage() {
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                 <div style={S.card}>
-                  <div style={{ fontSize: 10, color: th.textTertiary, fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>On Time</div>
+                  <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>On Time</div>
                   <div style={{ fontSize: 28, fontWeight: 700, color: GREEN }}>{data.onTime || 0}%</div>
                 </div>
                 <div style={S.card}>
-                  <div style={{ fontSize: 10, color: th.textTertiary, fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>Overdue</div>
+                  <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>Overdue</div>
                   <div style={{ fontSize: 28, fontWeight: 700, color: RED }}>{data.overdueCount || 0}</div>
                 </div>
               </div>
               {(data.overdueList || []).length > 0 && (
-                <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead><tr>{['Truck', 'Service', 'Days Overdue'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                     <tbody>{(data.overdueList || []).map((p: any, i: number) => (
                       <tr key={i}>
-                        <td style={{ ...S.td, fontFamily: MONO, color: th.accentLight }}>#{p.unit_number || '—'}</td>
+                        <td style={{ ...S.td, fontFamily: MONO, color: 'var(--tz-accentLight)' }}>#{p.unit_number || '—'}</td>
                         <td style={S.td}>{p.service_type}</td>
                         <td style={{ ...S.td, color: RED, fontWeight: 700 }}>{p.days_overdue}d</td>
                       </tr>
@@ -170,17 +170,17 @@ export default function MaintReportsPage() {
           )}
 
           {tab === 'Driver' && (
-            <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead><tr>{['Driver', 'Inspections', 'Defects', 'Fuel Entries', 'Repairs'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                 <tbody>
                   {(data.drivers || []).length === 0 ? (
-                    <tr><td colSpan={5} style={{ ...S.td, textAlign: 'center', color: th.textTertiary }}>No driver data for this period</td></tr>
+                    <tr><td colSpan={5} style={{ ...S.td, textAlign: 'center', color: 'var(--tz-textTertiary)' }}>No driver data for this period</td></tr>
                   ) : (data.drivers || []).map((d: any) => (
                     <tr key={d.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/maintenance/drivers/${d.id}`}>
-                      <td style={{ ...S.td, fontWeight: 600, color: th.text }}>{d.full_name}</td>
+                      <td style={{ ...S.td, fontWeight: 600, color: 'var(--tz-text)' }}>{d.full_name}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>{d.inspections || 0}</td>
-                      <td style={{ ...S.td, fontFamily: MONO, color: (d.defects || 0) > 0 ? RED : th.text }}>{d.defects || 0}</td>
+                      <td style={{ ...S.td, fontFamily: MONO, color: (d.defects || 0) > 0 ? RED : 'var(--tz-text)' }}>{d.defects || 0}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>{d.fuel_entries || 0}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>{d.repairs || 0}</td>
                     </tr>
@@ -191,15 +191,15 @@ export default function MaintReportsPage() {
           )}
 
           {tab === 'Vendor Spend' && (
-            <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead><tr>{['Vendor', 'Total Spent', 'Repairs', 'Avg Repair Cost'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                 <tbody>
                   {(data.vendors || []).length === 0 ? (
-                    <tr><td colSpan={4} style={{ ...S.td, textAlign: 'center', color: th.textTertiary }}>No vendor data for this period</td></tr>
+                    <tr><td colSpan={4} style={{ ...S.td, textAlign: 'center', color: 'var(--tz-textTertiary)' }}>No vendor data for this period</td></tr>
                   ) : (data.vendors || []).map((v: any) => (
                     <tr key={v.id} style={{ cursor: 'pointer' }} onClick={() => window.location.href = `/maintenance/vendors/${v.id}`}>
-                      <td style={{ ...S.td, fontWeight: 600, color: th.text }}>{v.name}</td>
+                      <td style={{ ...S.td, fontWeight: 600, color: 'var(--tz-text)' }}>{v.name}</td>
                       <td style={{ ...S.td, fontFamily: MONO, fontWeight: 700 }}>${(v.total || 0).toFixed(0)}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>{v.repair_count || 0}</td>
                       <td style={{ ...S.td, fontFamily: MONO }}>${(v.avg_cost || 0).toFixed(0)}</td>
@@ -218,12 +218,12 @@ export default function MaintReportsPage() {
                   { label: 'Open Faults', value: data.openFaults || 0, color: RED },
                   { label: 'Avg Resolution (days)', value: data.avgResolution || '—', color: BLUE },
                 ].map(c => (
-                  <div key={c.label} style={S.card}><div style={{ fontSize: 10, color: th.textTertiary, fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div><div style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</div></div>
+                  <div key={c.label} style={S.card}><div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div><div style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</div></div>
                 ))}
               </div>
               {(data.topFaults || []).length > 0 && (
-                <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
-                  <div style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: th.text }}>Top Fault Codes</div>
+                <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
+                  <div style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: 'var(--tz-text)' }}>Top Fault Codes</div>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr>{['Code', 'Count', 'Severity'].map(h => <th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                     <tbody>{(data.topFaults || []).map((f: any, i: number) => (<tr key={i}><td style={{ ...S.td, fontFamily: MONO, color: BLUE }}>{f.fault_code}</td><td style={{ ...S.td, fontFamily: MONO, fontWeight: 700 }}>{f.count}</td><td style={S.td}>{f.severity}</td></tr>))}</tbody>
                   </table>
@@ -243,7 +243,7 @@ export default function MaintReportsPage() {
                 const pct = total > 0 ? Math.round((c.ok / total) * 100) : 0
                 return (
                   <div key={c.label} style={S.card}>
-                    <div style={{ fontSize: 10, color: th.textTertiary, fontFamily: MONO, textTransform: 'uppercase', marginBottom: 8 }}>{c.label}</div>
+                    <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 8 }}>{c.label}</div>
                     <div style={{ fontSize: 28, fontWeight: 700, color: pct >= 80 ? GREEN : pct >= 50 ? AMBER : RED }}>{pct}%</div>
                     <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{c.overdue} overdue · {c.ok} on time</div>
                   </div>
@@ -260,7 +260,7 @@ export default function MaintReportsPage() {
                   { label: 'Total Claimed', value: `$${(data.totalClaimed || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: BLUE },
                   { label: 'Claims This Period', value: data.claimsCount || 0, color: AMBER },
                 ].map(c => (
-                  <div key={c.label} style={S.card}><div style={{ fontSize: 10, color: th.textTertiary, fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div><div style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</div></div>
+                  <div key={c.label} style={S.card}><div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: MONO, textTransform: 'uppercase', marginBottom: 4 }}>{c.label}</div><div style={{ fontSize: 24, fontWeight: 700, color: c.color }}>{c.value}</div></div>
                 ))}
               </div>
             </div>
@@ -268,7 +268,7 @@ export default function MaintReportsPage() {
 
           {tab === 'Fleet Utilization' && (
             <div style={S.card}>
-              <div style={{ textAlign: 'center', padding: 30, color: th.textTertiary, fontSize: 13 }}>
+              <div style={{ textAlign: 'center', padding: 30, color: 'var(--tz-textTertiary)', fontSize: 13 }}>
                 Fleet utilization metrics will display once vehicle status and location data is available. Track days on road, in shop, and idle per truck.
               </div>
             </div>
@@ -276,7 +276,7 @@ export default function MaintReportsPage() {
 
           {tab === 'Service History' && (
             <div style={S.card}>
-              <div style={{ textAlign: 'center', padding: 30, color: th.textTertiary, fontSize: 13 }}>
+              <div style={{ textAlign: 'center', padding: 30, color: 'var(--tz-textTertiary)', fontSize: 13 }}>
                 Service history will display once maintenance records are entered. View all services grouped by vehicle with costs and frequency.
               </div>
             </div>
@@ -284,7 +284,7 @@ export default function MaintReportsPage() {
 
           {tab === 'Inventory & Parts' && (
             <div style={S.card}>
-              <div style={{ textAlign: 'center', padding: 30, color: th.textTertiary, fontSize: 13 }}>
+              <div style={{ textAlign: 'center', padding: 30, color: 'var(--tz-textTertiary)', fontSize: 13 }}>
                 Inventory reports will display once parts data is available. Track parts usage, inventory value, and low stock alerts.
               </div>
             </div>

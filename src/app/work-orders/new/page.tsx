@@ -43,11 +43,11 @@ export default function NewWorkOrderPage() {
   const { tokens: t } = useTheme()
   const supabase = createClient()
 
-  const card: React.CSSProperties = { background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20 }
-  const lbl: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6, fontFamily: FONT, display: 'block' }
-  const inp: React.CSSProperties = { width: '100%', border: `1px solid ${t.inputBorder}`, borderRadius: 8, padding: '10px 14px', fontSize: 14, color: t.text, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', background: t.inputBg }
-  const btnP: React.CSSProperties = { background: t.accent, color: t.bgLight, fontWeight: 700, borderRadius: 10, border: 'none', padding: '12px 28px', fontSize: 14, cursor: 'pointer', fontFamily: FONT }
-  const btnS: React.CSSProperties = { background: t.bgCard, color: t.accent, fontWeight: 600, borderRadius: 8, border: `1px solid ${t.inputBorder}`, padding: '8px 18px', fontSize: 13, cursor: 'pointer', fontFamily: FONT }
+  const card: React.CSSProperties = { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20 }
+  const lbl: React.CSSProperties = { fontSize: 11, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6, fontFamily: FONT, display: 'block' }
+  const inp: React.CSSProperties = { width: '100%', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 8, padding: '10px 14px', fontSize: 14, color: 'var(--tz-text)', fontFamily: FONT, outline: 'none', boxSizing: 'border-box', background: 'var(--tz-inputBg)' }
+  const btnP: React.CSSProperties = { background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', fontWeight: 700, borderRadius: 10, border: 'none', padding: '12px 28px', fontSize: 14, cursor: 'pointer', fontFamily: FONT }
+  const btnS: React.CSSProperties = { background: 'var(--tz-bgCard)', color: 'var(--tz-accent)', fontWeight: 600, borderRadius: 8, border: `1px solid ${'var(--tz-inputBorder)'}`, padding: '8px 18px', fontSize: 13, cursor: 'pointer', fontFamily: FONT }
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -471,26 +471,26 @@ export default function NewWorkOrderPage() {
   const canCreate = complaint.trim() && (selectedAsset || (showNewUnit && newUnit.number.trim())) && mileage && parseInt(mileage) > 0
 
   return (
-    <div style={{ minHeight: '100vh', background: t.bg, fontFamily: FONT, padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', fontFamily: FONT, padding: 24 }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <a href="/work-orders" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.bgElevated, borderRadius: 8, fontSize: 14, fontWeight: 700, color: t.text, textDecoration: 'none', marginBottom: 20 }}>
+        <a href="/work-orders" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--tz-bgElevated)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', textDecoration: 'none', marginBottom: 20 }}>
           <ChevronLeft size={16} /> Work Orders
         </a>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: t.text, margin: '12px 0 28px' }}>New Work Order</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--tz-text)', margin: '12px 0 28px' }}>New Work Order</h1>
 
         {/* Draft recovery banner */}
         {draftBanner && (
-          <div style={{ marginBottom: 16, padding: '14px 18px', background: t.warningBg, border: `1px solid ${t.warning}`, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div style={{ marginBottom: 16, padding: '14px 18px', background: 'var(--tz-warningBg)', border: `1px solid ${'var(--tz-warning)'}`, borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: t.warning }}>You have an unsaved draft</div>
-              <div style={{ fontSize: 12, color: t.warning, marginTop: 2 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-warning)' }}>You have an unsaved draft</div>
+              <div style={{ fontSize: 12, color: 'var(--tz-warning)', marginTop: 2 }}>
                 {draftBanner.customer?.company_name} — #{draftBanner.asset?.unit_number}
                 {draftBanner.complaint && ` — ${draftBanner.complaint.slice(0, 60)}${draftBanner.complaint.length > 60 ? '...' : ''}`}
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <button onClick={restoreDraft} style={{ padding: '8px 16px', background: t.warning, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Continue</button>
-              <button onClick={discardDraft} style={{ padding: '8px 16px', background: t.bgCard, color: t.warning, border: `1px solid ${t.warning}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Discard</button>
+              <button onClick={restoreDraft} style={{ padding: '8px 16px', background: 'var(--tz-warning)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Continue</button>
+              <button onClick={discardDraft} style={{ padding: '8px 16px', background: 'var(--tz-bgCard)', color: 'var(--tz-warning)', border: `1px solid ${'var(--tz-warning)'}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Discard</button>
             </div>
           </div>
         )}
@@ -501,8 +501,8 @@ export default function NewWorkOrderPage() {
           {selectedCustomer ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: t.text }}>{selectedCustomer.company_name}</div>
-                {selectedCustomer.contact_name && <div style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{selectedCustomer.contact_name}</div>}
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tz-text)' }}>{selectedCustomer.company_name}</div>
+                {selectedCustomer.contact_name && <div style={{ fontSize: 13, color: 'var(--tz-textSecondary)', marginTop: 2 }}>{selectedCustomer.contact_name}</div>}
               </div>
               <button onClick={() => { setSelectedCustomer(null); setCustomerSearch(''); setAssets([]); setSelectedAsset(null) }} style={btnS}>Change</button>
             </div>
@@ -510,11 +510,11 @@ export default function NewWorkOrderPage() {
             <div ref={dropdownRef} style={{ position: 'relative' }}>
               <input type="text" placeholder="Search company, contact, or phone..." value={customerSearch} onChange={e => { setCustomerSearch(e.target.value); setShowDropdown(true) }} onFocus={() => { if (customerSearch.trim()) setShowDropdown(true) }} style={inp} />
               {showDropdown && filteredCustomers.length > 0 && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 8, marginTop: 4, maxHeight: 240, overflowY: 'auto', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 8, marginTop: 4, maxHeight: 240, overflowY: 'auto', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
                   {filteredCustomers.map(c => (
-                    <div key={c.id} onClick={() => { setSelectedCustomer(c); setShowDropdown(false); setCustomerSearch('') }} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }} onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)} onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: t.text }}>{c.company_name}</div>
-                      {c.contact_name && <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 2 }}>{c.contact_name}</div>}
+                    <div key={c.id} onClick={() => { setSelectedCustomer(c); setShowDropdown(false); setCustomerSearch('') }} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: `1px solid ${'var(--tz-border)'}` }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)' }}>{c.company_name}</div>
+                      {c.contact_name && <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginTop: 2 }}>{c.contact_name}</div>}
                     </div>
                   ))}
                 </div>
@@ -528,36 +528,36 @@ export default function NewWorkOrderPage() {
           <div style={{ ...card, marginBottom: 16 }}>
             <span style={lbl}>Vehicle</span>
             {selectedAsset && !showVehicleList ? (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', border: `2px solid ${t.accent}`, borderRadius: 8, background: t.accentBg }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', border: `2px solid ${'var(--tz-accent)'}`, borderRadius: 8, background: 'var(--tz-accentBg)' }}>
                 <div>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: t.text }}>#{selectedAsset.unit_number}</span>
-                  <span style={{ fontSize: 13, color: t.textSecondary, marginLeft: 8 }}>{[selectedAsset.year, selectedAsset.make, selectedAsset.model].filter(Boolean).join(' ')}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>#{selectedAsset.unit_number}</span>
+                  <span style={{ fontSize: 13, color: 'var(--tz-textSecondary)', marginLeft: 8 }}>{[selectedAsset.year, selectedAsset.make, selectedAsset.model].filter(Boolean).join(' ')}</span>
                   {(() => {
                     const ot = unitType || selectedAsset?.ownership_type || 'fleet_asset'
-                    if (ot === 'owner_operator') return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: t.warningBg, color: t.warning }}>Owner Operator</span>
-                    if (ot === 'outside_customer') return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: t.accentBg, color: t.accent }}>Outside Customer</span>
-                    return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: t.successBg, color: t.success }}>Company Truck</span>
+                    if (ot === 'owner_operator') return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: 'var(--tz-warningBg)', color: 'var(--tz-warning)' }}>Owner Operator</span>
+                    if (ot === 'outside_customer') return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: 'var(--tz-accentBg)', color: 'var(--tz-accent)' }}>Outside Customer</span>
+                    return <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: 'var(--tz-successBg)', color: 'var(--tz-success)' }}>Company Truck</span>
                   })()}
                 </div>
                 <button onClick={() => { setShowVehicleList(true); setSelectedAsset(null) }} style={btnS}>Change</button>
               </div>
             ) : (
               <>
-                {assetsLoading ? <div style={{ padding: 20, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>Loading...</div>
-                : assets.length === 0 ? <div style={{ padding: 20, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No vehicles found</div>
+                {assetsLoading ? <div style={{ padding: 20, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>Loading...</div>
+                : assets.length === 0 ? <div style={{ padding: 20, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>No vehicles found</div>
                 : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {assets.map(a => (
-                      <div key={a.id} onClick={() => { setSelectedAsset(a); setShowVehicleList(false) }} style={{ padding: '10px 14px', borderRadius: 8, border: `1px solid ${t.cardBorder}`, background: t.bgCard, cursor: 'pointer' }} onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)} onMouseLeave={e => (e.currentTarget.style.background = t.bgCard)}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: t.text }}>#{a.unit_number}</span>
-                        {(a.year || a.make || a.model) && <span style={{ fontSize: 13, color: t.textSecondary, marginLeft: 8 }}>{[a.year, a.make, a.model].filter(Boolean).join(' ')}</span>}
+                      <div key={a.id} onClick={() => { setSelectedAsset(a); setShowVehicleList(false) }} style={{ padding: '10px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-cardBorder)'}`, background: 'var(--tz-bgCard)', cursor: 'pointer' }} onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')} onMouseLeave={e => (e.currentTarget.style.background = 'var(--tz-bgCard)')}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)' }}>#{a.unit_number}</span>
+                        {(a.year || a.make || a.model) && <span style={{ fontSize: 13, color: 'var(--tz-textSecondary)', marginLeft: 8 }}>{[a.year, a.make, a.model].filter(Boolean).join(' ')}</span>}
                       </div>
                     ))}
                   </div>}
                 {!showNewUnit ? (
                   <button onClick={() => { setShowNewUnit(true); setSelectedAsset(null) }} style={{ ...btnS, marginTop: 10, fontSize: 12 }}>+ Add New Unit</button>
                 ) : (
-                  <div style={{ marginTop: 12, padding: 16, border: `1px solid ${t.cardBorder}`, borderRadius: 10, background: t.bgElevated }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 12 }}>New Unit</div>
+                  <div style={{ marginTop: 12, padding: 16, border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 10, background: 'var(--tz-bgElevated)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>New Unit</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       <div><span style={lbl}>Unit Number</span><input style={inp} placeholder="e.g. 2717" value={newUnit.number} onChange={e => setNewUnit({ ...newUnit, number: e.target.value })} /></div>
                       <div><span style={lbl}>Year</span><input style={inp} type="number" placeholder="2022" value={newUnit.year} onChange={e => setNewUnit({ ...newUnit, year: e.target.value })} /></div>
@@ -580,17 +580,17 @@ export default function NewWorkOrderPage() {
         {selectedCustomer && (selectedAsset || showNewUnit) && step === 'edit' && (
           <div style={{ ...card, marginBottom: 16 }}>
             <span style={lbl}>Current Mileage *</span>
-            <input type="text" inputMode="numeric" value={mileage ? parseInt(mileage).toLocaleString() : ''} onChange={e => { const raw = e.target.value.replace(/[^0-9]/g, ''); if (raw.length <= 7) { setMileage(raw); setMileageError('') } }} placeholder="Enter current odometer reading" style={{ ...inp, borderColor: mileageError ? t.danger : t.inputBorder }} />
+            <input type="text" inputMode="numeric" value={mileage ? parseInt(mileage).toLocaleString() : ''} onChange={e => { const raw = e.target.value.replace(/[^0-9]/g, ''); if (raw.length <= 7) { setMileage(raw); setMileageError('') } }} placeholder="Enter current odometer reading" style={{ ...inp, borderColor: mileageError ? 'var(--tz-danger)' : 'var(--tz-inputBorder)' }} />
             {lastMileage && lastMileage.value > 0 && (
-              <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: 'var(--tz-textTertiary)', marginTop: 4 }}>
                 Last recorded: {lastMileage.value.toLocaleString()} mi{lastMileage.date ? ` on ${new Date(lastMileage.date).toLocaleDateString()}` : ''}
               </div>
             )}
             {mileageError && (
-              <div style={{ fontSize: 12, color: t.danger, marginTop: 6 }}>{mileageError}</div>
+              <div style={{ fontSize: 12, color: 'var(--tz-danger)', marginTop: 6 }}>{mileageError}</div>
             )}
             {mileageWarning && !mileageError && (
-              <div style={{ fontSize: 12, color: mileageWarning.includes('lower') ? t.danger : t.warning, marginTop: 6, padding: '6px 10px', background: mileageWarning.includes('lower') ? t.dangerBg : t.warningBg, borderRadius: 6, border: `1px solid ${mileageWarning.includes('lower') ? t.danger : t.warning}` }}>
+              <div style={{ fontSize: 12, color: mileageWarning.includes('lower') ? 'var(--tz-danger)' : 'var(--tz-warning)', marginTop: 6, padding: '6px 10px', background: mileageWarning.includes('lower') ? 'var(--tz-dangerBg)' : 'var(--tz-warningBg)', borderRadius: 6, border: `1px solid ${mileageWarning.includes('lower') ? 'var(--tz-danger)' : 'var(--tz-warning)'}` }}>
                 {mileageWarning}
               </div>
             )}
@@ -621,7 +621,7 @@ export default function NewWorkOrderPage() {
 
             {/* Estimate requirement indicator */}
             {!selectedAsset && (
-              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: t.surfaceMuted, color: t.textSecondary }}>
+              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'var(--tz-surfaceMuted)', color: 'var(--tz-textSecondary)' }}>
                 Select a vehicle to determine estimate requirements
               </div>
             )}
@@ -633,11 +633,11 @@ export default function NewWorkOrderPage() {
                 : 'No estimate required — work can start immediately'
               return (
                 <div style={{ marginTop: 10, borderRadius: 8, overflow: 'hidden' }}>
-                  <div style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: needsEstimate ? t.warningBg : t.successBg, border: `1px solid ${needsEstimate ? t.warning : t.success}`, borderRadius: 8, color: needsEstimate ? t.warning : t.success }}>
+                  <div style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, background: needsEstimate ? 'var(--tz-warningBg)' : 'var(--tz-successBg)', border: `1px solid ${needsEstimate ? 'var(--tz-warning)' : 'var(--tz-success)'}`, borderRadius: 8, color: needsEstimate ? 'var(--tz-warning)' : 'var(--tz-success)' }}>
                     {needsEstimate ? 'Estimate required — must be approved before work begins' : greenMsg}
                   </div>
                   {needsEstimate && (
-                    <div style={{ padding: '4px 12px 8px', fontSize: 11, color: t.warning }}>
+                    <div style={{ padding: '4px 12px 8px', fontSize: 11, color: 'var(--tz-warning)' }}>
                       Service writer must build and send estimate after creating this work order
                     </div>
                   )}
@@ -645,18 +645,18 @@ export default function NewWorkOrderPage() {
               )
             })()}
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 13, color: t.text, cursor: 'pointer' }}>
-              <input type="checkbox" checked={customerProvidesParts} onChange={e => setCustomerProvidesParts(e.target.checked)} style={{ accentColor: t.accent }} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 13, color: 'var(--tz-text)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={customerProvidesParts} onChange={e => setCustomerProvidesParts(e.target.checked)} style={{ accentColor: 'var(--tz-accent)' }} />
               Customer provides own parts
             </label>
 
             {/* Parts suggestions */}
             {suggestions.length > 0 && (
-              <div style={{ marginTop: 14, padding: 12, background: t.bgElevated, border: `1px solid ${t.cardBorder}`, borderRadius: 8 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', marginBottom: 8 }}>Suggested Parts</div>
+              <div style={{ marginTop: 14, padding: 12, background: 'var(--tz-bgElevated)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', marginBottom: 8 }}>Suggested Parts</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {suggestions.map((s, i) => (
-                    <span key={i} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: s.source === 'inventory' ? t.accentBg : t.surfaceMuted, color: s.source === 'inventory' ? t.accent : t.text, border: `1px solid ${s.source === 'inventory' ? t.borderAccent : t.cardBorder}` }}>
+                    <span key={i} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: s.source === 'inventory' ? 'var(--tz-accentBg)' : 'var(--tz-surfaceMuted)', color: s.source === 'inventory' ? 'var(--tz-accent)' : 'var(--tz-text)', border: `1px solid ${s.source === 'inventory' ? 'var(--tz-borderAccent)' : 'var(--tz-cardBorder)'}` }}>
                       {s.description}{s.source === 'inventory' && s.on_hand != null ? ` (${s.on_hand})` : ''}
                     </span>
                   ))}
@@ -669,8 +669,8 @@ export default function NewWorkOrderPage() {
         {/* Processing indicator */}
         {step === 'processing' && (
           <div style={{ ...card, marginBottom: 16, textAlign: 'center', padding: 40 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: t.text, marginBottom: 8 }}>Processing concern with AI...</div>
-            <div style={{ fontSize: 12, color: t.textTertiary }}>Splitting into individual job lines</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 8 }}>Processing concern with AI...</div>
+            <div style={{ fontSize: 12, color: 'var(--tz-textTertiary)' }}>Splitting into individual job lines</div>
           </div>
         )}
 
@@ -679,20 +679,20 @@ export default function NewWorkOrderPage() {
           <div style={{ ...card, marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <span style={{ ...lbl, marginBottom: 0 }}>Job Lines ({jobLines.length})</span>
-              {aiFailed && <span style={{ fontSize: 10, color: t.warning, background: t.warningBg, padding: '2px 8px', borderRadius: 4 }}>AI could not split — created as single job</span>}
+              {aiFailed && <span style={{ fontSize: 10, color: 'var(--tz-warning)', background: 'var(--tz-warningBg)', padding: '2px 8px', borderRadius: 4 }}>AI could not split — created as single job</span>}
             </div>
             {/* Duplicate warning */}
             {duplicateWarning && (
-              <div style={{ padding: '8px 12px', background: t.warningBg, border: `1px solid ${t.warning}`, borderRadius: 8, marginBottom: 12, fontSize: 12, color: t.warning, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ padding: '8px 12px', background: 'var(--tz-warningBg)', border: `1px solid ${'var(--tz-warning)'}`, borderRadius: 8, marginBottom: 12, fontSize: 12, color: 'var(--tz-warning)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{duplicateWarning}. Merge into one?</span>
-                <button onClick={() => setDuplicateWarning('')} style={{ background: 'none', border: 'none', color: t.textTertiary, fontSize: 11, cursor: 'pointer' }}>Dismiss</button>
+                <button onClick={() => setDuplicateWarning('')} style={{ background: 'none', border: 'none', color: 'var(--tz-textTertiary)', fontSize: 11, cursor: 'pointer' }}>Dismiss</button>
               </div>
             )}
 
             {/* Merge controls */}
             {jobLines.length > 1 && mergeSelected.size >= 2 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: t.accentBg, border: `1px solid ${t.borderAccent}`, borderRadius: 8, marginBottom: 12 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: t.accent }}>{mergeSelected.size} lines selected</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--tz-accentBg)', border: `1px solid ${'var(--tz-borderAccent)'}`, borderRadius: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-accent)' }}>{mergeSelected.size} lines selected</span>
                 <button onClick={() => {
                   const indices = Array.from(mergeSelected).sort((a, b) => a - b)
                   const destIdx = indices[0]
@@ -702,10 +702,10 @@ export default function NewWorkOrderPage() {
                   const merged = mergeDraftLines(dest, sources)
                   setJobLines(prev => prev.filter((_, idx) => !srcIndices.includes(idx)).map((l, idx) => idx === destIdx ? merged : l))
                   setMergeSelected(new Set())
-                }} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: t.accent, color: t.bgLight, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                }} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   Merge into Job {Array.from(mergeSelected).sort((a, b) => a - b)[0] + 1}
                 </button>
-                <button onClick={() => setMergeSelected(new Set())} style={{ background: 'none', border: 'none', color: t.textTertiary, fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={() => setMergeSelected(new Set())} style={{ background: 'none', border: 'none', color: 'var(--tz-textTertiary)', fontSize: 11, cursor: 'pointer' }}>Cancel</button>
               </div>
             )}
 
@@ -713,37 +713,37 @@ export default function NewWorkOrderPage() {
               {jobLines.map((line, i) => {
                 const unrecognized = isUnrecognizedJob(line.description, line.skills)
                 return (
-                <div key={i} style={{ border: mergeSelected.has(i) ? `2px solid ${t.accent}` : unrecognized ? `1px solid ${t.danger}` : `1px solid ${t.cardBorder}`, borderLeft: unrecognized && !mergeSelected.has(i) ? `4px solid ${t.danger}` : mergeSelected.has(i) ? `2px solid ${t.accent}` : `1px solid ${t.cardBorder}`, borderRadius: 10, padding: 12, background: mergeSelected.has(i) ? t.accentBg : unrecognized ? t.dangerBg : t.bgCard }}>
+                <div key={i} style={{ border: mergeSelected.has(i) ? `2px solid ${'var(--tz-accent)'}` : unrecognized ? `1px solid ${'var(--tz-danger)'}` : `1px solid ${'var(--tz-cardBorder)'}`, borderLeft: unrecognized && !mergeSelected.has(i) ? `4px solid ${'var(--tz-danger)'}` : mergeSelected.has(i) ? `2px solid ${'var(--tz-accent)'}` : `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 10, padding: 12, background: mergeSelected.has(i) ? 'var(--tz-accentBg)' : unrecognized ? 'var(--tz-dangerBg)' : 'var(--tz-bgCard)' }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: line.isTire ? 10 : 0 }}>
                     {jobLines.length > 1 && (
-                      <input type="checkbox" checked={mergeSelected.has(i)} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n })} style={{ cursor: 'pointer', accentColor: t.accent, width: 16, height: 16, flexShrink: 0 }} />
+                      <input type="checkbox" checked={mergeSelected.has(i)} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n })} style={{ cursor: 'pointer', accentColor: 'var(--tz-accent)', width: 16, height: 16, flexShrink: 0 }} />
                     )}
-                    <span style={{ fontSize: 11, fontWeight: 700, color: unrecognized ? t.danger : t.textTertiary, minWidth: 40, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      {unrecognized && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.danger} strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>}
+                    <span style={{ fontSize: 11, fontWeight: 700, color: unrecognized ? 'var(--tz-danger)' : 'var(--tz-textTertiary)', minWidth: 40, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {unrecognized && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={'var(--tz-danger)'} strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>}
                       Job {i + 1}
                     </span>
-                    {unrecognized && <span style={{ fontSize: 10, fontWeight: 600, color: t.danger, background: t.dangerBg, padding: '1px 6px', borderRadius: 4 }}>Unrecognized</span>}
-                    <input type="text" value={line.description} onChange={e => setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: e.target.value, isTire: isTireJob(e.target.value), isDiagnostic: isDiagnosticJob(e.target.value), roughParts: getAutoRoughParts(e.target.value, l.tirePositions) } : l))} style={{ ...inp, flex: 1, borderColor: unrecognized ? t.danger : t.inputBorder }} placeholder={unrecognized ? 'What did you mean? Type the correct description...' : ''} />
-                    <button onClick={() => setJobLines(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: `1px solid ${unrecognized ? t.danger : t.inputBorder}`, borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: t.danger, fontWeight: 600, flexShrink: 0, fontSize: 13 }}>{unrecognized ? 'Remove' : '×'}</button>
+                    {unrecognized && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--tz-danger)', background: 'var(--tz-dangerBg)', padding: '1px 6px', borderRadius: 4 }}>Unrecognized</span>}
+                    <input type="text" value={line.description} onChange={e => setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: e.target.value, isTire: isTireJob(e.target.value), isDiagnostic: isDiagnosticJob(e.target.value), roughParts: getAutoRoughParts(e.target.value, l.tirePositions) } : l))} style={{ ...inp, flex: 1, borderColor: unrecognized ? 'var(--tz-danger)' : 'var(--tz-inputBorder)' }} placeholder={unrecognized ? 'What did you mean? Type the correct description...' : ''} />
+                    <button onClick={() => setJobLines(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: `1px solid ${unrecognized ? 'var(--tz-danger)' : 'var(--tz-inputBorder)'}`, borderRadius: 8, padding: '8px 12px', cursor: 'pointer', color: 'var(--tz-danger)', fontWeight: 600, flexShrink: 0, fontSize: 13 }}>{unrecognized ? 'Remove' : '×'}</button>
                   </div>
 
                   {/* FIX 3: Tire position selector */}
                   {line.isTire && (
-                    <div style={{ marginTop: 8, padding: 10, background: t.warningBg, border: `1px solid ${t.warning}`, borderRadius: 8 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: t.warning, textTransform: 'uppercase', marginBottom: 8 }}>
+                    <div style={{ marginTop: 8, padding: 10, background: 'var(--tz-warningBg)', border: `1px solid ${'var(--tz-warning)'}`, borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tz-warning)', textTransform: 'uppercase', marginBottom: 8 }}>
                         Tire Position {line.tirePositions.length === 0 && '— specify for maintenance tracking'}
                       </div>
                       {TIRE_POSITIONS.map(g => (
                         <div key={g.group} style={{ marginBottom: 6 }}>
-                          <div style={{ fontSize: 10, fontWeight: 600, color: t.textSecondary, marginBottom: 3 }}>{g.group}</div>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--tz-textSecondary)', marginBottom: 3 }}>{g.group}</div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {g.positions.map(pos => {
                               const selected = line.tirePositions.includes(pos)
                               return (
                                 <button key={pos} onClick={() => toggleTirePosition(i, pos)} style={{
                                   padding: '4px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-                                  background: selected ? t.accent : t.bgCard, color: selected ? t.bgLight : t.text,
-                                  border: selected ? `1px solid ${t.accent}` : `1px solid ${t.inputBorder}`,
+                                  background: selected ? 'var(--tz-accent)' : 'var(--tz-bgCard)', color: selected ? 'var(--tz-bgLight)' : 'var(--tz-text)',
+                                  border: selected ? `1px solid ${'var(--tz-accent)'}` : `1px solid ${'var(--tz-inputBorder)'}`,
                                 }}>{pos}</button>
                               )
                             })}
@@ -755,21 +755,21 @@ export default function NewWorkOrderPage() {
 
                   {/* Diagnostic note */}
                   {line.isDiagnostic && (
-                    <div style={{ marginTop: 8, padding: '8px 12px', background: t.accentBg, border: `1px solid ${t.borderAccent}`, borderRadius: 8, fontSize: 11, color: t.accent }}>
+                    <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--tz-accentBg)', border: `1px solid ${'var(--tz-borderAccent)'}`, borderRadius: 8, fontSize: 11, color: 'var(--tz-accent)' }}>
                       Diagnostic — parts will be added after inspection
                     </div>
                   )}
 
                   {/* Noun-only clarification gate */}
                   {needsClarification(line.roughParts) && (
-                    <div style={{ marginTop: 8, padding: '10px 12px', background: t.warningBg, border: `1px solid ${t.warning}`, borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: t.warning, marginBottom: 6 }}>What do you need done? Choose an action:</div>
+                    <div style={{ marginTop: 8, padding: '10px 12px', background: 'var(--tz-warningBg)', border: `1px solid ${'var(--tz-warning)'}`, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tz-warning)', marginBottom: 6 }}>What do you need done? Choose an action:</div>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {getClarificationOptionsForInput(line.description).map(opt => (
                           <button key={opt} onClick={() => {
                             const newDesc = resolveClarification(opt, line.description)
                             setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, description: newDesc, isTire: isTireJob(newDesc), isDiagnostic: isDiagnosticJob(newDesc), roughParts: getAutoRoughParts(newDesc, l.tirePositions) } : l))
-                          }} style={{ padding: '6px 14px', borderRadius: 6, border: `1px solid ${t.warning}`, background: t.bgCard, color: t.warning, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                          }} style={{ padding: '6px 14px', borderRadius: 6, border: `1px solid ${'var(--tz-warning)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-warning)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                             {opt}
                           </button>
                         ))}
@@ -779,32 +779,32 @@ export default function NewWorkOrderPage() {
 
                   {/* Auto rough parts */}
                   {line.roughParts.length > 0 && !line.isDiagnostic && !needsClarification(line.roughParts) && (
-                    <div style={{ marginTop: 8, padding: '8px 12px', background: t.bgElevated, border: `1px solid ${t.cardBorder}`, borderRadius: 8 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', marginBottom: 6 }}>Auto-Generated Parts (rough)</div>
+                    <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--tz-bgElevated)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', marginBottom: 6 }}>Auto-Generated Parts (rough)</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                         {line.roughParts.map((p, pi) => (
-                          <span key={pi} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 5, fontSize: 10, background: p.is_labor ? t.surfaceMuted : t.warningBg, color: p.is_labor ? t.textSecondary : t.warning, border: `1px solid ${p.is_labor ? t.cardBorder : t.warning}` }}>
+                          <span key={pi} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 5, fontSize: 10, background: p.is_labor ? 'var(--tz-surfaceMuted)' : 'var(--tz-warningBg)', color: p.is_labor ? 'var(--tz-textSecondary)' : 'var(--tz-warning)', border: `1px solid ${p.is_labor ? 'var(--tz-cardBorder)' : 'var(--tz-warning)'}` }}>
                             {p.is_labor ? `${p.rough_name} (inspection)` : `${p.quantity > 1 ? `${p.quantity}x ` : ''}${p.rough_name}`}
                             <span onClick={() => setJobLines(prev => prev.map((l, idx) => idx === i ? { ...l, roughParts: l.roughParts.filter((_, rIdx) => rIdx !== pi) } : l))} style={{ cursor: 'pointer', marginLeft: 2, fontWeight: 700, fontSize: 12, lineHeight: 1, opacity: 0.6 }} title="Remove">&times;</span>
                           </span>
                         ))}
                       </div>
-                      <div style={{ fontSize: 9, color: t.textTertiary, marginTop: 4 }}>Parts dept will replace with real names + part numbers</div>
+                      <div style={{ fontSize: 9, color: 'var(--tz-textTertiary)', marginTop: 4 }}>Parts dept will replace with real names + part numbers</div>
                     </div>
                   )}
 
                   {/* Historical brain suggestions (TZBridge7) — PM/Oil Change only */}
                   {brainSuggestions[i]?.suggestions?.length > 0 && !needsClarification(line.roughParts) && (
-                    <div style={{ marginTop: 6, padding: '8px 12px', background: t.accentBg, border: `1px solid ${t.borderAccent}`, borderRadius: 8 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: t.accent, textTransform: 'uppercase', marginBottom: 4 }}>Historical Suggestions</div>
+                    <div style={{ marginTop: 6, padding: '8px 12px', background: 'var(--tz-accentBg)', border: `1px solid ${'var(--tz-borderAccent)'}`, borderRadius: 8 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--tz-accent)', textTransform: 'uppercase', marginBottom: 4 }}>Historical Suggestions</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                         {brainSuggestions[i].suggestions.map((s, si) => (
-                          <span key={si} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 5, fontSize: 10, background: t.accentBg, color: t.accent, border: `1px solid ${t.borderAccent}` }}>
+                          <span key={si} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 5, fontSize: 10, background: 'var(--tz-accentBg)', color: 'var(--tz-accent)', border: `1px solid ${'var(--tz-borderAccent)'}` }}>
                             {s.suggested_quantity > 1 ? `${s.suggested_quantity}x ` : ''}{s.description}{s.part_number ? ` [${s.part_number}]` : ''}
                           </span>
                         ))}
                       </div>
-                      <div style={{ fontSize: 9, color: t.textSecondary, marginTop: 3 }}>Based on {brainSuggestions[i].suggestions[0]?.historical_wo_count?.toLocaleString()}+ historical work orders</div>
+                      <div style={{ fontSize: 9, color: 'var(--tz-textSecondary)', marginTop: 3 }}>Based on {brainSuggestions[i].suggestions[0]?.historical_wo_count?.toLocaleString()}+ historical work orders</div>
                     </div>
                   )}
                 </div>
@@ -819,7 +819,7 @@ export default function NewWorkOrderPage() {
         )}
 
         {/* Error */}
-        {error && <div style={{ padding: '12px 16px', background: t.dangerBg, border: `1px solid ${t.danger}`, borderRadius: 8, color: t.danger, fontSize: 13, marginBottom: 16 }}>{error}</div>}
+        {error && <div style={{ padding: '12px 16px', background: 'var(--tz-dangerBg)', border: `1px solid ${'var(--tz-danger)'}`, borderRadius: 8, color: 'var(--tz-danger)', fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
         {/* Action buttons */}
         {step === 'edit' && (

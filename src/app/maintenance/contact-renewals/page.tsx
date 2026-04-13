@@ -33,15 +33,15 @@ export default function ContactRenewalsPage() {
     })
   }, [])
 
-  if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   function expiryColor(d: string) { if (!d) return MUTED; return d < today ? RED : d <= in30 ? AMBER : GREEN }
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Contact Renewals</div>
-        <a href="/maintenance/contact-renewals/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)' }}>Contact Renewals</div>
+        <a href="/maintenance/contact-renewals/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
         <div style={{ background: `${RED}12`, border: `1px solid ${RED}33`, borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10 }}><AlertTriangle size={18} color={RED} /><span style={{ fontSize: 28, fontWeight: 700, color: RED, fontFamily: MONO }}>{overdueCount}</span><span style={{ fontSize: 13, color: RED }}>Overdue</span></div>
@@ -49,7 +49,7 @@ export default function ContactRenewalsPage() {
       </div>
       <DataTable
         columns={[
-          { key: 'renewal_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: t.text, textTransform: 'capitalize' }}>{r.custom_name || r.renewal_type?.replace(/_/g, ' ')}</span> },
+          { key: 'renewal_type', label: 'Type', render: (r: any) => <span style={{ fontWeight: 600, color: 'var(--tz-text)', textTransform: 'capitalize' }}>{r.custom_name || r.renewal_type?.replace(/_/g, ' ')}</span> },
           { key: 'expiry_date', label: 'Expiry', render: (r: any) => <span style={{ color: expiryColor(r.expiry_date), fontFamily: MONO }}>{r.expiry_date ? new Date(r.expiry_date).toLocaleDateString() : '—'}</span> },
           { key: 'cost', label: 'Cost', render: (r: any) => r.cost ? `$${r.cost.toFixed(2)}` : '—' },
           { key: 'status', label: 'Status', render: (r: any) => { const expired = r.expiry_date && r.expiry_date < today; return <span style={{ fontSize: 9, fontWeight: 600, color: expired ? RED : GREEN, background: `${expired ? RED : GREEN}18`, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase' }}>{expired ? 'EXPIRED' : r.status}</span> } },

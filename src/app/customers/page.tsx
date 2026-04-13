@@ -176,21 +176,21 @@ export default function CustomersPage() {
 
   function paymentBadge(terms: string | null) {
     const term = (terms || '').toLowerCase()
-    let bg = t.surfaceMuted
-    let color = t.textSecondary
+    let bg = 'var(--tz-surfaceMuted)'
+    let color = 'var(--tz-textSecondary)'
     let label = terms || '—'
 
     if (term === 'cod') {
-      bg = t.dangerBg
-      color = t.danger
+      bg = 'var(--tz-dangerBg)'
+      color = 'var(--tz-danger)'
       label = 'COD'
     } else if (term === 'net15' || term === 'net_15') {
-      bg = t.warningBg
-      color = t.warning
+      bg = 'var(--tz-warningBg)'
+      color = 'var(--tz-warning)'
       label = 'Net 15'
     } else if (term === 'net30' || term === 'net_30') {
-      bg = t.accentBg
-      color = t.accentLight
+      bg = 'var(--tz-accentBg)'
+      color = 'var(--tz-accentLight)'
       label = 'Net 30'
     }
 
@@ -220,8 +220,8 @@ export default function CustomersPage() {
         borderRadius: 999,
         fontSize: 11,
         fontWeight: 600,
-        background: isActive ? t.successBg : t.surfaceMuted,
-        color: isActive ? t.success : t.textSecondary,
+        background: isActive ? 'var(--tz-successBg)' : 'var(--tz-surfaceMuted)',
+        color: isActive ? 'var(--tz-success)' : 'var(--tz-textSecondary)',
         whiteSpace: 'nowrap',
       }}>
         {isActive ? 'Active' : 'Inactive'}
@@ -231,9 +231,9 @@ export default function CustomersPage() {
 
   return (
     <div style={{
-      background: t.bg,
+      background: 'var(--tz-bg)',
       minHeight: '100vh',
-      color: t.text,
+      color: 'var(--tz-text)',
       fontFamily: "'Inter', sans-serif",
       padding: 24,
     }}>
@@ -250,13 +250,13 @@ export default function CustomersPage() {
           <h1 style={{
             fontSize: 24,
             fontWeight: 700,
-            color: t.text,
+            color: 'var(--tz-text)',
             margin: 0,
             lineHeight: 1.2,
           }}>
             Customers
           </h1>
-          <div style={{ fontSize: 13, color: t.textLightSecondary, marginTop: 4 }}>
+          <div style={{ fontSize: 13, color: 'var(--tz-textLightSecondary)', marginTop: 4 }}>
             {total.toLocaleString()} customers
           </div>
         </div>
@@ -266,9 +266,9 @@ export default function CustomersPage() {
             style={{
               padding: '8px 14px',
               background: 'transparent',
-              border: `1px solid ${t.borderAccent}`,
+              border: `1px solid ${'var(--tz-borderAccent)'}`,
               borderRadius: 8,
-              color: t.accent,
+              color: 'var(--tz-accent)',
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
@@ -281,10 +281,10 @@ export default function CustomersPage() {
             onClick={() => router.push('/customers/new')}
             style={{
               padding: '8px 16px',
-              background: t.accent,
+              background: 'var(--tz-accent)',
               border: 'none',
               borderRadius: 8,
-              color: t.bgLight,
+              color: 'var(--tz-bgLight)',
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
@@ -318,13 +318,13 @@ export default function CustomersPage() {
       {/* Error */}
       {error && (
         <div style={{
-          background: t.dangerBg,
-          border: `1px solid ${t.danger}`,
+          background: 'var(--tz-dangerBg)',
+          border: `1px solid ${'var(--tz-danger)'}`,
           borderRadius: 8,
           padding: 12,
           marginBottom: 16,
           fontSize: 13,
-          color: t.danger,
+          color: 'var(--tz-danger)',
         }}>
           {error}
         </div>
@@ -332,7 +332,7 @@ export default function CustomersPage() {
 
       {/* Table */}
       <div style={{
-        background: t.bgCard,
+        background: 'var(--tz-bgCard)',
         border: `1px solid ${t.bgActive}`,
         borderRadius: 12,
         overflow: 'hidden',
@@ -345,14 +345,14 @@ export default function CustomersPage() {
                   <th key={h} style={{
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontSize: 10,
-                    color: t.textLightSecondary,
+                    color: 'var(--tz-textLightSecondary)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                     padding: '10px 14px',
                     textAlign: 'left',
-                    background: t.bgInput,
+                    background: 'var(--tz-bgInput)',
                     whiteSpace: 'nowrap',
-                    borderBottom: `1px solid ${t.border}`,
+                    borderBottom: `1px solid ${'var(--tz-border)'}`,
                     fontWeight: 500,
                   }}>
                     {h}
@@ -363,13 +363,13 @@ export default function CustomersPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', color: t.textLightSecondary, padding: 48, fontSize: 13 }}>
+                  <td colSpan={6} style={{ textAlign: 'center', color: 'var(--tz-textLightSecondary)', padding: 48, fontSize: 13 }}>
                     Loading...
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', color: t.textLightSecondary, padding: 48, fontSize: 13 }}>
+                  <td colSpan={6} style={{ textAlign: 'center', color: 'var(--tz-textLightSecondary)', padding: 48, fontSize: 13 }}>
                     {search || statusFilter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No customers found'}
                   </td>
                 </tr>
@@ -378,54 +378,54 @@ export default function CustomersPage() {
                   key={c.id}
                   onClick={() => router.push(`/customers/${c.id}`)}
                   style={{ cursor: 'pointer' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = t.bgHover }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--tz-bgHover)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: `1px solid ${t.bgHover}`,
+                    borderBottom: `1px solid ${'var(--tz-bgHover)'}`,
                     fontSize: 13,
                     fontWeight: 600,
-                    color: t.accent,
+                    color: 'var(--tz-accent)',
                   }}>
                     {c.company_name || 'Unnamed'} <SourceBadge source={c.source} />
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: `1px solid ${t.bgHover}`,
+                    borderBottom: `1px solid ${'var(--tz-bgHover)'}`,
                     fontSize: 13,
                     fontFamily: "'IBM Plex Mono', monospace",
-                    color: t.textSecondary,
+                    color: 'var(--tz-textSecondary)',
                   }}>
                     {c.dot_number || '—'}
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: `1px solid ${t.bgHover}`,
+                    borderBottom: `1px solid ${'var(--tz-bgHover)'}`,
                     fontSize: 13,
-                    color: t.textSecondary,
+                    color: 'var(--tz-textSecondary)',
                   }}>
                     {c.phone || '—'}
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: `1px solid ${t.bgHover}`,
+                    borderBottom: `1px solid ${'var(--tz-bgHover)'}`,
                     fontSize: 13,
                   }}>
                     {paymentBadge(c.payment_terms)}
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: `1px solid ${t.bgHover}`,
+                    borderBottom: `1px solid ${'var(--tz-bgHover)'}`,
                     fontSize: 13,
                   }}>
                     {statusBadge(c.customer_status)}
                   </td>
                   <td style={{
                     padding: '11px 14px',
-                    borderBottom: `1px solid ${t.bgHover}`,
+                    borderBottom: `1px solid ${'var(--tz-bgHover)'}`,
                     fontSize: 13,
-                    color: t.textLightSecondary,
+                    color: 'var(--tz-textLightSecondary)',
                   }}>
                     {c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}
                   </td>

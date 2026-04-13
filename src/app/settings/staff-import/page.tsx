@@ -124,19 +124,19 @@ export default function StaffImportPage() {
     setImportProgress(0); setImportLog([]); setImportSummary(null)
   }
 
-  if (!user) return <div style={S.page}><div style={{ color: t.textTertiary, textAlign: 'center', paddingTop: 100 }}>Loading...</div></div>
+  if (!user) return <div style={S.page}><div style={{ color: 'var(--tz-textTertiary)', textAlign: 'center', paddingTop: 100 }}>Loading...</div></div>
 
   const ROLE_COLORS: Record<string, string> = {
-    technician: t.accent, maintenance_technician: t.accent, maintenance_manager: '#7C3AED',
+    technician: 'var(--tz-accent)', maintenance_technician: 'var(--tz-accent)', maintenance_manager: '#7C3AED',
     service_writer: '#059669', accountant: '#D97706', office_admin: '#EC4899', shop_manager: '#7C3AED',
     gm: '#DC2626', parts_manager: '#0891B2', fleet_manager: '#6366F1', dispatcher: '#84CC16', driver: '#78716C', owner: '#DC2626',
   }
 
   return (
     <div style={S.page}>
-      <a href="/settings/users" style={{ fontSize: 12, color: t.textSecondary, textDecoration: 'none', display: 'block', marginBottom: 20 }}>← Staff</a>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Staff Bulk Import</div>
-      <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 24 }}>Upload the completed staff roster Excel file to create accounts for all employees at once.</div>
+      <a href="/settings/users" style={{ fontSize: 12, color: 'var(--tz-textSecondary)', textDecoration: 'none', display: 'block', marginBottom: 20 }}>← Staff</a>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', marginBottom: 4 }}>Staff Bulk Import</div>
+      <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 24 }}>Upload the completed staff roster Excel file to create accounts for all employees at once.</div>
 
       {/* Step indicator */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
@@ -146,11 +146,11 @@ export default function StaffImportPage() {
             <div style={{
               width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontWeight: 700,
-              background: step === s || (s === 'importing' && step === 'done') ? t.accent : i < ['upload', 'preview', 'importing'].indexOf(step) || step === 'done' ? 'rgba(29,111,232,.2)' : t.inputBg,
-              color: step === s || step === 'done' ? t.bgLight : t.textTertiary,
-              border: `1px solid ${step === s ? t.accent : t.border}`,
+              background: step === s || (s === 'importing' && step === 'done') ? 'var(--tz-accent)' : i < ['upload', 'preview', 'importing'].indexOf(step) || step === 'done' ? 'rgba(29,111,232,.2)' : 'var(--tz-inputBg)',
+              color: step === s || step === 'done' ? 'var(--tz-bgLight)' : 'var(--tz-textTertiary)',
+              border: `1px solid ${step === s ? 'var(--tz-accent)' : 'var(--tz-border)'}`,
             }}>{i + 1}</div>
-            <span style={{ fontSize: 11, color: step === s || (s === 'importing' && step === 'done') ? t.text : t.textTertiary }}>
+            <span style={{ fontSize: 11, color: step === s || (s === 'importing' && step === 'done') ? 'var(--tz-text)' : 'var(--tz-textTertiary)' }}>
               {s === 'upload' ? 'Upload' : s === 'preview' ? 'Preview' : 'Import'}
             </span>
           </div>
@@ -167,13 +167,13 @@ export default function StaffImportPage() {
             onClick={() => fileRef.current?.click()}
             style={{
               ...S.card, textAlign: 'center', cursor: 'pointer', padding: '48px 24px',
-              border: dragOver ? `2px dashed ${t.accent}` : `2px dashed ${t.border}`,
-              background: dragOver ? 'rgba(29,111,232,.04)' : t.bgCard,
+              border: dragOver ? `2px dashed ${'var(--tz-accent)'}` : `2px dashed ${'var(--tz-border)'}`,
+              background: dragOver ? 'rgba(29,111,232,.04)' : 'var(--tz-bgCard)',
             }}
           >
             <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>+</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: t.text, marginBottom: 6 }}>Drop your Excel or CSV file here</div>
-            <div style={{ fontSize: 12, color: t.textTertiary }}>or click to browse — accepts .xlsx and .csv</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)', marginBottom: 6 }}>Drop your Excel or CSV file here</div>
+            <div style={{ fontSize: 12, color: 'var(--tz-textTertiary)' }}>or click to browse — accepts .xlsx and .csv</div>
           </div>
           <input ref={fileRef} type="file" accept=".xlsx,.csv,.xls" style={{ display: 'none' }} onChange={onFileSelect} />
 
@@ -182,15 +182,15 @@ export default function StaffImportPage() {
           <button onClick={downloadTemplate} style={{ ...S.btnOutline, marginTop: 12 }}>Download Blank Template (.xlsx)</button>
 
           <div style={{ ...S.card, marginTop: 16, padding: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 10 }}>Required Columns</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tz-textSecondary)', letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 10 }}>Required Columns</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {['Full Name', 'Email', 'Role'].map(c => <span key={c} style={{ padding: '4px 10px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 6, fontSize: 11, color: t.accentLight }}>{c}</span>)}
+              {['Full Name', 'Email', 'Role'].map(c => <span key={c} style={{ padding: '4px 10px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.15)', borderRadius: 6, fontSize: 11, color: 'var(--tz-accentLight)' }}>{c}</span>)}
             </div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, letterSpacing: '.05em', textTransform: 'uppercase', marginTop: 14, marginBottom: 10 }}>Optional Columns</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tz-textSecondary)', letterSpacing: '.05em', textTransform: 'uppercase', marginTop: 14, marginBottom: 10 }}>Optional Columns</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {['Team', 'Language', 'Phone', 'Skills', 'Employee ID', 'Notes'].map(c => <span key={c} style={{ padding: '4px 10px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 6, fontSize: 11, color: t.textSecondary }}>{c}</span>)}
+              {['Team', 'Language', 'Phone', 'Skills', 'Employee ID', 'Notes'].map(c => <span key={c} style={{ padding: '4px 10px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 6, fontSize: 11, color: 'var(--tz-textSecondary)' }}>{c}</span>)}
             </div>
-            <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 12, lineHeight: 1.6 }}>
+            <div style={{ fontSize: 11, color: 'var(--tz-textTertiary)', marginTop: 12, lineHeight: 1.6 }}>
               Valid roles: Technician, Service Writer, Shop Manager, Parts Manager, Accountant, Office Admin, GM, Dispatcher, Driver, Fleet Manager, Maintenance Technician, Maintenance Manager, Owner<br />
               Valid languages: English, Russian, Uzbek, Spanish, Ukrainian
             </div>
@@ -206,7 +206,7 @@ export default function StaffImportPage() {
             <div style={{ ...S.badge, background: 'rgba(29,184,112,.08)', borderColor: 'rgba(29,184,112,.2)', color: '#1DB870' }}>{validRows.length} valid</div>
             <div style={{ ...S.badge, background: 'rgba(217,167,6,.08)', borderColor: 'rgba(217,167,6,.2)', color: '#D9A706' }}>{warningRows.length} warnings</div>
             <div style={{ ...S.badge, background: 'rgba(217,79,79,.08)', borderColor: 'rgba(217,79,79,.2)', color: '#D94F4F' }}>{errorRows.length} errors</div>
-            <div style={{ ...S.badge, color: t.textSecondary }}>{rows.length} total from {fileName}</div>
+            <div style={{ ...S.badge, color: 'var(--tz-textSecondary)' }}>{rows.length} total from {fileName}</div>
           </div>
 
           {errorRows.length > 0 && (
@@ -229,11 +229,11 @@ export default function StaffImportPage() {
                 {rows.map((row, i) => (
                   <tr key={i} style={{ background: row._status === 'error' ? 'rgba(217,79,79,.04)' : 'transparent' }}>
                     <td style={S.td}>{i + 1}</td>
-                    <td style={{ ...S.td, fontWeight: 600, color: t.text }}>{row.full_name || '—'}</td>
+                    <td style={{ ...S.td, fontWeight: 600, color: 'var(--tz-text)' }}>{row.full_name || '—'}</td>
                     <td style={S.td}>{row.email || '—'}</td>
                     <td style={S.td}>
                       {row.role && (
-                        <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: `${ROLE_COLORS[row.role] || t.textTertiary}20`, color: ROLE_COLORS[row.role] || t.textTertiary }}>
+                        <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: `${ROLE_COLORS[row.role] || 'var(--tz-textTertiary)'}20`, color: ROLE_COLORS[row.role] || 'var(--tz-textTertiary)' }}>
                           {row.role.replace(/_/g, ' ')}
                         </span>
                       )}
@@ -279,11 +279,11 @@ export default function StaffImportPage() {
         <div>
           {/* Progress bar */}
           <div style={{ ...S.card, padding: 16, marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: t.textSecondary, marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 8 }}>
               <span>{step === 'done' ? 'Import complete' : 'Creating accounts...'}</span>
               <span>{importProgress} / {importable.length}</span>
             </div>
-            <div style={{ height: 6, background: t.inputBg, borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ height: 6, background: 'var(--tz-inputBg)', borderRadius: 3, overflow: 'hidden' }}>
               <div style={{
                 height: '100%', borderRadius: 3, transition: 'width .3s',
                 width: `${(importProgress / Math.max(importable.length, 1)) * 100}%`,
@@ -297,15 +297,15 @@ export default function StaffImportPage() {
             <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
               <div style={{ ...S.statCard, borderColor: 'rgba(29,184,112,.2)' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#1DB870' }}>{importSummary.created}</div>
-                <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 2 }}>Created</div>
+                <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)', marginTop: 2 }}>Created</div>
               </div>
               <div style={{ ...S.statCard, borderColor: 'rgba(217,167,6,.2)' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#D9A706' }}>{importSummary.skipped}</div>
-                <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 2 }}>Skipped</div>
+                <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)', marginTop: 2 }}>Skipped</div>
               </div>
               <div style={{ ...S.statCard, borderColor: 'rgba(217,79,79,.2)' }}>
                 <div style={{ fontSize: 24, fontWeight: 700, color: '#D94F4F' }}>{importSummary.failed}</div>
-                <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 2 }}>Failed</div>
+                <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)', marginTop: 2 }}>Failed</div>
               </div>
             </div>
           )}
@@ -313,16 +313,16 @@ export default function StaffImportPage() {
           {/* Live log */}
           <div style={{ ...S.card, padding: 0, maxHeight: 400, overflow: 'auto' }}>
             {importLog.map((entry, i) => (
-              <div key={i} style={{ padding: '8px 14px', borderBottom: `1px solid ${t.border}`, fontSize: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div key={i} style={{ padding: '8px 14px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span style={{ width: 16, textAlign: 'center', flexShrink: 0 }}>
                   {entry.status === 'created' ? <span style={{ color: '#1DB870' }}>&#10003;</span> : entry.status === 'skipped' ? <span style={{ color: '#D9A706' }}>&#8212;</span> : <span style={{ color: '#D94F4F' }}>&#10007;</span>}
                 </span>
-                <span style={{ color: t.text, fontWeight: 500, minWidth: 140 }}>{entry.name}</span>
-                <span style={{ color: t.textTertiary, flex: 1 }}>{entry.reason}</span>
+                <span style={{ color: 'var(--tz-text)', fontWeight: 500, minWidth: 140 }}>{entry.name}</span>
+                <span style={{ color: 'var(--tz-textTertiary)', flex: 1 }}>{entry.reason}</span>
               </div>
             ))}
             {step === 'importing' && importLog.length < importable.length && (
-              <div style={{ padding: '10px 14px', fontSize: 12, color: t.textTertiary }}>Processing...</div>
+              <div style={{ padding: '10px 14px', fontSize: 12, color: 'var(--tz-textTertiary)' }}>Processing...</div>
             )}
           </div>
 

@@ -696,7 +696,7 @@ export default function WorkOrderDetail() {
   const ownershipRate = shopLaborRates.find((r: any) => r.ownership_type === ownershipType)
   const laborRate = isImportedHistory ? 0 : (ownershipRate?.rate_per_hour || shop.labor_rate || shop.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK)
   const taxRate = isImportedHistory ? 0 : (shop.tax_rate || 0)
-  const woStatus = WO_STATUS[wo.status] || { label: wo.status, bg: t.surfaceMuted, color: GRAY }
+  const woStatus = WO_STATUS[wo.status] || { label: wo.status, bg: 'var(--tz-surfaceMuted)', color: GRAY }
   const vinDisplay = asset.vin ? asset.vin.slice(-6).toUpperCase() : '—'
   const createdByName = wo.createdByName || 'Unknown'
 
@@ -731,7 +731,7 @@ export default function WorkOrderDetail() {
 
   // RENDER
   return (
-    <div style={{ fontFamily: FONT, color: t.text, background: t.bgCard, minHeight: '100vh', maxWidth: 960, margin: '0 auto', padding: 'clamp(10px, 3vw, 20px)' }}>
+    <div style={{ fontFamily: FONT, color: 'var(--tz-text)', background: 'var(--tz-bgCard)', minHeight: '100vh', maxWidth: 960, margin: '0 auto', padding: 'clamp(10px, 3vw, 20px)' }}>
 
       {/* BACK BUTTON — role-safe: only accounting roles go to /accounting/history */}
       {(() => {
@@ -739,7 +739,7 @@ export default function WorkOrderDetail() {
         const backHref = wo.is_historical && isAccountingUser ? '/accounting/history' : '/work-orders'
         const backLabel = wo.is_historical && isAccountingUser ? 'Imported History' : 'Work Orders'
         return (
-          <a href={backHref} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: t.surfaceMuted, color: t.text, borderRadius: 100, padding: '6px 14px 6px 8px', fontSize: 13, fontWeight: 700, textDecoration: 'none', marginBottom: 16, fontFamily: FONT }}>
+          <a href={backHref} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'var(--tz-surfaceMuted)', color: 'var(--tz-text)', borderRadius: 100, padding: '6px 14px 6px 8px', fontSize: 13, fontWeight: 700, textDecoration: 'none', marginBottom: 16, fontFamily: FONT }}>
             <ChevronLeft size={16} /> {backLabel}
           </a>
         )
@@ -747,26 +747,26 @@ export default function WorkOrderDetail() {
 
       {/* HISTORICAL BANNER */}
       {wo.is_historical && (
-        <div style={{ background: 'rgba(124,139,160,0.08)', border: '1px solid rgba(124,139,160,0.15)', borderRadius: 8, padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: t.textSecondary }}>
+        <div style={{ background: 'rgba(124,139,160,0.08)', border: '1px solid rgba(124,139,160,0.15)', borderRadius: 8, padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--tz-textSecondary)' }}>
           Historical Record — Imported | WO #{wo.so_number} | {new Date(wo.created_at).toLocaleDateString()}
         </div>
       )}
 
       <WOHeader>
       {/* HEADER */}
-      <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderBottom: '2px solid ${t.border}' }}>
+      <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderBottom: `2px solid ${'var(--tz-border)'}` }}>
         <div style={{ flex: 1, minWidth: 200 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <span style={{ fontSize: 26, fontWeight: 800 }}>{wo.so_number || ('WO-' + wo.id?.slice(0, 6))}</span>
             <span style={pillStyle(woStatus.bg, woStatus.color)}>{woStatus.label}</span>
             <SourceBadge source={wo.source} />
-            {wo.payment_terms === 'cod' && <span style={pillStyle(t.dangerBg, RED)}>COD</span>}
+            {wo.payment_terms === 'cod' && <span style={pillStyle('var(--tz-dangerBg)', RED)}>COD</span>}
             {wo.invoice_status && wo.invoice_status !== 'draft' && (() => {
               const IS: Record<string, { label: string; bg: string; color: string }> = {
-                quality_check_failed: { label: 'QC Failed', bg: t.dangerBg, color: RED },
-                pending_accounting:   { label: 'Pending Accounting', bg: t.warningBg, color: AMBER },
-                accounting_approved:  { label: 'Acct. Approved', bg: t.successBg, color: GREEN },
-                sent_to_customer:     { label: 'Sent to Customer', bg: t.accentBg, color: BLUE },
+                quality_check_failed: { label: 'QC Failed', bg: 'var(--tz-dangerBg)', color: RED },
+                pending_accounting:   { label: 'Pending Accounting', bg: 'var(--tz-warningBg)', color: AMBER },
+                accounting_approved:  { label: 'Acct. Approved', bg: 'var(--tz-successBg)', color: GREEN },
+                sent_to_customer:     { label: 'Sent to Customer', bg: 'var(--tz-accentBg)', color: BLUE },
               }
               const s = IS[wo.invoice_status]; return s ? <span style={pillStyle(s.bg, s.color)}>{s.label}</span> : null
             })()}
@@ -782,12 +782,12 @@ export default function WorkOrderDetail() {
             <div style={{ marginTop: 10 }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: editMode ? 10 : 0 }}>
                 {!editMode ? (
-                  <button onClick={() => { setEditMode(true); setEditDraft({ complaint: wo.complaint || '', priority: wo.priority || 'normal', cause: wo.cause || '', correction: wo.correction || '' }) }} style={{ ...btnStyle( t.bgLight, BLUE), border: `1px solid ${BLUE}`, padding: '6px 14px', fontSize: 12 }}>
+                  <button onClick={() => { setEditMode(true); setEditDraft({ complaint: wo.complaint || '', priority: wo.priority || 'normal', cause: wo.cause || '', correction: wo.correction || '' }) }} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), border: `1px solid ${BLUE}`, padding: '6px 14px', fontSize: 12 }}>
                     Edit
                   </button>
                 ) : (
                   <>
-                    <button onClick={() => { setEditMode(false); setEditDraft(null) }} style={{ ...btnStyle( t.bgLight, GRAY), padding: '6px 14px', fontSize: 12 }}>
+                    <button onClick={() => { setEditMode(false); setEditDraft(null) }} style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), padding: '6px 14px', fontSize: 12 }}>
                       Cancel
                     </button>
                     <button onClick={async () => {
@@ -810,7 +810,7 @@ export default function WorkOrderDetail() {
                         setToastMsg(err.error || 'Failed to save')
                         setTimeout(() => setToastMsg(''), 4000)
                       }
-                    }} style={btnStyle(BLUE, t.bgLight)}>
+                    }} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
                       Submit
                     </button>
                   </>
@@ -818,14 +818,14 @@ export default function WorkOrderDetail() {
               </div>
               {/* Editable fields in edit mode */}
               {editMode && editDraft && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px 14px', background: t.bgHover, borderRadius: 8, border: `1px solid ${t.border}` }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '12px 14px', background: 'var(--tz-bgHover)', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}` }}>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={labelStyle}>Concern / Complaint</label>
-                    <textarea value={editDraft.complaint} onChange={e => setEditDraft({ ...editDraft, complaint: e.target.value })} rows={2} style={{ ...inputStyle, resize: 'vertical', borderColor: t.borderAccent }} />
+                    <textarea value={editDraft.complaint} onChange={e => setEditDraft({ ...editDraft, complaint: e.target.value })} rows={2} style={{ ...inputStyle, resize: 'vertical', borderColor: 'var(--tz-borderAccent)' }} />
                   </div>
                   <div>
                     <label style={labelStyle}>Priority</label>
-                    <select value={editDraft.priority} onChange={e => setEditDraft({ ...editDraft, priority: e.target.value })} style={{ ...inputStyle, borderColor: t.borderAccent, appearance: 'auto' }}>
+                    <select value={editDraft.priority} onChange={e => setEditDraft({ ...editDraft, priority: e.target.value })} style={{ ...inputStyle, borderColor: 'var(--tz-borderAccent)', appearance: 'auto' }}>
                       <option value="low">Low</option>
                       <option value="normal">Normal</option>
                       <option value="high">High</option>
@@ -834,11 +834,11 @@ export default function WorkOrderDetail() {
                   </div>
                   <div>
                     <label style={labelStyle}>Cause</label>
-                    <input value={editDraft.cause} onChange={e => setEditDraft({ ...editDraft, cause: e.target.value })} style={{ ...inputStyle, borderColor: t.borderAccent }} placeholder="Root cause" />
+                    <input value={editDraft.cause} onChange={e => setEditDraft({ ...editDraft, cause: e.target.value })} style={{ ...inputStyle, borderColor: 'var(--tz-borderAccent)' }} placeholder="Root cause" />
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={labelStyle}>Correction</label>
-                    <input value={editDraft.correction} onChange={e => setEditDraft({ ...editDraft, correction: e.target.value })} style={{ ...inputStyle, borderColor: t.borderAccent }} placeholder="Correction applied" />
+                    <input value={editDraft.correction} onChange={e => setEditDraft({ ...editDraft, correction: e.target.value })} style={{ ...inputStyle, borderColor: 'var(--tz-borderAccent)' }} placeholder="Correction applied" />
                   </div>
                 </div>
               )}
@@ -853,7 +853,7 @@ export default function WorkOrderDetail() {
                   Unit #{asset.unit_number}
                 </a>
               )}
-              <div style={{ fontSize: 13, color: t.text, marginTop: 2 }}>
+              <div style={{ fontSize: 13, color: 'var(--tz-text)', marginTop: 2 }}>
                 {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}
               </div>
               <div style={{ fontSize: 13, marginTop: 2 }}>
@@ -863,7 +863,7 @@ export default function WorkOrderDetail() {
               <div style={{ marginTop: 4 }}><OwnershipTypeBadge type={asset.is_owner_operator ? 'owner_operator' : (wo.ownership_type || asset.ownership_type)} size="lg" /></div>
             </>
           ) : (
-            <span style={{ color: t.textTertiary, fontStyle: 'italic' }}>Walk-in / Unit not on file</span>
+            <span style={{ color: 'var(--tz-textTertiary)', fontStyle: 'italic' }}>Walk-in / Unit not on file</span>
           )}
         </div>
       </div>
@@ -875,8 +875,8 @@ export default function WorkOrderDetail() {
         <div style={{ ...cardStyle, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '10px 16px', fontSize: 12 }}>
           <div>
             <span style={{ ...labelStyle, marginBottom: 2 }}>Owner</span>
-            <div style={{ fontWeight: 600, color: t.text }}>
-              {asset.owner_name || <span style={{ color: t.textTertiary, fontStyle: 'italic' }}>Not assigned</span>}
+            <div style={{ fontWeight: 600, color: 'var(--tz-text)' }}>
+              {asset.owner_name || <span style={{ color: 'var(--tz-textTertiary)', fontStyle: 'italic' }}>Not assigned</span>}
               {asset.owner_phone && (
                 <a href={`tel:${asset.owner_phone}`} style={{ color: BLUE, textDecoration: 'none', marginLeft: 8, fontWeight: 400 }}>{asset.owner_phone}</a>
               )}
@@ -884,8 +884,8 @@ export default function WorkOrderDetail() {
           </div>
           <div>
             <span style={{ ...labelStyle, marginBottom: 2 }}>Driver</span>
-            <div style={{ fontWeight: 600, color: t.text }}>
-              {asset.driver_name || <span style={{ color: t.textTertiary, fontStyle: 'italic' }}>Not assigned</span>}
+            <div style={{ fontWeight: 600, color: 'var(--tz-text)' }}>
+              {asset.driver_name || <span style={{ color: 'var(--tz-textTertiary)', fontStyle: 'italic' }}>Not assigned</span>}
               {asset.driver_phone && (
                 <a href={`tel:${asset.driver_phone}`} style={{ color: BLUE, textDecoration: 'none', marginLeft: 8, fontWeight: 400 }}>{asset.driver_phone}</a>
               )}
@@ -944,9 +944,9 @@ export default function WorkOrderDetail() {
                   {asset.warranty_mileage_limit ? ` — Mileage limit: ${asset.warranty_mileage_limit.toLocaleString()} mi` : ''}
                 </div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <button onClick={() => warrantyDecision('no_warranty')} style={btnStyle(t.successBg, GREEN)}>No Warranty — Proceed</button>
-                  <button onClick={() => warrantyDecision('checking')} style={btnStyle(t.warningBg, AMBER)}>Send for Warranty Check</button>
-                  <button onClick={() => warrantyDecision('send_to_dealer')} style={btnStyle(t.dangerBg, RED)}>Send to Dealer</button>
+                  <button onClick={() => warrantyDecision('no_warranty')} style={btnStyle('var(--tz-successBg)', GREEN)}>No Warranty — Proceed</button>
+                  <button onClick={() => warrantyDecision('checking')} style={btnStyle('var(--tz-warningBg)', AMBER)}>Send for Warranty Check</button>
+                  <button onClick={() => warrantyDecision('send_to_dealer')} style={btnStyle('var(--tz-dangerBg)', RED)}>Send to Dealer</button>
                 </div>
               </>
             ) : (
@@ -956,8 +956,8 @@ export default function WorkOrderDetail() {
                   {isFleet ? 'No warranty information on file for this unit' : 'Outside customer / Owner operator truck'}
                 </div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <button onClick={() => warrantyDecision('no_warranty')} style={btnStyle(t.successBg, GREEN)}>No Warranty — Proceed</button>
-                  <button onClick={() => warrantyDecision('checking')} style={btnStyle(t.warningBg, AMBER)}>Send for Warranty Check</button>
+                  <button onClick={() => warrantyDecision('no_warranty')} style={btnStyle('var(--tz-successBg)', GREEN)}>No Warranty — Proceed</button>
+                  <button onClick={() => warrantyDecision('checking')} style={btnStyle('var(--tz-warningBg)', AMBER)}>Send for Warranty Check</button>
                   {isFleet && asset?.id && <a href={`/fleet/${asset.id}`} style={{ fontSize: 11, color: BLUE, textDecoration: 'none', marginLeft: 8 }}>Add warranty info →</a>}
                 </div>
               </>
@@ -998,21 +998,21 @@ export default function WorkOrderDetail() {
         <div style={{
           ...cardStyle,
           display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-          background: wo.automation.is_overdue ? t.dangerBg : wo.automation.blocked_by ? t.warningBg : t.successBg,
-          border: `1px solid ${wo.automation.is_overdue ? t.danger : wo.automation.blocked_by ? t.warning : t.success}`,
+          background: wo.automation.is_overdue ? 'var(--tz-dangerBg)' : wo.automation.blocked_by ? 'var(--tz-warningBg)' : 'var(--tz-successBg)',
+          border: `1px solid ${wo.automation.is_overdue ? 'var(--tz-danger)' : wo.automation.blocked_by ? 'var(--tz-warning)' : 'var(--tz-success)'}`,
         }}>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: wo.automation.is_overdue ? t.danger : wo.automation.blocked_by ? t.warning : t.success, marginBottom: 2 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: wo.automation.is_overdue ? 'var(--tz-danger)' : wo.automation.blocked_by ? 'var(--tz-warning)' : 'var(--tz-success)', marginBottom: 2 }}>
               {wo.automation.is_overdue ? 'Overdue' : wo.automation.blocked_by ? 'Blocked' : 'On Track'}
               {wo.automation.exception && <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: 'rgba(0,0,0,0.06)', textTransform: 'uppercase' }}>{wo.automation.exception.replace(/_/g, ' ')}</span>}
             </div>
-            <div style={{ fontSize: 12, color: t.textSecondary }}><strong>Next:</strong> {wo.automation.next_action}</div>
-            {wo.automation.blocked_by && <div style={{ fontSize: 11, color: t.warning, marginTop: 2 }}>{wo.automation.blocked_by}</div>}
+            <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}><strong>Next:</strong> {wo.automation.next_action}</div>
+            {wo.automation.blocked_by && <div style={{ fontSize: 11, color: 'var(--tz-warning)', marginTop: 2 }}>{wo.automation.blocked_by}</div>}
           </div>
           <div style={{ textAlign: 'right', fontSize: 11, color: GRAY }}>
-            <div>Owner: <strong style={{ color: t.text }}>{wo.automation.owner.replace(/_/g, ' ')}</strong></div>
+            <div>Owner: <strong style={{ color: 'var(--tz-text)' }}>{wo.automation.owner.replace(/_/g, ' ')}</strong></div>
             {wo.etc && wo.etc.confidence !== 'none' && (
-              <div style={{ marginTop: 2, fontWeight: 600, color: wo.etc.remaining_hours === 0 ? RED : t.textSecondary }}>
+              <div style={{ marginTop: 2, fontWeight: 600, color: wo.etc.remaining_hours === 0 ? RED : 'var(--tz-textSecondary)' }}>
                 ETC: {wo.etc.etc_label}
                 <span style={{ marginLeft: 4, fontSize: 9, fontWeight: 400, opacity: 0.7 }}>({wo.etc.confidence})</span>
               </div>
@@ -1025,12 +1025,12 @@ export default function WorkOrderDetail() {
 
       {/* EXTRA TIME REQUESTS */}
       {extraTimeRequests.length > 0 && (
-        <div style={{ ...cardStyle, background: t.warningBg, border: '1px solid ${t.warning}' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.warning, marginBottom: 8 }}>
+        <div style={{ ...cardStyle, background: 'var(--tz-warningBg)', border: `1px solid ${'var(--tz-warning)'}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-warning)', marginBottom: 8 }}>
             Extra Time Request{extraTimeRequests.length > 1 ? 's' : ''} ({extraTimeRequests.length})
           </div>
           {extraTimeRequests.map((req: any) => (
-            <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid ${t.warning}' }}>
+            <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: `1px solid ${'var(--tz-warning)'}` }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 600 }}>
                   {req.users?.full_name || 'Mechanic'} — {req.hours_requested ? `+${req.hours_requested}h` : 'Extra time'}
@@ -1042,12 +1042,12 @@ export default function WorkOrderDetail() {
                   await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'respond', request_id: req.id, status: 'approved' }) })
                   setExtraTimeRequests(prev => prev.filter(r => r.id !== req.id))
-                }} style={{ ...btnStyle(GREEN, t.bgLight), padding: '4px 12px', fontSize: 11 }}>Approve</button>
+                }} style={{ ...btnStyle(GREEN, 'var(--tz-bgLight)'), padding: '4px 12px', fontSize: 11 }}>Approve</button>
                 <button onClick={async () => {
                   await fetch('/api/mechanic-requests', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'respond', request_id: req.id, status: 'denied' }) })
                   setExtraTimeRequests(prev => prev.filter(r => r.id !== req.id))
-                }} style={{ ...btnStyle(RED, t.bgLight), padding: '4px 12px', fontSize: 11 }}>Deny</button>
+                }} style={{ ...btnStyle(RED, 'var(--tz-bgLight)'), padding: '4px 12px', fontSize: 11 }}>Deny</button>
               </div>
             </div>
           ))}
@@ -1055,11 +1055,11 @@ export default function WorkOrderDetail() {
       )}
 
       {/* TAB BAR */}
-      <div data-no-print style={{ display: 'flex', gap: 0, borderBottom: '1px solid ${t.border}', marginBottom: 16, overflowX: 'auto' }}>
+      <div data-no-print style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${'var(--tz-border)'}`, marginBottom: 16, overflowX: 'auto' }}>
         {TABS.map((tabLabel, i) => (
           <button key={tabLabel} onClick={() => setTab(i)} style={{
-            padding: '10px 18px', background: 'transparent', border: 'none', borderBottom: tab === i ? `2px solid ${t.accent}` : '2px solid transparent',
-            color: tab === i ? t.accent : t.textTertiary, fontWeight: tab === i ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
+            padding: '10px 18px', background: 'transparent', border: 'none', borderBottom: tab === i ? `2px solid ${'var(--tz-accent)'}` : '2px solid transparent',
+            color: tab === i ? 'var(--tz-accent)' : 'var(--tz-textTertiary)', fontWeight: tab === i ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
           }}>
             {tabLabel}
           </button>
@@ -1084,25 +1084,25 @@ export default function WorkOrderDetail() {
           ].map(a => (
             <button key={a.label} onClick={a.onClick} style={{
               width: 38, height: 38, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              background: t.bgHover, border: `1px solid ${t.border}`, borderRadius: 8, cursor: 'pointer', padding: 0, gap: 2,
+              background: 'var(--tz-bgHover)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, cursor: 'pointer', padding: 0, gap: 2,
             }}>
               {a.icon}
               <span style={{ fontSize: 10, color: GRAY }}>{a.label}</span>
             </button>
           ))}
-          <div style={{ width: 1, height: 30, background: t.border }} />
+          <div style={{ width: 1, height: 30, background: 'var(--tz-border)' }} />
           <div style={{ position: 'relative' }}>
-            <button onClick={() => setShowMenu(!showMenu)} style={{ width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', background: t.bgHover, border: `1px solid ${t.border}`, borderRadius: 8, cursor: 'pointer' }}>
+            <button onClick={() => setShowMenu(!showMenu)} style={{ width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--tz-bgHover)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, cursor: 'pointer' }}>
               <MoreHorizontal size={16} />
             </button>
             {showMenu && (
-              <div style={{ position: 'absolute', top: 42, left: 0, background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: 180, padding: 4 }}>
+              <div style={{ position: 'absolute', top: 42, left: 0, background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: 180, padding: 4 }}>
                 {Object.entries(WO_STATUS).map(([k, v]) => (
-                  <button key={k} onClick={() => updateWoStatus(k)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: wo.status === k ? t.accentBg : 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: v.color }}>
+                  <button key={k} onClick={() => updateWoStatus(k)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: wo.status === k ? 'var(--tz-accentBg)' : 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: v.color }}>
                     {v.label}
                   </button>
                 ))}
-                <div style={{ borderTop: '1px solid ${t.border}', margin: '4px 0' }} />
+                <div style={{ borderTop: `1px solid ${'var(--tz-border)'}`, margin: '4px 0' }} />
                 {isWriter && (
                   <button onClick={() => { setShowMenu(false); setDeleteConfirm(true) }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontFamily: FONT, color: RED }}>
                     Void Work Order
@@ -1119,12 +1119,12 @@ export default function WorkOrderDetail() {
 
       {/* QC ERRORS */}
       {showQcErrors && qcErrors.length > 0 && (
-        <div style={{ ...cardStyle, background: t.dangerBg, border: '1px solid ${t.danger}', marginBottom: 12 }}>
+        <div style={{ ...cardStyle, background: 'var(--tz-dangerBg)', border: `1px solid ${'var(--tz-danger)'}`, marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: RED }}>Quality Check Failed</span>
             <button onClick={() => setShowQcErrors(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, fontSize: 16, fontFamily: FONT }}>&times;</button>
           </div>
-          <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 12, color: t.danger, lineHeight: 1.8 }}>
+          <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 12, color: 'var(--tz-danger)', lineHeight: 1.8 }}>
             {qcErrors.map((e, i) => <li key={i}>{e}</li>)}
           </ul>
         </div>
@@ -1136,8 +1136,8 @@ export default function WorkOrderDetail() {
         <div>
           {/* Merge controls for service writers */}
           {!wo.is_historical && !isViewOnly && jobLines.length > 1 && mergeSelected.size >= 2 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: t.accentBg, border: '1px solid ${t.borderAccent}', borderRadius: 10, marginBottom: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: t.accent }}>{mergeSelected.size} lines selected</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--tz-accentBg)', border: `1px solid ${'var(--tz-borderAccent)'}`, borderRadius: 10, marginBottom: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-accent)' }}>{mergeSelected.size} lines selected</span>
               <button disabled={merging} onClick={async () => {
                 const ids = Array.from(mergeSelected)
                 const destId = ids[0]
@@ -1159,10 +1159,10 @@ export default function WorkOrderDetail() {
                   }
                 } catch { alert('Merge failed — please try again') }
                 setMerging(false)
-              }} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: t.accent, color: t.bgLight, fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: merging ? 0.5 : 1 }}>
+              }} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: merging ? 0.5 : 1 }}>
                 {merging ? 'Merging...' : `Merge into first selected`}
               </button>
-              <button onClick={() => setMergeSelected(new Set())} style={{ background: 'none', border: 'none', color: t.textTertiary, fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => setMergeSelected(new Set())} style={{ background: 'none', border: 'none', color: 'var(--tz-textTertiary)', fontSize: 11, cursor: 'pointer' }}>Cancel</button>
             </div>
           )}
           {jobLines.map((line: any, idx: number) => {
@@ -1176,7 +1176,7 @@ export default function WorkOrderDetail() {
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                   {!wo.is_historical && !isViewOnly && jobLines.length > 1 && (
-                    <input type="checkbox" checked={mergeSelected.has(line.id)} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(line.id) ? n.delete(line.id) : n.add(line.id); return n })} style={{ cursor: 'pointer', accentColor: t.accent, width: 16, height: 16, flexShrink: 0 }} />
+                    <input type="checkbox" checked={mergeSelected.has(line.id)} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(line.id) ? n.delete(line.id) : n.add(line.id); return n })} style={{ cursor: 'pointer', accentColor: 'var(--tz-accent)', width: 16, height: 16, flexShrink: 0 }} />
                   )}
                   <span style={{ fontSize: 14, fontWeight: 700 }}>Job {idx + 1}</span>
                   {wo.is_historical ? (
@@ -1192,16 +1192,16 @@ export default function WorkOrderDetail() {
                       ))}
                     </select>
                   )}
-                  {isAdditional && <span style={pillStyle(t.warningBg, AMBER)}>ADDITIONAL</span>}
+                  {isAdditional && <span style={pillStyle('var(--tz-warningBg)', AMBER)}>ADDITIONAL</span>}
                   {/* Approval badge */}
                   {!wo.is_historical && !isViewOnly && (() => {
                     const as = line.approval_status || 'pre_approved'
                     const AB: Record<string, { bg: string; color: string; label: string }> = {
-                      pre_approved: { bg: t.successBg, color: GREEN, label: 'Pre-Approved' },
-                      needs_approval: { bg: t.warningBg, color: AMBER, label: 'Needs Approval' },
-                      pending: { bg: t.warningBg, color: AMBER, label: 'Pending' },
-                      approved: { bg: t.successBg, color: GREEN, label: 'Approved' },
-                      declined: { bg: t.dangerBg, color: RED, label: 'Declined' },
+                      pre_approved: { bg: 'var(--tz-successBg)', color: GREEN, label: 'Pre-Approved' },
+                      needs_approval: { bg: 'var(--tz-warningBg)', color: AMBER, label: 'Needs Approval' },
+                      pending: { bg: 'var(--tz-warningBg)', color: AMBER, label: 'Pending' },
+                      approved: { bg: 'var(--tz-successBg)', color: GREEN, label: 'Approved' },
+                      declined: { bg: 'var(--tz-dangerBg)', color: RED, label: 'Declined' },
                     }
                     const b = AB[as] || AB.pre_approved
                     return <span style={pillStyle(b.bg, b.color)}>{b.label}</span>
@@ -1211,8 +1211,8 @@ export default function WorkOrderDetail() {
                 {/* Pre-Approval Toggle */}
                 {!wo.is_historical && !isViewOnly && (line.approval_status === 'pre_approved' || line.approval_status === 'needs_approval' || !line.approval_status) && (
                   <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-                    <button onClick={() => toggleApproval(line.id, false)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, background: !line.approval_required ? 'rgba(22,163,74,0.1)' : 'transparent', color: !line.approval_required ? GREEN : GRAY, border: !line.approval_required ? `1px solid ${GREEN}40` : '1px solid ${t.border}' }}>Pre-Approved</button>
-                    <button onClick={() => toggleApproval(line.id, true)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, background: line.approval_required ? 'rgba(217,150,11,0.1)' : 'transparent', color: line.approval_required ? AMBER : GRAY, border: line.approval_required ? `1px solid ${AMBER}40` : '1px solid ${t.border}' }}>Needs Approval</button>
+                    <button onClick={() => toggleApproval(line.id, false)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, background: !line.approval_required ? 'rgba(22,163,74,0.1)' : 'transparent', color: !line.approval_required ? GREEN : GRAY, border: !line.approval_required ? `1px solid ${GREEN}40` : `1px solid ${'var(--tz-border)'}` }}>Pre-Approved</button>
+                    <button onClick={() => toggleApproval(line.id, true)} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, background: line.approval_required ? 'rgba(217,150,11,0.1)' : 'transparent', color: line.approval_required ? AMBER : GRAY, border: line.approval_required ? `1px solid ${AMBER}40` : `1px solid ${'var(--tz-border)'}` }}>Needs Approval</button>
                   </div>
                 )}
 
@@ -1222,8 +1222,8 @@ export default function WorkOrderDetail() {
                     <div style={{ color: AMBER, fontWeight: 600, marginBottom: 6 }}>Waiting for customer approval</div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <input value={approvalNotes} onChange={e => setApprovalNotes(e.target.value)} placeholder="Notes..." style={{ ...inputStyle, flex: 1, padding: '4px 8px', fontSize: 11 }} />
-                      <button onClick={() => approveJob(line.id)} style={btnStyle(t.successBg, GREEN)}>Approve</button>
-                      <button onClick={() => declineJob(line.id)} style={btnStyle(t.dangerBg, RED)}>Decline</button>
+                      <button onClick={() => approveJob(line.id)} style={btnStyle('var(--tz-successBg)', GREEN)}>Approve</button>
+                      <button onClick={() => declineJob(line.id)} style={btnStyle('var(--tz-dangerBg)', RED)}>Decline</button>
                     </div>
                   </div>
                 )}
@@ -1233,7 +1233,7 @@ export default function WorkOrderDetail() {
                   <span style={{ fontSize: 11, fontWeight: 700, color: GRAY }}>ASSIGNED:</span>
                   {lineAssignments.length > 0 ? (
                     lineAssignments.map((a: any) => (
-                      <span key={a.id} style={pillStyle(t.accentBg, BLUE)}>
+                      <span key={a.id} style={pillStyle('var(--tz-accentBg)', BLUE)}>
                         {a.users?.full_name || 'Unknown'} ({a.percentage}%)
                       </span>
                     ))
@@ -1248,7 +1248,7 @@ export default function WorkOrderDetail() {
                         return
                       }
                       openAssignModal(line.id, idx)
-                    }} style={{ ...btnStyle( t.bgLight, BLUE), padding: '4px 10px', fontSize: 11 }}>
+                    }} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), padding: '4px 10px', fontSize: 11 }}>
                       <Users size={12} /> Assign
                     </button>
                   )}
@@ -1265,7 +1265,7 @@ export default function WorkOrderDetail() {
                         { label: 'Actual', value: Math.round(actualHours * 100) / 100 },
                         { label: 'Billed', value: line.billed_hours || 0 },
                       ].map(h => (
-                        <div key={h.label} style={{ background: t.bgHover, borderRadius: 8, padding: '8px 12px' }}>
+                        <div key={h.label} style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: '8px 12px' }}>
                           <div style={labelStyle}>{h.label}</div>
                           <div style={{ fontSize: 16, fontWeight: 700 }}>{h.value || 0}</div>
                         </div>
@@ -1283,7 +1283,7 @@ export default function WorkOrderDetail() {
 
                 {/* Concern / Work Description */}
                 {line.description && (
-                  <div style={{ background: t.bgHover, borderRadius: 8, padding: '10px 12px', marginBottom: 6, fontSize: 13, color: t.textSecondary }}>
+                  <div style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: '10px 12px', marginBottom: 6, fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                     <span style={{ ...labelStyle, marginBottom: 6 }}>{wo.is_historical ? 'Work Description' : 'Concern'}</span>
                     {line.description}
                   </div>
@@ -1293,7 +1293,7 @@ export default function WorkOrderDetail() {
                 {(() => {
                   const notes: any[] = Array.isArray(line.mechanic_notes) ? line.mechanic_notes : []
                   return (
-                    <div style={{ background: t.bgHover, borderRadius: 8, padding: '10px 12px', marginBottom: 6 }}>
+                    <div style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: '10px 12px', marginBottom: 6 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: notes.length > 0 ? 8 : 0 }}>
                         <MessageSquare size={12} style={{ color: GRAY }} />
                         <span style={{ ...labelStyle, marginBottom: 0 }}>Mechanic Notes</span>
@@ -1301,7 +1301,7 @@ export default function WorkOrderDetail() {
                       {notes.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                           {notes.map((n: any, ni: number) => (
-                            <div key={ni} style={{ fontSize: 12, color: t.textSecondary, padding: '4px 0', borderBottom: ni < notes.length - 1 ? '1px solid ${t.border}' : 'none' }}>
+                            <div key={ni} style={{ fontSize: 12, color: 'var(--tz-textSecondary)', padding: '4px 0', borderBottom: ni < notes.length - 1 ? `1px solid ${'var(--tz-border)'}` : 'none' }}>
                               <div>{n.text || n.note || String(n)}</div>
                               {n.created_at && <div style={{ fontSize: 10, color: GRAY, marginTop: 2 }}>{new Date(n.created_at).toLocaleString()}</div>}
                             </div>
@@ -1318,18 +1318,18 @@ export default function WorkOrderDetail() {
                 {!wo.is_historical && !isViewOnly && line.description && line.description.length >= 10 && (
                   <>
                     {!aiSuggestions[line.id] && aiLoadingLine !== line.id && (
-                      <button onClick={() => fetchAiSuggestions(line.id, line.description)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: t.aiPurpleBg, border: '1px solid ${t.aiPurple}', borderRadius: 8, color: t.aiPurple, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                      <button onClick={() => fetchAiSuggestions(line.id, line.description)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: 'var(--tz-aiPurpleBg)', border: `1px solid ${'var(--tz-aiPurple)'}`, borderRadius: 8, color: 'var(--tz-aiPurple)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
                         AI: Suggest parts for this job
                       </button>
                     )}
                     {aiLoadingLine === line.id && (
-                      <div style={{ padding: '8px 12px', marginBottom: 10, background: t.aiPurpleBg, border: '1px solid ${t.aiPurple}', borderRadius: 8, color: t.aiPurple, fontSize: 11, fontWeight: 600 }}>
+                      <div style={{ padding: '8px 12px', marginBottom: 10, background: 'var(--tz-aiPurpleBg)', border: `1px solid ${'var(--tz-aiPurple)'}`, borderRadius: 8, color: 'var(--tz-aiPurple)', fontSize: 11, fontWeight: 600 }}>
                         Analyzing job description...
                       </div>
                     )}
                     {aiSuggestions[line.id] && !showAiPanel && (
-                      <button onClick={() => setShowAiPanel(line.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: t.aiPurpleBg, border: '1px solid ${t.aiPurple}', borderRadius: 8, color: t.aiPurple, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                      <button onClick={() => setShowAiPanel(line.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: 'var(--tz-aiPurpleBg)', border: `1px solid ${'var(--tz-aiPurple)'}`, borderRadius: 8, color: 'var(--tz-aiPurple)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
                         AI suggested {aiSuggestions[line.id].length} parts — tap to review
                       </button>
@@ -1337,26 +1337,26 @@ export default function WorkOrderDetail() {
                     {showAiPanel === line.id && aiSuggestions[line.id] && (() => {
                       const suggestions = aiSuggestions[line.id]
                       return (
-                        <div style={{ background: t.bgElevated, border: '1px solid ${t.aiPurple}', borderRadius: 10, padding: 14, marginBottom: 10 }}>
+                        <div style={{ background: 'var(--tz-bgElevated)', border: `1px solid ${'var(--tz-aiPurple)'}`, borderRadius: 10, padding: 14, marginBottom: 10 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: t.aiPurple }}>AI Suggested Parts</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-aiPurple)' }}>AI Suggested Parts</span>
                             <button onClick={() => setShowAiPanel(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: GRAY, fontSize: 11 }}>Close</button>
                           </div>
                           {suggestions.map((s: any, si: number) => (
-                            <label key={si} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: si < suggestions.length - 1 ? '1px solid ${t.border}' : 'none', cursor: 'pointer' }}>
-                              <input type="checkbox" defaultChecked style={{ accentColor: t.aiPurple }} data-idx={si} />
+                            <label key={si} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: si < suggestions.length - 1 ? `1px solid ${'var(--tz-border)'}` : 'none', cursor: 'pointer' }}>
+                              <input type="checkbox" defaultChecked style={{ accentColor: 'var(--tz-aiPurple)' }} data-idx={si} />
                               <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: 12, fontWeight: 600, color: t.textSecondary }}>{s.description}</div>
+                                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-textSecondary)' }}>{s.description}</div>
                                 <div style={{ fontSize: 10, color: GRAY }}>Qty: {s.quantity || 1}{s.part_number ? ` · ${s.part_number}` : ''}{s.reason ? ` · ${s.reason}` : ''}</div>
                               </div>
-                              <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: s.confidence === 'very_high' ? t.successBg : s.confidence === 'high' ? t.accentBg : t.warningBg, color: s.confidence === 'very_high' ? GREEN : s.confidence === 'high' ? BLUE : AMBER }}>{s.confidence || 'medium'}</span>
+                              <span style={{ fontSize: 9, fontWeight: 600, padding: '1px 5px', borderRadius: 3, background: s.confidence === 'very_high' ? 'var(--tz-successBg)' : s.confidence === 'high' ? 'var(--tz-accentBg)' : 'var(--tz-warningBg)', color: s.confidence === 'very_high' ? GREEN : s.confidence === 'high' ? BLUE : AMBER }}>{s.confidence || 'medium'}</span>
                             </label>
                           ))}
                           <button onClick={() => {
                             const checks = document.querySelectorAll(`input[data-idx]`) as NodeListOf<HTMLInputElement>
                             const selected = suggestions.filter((_: any, i: number) => checks[i]?.checked)
                             if (selected.length) addAiParts(line.id, selected)
-                          }} style={{ marginTop: 10, padding: '8px 16px', background: t.aiPurple, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, width: '100%' }}>
+                          }} style={{ marginTop: 10, padding: '8px 16px', background: 'var(--tz-aiPurple)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, width: '100%' }}>
                             Add Selected Parts
                           </button>
                         </div>
@@ -1376,7 +1376,7 @@ export default function WorkOrderDetail() {
                         <div style={{ marginTop: 6 }}>
                           <ul style={{ margin: '4px 0 0 16px', padding: 0, listStyle: 'disc' }}>
                             {line.resolution.split('\n').filter(Boolean).map((l: string, i: number) => (
-                              <li key={i} style={{ fontSize: 13, color: t.textSecondary, marginBottom: 2 }}>{l}</li>
+                              <li key={i} style={{ fontSize: 13, color: 'var(--tz-textSecondary)', marginBottom: 2 }}>{l}</li>
                             ))}
                           </ul>
                         </div>
@@ -1397,14 +1397,14 @@ export default function WorkOrderDetail() {
                   <div style={{ marginBottom: 10 }}>
                     <span style={labelStyle}>Parts</span>
                     {lineParts.map((p: any) => (
-                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12, borderBottom: '1px solid ${t.border}' }}>
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12, borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                         <span style={{ flex: 1 }}>{p.description} {p.part_number ? `(${p.part_number})` : ''}</span>
                         <span>{p.quantity}x</span>
                         <span style={{ fontWeight: 600 }}>{fmt(p.unit_cost || 0)}</span>
                         <select
                           value={p.status || 'needed'}
                           onChange={e => updatePartStatus(p.id, e.target.value)}
-                          style={{ padding: '2px 6px', fontSize: 11, borderRadius: 6, border: `1px solid ${t.border}`, fontFamily: FONT }}
+                          style={{ padding: '2px 6px', fontSize: 11, borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, fontFamily: FONT }}
                         >
                           {Object.entries(PART_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                         </select>
@@ -1421,10 +1421,10 @@ export default function WorkOrderDetail() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button onClick={() => {
                       setNewPartForms(prev => ({ ...prev, [line.id]: prev[line.id] || { desc: '', pn: '', qty: '', cost: '' } }))
-                    }} style={{ ...btnStyle( t.bgLight, BLUE), padding: '6px 12px', fontSize: 11 }}>
+                    }} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), padding: '6px 12px', fontSize: 11 }}>
                       <Plus size={12} /> Add Parts
                     </button>
-                    <button onClick={() => setHoursModal({ id: line.id, estimated_hours: line.estimated_hours || '', actual_hours: line.actual_hours || '', billed_hours: line.billed_hours || '' })} style={{ ...btnStyle( t.bgLight, GRAY), padding: '6px 12px', fontSize: 11 }}>
+                    <button onClick={() => setHoursModal({ id: line.id, estimated_hours: line.estimated_hours || '', actual_hours: line.actual_hours || '', billed_hours: line.billed_hours || '' })} style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), padding: '6px 12px', fontSize: 11 }}>
                       <Clock size={12} /> Log Hours
                     </button>
                     <button onClick={() => removeJobLine(line.id)} style={{ ...btnStyle('transparent', RED), padding: '6px 12px', fontSize: 11, border: 'none' }}>
@@ -1452,8 +1452,8 @@ export default function WorkOrderDetail() {
                       <span style={labelStyle}>Cost</span>
                       <input value={newPartForms[line.id].cost} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], cost: e.target.value } }))} style={inputStyle} placeholder="0.00" type="number" step="0.01" />
                     </div>
-                    <button onClick={() => addPart(line.id)} style={btnStyle(BLUE, t.bgLight)}>Add</button>
-                    <button onClick={() => setNewPartForms(p => { const n = { ...p }; delete n[line.id]; return n })} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
+                    <button onClick={() => addPart(line.id)} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>Add</button>
+                    <button onClick={() => setNewPartForms(p => { const n = { ...p }; delete n[line.id]; return n })} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
                   </div>
                 )}
               </div>
@@ -1463,8 +1463,8 @@ export default function WorkOrderDetail() {
           {/* Add Job Line */}
           {!wo.is_historical && !isViewOnly && (
             <div>
-              <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', borderColor: (newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText)) ? t.danger : undefined }}>
-                <button onClick={() => setUseAI(!useAI)} style={{ ...pillStyle(useAI ? t.accentBg : t.surfaceMuted, useAI ? BLUE : GRAY), cursor: 'pointer', border: 'none', fontFamily: FONT }}>
+              <div style={{ ...cardStyle, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', borderColor: (newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText)) ? 'var(--tz-danger)' : undefined }}>
+                <button onClick={() => setUseAI(!useAI)} style={{ ...pillStyle(useAI ? 'var(--tz-accentBg)' : 'var(--tz-surfaceMuted)', useAI ? BLUE : GRAY), cursor: 'pointer', border: 'none', fontFamily: FONT }}>
                   <Mic size={11} /> AI {useAI ? 'ON' : 'OFF'}
                 </button>
                 <input
@@ -1472,9 +1472,9 @@ export default function WorkOrderDetail() {
                   onChange={e => { setNewJobText(e.target.value); setJobWarning('') }}
                   onKeyDown={e => e.key === 'Enter' && addJobLine()}
                   placeholder={newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText) ? 'What did you mean? Use repair terms like: oil change, brake, pm service...' : 'Describe the job concern...'}
-                  style={{ ...inputStyle, flex: 1, minWidth: 200, borderColor: (newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText)) ? t.danger : undefined }}
+                  style={{ ...inputStyle, flex: 1, minWidth: 200, borderColor: (newJobText.trim().length >= 2 && isUnrecognizedJob(newJobText)) ? 'var(--tz-danger)' : undefined }}
                 />
-                <button onClick={addJobLine} disabled={addingJob || !newJobText.trim()} style={{ ...btnStyle(BLUE, t.bgLight), opacity: addingJob || !newJobText.trim() ? 0.5 : 1 }}>
+                <button onClick={addJobLine} disabled={addingJob || !newJobText.trim()} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), opacity: addingJob || !newJobText.trim() ? 0.5 : 1 }}>
                   <Plus size={14} /> {addingJob ? 'Adding...' : 'Add Job Line'}
                 </button>
               </div>
@@ -1484,7 +1484,7 @@ export default function WorkOrderDetail() {
                 </div>
               )}
               {jobWarning && (
-                <div style={{ fontSize: 11, color: RED, fontWeight: 600, marginTop: 4, padding: '4px 8px', background: t.dangerBg, borderRadius: 6, border: '1px solid ${t.danger}' }}>
+                <div style={{ fontSize: 11, color: RED, fontWeight: 600, marginTop: 4, padding: '4px 8px', background: 'var(--tz-dangerBg)', borderRadius: 6, border: `1px solid ${'var(--tz-danger)'}` }}>
                   {jobWarning}
                 </div>
               )}
@@ -1502,7 +1502,7 @@ export default function WorkOrderDetail() {
               <span style={{ fontSize: 12, fontWeight: 700, color: GRAY }}>Shop Charge:</span>
               <input value={newChargeDesc} onChange={e => setNewChargeDesc(e.target.value)} placeholder="Description" style={{ ...inputStyle, flex: 1, minWidth: 150 }} />
               <input value={newChargeAmt} onChange={e => setNewChargeAmt(e.target.value)} placeholder="Amount" type="number" step="0.01" style={{ ...inputStyle, width: 100 }} />
-              <button onClick={addShopCharge} disabled={!newChargeDesc.trim() || !newChargeAmt} style={{ ...btnStyle(GREEN, t.bgLight), opacity: !newChargeDesc.trim() || !newChargeAmt ? 0.5 : 1 }}>
+              <button onClick={addShopCharge} disabled={!newChargeDesc.trim() || !newChargeAmt} style={{ ...btnStyle(GREEN, 'var(--tz-bgLight)'), opacity: !newChargeDesc.trim() || !newChargeAmt ? 0.5 : 1 }}>
                 <Plus size={14} /> Add Charge
               </button>
             </div>
@@ -1513,7 +1513,7 @@ export default function WorkOrderDetail() {
             <div style={cardStyle}>
               <span style={{ ...labelStyle, marginBottom: 8 }}>Shop Charges</span>
               {shopCharges.map((c: any) => (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid ${t.border}', fontSize: 13 }}>
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 13 }}>
                   <span style={{ flex: 1 }}>{c.description}</span>
                   <span style={{ fontWeight: 700 }}>{fmt(c.amount)}</span>
                   <button onClick={() => removeCharge(c.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED }}><X size={14} /></button>
@@ -1525,7 +1525,7 @@ export default function WorkOrderDetail() {
           {/* Get Approval — only show when estimate required and NOT yet approved */}
           {!wo.is_historical && wo.estimate_required && !wo.estimate_approved && (
             <div style={{ textAlign: 'right', marginTop: 8 }}>
-              <button onClick={() => setApprovalModal(true)} style={btnStyle(BLUE, t.bgLight)}>
+              <button onClick={() => setApprovalModal(true)} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
                 <DollarSign size={14} /> Get Approval
               </button>
             </div>
@@ -1552,7 +1552,7 @@ export default function WorkOrderDetail() {
                 const name = prompt('Part name or description:')
                 if (!name?.trim()) return
                 fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) }).then(() => loadData())
-              }} style={{ ...btnStyle(BLUE, t.bgLight), padding: '8px 20px' }}>
+              }} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '8px 20px' }}>
                 + Add Part
               </button>
             </div>
@@ -1566,7 +1566,7 @@ export default function WorkOrderDetail() {
                     const name = prompt('Part name or description:')
                     if (!name?.trim()) return
                     fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) }).then(() => loadData())
-                  }} style={{ ...btnStyle(BLUE, t.bgLight), padding: '5px 12px', fontSize: 11 }}>
+                  }} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '5px 12px', fontSize: 11 }}>
                     + Add Part
                   </button>
                 )}
@@ -1576,22 +1576,22 @@ export default function WorkOrderDetail() {
                   const partsEditable = !partsLocked && p.parts_status !== 'canceled'
                   const isConfirmed = p.parts_status && !['rough'].includes(p.parts_status)
                   const statusColors: Record<string, { label: string; bg: string; color: string }> = {
-                    rough: { label: 'Requested', bg: t.warningBg, color: t.warning },
-                    sourced: { label: 'Confirmed', bg: t.accentBg, color: BLUE },
-                    ordered: { label: 'Ordered', bg: t.warningBg, color: AMBER },
-                    received: { label: 'Preparing', bg: t.accentBg, color: BLUE },
-                    ready_for_job: { label: 'Ready for Pickup', bg: t.successBg, color: GREEN },
-                    picked_up: { label: 'Picked Up', bg: t.successBg, color: GREEN },
-                    installed: { label: 'Installed', bg: t.successBg, color: t.success },
-                    canceled: { label: 'Canceled', bg: t.dangerBg, color: t.danger },
+                    rough: { label: 'Requested', bg: 'var(--tz-warningBg)', color: 'var(--tz-warning)' },
+                    sourced: { label: 'Confirmed', bg: 'var(--tz-accentBg)', color: BLUE },
+                    ordered: { label: 'Ordered', bg: 'var(--tz-warningBg)', color: AMBER },
+                    received: { label: 'Preparing', bg: 'var(--tz-accentBg)', color: BLUE },
+                    ready_for_job: { label: 'Ready for Pickup', bg: 'var(--tz-successBg)', color: GREEN },
+                    picked_up: { label: 'Picked Up', bg: 'var(--tz-successBg)', color: GREEN },
+                    installed: { label: 'Installed', bg: 'var(--tz-successBg)', color: 'var(--tz-success)' },
+                    canceled: { label: 'Canceled', bg: 'var(--tz-dangerBg)', color: 'var(--tz-danger)' },
                   }
                   const st = statusColors[p.parts_status || 'rough'] || statusColors.rough
                   return (
-                    <div key={p.id} style={{ border: `1px solid ${isConfirmed ? t.successBg : t.warning}`, borderRadius: 10, padding: 12, background: isConfirmed ? t.bgLight : t.warningBg }}>
+                    <div key={p.id} style={{ border: `1px solid ${isConfirmed ? 'var(--tz-successBg)' : 'var(--tz-warning)'}`, borderRadius: 10, padding: 12, background: isConfirmed ? 'var(--tz-bgLight)' : 'var(--tz-warningBg)' }}>
                       {/* Request layer — always visible */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                        <div style={{ fontSize: 11, color: t.warning }}>
-                          Request: <strong style={{ color: t.warning }}>{p.rough_name || p.description || '—'}</strong>
+                        <div style={{ fontSize: 11, color: 'var(--tz-warning)' }}>
+                          Request: <strong style={{ color: 'var(--tz-warning)' }}>{p.rough_name || p.description || '—'}</strong>
                         </div>
                         <span style={pillStyle(st.bg, st.color)}>{st.label}</span>
                         {!wo.is_historical && !partsLocked && !isMechanic && p.parts_status !== 'canceled' && !['ready_for_job', 'installed'].includes(p.parts_status) && (
@@ -1610,16 +1610,16 @@ export default function WorkOrderDetail() {
                       {/* Confirmed layer — shown when real_name exists */}
                       {p.real_name && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, padding: '4px 0' }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: t.text }}>{p.real_name}{p.part_number ? ` (${p.part_number})` : ''}</span>
-                          {!isConfirmed && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, background: t.warningBg, color: t.warning, fontWeight: 600 }}>Auto-matched — needs Parts confirmation</span>}
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>{p.real_name}{p.part_number ? ` (${p.part_number})` : ''}</span>
+                          {!isConfirmed && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, background: 'var(--tz-warningBg)', color: 'var(--tz-warning)', fontWeight: 600 }}>Auto-matched — needs Parts confirmation</span>}
                         </div>
                       )}
 
                       {/* Part note input */}
                       {partNoteOpen === p.id && (
                         <div style={{ display: 'flex', gap: 6, marginTop: 6, marginBottom: 6 }}>
-                          <input id={`part-note-${p.id}`} defaultValue={p.finding || ''} placeholder="Add note about this part..." style={{ flex: 1, padding: '6px 10px', border: `1px solid ${t.border}`, borderRadius: 6, fontSize: 12, fontFamily: FONT, outline: 'none' }} onKeyDown={async e => { if (e.key === 'Enter') { await patchLine(p.id, { finding: (e.target as HTMLInputElement).value }); setPartNoteOpen(null) } }} />
-                          <button onClick={async () => { const el = document.getElementById(`part-note-${p.id}`) as HTMLInputElement; if (el) await patchLine(p.id, { finding: el.value }); setPartNoteOpen(null) }} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: BLUE, color: t.bgLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Save</button>
+                          <input id={`part-note-${p.id}`} defaultValue={p.finding || ''} placeholder="Add note about this part..." style={{ flex: 1, padding: '6px 10px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 6, fontSize: 12, fontFamily: FONT, outline: 'none' }} onKeyDown={async e => { if (e.key === 'Enter') { await patchLine(p.id, { finding: (e.target as HTMLInputElement).value }); setPartNoteOpen(null) } }} />
+                          <button onClick={async () => { const el = document.getElementById(`part-note-${p.id}`) as HTMLInputElement; if (el) await patchLine(p.id, { finding: el.value }); setPartNoteOpen(null) }} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: BLUE, color: 'var(--tz-bgLight)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Save</button>
                         </div>
                       )}
                       {p.finding && partNoteOpen !== p.id && <div style={{ fontSize: 11, color: GRAY, marginTop: 2, marginBottom: 4, fontStyle: 'italic' }}>Note: {p.finding}</div>}
@@ -1633,11 +1633,11 @@ export default function WorkOrderDetail() {
                               <input value={p.real_name || ''} onChange={e => { const v = e.target.value; const updated = wo.so_lines.map((l: any) => l.id === p.id ? { ...l, real_name: v } : l); setWo((prev: any) => ({ ...prev, so_lines: updated })); searchInventory(p.id, v) }} onBlur={e => { if (partDropdownClicked.current) { partDropdownClicked.current = false; return } if (e.target.value) { patchLine(p.id, { real_name: e.target.value }) } setTimeout(() => setPartSearchResults(prev => { const n = {...prev}; delete n[p.id]; return n }), 200) }} placeholder="Type to search inventory..." style={inputStyle} />
                               {/* Inventory search dropdown */}
                               {partSearchResults[p.id]?.length > 0 && (
-                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 160, overflowY: 'auto' }}>
+                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 160, overflowY: 'auto' }}>
                                   {partSearchResults[p.id].map((inv: any) => (
-                                    <div key={inv.id} onMouseDown={() => { partDropdownClicked.current = true; autoFillFromInventory(p.id, inv) }} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid ${t.border}', fontSize: 12 }}
-                                      onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)} onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                                      <div style={{ fontWeight: 600, color: t.text }}>{inv.description}</div>
+                                    <div key={inv.id} onMouseDown={() => { partDropdownClicked.current = true; autoFillFromInventory(p.id, inv) }} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 12 }}
+                                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')} onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                                      <div style={{ fontWeight: 600, color: 'var(--tz-text)' }}>{inv.description}</div>
                                       <div style={{ fontSize: 10, color: GRAY }}>{inv.part_number || '—'} · Cost: {fmt(inv.cost_price || 0)} · Sell: {fmt(inv.sell_price || 0)} · {inv.on_hand || 0} in stock</div>
                                     </div>
                                   ))}
@@ -1708,7 +1708,7 @@ export default function WorkOrderDetail() {
                   })
                   input.value = ''
                   await loadData()
-                }} style={btnStyle(BLUE, t.bgLight)}>
+                }} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
                   Request
                 </button>
               </div>
@@ -1728,7 +1728,7 @@ export default function WorkOrderDetail() {
                 <div style={{ ...cardStyle, marginTop: 12 }}>
                   <div style={{ textAlign: 'center', color: GREEN, fontSize: 13, fontWeight: 700, padding: 8 }}>All Parts Ready</div>
                   {!partsSubmitted && (
-                    <button onClick={submitParts} disabled={partsSubmitting} style={{ ...btnStyle(GREEN, t.bgLight), width: '100%', justifyContent: 'center', marginTop: 8 }}>
+                    <button onClick={submitParts} disabled={partsSubmitting} style={{ ...btnStyle(GREEN, 'var(--tz-bgLight)'), width: '100%', justifyContent: 'center', marginTop: 8 }}>
                       {partsSubmitting ? 'Notifying...' : 'Notify Mechanic — Parts Ready'}
                     </button>
                   )}
@@ -1742,7 +1742,7 @@ export default function WorkOrderDetail() {
                 <div style={{ display: 'flex', gap: 12, color: GRAY }}>
                   {readyCount > 0 && <span style={{ color: GREEN, fontWeight: 600 }}>{readyCount} ready</span>}
                   {orderedCount > 0 && <span style={{ color: AMBER, fontWeight: 600 }}>{orderedCount} ordered</span>}
-                  {roughCount > 0 && <span style={{ color: t.danger, fontWeight: 600 }}>{roughCount} pending</span>}
+                  {roughCount > 0 && <span style={{ color: 'var(--tz-danger)', fontWeight: 600 }}>{roughCount} pending</span>}
                 </div>
               </div>
             )
@@ -1754,7 +1754,7 @@ export default function WorkOrderDetail() {
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: GRAY }}>Additional Parts (wo_parts)</div>
               <div style={{ fontSize: 12, color: GRAY }}>
                 {woParts.map((p: any) => (
-                  <div key={p.id} style={{ display: 'flex', gap: 8, padding: '4px 0', borderBottom: '1px solid ${t.border}' }}>
+                  <div key={p.id} style={{ display: 'flex', gap: 8, padding: '4px 0', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                     <span style={{ flex: 1 }}>{p.description}{p.part_number ? ` (${p.part_number})` : ''}</span>
                     <span>Qty: {p.quantity}</span>
                     {canSeePrices && <span>{fmt(p.unit_cost || 0)}</span>}
@@ -1773,7 +1773,7 @@ export default function WorkOrderDetail() {
         <div>
           {/* Estimate requirement notice */}
           {!wo.estimate_required && !wo.is_historical && (
-            <div style={{ ...cardStyle, background: t.successBg, border: '1px solid ${t.success}', marginBottom: 12, fontSize: 13, color: t.success, fontWeight: 600 }}>
+            <div style={{ ...cardStyle, background: 'var(--tz-successBg)', border: `1px solid ${'var(--tz-success)'}`, marginBottom: 12, fontSize: 13, color: 'var(--tz-success)', fontWeight: 600 }}>
               Estimate not required for company trucks. You can still create one manually if needed.
             </div>
           )}
@@ -1855,11 +1855,11 @@ export default function WorkOrderDetail() {
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
                       onClick={() => setApprovalModal(true)}
-                      style={btnStyle(BLUE, t.bgLight)}
+                      style={btnStyle(BLUE, 'var(--tz-bgLight)')}
                     >
                       {estStatus === 'sent' ? 'Resend / Approve' : estStatus === 'declined' ? 'Resend Modified Estimate' : 'Send Estimate'}
                     </button>
-                    <button onClick={() => { setApprovalModal(true); setApprovalConfirmModal({ method: 'in_person', notes: '' }) }} style={{ ...btnStyle( t.bgLight, BLUE), border: `1px solid ${BLUE}` }}>
+                    <button onClick={() => { setApprovalModal(true); setApprovalConfirmModal({ method: 'in_person', notes: '' }) }} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), border: `1px solid ${BLUE}` }}>
                       Approve In Person
                     </button>
                   </div>
@@ -1883,7 +1883,7 @@ export default function WorkOrderDetail() {
             return (
               <div style={{ display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 12, marginBottom: 16 }}>
                 {items.map(s => (
-                  <div key={s.label} style={{ background: t.bgHover, borderRadius: 10, padding: 14, textAlign: 'center' }}>
+                  <div key={s.label} style={{ background: 'var(--tz-bgHover)', borderRadius: 10, padding: 14, textAlign: 'center' }}>
                     <div style={labelStyle}>{s.label}</div>
                     <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
                   </div>
@@ -1897,7 +1897,7 @@ export default function WorkOrderDetail() {
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Labor</span>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid ${t.border}' }}>
+                <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                   <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Job</th>
                   <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Est Hours</th>
                   <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Actual</th>
@@ -1910,7 +1910,7 @@ export default function WorkOrderDetail() {
                 {jobLines.map((line: any, idx: number) => {
                   const hrs = line.billed_hours || line.actual_hours || line.estimated_hours || 0
                   return (
-                    <tr key={line.id} style={{ borderBottom: '1px solid ${t.border}' }}>
+                    <tr key={line.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                       <td style={{ padding: '6px 8px' }}>Job {idx + 1}: {line.description?.slice(0, 40)}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.estimated_hours || 0}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.actual_hours || 0}</td>
@@ -1934,7 +1934,7 @@ export default function WorkOrderDetail() {
               <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Parts</span>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid ${t.border}' }}>
+                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                     <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
                     <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part</th>
                     <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part #</th>
@@ -1948,7 +1948,7 @@ export default function WorkOrderDetail() {
                     const qty = p.quantity || 1
                     const lineTotal = sell * qty
                     return (
-                      <tr key={p.id} style={{ borderBottom: '1px solid ${t.border}' }}>
+                      <tr key={p.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                         <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
                         <td style={{ padding: '6px 8px' }}>{p.real_name || p.rough_name || p.description || '—'}</td>
                         <td style={{ padding: '6px 8px', color: GRAY }}>{p.part_number || '—'}</td>
@@ -1972,7 +1972,7 @@ export default function WorkOrderDetail() {
               <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Additional Parts</span>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid ${t.border}' }}>
+                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                     <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
                     <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part</th>
                     <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Unit Cost</th>
@@ -1981,7 +1981,7 @@ export default function WorkOrderDetail() {
                 </thead>
                 <tbody>
                   {woParts.map((p: any) => (
-                    <tr key={p.id} style={{ borderBottom: '1px solid ${t.border}' }}>
+                    <tr key={p.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>{p.quantity || 1}</td>
                       <td style={{ padding: '6px 8px' }}>{p.description || '—'}</td>
                       <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(p.unit_cost)}</td>
@@ -2002,7 +2002,7 @@ export default function WorkOrderDetail() {
             <div style={cardStyle}>
               <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Shop Charges</span>
               {shopCharges.map((c: any) => (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid ${t.border}', fontSize: 13 }}>
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 13 }}>
                   <span style={{ flex: 1 }}>{c.description}</span>
                   <span>{c.taxable ? '(Taxable)' : ''}</span>
                   <span style={{ fontWeight: 700 }}>{fmt(c.amount)}</span>
@@ -2018,7 +2018,7 @@ export default function WorkOrderDetail() {
               <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Fees & Charges</span>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid ${t.border}' }}>
+                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                     <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Description</th>
                     <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
                     <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Amount</th>
@@ -2029,7 +2029,7 @@ export default function WorkOrderDetail() {
                   {feeLines.map((f: any) => {
                     const lineTotal = f.total_price || (f.quantity || 1) * (f.unit_price || 0)
                     return (
-                      <tr key={f.id} style={{ borderBottom: '1px solid ${t.border}' }}>
+                      <tr key={f.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                         <td style={{ padding: '6px 8px' }}>{f.description || '—'}</td>
                         <td style={{ padding: '6px 8px', textAlign: 'center' }}>{f.quantity || 1}</td>
                         <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(f.unit_price || 0)}</td>
@@ -2048,7 +2048,7 @@ export default function WorkOrderDetail() {
 
           {/* Historical parts summary — shown only when no summary card above already displays parts */}
           {wo.is_historical && partLines.length === 0 && wo.parts_total > 0 && !partsLineTotal && (
-            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13, background: t.bgCard }}>
+            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13, background: 'var(--tz-bgCard)' }}>
               <span style={{ color: GRAY }}>Parts (imported summary)</span>
               <span style={{ fontWeight: 700 }}>{fmt(wo.parts_total)}</span>
             </div>
@@ -2063,7 +2063,7 @@ export default function WorkOrderDetail() {
           )}
 
           {/* Grand Total */}
-          <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', background: t.successBg, border: `1px solid ${GREEN}` }}>
+          <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', background: 'var(--tz-successBg)', border: `1px solid ${GREEN}` }}>
             <span style={{ fontSize: 16, fontWeight: 800 }}>Total</span>
             <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>{fmt(wo.is_historical && wo.grand_total ? wo.grand_total : grandTotal)}</span>
           </div>
@@ -2071,7 +2071,7 @@ export default function WorkOrderDetail() {
           {/* Signature area */}
           <div style={cardStyle}>
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Authorization</span>
-            <div style={{ background: t.bgHover, borderRadius: 8, padding: 20, textAlign: 'center', border: `1px dashed ${t.border}`, minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontSize: 13 }}>
+            <div style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: 20, textAlign: 'center', border: `1px dashed ${'var(--tz-border)'}`, minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontSize: 13 }}>
               Customer signature area (canvas placeholder)
             </div>
             <div style={{ marginTop: 8, fontSize: 11, color: GRAY }}>
@@ -2098,7 +2098,7 @@ export default function WorkOrderDetail() {
               userId={user?.id}
               placeholder="Write a note..."
               rows={3}
-              style={{ ...inputStyle, minHeight: 70, resize: 'vertical', marginBottom: 8, paddingRight: 48, background: t.bgCard, color: '#111', border: `1px solid ${t.border}` }}
+              style={{ ...inputStyle, minHeight: 70, resize: 'vertical', marginBottom: 8, paddingRight: 48, background: 'var(--tz-bgCard)', color: '#111', border: `1px solid ${'var(--tz-border)'}` }}
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, cursor: 'pointer' }}>
@@ -2106,7 +2106,7 @@ export default function WorkOrderDetail() {
                 Visible to customer
               </label>
               <div style={{ flex: 1 }} />
-              <button onClick={addNote} disabled={addingNote || !noteText.trim()} style={{ ...btnStyle(BLUE, t.bgLight), opacity: addingNote || !noteText.trim() ? 0.5 : 1 }}>
+              <button onClick={addNote} disabled={addingNote || !noteText.trim()} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), opacity: addingNote || !noteText.trim() ? 0.5 : 1 }}>
                 {addingNote ? 'Saving...' : 'Add Note'}
               </button>
             </div>
@@ -2118,13 +2118,13 @@ export default function WorkOrderDetail() {
             <div style={cardStyle}>
               <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Notes ({notes.length})</span>
               {notes.map((n: any) => (
-                <div key={n.id} style={{ padding: '10px 0', borderBottom: '1px solid ${t.border}' }}>
+                <div key={n.id} style={{ padding: '10px 0', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <span style={{ fontSize: 12, fontWeight: 700 }}>{userMap[n.user_id] || 'System'}</span>
                     <span style={{ fontSize: 11, color: GRAY }}>{fmtDate(n.created_at)}</span>
-                    {n.visible_to_customer && <span style={pillStyle(t.accentBg, BLUE)}>Customer Visible</span>}
+                    {n.visible_to_customer && <span style={pillStyle('var(--tz-accentBg)', BLUE)}>Customer Visible</span>}
                   </div>
-                  <div style={{ fontSize: 13, color: t.textSecondary, whiteSpace: 'pre-wrap' }}>{n.note_text}</div>
+                  <div style={{ fontSize: 13, color: 'var(--tz-textSecondary)', whiteSpace: 'pre-wrap' }}>{n.note_text}</div>
                 </div>
               ))}
             </div>
@@ -2135,7 +2135,7 @@ export default function WorkOrderDetail() {
           <div style={cardStyle}>
             <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Files</span>
             <input ref={fileRef} type="file" multiple style={{ display: 'none' }} onChange={e => uploadFiles(e.target.files)} />
-            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={btnStyle( t.bgLight, BLUE)}>
+            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={btnStyle( 'var(--tz-bgLight)', BLUE)}>
               <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload Files'}
             </button>
           </div>
@@ -2146,7 +2146,7 @@ export default function WorkOrderDetail() {
             <div style={cardStyle}>
               <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Uploaded Files ({files.length})</span>
               {files.map((f: any) => (
-                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid ${t.border}' }}>
+                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                   <Paperclip size={14} color={GRAY} />
                   <a href={f.file_url} target="_blank" rel="noreferrer" style={{ color: BLUE, fontSize: 13, fontWeight: 600, textDecoration: 'none', flex: 1 }}>
                     {f.filename}
@@ -2166,13 +2166,13 @@ export default function WorkOrderDetail() {
           <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, display: 'block' }}>Activity Log</span>
           {activity.length === 0 && <div style={{ fontSize: 13, color: GRAY, padding: 20, textAlign: 'center' }}>No activity yet</div>}
           {activity.map((a: any, i: number) => (
-            <div key={a.id} style={{ display: 'flex', gap: 12, paddingBottom: 14, marginBottom: 14, borderLeft: i < activity.length - 1 ? `2px solid ${t.border}` : '2px solid transparent', paddingLeft: 16, position: 'relative' }}>
+            <div key={a.id} style={{ display: 'flex', gap: 12, paddingBottom: 14, marginBottom: 14, borderLeft: i < activity.length - 1 ? `2px solid ${'var(--tz-border)'}` : '2px solid transparent', paddingLeft: 16, position: 'relative' }}>
               <div style={{ position: 'absolute', left: -5, top: 2, width: 8, height: 8, borderRadius: '50%', background: BLUE }} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, color: t.text }}>{a.action}</div>
+                <div style={{ fontSize: 13, color: 'var(--tz-text)' }}>{a.action}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
                   <span style={{ fontSize: 11, fontWeight: 600, color: GRAY }}>{userMap[a.user_id] || a.users?.full_name || 'System'}</span>
-                  <span style={{ fontSize: 11, color: t.textTertiary }}>{fmtDate(a.created_at)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--tz-textTertiary)' }}>{fmtDate(a.created_at)}</span>
                 </div>
               </div>
             </div>
@@ -2182,18 +2182,18 @@ export default function WorkOrderDetail() {
 
       {/* ========== TAB 5: INVOICE ========== */}
       {tab === 5 && !wo.is_historical && (
-        <div style={{ background: t.bgElevated, borderRadius: 16, border: '1px solid ${t.border}', padding: 'clamp(12px, 3vw, 24px)' }}>
+        <div style={{ background: 'var(--tz-bgElevated)', borderRadius: 16, border: `1px solid ${'var(--tz-border)'}`, padding: 'clamp(12px, 3vw, 24px)' }}>
 
           {/* ── Invoice Title Bar ── */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid ${t.border}' }}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: t.text, letterSpacing: '-0.02em' }}>Invoice</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 14, borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+            <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--tz-text)', letterSpacing: '-0.02em' }}>Invoice</span>
             {(() => {
               const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-                draft: { label: 'Draft', bg: t.surfaceMuted, color: t.textSecondary },
-                accounting_review: { label: 'Under Review', bg: t.warningBg, color: t.warning },
-                sent: { label: 'Sent to Customer', bg: t.accentBg, color: t.accent },
-                paid: { label: 'Paid', bg: t.successBg, color: t.success },
-                closed: { label: 'Closed', bg: t.surfaceMuted, color: t.textSecondary },
+                draft: { label: 'Draft', bg: 'var(--tz-surfaceMuted)', color: 'var(--tz-textSecondary)' },
+                accounting_review: { label: 'Under Review', bg: 'var(--tz-warningBg)', color: 'var(--tz-warning)' },
+                sent: { label: 'Sent to Customer', bg: 'var(--tz-accentBg)', color: 'var(--tz-accent)' },
+                paid: { label: 'Paid', bg: 'var(--tz-successBg)', color: 'var(--tz-success)' },
+                closed: { label: 'Closed', bg: 'var(--tz-surfaceMuted)', color: 'var(--tz-textSecondary)' },
               }
               const s = statusMap[wo.invoice_status] || statusMap.draft
               return <span style={{ padding: '3px 12px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: s.bg, color: s.color, textTransform: 'uppercase', letterSpacing: '.04em' }}>{s.label}</span>
@@ -2201,37 +2201,37 @@ export default function WorkOrderDetail() {
           </div>
 
           {/* ── Invoice Info: From / Bill To / Details ── */}
-          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 20 }}>
               {/* From */}
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>From</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: t.text }}>{shop.payment_payee_name || shop.dba || shop.name || '—'}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>{shop.payment_payee_name || shop.dba || shop.name || '—'}</div>
                 {(shop.payment_mail_address || shop.address) && (
-                  <div style={{ fontSize: 12, color: t.textSecondary, lineHeight: 1.7 }}>
+                  <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', lineHeight: 1.7 }}>
                     {shop.payment_mail_address || shop.address}
                     {(shop.payment_mail_city || shop.payment_mail_state || shop.payment_mail_zip) && <br />}
                     {[shop.payment_mail_city, shop.payment_mail_state].filter(Boolean).join(', ')} {shop.payment_mail_zip || ''}
                   </div>
                 )}
-                {shop.phone && <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 2 }}>{shop.phone}</div>}
-                {shop.email && <div style={{ fontSize: 12, color: t.textSecondary }}>{shop.email}</div>}
+                {shop.phone && <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginTop: 2 }}>{shop.phone}</div>}
+                {shop.email && <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{shop.email}</div>}
               </div>
               {/* Bill To */}
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Bill To</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: t.text }}>{customer?.company_name || '—'}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>{customer?.company_name || '—'}</div>
                 {(contactEmail || customer?.email) && (
-                  <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 2 }}>{contactEmail || customer.email}</div>
+                  <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginTop: 2 }}>{contactEmail || customer.email}</div>
                 )}
                 {(contactPhone || customer?.phone) && (
-                  <div style={{ fontSize: 12, color: t.textSecondary }}>{contactPhone || customer.phone}</div>
+                  <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{contactPhone || customer.phone}</div>
                 )}
               </div>
               {/* Invoice Details */}
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Details</div>
-                <div style={{ fontSize: 12, color: t.textSecondary, lineHeight: 1.8 }}>
+                <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', lineHeight: 1.8 }}>
                   <div><span style={{ color: GRAY }}>WO #:</span> <span style={{ fontWeight: 600 }}>{wo.so_number}</span></div>
                   {wo.invoices?.[0]?.invoice_number && (
                     <div><span style={{ color: GRAY }}>Invoice #:</span> <span style={{ fontWeight: 600 }}>{wo.invoices[0].invoice_number}</span></div>
@@ -2243,7 +2243,7 @@ export default function WorkOrderDetail() {
               {/* Unit Info */}
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 6 }}>Unit</div>
-                <div style={{ fontSize: 12, color: t.textSecondary, lineHeight: 1.8 }}>
+                <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', lineHeight: 1.8 }}>
                   <div style={{ fontWeight: 600 }}>#{asset?.unit_number || '—'}</div>
                   {(asset?.year || asset?.make || asset?.model) && (
                     <div>{[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
@@ -2255,7 +2255,7 @@ export default function WorkOrderDetail() {
           </div>
 
           {['sent', 'paid', 'closed'].includes(wo.invoice_status) && (
-            <div style={{ background: t.warningBg, border: '1px solid ${t.warning}', borderRadius: 8, padding: '8px 14px', marginBottom: 16, fontSize: 12, color: t.warning, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ background: 'var(--tz-warningBg)', border: `1px solid ${'var(--tz-warning)'}`, borderRadius: 8, padding: '8px 14px', marginBottom: 16, fontSize: 12, color: 'var(--tz-warning)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 14 }}>&#128274;</span> Editing locked — invoice has been sent to customer
             </div>
           )}
@@ -2273,11 +2273,11 @@ export default function WorkOrderDetail() {
                   const jobTotal = jobLaborAmt + jobPartsTotal
 
                   return (
-                    <div key={line.id} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+                    <div key={line.id} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
                       {/* A. Job Header */}
-                      <div style={{ padding: '10px 20px', borderBottom: '1px solid ${t.border}', background: t.bgCard, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ padding: '10px 20px', borderBottom: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em' }}>Job {idx + 1}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: t.text }}>{line.description?.slice(0, 60) || `Job ${idx + 1}`}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>{line.description?.slice(0, 60) || `Job ${idx + 1}`}</span>
                       </div>
 
                       <div style={{ padding: '0 20px' }}>
@@ -2285,24 +2285,24 @@ export default function WorkOrderDetail() {
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                           <thead>
                             <tr>
-                              <th style={{ textAlign: 'left', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}' }}>Labor</th>
-                              <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 80 }}>Hours</th>
-                              <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 70 }}>Rate</th>
-                              <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 80 }}>Amount</th>
+                              <th style={{ textAlign: 'left', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}` }}>Labor</th>
+                              <th style={{ textAlign: 'center', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 80 }}>Hours</th>
+                              <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 70 }}>Rate</th>
+                              <th style={{ textAlign: 'right', padding: '10px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 80 }}>Amount</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ padding: '8px 8px', color: t.textSecondary, fontWeight: 500 }}>{line.description?.slice(0, 50) || `Job ${idx + 1}`}</td>
+                              <td style={{ padding: '8px 8px', color: 'var(--tz-textSecondary)', fontWeight: 500 }}>{line.description?.slice(0, 50) || `Job ${idx + 1}`}</td>
                               <td style={{ padding: '8px 8px', textAlign: 'center' }}>
                                 {canEditPrices ? (
-                                  <input type="number" step="0.25" defaultValue={line.billed_hours || ''} onBlur={async e => { const v = parseFloat(e.target.value) || 0; if (v !== (line.billed_hours || 0)) { await patchLine(line.id, { billed_hours: v }); } }} placeholder={String(line.estimated_hours || 0)} style={{ width: 60, textAlign: 'center', padding: '4px 6px', border: `1px solid ${t.border}`, borderRadius: 6, fontSize: 12, fontFamily: 'inherit', background: t.bgCard }} />
+                                  <input type="number" step="0.25" defaultValue={line.billed_hours || ''} onBlur={async e => { const v = parseFloat(e.target.value) || 0; if (v !== (line.billed_hours || 0)) { await patchLine(line.id, { billed_hours: v }); } }} placeholder={String(line.estimated_hours || 0)} style={{ width: 60, textAlign: 'center', padding: '4px 6px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 6, fontSize: 12, fontFamily: 'inherit', background: 'var(--tz-bgCard)' }} />
                                 ) : (
                                   <span style={{ fontWeight: 600 }}>{line.billed_hours || hrs}</span>
                                 )}
                               </td>
                               <td style={{ padding: '8px 8px', textAlign: 'right', color: GRAY }}>{isImportedHistory ? (line.labor_rate ? `${fmt(line.labor_rate)}/hr` : '—') : `${fmt(laborRate)}/hr`}</td>
-                              <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700, color: t.text }}>{isImportedHistory ? fmt(line.unit_price || 0) : fmt(jobLaborAmt)}</td>
+                              <td style={{ padding: '8px 8px', textAlign: 'right', fontWeight: 700, color: 'var(--tz-text)' }}>{isImportedHistory ? fmt(line.unit_price || 0) : fmt(jobLaborAmt)}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -2312,12 +2312,12 @@ export default function WorkOrderDetail() {
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginTop: 4 }}>
                             <thead>
                               <tr>
-                                <th style={{ textAlign: 'center', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 36 }}>Qty</th>
-                                <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}' }}>Parts</th>
-                                <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 80 }}>Part #</th>
-                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 60 }}>Cost</th>
-                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 60 }}>Sell</th>
-                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 80 }}>Amount</th>
+                                <th style={{ textAlign: 'center', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 36 }}>Qty</th>
+                                <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}` }}>Parts</th>
+                                <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 80 }}>Part #</th>
+                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 60 }}>Cost</th>
+                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 60 }}>Sell</th>
+                                <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 80 }}>Amount</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -2328,18 +2328,18 @@ export default function WorkOrderDetail() {
                                 const lineTotal = sell * qty
                                 const isZero = lineTotal === 0 && sell === 0
                                 return (
-                                  <tr key={p.id} style={{ borderBottom: pi < jobParts.length - 1 ? '1px solid ${t.border}' : 'none', opacity: isZero ? 0.45 : 1 }}>
+                                  <tr key={p.id} style={{ borderBottom: pi < jobParts.length - 1 ? `1px solid ${'var(--tz-border)'}` : 'none', opacity: isZero ? 0.45 : 1 }}>
                                     <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600 }}>{qty}</td>
                                     <td style={{ padding: '6px 8px' }}>
-                                      <span style={{ color: t.text, fontWeight: 500 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
+                                      <span style={{ color: 'var(--tz-text)', fontWeight: 500 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
                                       {p.real_name && p.rough_name && p.real_name !== p.rough_name && (
-                                        <div style={{ fontSize: 9, color: t.textTertiary, marginTop: 1 }}>Originally: {p.rough_name}</div>
+                                        <div style={{ fontSize: 9, color: 'var(--tz-textTertiary)', marginTop: 1 }}>Originally: {p.rough_name}</div>
                                       )}
                                     </td>
                                     <td style={{ padding: '6px 8px', color: GRAY, fontSize: 11 }}>{p.part_number || '—'}</td>
                                     <td style={{ padding: '6px 8px', textAlign: 'right', color: GRAY, fontSize: 11 }}>{canSeePrices ? fmt(cost) : '—'}</td>
                                     <td style={{ padding: '6px 8px', textAlign: 'right' }}>{canSeePrices ? fmt(sell) : '—'}</td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, color: t.text }}>{fmt(lineTotal)}</td>
+                                    <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, color: 'var(--tz-text)' }}>{fmt(lineTotal)}</td>
                                   </tr>
                                 )
                               })}
@@ -2349,11 +2349,11 @@ export default function WorkOrderDetail() {
                       </div>
 
                       {/* D. Job Financial Recap */}
-                      <div style={{ padding: '8px 20px', borderTop: '1px solid ${t.border}' }}>
+                      <div style={{ padding: '8px 20px', borderTop: `1px solid ${'var(--tz-border)'}` }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 20, fontSize: 11, color: GRAY }}>
                           <span>Labor: {fmt(jobLaborAmt)}</span>
                           {jobParts.length > 0 && <span>Parts: {fmt(jobPartsTotal)}</span>}
-                          <span style={{ color: t.textSecondary, fontWeight: 600 }}>Job Total: {fmt(jobTotal)}</span>
+                          <span style={{ color: 'var(--tz-textSecondary)', fontWeight: 600 }}>Job Total: {fmt(jobTotal)}</span>
                         </div>
                       </div>
                     </div>
@@ -2362,21 +2362,21 @@ export default function WorkOrderDetail() {
 
                 {/* Orphan Parts — parts not linked to any specific job */}
                 {orphanParts.length > 0 && (
-                  <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
-                    <div style={{ padding: '10px 20px', borderBottom: '1px solid ${t.border}', background: t.bgCard, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: t.text, textTransform: 'uppercase', letterSpacing: '.04em' }}>Additional Parts</span>
+                  <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+                    <div style={{ padding: '10px 20px', borderBottom: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Additional Parts</span>
                       <span style={{ fontSize: 11, color: GRAY }}>({orphanParts.length} {orphanParts.length === 1 ? 'item' : 'items'})</span>
                     </div>
                     <div style={{ padding: '0 20px' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                         <thead>
                           <tr>
-                            <th style={{ textAlign: 'center', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 36 }}>Qty</th>
-                            <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}' }}>Part</th>
-                            <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 80 }}>Part #</th>
-                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 60 }}>Cost</th>
-                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 60 }}>Sell</th>
-                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid ${t.border}', width: 80 }}>Amount</th>
+                            <th style={{ textAlign: 'center', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 36 }}>Qty</th>
+                            <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}` }}>Part</th>
+                            <th style={{ textAlign: 'left', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 80 }}>Part #</th>
+                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 60 }}>Cost</th>
+                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 60 }}>Sell</th>
+                            <th style={{ textAlign: 'right', padding: '8px 8px 6px', fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${'var(--tz-border)'}`, width: 80 }}>Amount</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2387,18 +2387,18 @@ export default function WorkOrderDetail() {
                             const lineTotal = sell * qty
                             const isZero = lineTotal === 0 && sell === 0
                             return (
-                              <tr key={p.id} style={{ borderBottom: pi < orphanParts.length - 1 ? '1px solid ${t.border}' : 'none', opacity: isZero ? 0.45 : 1 }}>
+                              <tr key={p.id} style={{ borderBottom: pi < orphanParts.length - 1 ? `1px solid ${'var(--tz-border)'}` : 'none', opacity: isZero ? 0.45 : 1 }}>
                                 <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600 }}>{qty}</td>
                                 <td style={{ padding: '6px 8px' }}>
-                                  <span style={{ color: t.text, fontWeight: 500 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
+                                  <span style={{ color: 'var(--tz-text)', fontWeight: 500 }}>{p.real_name || p.rough_name || p.description || '—'}</span>
                                   {p.real_name && p.rough_name && p.real_name !== p.rough_name && (
-                                    <div style={{ fontSize: 9, color: t.textTertiary, marginTop: 1 }}>Originally: {p.rough_name}</div>
+                                    <div style={{ fontSize: 9, color: 'var(--tz-textTertiary)', marginTop: 1 }}>Originally: {p.rough_name}</div>
                                   )}
                                 </td>
                                 <td style={{ padding: '6px 8px', color: GRAY, fontSize: 11 }}>{p.part_number || '—'}</td>
                                 <td style={{ padding: '6px 8px', textAlign: 'right', color: GRAY, fontSize: 11 }}>{canSeePrices ? fmt(cost) : '—'}</td>
                                 <td style={{ padding: '6px 8px', textAlign: 'right' }}>{canSeePrices ? fmt(sell) : '—'}</td>
-                                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, color: t.text }}>{fmt(lineTotal)}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700, color: 'var(--tz-text)' }}>{fmt(lineTotal)}</td>
                               </tr>
                             )
                           })}
@@ -2412,26 +2412,26 @@ export default function WorkOrderDetail() {
           })()}
 
           {/* ── Summary & Totals ── */}
-          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 20px', borderBottom: '1px solid ${t.border}' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: t.text, textTransform: 'uppercase', letterSpacing: '.04em' }}>Summary</span>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '12px 20px', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Summary</span>
             </div>
             <div style={{ padding: '16px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: t.textSecondary }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                 <span>Labor ({jobLines.length} {jobLines.length === 1 ? 'job' : 'jobs'})</span>
                 <span style={{ fontWeight: 600 }}>{fmt(laborTotal)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: t.textSecondary }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                 <span>Parts ({partLines.length} {partLines.length === 1 ? 'item' : 'items'})</span>
                 <span style={{ fontWeight: 600 }}>{fmt(partsLineTotal + woPartsTotal)}</span>
               </div>
               {shopCharges.length > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: t.textSecondary }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                   <span>Shop Charges</span>
                   <span style={{ fontWeight: 600 }}>{fmt(shopCharges.reduce((s: number, c: any) => s + (c.amount || 0), 0))}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, borderTop: '1px solid ${t.border}', marginTop: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 13, borderTop: `1px solid ${'var(--tz-border)'}`, marginTop: 6 }}>
                 <span style={{ color: GRAY }}>Subtotal</span>
                 <span style={{ fontWeight: 600 }}>{fmt(subtotal)}</span>
               </div>
@@ -2441,12 +2441,12 @@ export default function WorkOrderDetail() {
                   <span>{fmt(taxAmt)}</span>
                 </div>
               ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12, color: t.textTertiary }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12, color: 'var(--tz-textTertiary)' }}>
                   <span>Tax</span><span>Exempt</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px', borderTop: '1px solid ${t.border}', marginTop: 8 }}>
-                <span style={{ fontSize: 15, fontWeight: 800, color: t.text }}>Invoice Total</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px', borderTop: `1px solid ${'var(--tz-border)'}`, marginTop: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--tz-text)' }}>Invoice Total</span>
                 <span style={{ fontSize: 18, fontWeight: 800, color: GREEN }}>{fmt(grandTotal)}</span>
               </div>
             </div>
@@ -2454,45 +2454,45 @@ export default function WorkOrderDetail() {
 
           {/* ── Payment Instructions ── */}
           {shop.payment_payee_name && (
-          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
-            <div style={{ padding: '10px 20px', borderBottom: '1px solid ${t.border}', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Payment Instructions</span>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '10px 20px', borderBottom: `1px solid ${'var(--tz-border)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Payment Instructions</span>
               <span style={{ fontSize: 11, color: GRAY }}>Payable to: {shop.payment_payee_name}</span>
             </div>
             <div style={{ padding: '12px 20px' }}>
               {shop.payment_bank_name && <div style={{ fontSize: 11, color: GRAY, marginBottom: 10 }}>Bank: {shop.payment_bank_name}</div>}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 10 }}>
                 {shop.payment_ach_account && (
-                <div style={{ background: t.bgCard, borderRadius: 6, padding: '10px 12px', border: `1px solid ${t.border}`, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>ACH Payment</div>
-                  <div style={{ fontSize: 11, color: t.textSecondary, lineHeight: 1.6 }}>
+                <div style={{ background: 'var(--tz-bgCard)', borderRadius: 6, padding: '10px 12px', border: `1px solid ${'var(--tz-border)'}`, overflow: 'hidden' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>ACH Payment</div>
+                  <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', lineHeight: 1.6 }}>
                     <div>Account: <span style={{ fontWeight: 600 }}>{shop.payment_ach_account}</span></div>
                     {shop.payment_ach_routing && <div>Routing: <span style={{ fontWeight: 600 }}>{shop.payment_ach_routing}</span></div>}
                   </div>
                 </div>
                 )}
                 {shop.payment_wire_account && (
-                <div style={{ background: t.bgCard, borderRadius: 6, padding: '10px 12px', border: `1px solid ${t.border}`, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Wire Transfer</div>
-                  <div style={{ fontSize: 11, color: t.textSecondary, lineHeight: 1.6 }}>
+                <div style={{ background: 'var(--tz-bgCard)', borderRadius: 6, padding: '10px 12px', border: `1px solid ${'var(--tz-border)'}`, overflow: 'hidden' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Wire Transfer</div>
+                  <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', lineHeight: 1.6 }}>
                     <div>Account: <span style={{ fontWeight: 600 }}>{shop.payment_wire_account}</span></div>
                     {shop.payment_wire_routing && <div>Routing: <span style={{ fontWeight: 600 }}>{shop.payment_wire_routing}</span></div>}
                   </div>
                 </div>
                 )}
                 {(shop.payment_zelle_email_1 || shop.payment_zelle_email_2) && (
-                <div style={{ background: t.bgCard, borderRadius: 6, padding: '10px 12px', border: `1px solid ${t.border}`, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Zelle</div>
-                  <div style={{ fontSize: 11, color: t.textSecondary, lineHeight: 1.6, overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                <div style={{ background: 'var(--tz-bgCard)', borderRadius: 6, padding: '10px 12px', border: `1px solid ${'var(--tz-border)'}`, overflow: 'hidden' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Zelle</div>
+                  <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', lineHeight: 1.6, overflowWrap: 'break-word', wordBreak: 'break-all' }}>
                     {shop.payment_zelle_email_1 && <div>{shop.payment_zelle_email_1}</div>}
                     {shop.payment_zelle_email_2 && <div>{shop.payment_zelle_email_2}</div>}
                   </div>
                 </div>
                 )}
                 {shop.payment_mail_payee && (
-                <div style={{ background: t.bgCard, borderRadius: 6, padding: '10px 12px', border: `1px solid ${t.border}`, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Mail Check To</div>
-                  <div style={{ fontSize: 11, color: t.textSecondary, lineHeight: 1.6, overflowWrap: 'break-word' }}>
+                <div style={{ background: 'var(--tz-bgCard)', borderRadius: 6, padding: '10px 12px', border: `1px solid ${'var(--tz-border)'}`, overflow: 'hidden' }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 4 }}>Mail Check To</div>
+                  <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', lineHeight: 1.6, overflowWrap: 'break-word' }}>
                     <div style={{ fontWeight: 600 }}>{shop.payment_mail_payee}</div>
                     {shop.payment_mail_address && <div>{shop.payment_mail_address}</div>}
                     {(shop.payment_mail_city || shop.payment_mail_state || shop.payment_mail_zip) && <div>{[shop.payment_mail_city, shop.payment_mail_state].filter(Boolean).join(', ')} {shop.payment_mail_zip || ''}</div>}
@@ -2508,11 +2508,11 @@ export default function WorkOrderDetail() {
           )}
 
           {/* ── Actions & Documents ── */}
-          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
             <div style={{ padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {wo.invoice_status === 'draft' && !isViewOnly && (
-                  <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, t.bgLight), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>
+                  <button onClick={() => invoiceAction('submit_to_accounting')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, 'var(--tz-bgLight)'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>
                     {invoiceLoading ? 'Submitting...' : 'Send to Accounting'}
                   </button>
                 )}
@@ -2524,21 +2524,21 @@ export default function WorkOrderDetail() {
                       setInvoiceLoading(false)
                       if (res.ok) await loadData()
                       else { const err = await res.json(); alert(err.error || 'Approve failed') }
-                    }} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, t.bgLight), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Approve & Send</button>
-                    <a href={wo.invoices?.[0]?.id ? `/invoices/${wo.invoices[0].id}` : getWorkorderRoute(wo.id)} style={{ ...btnStyle( t.bgLight, BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, borderRadius: 8 }}>Edit Invoice</a>
+                    }} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, 'var(--tz-bgLight)'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Approve & Send</button>
+                    <a href={wo.invoices?.[0]?.id ? `/invoices/${wo.invoices[0].id}` : getWorkorderRoute(wo.id)} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), border: `1px solid ${BLUE}33`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, borderRadius: 8 }}>Edit Invoice</a>
                   </>
                 )}
                 {wo.invoice_status === 'accounting_review' && !canEditPrices && (
                   <span style={{ fontSize: 12, color: AMBER, fontWeight: 600 }}>Awaiting accounting approval</span>
                 )}
                 {wo.invoice_status === 'sent' && canEditPrices && (
-                  <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, t.bgLight), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Record Payment</button>
+                  <button onClick={() => invoiceAction('mark_paid')} disabled={invoiceLoading} style={{ ...btnStyle(GREEN, 'var(--tz-bgLight)'), padding: '8px 20px', fontSize: 13, borderRadius: 8 }}>Record Payment</button>
                 )}
                 {wo.invoice_status === 'paid' && !isViewOnly && (
-                  <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, t.bgLight), padding: '8px 18px', fontSize: 13, borderRadius: 8 }}>Close Work Order</button>
+                  <button onClick={() => invoiceAction('close_wo')} disabled={invoiceLoading} style={{ ...btnStyle(GRAY, 'var(--tz-bgLight)'), padding: '8px 18px', fontSize: 13, borderRadius: 8 }}>Close Work Order</button>
                 )}
                 {wo.invoice_status === 'closed' && (
-                  <span style={{ color: t.textSecondary, fontWeight: 600, fontSize: 13 }}>Work Order Closed</span>
+                  <span style={{ color: 'var(--tz-textSecondary)', fontWeight: 600, fontSize: 13 }}>Work Order Closed</span>
                 )}
                 {['sent', 'paid', 'closed'].includes(wo.invoice_status) && ACCOUNTING_ROLES.includes(userRole) && (
                   <button onClick={async () => {
@@ -2551,9 +2551,9 @@ export default function WorkOrderDetail() {
               </div>
               {wo.invoices?.[0]?.id && (
                 <div style={{ display: 'flex', gap: 4 }}>
-                  <a href={`/api/invoices/${wo.invoices[0].id}/pdf`} target="_blank" rel="noopener" style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid ${t.border}', background: t.bgCard, color: t.textSecondary, fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>PDF</a>
-                  <a href={`/invoices/${wo.invoices[0].id}`} target="_blank" rel="noopener" onClick={e => { e.preventDefault(); const w = window.open(`/invoices/${wo.invoices[0].id}`, '_blank'); if (w) setTimeout(() => w.print(), 1500) }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid ${t.border}', background: t.bgCard, color: t.textSecondary, fontSize: 11, fontWeight: 600, textDecoration: 'none', cursor: 'pointer', fontFamily: FONT }}>Print</a>
-                  <a href={`/invoices/${wo.invoices[0].id}`} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid ${t.border}', background: t.bgCard, color: t.textSecondary, fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>View</a>
+                  <a href={`/api/invoices/${wo.invoices[0].id}/pdf`} target="_blank" rel="noopener" style={{ padding: '6px 12px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-textSecondary)', fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>PDF</a>
+                  <a href={`/invoices/${wo.invoices[0].id}`} target="_blank" rel="noopener" onClick={e => { e.preventDefault(); const w = window.open(`/invoices/${wo.invoices[0].id}`, '_blank'); if (w) setTimeout(() => w.print(), 1500) }} style={{ padding: '6px 12px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-textSecondary)', fontSize: 11, fontWeight: 600, textDecoration: 'none', cursor: 'pointer', fontFamily: FONT }}>Print</a>
+                  <a href={`/invoices/${wo.invoices[0].id}`} style={{ padding: '6px 12px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-textSecondary)', fontSize: 11, fontWeight: 600, textDecoration: 'none', fontFamily: FONT }}>View</a>
                 </div>
               )}
             </div>
@@ -2563,31 +2563,31 @@ export default function WorkOrderDetail() {
 
       {/* ========== TAB 5: IMPORTED HISTORICAL INVOICE (read-only) ========== */}
       {tab === 5 && wo.is_historical && (
-        <div style={{ background: t.bgElevated, borderRadius: 16, border: '1px solid ${t.border}', padding: 'clamp(12px, 3vw, 24px)' }}>
+        <div style={{ background: 'var(--tz-bgElevated)', borderRadius: 16, border: `1px solid ${'var(--tz-border)'}`, padding: 'clamp(12px, 3vw, 24px)' }}>
           <div style={{ marginBottom: 16 }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: t.text }}>Invoice (Imported History)</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--tz-text)' }}>Invoice (Imported History)</span>
           </div>
           {wo.invoices?.[0] ? (
-            <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: '16px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: t.textSecondary }}>
+            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '16px 20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                 <span>Invoice #</span><span style={{ fontWeight: 600 }}>{wo.invoices[0].invoice_number || '—'}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: t.textSecondary }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                 <span>Status</span><span style={{ fontWeight: 600, color: wo.invoices[0].status === 'paid' ? GREEN : undefined }}>{(wo.invoices[0].status || '—').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: t.textSecondary }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                 <span>Labor</span><span style={{ fontWeight: 600 }}>{fmt(laborTotal)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: t.textSecondary }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                 <span>Parts</span><span style={{ fontWeight: 600 }}>{fmt(partsLineTotal)}</span>
               </div>
               {chargesTotal > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: t.textSecondary }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                   <span>Fees</span><span style={{ fontWeight: 600 }}>{fmt(chargesTotal)}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px', borderTop: '1px solid ${t.border}', marginTop: 8 }}>
-                <span style={{ fontSize: 15, fontWeight: 800, color: t.text }}>Total</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px', borderTop: `1px solid ${'var(--tz-border)'}`, marginTop: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--tz-text)' }}>Total</span>
                 <span style={{ fontSize: 18, fontWeight: 800, color: GREEN }}>{fmt(wo.invoices[0].total || wo.grand_total || 0)}</span>
               </div>
               {wo.invoices[0].balance_due > 0 && wo.invoices[0].status !== 'paid' && (
@@ -2607,7 +2607,7 @@ export default function WorkOrderDetail() {
         <div style={{ ...cardStyle, marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: GRAY }}>Invoice</span>
           <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 100, textTransform: 'uppercase',
-            background: wo.invoice_status === 'closed' ? t.surfaceMuted : wo.invoice_status === 'paid' ? t.successBg : wo.invoice_status === 'sent' ? t.accentBg : t.warningBg,
+            background: wo.invoice_status === 'closed' ? 'var(--tz-surfaceMuted)' : wo.invoice_status === 'paid' ? 'var(--tz-successBg)' : wo.invoice_status === 'sent' ? 'var(--tz-accentBg)' : 'var(--tz-warningBg)',
             color: wo.invoice_status === 'closed' ? GRAY : wo.invoice_status === 'paid' ? GREEN : wo.invoice_status === 'sent' ? BLUE : AMBER,
           }}>{(wo.invoice_status || '').replace(/_/g, ' ')}</span>
         </div>
@@ -2615,7 +2615,7 @@ export default function WorkOrderDetail() {
 
       {/* Mechanic role — hide prices indicator */}
       {isMechanic && !wo.is_historical && (
-        <div style={{ ...cardStyle, marginTop: 12, background: t.bgHover, textAlign: 'center', color: GRAY, fontSize: 12, padding: 12 }}>
+        <div style={{ ...cardStyle, marginTop: 12, background: 'var(--tz-bgHover)', textAlign: 'center', color: GRAY, fontSize: 12, padding: 12 }}>
           Pricing information is managed by the service department
         </div>
       )}
@@ -2625,7 +2625,7 @@ export default function WorkOrderDetail() {
       {/* Team Modal */}
       {showTeamModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowTeamModal(false)}>
-          <div style={{ background: t.bgCard, borderRadius: 12, padding: 24, width: 400, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 400, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <span style={{ fontSize: 16, fontWeight: 700 }}>Team Assignment</span>
               <button onClick={() => setShowTeamModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
@@ -2652,8 +2652,8 @@ export default function WorkOrderDetail() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowTeamModal(false)} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
-              <button onClick={saveTeamAssign} style={btnStyle(BLUE, t.bgLight)}>Save</button>
+              <button onClick={() => setShowTeamModal(false)} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
+              <button onClick={saveTeamAssign} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>Save</button>
             </div>
           </div>
         </div>
@@ -2662,7 +2662,7 @@ export default function WorkOrderDetail() {
       {/* Assign Modal */}
       {assignModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setAssignModal(null)}>
-          <div style={{ background: t.bgCard, borderRadius: 12, padding: 24, width: 480, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 480, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <span style={{ fontSize: 16, fontWeight: 700 }}>Assign Mechanics — Job {assignModal.idx + 1}</span>
               <button onClick={() => setAssignModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
@@ -2677,9 +2677,9 @@ export default function WorkOrderDetail() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {suggestions.filter(s => !assignList.some(a => a.user_id === s.user_id)).map(s => (
-                      <div key={s.user_id} onClick={() => addMechToList(s.user_id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, border: `1px solid ${t.border}`, cursor: 'pointer', background: t.bgCard }}
-                        onMouseEnter={e => (e.currentTarget.style.background = t.accentBg)}
-                        onMouseLeave={e => (e.currentTarget.style.background = t.bgCard)}>
+                      <div key={s.user_id} onClick={() => addMechToList(s.user_id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer', background: 'var(--tz-bgCard)' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-accentBg)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'var(--tz-bgCard)')}>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 600 }}>{s.name}</div>
                           <div style={{ fontSize: 10, color: GRAY }}>
@@ -2689,7 +2689,7 @@ export default function WorkOrderDetail() {
                             {s.jobsInQueue > 0 ? ` · ${s.jobsInQueue} active job${s.jobsInQueue > 1 ? 's' : ''}` : ' · No active jobs'}
                           </div>
                         </div>
-                        <span style={{ fontSize: 9, fontWeight: 700, color: s.score >= 50 ? GREEN : s.score >= 20 ? AMBER : GRAY, background: s.score >= 50 ? t.successBg : s.score >= 20 ? t.warningBg : t.surfaceMuted, padding: '2px 6px', borderRadius: 4 }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: s.score >= 50 ? GREEN : s.score >= 20 ? AMBER : GRAY, background: s.score >= 50 ? 'var(--tz-successBg)' : s.score >= 20 ? 'var(--tz-warningBg)' : 'var(--tz-surfaceMuted)', padding: '2px 6px', borderRadius: 4 }}>
                           {s.score >= 50 ? 'Strong' : s.score >= 20 ? 'Fair' : 'Low'}
                         </span>
                       </div>
@@ -2714,7 +2714,7 @@ export default function WorkOrderDetail() {
             {assignList.length > 0 && (
               <div style={{ marginBottom: 16 }}>
                 {assignList.map((a, i) => (
-                  <div key={a.user_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid ${t.border}' }}>
+                  <div key={a.user_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                     <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{a.name}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <input
@@ -2742,8 +2742,8 @@ export default function WorkOrderDetail() {
             {assignList.length === 0 && <div style={{ fontSize: 13, color: GRAY, padding: 16, textAlign: 'center' }}>No mechanics assigned. Select one above.</div>}
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setAssignModal(null)} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
-              <button onClick={saveAssignments} style={btnStyle(BLUE, t.bgLight)}>Save Assignments</button>
+              <button onClick={() => setAssignModal(null)} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
+              <button onClick={saveAssignments} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>Save Assignments</button>
             </div>
           </div>
         </div>
@@ -2752,7 +2752,7 @@ export default function WorkOrderDetail() {
       {/* Hours Modal */}
       {hoursModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setHoursModal(null)}>
-          <div style={{ background: t.bgCard, borderRadius: 12, padding: 24, width: 360, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 360, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <span style={{ fontSize: 16, fontWeight: 700 }}>Log Hours</span>
               <button onClick={() => setHoursModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
@@ -2775,8 +2775,8 @@ export default function WorkOrderDetail() {
               </div>
             ))}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-              <button onClick={() => setHoursModal(null)} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
-              <button onClick={saveHours} style={btnStyle(BLUE, t.bgLight)}>Save Hours</button>
+              <button onClick={() => setHoursModal(null)} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
+              <button onClick={saveHours} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>Save Hours</button>
             </div>
           </div>
         </div>
@@ -2785,7 +2785,7 @@ export default function WorkOrderDetail() {
       {/* Delete Confirm Modal */}
       {deleteConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setDeleteConfirm(false)}>
-          <div style={{ background: t.bgCard, borderRadius: 12, padding: 24, width: 380, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 380, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: RED }}>Void Work Order</div>
             <div style={{ fontSize: 13, color: GRAY, marginBottom: 16 }}>
               This will void the work order. Type <strong>DELETE</strong> to confirm.
@@ -2797,8 +2797,8 @@ export default function WorkOrderDetail() {
               style={{ ...inputStyle, marginBottom: 12 }}
             />
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => { setDeleteConfirm(false); setDeleteText('') }} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
-              <button onClick={deleteWO} disabled={deleteText !== 'DELETE'} style={{ ...btnStyle(RED, t.bgLight), opacity: deleteText !== 'DELETE' ? 0.5 : 1 }}>Void</button>
+              <button onClick={() => { setDeleteConfirm(false); setDeleteText('') }} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
+              <button onClick={deleteWO} disabled={deleteText !== 'DELETE'} style={{ ...btnStyle(RED, 'var(--tz-bgLight)'), opacity: deleteText !== 'DELETE' ? 0.5 : 1 }}>Void</button>
             </div>
           </div>
         </div>
@@ -2877,18 +2877,18 @@ export default function WorkOrderDetail() {
 
         return (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(false)}>
-            <div style={{ background: t.bgCard, borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <span style={{ fontSize: 16, fontWeight: 700 }}>Get Estimate Approval</span>
                 <button onClick={() => setApprovalModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
               </div>
-              <div style={{ fontSize: 13, marginBottom: 16, padding: '10px 14px', background: t.bgHover, borderRadius: 8 }}>
+              <div style={{ fontSize: 13, marginBottom: 16, padding: '10px 14px', background: 'var(--tz-bgHover)', borderRadius: 8 }}>
                 <div style={{ marginBottom: 4 }}>Estimate total: <strong style={{ color: GREEN }}>{fmt(grandTotal)}</strong></div>
                 <div>Customer: <strong>{customer?.contact_name || customer?.company_name || '—'}</strong></div>
               </div>
 
               {/* Contact fields — always visible, always editable */}
-              <div style={{ marginBottom: 16, padding: '12px 14px', border: `1px solid ${t.border}`, borderRadius: 8 }}>
+              <div style={{ marginBottom: 16, padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>Send Estimate To</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div>
@@ -2913,36 +2913,36 @@ export default function WorkOrderDetail() {
                   </div>
                 </div>
                 {!hasContact && (
-                  <div style={{ padding: '6px 8px', background: t.warningBg, border: '1px solid rgba(217,119,6,0.2)', borderRadius: 6, fontSize: 11, color: t.warning, marginTop: 8 }}>
+                  <div style={{ padding: '6px 8px', background: 'var(--tz-warningBg)', border: '1px solid rgba(217,119,6,0.2)', borderRadius: 6, fontSize: 11, color: 'var(--tz-warning)', marginTop: 8 }}>
                     Add at least one contact method to send estimate
                   </div>
                 )}
               </div>
 
               {/* Path 1: Send Estimate */}
-              <div style={{ marginBottom: 12, padding: '12px 14px', border: `1px solid ${t.border}`, borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Send Estimate</div>
                 <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>Send estimate via email and/or SMS with approval link</div>
                 <button
                   onClick={sendEstimateEmail}
                   disabled={!hasContact}
-                  style={{ ...btnStyle(BLUE, t.bgLight), width: '100%', justifyContent: 'center', opacity: hasContact ? 1 : 0.5, cursor: hasContact ? 'pointer' : 'not-allowed' }}
+                  style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), width: '100%', justifyContent: 'center', opacity: hasContact ? 1 : 0.5, cursor: hasContact ? 'pointer' : 'not-allowed' }}
                 >
                   Send Estimate{contactEmail && contactPhone ? ' (Email + SMS)' : contactEmail ? ' (Email)' : contactPhone ? ' (SMS)' : ''}
                 </button>
               </div>
 
               {/* Path 2: Approve In Person */}
-              <div style={{ marginBottom: 12, padding: '12px 14px', border: `1px solid ${t.border}`, borderRadius: 8 }}>
+              <div style={{ marginBottom: 12, padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Approve In Person</div>
                 <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>Customer has reviewed and verbally approved this estimate</div>
-                <button onClick={() => setApprovalConfirmModal({ method: 'in_person', notes: '' })} style={{ ...btnStyle( t.bgLight, BLUE), width: '100%', justifyContent: 'center', border: `1px solid ${BLUE}` }}>
+                <button onClick={() => setApprovalConfirmModal({ method: 'in_person', notes: '' })} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), width: '100%', justifyContent: 'center', border: `1px solid ${BLUE}` }}>
                   Approve In Person
                 </button>
               </div>
 
               {/* Path 3: Print & Sign */}
-              <div style={{ padding: '12px 14px', border: `1px solid ${t.border}`, borderRadius: 8 }}>
+              <div style={{ padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Print and Sign</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {estimateId ? (
@@ -2950,21 +2950,21 @@ export default function WorkOrderDetail() {
                       href={`/api/estimates/${estimateId}/pdf`}
                       target="_blank"
                       onClick={() => setPrintedReady(true)}
-                      style={{ ...btnStyle( t.bgLight, GRAY), flex: 1, justifyContent: 'center', textDecoration: 'none', textAlign: 'center', border: '1px solid ${t.border}' }}
+                      style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', textDecoration: 'none', textAlign: 'center', border: `1px solid ${'var(--tz-border)'}` }}
                     >
                       Print Estimate
                     </a>
                   ) : (
-                    <button disabled style={{ ...btnStyle( t.bgLight, GRAY), flex: 1, justifyContent: 'center', border: '1px solid ${t.border}', opacity: 0.5, cursor: 'not-allowed' }}>
+                    <button disabled style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', border: `1px solid ${'var(--tz-border)'}`, opacity: 0.5, cursor: 'not-allowed' }}>
                       Build estimate first
                     </button>
                   )}
                   {printedReady ? (
-                    <button onClick={() => setApprovalConfirmModal({ method: 'printed_signed', notes: '' })} style={{ ...btnStyle(BLUE, t.bgLight), flex: 1, justifyContent: 'center' }}>
+                    <button onClick={() => setApprovalConfirmModal({ method: 'printed_signed', notes: '' })} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), flex: 1, justifyContent: 'center' }}>
                       Mark as Signed &amp; Approved
                     </button>
                   ) : (
-                    <button disabled style={{ ...btnStyle( t.bgLight, GRAY), flex: 1, justifyContent: 'center', border: '1px solid ${t.border}', opacity: 0.5, cursor: 'not-allowed' }}>
+                    <button disabled style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', border: `1px solid ${'var(--tz-border)'}`, opacity: 0.5, cursor: 'not-allowed' }}>
                       Print first →
                     </button>
                   )}
@@ -2975,7 +2975,7 @@ export default function WorkOrderDetail() {
             {/* In-Person / Print Confirmation sub-modal */}
             {approvalConfirmModal && (
               <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }} onClick={() => setApprovalConfirmModal(null)}>
-                <div style={{ background: t.bgCard, borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+                <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 420, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
                   <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
                     {approvalConfirmModal.method === 'in_person' ? 'Confirm In-Person Approval' : 'Confirm Print & Sign Approval'}
                   </div>
@@ -2992,8 +2992,8 @@ export default function WorkOrderDetail() {
                     style={{ ...inputStyle, resize: 'vertical', marginBottom: 16 }}
                   />
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                    <button onClick={() => setApprovalConfirmModal(null)} style={btnStyle( t.bgLight, GRAY)}>Cancel</button>
-                    <button onClick={() => approveEstimate(approvalConfirmModal.method as 'in_person' | 'printed_signed', approvalConfirmModal.notes)} style={btnStyle(BLUE, t.bgLight)}>
+                    <button onClick={() => setApprovalConfirmModal(null)} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
+                    <button onClick={() => approveEstimate(approvalConfirmModal.method as 'in_person' | 'printed_signed', approvalConfirmModal.notes)} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
                       Confirm Approval
                     </button>
                   </div>
@@ -3009,7 +3009,7 @@ export default function WorkOrderDetail() {
         <div style={{ ...cardStyle, marginTop: 12 }}>
           <button
             onClick={() => setShowExternalData(!showExternalData)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: t.textSecondary, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 700, color: 'var(--tz-textSecondary)', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
           >
             <span style={{ transform: showExternalData ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', display: 'inline-block' }}>&#9654;</span>
             Additional Info
@@ -3019,7 +3019,7 @@ export default function WorkOrderDetail() {
               {Object.entries(wo.external_data).map(([key, val]) => (
                 <div key={key} style={{ fontSize: 12 }}>
                   <span style={{ color: GRAY, fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
-                  <span style={{ color: t.textSecondary }}>{val != null ? String(val) : '\u2014'}</span>
+                  <span style={{ color: 'var(--tz-textSecondary)' }}>{val != null ? String(val) : '\u2014'}</span>
                 </div>
               ))}
             </div>
@@ -3028,13 +3028,13 @@ export default function WorkOrderDetail() {
       )}
 
       {/* FOOTER */}
-      <div style={{ textAlign: 'center', padding: '24px 0', fontSize: 11, color: t.textTertiary, borderTop: '1px solid ${t.border}', marginTop: 24 }}>
+      <div style={{ textAlign: 'center', padding: '24px 0', fontSize: 11, color: 'var(--tz-textTertiary)', borderTop: `1px solid ${'var(--tz-border)'}`, marginTop: 24 }}>
         {shop.name || shop.dba || 'TruckZen'} {shop.phone ? ` | ${shop.phone}` : ''} {shop.email ? ` | ${shop.email}` : ''}
       </div>
 
       {/* Toast notification */}
       {toastMsg && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: t.bgElevated, color: t.bgLight, padding: '12px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 2000, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontFamily: FONT }}>
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: 'var(--tz-bgElevated)', color: 'var(--tz-bgLight)', padding: '12px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 2000, boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontFamily: FONT }}>
           {toastMsg}
         </div>
       )}

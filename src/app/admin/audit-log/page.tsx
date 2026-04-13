@@ -80,7 +80,7 @@ export default function AuditLogPage() {
   const btnStyle: React.CSSProperties = {
     padding: '8px 16px',
     background: COLORS.blue,
-    color: t.bgLight,
+    color: 'var(--tz-bgLight)',
     border: 'none',
     borderRadius: 8,
     fontSize: 13,

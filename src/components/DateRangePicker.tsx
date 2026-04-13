@@ -119,9 +119,9 @@ export default function DateRangePicker({ onChange, defaultPreset = 'this_month'
           return (
             <button key={p.key} onClick={() => selectPreset(p.key)} style={{
               padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              border: isActive ? '1px solid rgba(29,111,232,.3)' : `1px solid ${t.border}`,
+              border: isActive ? '1px solid rgba(29,111,232,.3)' : `1px solid ${'var(--tz-border)'}`,
               background: isActive ? 'rgba(29,111,232,.1)' : 'transparent',
-              color: isActive ? t.accentLight : t.textSecondary,
+              color: isActive ? 'var(--tz-accentLight)' : 'var(--tz-textSecondary)',
               fontFamily: 'inherit', whiteSpace: 'nowrap',
             }}>
               {p.label}
@@ -130,9 +130,9 @@ export default function DateRangePicker({ onChange, defaultPreset = 'this_month'
         })}
         <button onClick={() => { setShowCustom(!showCustom); setActive('custom') }} style={{
           padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-          border: active === 'custom' ? '1px solid rgba(29,111,232,.3)' : `1px solid ${t.border}`,
+          border: active === 'custom' ? '1px solid rgba(29,111,232,.3)' : `1px solid ${'var(--tz-border)'}`,
           background: active === 'custom' ? 'rgba(29,111,232,.1)' : 'transparent',
-          color: active === 'custom' ? t.accentLight : t.textSecondary,
+          color: active === 'custom' ? 'var(--tz-accentLight)' : 'var(--tz-textSecondary)',
           fontFamily: 'inherit',
         }}>
           Custom
@@ -142,21 +142,21 @@ export default function DateRangePicker({ onChange, defaultPreset = 'this_month'
       {/* Custom range inputs */}
       {showCustom && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: t.textSecondary }}>From:</span>
+          <span style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>From:</span>
           <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 6, border: `1px solid ${t.border}`, background: t.inputBg, color: t.text, fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
-          <span style={{ fontSize: 12, color: t.textSecondary }}>To:</span>
+            style={{ padding: '6px 10px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-inputBg)', color: 'var(--tz-text)', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+          <span style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>To:</span>
           <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-            style={{ padding: '6px 10px', borderRadius: 6, border: `1px solid ${t.border}`, background: t.inputBg, color: t.text, fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+            style={{ padding: '6px 10px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-inputBg)', color: 'var(--tz-text)', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
           <button onClick={applyCustom} disabled={!customFrom || !customTo}
-            style={{ padding: '6px 16px', borderRadius: 6, background: t.accent, color: t.bgLight, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: !customFrom || !customTo ? 0.4 : 1 }}>
+            style={{ padding: '6px 16px', borderRadius: 6, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: !customFrom || !customTo ? 0.4 : 1 }}>
             Apply
           </button>
         </div>
       )}
 
       {/* Selected range label */}
-      <div style={{ fontSize: 11, color: t.textTertiary }}>
+      <div style={{ fontSize: 11, color: 'var(--tz-textTertiary)' }}>
         Showing: {formatLabel(from || '', to || '')}
       </div>
     </div>

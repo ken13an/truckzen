@@ -50,12 +50,12 @@ export default function AppPageShell({
   style,
 }: AppPageShellProps) {
   const { tokens: t } = useTheme()
-  const bg = surface === 'bgCard' ? t.bgCard : surface === 'bgElevated' ? t.bgElevated : t.bg
+  const bg = surface === 'bgCard' ? 'var(--tz-bgCard)' : surface === 'bgElevated' ? 'var(--tz-bgElevated)' : 'var(--tz-bg)'
   return (
     <div
       style={{
         background: bg,
-        color: t.text,
+        color: 'var(--tz-text)',
         minHeight: '100vh',
         width: '100%',
         fontFamily: "'Instrument Sans', sans-serif",

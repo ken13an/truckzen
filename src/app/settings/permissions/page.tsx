@@ -123,7 +123,7 @@ export default function PermissionsPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 256, fontFamily: FONT }}>
-        <span style={{ color: t.textSecondary, fontSize: 14 }}>Loading...</span>
+        <span style={{ color: 'var(--tz-textSecondary)', fontSize: 14 }}>Loading...</span>
       </div>
     )
   }
@@ -132,12 +132,12 @@ export default function PermissionsPage() {
     <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: FONT, padding: 24 }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 24, fontWeight: 800, color: t.text }}>Employee Permissions</div>
-        <div style={{ fontSize: 13, color: t.textSecondary, marginTop: 4 }}>Control what each team member can see and do</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--tz-text)' }}>Employee Permissions</div>
+        <div style={{ fontSize: 13, color: 'var(--tz-textSecondary)', marginTop: 4 }}>Control what each team member can see and do</div>
       </div>
 
       {/* Department Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.border}`, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${'var(--tz-border)'}`, marginBottom: 24 }}>
         {visibleDepts.map(dept => (
           <button
             key={dept.department}
@@ -145,7 +145,7 @@ export default function PermissionsPage() {
             style={{
               padding: '10px 18px', background: 'none', border: 'none',
               borderBottom: activeDept === dept.department ? `2px solid ${BLUE}` : '2px solid transparent',
-              color: activeDept === dept.department ? BLUE : t.textSecondary,
+              color: activeDept === dept.department ? BLUE : 'var(--tz-textSecondary)',
               fontWeight: activeDept === dept.department ? 700 : 500,
               fontSize: 13, cursor: 'pointer', fontFamily: FONT, marginBottom: -2,
             }}
@@ -158,16 +158,16 @@ export default function PermissionsPage() {
       <div style={{ display: 'flex', gap: 24 }}>
         {/* Employee List */}
         <div style={{ width: 256, flexShrink: 0 }}>
-          <div style={{ background: t.bgLight, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', background: t.bgHover, borderBottom: `1px solid ${t.border}` }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>
+          <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ padding: '12px 16px', background: 'var(--tz-bgHover)', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>
                 {activeDeptDef?.label} Team
               </span>
             </div>
             {loadingEmployees ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: t.textSecondary }}>Loading...</div>
+              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: 'var(--tz-textSecondary)' }}>Loading...</div>
             ) : employees.length === 0 ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: t.textSecondary }}>
+              <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                 No employees in this department
               </div>
             ) : (
@@ -178,16 +178,16 @@ export default function PermissionsPage() {
                     onClick={() => selectEmployee(emp)}
                     style={{
                       padding: '12px 16px', cursor: 'pointer',
-                      background: selectedEmployee?.id === emp.id ? 'rgba(27,110,230,.06)' : t.bgLight,
+                      background: selectedEmployee?.id === emp.id ? 'rgba(27,110,230,.06)' : 'var(--tz-bgLight)',
                       borderLeft: selectedEmployee?.id === emp.id ? `2px solid ${BLUE}` : '2px solid transparent',
-                      borderBottom: i < employees.length - 1 ? `1px solid ${t.bgHover}` : 'none',
+                      borderBottom: i < employees.length - 1 ? `1px solid ${'var(--tz-bgHover)'}` : 'none',
                       transition: 'all .12s',
                     }}
-                    onMouseEnter={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = t.bgHover }}
-                    onMouseLeave={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = t.bgLight }}
+                    onMouseEnter={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = 'var(--tz-bgHover)' }}
+                    onMouseLeave={e => { if (selectedEmployee?.id !== emp.id) (e.currentTarget as HTMLElement).style.background = 'var(--tz-bgLight)' }}
                   >
-                    <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{emp.full_name}</div>
-                    <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 2 }}>{emp.role}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)' }}>{emp.full_name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginTop: 2 }}>{emp.role}</div>
                   </div>
                 ))}
               </div>
@@ -200,20 +200,20 @@ export default function PermissionsPage() {
           {!selectedEmployee ? (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              height: 256, border: `2px dashed ${t.border}`, borderRadius: 12,
+              height: 256, border: `2px dashed ${'var(--tz-border)'}`, borderRadius: 12,
             }}>
-              <span style={{ color: t.textSecondary, fontSize: 13 }}>Select an employee to manage their permissions</span>
+              <span style={{ color: 'var(--tz-textSecondary)', fontSize: 13 }}>Select an employee to manage their permissions</span>
             </div>
           ) : (
-            <div style={{ background: t.bgLight, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
               {/* Employee Header */}
               <div style={{
-                padding: '16px 24px', background: t.bgHover, borderBottom: `1px solid ${t.border}`,
+                padding: '16px 24px', background: 'var(--tz-bgHover)', borderBottom: `1px solid ${'var(--tz-border)'}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: t.text }}>{selectedEmployee.full_name}</div>
-                  <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 2 }}>{selectedEmployee.email}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tz-text)' }}>{selectedEmployee.full_name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginTop: 2 }}>{selectedEmployee.email}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {saveStatus === 'saved' && (
@@ -227,7 +227,7 @@ export default function PermissionsPage() {
                     disabled={saving}
                     style={{
                       padding: '8px 20px', background: BLUE, border: 'none', borderRadius: 8,
-                      color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+                      color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                       fontFamily: FONT, opacity: saving ? 0.5 : 1, transition: 'opacity .12s',
                     }}
                   >
@@ -243,12 +243,12 @@ export default function PermissionsPage() {
                     key={perm.key}
                     style={{
                       padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      borderBottom: i < (activeDeptDef.permissions.length - 1) ? `1px solid ${t.bgHover}` : 'none',
+                      borderBottom: i < (activeDeptDef.permissions.length - 1) ? `1px solid ${'var(--tz-bgHover)'}` : 'none',
                     }}
                   >
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{perm.label}</div>
-                      <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 2 }}>{perm.description}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)' }}>{perm.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginTop: 2 }}>{perm.description}</div>
                     </div>
                     <button
                       onClick={() => togglePermission(perm.key)}
@@ -256,13 +256,13 @@ export default function PermissionsPage() {
                         position: 'relative', display: 'inline-flex', flexShrink: 0,
                         height: 24, width: 44, cursor: 'pointer',
                         borderRadius: 12, border: 'none', padding: 0,
-                        background: permissions[perm.key] ? BLUE : t.border,
+                        background: permissions[perm.key] ? BLUE : 'var(--tz-border)',
                         transition: 'background .2s',
                       }}
                     >
                       <span style={{
                         display: 'inline-block', height: 20, width: 20,
-                        borderRadius: 10, background: t.bgLight,
+                        borderRadius: 10, background: 'var(--tz-bgLight)',
                         boxShadow: '0 1px 3px rgba(0,0,0,.15)',
                         transform: permissions[perm.key] ? 'translateX(22px)' : 'translateX(2px)',
                         transition: 'transform .2s',

@@ -88,72 +88,72 @@ export default function FleetDetailPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
-    card:  { background:t.bgCard, border: `1px solid ${t.border}`, borderRadius:12, padding:16, marginBottom:12 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'8px 11px', background:t.inputBg, border: `1px solid ${t.border}`, borderRadius:7, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
+    page:  { background:'var(--tz-bg)', minHeight:'100vh', color:'var(--tz-text)', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
+    card:  { background:'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius:12, padding:16, marginBottom:12 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'var(--tz-textTertiary)', marginBottom:5, display:'block' },
+    input: { width:'100%', padding:'8px 11px', background:'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius:7, fontSize:12, color:'var(--tz-text)', outline:'none', fontFamily:'inherit', minHeight:36, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
-    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background: t.bgInput },
-    td:    { padding:'9px 10px', borderBottom: `1px solid ${t.border}`, fontSize:11 },
+    th:    { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'var(--tz-textTertiary)', textTransform:'uppercase', letterSpacing:'.08em', padding:'6px 10px', textAlign:'left', background: 'var(--tz-bgInput)' },
+    td:    { padding:'9px 10px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize:11 },
     btn:   { padding:'8px 16px', borderRadius:8, border:'none', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit' },
   }
 
-  if (loading) return <div style={{ ...S.page, color:t.textSecondary, padding:60 }}>Loading...</div>
+  if (loading) return <div style={{ ...S.page, color:'var(--tz-textSecondary)', padding:60 }}>Loading...</div>
 
   const UNIT_TYPE_LABEL: Record<string, string> = { tractor: 'Tractor', trailer_dry_van: 'Dry Van', trailer_reefer: 'Reefer', trailer_flatbed: 'Flatbed', trailer_tanker: 'Tanker', trailer_lowboy: 'Lowboy', trailer_other: 'Trailer' }
-  const statusColor: Record<string, string> = { active:'#1DB870', in_shop: t.accentLight, inactive:t.textSecondary, decommissioned:'#D94F4F' }
+  const statusColor: Record<string, string> = { active:'#1DB870', in_shop: 'var(--tz-accentLight)', inactive:'var(--tz-textSecondary)', decommissioned:'#D94F4F' }
 
   const fmt = (n: number | null | undefined) => n != null ? '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '$0'
   const historyTotalPages = Math.ceil(historyTotal / 50) || 1
 
   return (
     <div style={S.page}>
-      <a href="/fleet" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: t.text, textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/fleet" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--tz-border)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Fleet
 </a>
 
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div>
-          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:t.text, letterSpacing:'.02em' }}>Unit #{asset.unit_number}</div>
-          <div style={{ fontSize:14, color:t.text, marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
-          {asset.unit_type && <div style={{ fontSize:12, color:t.textSecondary, marginTop:2 }}>{UNIT_TYPE_LABEL[asset.unit_type] || asset.unit_type}</div>}
-          <div style={{ fontSize:12, color:t.textSecondary, marginTop:2 }}>{(asset.customers as any)?.company_name}</div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:32, color:'var(--tz-text)', letterSpacing:'.02em' }}>Unit #{asset.unit_number}</div>
+          <div style={{ fontSize:14, color:'var(--tz-text)', marginTop:2 }}>{asset.year} {asset.make} {asset.model}</div>
+          {asset.unit_type && <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginTop:2 }}>{UNIT_TYPE_LABEL[asset.unit_type] || asset.unit_type}</div>}
+          <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginTop:2 }}>{(asset.customers as any)?.company_name}</div>
           <div style={{ marginTop:6 }}><OwnershipTypeBadge type={asset.is_owner_operator ? 'owner_operator' : asset.ownership_type} dark /></div>
         </div>
         <div style={{ display:'flex', gap:8, flexDirection:'column', alignItems:'flex-end' }}>
-          <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]|| t.textSecondary)+'18', color:statusColor[asset.status]|| t.textSecondary, border:`1px solid ${statusColor[asset.status]|| t.textSecondary}33` }}>
+          <span style={{ padding:'4px 12px', borderRadius:100, fontFamily:'monospace', fontSize:9, background:(statusColor[asset.status]|| 'var(--tz-textSecondary)')+'18', color:statusColor[asset.status]|| 'var(--tz-textSecondary)', border:`1px solid ${statusColor[asset.status]|| 'var(--tz-textSecondary)'}33` }}>
             {(asset.status||'active').replace(/_/g,' ').toUpperCase()}
           </span>
-          <div style={{ fontFamily:'monospace', fontSize:12, color:t.textSecondary }}>{asset.odometer?.toLocaleString()} mi</div>
+          <div style={{ fontFamily:'monospace', fontSize:12, color:'var(--tz-textSecondary)' }}>{asset.odometer?.toLocaleString()} mi</div>
         </div>
       </div>
 
       {/* OWNERSHIP & DRIVER */}
       {(asset.owner_name || asset.driver_name) && (
-        <div style={{ background:t.border, border: `1px solid ${t.border}`, borderRadius:10, padding:'12px 16px', marginBottom:16, display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, fontSize:12 }}>
+        <div style={{ background:'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius:10, padding:'12px 16px', marginBottom:16, display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, fontSize:12 }}>
           <div>
-            <div style={{ fontSize:9, fontWeight:700, color:t.textSecondary, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Owner</div>
-            <div style={{ color:t.text, fontWeight:600 }}>
-              {asset.owner_name || <span style={{ color:t.textSecondary, fontStyle:'italic' }}>Not assigned</span>}
+            <div style={{ fontSize:9, fontWeight:700, color:'var(--tz-textSecondary)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Owner</div>
+            <div style={{ color:'var(--tz-text)', fontWeight:600 }}>
+              {asset.owner_name || <span style={{ color:'var(--tz-textSecondary)', fontStyle:'italic' }}>Not assigned</span>}
             </div>
-            {asset.owner_phone && <a href={`tel:${asset.owner_phone}`} style={{ color: t.accent, textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.owner_phone}</a>}
+            {asset.owner_phone && <a href={`tel:${asset.owner_phone}`} style={{ color: 'var(--tz-accent)', textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.owner_phone}</a>}
           </div>
           <div>
-            <div style={{ fontSize:9, fontWeight:700, color:t.textSecondary, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Driver</div>
-            <div style={{ color:t.text, fontWeight:600 }}>
-              {asset.driver_name || <span style={{ color:t.textSecondary, fontStyle:'italic' }}>Not assigned</span>}
+            <div style={{ fontSize:9, fontWeight:700, color:'var(--tz-textSecondary)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Driver</div>
+            <div style={{ color:'var(--tz-text)', fontWeight:600 }}>
+              {asset.driver_name || <span style={{ color:'var(--tz-textSecondary)', fontStyle:'italic' }}>Not assigned</span>}
             </div>
-            {asset.driver_phone && <a href={`tel:${asset.driver_phone}`} style={{ color: t.accent, textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.driver_phone}</a>}
+            {asset.driver_phone && <a href={`tel:${asset.driver_phone}`} style={{ color: 'var(--tz-accent)', textDecoration:'none', fontSize:11, marginTop:2, display:'inline-block' }}>{asset.driver_phone}</a>}
           </div>
           {asset.lease_info && (
             <div>
-              <div style={{ fontSize:9, fontWeight:700, color:t.textSecondary, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Lease</div>
-              <div style={{ color:t.text }}>{asset.lease_info}</div>
+              <div style={{ fontSize:9, fontWeight:700, color:'var(--tz-textSecondary)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Lease</div>
+              <div style={{ color:'var(--tz-text)' }}>{asset.lease_info}</div>
             </div>
           )}
           {asset.asset_status && asset.asset_status !== 'active' && (
             <div>
-              <div style={{ fontSize:9, fontWeight:700, color:t.textSecondary, textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Status</div>
+              <div style={{ fontSize:9, fontWeight:700, color:'var(--tz-textSecondary)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Status</div>
               <span style={{ padding:'2px 8px', borderRadius:100, fontSize:10, fontWeight:600, background:'rgba(220,38,38,.12)', color:'#DC2626', border:'1px solid rgba(220,38,38,.2)' }}>Removed</span>
             </div>
           )}
@@ -161,12 +161,12 @@ export default function FleetDetailPage() {
       )}
 
       {/* Tab bar */}
-      <div style={{ display:'flex', gap:0, borderBottom: `1px solid ${t.border}`, marginBottom:16 }}>
+      <div style={{ display:'flex', gap:0, borderBottom: `1px solid ${'var(--tz-border)'}`, marginBottom:16 }}>
         {([['overview', 'Overview'], ['history', 'Full History']] as const).map(([key, label]) => (
           <button key={key} onClick={() => setPageTab(key)} style={{
             padding:'10px 20px', background:'none', border:'none',
-            borderBottom: pageTab === key ? `2px solid ${t.accent}` : '2px solid transparent',
-            color: pageTab === key ? t.text : t.textSecondary,
+            borderBottom: pageTab === key ? `2px solid ${'var(--tz-accent)'}` : '2px solid transparent',
+            color: pageTab === key ? 'var(--tz-text)' : 'var(--tz-textSecondary)',
             fontWeight: pageTab === key ? 700 : 500, fontSize:13, cursor:'pointer',
             fontFamily:'inherit', marginBottom:-1,
           }}>{label}</button>
@@ -179,7 +179,7 @@ export default function FleetDetailPage() {
           <div>
             {/* Edit form */}
             <div style={S.card}>
-              <div style={{ fontSize:12, fontWeight:700, color:t.text, marginBottom:12 }}>Vehicle Details</div>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)', marginBottom:12 }}>Vehicle Details</div>
               <div style={S.row2}>
                 <div><label style={S.label}>Unit Number</label><input style={S.input} value={edit?.unit_number||''} onChange={e=>setEdit((a:any)=>({...a,unit_number:e.target.value}))}/></div>
                 <div><label style={S.label}>VIN</label><input value={edit?.vin||''} readOnly style={{ ...S.input, opacity:.6 }}/></div>
@@ -221,20 +221,20 @@ export default function FleetDetailPage() {
                   </select>
                 </div>
               </div>
-              <button style={{ ...S.btn, background:t.accent, color: t.bgLight }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
+              <button style={{ ...S.btn, background:'var(--tz-accent)', color: 'var(--tz-bgLight)' }} onClick={save} disabled={saving}>{saving?'Saving...':'Save'}</button>
             </div>
 
             {/* Warranty section */}
             <div style={S.card}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Warranty</div>
+                <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)' }}>Warranty</div>
                 <div style={{ display:'flex', gap:4 }}>
-                  <button onClick={() => { setWarrantyMode('none'); setEdit((a:any) => ({...a, warranty_provider:null, warranty_start:null, warranty_expiry:null, warranty_mileage_limit:null, warranty_notes:null, warranty_coverage_type:null})) }} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='none' ? 'rgba(124,139,160,.12)' : 'transparent', color: warrantyMode==='none' ? t.textSecondary : t.textTertiary, border: warrantyMode==='none' ? '1px solid rgba(124,139,160,.2)' : `1px solid ${t.border}` }}>No Warranty</button>
-                  <button onClick={() => setWarrantyMode('has')} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='has' ? 'rgba(29,184,112,.1)' : 'transparent', color: warrantyMode==='has' ? '#1DB870' : t.textTertiary, border: warrantyMode==='has' ? '1px solid rgba(29,184,112,.2)' : `1px solid ${t.border}` }}>Has Warranty</button>
+                  <button onClick={() => { setWarrantyMode('none'); setEdit((a:any) => ({...a, warranty_provider:null, warranty_start:null, warranty_expiry:null, warranty_mileage_limit:null, warranty_notes:null, warranty_coverage_type:null})) }} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='none' ? 'rgba(124,139,160,.12)' : 'transparent', color: warrantyMode==='none' ? 'var(--tz-textSecondary)' : 'var(--tz-textTertiary)', border: warrantyMode==='none' ? '1px solid rgba(124,139,160,.2)' : `1px solid ${'var(--tz-border)'}` }}>No Warranty</button>
+                  <button onClick={() => setWarrantyMode('has')} style={{ padding:'4px 10px', borderRadius:6, fontSize:10, fontWeight:600, cursor:'pointer', fontFamily:'inherit', background: warrantyMode==='has' ? 'rgba(29,184,112,.1)' : 'transparent', color: warrantyMode==='has' ? '#1DB870' : 'var(--tz-textTertiary)', border: warrantyMode==='has' ? '1px solid rgba(29,184,112,.2)' : `1px solid ${'var(--tz-border)'}` }}>Has Warranty</button>
                 </div>
               </div>
               {warrantyMode === 'none' ? (
-                <div style={{ textAlign:'center', padding:12, color:t.textTertiary, fontSize:12 }}>No warranty on file</div>
+                <div style={{ textAlign:'center', padding:12, color:'var(--tz-textTertiary)', fontSize:12 }}>No warranty on file</div>
               ) : (
                 <>
                   {edit?.warranty_expiry && (() => {
@@ -246,7 +246,7 @@ export default function FleetDetailPage() {
                     return (
                       <div style={{ marginBottom:10, padding:'6px 10px', borderRadius:6, fontSize:11, fontWeight:600,
                         background: isActive ? 'rgba(29,184,112,.08)' : isMileageExceeded ? 'rgba(212,136,42,.08)' : 'rgba(124,139,160,.06)',
-                        color: isActive ? '#1DB870' : isMileageExceeded ? '#D4882A' : t.textSecondary,
+                        color: isActive ? '#1DB870' : isMileageExceeded ? '#D4882A' : 'var(--tz-textSecondary)',
                         border: `1px solid ${isActive ? 'rgba(29,184,112,.15)' : isMileageExceeded ? 'rgba(212,136,42,.15)' : 'rgba(124,139,160,.1)'}` }}>
                         {isActive ? `Active — expires in ${monthsLeft} month${monthsLeft!==1?'s':''}` : isMileageExceeded ? 'Mileage Exceeded' : isExpired ? 'Expired' : 'Unknown'}
                       </div>
@@ -288,7 +288,7 @@ export default function FleetDetailPage() {
                     <label style={S.label}>Notes</label>
                     <textarea style={{ ...S.input, minHeight:50, resize:'vertical' }} value={edit?.warranty_notes||''} onChange={e=>setEdit((a:any)=>({...a,warranty_notes:e.target.value}))} placeholder="Dealer contact, coverage details..."/>
                   </div>
-                  <button style={{ ...S.btn, background:t.accent, color: t.bgLight }} onClick={async () => {
+                  <button style={{ ...S.btn, background:'var(--tz-accent)', color: 'var(--tz-bgLight)' }} onClick={async () => {
                     setSaving(true)
                     await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ warranty_provider:edit.warranty_provider||null, warranty_start:edit.warranty_start||null, warranty_expiry:edit.warranty_expiry||null, warranty_mileage_limit:edit.warranty_mileage_limit||null, warranty_notes:edit.warranty_notes||null, warranty_coverage_type:edit.warranty_coverage_type||null }) })
                     setAsset(edit); setSaving(false)
@@ -300,14 +300,14 @@ export default function FleetDetailPage() {
             {/* Active Work Orders */}
             {activeWos.length > 0 && (
               <div style={{ ...S.card, borderColor:'rgba(29,111,232,.2)' }}>
-                <div style={{ fontSize:12, fontWeight:700, color: t.accentLight, marginBottom:10 }}>Active Work Orders ({activeWos.length})</div>
+                <div style={{ fontSize:12, fontWeight:700, color: 'var(--tz-accentLight)', marginBottom:10 }}>Active Work Orders ({activeWos.length})</div>
                 {activeWos.map((wo:any) => (
-                  <a key={wo.id} href={getWorkorderRoute(wo.id, undefined, 'fleet')} style={{ display:'block', textDecoration:'none', padding:'8px 10px', borderLeft:`3px solid ${t.accent}`, background:'rgba(29,111,232,.04)', borderRadius:6, marginBottom:6 }}>
+                  <a key={wo.id} href={getWorkorderRoute(wo.id, undefined, 'fleet')} style={{ display:'block', textDecoration:'none', padding:'8px 10px', borderLeft:`3px solid ${'var(--tz-accent)'}`, background:'rgba(29,111,232,.04)', borderRadius:6, marginBottom:6 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                      <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color: t.accentLight }}>{wo.so_number}</span>
+                      <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, fontWeight:700, color: 'var(--tz-accentLight)' }}>{wo.so_number}</span>
                       <span style={{ fontSize:9, fontWeight:600, color:'#D4882A', background:'rgba(212,136,42,.1)', padding:'2px 6px', borderRadius:4, textTransform:'uppercase' }}>{wo.status?.replace(/_/g,' ')}</span>
                     </div>
-                    <div style={{ fontSize:11, color:t.text, marginTop:2 }}>{wo.complaint?.slice(0,60) || '—'}</div>
+                    <div style={{ fontSize:11, color:'var(--tz-text)', marginTop:2 }}>{wo.complaint?.slice(0,60) || '—'}</div>
                   </a>
                 ))}
               </div>
@@ -316,22 +316,22 @@ export default function FleetDetailPage() {
             {/* Service history */}
             <div style={S.card}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Service History ({history.length})</div>
-                <a href={`/orders/new`} style={{ fontSize:11, color: t.accentLight, textDecoration:'none' }}>+ New SO</a>
+                <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)' }}>Service History ({history.length})</div>
+                <a href={`/orders/new`} style={{ fontSize:11, color: 'var(--tz-accentLight)', textDecoration:'none' }}>+ New SO</a>
               </div>
               {history.length === 0 ? (
-                <div style={{ textAlign:'center', padding:20, color:t.textTertiary, fontSize:12 }}>No service history</div>
+                <div style={{ textAlign:'center', padding:20, color:'var(--tz-textTertiary)', fontSize:12 }}>No service history</div>
               ) : (
                 <table style={{ width:'100%', borderCollapse:'collapse' }}>
                   <thead><tr>{['SO #','Date','Complaint','Total','Status'].map(h=><th key={h} style={S.th as any}>{h}</th>)}</tr></thead>
                   <tbody>
                     {history.map(so => (
                       <tr key={so.id} style={{ cursor:'pointer' }} onClick={() => window.location.href=`/orders/${so.id}`}>
-                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: t.accentLight }}>{so.so_number}</td>
-                        <td style={{ ...S.td, color:t.textSecondary }}>{new Date(so.created_at).toLocaleDateString()}</td>
+                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: 'var(--tz-accentLight)' }}>{so.so_number}</td>
+                        <td style={{ ...S.td, color:'var(--tz-textSecondary)' }}>{new Date(so.created_at).toLocaleDateString()}</td>
                         <td style={{ ...S.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{so.complaint}</td>
                         <td style={{ ...S.td, fontFamily:'monospace' }}>{so.grand_total?`$${so.grand_total.toFixed(0)}`:'—'}</td>
-                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:9, color:t.textSecondary }}>{so.status?.replace(/_/g,' ')}</td>
+                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:9, color:'var(--tz-textSecondary)' }}>{so.status?.replace(/_/g,' ')}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -343,20 +343,20 @@ export default function FleetDetailPage() {
           {/* Right: PM schedules */}
           <div style={S.card}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:t.text }}>PM Schedules</div>
-              <a href="/maintenance/new" style={{ fontSize:11, color: t.accentLight, textDecoration:'none' }}>+ Add</a>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)' }}>PM Schedules</div>
+              <a href="/maintenance/new" style={{ fontSize:11, color: 'var(--tz-accentLight)', textDecoration:'none' }}>+ Add</a>
             </div>
             {pms.length === 0 ? (
-              <div style={{ textAlign:'center', padding:20, color:t.textTertiary, fontSize:12 }}>No PM schedules</div>
+              <div style={{ textAlign:'center', padding:20, color:'var(--tz-textTertiary)', fontSize:12 }}>No PM schedules</div>
             ) : pms.map(pm => {
               const today   = new Date().toISOString().split('T')[0]
               const isOver  = pm.next_due_date < today
               const color   = isOver ? '#D94F4F' : '#1DB870'
               return (
-                <div key={pm.id} style={{ padding:'10px 0', borderBottom: `1px solid ${t.border}` }}>
-                  <div style={{ fontSize:12, fontWeight:600, color:t.text }}>{pm.service_name}</div>
+                <div key={pm.id} style={{ padding:'10px 0', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                  <div style={{ fontSize:12, fontWeight:600, color:'var(--tz-text)' }}>{pm.service_name}</div>
                   <div style={{ fontSize:10, color:color, marginTop:3, fontFamily:'monospace' }}>{isOver?'OVERDUE — ':''}{pm.next_due_date}</div>
-                  {pm.interval_miles && <div style={{ fontSize:10, color:t.textTertiary }}>Every {pm.interval_miles.toLocaleString()} miles</div>}
+                  {pm.interval_miles && <div style={{ fontSize:10, color:'var(--tz-textTertiary)' }}>Every {pm.interval_miles.toLocaleString()} miles</div>}
                 </div>
               )
             })}
@@ -381,26 +381,26 @@ export default function FleetDetailPage() {
               <>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:12, marginBottom:12 }}>
                   {[
-                    { label: 'Total Records', value: historySummary ? String(ihCount + ohCount) : '—', color: t.text },
-                    { label: 'In-House Jobs', value: String(ihCount), sub: canSeeCost ? fmt(ihTotal) : '***', color: t.accent },
+                    { label: 'Total Records', value: historySummary ? String(ihCount + ohCount) : '—', color: 'var(--tz-text)' },
+                    { label: 'In-House Jobs', value: String(ihCount), sub: canSeeCost ? fmt(ihTotal) : '***', color: 'var(--tz-accent)' },
                     { label: 'Outside Repairs', value: String(ohCount), sub: canSeeCost ? fmt(ohTotal) : '***', color: '#D4882A' },
                     { label: 'Total Spent', value: canSeeCost ? fmt(totalCost) : '***', color: '#1DB870' },
                   ].map(c => (
                     <div key={c.label} style={S.card}>
                       <div style={{ ...S.label, marginBottom:8 }}>{c.label}</div>
                       <div style={{ fontSize:22, fontWeight:800, color:c.color, fontFamily:"'IBM Plex Mono',monospace" }}>{c.value}</div>
-                      {(c as any).sub && <div style={{ fontSize:11, color:t.textSecondary, marginTop:4, fontFamily:"'IBM Plex Mono',monospace" }}>{(c as any).sub}</div>}
+                      {(c as any).sub && <div style={{ fontSize:11, color:'var(--tz-textSecondary)', marginTop:4, fontFamily:"'IBM Plex Mono',monospace" }}>{(c as any).sub}</div>}
                     </div>
                   ))}
                 </div>
                 {canSeeCost && totalCost > 0 && (
                   <div style={{ ...S.card, marginBottom:16, padding:'12px 16px' }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:t.textSecondary, marginBottom:6, fontFamily:"'IBM Plex Mono',monospace" }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'var(--tz-textSecondary)', marginBottom:6, fontFamily:"'IBM Plex Mono',monospace" }}>
                       <span>In-House {ihPct}%</span>
                       <span>Outside {100 - ihPct}%</span>
                     </div>
                     <div style={{ height:8, borderRadius:4, background:'rgba(212,136,42,.2)', overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${ihPct}%`, background: t.accent, borderRadius:4, transition:'width .3s' }} />
+                      <div style={{ height:'100%', width:`${ihPct}%`, background: 'var(--tz-accent)', borderRadius:4, transition:'width .3s' }} />
                     </div>
                   </div>
                 )}
@@ -414,27 +414,27 @@ export default function FleetDetailPage() {
               value={historySearch}
               onChange={e => { setHistorySearch(e.target.value); setHistoryPage(1) }}
               placeholder="Search description, ref #, done by..."
-              style={{ ...S.input, maxWidth:280, background:t.inputBg }}
+              style={{ ...S.input, maxWidth:280, background:'var(--tz-inputBg)' }}
             />
             <select
               value={historySource}
               onChange={e => { setHistorySource(e.target.value); setHistoryPage(1) }}
-              style={{ ...S.input, width:'auto', minWidth:140, appearance:'auto', cursor:'pointer', background:t.inputBg }}
+              style={{ ...S.input, width:'auto', minWidth:140, appearance:'auto', cursor:'pointer', background:'var(--tz-inputBg)' }}
             >
               <option value="all">All Sources</option>
               <option value="inhouse">In-House Only</option>
               <option value="outside">Outside Only</option>
             </select>
             <div style={{ flex:1 }} />
-            <div style={{ fontSize:12, color:t.textSecondary }}>{historyTotal} total records</div>
+            <div style={{ fontSize:12, color:'var(--tz-textSecondary)' }}>{historyTotal} total records</div>
           </div>
 
           {/* History table */}
           <div style={S.card}>
             {historyLoading ? (
-              <div style={{ textAlign:'center', padding:40, color:t.textTertiary, fontSize:12 }}>Loading...</div>
+              <div style={{ textAlign:'center', padding:40, color:'var(--tz-textTertiary)', fontSize:12 }}>Loading...</div>
             ) : historyData.length === 0 ? (
-              <div style={{ textAlign:'center', padding:40, color:t.textTertiary, fontSize:12 }}>No history found for this truck yet.</div>
+              <div style={{ textAlign:'center', padding:40, color:'var(--tz-textTertiary)', fontSize:12 }}>No history found for this truck yet.</div>
             ) : (
               <div style={{ overflowX:'auto' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse' }}>
@@ -452,22 +452,22 @@ export default function FleetDetailPage() {
                           if (row.source === 'inhouse') window.location.href = getWorkorderRoute(row.id, undefined, 'fleet')
                           else window.location.href = `/maintenance/repairs/${row.id}`
                         }}
-                        onMouseEnter={e => (e.currentTarget.style.background = t.bgHover)}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                       >
-                        <td style={{ ...S.td, color:t.textSecondary, whiteSpace:'nowrap' }}>
+                        <td style={{ ...S.td, color:'var(--tz-textSecondary)', whiteSpace:'nowrap' }}>
                           {row.date ? new Date(row.date).toLocaleDateString() : '—'}
                         </td>
-                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: t.accentLight }}>
+                        <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: 'var(--tz-accentLight)' }}>
                           {row.reference_number || '—'}
                         </td>
-                        <td style={{ ...S.td, fontSize:10, color:t.textSecondary }}>
+                        <td style={{ ...S.td, fontSize:10, color:'var(--tz-textSecondary)' }}>
                           {row.source === 'inhouse' ? 'Service Order' : 'Road Repair'}
                         </td>
                         <td style={{ ...S.td, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                           {row.description || '—'}
                         </td>
-                        <td style={{ ...S.td, color:t.text }}>
+                        <td style={{ ...S.td, color:'var(--tz-text)' }}>
                           {row.assigned_to || '—'}
                         </td>
                         <td style={{ ...S.td, fontFamily:'monospace', textAlign:'right' }}>
@@ -480,7 +480,7 @@ export default function FleetDetailPage() {
                             display:'inline-block', padding:'2px 8px', borderRadius:100,
                             fontSize:9, fontWeight:700, letterSpacing:'.04em',
                             background: row.source === 'inhouse' ? 'rgba(29,111,232,.15)' : 'rgba(212,136,42,.15)',
-                            color: row.source === 'inhouse' ? t.accentLight : '#D4882A',
+                            color: row.source === 'inhouse' ? 'var(--tz-accentLight)' : '#D4882A',
                           }}>
                             {row.source === 'inhouse' ? 'In-House' : 'Outside'}
                           </span>
@@ -497,10 +497,10 @@ export default function FleetDetailPage() {
           {historyTotal > 50 && (
             <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12, padding:'16px 0' }}>
               <button disabled={historyPage <= 1} onClick={() => setHistoryPage(p => p - 1)}
-                style={{ ...S.btn, background: historyPage <= 1 ? t.surfaceMuted : t.border, color: historyPage <= 1 ? t.textTertiary : t.text, cursor: historyPage <= 1 ? 'default' : 'pointer' }}>Previous</button>
-              <span style={{ fontSize:12, fontWeight:600, color:t.textSecondary }}>Page {historyPage} of {historyTotalPages}</span>
+                style={{ ...S.btn, background: historyPage <= 1 ? 'var(--tz-surfaceMuted)' : 'var(--tz-border)', color: historyPage <= 1 ? 'var(--tz-textTertiary)' : 'var(--tz-text)', cursor: historyPage <= 1 ? 'default' : 'pointer' }}>Previous</button>
+              <span style={{ fontSize:12, fontWeight:600, color:'var(--tz-textSecondary)' }}>Page {historyPage} of {historyTotalPages}</span>
               <button disabled={historyPage >= historyTotalPages} onClick={() => setHistoryPage(p => p + 1)}
-                style={{ ...S.btn, background: historyPage >= historyTotalPages ? t.surfaceMuted : t.border, color: historyPage >= historyTotalPages ? t.textTertiary : t.text, cursor: historyPage >= historyTotalPages ? 'default' : 'pointer' }}>Next</button>
+                style={{ ...S.btn, background: historyPage >= historyTotalPages ? 'var(--tz-surfaceMuted)' : 'var(--tz-border)', color: historyPage >= historyTotalPages ? 'var(--tz-textTertiary)' : 'var(--tz-text)', cursor: historyPage >= historyTotalPages ? 'default' : 'pointer' }}>Next</button>
             </div>
           )}
         </div>

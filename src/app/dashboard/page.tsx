@@ -17,7 +17,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default function DashboardPage() {
   const { tokens: t } = useTheme()
-  const BLUE = t.accent, GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = t.textLightSecondary
+  const BLUE = 'var(--tz-accent)', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = 'var(--tz-textLightSecondary)'
   const PRIORITY_BORDER: Record<string, string> = { urgent: RED, high: AMBER, normal: BLUE, low: GRAY }
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
@@ -72,7 +72,7 @@ export default function DashboardPage() {
   // Notifications are handled by the NotificationBell component (per-user only).
   // The dashboard does not display or manage notifications directly.
 
-  if (loading) return <div style={{ background: t.bgLight, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading...</div>
+  if (loading) return <div style={{ background: 'var(--tz-bgLight)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontFamily: FONT }}>Loading...</div>
 
   const stats = data?.stats || {}
   const actionItems = data?.actionItems || []
@@ -96,14 +96,14 @@ export default function DashboardPage() {
     color: key.includes('pending') || key.includes('unassigned') || key.includes('overdue') ? AMBER : key.includes('revenue') || key.includes('approved') || key.includes('completed') ? GREEN : BLUE,
   }))
 
-  const card: React.CSSProperties = { background: t.bgLight, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16 }
+  const card: React.CSSProperties = { background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-borderLight)'}`, borderRadius: 12, padding: 16 }
 
   return (
-    <div style={{ background: t.bgHover, minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
+    <div style={{ background: 'var(--tz-bgHover)', minHeight: '100vh', fontFamily: FONT, padding: 'clamp(12px, 3vw, 28px)' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: t.textLight }}>{greeting}, {user?.full_name?.split(' ')[0] || 'there'}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-textLight)' }}>{greeting}, {user?.full_name?.split(' ')[0] || 'there'}</div>
           <div style={{ fontSize: 13, color: GRAY, marginTop: 2 }}>{shop?.name || ''} · {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
         </div>
         <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#EFF6FF', color: BLUE }}>{ROLE_LABEL[role] || role}</span>
@@ -114,7 +114,7 @@ export default function DashboardPage() {
         {statCards.map(c => (
           <div key={c.label} style={{ ...card, borderLeft: `3px solid ${c.color}` }}>
             <div style={{ fontSize: 11, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>{c.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: t.textLight }}>{String(c.value)}</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--tz-textLight)' }}>{String(c.value)}</div>
           </div>
         ))}
       </div>
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       {/* Action Items */}
       <div style={{ marginBottom: 24 }}>
         <div style={card}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: t.textLight, marginBottom: 12 }}>Action Items</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-textLight)', marginBottom: 12 }}>Action Items</div>
           {actionItems.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 30, color: GREEN }}>
               <Check size={28} style={{ marginBottom: 6 }} />
@@ -130,13 +130,13 @@ export default function DashboardPage() {
               <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>No action items right now</div>
             </div>
           ) : actionItems.map((item: any) => (
-            <div key={item.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: `1px solid ${t.bgHover}`, borderLeft: `3px solid ${PRIORITY_BORDER[item.priority] || BLUE}`, paddingLeft: 12 }}>
+            <div key={item.id} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: `1px solid ${'var(--tz-bgHover)'}`, borderLeft: `3px solid ${PRIORITY_BORDER[item.priority] || BLUE}`, paddingLeft: 12 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: t.textLight }}>{item.title}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-textLight)' }}>{item.title}</div>
                 {item.wo_number && <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, marginTop: 2 }}>{item.wo_number}{item.unit ? ` · #${item.unit}` : ''}</div>}
                 {item.description && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{item.description}</div>}
               </div>
-              <a href={item.link} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: BLUE, color: t.bgLight, borderRadius: 6, fontSize: 11, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', height: 'fit-content' }}>
+              <a href={item.link} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: BLUE, color: 'var(--tz-bgLight)', borderRadius: 6, fontSize: 11, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', height: 'fit-content' }}>
                 {item.action || 'View'} <ChevronRight size={12} />
               </a>
             </div>
@@ -147,11 +147,11 @@ export default function DashboardPage() {
       {/* Team Status (Floor Manager / Owner) */}
       {teamStatus && Array.isArray(teamStatus) && teamStatus.length > 0 && (
         <div style={{ ...card, marginBottom: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: t.textLight, marginBottom: 12 }}>Team Status</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-textLight)', marginBottom: 12 }}>Team Status</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
             {teamStatus.map((m: any) => (
-              <div key={m.id} style={{ padding: '10px 14px', background: t.bgHover, borderRadius: 8, border: `1px solid ${t.bgHover}` }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: t.textLight }}>{m.full_name}</div>
+              <div key={m.id} style={{ padding: '10px 14px', background: 'var(--tz-bgHover)', borderRadius: 8, border: `1px solid ${'var(--tz-bgHover)'}` }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-textLight)' }}>{m.full_name}</div>
                 <div style={{ fontSize: 11, color: GRAY, marginTop: 2 }}>Team {m.team || '—'}</div>
               </div>
             ))}
@@ -161,15 +161,15 @@ export default function DashboardPage() {
 
       {/* Recent Activity */}
       <div style={card}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: t.textLight, marginBottom: 12 }}>Recent Activity</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-textLight)', marginBottom: 12 }}>Recent Activity</div>
         {recentActivity.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 20, color: GRAY, fontSize: 12 }}>No recent activity</div>
         ) : recentActivity.map((a: any) => (
-          <div key={a.id} style={{ display: 'flex', gap: 8, padding: '6px 0', borderBottom: `1px solid ${t.bgHover}` }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: t.border, marginTop: 6, flexShrink: 0 }} />
+          <div key={a.id} style={{ display: 'flex', gap: 8, padding: '6px 0', borderBottom: `1px solid ${'var(--tz-bgHover)'}` }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--tz-border)', marginTop: 6, flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, color: t.textSecondary }}>{a.action}</div>
-              <div style={{ fontSize: 10, color: t.textSecondary, marginTop: 1 }}>{timeAgo(a.created_at)}</div>
+              <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{a.action}</div>
+              <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)', marginTop: 1 }}>{timeAgo(a.created_at)}</div>
             </div>
           </div>
         ))}

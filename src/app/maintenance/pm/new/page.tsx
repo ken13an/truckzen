@@ -89,19 +89,19 @@ export default function NewPMSchedulePage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page: { background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24, maxWidth: 640, margin: '0 auto' },
-    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 20, marginBottom: 12 },
-    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary, marginBottom: 5, display: 'block' },
-    input: { width: '100%', padding: '9px 12px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const },
+    page: { background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24, maxWidth: 640, margin: '0 auto' },
+    card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginBottom: 12 },
+    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'var(--tz-textTertiary)', marginBottom: 5, display: 'block' },
+    input: { width: '100%', padding: '9px 12px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: 'inherit', minHeight: 38, boxSizing: 'border-box' as const },
     row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 },
-    btn: { padding: '12px 24px', background: th.accent, border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: th.bgLight, cursor: 'pointer', fontFamily: 'inherit', width: '100%' },
+    btn: { padding: '12px 24px', background: 'var(--tz-accent)', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, color: 'var(--tz-bgLight)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' },
     error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 12 },
   }
 
   return (
     <div style={S.page}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text, marginBottom: 4 }}>New PM Schedule</div>
-      <div style={{ fontSize: 12, color: th.textSecondary, marginBottom: 20 }}>Set up a recurring maintenance schedule.</div>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', marginBottom: 4 }}>New PM Schedule</div>
+      <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 20 }}>Set up a recurring maintenance schedule.</div>
       {error && <div style={S.error}>{error}</div>}
       <form onSubmit={submit}>
         <div style={S.card}>
@@ -132,8 +132,8 @@ export default function NewPMSchedulePage() {
         </div>
 
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 10 }}>Intervals</div>
-          <div style={{ fontSize: 11, color: th.textTertiary, marginBottom: 8 }}>Set one or both — alert triggers when either is reached.</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 10 }}>Intervals</div>
+          <div style={{ fontSize: 11, color: 'var(--tz-textTertiary)', marginBottom: 8 }}>Set one or both — alert triggers when either is reached.</div>
           <div style={S.row2}>
             <div><label style={S.label}>Every X Miles</label><input style={S.input} type="number" value={form.interval_miles} onChange={set('interval_miles')} placeholder="15000" /></div>
             <div><label style={S.label}>Every X Days</label><input style={S.input} type="number" value={form.interval_days} onChange={set('interval_days')} placeholder="90" /></div>
@@ -141,7 +141,7 @@ export default function NewPMSchedulePage() {
         </div>
 
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 10 }}>Last Completed</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 10 }}>Last Completed</div>
           <div style={S.row2}>
             <div><label style={S.label}>Date</label><input style={S.input} type="date" value={form.last_completed_date} onChange={set('last_completed_date')} /></div>
             <div><label style={S.label}>Miles</label><input style={S.input} type="number" value={form.last_completed_miles} onChange={set('last_completed_miles')} placeholder="472000" /></div>

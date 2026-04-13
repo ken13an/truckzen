@@ -65,15 +65,15 @@ export default function WarrantyReviewPage() {
 
   const daysSince = (d: string) => Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
 
-  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 }}>Warranty Review</div>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', marginBottom: 4 }}>Warranty Review</div>
       <div style={{ fontSize: 12, color: MUTED, marginBottom: 20 }}>{wos.length} work order{wos.length !== 1 ? 's' : ''} pending warranty verification</div>
 
       {wos.length === 0 ? (
-        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 40, textAlign: 'center', color: MUTED, fontSize: 13 }}>
           No work orders pending warranty review
         </div>
       ) : (
@@ -84,16 +84,16 @@ export default function WarrantyReviewPage() {
             const age = daysSince(wo.created_at)
             const isUrgent = age > 1
             return (
-              <div key={wo.id} style={{ background: t.bgCard, border: `1px solid ${isUrgent ? 'rgba(245,158,11,.25)' : t.border}`, borderRadius: 12, padding: 16 }}>
+              <div key={wo.id} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${isUrgent ? 'rgba(245,158,11,.25)' : 'var(--tz-border)'}`, borderRadius: 12, padding: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <a href={getWorkorderRoute(wo.id, undefined, 'warranty')} style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: BLUE, textDecoration: 'none' }}>{wo.so_number}</a>
                       {isUrgent && <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: 'rgba(245,158,11,.12)', color: AMBER }}>{age}d OLD — NEEDS ATTENTION</span>}
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: t.text }}>#{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)' }}>#{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
                     <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{cust.company_name || '—'}</div>
-                    {wo.complaint && <div style={{ fontSize: 12, color: t.text, marginTop: 6, padding: '6px 10px', background: t.border, borderRadius: 6 }}>{wo.complaint}</div>}
+                    {wo.complaint && <div style={{ fontSize: 12, color: 'var(--tz-text)', marginTop: 6, padding: '6px 10px', background: 'var(--tz-border)', borderRadius: 6 }}>{wo.complaint}</div>}
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     {asset.warranty_provider && <div style={{ fontSize: 11, color: AMBER, fontWeight: 600 }}>Warranty: {asset.warranty_provider}</div>}
@@ -103,19 +103,19 @@ export default function WarrantyReviewPage() {
 
                 {/* Action buttons */}
                 {actionWo?.id === wo.id ? (
-                  <div style={{ padding: 12, background: t.border, borderRadius: 8, marginTop: 8 }}>
-                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes..." rows={2} style={{ width: '100%', padding: '8px 10px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+                  <div style={{ padding: 12, background: 'var(--tz-border)', borderRadius: 8, marginTop: 8 }}>
+                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes..." rows={2} style={{ width: '100%', padding: '8px 10px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: FONT, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
                     {actionWo.decision === 'send_to_dealer' && (
                       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                        <input value={dealerName} onChange={e => setDealerName(e.target.value)} placeholder="Dealer name" style={{ flex: 1, padding: '8px 10px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT }} />
-                        <input value={dealerLocation} onChange={e => setDealerLocation(e.target.value)} placeholder="Location" style={{ flex: 1, padding: '8px 10px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT }} />
+                        <input value={dealerName} onChange={e => setDealerName(e.target.value)} placeholder="Dealer name" style={{ flex: 1, padding: '8px 10px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: FONT }} />
+                        <input value={dealerLocation} onChange={e => setDealerLocation(e.target.value)} placeholder="Location" style={{ flex: 1, padding: '8px 10px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: FONT }} />
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => resolveWarranty(wo.id, actionWo.decision)} disabled={saving} style={{ padding: '8px 16px', background: actionWo.decision === 'no_warranty' ? '#22C55E' : actionWo.decision === 'local_repair' ? t.accent : RED, color: t.bgLight, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                      <button onClick={() => resolveWarranty(wo.id, actionWo.decision)} disabled={saving} style={{ padding: '8px 16px', background: actionWo.decision === 'no_warranty' ? '#22C55E' : actionWo.decision === 'local_repair' ? 'var(--tz-accent)' : RED, color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                         {saving ? 'Saving...' : 'Confirm'}
                       </button>
-                      <button onClick={() => setActionWo(null)} style={{ padding: '8px 16px', background: t.border, color: MUTED, border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+                      <button onClick={() => setActionWo(null)} style={{ padding: '8px 16px', background: 'var(--tz-border)', color: MUTED, border: 'none', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
                     </div>
                   </div>
                 ) : (

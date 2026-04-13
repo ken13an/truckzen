@@ -10,12 +10,12 @@ export default function RolesGuidePage() {
   const { tokens: t } = useTheme()
 
   const S: Record<string, React.CSSProperties> = {
-  page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, letterSpacing: '.03em' },
-  card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 },
+  page: { background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', letterSpacing: '.03em' },
+  card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20 },
   table: { width: '100%', borderCollapse: 'collapse' as const },
-  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: t.textTertiary, textTransform: 'uppercase' as const, letterSpacing: '.06em', padding: '8px 6px', textAlign: 'left' as const, background: t.bgInput },
-  td: { padding: '6px 6px', borderBottom: `1px solid ${t.border}`, fontSize: 11 },
+  th: { fontFamily: "'IBM Plex Mono',monospace", fontSize: 9, color: 'var(--tz-textTertiary)', textTransform: 'uppercase' as const, letterSpacing: '.06em', padding: '8px 6px', textAlign: 'left' as const, background: 'var(--tz-bgInput)' },
+  td: { padding: '6px 6px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 11 },
 }
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -30,7 +30,7 @@ export default function RolesGuidePage() {
     })
   }, [])
 
-  if (loading) return <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-textSecondary)' }}>Loading...</div>
 
   const roleGroups = [
     { title: 'Owner / Admin', roles: ['owner', 'gm', 'it_person'], desc: 'Full access to all modules, billing, permissions, integrations.' },
@@ -47,9 +47,9 @@ export default function RolesGuidePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <div style={S.title}>Role & Permissions Guide</div>
-          <div style={{ fontSize: 12, color: t.textSecondary }}>Complete reference for all {ALL_ROLES.length} roles and {MODULES.length} modules</div>
+          <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>Complete reference for all {ALL_ROLES.length} roles and {MODULES.length} modules</div>
         </div>
-        <button onClick={() => window.print()} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: t.accent, color: t.bgLight }}>
+        <button onClick={() => window.print()} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: 'var(--tz-accent)', color: 'var(--tz-bgLight)' }}>
           Print / Save PDF
         </button>
       </div>
@@ -57,8 +57,8 @@ export default function RolesGuidePage() {
       {/* Role cards by group */}
       {roleGroups.map(group => (
         <div key={group.title} style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 4 }}>{group.title}</div>
-          <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 16 }}>{group.desc}</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 4 }}>{group.title}</div>
+          <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 16 }}>{group.desc}</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 16 }}>
             {group.roles.map(role => {
@@ -73,8 +73,8 @@ export default function RolesGuidePage() {
                       {ROLE_LABEL[role]?.charAt(0)}
                     </div>
                     <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: t.text }}>{ROLE_LABEL[role]}</div>
-                      <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: 'monospace' }}>{role} · Landing: {ROLE_REDIRECT[role]}</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)' }}>{ROLE_LABEL[role]}</div>
+                      <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: 'monospace' }}>{role} · Landing: {ROLE_REDIRECT[role]}</div>
                     </div>
                   </div>
 
@@ -91,12 +91,12 @@ export default function RolesGuidePage() {
 
                   {denied.length > 0 && denied.length < MODULES.length && (
                     <>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: t.textTertiary, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tz-textTertiary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>
                         No Access ({denied.length})
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                         {denied.map(m => (
-                          <span key={m.key} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: t.border, color: t.textTertiary }}>
+                          <span key={m.key} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 4, background: 'var(--tz-border)', color: 'var(--tz-textTertiary)' }}>
                             {m.label}
                           </span>
                         ))}
@@ -112,7 +112,7 @@ export default function RolesGuidePage() {
 
       {/* Full matrix */}
       <div style={{ marginTop: 40, pageBreakBefore: 'always' }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: t.text, marginBottom: 16 }}>Complete Permission Matrix</div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 16 }}>Complete Permission Matrix</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ ...S.table, fontSize: 10 }}>
             <thead>

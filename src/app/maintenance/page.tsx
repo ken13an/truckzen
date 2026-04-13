@@ -10,7 +10,7 @@ const MONO = "'IBM Plex Mono',monospace"
 
 export default function MaintenanceDashboard() {
   const { tokens: t } = useTheme()
-  const BLUE = t.accent, GREEN = '#1DB870', AMBER = t.warning, RED = t.danger, MUTED = t.textSecondary
+  const BLUE = 'var(--tz-accent)', GREEN = '#1DB870', AMBER = 'var(--tz-warning)', RED = 'var(--tz-danger)', MUTED = 'var(--tz-textSecondary)'
   const supabase = createClient()
   const [stats, setStats] = useState<any>({})
   const [activities, setActivities] = useState<any[]>([])
@@ -59,8 +59,8 @@ export default function MaintenanceDashboard() {
   const typeColor: Record<string, string> = { comment: BLUE, status_change: AMBER, repair_created: GREEN, fault_detected: RED, issue_reported: AMBER }
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 20 }}>Maintenance</div>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', marginBottom: 20 }}>Maintenance</div>
 
       {/* Stats Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 10, marginBottom: 24 }}>
@@ -68,12 +68,12 @@ export default function MaintenanceDashboard() {
           const Icon = c.icon
           return (
             <a key={c.label} href={c.href} style={{ textDecoration: 'none' }}>
-              <div style={{ background: t.bgCard, border: `1px solid ${t.bgActive}`, borderRadius: 12, padding: '14px 16px', cursor: 'pointer', transition: 'border-color .15s' }}
+              <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${t.bgActive}`, borderRadius: 12, padding: '14px 16px', cursor: 'pointer', transition: 'border-color .15s' }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = c.color + '44')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = t.bgActive)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
                   <Icon size={13} color={c.color} />
-                  <span style={{ fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.05em', fontFamily: MONO }}>{c.label}</span>
+                  <span style={{ fontSize: 9, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.05em', fontFamily: MONO }}>{c.label}</span>
                 </div>
                 <div style={{ fontSize: 24, fontWeight: 700, color: loading ? MUTED : c.color }}>{loading ? '...' : c.value}</div>
               </div>
@@ -84,10 +84,10 @@ export default function MaintenanceDashboard() {
 
       {/* Quick Actions */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO, marginBottom: 10 }}>Quick Actions</div>
+        <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.08em', fontFamily: MONO, marginBottom: 10 }}>Quick Actions</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {quickActions.map(a => (
-            <a key={a.label} href={a.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>
+            <a key={a.label} href={a.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 14px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 11, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>
               <Plus size={12} /> {a.label}
             </a>
           ))}
@@ -95,25 +95,25 @@ export default function MaintenanceDashboard() {
       </div>
 
       {/* Recent Activity */}
-      <div style={{ background: t.bgCard, border: `1px solid ${t.bgActive}`, borderRadius: 12, padding: 16 }}>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${t.bgActive}`, borderRadius: 12, padding: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <MessageSquare size={14} color={MUTED} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: t.text }}>Recent Activity</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)' }}>Recent Activity</span>
           </div>
-          <a href="/maintenance/activity" style={{ fontSize: 11, color: t.accentLight, textDecoration: 'none' }}>View all</a>
+          <a href="/maintenance/activity" style={{ fontSize: 11, color: 'var(--tz-accentLight)', textDecoration: 'none' }}>View all</a>
         </div>
         {activities.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 20, color: t.textTertiary, fontSize: 12 }}>No activity yet. Data will appear here once maintenance records are created.</div>
+          <div style={{ textAlign: 'center', padding: 20, color: 'var(--tz-textTertiary)', fontSize: 12 }}>No activity yet. Data will appear here once maintenance records are created.</div>
         ) : (
           <div style={{ maxHeight: 300, overflowY: 'auto' }}>
             {activities.map(a => (
-              <div key={a.id} style={{ padding: '8px 0', borderBottom: `1px solid ${t.border}`, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <div key={a.id} style={{ padding: '8px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <div style={{ width: 24, height: 24, borderRadius: '50%', background: `${typeColor[a.activity_type] || BLUE}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: typeColor[a.activity_type] || BLUE, flexShrink: 0 }}>
                   {(a.user_name || 'S')[0].toUpperCase()}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, color: t.text }}><span style={{ fontWeight: 600 }}>{a.user_name || 'System'}</span> <span style={{ color: MUTED }}>{a.activity_type?.replace(/_/g, ' ')}</span></div>
+                  <div style={{ fontSize: 11, color: 'var(--tz-text)' }}><span style={{ fontWeight: 600 }}>{a.user_name || 'System'}</span> <span style={{ color: MUTED }}>{a.activity_type?.replace(/_/g, ' ')}</span></div>
                   <div style={{ fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.message}</div>
                 </div>
                 <div style={{ fontSize: 9, color: MUTED, whiteSpace: 'nowrap' }}>{new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>

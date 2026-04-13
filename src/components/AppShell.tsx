@@ -118,7 +118,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} onClick={() => setDrawerOpen(false)} />
           <div style={{ position: 'relative', zIndex: 1, width: 260, maxWidth: '80vw' }}>
             <Sidebar />
-            <button onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', top: 12, right: -44, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer', color: t.bgLight }}>
+            <button onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', top: 12, right: -44, background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer', color: 'var(--tz-bgLight)' }}>
               <X size={20} />
             </button>
           </div>
@@ -138,7 +138,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               })
               localStorage.removeItem('tz_original_shop_id')
               window.location.href = '/platform-admin'
-            }} style={{ background: COLORS.roleAccounting, border: 'none', borderRadius: 4, color: t.bgLight, fontSize: 10, cursor: 'pointer', padding: '3px 10px', fontFamily: 'inherit', fontWeight: 700 }}>
+            }} style={{ background: COLORS.roleAccounting, border: 'none', borderRadius: 4, color: 'var(--tz-bgLight)', fontSize: 10, cursor: 'pointer', padding: '3px 10px', fontFamily: 'inherit', fontWeight: 700 }}>
               Exit Impersonation
             </button>
           </div>
@@ -161,7 +161,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Left: mobile menu or spacer */}
           <div>
             {isMobile && (
-              <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textSecondary, padding: 6 }}>
+              <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textSecondary)', padding: 6 }}>
                 <Menu size={22} />
               </button>
             )}
@@ -188,12 +188,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {user?.can_impersonate ? (
               <RoleSwitcher userId={user.id} actualRole={user.role} impersonateRole={user.impersonate_role} />
             ) : user && effectiveRole ? (
-              <span style={{ fontSize: 10, fontWeight: 600, color: t.textSecondary, background: t.bgHover, borderRadius: 6, padding: '4px 10px', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--tz-textSecondary)', background: 'var(--tz-bgHover)', borderRadius: 6, padding: '4px 10px', textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
                 {effectiveRole.replace(/_/g, ' ')}
               </span>
             ) : null}
             {user && (
-              <div title={user.full_name || ''} style={{ width: 28, height: 28, borderRadius: 14, background: t.accent, color: t.bgLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+              <div title={user.full_name || ''} style={{ width: 28, height: 28, borderRadius: 14, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
                 {(user.full_name || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
               </div>
             )}

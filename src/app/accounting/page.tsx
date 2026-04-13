@@ -14,15 +14,15 @@ const TABS = ['Pending Review', 'Sent / Unpaid', 'Paid', 'All']
 
 export default function AccountingPage() {
   const { tokens: t } = useTheme()
-  const BLUE = t.accent, GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = t.textLightSecondary
+  const BLUE = 'var(--tz-accent)', GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706', GRAY = 'var(--tz-textLightSecondary)'
 
   const INVOICE_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-    draft:                { label: 'Draft',            bg: t.bgHover, color: GRAY },
+    draft:                { label: 'Draft',            bg: 'var(--tz-bgHover)', color: GRAY },
     quality_check_failed: { label: 'QC Failed',        bg: '#FEF2F2', color: RED },
     accounting_review:    { label: 'Pending Review',   bg: '#FFFBEB', color: AMBER },
     sent:                 { label: 'Sent',             bg: '#EFF6FF', color: BLUE },
     paid:                 { label: 'Paid',             bg: '#F0FDF4', color: GREEN },
-    closed:               { label: 'Closed',           bg: t.bgHover, color: GRAY },
+    closed:               { label: 'Closed',           bg: 'var(--tz-bgHover)', color: GRAY },
   }
 
   const supabase = createClient()
@@ -104,20 +104,20 @@ export default function AccountingPage() {
   }
 
   const S = {
-    page: { fontFamily: FONT, background: t.bg, minHeight: '100vh', color: t.text, padding: 24 } as React.CSSProperties,
-    card: { background: t.bgElevated, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 12 } as React.CSSProperties,
-    label: { fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.04em' } as React.CSSProperties,
+    page: { fontFamily: FONT, background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', padding: 24 } as React.CSSProperties,
+    card: { background: 'var(--tz-bgElevated)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 12 } as React.CSSProperties,
+    label: { fontSize: 10, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.04em' } as React.CSSProperties,
     pill: (bg: string, color: string): React.CSSProperties => ({ display: 'inline-flex', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: bg, color }),
     btn: (bg: string, color: string, outline?: boolean): React.CSSProperties => ({
       padding: '9px 20px', background: outline ? 'transparent' : bg, color,
       border: outline ? `1px solid ${color}` : 'none',
       borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
     }),
-    input: { width: '100%', padding: '9px 12px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 13, color: t.text, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' as const, minHeight: 80, resize: 'vertical' as const } as React.CSSProperties,
+    input: { width: '100%', padding: '9px 12px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', outline: 'none', fontFamily: FONT, boxSizing: 'border-box' as const, minHeight: 80, resize: 'vertical' as const } as React.CSSProperties,
   }
 
   if (loading) {
-    return <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}><div style={{ color: t.textSecondary }}>Loading...</div></div>
+    return <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}><div style={{ color: 'var(--tz-textSecondary)' }}>Loading...</div></div>
   }
 
   // Main list view
@@ -126,19 +126,19 @@ export default function AccountingPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 26, fontWeight: 800 }}>Invoice Review Queue</div>
-          <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginTop: 4 }}>
             {wos.length > 0 ? `${wos.length} work order${wos.length !== 1 ? 's' : ''} in queue` : 'No work orders in accounting queue'}
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${t.border}`, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${'var(--tz-border)'}`, marginBottom: 20 }}>
         {TABS.map((tt, i) => (
           <button key={tt} onClick={() => setTab(i)} style={{
             padding: '10px 20px', background: 'transparent', border: 'none',
             borderBottom: tab === i ? `2px solid ${BLUE}` : '2px solid transparent',
-            color: tab === i ? t.text : t.textSecondary, fontWeight: tab === i ? 700 : 500,
+            color: tab === i ? 'var(--tz-text)' : 'var(--tz-textSecondary)', fontWeight: tab === i ? 700 : 500,
             fontSize: 13, cursor: 'pointer', fontFamily: FONT,
           }}>
             {tt}
@@ -161,7 +161,7 @@ export default function AccountingPage() {
 
       {/* WO Cards */}
       {filteredWos.length === 0 && (
-        <div style={{ ...S.card, textAlign: 'center', color: t.textSecondary, padding: 40 }}>
+        <div style={{ ...S.card, textAlign: 'center', color: 'var(--tz-textSecondary)', padding: 40 }}>
           {acctSearch || acctDateFrom || acctDateTo ? 'No results found. Try adjusting your filters.' : tab === 0 ? 'No work orders pending review' : tab === 1 ? 'No approved invoices' : 'No work orders found'}
         </div>
       )}
@@ -171,26 +171,26 @@ export default function AccountingPage() {
         const asset = wo.assets as any
         return (
           <div key={wo.id} style={{ ...S.card, cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id)}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = t.border)}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = t.border)}>
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--tz-border)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--tz-border)')}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <span style={{ fontSize: 15, fontWeight: 700 }}>{wo.so_number}</span>
                   <span style={S.pill(st.bg, st.color)}>{st.label}</span>
                 </div>
-                <div style={{ fontSize: 13, color: t.text }}>{customer?.company_name || 'No customer'}</div>
-                {asset && <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 2 }}>Unit #{asset.unit_number} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>}
+                <div style={{ fontSize: 13, color: 'var(--tz-text)' }}>{customer?.company_name || 'No customer'}</div>
+                {asset && <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginTop: 2 }}>Unit #{asset.unit_number} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>}
                 {wo.accounting_notes && <div style={{ fontSize: 12, color: AMBER, marginTop: 4 }}>Notes: {wo.accounting_notes}</div>}
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 16, fontWeight: 800 }}>{fmt(wo.grand_total || 0)}</div>
-                <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 2 }}>{fmtDate(wo.updated_at || wo.created_at)}</div>
+                <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginTop: 2 }}>{fmtDate(wo.updated_at || wo.created_at)}</div>
               </div>
             </div>
             {wo.invoice_status === 'accounting_review' && (
               <div style={{ marginTop: 10 }}>
-                <button style={{ ...S.btn(BLUE, t.bgLight), fontSize: 12, padding: '6px 14px' }}>Review</button>
+                <button style={{ ...S.btn(BLUE, 'var(--tz-bgLight)'), fontSize: 12, padding: '6px 14px' }}>Review</button>
               </div>
             )}
           </div>

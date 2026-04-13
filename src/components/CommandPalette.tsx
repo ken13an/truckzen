@@ -145,14 +145,14 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
             onClick={e => e.stopPropagation()}
             style={{
               position: 'relative', width: '100%', maxWidth: 640, maxHeight: '70vh',
-              background: t.bgElevated, border: `1px solid ${t.border}`, borderRadius: 14,
+              background: 'var(--tz-bgElevated)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 14,
               display: 'flex', flexDirection: 'column', overflow: 'hidden',
               boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
             }}
           >
             {/* Search input */}
-            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Wrench size={16} color={t.textTertiary} style={{ flexShrink: 0 }} />
+            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${'var(--tz-border)'}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Wrench size={16} color={'var(--tz-textTertiary)'} style={{ flexShrink: 0 }} />
               <input
                 ref={inputRef}
                 value={query}
@@ -160,32 +160,32 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
                 placeholder="Search work orders, parts, customers, trucks..."
                 style={{
                   flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                  fontSize: 15, color: t.text, fontFamily: 'inherit',
+                  fontSize: 15, color: 'var(--tz-text)', fontFamily: 'inherit',
                 }}
               />
-              {loading && <Loader2 size={16} color={t.textTertiary} style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }} />}
-              <span style={{ fontSize: 10, color: t.textTertiary, background: t.bgHover, borderRadius: 4, padding: '2px 6px', flexShrink: 0 }}>ESC</span>
+              {loading && <Loader2 size={16} color={'var(--tz-textTertiary)'} style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }} />}
+              <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)', background: 'var(--tz-bgHover)', borderRadius: 4, padding: '2px 6px', flexShrink: 0 }}>ESC</span>
             </div>
 
             {/* Results */}
             <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
               {/* Before typing */}
               {!query && !results && (
-                <div style={{ padding: '32px 20px', textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>
+                <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>
                   Start typing to search across all data
                 </div>
               )}
 
               {/* No results */}
               {query.length >= 2 && !loading && results && results.total === 0 && (
-                <div style={{ padding: '32px 20px', textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>
+                <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>
                   No results for &ldquo;{query}&rdquo;
                 </div>
               )}
 
               {/* Error */}
               {error && (
-                <div style={{ padding: '32px 20px', textAlign: 'center', color: t.danger, fontSize: 13 }}>
+                <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--tz-danger)', fontSize: 13 }}>
                   Search failed. Try again.
                 </div>
               )}
@@ -198,7 +198,7 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
 
                 return (
                   <div key={section.key}>
-                    <div style={{ padding: '10px 20px 4px', fontSize: 10, fontWeight: 600, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ padding: '10px 20px 4px', fontSize: 10, fontWeight: 600, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.06em', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <SectionIcon size={11} />
                       {section.label} ({sectionResults.length})
                     </div>
@@ -215,21 +215,21 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
                           style={{
                             display: 'flex', alignItems: 'center', gap: 12,
                             padding: '8px 20px', cursor: 'pointer',
-                            background: isActive ? t.bgHover : 'transparent',
+                            background: isActive ? 'var(--tz-bgHover)' : 'transparent',
                             transition: 'background .1s',
                           }}
                           onMouseEnter={() => setActiveIndex(idx)}
                         >
-                          <Icon size={14} color={t.textTertiary} style={{ flexShrink: 0 }} />
+                          <Icon size={14} color={'var(--tz-textTertiary)'} style={{ flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: t.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{result.title}</div>
-                            <div style={{ fontSize: 11, color: t.textSecondary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{result.subtitle}</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{result.title}</div>
+                            <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{result.subtitle}</div>
                           </div>
                           {result.status && (
                             <span style={{
                               fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 4, flexShrink: 0,
-                              color: (STATUS_COLORS[result.status] || (() => t.textSecondary))(t),
-                              background: t.surfaceMuted,
+                              color: (STATUS_COLORS[result.status] || (() => 'var(--tz-textSecondary)'))(t),
+                              background: 'var(--tz-surfaceMuted)',
                             }}>
                               {result.status.replace(/_/g, ' ')}
                             </span>
@@ -243,10 +243,10 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
             </div>
 
             {/* Footer hint */}
-            <div style={{ padding: '8px 20px', borderTop: `1px solid ${t.border}`, display: 'flex', gap: 16, fontSize: 10, color: t.textTertiary }}>
-              <span><b style={{ color: t.textSecondary }}>&uarr;&darr;</b> navigate</span>
-              <span><b style={{ color: t.textSecondary }}>&crarr;</b> open</span>
-              <span><b style={{ color: t.textSecondary }}>esc</b> close</span>
+            <div style={{ padding: '8px 20px', borderTop: `1px solid ${'var(--tz-border)'}`, display: 'flex', gap: 16, fontSize: 10, color: 'var(--tz-textTertiary)' }}>
+              <span><b style={{ color: 'var(--tz-textSecondary)' }}>&uarr;&darr;</b> navigate</span>
+              <span><b style={{ color: 'var(--tz-textSecondary)' }}>&crarr;</b> open</span>
+              <span><b style={{ color: 'var(--tz-textSecondary)' }}>esc</b> close</span>
             </div>
           </motion.div>
         </motion.div>

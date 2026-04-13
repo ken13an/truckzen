@@ -148,7 +148,7 @@ export default function DataRequestsPage() {
                           <button
                             onClick={() => processRequest(r.id)}
                             disabled={processing === r.id}
-                            style={btnStyle(COLORS.green, t.bgLight)}
+                            style={btnStyle(COLORS.green, 'var(--tz-bgLight)')}
                           >
                             {processing === r.id ? '...' : 'Process'}
                           </button>
@@ -189,7 +189,7 @@ export default function DataRequestsPage() {
               <button onClick={() => { setDenyModal(null); setDenyReason('') }} style={{ ...btnStyle('transparent', COLORS.textSecondary), border: `1px solid ${COLORS.border}` }}>
                 Cancel
               </button>
-              <button onClick={denyRequest} disabled={!!processing} style={btnStyle(COLORS.red, t.bgLight)}>
+              <button onClick={denyRequest} disabled={!!processing} style={btnStyle(COLORS.red, 'var(--tz-bgLight)')}>
                 {processing ? 'Denying...' : 'Deny Request'}
               </button>
             </div>

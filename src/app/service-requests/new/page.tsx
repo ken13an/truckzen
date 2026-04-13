@@ -127,32 +127,32 @@ export default function NewServiceRequestPage() {
 
   const S: Record<string, React.CSSProperties> = {
     page: { padding: 24, fontFamily: "'Instrument Sans', sans-serif", maxWidth: 720, margin: '0 auto' },
-    back: { fontSize: 12, color: th.textSecondary, textDecoration: 'none', display: 'block', marginBottom: 20 },
-    title: { fontSize: 22, fontWeight: 700, color: th.text, marginBottom: 4 },
-    sub: { fontSize: 13, color: th.textSecondary, marginBottom: 28 },
-    section: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 20, marginBottom: 16 },
-    sectionTitle: { fontSize: 13, fontWeight: 700, color: th.text, marginBottom: 14 },
-    label: { fontSize: 11, fontWeight: 600, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 6 },
-    input: { width: '100%', padding: '10px 12px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
-    textarea: { width: '100%', padding: '10px 12px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 100, resize: 'vertical' as const, boxSizing: 'border-box' as const },
-    select: { width: '100%', padding: '10px 12px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
+    back: { fontSize: 12, color: 'var(--tz-textSecondary)', textDecoration: 'none', display: 'block', marginBottom: 20 },
+    title: { fontSize: 22, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 4 },
+    sub: { fontSize: 13, color: 'var(--tz-textSecondary)', marginBottom: 28 },
+    section: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginBottom: 16 },
+    sectionTitle: { fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 14 },
+    label: { fontSize: 11, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.06em', fontFamily: "'IBM Plex Mono', monospace", display: 'block', marginBottom: 6 },
+    input: { width: '100%', padding: '10px 12px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
+    textarea: { width: '100%', padding: '10px 12px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', outline: 'none', fontFamily: 'inherit', minHeight: 100, resize: 'vertical' as const, boxSizing: 'border-box' as const },
+    select: { width: '100%', padding: '10px 12px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', outline: 'none', fontFamily: 'inherit', minHeight: 42, boxSizing: 'border-box' as const },
     row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 },
     field: { marginBottom: 12 },
     custCard: { padding: '10px 14px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    unitCard: { padding: '8px 12px', background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 8, cursor: 'pointer', marginBottom: 6 },
+    unitCard: { padding: '8px 12px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, cursor: 'pointer', marginBottom: 6 },
     unitCardActive: { padding: '8px 12px', background: 'rgba(29,111,232,.08)', border: '1px solid rgba(29,111,232,.25)', borderRadius: 8, cursor: 'pointer', marginBottom: 6 },
-    secondaryBtn: { padding: '7px 14px', background: 'none', border: `1px solid ${th.border}`, borderRadius: 8, color: th.textSecondary, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
-    submitBtn: { width: '100%', padding: 14, background: th.accent, border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, color: th.bgLight, cursor: 'pointer', fontFamily: 'inherit', minHeight: 48, boxShadow: '0 0 16px rgba(29,111,232,.25)' },
-    submitDisabled: { width: '100%', padding: 14, background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 10, fontSize: 14, fontWeight: 600, color: th.textSecondary, cursor: 'not-allowed', fontFamily: 'inherit', minHeight: 48 },
+    secondaryBtn: { padding: '7px 14px', background: 'none', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: 'var(--tz-textSecondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' },
+    submitBtn: { width: '100%', padding: 14, background: 'var(--tz-accent)', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, color: 'var(--tz-bgLight)', cursor: 'pointer', fontFamily: 'inherit', minHeight: 48, boxShadow: '0 0 16px rgba(29,111,232,.25)' },
+    submitDisabled: { width: '100%', padding: 14, background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, fontSize: 14, fontWeight: 600, color: 'var(--tz-textSecondary)', cursor: 'not-allowed', fontFamily: 'inherit', minHeight: 48 },
     error: { padding: '10px 12px', background: 'rgba(217,79,79,.08)', border: '1px solid rgba(217,79,79,.2)', borderRadius: 8, fontSize: 12, color: '#D94F4F', marginBottom: 16 },
-    searchResult: { padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${th.border}` },
+    searchResult: { padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${'var(--tz-border)'}` },
   }
 
-  if (!user) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: th.textSecondary }}>Loading...</div>
+  if (!user) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-textSecondary)' }}>Loading...</div>
 
   return (
     <div style={S.page}>
-      <a href="/service-requests" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: th.text, textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/service-requests" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--tz-border)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Service Requests
 </a>
       <div style={S.title}>New Service Request</div>
@@ -166,8 +166,8 @@ export default function NewServiceRequestPage() {
           {selectedCustomer ? (
             <div style={S.custCard}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: th.text }}>{selectedCustomer.company_name}</div>
-                <div style={{ fontSize: 11, color: th.textSecondary }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>{selectedCustomer.company_name}</div>
+                <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)' }}>
                   {[selectedCustomer.contact_name, selectedCustomer.phone].filter(Boolean).join(' - ') || 'No contact info'}
                 </div>
               </div>
@@ -176,7 +176,7 @@ export default function NewServiceRequestPage() {
           ) : showNewCustomer ? (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: th.accentLight }}>New Customer</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-accentLight)' }}>New Customer</div>
                 <button type="button" style={S.secondaryBtn} onClick={() => setShowNewCustomer(false)}>Search Instead</button>
               </div>
               <div style={S.row}>
@@ -210,17 +210,17 @@ export default function NewServiceRequestPage() {
                   placeholder="Search by company name, contact, or phone..."
                   autoFocus
                 />
-                {searching && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: th.textSecondary }}>Searching...</div>}
+                {searching && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--tz-textSecondary)' }}>Searching...</div>}
               </div>
               {customerResults.length > 0 && (
-                <div style={{ background: th.inputBg, border: `1px solid ${th.border}`, borderRadius: 8, marginTop: 6, maxHeight: 200, overflowY: 'auto' }}>
+                <div style={{ background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, marginTop: 6, maxHeight: 200, overflowY: 'auto' }}>
                   {customerResults.map(c => (
                     <div key={c.id} style={S.searchResult}
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(29,111,232,.08)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                       onClick={() => { setSelectedCustomer(c); setCustomerResults([]); setCustomerSearch('') }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: th.text }}>{c.company_name || 'Unnamed'}</div>
-                      <div style={{ fontSize: 10, color: th.textSecondary }}>{[c.contact_name, c.phone].filter(Boolean).join(' - ')}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)' }}>{c.company_name || 'Unnamed'}</div>
+                      <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)' }}>{[c.contact_name, c.phone].filter(Boolean).join(' - ')}</div>
                     </div>
                   ))}
                 </div>
@@ -236,7 +236,7 @@ export default function NewServiceRequestPage() {
             <div style={S.sectionTitle}>Unit / Vehicle</div>
 
             {loadingUnits ? (
-              <div style={{ color: th.textSecondary, fontSize: 12 }}>Loading units...</div>
+              <div style={{ color: 'var(--tz-textSecondary)', fontSize: 12 }}>Loading units...</div>
             ) : (
               <>
                 {units.length > 0 && !showNewUnit && (
@@ -245,10 +245,10 @@ export default function NewServiceRequestPage() {
                       <div key={u.id}
                         style={selectedUnit?.id === u.id ? S.unitCardActive : S.unitCard}
                         onClick={() => { setSelectedUnit(u); setShowNewUnit(false) }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedUnit?.id === u.id ? th.accentLight : th.text }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedUnit?.id === u.id ? 'var(--tz-accentLight)' : 'var(--tz-text)' }}>
                           #{u.unit_number || '—'} {u.year ? `${u.year} ` : ''}{u.make || ''} {u.model || ''}
                         </div>
-                        {u.vin && <div style={{ fontSize: 10, color: th.textTertiary, fontFamily: 'monospace' }}>{u.vin}</div>}
+                        {u.vin && <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: 'monospace' }}>{u.vin}</div>}
                       </div>
                     ))}
                   </div>
@@ -257,7 +257,7 @@ export default function NewServiceRequestPage() {
                 {showNewUnit ? (
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: th.accentLight }}>New Unit</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-accentLight)' }}>New Unit</div>
                       {units.length > 0 && <button type="button" style={S.secondaryBtn} onClick={() => setShowNewUnit(false)}>Select Existing</button>}
                     </div>
                     <div style={S.row}>

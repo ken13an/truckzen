@@ -21,7 +21,7 @@ export default function AccountingLayout({ children }: { children: React.ReactNo
     })
   }, [])
 
-  if (allowed === null) return <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary }}>Loading...</div>
+  if (allowed === null) return <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-textSecondary)' }}>Loading...</div>
   if (!allowed) return null
   return <>{children}</>
 }

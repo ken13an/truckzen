@@ -67,7 +67,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
     const totalDuration = formatDuration(wo.submitted_at, wo.invoiced_at)
 
     return (
-      <div style={{ background: t.bgLight, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: '14px 20px', marginBottom: 12 }}>
+      <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: '14px 20px', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: 0 }}>
           {steps.map((s, i) => (
             <div key={s.label} style={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -75,8 +75,8 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace",
-                  background: s.done ? GREEN : s.skip ? 'rgba(22,163,74,.1)' : s.active ? BLUE : t.border,
-                  color: s.done ? t.bgLight : s.skip ? GREEN : s.active ? t.bgLight : GRAY,
+                  background: s.done ? GREEN : s.skip ? 'rgba(22,163,74,.1)' : s.active ? BLUE : 'var(--tz-border)',
+                  color: s.done ? 'var(--tz-bgLight)' : s.skip ? GREEN : s.active ? 'var(--tz-bgLight)' : GRAY,
                 }}>
                   {s.done ? '\u2713' : s.skip ? 'N/A' : i + 1}
                 </div>
@@ -85,17 +85,17 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
                   <span style={{ fontSize: 8, color: s.active ? BLUE : GRAY, textAlign: 'center' }}>{s.progress}</span>
                 )}
                 {s.duration && s.done && (
-                  <span style={{ fontSize: 8, color: t.textTertiary, textAlign: 'center' }}>{s.duration}</span>
+                  <span style={{ fontSize: 8, color: 'var(--tz-textTertiary)', textAlign: 'center' }}>{s.duration}</span>
                 )}
               </div>
               {i < steps.length - 1 && (
-                <div style={{ width: 20, height: 2, background: s.done ? GREEN : t.border, margin: '13px 2px 0', flexShrink: 0 }} />
+                <div style={{ width: 20, height: 2, background: s.done ? GREEN : 'var(--tz-border)', margin: '13px 2px 0', flexShrink: 0 }} />
               )}
             </div>
           ))}
         </div>
         {totalDuration && (
-          <div style={{ textAlign: 'center', fontSize: 10, color: t.textTertiary, marginTop: 6 }}>
+          <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--tz-textTertiary)', marginTop: 6 }}>
             Total: {totalDuration}
           </div>
         )}
@@ -117,7 +117,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
   ]
 
   return (
-    <div style={{ background: t.bgLight, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: '12px 20px', marginBottom: 12 }}>
+    <div style={{ background: 'var(--tz-bgLight)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: '12px 20px', marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0 }}>
         {oldSteps.map((s, i) => (
           <div key={s.label} style={{ display: 'flex', alignItems: 'center' }}>
@@ -125,15 +125,15 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace",
-                background: s.done ? GREEN : i === activeStep ? BLUE : t.border,
-                color: s.done || i === activeStep ? t.bgLight : GRAY,
+                background: s.done ? GREEN : i === activeStep ? BLUE : 'var(--tz-border)',
+                color: s.done || i === activeStep ? 'var(--tz-bgLight)' : GRAY,
               }}>
                 {s.done ? '\u2713' : i + 1}
               </div>
               <span style={{ fontSize: 9, fontWeight: 600, color: s.done ? GREEN : i === activeStep ? BLUE : GRAY, textTransform: 'uppercase', letterSpacing: '.04em' }}>{s.label}</span>
             </div>
             {i < oldSteps.length - 1 && (
-              <div style={{ width: 40, height: 2, background: s.done ? GREEN : t.border, margin: '0 4px', marginBottom: 16 }} />
+              <div style={{ width: 40, height: 2, background: s.done ? GREEN : 'var(--tz-border)', margin: '0 4px', marginBottom: 16 }} />
             )}
           </div>
         ))}

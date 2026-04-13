@@ -1,0 +1,56 @@
+{
+  "touched": [
+    {
+      "file": "src/app/accounting/page.tsx",
+      "replacements": 2,
+      "movedBlocks": 0
+    },
+    {
+      "file": "src/app/admin/data-requests/page.tsx",
+      "replacements": 2,
+      "movedBlocks": 0
+    },
+    {
+      "file": "src/app/admin/migrate/page.tsx",
+      "replacements": 9,
+      "movedBlocks": 3
+    },
+    {
+      "file": "src/app/dashboard/page.tsx",
+      "replacements": 7,
+      "movedBlocks": 0
+    },
+    {
+      "file": "src/app/floor-manager/quick-assign/page.tsx",
+      "replacements": 40,
+      "movedBlocks": 0
+    },
+    {
+      "file": "src/app/reports/mechanics/page.tsx",
+      "replacements": 22,
+      "movedBlocks": 0
+    },
+    {
+      "file": "src/app/reports/page.tsx",
+      "replacements": 2,
+      "movedBlocks": 1
+    },
+    {
+      "file": "src/app/settings/export/page.tsx",
+      "replacements": 19,
+      "movedBlocks": 0
+    },
+    {
+      "file": "src/app/settings/page.tsx",
+      "replacements": 6,
+      "movedBlocks": 0
+    },
+    {
+      "file": "src/app/settings/permissions/page.tsx",
+      "replacements": 16,
+      "movedBlocks": 0
+    }
+  ],
+  "totalReplacements": 125,
+  "movedBlocks": 4
+}

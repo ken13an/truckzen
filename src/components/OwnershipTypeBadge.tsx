@@ -18,9 +18,9 @@ export default function OwnershipTypeBadge({ type, size = 'md' }: Props) {
   const key = type || 'fleet_asset'
 
   const config: Record<string, { bg: string; color: string; border: string }> = {
-    fleet_asset:      { bg: t.accentBg, color: t.accentLight, border: t.borderAccent },
-    owner_operator:   { bg: t.warningBg, color: t.warning, border: t.warning },
-    outside_customer: { bg: t.surfaceMuted, color: t.textSecondary, border: t.border },
+    fleet_asset:      { bg: 'var(--tz-accentBg)', color: 'var(--tz-accentLight)', border: 'var(--tz-borderAccent)' },
+    owner_operator:   { bg: 'var(--tz-warningBg)', color: 'var(--tz-warning)', border: 'var(--tz-warning)' },
+    outside_customer: { bg: 'var(--tz-surfaceMuted)', color: 'var(--tz-textSecondary)', border: 'var(--tz-border)' },
   }
   const c = config[key] || config.fleet_asset
   const label = LABELS[key] || 'Company Truck'

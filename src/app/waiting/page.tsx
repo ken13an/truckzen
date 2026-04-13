@@ -50,19 +50,19 @@ export default function WaitingPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: t.bg,
+      minHeight: '100vh', background: 'var(--tz-bg)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Instrument Sans', sans-serif", padding: '20px',
     }}>
       <div style={{
         maxWidth: '440px', textAlign: 'center',
-        background: t.bgCard, border: `1px solid ${t.border}`,
+        background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`,
         borderRadius: '16px', padding: '48px 36px',
       }}>
         {/* Logo */}
         <div style={{
           width: '56px', height: '56px', borderRadius: '14px',
-          background: t.accent,
+          background: 'var(--tz-accent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 24px', boxShadow: '0 0 24px rgba(29,111,232,0.3)',
         }}>
@@ -71,11 +71,11 @@ export default function WaitingPage() {
           </svg>
         </div>
 
-        <div style={{ fontSize: '22px', fontWeight: 700, color: t.text, marginBottom: '8px' }}>
+        <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--tz-text)', marginBottom: '8px' }}>
           {userName ? `Hi ${userName}` : 'Almost ready'}
         </div>
 
-        <div style={{ fontSize: '14px', color: t.textSecondary, lineHeight: 1.7, marginBottom: '28px' }}>
+        <div style={{ fontSize: '14px', color: 'var(--tz-textSecondary)', lineHeight: 1.7, marginBottom: '28px' }}>
           Your shop admin is finishing setup. This page will update automatically once TruckZen is ready for you.
         </div>
 
@@ -84,7 +84,7 @@ export default function WaitingPage() {
           {[0, 1, 2].map(i => (
             <div key={i} style={{
               width: '8px', height: '8px', borderRadius: '50%',
-              background: t.accent, opacity: 0.4,
+              background: 'var(--tz-accent)', opacity: 0.4,
               animation: `pulse 1.4s ease-in-out ${i * 0.2}s infinite`,
             }}/>
           ))}
@@ -93,7 +93,7 @@ export default function WaitingPage() {
         <div style={{
           padding: '12px 16px', background: 'rgba(29,111,232,0.06)',
           border: '1px solid rgba(29,111,232,0.15)', borderRadius: '9px',
-          fontSize: '12px', color: t.accentLight, lineHeight: 1.6, marginBottom: '24px',
+          fontSize: '12px', color: 'var(--tz-accentLight)', lineHeight: 1.6, marginBottom: '24px',
         }}>
           Checking every 10 seconds for updates
         </div>
@@ -101,8 +101,8 @@ export default function WaitingPage() {
         <button
           onClick={handleSignOut}
           style={{
-            background: 'none', border: `1px solid ${t.border}`,
-            borderRadius: '8px', padding: '9px 20px', color: t.textTertiary,
+            background: 'none', border: `1px solid ${'var(--tz-border)'}`,
+            borderRadius: '8px', padding: '9px 20px', color: 'var(--tz-textTertiary)',
             fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit',
             transition: 'all 0.14s',
           }}

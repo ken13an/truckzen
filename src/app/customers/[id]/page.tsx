@@ -221,7 +221,7 @@ export default function CustomerProfilePage() {
   // -- Loading state --
   if (loading) {
     return (
-      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: th.textSecondary }}>
+      <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: 'var(--tz-textSecondary)' }}>
         Loading...
       </div>
     )
@@ -229,9 +229,9 @@ export default function CustomerProfilePage() {
 
   if (loadError) {
     return (
-      <div style={{ background: th.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: th.danger, gap: 16 }}>
+      <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif", color: 'var(--tz-danger)', gap: 16 }}>
         <div style={{ fontSize: 15 }}>{loadError}</div>
-        <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', background: th.accent, color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
+        <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
       </div>
     )
   }
@@ -256,7 +256,7 @@ export default function CustomerProfilePage() {
     if (t === 'net15') return { bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
     if (t === 'net30') return { bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
     if (t === 'net60') return { bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
-    return { bg: th.border, color: th.textSecondary }
+    return { bg: 'var(--tz-border)', color: 'var(--tz-textSecondary)' }
   }
 
   const unitTypeBadge = (type: string) => {
@@ -264,7 +264,7 @@ export default function CustomerProfilePage() {
     if (t === 'tractor') return { label: 'TRACTOR', bg: 'rgba(59,130,246,0.15)', color: '#3B82F6' }
     if (t.includes('reefer')) return { label: 'TRAILER-REEFER', bg: 'rgba(245,158,11,0.15)', color: '#F59E0B' }
     if (t.includes('trailer')) return { label: 'TRAILER', bg: 'rgba(139,92,246,0.15)', color: '#8B5CF6' }
-    return { label: t.toUpperCase(), bg: th.border, color: th.textSecondary }
+    return { label: t.toUpperCase(), bg: 'var(--tz-border)', color: 'var(--tz-textSecondary)' }
   }
 
   const woStatusColor = (s: string) => {
@@ -288,16 +288,16 @@ export default function CustomerProfilePage() {
   ]
 
   return (
-    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: "'Inter', sans-serif", padding: 24 }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: "'Inter', sans-serif", padding: 24 }}>
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: th.accent, color: th.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
+        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
           {toast}
         </div>
       )}
 
       {/* Back button */}
-      <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: th.text, textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--tz-border)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={16} strokeWidth={2} /> Customers
       </a>
 
@@ -305,7 +305,7 @@ export default function CustomerProfilePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div style={{ fontSize: 24, fontWeight: 700, color: th.text }}>{customer.company_name || 'Unknown'}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--tz-text)' }}>{customer.company_name || 'Unknown'}</div>
             <SourceBadge source={customer.source} />
             {customer.is_owner_operator && (
               <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(217,119,6,0.15)', color: '#D97706', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
@@ -313,7 +313,7 @@ export default function CustomerProfilePage() {
               </span>
             )}
             {!customer.is_owner_operator && customer.customer_type === 'outside_customer' && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(107,114,128,0.15)', color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 4, background: 'rgba(107,114,128,0.15)', color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.03em' }}>
                 Outside
               </span>
             )}
@@ -330,7 +330,7 @@ export default function CustomerProfilePage() {
                 fontSize: 11,
                 fontWeight: 600,
                 fontFamily: "'Inter', sans-serif",
-                background: th.border,
+                background: 'var(--tz-border)',
                 border: `1px solid ${statusColor(customer.customer_status || 'active')}40`,
                 borderRadius: 6,
                 color: statusColor(customer.customer_status || 'active'),
@@ -339,13 +339,13 @@ export default function CustomerProfilePage() {
                 textTransform: 'uppercase' as const,
               }}
             >
-              <option value="active" style={{ background: th.bgCard, color: th.text }}>Active</option>
-              <option value="inactive" style={{ background: th.bgCard, color: th.text }}>Inactive</option>
-              <option value="blacklisted" style={{ background: th.bgCard, color: th.text }}>Blacklisted</option>
+              <option value="active" style={{ background: 'var(--tz-bgCard)', color: 'var(--tz-text)' }}>Active</option>
+              <option value="inactive" style={{ background: 'var(--tz-bgCard)', color: 'var(--tz-text)' }}>Inactive</option>
+              <option value="blacklisted" style={{ background: 'var(--tz-bgCard)', color: 'var(--tz-text)' }}>Blacklisted</option>
             </select>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: th.textSecondary, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: 'var(--tz-textSecondary)', flexWrap: 'wrap' }}>
             {customer.dot_number && <span>DOT #{customer.dot_number}</span>}
             {customer.dot_number && customer.mc_number && <span style={{ color: '#3A3A4A' }}>|</span>}
             {customer.mc_number && <span>MC #{customer.mc_number}</span>}
@@ -389,9 +389,9 @@ export default function CustomerProfilePage() {
           style={{
             padding: '9px 20px',
             borderRadius: 8,
-            border: `1px solid ${th.border}`,
-            background: th.border,
-            color: th.text,
+            border: `1px solid ${'var(--tz-border)'}`,
+            background: 'var(--tz-border)',
+            color: 'var(--tz-text)',
             fontSize: 13,
             fontWeight: 600,
             cursor: 'pointer',
@@ -410,15 +410,15 @@ export default function CustomerProfilePage() {
           { label: 'Lifetime Spend', value: `$${lifetimeSpend.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
           { label: 'Avg WO Value', value: `$${avgWO.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
         ].map(s => (
-          <div key={s.label} style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: '16px 20px' }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: th.text, fontFamily: "'Inter', sans-serif" }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginTop: 4 }}>{s.label}</div>
+          <div key={s.label} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '16px 20px' }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)', fontFamily: "'Inter', sans-serif" }}>{s.value}</div>
+            <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginTop: 4 }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: `1px solid ${th.border}` }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 24, borderBottom: `1px solid ${'var(--tz-border)'}` }}>
         {tabs.map(t => (
           <button
             key={t.key}
@@ -431,7 +431,7 @@ export default function CustomerProfilePage() {
               background: 'none',
               border: 'none',
               borderBottom: tab === t.key ? '2px solid #3B82F6' : '2px solid transparent',
-              color: tab === t.key ? '#3B82F6' : th.textSecondary,
+              color: tab === t.key ? '#3B82F6' : 'var(--tz-textSecondary)',
               fontFamily: "'Inter', sans-serif",
               marginBottom: -1,
             }}
@@ -443,7 +443,7 @@ export default function CustomerProfilePage() {
 
       {/* ==================== FLEET TAB ==================== */}
       {tab === 'fleet' && (
-        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 20 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <input
               placeholder="Search unit number..."
@@ -451,11 +451,11 @@ export default function CustomerProfilePage() {
               onChange={e => setFleetSearch(e.target.value)}
               style={{
                 padding: '9px 14px',
-                background: th.border,
-                border: `1px solid ${th.border}`,
+                background: 'var(--tz-border)',
+                border: `1px solid ${'var(--tz-border)'}`,
                 borderRadius: 8,
                 fontSize: 12,
-                color: th.text,
+                color: 'var(--tz-text)',
                 outline: 'none',
                 width: 260,
                 fontFamily: "'Inter', sans-serif",
@@ -472,7 +472,7 @@ export default function CustomerProfilePage() {
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                color: th.bgLight,
+                color: 'var(--tz-bgLight)',
                 textDecoration: 'none',
                 fontFamily: "'Inter', sans-serif",
               }}
@@ -482,13 +482,13 @@ export default function CustomerProfilePage() {
           </div>
 
           {filteredUnits.length === 0 ? (
-            <div style={{ color: th.textSecondary, textAlign: 'center', padding: 40, fontSize: 13 }}>No units found</div>
+            <div style={{ color: 'var(--tz-textSecondary)', textAlign: 'center', padding: 40, fontSize: 13 }}>No units found</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
               <thead>
                 <tr>
                   {['Unit #', 'Type', 'Truck Type', 'Year / Make / Model', 'Mileage', 'Status', ''].map(h => (
-                    <th key={h} style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: `1px solid ${th.border}`, fontWeight: 600 }}>{h}</th>
+                    <th key={h} style={{ fontSize: 10, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: `1px solid ${'var(--tz-border)'}`, fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -496,7 +496,7 @@ export default function CustomerProfilePage() {
                 {filteredUnits.map((u: any) => {
                   const badge = unitTypeBadge(u.unit_type)
                   return (
-                    <tr key={u.id} style={{ borderBottom: `1px solid ${th.border}` }}>
+                    <tr key={u.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                       <td style={{ padding: '10px 12px', fontSize: 13 }}>
                         <a href={`/customers/${id}/units/${u.id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
                           #{u.unit_number}
@@ -510,14 +510,14 @@ export default function CustomerProfilePage() {
                       <td style={{ padding: '10px 12px' }}>
                         <OwnershipTypeBadge type={u.is_owner_operator ? 'owner_operator' : u.ownership_type} size="sm" dark />
                       </td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>
                         {[u.year, u.make, u.model].filter(Boolean).join(' ') || '\u2014'}
                       </td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary, fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)', fontVariantNumeric: 'tabular-nums' }}>
                         {u.odometer ? u.odometer.toLocaleString() : '\u2014'}
                       </td>
                       <td style={{ padding: '10px 12px' }}>
-                        <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, color: u.status === 'on_road' ? '#22C55E' : u.status === 'in_shop' ? '#F59E0B' : th.textSecondary }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase' as const, color: u.status === 'on_road' ? '#22C55E' : u.status === 'in_shop' ? '#F59E0B' : 'var(--tz-textSecondary)' }}>
                           {u.status?.replace(/_/g, ' ') || 'unknown'}
                         </span>
                       </td>
@@ -540,9 +540,9 @@ export default function CustomerProfilePage() {
 
       {/* ==================== WORK ORDERS TAB ==================== */}
       {tab === 'work-orders' && (
-        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 20 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: th.text }}>Service History ({woCount})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Service History ({woCount})</div>
             <a
               href={getNewWorkorderRoute({ customer: id as string })}
               style={{
@@ -554,7 +554,7 @@ export default function CustomerProfilePage() {
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                color: th.bgLight,
+                color: 'var(--tz-bgLight)',
                 textDecoration: 'none',
                 fontFamily: "'Inter', sans-serif",
               }}
@@ -564,7 +564,7 @@ export default function CustomerProfilePage() {
           </div>
 
           {workOrders.length === 0 ? (
-            <div style={{ color: th.textSecondary, textAlign: 'center', padding: 40, fontSize: 13 }}>No work orders yet</div>
+            <div style={{ color: 'var(--tz-textSecondary)', textAlign: 'center', padding: 40, fontSize: 13 }}>No work orders yet</div>
           ) : (() => {
             const sorted = [...workOrders].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             const totalPages = Math.ceil(sorted.length / woPerPage)
@@ -575,22 +575,22 @@ export default function CustomerProfilePage() {
                   <thead>
                     <tr>
                       {['WO #', 'Unit', 'Status', 'Created', 'Total'].map(h => (
-                        <th key={h} style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: `1px solid ${th.border}`, fontWeight: 600 }}>{h}</th>
+                        <th key={h} style={{ fontSize: 10, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: `1px solid ${'var(--tz-border)'}`, fontWeight: 600 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {paginated.map((wo: any) => (
-                      <tr key={wo.id} style={{ borderBottom: `1px solid ${th.border}`, cursor: 'pointer' }} onClick={() => router.push(getWorkorderRoute(wo.id, undefined, 'customer'))}>
+                      <tr key={wo.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer' }} onClick={() => router.push(getWorkorderRoute(wo.id, undefined, 'customer'))}>
                         <td style={{ padding: '10px 12px', fontSize: 13 }}>
                           <a href={getWorkorderRoute(wo.id, undefined, 'customer')} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 700 }} onClick={e => e.stopPropagation()}>
                             {wo.so_number}
                           </a>
                           {wo.is_historical && (
-                            <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: th.textSecondary, fontSize: 9, fontWeight: 600, textTransform: 'uppercase' as const }}>Historical</span>
+                            <span style={{ marginLeft: 6, padding: '1px 6px', borderRadius: 4, background: 'rgba(124,139,160,0.1)', color: 'var(--tz-textSecondary)', fontSize: 9, fontWeight: 600, textTransform: 'uppercase' as const }}>Historical</span>
                           )}
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>
                           {(wo.assets as any)?.unit_number ? `#${(wo.assets as any).unit_number}` : '\u2014'}
                         </td>
                         <td style={{ padding: '10px 12px' }}>
@@ -598,10 +598,10 @@ export default function CustomerProfilePage() {
                             {wo.status?.replace(/_/g, ' ')}
                           </span>
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>
                           {wo.created_at ? new Date(wo.created_at).toLocaleDateString() : '\u2014'}
                         </td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: th.text, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-text)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                           ${(wo.grand_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
@@ -609,11 +609,11 @@ export default function CustomerProfilePage() {
                   </tbody>
                 </table>
                 {totalPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 12, color: th.textSecondary }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 12, color: 'var(--tz-textSecondary)' }}>
                     <button
                       disabled={woPage <= 1}
                       onClick={() => setWoPage(p => Math.max(1, p - 1))}
-                      style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${th.border}`, background: th.border, color: th.text, cursor: woPage <= 1 ? 'default' : 'pointer', opacity: woPage <= 1 ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-border)', color: 'var(--tz-text)', cursor: woPage <= 1 ? 'default' : 'pointer', opacity: woPage <= 1 ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
                     >
                       Prev
                     </button>
@@ -621,7 +621,7 @@ export default function CustomerProfilePage() {
                     <button
                       disabled={woPage >= totalPages}
                       onClick={() => setWoPage(p => Math.min(totalPages, p + 1))}
-                      style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${th.border}`, background: th.border, color: th.text, cursor: woPage >= totalPages ? 'default' : 'pointer', opacity: woPage >= totalPages ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-border)', color: 'var(--tz-text)', cursor: woPage >= totalPages ? 'default' : 'pointer', opacity: woPage >= totalPages ? 0.4 : 1, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600 }}
                     >
                       Next
                     </button>
@@ -635,9 +635,9 @@ export default function CustomerProfilePage() {
 
       {/* ==================== CONTACTS TAB ==================== */}
       {tab === 'contacts' && (
-        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 20 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: th.text }}>Contacts ({contacts.length})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Contacts ({contacts.length})</div>
             <button
               onClick={() => {
                 setContactForm({ name: '', role: '', phone: '', email: '', is_primary: false })
@@ -653,7 +653,7 @@ export default function CustomerProfilePage() {
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                color: th.bgLight,
+                color: 'var(--tz-bgLight)',
                 border: 'none',
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
@@ -664,21 +664,21 @@ export default function CustomerProfilePage() {
           </div>
 
           {contacts.length === 0 ? (
-            <div style={{ color: th.textSecondary, textAlign: 'center', padding: 40, fontSize: 13 }}>No contacts yet</div>
+            <div style={{ color: 'var(--tz-textSecondary)', textAlign: 'center', padding: 40, fontSize: 13 }}>No contacts yet</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {contacts.map((c: any) => (
-                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', background: th.border, borderRadius: 8, border: `1px solid ${th.border}` }}>
+                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', background: 'var(--tz-border)', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}` }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: th.text }}>{c.name}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>{c.name}</span>
                       {c.is_primary && (
                         <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(59,130,246,0.15)', color: '#3B82F6', textTransform: 'uppercase' as const }}>
                           Primary
                         </span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: 16, marginTop: 4, fontSize: 12, color: th.textSecondary }}>
+                    <div style={{ display: 'flex', gap: 16, marginTop: 4, fontSize: 12, color: 'var(--tz-textSecondary)' }}>
                       {c.role && <span>{c.role}</span>}
                       {c.phone && <span>{c.phone}</span>}
                       {c.email && <span>{c.email}</span>}
@@ -691,14 +691,14 @@ export default function CustomerProfilePage() {
                         setEditingContactId(c.id)
                         setContactModal(true)
                       }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textSecondary)', padding: 4 }}
                       title="Edit contact"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => deleteContact(c.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textSecondary)', padding: 4 }}
                       title="Delete contact"
                     >
                       <Trash2 size={14} />
@@ -713,38 +713,38 @@ export default function CustomerProfilePage() {
 
       {/* ==================== BILLING TAB ==================== */}
       {tab === 'billing' && (
-        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: th.text, marginBottom: 20 }}>Billing Settings</div>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 20 }}>Billing Settings</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Payment Terms</label>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Payment Terms</label>
               <select
                 value={customer.payment_terms || ''}
                 onChange={e => updateField('payment_terms', e.target.value)}
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: th.border,
-                  border: `1px solid ${th.border}`,
+                  background: 'var(--tz-border)',
+                  border: `1px solid ${'var(--tz-border)'}`,
                   borderRadius: 8,
                   fontSize: 13,
-                  color: th.text,
+                  color: 'var(--tz-text)',
                   outline: 'none',
                   fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer',
                 }}
               >
-                <option value="" style={{ background: th.bgCard }}>Select...</option>
-                <option value="cod" style={{ background: th.bgCard }}>COD</option>
-                <option value="net15" style={{ background: th.bgCard }}>Net 15</option>
-                <option value="net30" style={{ background: th.bgCard }}>Net 30</option>
-                <option value="net60" style={{ background: th.bgCard }}>Net 60</option>
+                <option value="" style={{ background: 'var(--tz-bgCard)' }}>Select...</option>
+                <option value="cod" style={{ background: 'var(--tz-bgCard)' }}>COD</option>
+                <option value="net15" style={{ background: 'var(--tz-bgCard)' }}>Net 15</option>
+                <option value="net30" style={{ background: 'var(--tz-bgCard)' }}>Net 30</option>
+                <option value="net60" style={{ background: 'var(--tz-bgCard)' }}>Net 60</option>
               </select>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Credit Limit</label>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Credit Limit</label>
               <input
                 type="number"
                 defaultValue={customer.credit_limit || ''}
@@ -756,11 +756,11 @@ export default function CustomerProfilePage() {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  background: th.border,
-                  border: `1px solid ${th.border}`,
+                  background: 'var(--tz-border)',
+                  border: `1px solid ${'var(--tz-border)'}`,
                   borderRadius: 8,
                   fontSize: 13,
-                  color: th.text,
+                  color: 'var(--tz-text)',
                   outline: 'none',
                   fontFamily: "'Inter', sans-serif",
                   boxSizing: 'border-box' as const,
@@ -771,17 +771,17 @@ export default function CustomerProfilePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Default Truck Type</label>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 6, fontWeight: 600 }}>Default Truck Type</label>
               <select
                 value={customer.default_ownership_type || 'fleet_asset'}
                 onChange={e => updateField('default_ownership_type', e.target.value)}
-                style={{ width: '100%', padding: '10px 14px', background: th.border, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: "'Inter', sans-serif", appearance: 'none' as const, boxSizing: 'border-box' as const }}
+                style={{ width: '100%', padding: '10px 14px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', outline: 'none', fontFamily: "'Inter', sans-serif", appearance: 'none' as const, boxSizing: 'border-box' as const }}
               >
-                <option value="fleet_asset" style={{ background: th.bgCard }}>Company Truck</option>
-                <option value="owner_operator" style={{ background: th.bgCard }}>Owner Operator</option>
-                <option value="outside_customer" style={{ background: th.bgCard }}>Outside Customer</option>
+                <option value="fleet_asset" style={{ background: 'var(--tz-bgCard)' }}>Company Truck</option>
+                <option value="owner_operator" style={{ background: 'var(--tz-bgCard)' }}>Owner Operator</option>
+                <option value="outside_customer" style={{ background: 'var(--tz-bgCard)' }}>Outside Customer</option>
               </select>
-              <div style={{ fontSize: 10, color: th.textTertiary, marginTop: 4 }}>Changing this does not update existing trucks — only new trucks added after this change</div>
+              <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', marginTop: 4 }}>Changing this does not update existing trucks — only new trucks added after this change</div>
             </div>
           </div>
         </div>
@@ -789,9 +789,9 @@ export default function CustomerProfilePage() {
 
       {/* ==================== DOCUMENTS TAB ==================== */}
       {tab === 'documents' && (
-        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 20 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: th.text }}>Documents ({documents.length})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Documents ({documents.length})</div>
             <button
               onClick={() => fileInputRef.current?.click()}
               style={{
@@ -803,7 +803,7 @@ export default function CustomerProfilePage() {
                 borderRadius: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                color: th.bgLight,
+                color: 'var(--tz-bgLight)',
                 border: 'none',
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
@@ -824,22 +824,22 @@ export default function CustomerProfilePage() {
           </div>
 
           {documents.length === 0 ? (
-            <div style={{ color: th.textSecondary, textAlign: 'center', padding: 40, fontSize: 13 }}>No documents uploaded yet</div>
+            <div style={{ color: 'var(--tz-textSecondary)', textAlign: 'center', padding: 40, fontSize: 13 }}>No documents uploaded yet</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
               <thead>
                 <tr>
                   {['Filename', 'Type', 'Date', ''].map(h => (
-                    <th key={h} style={{ fontSize: 10, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: `1px solid ${th.border}`, fontWeight: 600 }}>{h}</th>
+                    <th key={h} style={{ fontSize: 10, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', padding: '8px 12px', textAlign: 'left' as const, borderBottom: `1px solid ${'var(--tz-border)'}`, fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {documents.map((doc: any) => (
-                  <tr key={doc.id} style={{ borderBottom: `1px solid ${th.border}` }}>
-                    <td style={{ padding: '10px 12px', fontSize: 13, color: th.text, fontWeight: 600 }}>{doc.filename}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>{doc.file_type || '\u2014'}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 12, color: th.textSecondary }}>
+                  <tr key={doc.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                    <td style={{ padding: '10px 12px', fontSize: 13, color: 'var(--tz-text)', fontWeight: 600 }}>{doc.filename}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>{doc.file_type || '\u2014'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>
                       {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '\u2014'}
                     </td>
                     <td style={{ padding: '10px 12px', textAlign: 'right' as const }}>
@@ -853,7 +853,7 @@ export default function CustomerProfilePage() {
                         </button>
                         <button
                           onClick={() => deleteDocument(doc)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textSecondary)', padding: 4 }}
                           title="Delete"
                         >
                           <Trash2 size={14} />
@@ -870,19 +870,19 @@ export default function CustomerProfilePage() {
 
       {/* ==================== PARTS TAB ==================== */}
       {tab === 'parts' && (
-        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 24 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: th.text, marginBottom: 16 }}>Pricing Tier</div>
-          <div style={{ fontSize: 12, color: th.textSecondary, marginBottom: 16, lineHeight: 1.6 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 16 }}>Pricing Tier</div>
+          <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 16, lineHeight: 1.6 }}>
             Determines which price level is used when parts are quoted for this customer&apos;s work orders.
           </div>
 
           {/* Current tier badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-            <span style={{ fontSize: 12, color: th.textSecondary }}>Current tier:</span>
+            <span style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>Current tier:</span>
             <span style={{
               padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 700,
               background: customer.pricing_tier === 'ugl_company' ? 'rgba(59,130,246,0.15)' : customer.pricing_tier === 'ugl_owner_operator' ? 'rgba(245,158,11,0.15)' : 'rgba(107,114,128,0.15)',
-              color: customer.pricing_tier === 'ugl_company' ? '#3B82F6' : customer.pricing_tier === 'ugl_owner_operator' ? '#F59E0B' : th.textSecondary,
+              color: customer.pricing_tier === 'ugl_company' ? '#3B82F6' : customer.pricing_tier === 'ugl_owner_operator' ? '#F59E0B' : 'var(--tz-textSecondary)',
               textTransform: 'uppercase' as const, letterSpacing: '.03em',
             }}>
               {customer.pricing_tier === 'ugl_company' ? 'UGL Company' : customer.pricing_tier === 'ugl_owner_operator' ? 'UGL Owner Operator' : 'Outside Customer'}
@@ -908,13 +908,13 @@ export default function CustomerProfilePage() {
               }}
               style={{
                 padding: '8px 14px', fontSize: 12, borderRadius: 8,
-                background: th.border, border: `1px solid ${th.border}`,
-                color: th.text, fontFamily: "'Inter', sans-serif", cursor: 'pointer', outline: 'none',
+                background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`,
+                color: 'var(--tz-text)', fontFamily: "'Inter', sans-serif", cursor: 'pointer', outline: 'none',
               }}
             >
-              <option value="ugl_company" style={{ background: th.bgCard }}>UGL Company</option>
-              <option value="ugl_owner_operator" style={{ background: th.bgCard }}>UGL Owner Operator</option>
-              <option value="outside" style={{ background: th.bgCard }}>Outside Customer</option>
+              <option value="ugl_company" style={{ background: 'var(--tz-bgCard)' }}>UGL Company</option>
+              <option value="ugl_owner_operator" style={{ background: 'var(--tz-bgCard)' }}>UGL Owner Operator</option>
+              <option value="outside" style={{ background: 'var(--tz-bgCard)' }}>Outside Customer</option>
             </select>
           </div>
 
@@ -923,17 +923,17 @@ export default function CustomerProfilePage() {
             {[
               { tier: 'ugl_company', label: 'UGL Company', desc: 'Company-owned trucks on UGL account', color: '#3B82F6' },
               { tier: 'ugl_owner_operator', label: 'UGL Owner Operator', desc: 'Independent operators under UGL', color: '#F59E0B' },
-              { tier: 'outside', label: 'Outside Customer', desc: 'Standard outside customer pricing', color: th.textSecondary },
+              { tier: 'outside', label: 'Outside Customer', desc: 'Standard outside customer pricing', color: 'var(--tz-textSecondary)' },
             ].map(t => (
               <div key={t.tier} style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 8,
-                background: customer.pricing_tier === t.tier ? th.border : 'transparent',
+                background: customer.pricing_tier === t.tier ? 'var(--tz-border)' : 'transparent',
                 border: customer.pricing_tier === t.tier ? `1px solid ${t.color}30` : '1px solid transparent',
               }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: th.text }}>{t.label}</div>
-                  <div style={{ fontSize: 11, color: th.textSecondary }}>{t.desc}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-text)' }}>{t.label}</div>
+                  <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)' }}>{t.desc}</div>
                 </div>
                 {customer.pricing_tier === t.tier && (
                   <span style={{ marginLeft: 'auto', fontSize: 10, color: t.color, fontWeight: 700 }}>ACTIVE</span>
@@ -947,10 +947,10 @@ export default function CustomerProfilePage() {
       {/* ==================== EDIT COMPANY MODAL ==================== */}
       {editModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditModal(false)}>
-          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '85vh', overflowY: 'auto' as const }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '85vh', overflowY: 'auto' as const }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: th.text }}>Edit Customer</div>
-              <button onClick={() => setEditModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}><X size={18} /></button>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)' }}>Edit Customer</div>
+              <button onClick={() => setEditModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textSecondary)', padding: 4 }}><X size={18} /></button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
@@ -963,18 +963,18 @@ export default function CustomerProfilePage() {
                 { key: 'mc_number', label: 'MC #' },
               ].map(f => (
                 <div key={f.key}>
-                  <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
                   <input
                     value={editForm[f.key] || ''}
                     onChange={e => setEditForm((p: any) => ({ ...p, [f.key]: e.target.value }))}
                     style={{
                       width: '100%',
                       padding: '9px 12px',
-                      background: th.border,
-                      border: `1px solid ${th.border}`,
+                      background: 'var(--tz-border)',
+                      border: `1px solid ${'var(--tz-border)'}`,
                       borderRadius: 8,
                       fontSize: 13,
-                      color: th.text,
+                      color: 'var(--tz-text)',
                       outline: 'none',
                       fontFamily: "'Inter', sans-serif",
                       boxSizing: 'border-box' as const,
@@ -985,18 +985,18 @@ export default function CustomerProfilePage() {
             </div>
 
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Address</label>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Address</label>
               <input
                 value={editForm.address || ''}
                 onChange={e => setEditForm((p: any) => ({ ...p, address: e.target.value }))}
                 style={{
                   width: '100%',
                   padding: '9px 12px',
-                  background: th.border,
-                  border: `1px solid ${th.border}`,
+                  background: 'var(--tz-border)',
+                  border: `1px solid ${'var(--tz-border)'}`,
                   borderRadius: 8,
                   fontSize: 13,
-                  color: th.text,
+                  color: 'var(--tz-text)',
                   outline: 'none',
                   fontFamily: "'Inter', sans-serif",
                   boxSizing: 'border-box' as const,
@@ -1005,7 +1005,7 @@ export default function CustomerProfilePage() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Notes</label>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>Notes</label>
               <textarea
                 value={editForm.notes || ''}
                 onChange={e => setEditForm((p: any) => ({ ...p, notes: e.target.value }))}
@@ -1013,11 +1013,11 @@ export default function CustomerProfilePage() {
                 style={{
                   width: '100%',
                   padding: '9px 12px',
-                  background: th.border,
-                  border: `1px solid ${th.border}`,
+                  background: 'var(--tz-border)',
+                  border: `1px solid ${'var(--tz-border)'}`,
                   borderRadius: 8,
                   fontSize: 13,
-                  color: th.text,
+                  color: 'var(--tz-text)',
                   outline: 'none',
                   fontFamily: "'Inter', sans-serif",
                   boxSizing: 'border-box' as const,
@@ -1034,7 +1034,7 @@ export default function CustomerProfilePage() {
                   height: 20,
                   borderRadius: 10,
                   border: 'none',
-                  background: editForm.is_owner_operator ? '#D97706' : th.border,
+                  background: editForm.is_owner_operator ? '#D97706' : 'var(--tz-border)',
                   cursor: 'pointer',
                   position: 'relative' as const,
                   transition: 'background 0.2s',
@@ -1044,27 +1044,27 @@ export default function CustomerProfilePage() {
                   width: 14,
                   height: 14,
                   borderRadius: 7,
-                  background: th.bgLight,
+                  background: 'var(--tz-bgLight)',
                   position: 'absolute' as const,
                   top: 3,
                   left: editForm.is_owner_operator ? 19 : 3,
                   transition: 'left 0.2s',
                 }} />
               </button>
-              <span style={{ fontSize: 12, color: th.text }}>Owner Operator</span>
+              <span style={{ fontSize: 12, color: 'var(--tz-text)' }}>Owner Operator</span>
             </div>
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setEditModal(false)}
-                style={{ padding: '9px 18px', borderRadius: 8, border: `1px solid ${th.border}`, background: 'transparent', color: th.textSecondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+                style={{ padding: '9px 18px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'transparent', color: 'var(--tz-textSecondary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
               >
                 Cancel
               </button>
               <button
                 onClick={saveEdit}
                 disabled={saving}
-                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3B82F6', color: th.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: saving ? 0.6 : 1 }}
+                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3B82F6', color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: saving ? 0.6 : 1 }}
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -1075,10 +1075,10 @@ export default function CustomerProfilePage() {
 
       {/* ADDITIONAL INFO (external_data) */}
       {customer.external_data && typeof customer.external_data === 'object' && Object.keys(customer.external_data).length > 0 && (
-        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginTop: 12 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginTop: 12 }}>
           <button
             onClick={() => setShowExternalData(!showExternalData)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: th.text, display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', display: 'flex', alignItems: 'center', gap: 6, padding: 0 }}
           >
             <span style={{ transform: showExternalData ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', display: 'inline-block' }}>&#9654;</span>
             Additional Info
@@ -1087,8 +1087,8 @@ export default function CustomerProfilePage() {
             <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {Object.entries(customer.external_data).map(([key, val]) => (
                 <div key={key} style={{ fontSize: 12 }}>
-                  <span style={{ color: th.textSecondary, fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
-                  <span style={{ color: th.text }}>{val != null ? String(val) : '\u2014'}</span>
+                  <span style={{ color: 'var(--tz-textSecondary)', fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
+                  <span style={{ color: 'var(--tz-text)' }}>{val != null ? String(val) : '\u2014'}</span>
                 </div>
               ))}
             </div>
@@ -1099,10 +1099,10 @@ export default function CustomerProfilePage() {
       {/* ==================== CONTACT MODAL ==================== */}
       {contactModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setContactModal(false)}>
-          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 24, width: 440, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 24, width: 440, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: th.text }}>{editingContactId ? 'Edit Contact' : 'Add Contact'}</div>
-              <button onClick={() => setContactModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: th.textSecondary, padding: 4 }}><X size={18} /></button>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)' }}>{editingContactId ? 'Edit Contact' : 'Add Contact'}</div>
+              <button onClick={() => setContactModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--tz-textSecondary)', padding: 4 }}><X size={18} /></button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1113,7 +1113,7 @@ export default function CustomerProfilePage() {
                 { key: 'email', label: 'Email', type: 'email' },
               ].map(f => (
                 <div key={f.key}>
-                  <label style={{ display: 'block', fontSize: 11, color: th.textSecondary, textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, letterSpacing: '.05em', marginBottom: 4, fontWeight: 600 }}>{f.label}</label>
                   <input
                     type={f.type}
                     value={contactForm[f.key] || ''}
@@ -1121,11 +1121,11 @@ export default function CustomerProfilePage() {
                     style={{
                       width: '100%',
                       padding: '9px 12px',
-                      background: th.border,
-                      border: `1px solid ${th.border}`,
+                      background: 'var(--tz-border)',
+                      border: `1px solid ${'var(--tz-border)'}`,
                       borderRadius: 8,
                       fontSize: 13,
-                      color: th.text,
+                      color: 'var(--tz-text)',
                       outline: 'none',
                       fontFamily: "'Inter', sans-serif",
                       boxSizing: 'border-box' as const,
@@ -1142,7 +1142,7 @@ export default function CustomerProfilePage() {
                     height: 20,
                     borderRadius: 10,
                     border: 'none',
-                    background: contactForm.is_primary ? '#3B82F6' : th.border,
+                    background: contactForm.is_primary ? '#3B82F6' : 'var(--tz-border)',
                     cursor: 'pointer',
                     position: 'relative' as const,
                     transition: 'background 0.2s',
@@ -1152,28 +1152,28 @@ export default function CustomerProfilePage() {
                     width: 14,
                     height: 14,
                     borderRadius: 7,
-                    background: th.bgLight,
+                    background: 'var(--tz-bgLight)',
                     position: 'absolute' as const,
                     top: 3,
                     left: contactForm.is_primary ? 19 : 3,
                     transition: 'left 0.2s',
                   }} />
                 </button>
-                <span style={{ fontSize: 12, color: th.text }}>Primary contact</span>
+                <span style={{ fontSize: 12, color: 'var(--tz-text)' }}>Primary contact</span>
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
               <button
                 onClick={() => setContactModal(false)}
-                style={{ padding: '9px 18px', borderRadius: 8, border: `1px solid ${th.border}`, background: 'transparent', color: th.textSecondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+                style={{ padding: '9px 18px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'transparent', color: 'var(--tz-textSecondary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
               >
                 Cancel
               </button>
               <button
                 onClick={saveContact}
                 disabled={saving || !contactForm.name}
-                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3B82F6', color: th.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: (saving || !contactForm.name) ? 0.5 : 1 }}
+                style={{ padding: '9px 18px', borderRadius: 8, border: 'none', background: '#3B82F6', color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", opacity: (saving || !contactForm.name) ? 0.5 : 1 }}
               >
                 {saving ? 'Saving...' : editingContactId ? 'Update' : 'Add Contact'}
               </button>

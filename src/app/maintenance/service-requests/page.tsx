@@ -62,30 +62,30 @@ export default function MaintenanceServiceRequestsPage() {
   if (!user) return null
 
   return (
-    <div style={{ padding: 32, maxWidth: 1200, background: t.bg, minHeight: '100vh', color: t.text }}>
+    <div style={{ padding: 32, maxWidth: 1200, background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: t.text, margin: 0 }}>Service Requests</h1>
-          <p style={{ fontSize: 13, color: t.textSecondary, margin: '4px 0 0' }}>Maintenance department service requests</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)', margin: 0 }}>Service Requests</h1>
+          <p style={{ fontSize: 13, color: 'var(--tz-textSecondary)', margin: '4px 0 0' }}>Maintenance department service requests</p>
         </div>
         <a href="/service-requests/new" style={{
-          background: '#F59E0B', color: t.bgInput, padding: '8px 16px', borderRadius: 8,
+          background: '#F59E0B', color: 'var(--tz-bgInput)', padding: '8px 16px', borderRadius: 8,
           fontSize: 13, fontWeight: 600, textDecoration: 'none',
         }}>+ New Request</a>
       </div>
 
       {loading ? (
-        <p style={{ color: t.textSecondary }}>Loading...</p>
+        <p style={{ color: 'var(--tz-textSecondary)' }}>Loading...</p>
       ) : requests.length === 0 ? (
-        <p style={{ color: t.textSecondary }}>No service requests found.</p>
+        <p style={{ color: 'var(--tz-textSecondary)' }}>No service requests found.</p>
       ) : (
         <>
-          <div style={{ background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, border: `1px solid ${'var(--tz-border)'}`, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                   {['Request', 'Unit', 'Urgency', 'Status', 'Created'].map(h => (
-                    <th key={h} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textAlign: 'left', textTransform: 'uppercase', letterSpacing: '.05em' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '.05em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -94,16 +94,16 @@ export default function MaintenanceServiceRequestsPage() {
                   const urg = URGENCY[r.urgency] || URGENCY.normal
                   const st = STATUS[r.status] || STATUS.pending
                   return (
-                    <tr key={r.id} style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <td style={{ padding: '10px 16px', fontSize: 13, color: t.text }}>{r.title || r.description?.slice(0, 50) || '—'}</td>
-                      <td style={{ padding: '10px 16px', fontSize: 13, color: t.textSecondary }}>{r.unit_number || '—'}</td>
+                    <tr key={r.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                      <td style={{ padding: '10px 16px', fontSize: 13, color: 'var(--tz-text)' }}>{r.title || r.description?.slice(0, 50) || '—'}</td>
+                      <td style={{ padding: '10px 16px', fontSize: 13, color: 'var(--tz-textSecondary)' }}>{r.unit_number || '—'}</td>
                       <td style={{ padding: '10px 16px' }}>
                         <span style={{ fontSize: 10, fontWeight: 700, color: urg.color, background: urg.bg, padding: '2px 8px', borderRadius: 4 }}>{urg.label}</span>
                       </td>
                       <td style={{ padding: '10px 16px' }}>
                         <span style={{ fontSize: 10, fontWeight: 700, color: st.color, background: st.bg, padding: '2px 8px', borderRadius: 4 }}>{st.label}</span>
                       </td>
-                      <td style={{ padding: '10px 16px', fontSize: 12, color: t.textTertiary }}>{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td style={{ padding: '10px 16px', fontSize: 12, color: 'var(--tz-textTertiary)' }}>{new Date(r.created_at).toLocaleDateString()}</td>
                     </tr>
                   )
                 })}

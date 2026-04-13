@@ -69,7 +69,7 @@ export default function RepairDetailPage() {
     setLines(l => l.filter(x => x.id !== id))
   }
 
-  if (loading) return <div style={{ background: th.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const asset = repair.assets || {}
   const driver = repair.maint_drivers || {}
@@ -77,25 +77,25 @@ export default function RepairDetailPage() {
   const nextStatus = STATUS_FLOW[STATUS_FLOW.indexOf(repair.status) + 1]
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, padding: 16, marginBottom: 12 },
-    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: th.textTertiary },
-    val: { fontSize: 13, color: th.text, fontWeight: 600 },
+    card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 12 },
+    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'var(--tz-textTertiary)' },
+    val: { fontSize: 13, color: 'var(--tz-text)', fontWeight: 600 },
   }
 
   const tabs = ['overview', 'lines', 'files'] as const
 
   return (
-    <div style={{ background: th.bg, minHeight: '100vh', color: th.text, fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: th.text }}>{repair.repair_number || 'Repair'}</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)' }}>{repair.repair_number || 'Repair'}</div>
           <div style={{ fontSize: 13, color: MUTED }}>#{asset.unit_number} {asset.year} {asset.make} {asset.model}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: `${stColor[repair.status] || MUTED}18`, color: stColor[repair.status] || MUTED, textTransform: 'uppercase' }}>{repair.status?.replace(/_/g, ' ')}</span>
           {nextStatus && (
-            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: th.accent, border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+            <button onClick={() => updateStatus(nextStatus)} disabled={saving} style={{ padding: '6px 14px', background: 'var(--tz-accent)', border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
               {saving ? '...' : `Mark ${nextStatus.replace(/_/g, ' ')}`}
             </button>
           )}
@@ -103,11 +103,11 @@ export default function RepairDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: `1px solid ${th.border}` }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderBottom: `1px solid ${'var(--tz-border)'}` }}>
         {tabs.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${th.accent}` : '2px solid transparent',
-            color: tab === t ? th.text : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
+            padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === t ? `2px solid ${'var(--tz-accent)'}` : '2px solid transparent',
+            color: tab === t ? 'var(--tz-text)' : MUTED, fontSize: 12, fontWeight: tab === t ? 700 : 400, cursor: 'pointer', fontFamily: FONT, textTransform: 'capitalize',
           }}>{t === 'lines' ? 'Line Items' : t}</button>
         ))}
       </div>
@@ -121,21 +121,21 @@ export default function RepairDetailPage() {
                 <div><div style={S.label}>Driver</div><div style={S.val}>{driver.full_name || '—'}</div></div>
                 <div><div style={S.label}>Vendor</div><div style={S.val}>{vendor.name || '—'}</div></div>
               </div>
-              <div style={{ marginBottom: 12 }}><div style={S.label}>Location</div><div style={{ fontSize: 13, color: th.text, marginTop: 4 }}>{repair.location_description || '—'}</div></div>
-              <div style={{ marginBottom: 12 }}><div style={S.label}>Description</div><div style={{ fontSize: 13, color: th.text, marginTop: 4 }}>{repair.description || '—'}</div></div>
+              <div style={{ marginBottom: 12 }}><div style={S.label}>Location</div><div style={{ fontSize: 13, color: 'var(--tz-text)', marginTop: 4 }}>{repair.location_description || '—'}</div></div>
+              <div style={{ marginBottom: 12 }}><div style={S.label}>Description</div><div style={{ fontSize: 13, color: 'var(--tz-text)', marginTop: 4 }}>{repair.description || '—'}</div></div>
               {repair.notes && <div><div style={S.label}>Notes</div><div style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>{repair.notes}</div></div>}
             </div>
           </div>
           <div style={S.card}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 12 }}>Cost Summary</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Cost Summary</div>
             {[
               { label: 'Parts', val: repair.parts_cost },
               { label: 'Labor', val: repair.labor_cost },
               { label: 'Total', val: repair.total_cost },
             ].map(r => (
-              <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${th.border}`, fontSize: 12 }}>
-                <span style={{ color: th.textTertiary }}>{r.label}</span>
-                <span style={{ fontFamily: MONO, fontWeight: r.label === 'Total' ? 700 : 400, color: r.label === 'Total' ? th.text : th.text }}>${(r.val || 0).toFixed(2)}</span>
+              <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 12 }}>
+                <span style={{ color: 'var(--tz-textTertiary)' }}>{r.label}</span>
+                <span style={{ fontFamily: MONO, fontWeight: r.label === 'Total' ? 700 : 400, color: r.label === 'Total' ? 'var(--tz-text)' : 'var(--tz-text)' }}>${(r.val || 0).toFixed(2)}</span>
               </div>
             ))}
             <div style={{ marginTop: 12 }}><div style={S.label}>Reported</div><div style={{ fontSize: 12, color: MUTED }}>{repair.reported_date ? new Date(repair.reported_date).toLocaleDateString() : '—'}</div></div>
@@ -147,25 +147,25 @@ export default function RepairDetailPage() {
       {tab === 'lines' && (
         <div style={S.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: th.text }}>Line Items ({lines.length})</div>
-            <button onClick={addLine} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 6, color: th.accentLight, fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)' }}>Line Items ({lines.length})</div>
+            <button onClick={addLine} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'rgba(29,111,232,.1)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 6, color: 'var(--tz-accentLight)', fontSize: 11, cursor: 'pointer', fontFamily: FONT }}>
               <Plus size={12} /> Add
             </button>
           </div>
           {lines.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 20, color: th.textTertiary, fontSize: 12 }}>No line items yet</div>
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--tz-textTertiary)', fontSize: 12 }}>No line items yet</div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>{['Type', 'Description', 'Part #', 'Qty', 'Unit Cost', 'Total', ''].map(h => (
-                  <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: th.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: th.bgInput }}>{h}</th>
+                  <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: 'var(--tz-bgInput)' }}>{h}</th>
                 ))}</tr>
               </thead>
               <tbody>
                 {lines.map(l => (
                   <tr key={l.id}>
                     <td style={{ padding: '8px', fontSize: 10, color: MUTED, textTransform: 'uppercase' }}>{l.line_type}</td>
-                    <td style={{ padding: '8px', fontSize: 12, color: th.text }}>{l.description}</td>
+                    <td style={{ padding: '8px', fontSize: 12, color: 'var(--tz-text)' }}>{l.description}</td>
                     <td style={{ padding: '8px', fontSize: 10, fontFamily: MONO, color: MUTED }}>{l.part_number || '—'}</td>
                     <td style={{ padding: '8px', fontSize: 12, fontFamily: MONO }}>{l.quantity}</td>
                     <td style={{ padding: '8px', fontSize: 12, fontFamily: MONO }}>${(l.unit_cost || 0).toFixed(2)}</td>
@@ -183,9 +183,9 @@ export default function RepairDetailPage() {
 
       {tab === 'files' && (
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: th.text, marginBottom: 12 }}>Files & Invoices</div>
-          <div style={{ textAlign: 'center', padding: 30, color: th.textTertiary, fontSize: 12, border: `2px dashed ${th.border}`, borderRadius: 8 }}>
-            <Upload size={24} color={th.textTertiary} style={{ marginBottom: 8 }} />
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Files & Invoices</div>
+          <div style={{ textAlign: 'center', padding: 30, color: 'var(--tz-textTertiary)', fontSize: 12, border: `2px dashed ${'var(--tz-border)'}`, borderRadius: 8 }}>
+            <Upload size={24} color={'var(--tz-textTertiary)'} style={{ marginBottom: 8 }} />
             <div>Upload vendor invoices and photos</div>
             <div style={{ fontSize: 11, marginTop: 4 }}>Drag & drop or click to upload</div>
           </div>

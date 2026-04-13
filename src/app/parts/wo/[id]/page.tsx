@@ -22,17 +22,17 @@ export default function PartsWOView() {
   const { tokens: t } = useTheme()
 
   const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 9, fontWeight: 700, color: t.textTertiary,
+  display: 'block', fontSize: 9, fontWeight: 700, color: 'var(--tz-textTertiary)',
   textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4,
   fontFamily: "'IBM Plex Mono',monospace",
 }
   const inputStyle: React.CSSProperties = {
-  background: t.border,
-  border: `1px solid ${t.border}`,
+  background: 'var(--tz-border)',
+  border: `1px solid ${'var(--tz-border)'}`,
   borderRadius: 6,
   padding: '6px 8px',
   fontSize: 11,
-  color: t.text,
+  color: 'var(--tz-text)',
   fontFamily: "'Instrument Sans',sans-serif",
   outline: 'none',
   width: '100%',
@@ -161,33 +161,33 @@ export default function PartsWOView() {
   // Parts locked after invoice sent (not during accounting_review — accounting can still edit)
   const partsLocked = !!wo?.invoice_status && ['sent', 'paid', 'closed'].includes(wo.invoice_status)
 
-  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
+  if (loading) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED, fontFamily: FONT }}>Loading...</div>
   if (!wo) return null
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: GREEN, color: t.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 999, background: GREEN, color: 'var(--tz-bgLight)', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <a href="/parts/queue" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: MUTED, textDecoration: 'none', fontSize: 12, marginBottom: 16 }}>
         <ChevronLeft size={14} /> Back to Parts Queue
       </a>
 
       {/* Header */}
-      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <span style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: BLUE }}>WO #{wo.so_number}</span>
               <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: `${tierColor}20`, color: tierColor, textTransform: 'uppercase' }}>{pricingTierLabel}</span>
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: t.text }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)' }}>
               <Truck size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
               #{asset.unit_number || '—'} {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}
             </div>
             <div style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>{customer.company_name || '—'}</div>
           </div>
           <div style={{ textAlign: 'right', fontSize: 12, color: MUTED }}>
-            {wo.users?.full_name && <div>Mechanic: <span style={{ color: t.text }}>{wo.users.full_name}</span></div>}
+            {wo.users?.full_name && <div>Mechanic: <span style={{ color: 'var(--tz-text)' }}>{wo.users.full_name}</span></div>}
             {wo.complaint && <div style={{ marginTop: 4, maxWidth: 300, fontSize: 11 }}>Complaint: {wo.complaint}</div>}
           </div>
         </div>
@@ -195,13 +195,13 @@ export default function PartsWOView() {
 
       {/* Progress bar */}
       {partLines.length > 0 && (
-        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
           <Package size={16} color={allSourced ? GREEN : AMBER} />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: allSourced ? GREEN : AMBER, marginBottom: 4 }}>
               {sourcedCount}/{partLines.length} parts sourced
             </div>
-            <div style={{ width: '100%', height: 4, background: t.border, borderRadius: 2 }}>
+            <div style={{ width: '100%', height: 4, background: 'var(--tz-border)', borderRadius: 2 }}>
               <div style={{ width: `${(sourcedCount / partLines.length) * 100}%`, height: '100%', background: allSourced ? GREEN : AMBER, borderRadius: 2, transition: 'width .3s' }} />
             </div>
           </div>
@@ -216,19 +216,19 @@ export default function PartsWOView() {
       )}
 
       {/* Part Lines from so_lines */}
-      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 16 }}>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 16 }}>
           Parts ({partLines.length})
         </div>
 
         {partLines.length === 0 && (
-          <div style={{ padding: 30, textAlign: 'center', color: t.textTertiary, fontSize: 12 }}>No part lines on this work order.</div>
+          <div style={{ padding: 30, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 12 }}>No part lines on this work order.</div>
         )}
 
         {partLines.map((p: any) => {
           const st = statusOptions[p.parts_status || 'rough'] || statusOptions.rough
           return (
-            <div key={p.id} style={{ border: `1px solid ${t.border}`, borderRadius: 10, padding: 14, marginBottom: 10, background: p.parts_status === 'rough' || !p.real_name ? '#0A0C10' : t.bgCard }}>
+            <div key={p.id} style={{ border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, padding: 14, marginBottom: 10, background: p.parts_status === 'rough' || !p.real_name ? '#0A0C10' : 'var(--tz-bgCard)' }}>
               {/* Top row: rough name + status */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <div style={{ fontSize: 12, color: MUTED }}>
@@ -263,16 +263,16 @@ export default function PartsWOView() {
                     style={inputStyle}
                   />
                   {searchResults[p.id]?.length > 0 && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1A1F2B', border: `1px solid ${t.border}`, borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.4)', maxHeight: 180, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#1A1F2B', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, marginTop: 2, zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.4)', maxHeight: 180, overflowY: 'auto' }}>
                       {searchResults[p.id].map((inv: any) => (
                         <div
                           key={inv.id}
                           onMouseDown={() => { dropdownClicked.current = true; autoFillFromInventory(p.id, inv) }}
-                          style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${t.border}`, fontSize: 12 }}
+                          style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 12 }}
                           onMouseEnter={e => (e.currentTarget.style.background = '#242A38')}
                           onMouseLeave={e => (e.currentTarget.style.background = '')}
                         >
-                          <div style={{ fontWeight: 600, color: t.text }}>{inv.description}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--tz-text)' }}>{inv.description}</div>
                           <div style={{ fontSize: 10, color: MUTED }}>
                             {inv.part_number || '—'} · Cost: {fmt(inv.cost_price)} · Sell: {fmt(inv.sell_price)} · {inv.on_hand || 0} in stock
                           </div>

@@ -72,13 +72,13 @@ export default function NewFleetPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:640, margin:'0 auto' },
-    card:  { background:t.bgCard, border: `1px solid ${t.border}`, borderRadius:12, padding:20, marginBottom:12 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:t.textTertiary, marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'9px 12px', background:t.inputBg, border: `1px solid ${t.border}`, borderRadius:8, fontSize:12, color:t.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
+    page:  { background:'var(--tz-bg)', minHeight:'100vh', color:'var(--tz-text)', fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:640, margin:'0 auto' },
+    card:  { background:'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius:12, padding:20, marginBottom:12 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'var(--tz-textTertiary)', marginBottom:5, display:'block' },
+    input: { width:'100%', padding:'9px 12px', background:'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius:8, fontSize:12, color:'var(--tz-text)', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
     row3:  { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10 },
-    btn:   { padding:'12px 24px', background:t.accent, border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:t.bgLight, cursor:'pointer', fontFamily:'inherit' },
+    btn:   { padding:'12px 24px', background:'var(--tz-accent)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'var(--tz-bgLight)', cursor:'pointer', fontFamily:'inherit' },
     error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#D94F4F', marginBottom:12 },
   }
 
@@ -92,18 +92,18 @@ export default function NewFleetPage() {
 
   return (
     <div style={S.page}>
-      <a href="/fleet" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: t.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: t.text, textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/fleet" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--tz-border)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Fleet
 </a>
-      <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:t.text, marginBottom:4 }}>Add Vehicle</div>
-      <div style={{ fontSize:12, color:t.textSecondary, marginBottom:20 }}>Enter a VIN to auto-fill year, make, and model — or fill in manually.</div>
+      <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'var(--tz-text)', marginBottom:4 }}>Add Vehicle</div>
+      <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginBottom:20 }}>Enter a VIN to auto-fill year, make, and model — or fill in manually.</div>
 
       {error && <div style={S.error}>{error}</div>}
 
       <form onSubmit={submit}>
         {/* VIN decode */}
         <div style={S.card}>
-          <div style={{ fontSize:12, fontWeight:700, color:t.text, marginBottom:12 }}>VIN Decoder</div>
+          <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)', marginBottom:12 }}>VIN Decoder</div>
           <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
             <div style={{ flex:1 }}>
               <label style={S.label}>VIN (17 characters)</label>
@@ -119,7 +119,7 @@ export default function NewFleetPage() {
 
         {/* Vehicle info */}
         <div style={S.card}>
-          <div style={{ fontSize:12, fontWeight:700, color:t.text, marginBottom:12 }}>Vehicle Information</div>
+          <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)', marginBottom:12 }}>Vehicle Information</div>
           <div style={S.row2}>{inp('Unit Number *','unit_number','text','e.g. 2717')}{inp('Odometer (miles)','odometer','number','0')}</div>
           <div style={S.row3}>{inp('Year','year','number','2022')}{inp('Make','make','text','Kenworth')}{inp('Model','model','text','T680')}</div>
           <div style={S.row2}>
@@ -151,7 +151,7 @@ export default function NewFleetPage() {
                 <option value="owner_operator">Owner Operator</option>
                 <option value="outside_customer">Outside Customer</option>
               </select>
-              <div style={{ fontSize: 10, color: t.textTertiary, marginTop: 3 }}>Determines estimate requirements and labor rates</div>
+              <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', marginTop: 3 }}>Determines estimate requirements and labor rates</div>
             </div>
             <div>
               <label style={S.label}>Owner / Customer</label>

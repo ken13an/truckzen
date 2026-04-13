@@ -82,7 +82,7 @@ export default function DataTable({
             value={search}
             onChange={e => handleSearch(e.target.value)}
             placeholder={searchPlaceholder}
-            style={{ padding: '7px 12px', background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, color: t.text, fontSize: 12, fontFamily: FONT, outline: 'none', flex: 1, minWidth: 180, maxWidth: 300 }}
+            style={{ padding: '7px 12px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 8, color: 'var(--tz-text)', fontSize: 12, fontFamily: FONT, outline: 'none', flex: 1, minWidth: 180, maxWidth: 300 }}
           />
           {headerActions}
         </div>
@@ -94,29 +94,29 @@ export default function DataTable({
       )}
 
       {/* Table */}
-      <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 500 }}>
             <thead>
               <tr>
                 {columns.map(col => (
-                  <th key={col.key} style={{ fontFamily: MONO, fontSize: 8, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left', background: t.bg, whiteSpace: 'nowrap', ...col.headerStyle }}>{col.label}</th>
+                  <th key={col.key} style={{ fontFamily: MONO, fontSize: 8, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.1em', padding: '7px 10px', textAlign: 'left', background: 'var(--tz-bg)', whiteSpace: 'nowrap', ...col.headerStyle }}>{col.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: t.textSecondary, fontSize: 13 }}>Loading...</td></tr>
+                <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: 'var(--tz-textSecondary)', fontSize: 13 }}>Loading...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: t.textSecondary, fontSize: 13 }}>{emptyMessage}</td></tr>
+                <tr><td colSpan={columns.length} style={{ padding: 40, textAlign: 'center', color: 'var(--tz-textSecondary)', fontSize: 13 }}>{emptyMessage}</td></tr>
               ) : data.map((row, i) => (
                 <tr key={row.id || i}
-                  style={{ borderBottom: `1px solid ${t.border}`, cursor: onRowClick ? 'pointer' : 'default' }}
+                  style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: onRowClick ? 'pointer' : 'default' }}
                   onClick={() => onRowClick?.(row)}
-                  onMouseEnter={e => { if (onRowClick) (e.currentTarget.style.background = t.bgHover) }}
+                  onMouseEnter={e => { if (onRowClick) (e.currentTarget.style.background = 'var(--tz-bgHover)') }}
                   onMouseLeave={e => { if (onRowClick) (e.currentTarget.style.background = '') }}>
                   {columns.map(col => (
-                    <td key={col.key} style={{ padding: '9px 10px', fontSize: 12, color: t.text, ...col.style }}>
+                    <td key={col.key} style={{ padding: '9px 10px', fontSize: 12, color: 'var(--tz-text)', ...col.style }}>
                       {col.render ? col.render(row) : (row[col.key] ?? '—')}
                     </td>
                   ))}

@@ -87,7 +87,7 @@ export default function PMDetailPage() {
     setSaving(false)
   }
 
-  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const asset = pm.assets || {}
   const today = new Date().toISOString().split('T')[0]
@@ -96,20 +96,20 @@ export default function PMDetailPage() {
   const stColor = isOver ? RED : isSoon ? AMBER : GREEN
 
   const S: Record<string, React.CSSProperties> = {
-    card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 12 },
-    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary },
-    input: { width: '100%', padding: '8px 11px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 7, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
+    card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 12 },
+    label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'var(--tz-textTertiary)' },
+    input: { width: '100%', padding: '8px 11px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 7, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: 'inherit', minHeight: 36, boxSizing: 'border-box' as const },
   }
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>{pm.custom_name || pm.service_type?.replace(/_/g, ' ')}</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)' }}>{pm.custom_name || pm.service_type?.replace(/_/g, ' ')}</div>
           <div style={{ fontSize: 13, color: MUTED }}>#{asset.unit_number} {asset.year} {asset.make} {asset.model}</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, background: `${stColor}18`, color: stColor }}>{isOver ? 'OVERDUE' : isSoon ? 'DUE SOON' : 'OK'} {pm.next_due_date ? `· ${pm.next_due_date}` : ''}</span>
-            {pm.next_due_miles && <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, background: 'rgba(29,111,232,.1)', color: t.accentLight }}>{pm.next_due_miles.toLocaleString()} mi</span>}
+            {pm.next_due_miles && <span style={{ padding: '4px 12px', borderRadius: 100, fontFamily: MONO, fontSize: 10, background: 'rgba(29,111,232,.1)', color: 'var(--tz-accentLight)' }}>{pm.next_due_miles.toLocaleString()} mi</span>}
           </div>
         </div>
         <button onClick={() => setShowComplete(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: `${GREEN}18`, border: `1px solid ${GREEN}33`, borderRadius: 8, color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
@@ -125,8 +125,8 @@ export default function PMDetailPage() {
             <div><label style={S.label}>Notes</label><input style={S.input} value={completeNotes} onChange={e => setCompleteNotes(e.target.value)} placeholder="Any notes..." /></div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={markComplete} disabled={saving} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? 'Saving...' : 'Confirm Complete'}</button>
-            <button onClick={() => setShowComplete(false)} style={{ padding: '8px 16px', background: t.border, border: 'none', borderRadius: 8, color: MUTED, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+            <button onClick={markComplete} disabled={saving} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? 'Saving...' : 'Confirm Complete'}</button>
+            <button onClick={() => setShowComplete(false)} style={{ padding: '8px 16px', background: 'var(--tz-border)', border: 'none', borderRadius: 8, color: MUTED, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
           </div>
         </div>
       )}
@@ -134,7 +134,7 @@ export default function PMDetailPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 14, alignItems: 'start' }}>
         <div>
           <div style={S.card}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: t.text, marginBottom: 12 }}>Schedule Details</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Schedule Details</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {[
                 { label: 'Service Type', val: pm.service_type?.replace(/_/g, ' ') },
@@ -144,25 +144,25 @@ export default function PMDetailPage() {
                 { label: 'Last Completed', val: pm.last_completed_date ? new Date(pm.last_completed_date).toLocaleDateString() : '—' },
                 { label: 'Last Miles', val: pm.last_completed_miles ? pm.last_completed_miles.toLocaleString() : '—' },
               ].map(r => (
-                <div key={r.label}><div style={S.label}>{r.label}</div><div style={{ fontSize: 13, color: t.text, marginTop: 4 }}>{r.val}</div></div>
+                <div key={r.label}><div style={S.label}>{r.label}</div><div style={{ fontSize: 13, color: 'var(--tz-text)', marginTop: 4 }}>{r.val}</div></div>
               ))}
             </div>
             {pm.notes && <div style={{ marginTop: 12 }}><div style={S.label}>Notes</div><div style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>{pm.notes}</div></div>}
           </div>
 
           <div style={S.card}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: t.text, marginBottom: 12 }}>Completion History</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Completion History</div>
             {history.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 16, color: t.textTertiary, fontSize: 12 }}>No completions recorded yet</div>
+              <div style={{ textAlign: 'center', padding: 16, color: 'var(--tz-textTertiary)', fontSize: 12 }}>No completions recorded yet</div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr>{['Date', 'Miles', 'Notes'].map(h => <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: t.textTertiary, textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: t.bgInput }}>{h}</th>)}</tr>
+                  <tr>{['Date', 'Miles', 'Notes'].map(h => <th key={h} style={{ fontFamily: MONO, fontSize: 8, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', padding: '6px 8px', textAlign: 'left', background: 'var(--tz-bgInput)' }}>{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {history.map(h => (
                     <tr key={h.id}>
-                      <td style={{ padding: '8px', fontSize: 12, color: t.text }}>{new Date(h.completed_date).toLocaleDateString()}</td>
+                      <td style={{ padding: '8px', fontSize: 12, color: 'var(--tz-text)' }}>{new Date(h.completed_date).toLocaleDateString()}</td>
                       <td style={{ padding: '8px', fontSize: 12, fontFamily: MONO, color: MUTED }}>{h.completed_miles?.toLocaleString() || '—'}</td>
                       <td style={{ padding: '8px', fontSize: 11, color: MUTED }}>{h.notes || '—'}</td>
                     </tr>
@@ -174,7 +174,7 @@ export default function PMDetailPage() {
         </div>
 
         <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: t.text, marginBottom: 12 }}>Vehicle</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Vehicle</div>
           {[
             { label: 'Unit #', val: `#${asset.unit_number}` },
             { label: 'Year', val: asset.year },
@@ -182,8 +182,8 @@ export default function PMDetailPage() {
             { label: 'Model', val: asset.model },
             { label: 'Odometer', val: asset.odometer ? `${asset.odometer.toLocaleString()} mi` : '—' },
           ].filter(r => r.val).map(r => (
-            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${t.border}`, fontSize: 12 }}>
-              <span style={{ color: t.textTertiary }}>{r.label}</span><span style={{ color: t.text }}>{r.val}</span>
+            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 12 }}>
+              <span style={{ color: 'var(--tz-textTertiary)' }}>{r.label}</span><span style={{ color: 'var(--tz-text)' }}>{r.val}</span>
             </div>
           ))}
         </div>

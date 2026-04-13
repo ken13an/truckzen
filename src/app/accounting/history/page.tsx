@@ -60,15 +60,15 @@ export default function ImportedHistoryPage() {
 
   if (loading && records.length === 0) return (
     <AppPageShell width="wide" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
-      <div style={{ color: t.textSecondary }}>Loading...</div>
+      <div style={{ color: 'var(--tz-textSecondary)' }}>Loading...</div>
     </AppPageShell>
   )
 
   return (
     <AppPageShell width="wide" style={{ fontFamily: FONT }}>
       <div style={{ marginBottom: 20 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Imported History</div>
-        <div style={{ fontSize: 12, color: t.textSecondary }}>{total.toLocaleString()} imported work orders &mdash; read-only</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)' }}>Imported History</div>
+        <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{total.toLocaleString()} imported work orders &mdash; read-only</div>
       </div>
 
       <div style={{ background: 'rgba(139,92,246,.06)', border: '1px solid rgba(139,92,246,.2)', borderRadius: 10, padding: '10px 16px', marginBottom: 16, fontSize: 12, color: '#A78BFA', fontWeight: 600 }}>
@@ -87,24 +87,24 @@ export default function ImportedHistoryPage() {
       />
 
       {records.length === 0 && !loading && (
-        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 40, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 40, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>
           {search || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : 'No imported records found.'}
         </div>
       )}
 
       {records.length > 0 && (
-        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
-              <tr style={{ borderBottom: `1px solid ${t.border}` }}>
-                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>WO #</th>
-                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Customer</th>
-                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Unit</th>
-                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Complaint</th>
-                <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Total</th>
-                <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Date</th>
-                <th style={{ textAlign: 'center', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Source</th>
-                <th style={{ textAlign: 'center', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.04em' }}>Status</th>
+              <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>WO #</th>
+                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Customer</th>
+                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Unit</th>
+                <th style={{ textAlign: 'left', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Complaint</th>
+                <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Total</th>
+                <th style={{ textAlign: 'right', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Date</th>
+                <th style={{ textAlign: 'center', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Source</th>
+                <th style={{ textAlign: 'center', padding: '10px 14px', fontSize: 10, fontWeight: 700, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -115,9 +115,9 @@ export default function ImportedHistoryPage() {
                 const srcLabel = src === 'csv_import' ? 'CSV' : 'Imported'
                 const st = wo.invoice_status || wo.status || '—'
                 return (
-                  <tr key={wo.id} style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }}
+                  <tr key={wo.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer' }}
                     onClick={() => window.location.href = getWorkorderRoute(wo.id, undefined, 'accounting-history')}
-                    onMouseEnter={e => (e.currentTarget.style.background = t.border)}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-border)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
                     <td style={{ padding: '10px 14px', fontFamily: MONO, fontWeight: 700, color: BLUE }}>{wo.so_number || '—'}</td>
                     <td style={{ padding: '10px 14px' }}>{cust?.company_name || '—'}</td>

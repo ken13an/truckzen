@@ -57,7 +57,7 @@ export default function MaintenanceLayout({ children }: { children: React.ReactN
     })
   }, [])
 
-  if (allowed === null) return <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary, fontFamily: "'Instrument Sans',sans-serif" }}>Loading...</div>
+  if (allowed === null) return <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-textSecondary)', fontFamily: "'Instrument Sans',sans-serif" }}>Loading...</div>
   if (!allowed) return null
 
   // Build breadcrumbs
@@ -77,16 +77,16 @@ export default function MaintenanceLayout({ children }: { children: React.ReactN
   const isRoot = pathname === '/maintenance'
 
   return (
-    <div style={{ minHeight: '100vh', background: t.bg }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)' }}>
       {!isRoot && crumbs.length > 1 && (
         <div style={{ padding: '12px 24px 0', display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Instrument Sans',sans-serif" }}>
           {crumbs.map((c, i) => (
             <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {i > 0 && <ChevronRight size={12} color={t.textTertiary} />}
+              {i > 0 && <ChevronRight size={12} color={'var(--tz-textTertiary)'} />}
               {c.href && i < crumbs.length - 1 ? (
-                <a href={c.href} style={{ color: t.accentLight, fontSize: 12, textDecoration: 'none' }}>{c.label}</a>
+                <a href={c.href} style={{ color: 'var(--tz-accentLight)', fontSize: 12, textDecoration: 'none' }}>{c.label}</a>
               ) : (
-                <span style={{ color: t.textSecondary, fontSize: 12 }}>{c.label}</span>
+                <span style={{ color: 'var(--tz-textSecondary)', fontSize: 12 }}>{c.label}</span>
               )}
             </span>
           ))}

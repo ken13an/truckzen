@@ -53,7 +53,7 @@ const mono = "'IBM Plex Mono', monospace"
 export default function UsersPage() {
   const { tokens: th } = useTheme()
 
-  const modalBox: React.CSSProperties = { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 440 }
+  const modalBox: React.CSSProperties = { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 440 }
   const supabase = createClient()
   const [me, setMe] = useState<UserProfile | null>(null)
   const [members, setMembers] = useState<any[]>([])
@@ -174,7 +174,7 @@ export default function UsersPage() {
   }
 
   const getStatus = (u: any) => {
-    if (!u.active) return { label: 'Inactive', bg: 'rgba(150,150,150,.12)', color: th.textSecondary }
+    if (!u.active) return { label: 'Inactive', bg: 'rgba(150,150,150,.12)', color: 'var(--tz-textSecondary)' }
     if (!u.last_sign_in_at) return { label: 'Pending', bg: 'rgba(217,119,6,.12)', color: '#F59E0B' }
     return { label: 'Active', bg: 'rgba(29,184,112,.12)', color: '#1DB870' }
   }
@@ -186,22 +186,22 @@ export default function UsersPage() {
   }
 
   const S = {
-    input: { width: '100%', padding: '9px 12px', background: th.border, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, color: th.text, outline: 'none', fontFamily: font, boxSizing: 'border-box' as const },
-    label: { fontSize: 11, fontWeight: 600, color: th.textSecondary, textTransform: 'uppercase' as const, display: 'block', marginBottom: 4, letterSpacing: '.04em' } as React.CSSProperties,
-    select: { padding: '8px 12px', background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 12, color: th.text, outline: 'none', fontFamily: font, appearance: 'auto' as const, cursor: 'pointer', minWidth: 120 },
+    input: { width: '100%', padding: '9px 12px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', outline: 'none', fontFamily: font, boxSizing: 'border-box' as const },
+    label: { fontSize: 11, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' as const, display: 'block', marginBottom: 4, letterSpacing: '.04em' } as React.CSSProperties,
+    select: { padding: '8px 12px', background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: font, appearance: 'auto' as const, cursor: 'pointer', minWidth: 120 },
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, display: 'flex', alignItems: 'center', justifyContent: 'center', color: th.textSecondary }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', fontFamily: font, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-textSecondary)' }}>Loading...</div>
 
   const allCount = Object.values(deptCounts).reduce((a, b) => a + b, 0)
 
   return (
-    <div style={{ minHeight: '100vh', background: th.bg, fontFamily: font, padding: 24, color: th.text }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', fontFamily: font, padding: 24, color: 'var(--tz-text)' }}>
       {/* Toast */}
-      {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: th.accent, color: th.bgLight, padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 999, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 16px rgba(0,0,0,.3)' }}>{toast}</div>}
 
       {/* Back */}
-      <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 13, fontWeight: 600, color: th.textSecondary, textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--tz-border)', borderRadius: 8, fontSize: 13, fontWeight: 600, color: 'var(--tz-textSecondary)', textDecoration: 'none', marginBottom: 20 }}>
         <ChevronLeft size={14} strokeWidth={2} /> Settings
       </a>
 
@@ -209,10 +209,10 @@ export default function UsersPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ fontSize: 24, fontWeight: 800 }}>Team Members</div>
-          <span style={{ padding: '4px 12px', background: 'rgba(29,111,232,.1)', color: th.accentLight, borderRadius: 100, fontSize: 12, fontWeight: 700, fontFamily: mono }}>{total} members</span>
+          <span style={{ padding: '4px 12px', background: 'rgba(29,111,232,.1)', color: 'var(--tz-accentLight)', borderRadius: 100, fontSize: 12, fontWeight: 700, fontFamily: mono }}>{total} members</span>
         </div>
         <button onClick={() => setInviting(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: th.accent, border: 'none', borderRadius: 8, color: th.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 18px', background: 'var(--tz-accent)', border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>
           <UserPlus size={14} strokeWidth={2.5} /> Invite Member
         </button>
       </div>
@@ -220,7 +220,7 @@ export default function UsersPage() {
       {/* Filter bar */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: 320 }}>
-          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: th.textTertiary }} />
+          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--tz-textTertiary)' }} />
           <input
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
@@ -252,8 +252,8 @@ export default function UsersPage() {
               style={{
                 padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: active ? 700 : 500,
                 background: active ? 'rgba(29,111,232,.12)' : 'transparent',
-                border: active ? '1px solid rgba(29,111,232,.3)' : `1px solid ${th.border}`,
-                color: active ? th.accentLight : th.textSecondary,
+                border: active ? '1px solid rgba(29,111,232,.3)' : `1px solid ${'var(--tz-border)'}`,
+                color: active ? 'var(--tz-accentLight)' : 'var(--tz-textSecondary)',
                 cursor: 'pointer', fontFamily: font, whiteSpace: 'nowrap',
                 display: 'flex', alignItems: 'center', gap: 6,
               }}>
@@ -265,39 +265,39 @@ export default function UsersPage() {
       </div>
 
       {/* Staff table */}
-      <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
             <thead>
-              <tr style={{ borderBottom: `1px solid ${th.border}` }}>
+              <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                 {['Name', 'Role', 'Department', 'Status', 'Last Active', 'Actions'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: th.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: mono }}>{h}</th>
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: mono }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {members.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: th.textSecondary, fontSize: 13 }}>
+                <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: 'var(--tz-textSecondary)', fontSize: 13 }}>
                   {hasFilters ? 'No members match your filters' : 'No team members yet'}
                 </td></tr>
               )}
               {members.map(u => {
                 const st = getStatus(u)
                 return (
-                  <tr key={u.id} style={{ borderBottom: `1px solid ${th.border}`, opacity: u.active ? 1 : 0.5 }}>
+                  <tr key={u.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, opacity: u.active ? 1 : 0.5 }}>
                     {/* Avatar + Name */}
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{
                           width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: u.active ? 'rgba(29,111,232,.12)' : th.border,
-                          color: u.active ? th.accentLight : th.textSecondary, fontSize: 11, fontWeight: 700, fontFamily: mono, flexShrink: 0,
+                          background: u.active ? 'rgba(29,111,232,.12)' : 'var(--tz-border)',
+                          color: u.active ? 'var(--tz-accentLight)' : 'var(--tz-textSecondary)', fontSize: 11, fontWeight: 700, fontFamily: mono, flexShrink: 0,
                         }}>
                           {getInitials(u.full_name)}
                         </div>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 600 }}>{u.full_name}</div>
-                          <div style={{ fontSize: 10, color: th.textSecondary, fontFamily: mono }}>{u.email}</div>
+                          <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)', fontFamily: mono }}>{u.email}</div>
                         </div>
                       </div>
                     </td>
@@ -305,7 +305,7 @@ export default function UsersPage() {
                     <td style={{ padding: '10px 14px', fontSize: 12 }}>{ROLE_LABEL[u.role] || u.role?.replace(/_/g, ' ')}</td>
                     {/* Department */}
                     <td style={{ padding: '10px 14px' }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'capitalize', color: th.textSecondary, padding: '3px 8px', background: th.border, borderRadius: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'capitalize', color: 'var(--tz-textSecondary)', padding: '3px 8px', background: 'var(--tz-border)', borderRadius: 4 }}>
                         {u.department || '—'}
                       </span>
                     </td>
@@ -314,13 +314,13 @@ export default function UsersPage() {
                       <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: st.bg, color: st.color }}>{st.label}</span>
                     </td>
                     {/* Last Active */}
-                    <td style={{ padding: '10px 14px', fontSize: 10, color: th.textSecondary, fontFamily: mono }}>
+                    <td style={{ padding: '10px 14px', fontSize: 10, color: 'var(--tz-textSecondary)', fontFamily: mono }}>
                       {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : 'Never'}
                     </td>
                     {/* Actions */}
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => setEditing({ ...u })} style={btnStyle( th.accentLight, 'rgba(29,111,232,.3)')}>Edit</button>
+                        <button onClick={() => setEditing({ ...u })} style={btnStyle( 'var(--tz-accentLight)', 'rgba(29,111,232,.3)')}>Edit</button>
                         {!u.last_sign_in_at && u.active && (
                           <button onClick={() => resendInvite(u)} disabled={saving} style={btnStyle('#F59E0B', 'rgba(217,119,6,.3)')}>Resend</button>
                         )}
@@ -372,8 +372,8 @@ export default function UsersPage() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => setEditing(null)} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
-              <button onClick={saveUser} disabled={saving} style={{ padding: '8px 18px', background: th.accent, color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Saving...' : 'Save'}</button>
+              <button onClick={() => setEditing(null)} style={{ padding: '8px 18px', background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={saveUser} disabled={saving} style={{ padding: '8px 18px', background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>
@@ -407,8 +407,8 @@ export default function UsersPage() {
               </select>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => { setInviting(false); setInviteError('') }} style={{ padding: '8px 18px', background: 'transparent', color: th.textSecondary, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
-              <button onClick={sendInvite} disabled={saving} style={{ padding: '8px 18px', background: th.accent, color: th.bgLight, border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Sending...' : 'Send Invite'}</button>
+              <button onClick={() => { setInviting(false); setInviteError('') }} style={{ padding: '8px 18px', background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={sendInvite} disabled={saving} style={{ padding: '8px 18px', background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: font }}>{saving ? 'Sending...' : 'Send Invite'}</button>
             </div>
           </div>
         </div>
@@ -419,13 +419,13 @@ export default function UsersPage() {
         <div style={modalOverlay} onClick={e => { if (e.target === e.currentTarget) { setRemoving(null); setConfirmText('') } }}>
           <div style={modalBox}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Remove {removing.full_name}</div>
-            <div style={{ fontSize: 12, color: th.textSecondary, marginBottom: 16 }}>Choose how to handle this user:</div>
+            <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 16 }}>Choose how to handle this user:</div>
             <div style={{ marginBottom: 16 }}>
               <label style={S.label}>Type CONFIRM to proceed</label>
               <input value={confirmText} onChange={e => setConfirmText(e.target.value.toUpperCase())} placeholder="CONFIRM" style={S.input} />
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={() => { setRemoving(null); setConfirmText('') }} style={{ padding: '8px 16px', background: 'transparent', color: th.textSecondary, border: `1px solid ${th.border}`, borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
+              <button onClick={() => { setRemoving(null); setConfirmText('') }} style={{ padding: '8px 16px', background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: font }}>Cancel</button>
               <button onClick={() => disableUser(removing)} disabled={confirmText !== 'CONFIRM'}
                 style={{ padding: '8px 16px', background: 'rgba(217,119,6,.15)', color: '#F59E0B', border: '1px solid rgba(217,119,6,.3)', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: confirmText === 'CONFIRM' ? 'pointer' : 'not-allowed', fontFamily: font, opacity: confirmText === 'CONFIRM' ? 1 : 0.4 }}>
                 Deactivate
@@ -435,7 +435,7 @@ export default function UsersPage() {
                 Delete Permanently
               </button>
             </div>
-            <div style={{ fontSize: 10, color: th.textSecondary, marginTop: 12 }}>
+            <div style={{ fontSize: 10, color: 'var(--tz-textSecondary)', marginTop: 12 }}>
               Deactivate: blocks login, keeps name in historical records. Delete: removes from system, name stays in WO history.
             </div>
           </div>

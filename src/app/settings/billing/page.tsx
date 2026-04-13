@@ -9,10 +9,10 @@ export default function BillingPage() {
   const { tokens: t } = useTheme()
 
   const S: Record<string, React.CSSProperties> = {
-  page: { background: t.bg, minHeight: '100vh', color: t.text, fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
-  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 4 },
-  card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20, marginBottom: 16 },
-  btn: { padding: '8px 16px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: t.bgLight },
+  page: { background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: "'Instrument Sans',sans-serif", padding: 24 },
+  title: { fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', marginBottom: 4 },
+  card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20, marginBottom: 16 },
+  btn: { padding: '8px 16px', borderRadius: 8, border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'linear-gradient(135deg,#1D6FE8,#1248B0)', color: 'var(--tz-bgLight)' },
 }
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
@@ -56,39 +56,39 @@ export default function BillingPage() {
     flash('Payment method removed')
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textSecondary }}>Loading...</div>
+  if (loading) return <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tz-textSecondary)' }}>Loading...</div>
 
   const plan = billing?.subscription_plan || 'free'
   const methods = billing?.payment_methods || []
 
   return (
     <div style={S.page}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: t.accent, color: t.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={S.title}>Billing & Subscription</div>
-      <div style={{ fontSize: 12, color: t.textSecondary, marginBottom: 24 }}>{billing?.shop_name}</div>
+      <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 24 }}>{billing?.shop_name}</div>
 
       {/* Current Plan */}
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>Current Plan</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: t.text }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>Current Plan</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--tz-text)' }}>
               {plan === 'free' ? 'Free Plan' : plan.charAt(0).toUpperCase() + plan.slice(1)}
             </div>
-            <div style={{ fontSize: 12, color: t.textSecondary, marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginTop: 4 }}>
               {plan === 'free' ? 'All features included during beta. No charge.' : `Next billing date: —`}
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 32, fontWeight: 700, color: '#22C55E' }}>$0</div>
-            <div style={{ fontSize: 11, color: t.textTertiary }}>/month</div>
+            <div style={{ fontSize: 11, color: 'var(--tz-textTertiary)' }}>/month</div>
           </div>
         </div>
         {plan === 'free' && (
           <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(29,111,232,.06)', borderRadius: 8, border: '1px solid rgba(29,111,232,.15)' }}>
-            <div style={{ fontSize: 12, color: t.accentLight, fontWeight: 600 }}>Beta Access</div>
-            <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 4 }}>You have full access to all TruckZen features during the beta period. Add a payment method to be ready when paid plans launch.</div>
+            <div style={{ fontSize: 12, color: 'var(--tz-accentLight)', fontWeight: 600 }}>Beta Access</div>
+            <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginTop: 4 }}>You have full access to all TruckZen features during the beta period. Add a payment method to be ready when paid plans launch.</div>
           </div>
         )}
       </div>
@@ -96,24 +96,24 @@ export default function BillingPage() {
       {/* Payment Methods */}
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.06em' }}>Payment Methods</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Payment Methods</div>
           <button onClick={addPaymentMethod} style={S.btn}>+ Add Card</button>
         </div>
 
         {methods.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 24, color: t.textTertiary, fontSize: 13 }}>
+          <div style={{ textAlign: 'center', padding: 24, color: 'var(--tz-textTertiary)', fontSize: 13 }}>
             No payment method on file. Add a card to be ready for billing.
           </div>
         ) : (
           methods.map((m: any) => (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${t.border}` }}>
+            <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 40, height: 28, background: t.border, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase' }}>
+                <div style={{ width: 40, height: 28, background: 'var(--tz-border)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--tz-textSecondary)', textTransform: 'uppercase' }}>
                   {m.brand}
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: t.text, fontFamily: 'monospace' }}>**** {m.last4}</div>
-                  <div style={{ fontSize: 11, color: t.textTertiary }}>Exp {m.exp_month}/{m.exp_year}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)', fontFamily: 'monospace' }}>**** {m.last4}</div>
+                  <div style={{ fontSize: 11, color: 'var(--tz-textTertiary)' }}>Exp {m.exp_month}/{m.exp_year}</div>
                 </div>
               </div>
               <button onClick={() => removePaymentMethod(m.id)}
@@ -127,7 +127,7 @@ export default function BillingPage() {
 
       {/* Stripe Customer ID */}
       {billing?.stripe_customer_id && (
-        <div style={{ fontSize: 10, color: t.textTertiary, marginTop: 8, fontFamily: 'monospace' }}>
+        <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', marginTop: 8, fontFamily: 'monospace' }}>
           Stripe ID: {billing.stripe_customer_id}
         </div>
       )}

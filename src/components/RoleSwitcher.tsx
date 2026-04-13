@@ -57,36 +57,36 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
   const displayLabel = current
     ? IMPERSONATE_ROLES.find(r => r.key === current)?.label || ROLE_LABEL[current] || current
     : ROLE_LABEL[actualRole] || actualRole
-  const color = ROLE_COLOR[displayRole] || t.textSecondary
+  const color = ROLE_COLOR[displayRole] || 'var(--tz-textSecondary)'
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button onClick={() => setOpen(!open)} style={{
         display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px',
-        background: current ? t.warningBg : t.bgCard,
-        border: current ? `1px solid ${t.warning}` : `1px solid ${t.cardBorder}`,
+        background: current ? 'var(--tz-warningBg)' : 'var(--tz-bgCard)',
+        border: current ? `1px solid ${'var(--tz-warning)'}` : `1px solid ${'var(--tz-cardBorder)'}`,
         borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-        color: current ? t.warning : color,
+        color: current ? 'var(--tz-warning)' : color,
       }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
         {current ? `Impersonating: ${displayLabel}` : displayLabel}
-        <span style={{ fontSize: 8, color: t.textTertiary, marginLeft: 2 }}>&#9660;</span>
+        <span style={{ fontSize: 8, color: 'var(--tz-textTertiary)', marginLeft: 2 }}>&#9660;</span>
       </button>
 
       {open && (
         <div style={{
           position: 'absolute', top: 36, right: 0, width: 220,
-          background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 10,
+          background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 10,
           boxShadow: '0 8px 32px rgba(0,0,0,.5)', zIndex: 999, overflow: 'hidden',
         }}>
-          <div style={{ padding: '8px 12px', borderBottom: `1px solid ${t.border}`, fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+          <div style={{ padding: '8px 12px', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 9, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
             Switch Role
           </div>
 
           {/* Reset to actual role */}
           {current && (
             <button onClick={() => switchRole(null)} disabled={switching}
-              style={{ ...S.item, color: t.success, fontWeight: 700, borderBottom: `1px solid ${t.border}` }}>
+              style={{ ...S.item, color: 'var(--tz-success)', fontWeight: 700, borderBottom: `1px solid ${'var(--tz-border)'}` }}>
               ↩ Back to {ROLE_LABEL[actualRole]}
             </button>
           )}
@@ -95,8 +95,8 @@ export default function RoleSwitcher({ userId, actualRole, impersonateRole }: {
             const isActive = displayRole === r.key && (!r.team || r.label.includes(r.team || ''))
             return (
               <button key={i} onClick={() => switchRole(r.key)} disabled={switching}
-                style={{ ...S.item, color: isActive ? t.accentLight : t.text, background: isActive ? t.accentBg : 'transparent' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ROLE_COLOR[r.key] || t.textSecondary, flexShrink: 0 }} />
+                style={{ ...S.item, color: isActive ? 'var(--tz-accentLight)' : 'var(--tz-text)', background: isActive ? 'var(--tz-accentBg)' : 'transparent' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ROLE_COLOR[r.key] || 'var(--tz-textSecondary)', flexShrink: 0 }} />
                 {r.label}
               </button>
             )

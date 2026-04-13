@@ -39,15 +39,15 @@ export default function FaultDetailPage() {
     setSaving(false)
   }
 
-  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (loading) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
   const asset = fault.assets || {}
-  const S: Record<string, React.CSSProperties> = { card: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 12 }, label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: t.textTertiary } }
+  const S: Record<string, React.CSSProperties> = { card: { background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 12 }, label: { fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'var(--tz-textTertiary)' } }
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>{fault.fault_code}</div>
+          <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)' }}>{fault.fault_code}</div>
           <div style={{ fontSize: 13, color: MUTED }}>#{asset.unit_number || '—'} {asset.make} {asset.model}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -59,13 +59,13 @@ export default function FaultDetailPage() {
         <div>
           <div style={S.card}>
             <div style={S.label}>Description</div>
-            <div style={{ fontSize: 13, color: t.text, marginTop: 4 }}>{fault.fault_description || 'No description'}</div>
+            <div style={{ fontSize: 13, color: 'var(--tz-text)', marginTop: 4 }}>{fault.fault_description || 'No description'}</div>
           </div>
           {!fault.resolved && (
             <div style={{ ...S.card, border: `1px solid ${GREEN}33` }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: GREEN, marginBottom: 10 }}>Resolve Fault</div>
-              <textarea value={resolveNotes} onChange={e => setResolveNotes(e.target.value)} placeholder="Resolution notes..." style={{ width: '100%', padding: '8px 10px', background: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.text, fontFamily: FONT, minHeight: 48, resize: 'vertical' as const, boxSizing: 'border-box', marginBottom: 8 }} />
-              <button onClick={resolve} disabled={saving} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? 'Saving...' : 'Mark Resolved'}</button>
+              <textarea value={resolveNotes} onChange={e => setResolveNotes(e.target.value)} placeholder="Resolution notes..." style={{ width: '100%', padding: '8px 10px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', fontFamily: FONT, minHeight: 48, resize: 'vertical' as const, boxSizing: 'border-box', marginBottom: 8 }} />
+              <button onClick={resolve} disabled={saving} style={{ padding: '8px 16px', background: GREEN, border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>{saving ? 'Saving...' : 'Mark Resolved'}</button>
             </div>
           )}
         </div>
@@ -77,8 +77,8 @@ export default function FaultDetailPage() {
             { label: 'Occurrences', val: fault.occurrence_count },
             { label: 'Resolved', val: fault.resolved_date ? new Date(fault.resolved_date).toLocaleString() : '—' },
           ].map(r => (
-            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${t.border}`, fontSize: 12 }}>
-              <span style={{ color: t.textTertiary }}>{r.label}</span><span style={{ color: t.text }}>{r.val}</span>
+            <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, fontSize: 12 }}>
+              <span style={{ color: 'var(--tz-textTertiary)' }}>{r.label}</span><span style={{ color: 'var(--tz-text)' }}>{r.val}</span>
             </div>
           ))}
         </div>

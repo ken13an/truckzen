@@ -24,24 +24,24 @@ export default function NewCustomerPage() {
   const upd = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const S: Record<string, React.CSSProperties> = {
-    page:  { background:th.bg, minHeight:'100vh', color:th.text, fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:600, margin:'0 auto' },
-    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:th.text, marginBottom:4 },
-    card:  { background:th.bgCard, border:`1px solid ${th.border}`, borderRadius:12, padding:20, marginBottom:12 },
-    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:th.textTertiary, marginBottom:5, display:'block' },
-    input: { width:'100%', padding:'9px 12px', background:th.inputBg, border:`1px solid ${th.border}`, borderRadius:8, fontSize:12, color:th.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
+    page:  { background:'var(--tz-bg)', minHeight:'100vh', color:'var(--tz-text)', fontFamily:"'Instrument Sans',sans-serif", padding:24, maxWidth:600, margin:'0 auto' },
+    title: { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, color:'var(--tz-text)', marginBottom:4 },
+    card:  { background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:12, padding:20, marginBottom:12 },
+    label: { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'var(--tz-textTertiary)', marginBottom:5, display:'block' },
+    input: { width:'100%', padding:'9px 12px', background:'var(--tz-inputBg)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:8, fontSize:12, color:'var(--tz-text)', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const },
     row2:  { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 },
     row3:  { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:10 },
-    btn:   { padding:'12px 24px', background:th.accent, border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:th.bgLight, cursor:'pointer', fontFamily:'inherit', width:'100%' },
+    btn:   { padding:'12px 24px', background:'var(--tz-accent)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'var(--tz-bgLight)', cursor:'pointer', fontFamily:'inherit', width:'100%' },
     error: { padding:'10px 12px', background:'rgba(217,79,79,.08)', border:'1px solid rgba(217,79,79,.2)', borderRadius:8, fontSize:12, color:'#D94F4F', marginBottom:12 },
   }
 
   return (
     <div style={S.page}>
-      <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: th.border, borderRadius: 8, fontSize: 14, fontWeight: 700, color: th.text, textDecoration: 'none', marginBottom: 20 }}>
+      <a href="/customers" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--tz-border)', borderRadius: 8, fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', textDecoration: 'none', marginBottom: 20 }}>
   <ChevronLeft size={16} strokeWidth={2} /> Customers
 </a>
       <div style={S.title}>Add Customer</div>
-      <div style={{ fontSize:12, color:th.textSecondary, marginBottom:20 }}>Add a new fleet company or owner to your customer list.</div>
+      <div style={{ fontSize:12, color:'var(--tz-textSecondary)', marginBottom:20 }}>Add a new fleet company or owner to your customer list.</div>
       {error && <div style={S.error}>{error}</div>}
       <form onSubmit={submit}>
         <div style={S.card}>
@@ -70,7 +70,7 @@ export default function NewCustomerPage() {
                 <option value="owner_operator">Owner Operator</option>
                 <option value="outside_customer">Outside Customer</option>
               </select>
-              <div style={{ fontSize: 10, color: th.textTertiary, marginTop: 3 }}>New trucks default to this type</div>
+              <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', marginTop: 3 }}>New trucks default to this type</div>
             </div>
           </div>
           <div><label style={S.label}>Notes</label><input style={S.input} value={form.notes} onChange={upd('notes')} placeholder="Optional notes"/></div>

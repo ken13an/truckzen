@@ -105,14 +105,14 @@ const FONT = "'Instrument Sans', sans-serif"
 
 export default function SmartDropPage() {
   const { tokens: _t } = useTheme()
-  const CARD_BG = _t.bgCard
-  const BORDER = _t.border
-  const TEXT = _t.text
-  const DIM = _t.textSecondary
-  const BLUE = _t.accent
-  const GREEN = _t.success
-  const AMBER = _t.warning
-  const RED = _t.danger
+  const CARD_BG = 'var(--tz-bgCard)'
+  const BORDER = 'var(--tz-border)'
+  const TEXT = 'var(--tz-text)'
+  const DIM = 'var(--tz-textSecondary)'
+  const BLUE = 'var(--tz-accent)'
+  const GREEN = 'var(--tz-success)'
+  const AMBER = 'var(--tz-warning)'
+  const RED = 'var(--tz-danger)'
   const card = makeCard(_t)
   const th = makeTh(_t)
   const td = makeTd(_t)
@@ -528,7 +528,7 @@ export default function SmartDropPage() {
 
   return (
     <AppPageShell width="wide" style={{ fontFamily: FONT }}>
-      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: BLUE, color: _t.bgLight, padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: BLUE, color: 'var(--tz-bgLight)', padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 600 }}>{toast}</div>}
 
       <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: TEXT, marginBottom: 4 }}>Smart Drop</div>
       <div style={{ fontSize: 12, color: DIM, marginBottom: 16 }}>Upload Excel or CSV files. Columns are auto-mapped using AI + smart matching.</div>
@@ -540,7 +540,7 @@ export default function SmartDropPage() {
             flex: 1, padding: '14px 20px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
             border: mode === 'upload' ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
             background: mode === 'upload' ? 'rgba(29,111,232,.1)' : CARD_BG,
-            color: mode === 'upload' ? _t.accentLight : DIM,
+            color: mode === 'upload' ? 'var(--tz-accentLight)' : DIM,
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Upload
@@ -549,7 +549,7 @@ export default function SmartDropPage() {
             flex: 1, padding: '14px 20px', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
             border: mode === 'fullbay' ? `2px solid ${BLUE}` : `1px solid ${BORDER}`,
             background: mode === 'fullbay' ? 'rgba(29,111,232,.1)' : CARD_BG,
-            color: mode === 'fullbay' ? _t.accentLight : DIM,
+            color: mode === 'fullbay' ? 'var(--tz-accentLight)' : DIM,
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
             Legacy System
@@ -688,7 +688,7 @@ export default function SmartDropPage() {
                 <button key={k} onClick={() => setImportType(k)}
                   style={{
                     flex: 1, padding: '10px', borderRadius: 8, border: importType === k ? `1px solid ${BLUE}` : `1px solid ${BORDER}`,
-                    background: importType === k ? 'rgba(29,111,232,.08)' : CARD_BG, color: importType === k ? _t.accentLight : DIM,
+                    background: importType === k ? 'rgba(29,111,232,.08)' : CARD_BG, color: importType === k ? 'var(--tz-accentLight)' : DIM,
                     fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                   }}>{l}</button>
               ))}
@@ -717,7 +717,7 @@ export default function SmartDropPage() {
             <div style={{ ...card, marginTop: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>Legacy Work Orders</div>
-                <button onClick={syncFullbayWOs} disabled={!!fbSyncing} style={{ ...btnSecondary, fontSize: 11, padding: '6px 14px', color: fbSyncing ? DIM : _t.accentLight, borderColor: fbSyncing ? BORDER : BLUE }}>
+                <button onClick={syncFullbayWOs} disabled={!!fbSyncing} style={{ ...btnSecondary, fontSize: 11, padding: '6px 14px', color: fbSyncing ? DIM : 'var(--tz-accentLight)', borderColor: fbSyncing ? BORDER : BLUE }}>
                   {fbSyncing ? 'Syncing...' : 'Sync Active WOs'}
                 </button>
               </div>
@@ -791,7 +791,7 @@ export default function SmartDropPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {colMappings.map((cm, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: _t.bgInput, borderRadius: 8 }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', background: 'var(--tz-bgInput)', borderRadius: 8 }}>
                   <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: TEXT }}>{cm.header}</div>
                   <div style={{ fontSize: 11, color: DIM }}>→</div>
                   <select
@@ -962,7 +962,7 @@ export default function SmartDropPage() {
           </div>
 
           {result.errors.length > 0 && (
-            <div style={{ background: _t.bgInput, borderRadius: 8, padding: 12, maxHeight: 150, overflowY: 'auto', textAlign: 'left', marginBottom: 16 }}>
+            <div style={{ background: 'var(--tz-bgInput)', borderRadius: 8, padding: 12, maxHeight: 150, overflowY: 'auto', textAlign: 'left', marginBottom: 16 }}>
               {result.errors.slice(0, 20).map((e, i) => (
                 <div key={i} style={{ fontSize: 11, color: DIM, padding: '2px 0' }}>{e}</div>
               ))}

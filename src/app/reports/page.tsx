@@ -15,9 +15,9 @@ import DateRangePicker from '@/components/DateRangePicker'
 export default function ReportsPage() {
   const { tokens: t } = useTheme()
 
-  const tdStyle: React.CSSProperties = { padding: '10px 12px', borderBottom: `1px solid ${t.bgHover}`, fontSize: 13 }
+  const tdStyle: React.CSSProperties = { padding: '10px 12px', borderBottom: `1px solid ${'var(--tz-bgHover)'}`, fontSize: 13 }
 
-  const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontSize: 10, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, borderBottom: `1px solid ${t.border}` }
+  const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontSize: 10, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, borderBottom: `1px solid ${'var(--tz-border)'}` }
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
   const [tab, setTab] = useState(0)
@@ -116,7 +116,7 @@ export default function ReportsPage() {
   return (
     <AppPageShell width="wide" padding="20px 24px" style={{ fontFamily: FONT }}>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 12px', color: t.text }}>Reports</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 12px', color: 'var(--tz-text)' }}>Reports</h1>
         <DateRangePicker onChange={handleDateChange} defaultPreset="this_month" />
       </div>
 
@@ -125,14 +125,14 @@ export default function ReportsPage() {
         {([['live', 'TruckZen Live'], ['fullbay', 'Imported History'], ['combined', 'Combined']] as const).map(([key, label]) => (
           <button key={key} onClick={() => setSourceMode(key as any)} style={{
             padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, border: 'none',
-            background: sourceMode === key ? t.accent : t.bgCard,
-            color: sourceMode === key ? t.bgLight : t.textSecondary,
+            background: sourceMode === key ? 'var(--tz-accent)' : 'var(--tz-bgCard)',
+            color: sourceMode === key ? 'var(--tz-bgLight)' : 'var(--tz-textSecondary)',
           }}>{label}</button>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.border}`, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${'var(--tz-border)'}`, marginBottom: 20 }}>
         {TABS.map((tt, i) => (
           <button key={tt} onClick={() => setTab(i)} style={{
             padding: '10px 20px', fontSize: 13, fontWeight: tab === i ? 700 : 500, cursor: 'pointer', fontFamily: FONT,
@@ -159,9 +159,9 @@ export default function ReportsPage() {
               const change = c.prev != null ? pctChange(typeof c.value === 'string' ? parseFloat(c.value.replace(/[$,]/g, '')) : c.value, c.prev) : null
               const changeColor = change != null ? (c.invert ? (change <= 0 ? GREEN : RED) : (change >= 0 ? GREEN : RED)) : GRAY
               return (
-                <div key={c.label} style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 16 }}>
+                <div key={c.label} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 16 }}>
                   <div style={{ fontSize: 11, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, fontWeight: 600 }}>{c.label}</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: t.text }}>{c.value}</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--tz-text)' }}>{c.value}</div>
                   {change != null && (
                     <div style={{ fontSize: 11, color: changeColor, fontWeight: 600, marginTop: 4 }}>
                       {change > 0 ? '+' : ''}{change}% vs previous period
@@ -178,7 +178,7 @@ export default function ReportsPage() {
       {!loading && tab === 1 && (
         <div>
           {/* Simple bar chart for daily revenue */}
-          <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 16px' }}>Daily Revenue</h3>
             {revenueByDay.length > 0 ? (
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 160 }}>
@@ -198,7 +198,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Top customers table */}
-          <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20 }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>Top Customers by Revenue</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
@@ -224,7 +224,7 @@ export default function ReportsPage() {
         <div>
           {/* Hours bar chart */}
           {laborData.length > 0 && (
-            <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
               <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 16px' }}>Hours by Mechanic</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {laborData.map((m, i) => {
@@ -233,9 +233,9 @@ export default function ReportsPage() {
                   return (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 120, fontSize: 12, fontWeight: 600, textAlign: 'right' }}>{m.name}</div>
-                      <div style={{ flex: 1, height: 24, background: t.surfaceMuted, borderRadius: 4 }}>
+                      <div style={{ flex: 1, height: 24, background: 'var(--tz-surfaceMuted)', borderRadius: 4 }}>
                         <div style={{ width: `${w}%`, height: '100%', background: BLUE, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 8 }}>
-                          <span style={{ fontSize: 10, color: t.bgLight, fontWeight: 700 }}>{m.hours.toFixed(1)}h</span>
+                          <span style={{ fontSize: 10, color: 'var(--tz-bgLight)', fontWeight: 700 }}>{m.hours.toFixed(1)}h</span>
                         </div>
                       </div>
                     </div>
@@ -246,7 +246,7 @@ export default function ReportsPage() {
           )}
 
           {/* Mechanic table */}
-          <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20 }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>Mechanic Productivity</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
@@ -273,7 +273,7 @@ export default function ReportsPage() {
         <div>
           {/* Top parts bar chart */}
           {partsData.length > 0 && (
-            <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
               <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 16px' }}>Top Parts by Quantity Used</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {partsData.slice(0, 10).map((p, i) => {
@@ -282,9 +282,9 @@ export default function ReportsPage() {
                   return (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 180, fontSize: 11, fontWeight: 500, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.description}</div>
-                      <div style={{ flex: 1, height: 20, background: t.surfaceMuted, borderRadius: 4 }}>
+                      <div style={{ flex: 1, height: 20, background: 'var(--tz-surfaceMuted)', borderRadius: 4 }}>
                         <div style={{ width: `${w}%`, height: '100%', background: GREEN, borderRadius: 4, display: 'flex', alignItems: 'center', paddingLeft: 6 }}>
-                          <span style={{ fontSize: 9, color: t.bgLight, fontWeight: 700 }}>{p.qty}</span>
+                          <span style={{ fontSize: 9, color: 'var(--tz-bgLight)', fontWeight: 700 }}>{p.qty}</span>
                         </div>
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 600, width: 70, textAlign: 'right' }}>{fmt(p.revenue)}</div>
@@ -296,7 +296,7 @@ export default function ReportsPage() {
           )}
 
           {/* Parts table */}
-          <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>Parts Usage & Revenue</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
@@ -317,7 +317,7 @@ export default function ReportsPage() {
 
           {/* Low stock alerts */}
           {lowStock.length > 0 && (
-            <div style={{ background: t.dangerBg, border: `1px solid ${t.danger}`, borderRadius: 12, padding: 20 }}>
+            <div style={{ background: 'var(--tz-dangerBg)', border: `1px solid ${'var(--tz-danger)'}`, borderRadius: 12, padding: 20 }}>
               <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px', color: RED }}>Low Stock Alerts</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
@@ -341,7 +341,7 @@ export default function ReportsPage() {
 
       {/* ═══ TRUCKS TAB ═══ */}
       {!loading && tab === 4 && (
-        <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20 }}>
           <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>Most Serviced Units</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
@@ -366,7 +366,7 @@ export default function ReportsPage() {
       {/* ═══ MECHANICS TAB ═══ */}
       {!loading && tab === 5 && (
         <div>
-          <div style={{ background: t.bgCard, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 20 }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 12px' }}>Mechanic Weekly Performance</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>

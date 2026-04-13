@@ -16,7 +16,7 @@ export default function SourceBadge({ source }: { source?: string | null }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 3,
       padding: '1px 6px', borderRadius: 4, fontSize: 8, fontWeight: 600,
-      color: t.textSecondary, background: 'rgba(124,139,160,.1)',
+      color: 'var(--tz-textSecondary)', background: 'rgba(124,139,160,.1)',
       border: '1px solid rgba(124,139,160,.15)',
       textTransform: 'uppercase', letterSpacing: '.04em',
       fontFamily: "'IBM Plex Mono', monospace",

@@ -60,11 +60,11 @@ export default function FilterBar({
 
   const inputStyle: React.CSSProperties = {
     padding: '7px 12px',
-    background: t.inputBg,
-    border: `1px solid ${t.inputBorder}`,
+    background: 'var(--tz-inputBg)',
+    border: `1px solid ${'var(--tz-inputBorder)'}`,
     borderRadius: 8,
     fontSize: 12,
-    color: t.text,
+    color: 'var(--tz-text)',
     outline: 'none',
     fontFamily: "'Instrument Sans', sans-serif",
     boxSizing: 'border-box',
@@ -73,18 +73,18 @@ export default function FilterBar({
   return (
     <div style={{
       display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap',
-      padding: '10px 14px', background: t.bgCard, border: `1px solid ${t.cardBorder}`,
+      padding: '10px 14px', background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`,
       borderRadius: 10, marginBottom: 12,
     }}>
       {/* Filters label */}
-      <div style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tz-textSecondary)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
         Filters
-        {activeCount > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 16, height: 16, padding: '0 4px', borderRadius: 100, background: t.accent, color: t.bgLight, fontSize: 9, fontWeight: 700, marginLeft: 4 }}>{activeCount}</span>}
+        {activeCount > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 16, height: 16, padding: '0 4px', borderRadius: 100, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', fontSize: 9, fontWeight: 700, marginLeft: 4 }}>{activeCount}</span>}
       </div>
 
       {/* Search */}
       <div style={{ position: 'relative', flex: '1 1 200px', minWidth: 180 }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.textTertiary} strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={'var(--tz-textTertiary)'} strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
           <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
         </svg>
         <input
@@ -111,7 +111,7 @@ export default function FilterBar({
       {/* Date From */}
       {onDateFromChange && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 10, color: t.textTertiary }}>From</span>
+          <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)' }}>From</span>
           <input type="date" value={dateFrom || ''} onChange={e => onDateFromChange(e.target.value)}
             style={{ ...inputStyle, padding: '6px 10px', fontSize: 11, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties} />
         </div>
@@ -120,7 +120,7 @@ export default function FilterBar({
       {/* Date To */}
       {onDateToChange && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 10, color: t.textTertiary }}>To</span>
+          <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)' }}>To</span>
           <input type="date" value={dateTo || ''} onChange={e => onDateToChange(e.target.value)}
             style={{ ...inputStyle, padding: '6px 10px', fontSize: 11, cursor: 'pointer', colorScheme: 'dark' } as React.CSSProperties} />
         </div>
@@ -129,8 +129,8 @@ export default function FilterBar({
       {/* Clear Filters */}
       {activeCount > 0 && (
         <button onClick={clearAll} style={{
-          padding: '6px 12px', background: t.dangerBg, border: `1px solid ${t.danger}`,
-          borderRadius: 8, fontSize: 11, fontWeight: 600, color: t.danger,
+          padding: '6px 12px', background: 'var(--tz-dangerBg)', border: `1px solid ${'var(--tz-danger)'}`,
+          borderRadius: 8, fontSize: 11, fontWeight: 600, color: 'var(--tz-danger)',
           cursor: 'pointer', fontFamily: "'Instrument Sans', sans-serif", whiteSpace: 'nowrap',
         }}>
           Clear Filters

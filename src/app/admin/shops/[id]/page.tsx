@@ -123,8 +123,8 @@ export default function PlatformAdminShopDetail() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: t.textSecondary, fontFamily: FONT }}>Loading...</span>
+      <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: 'var(--tz-textSecondary)', fontFamily: FONT }}>Loading...</span>
       </div>
     )
   }
@@ -132,33 +132,33 @@ export default function PlatformAdminShopDetail() {
   if (!user || !shop) return null
 
   const statusColor = (status: string) => {
-    if (status === 'active') return t.success
-    if (status === 'pending') return t.warning
-    if (status === 'suspended') return t.danger
-    return t.textSecondary
+    if (status === 'active') return 'var(--tz-success)'
+    if (status === 'pending') return 'var(--tz-warning)'
+    if (status === 'suspended') return 'var(--tz-danger)'
+    return 'var(--tz-textSecondary)'
   }
 
   const statusBg = (status: string) => {
-    if (status === 'active') return t.successBg
-    if (status === 'pending') return t.warningBg
-    if (status === 'suspended') return t.dangerBg
+    if (status === 'active') return 'var(--tz-successBg)'
+    if (status === 'pending') return 'var(--tz-warningBg)'
+    if (status === 'suspended') return 'var(--tz-dangerBg)'
     return 'transparent'
   }
 
   const statCards = [
-    { label: 'Users', value: shop.user_count, color: t.accent },
-    { label: 'Customers', value: shop.customer_count, color: t.success },
-    { label: 'Vehicles', value: shop.asset_count, color: t.warning },
-    { label: 'Work Orders', value: shop.wo_count, color: t.accentLight },
+    { label: 'Users', value: shop.user_count, color: 'var(--tz-accent)' },
+    { label: 'Customers', value: shop.customer_count, color: 'var(--tz-success)' },
+    { label: 'Vehicles', value: shop.asset_count, color: 'var(--tz-warning)' },
+    { label: 'Work Orders', value: shop.wo_count, color: 'var(--tz-accentLight)' },
     { label: 'Invoices', value: shop.invoice_count, color: COLORS.roleParts },
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: FONT }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', color: 'var(--tz-text)', fontFamily: FONT }}>
       {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', top: 20, right: 20, background: t.accent, color: t.bgLight,
+          position: 'fixed', top: 20, right: 20, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)',
           padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999,
           boxShadow: '0 4px 20px rgba(0,0,0,.4)',
         }}>{toast}</div>
@@ -166,7 +166,7 @@ export default function PlatformAdminShopDetail() {
 
       {/* Header */}
       <div style={{ padding: '32px 40px 0' }}>
-        <a href="/admin/shops" style={{ color: t.accentLight, fontSize: 12, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
+        <a href="/admin/shops" style={{ color: 'var(--tz-accentLight)', fontSize: 12, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
           ← Back to All Shops
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
@@ -179,14 +179,14 @@ export default function PlatformAdminShopDetail() {
           </span>
         </div>
         {shop.dba && shop.name !== shop.dba && (
-          <p style={{ fontSize: 13, color: t.textTertiary, margin: '2px 0 0' }}>Legal: {shop.name}</p>
+          <p style={{ fontSize: 13, color: 'var(--tz-textTertiary)', margin: '2px 0 0' }}>Legal: {shop.name}</p>
         )}
       </div>
 
       {/* Shop Info */}
       <div style={{ padding: '24px 40px' }}>
         <div style={{
-          background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`,
+          background: 'var(--tz-bgCard)', borderRadius: 12, border: `1px solid ${'var(--tz-border)'}`,
           padding: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20,
         }}>
           {[
@@ -198,8 +198,8 @@ export default function PlatformAdminShopDetail() {
             { label: 'Kiosk Code', value: shop.kiosk_code || '—' },
           ].map(item => (
             <div key={item.label}>
-              <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 4 }}>{item.label}</div>
-              <div style={{ fontSize: 13, color: item.value ? t.text : t.textTertiary }}>{item.value || '—'}</div>
+              <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 4 }}>{item.label}</div>
+              <div style={{ fontSize: 13, color: item.value ? 'var(--tz-text)' : 'var(--tz-textTertiary)' }}>{item.value || '—'}</div>
             </div>
           ))}
         </div>
@@ -209,9 +209,9 @@ export default function PlatformAdminShopDetail() {
       <div style={{ padding: '0 40px 24px', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
         {statCards.map(card => (
           <div key={card.label} style={{
-            background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, padding: 20,
+            background: 'var(--tz-bgCard)', borderRadius: 12, border: `1px solid ${'var(--tz-border)'}`, padding: 20,
           }}>
-            <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 8 }}>{card.label}</div>
+            <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', marginBottom: 8 }}>{card.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: card.color }}>{card.value}</div>
           </div>
         ))}
@@ -220,15 +220,15 @@ export default function PlatformAdminShopDetail() {
       {/* Admin Actions */}
       <div style={{ padding: '0 40px 40px' }}>
         <div style={{
-          background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, padding: 24,
+          background: 'var(--tz-bgCard)', borderRadius: 12, border: `1px solid ${'var(--tz-border)'}`, padding: 24,
         }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 16px', color: t.text }}>Admin Actions</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 700, margin: '0 0 16px', color: 'var(--tz-text)' }}>Admin Actions</h3>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {/* Impersonate */}
             <button
               onClick={handleImpersonate}
               style={{
-                background: t.accentBg, color: t.accentLight, border: `1px solid ${t.accent}`,
+                background: 'var(--tz-accentBg)', color: 'var(--tz-accentLight)', border: `1px solid ${'var(--tz-accent)'}`,
                 borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
               }}
             >
@@ -240,9 +240,9 @@ export default function PlatformAdminShopDetail() {
               onClick={handleSuspend}
               disabled={suspending}
               style={{
-                background: shop.status === 'suspended' ? t.successBg : t.warningBg,
-                color: shop.status === 'suspended' ? t.success : t.warning,
-                border: `1px solid ${shop.status === 'suspended' ? t.success : t.warning}`,
+                background: shop.status === 'suspended' ? 'var(--tz-successBg)' : 'var(--tz-warningBg)',
+                color: shop.status === 'suspended' ? 'var(--tz-success)' : 'var(--tz-warning)',
+                border: `1px solid ${shop.status === 'suspended' ? 'var(--tz-success)' : 'var(--tz-warning)'}`,
                 borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                 opacity: suspending ? 0.6 : 1,
               }}
@@ -254,7 +254,7 @@ export default function PlatformAdminShopDetail() {
             <button
               onClick={() => setShowClearConfirm(true)}
               style={{
-                background: t.dangerBg, color: t.danger, border: `1px solid ${t.danger}`,
+                background: 'var(--tz-dangerBg)', color: 'var(--tz-danger)', border: `1px solid ${'var(--tz-danger)'}`,
                 borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
               }}
             >
@@ -265,15 +265,15 @@ export default function PlatformAdminShopDetail() {
           {/* Clear Result */}
           {clearResult && (
             <div style={{
-              marginTop: 16, padding: 16, background: t.bgAlt, borderRadius: 8, border: `1px solid ${t.border}`,
+              marginTop: 16, padding: 16, background: 'var(--tz-bgAlt)', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`,
             }}>
-              <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', color: t.success }}>
+              <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', color: 'var(--tz-success)' }}>
                 Cleared {clearResult.total} records from {clearResult.shop}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
                 {Object.entries(clearResult.cleared).map(([key, val]) => (
-                  <div key={key} style={{ fontSize: 12, color: t.textSecondary }}>
-                    <span style={{ color: t.textTertiary }}>{key}:</span> <span style={{ fontWeight: 600, color: t.text }}>{val as number}</span>
+                  <div key={key} style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>
+                    <span style={{ color: 'var(--tz-textTertiary)' }}>{key}:</span> <span style={{ fontWeight: 600, color: 'var(--tz-text)' }}>{val as number}</span>
                   </div>
                 ))}
               </div>
@@ -291,15 +291,15 @@ export default function PlatformAdminShopDetail() {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: t.bgCard, borderRadius: 16, border: `1px solid ${t.border}`,
+              background: 'var(--tz-bgCard)', borderRadius: 16, border: `1px solid ${'var(--tz-border)'}`,
               padding: 32, width: 440, boxShadow: '0 20px 60px rgba(0,0,0,.5)',
             }}
           >
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 12px', color: t.danger }}>Clear All Test Data?</h2>
-            <p style={{ fontSize: 13, color: t.textSecondary, margin: '0 0 8px', lineHeight: 1.6 }}>
-              This will permanently delete <strong style={{ color: t.text }}>all</strong> data for <strong style={{ color: t.text }}>{shop.dba || shop.name}</strong>:
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 12px', color: 'var(--tz-danger)' }}>Clear All Test Data?</h2>
+            <p style={{ fontSize: 13, color: 'var(--tz-textSecondary)', margin: '0 0 8px', lineHeight: 1.6 }}>
+              This will permanently delete <strong style={{ color: 'var(--tz-text)' }}>all</strong> data for <strong style={{ color: 'var(--tz-text)' }}>{shop.dba || shop.name}</strong>:
             </p>
-            <ul style={{ fontSize: 12, color: t.textSecondary, margin: '8px 0 20px', paddingLeft: 20, lineHeight: 1.8 }}>
+            <ul style={{ fontSize: 12, color: 'var(--tz-textSecondary)', margin: '8px 0 20px', paddingLeft: 20, lineHeight: 1.8 }}>
               <li>All service orders, lines, and job assignments</li>
               <li>All invoices and invoice lines</li>
               <li>All customers and contacts</li>
@@ -307,7 +307,7 @@ export default function PlatformAdminShopDetail() {
               <li>All time entries, notes, files, parts requests</li>
               <li>Test user accounts (technicians, mechanics)</li>
             </ul>
-            <p style={{ fontSize: 12, color: t.danger, margin: '0 0 20px', fontWeight: 600 }}>
+            <p style={{ fontSize: 12, color: 'var(--tz-danger)', margin: '0 0 20px', fontWeight: 600 }}>
               This action cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
@@ -315,7 +315,7 @@ export default function PlatformAdminShopDetail() {
                 onClick={() => setShowClearConfirm(false)}
                 disabled={clearing}
                 style={{
-                  background: 'transparent', color: t.textSecondary, border: `1px solid ${t.border}`,
+                  background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}`,
                   borderRadius: 8, padding: '10px 20px', fontSize: 13, cursor: 'pointer', fontFamily: FONT,
                 }}
               >
@@ -328,7 +328,7 @@ export default function PlatformAdminShopDetail() {
                 }}
                 disabled={clearing}
                 style={{
-                  background: t.danger, color: t.bgLight, border: 'none', borderRadius: 8,
+                  background: 'var(--tz-danger)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8,
                   padding: '10px 24px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                   opacity: clearing ? 0.6 : 1,
                 }}

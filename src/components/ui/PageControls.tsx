@@ -36,14 +36,14 @@ export default function PageControls({
   return (
     <>
       <div style={{ position: 'relative', marginBottom: 12 }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.textTertiary} strokeWidth="2" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={'var(--tz-textTertiary)'} strokeWidth="2" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
           <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
         </svg>
         <input
           value={localSearch}
           onChange={e => handleSearchInput(e.target.value)}
           placeholder={searchPlaceholder}
-          style={{ width: '100%', maxWidth: 360, padding: '8px 12px 8px 34px', background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' }}
+          style={{ width: '100%', maxWidth: 360, padding: '8px 12px 8px 34px', background: 'var(--tz-inputBg)', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: FONT, boxSizing: 'border-box' }}
         />
       </div>
     </>

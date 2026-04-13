@@ -94,7 +94,7 @@ export default function PartDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: t.bg, fontFamily: FONT, padding: 48, textAlign: 'center', color: t.textTertiary }}>
+      <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', fontFamily: FONT, padding: 48, textAlign: 'center', color: 'var(--tz-textTertiary)' }}>
         Loading...
       </div>
     )
@@ -105,10 +105,10 @@ export default function PartDetailPage() {
   const crossRefs = part?.cross_references || []
 
   return (
-    <div style={{ minHeight: '100vh', background: t.bg, fontFamily: FONT, padding: 24 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', fontFamily: FONT, padding: 24 }}>
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: t.accent, color: t.bgLight, padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
           {toast}
         </div>
       )}
@@ -117,37 +117,37 @@ export default function PartDetailPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-            <div style={{ fontFamily: MONO, fontSize: 13, color: t.accent, fontWeight: 600 }}>{part.part_number || 'No Part #'}</div>
+            <div style={{ fontFamily: MONO, fontSize: 13, color: 'var(--tz-accent)', fontWeight: 600 }}>{part.part_number || 'No Part #'}</div>
             <span style={{
               display: 'inline-block', padding: '2px 10px', borderRadius: 100, fontSize: 10, fontWeight: 600,
-              background: status === 'active' ? t.successBg : t.surfaceMuted,
-              color: status === 'active' ? t.success : t.textTertiary,
+              background: status === 'active' ? 'var(--tz-successBg)' : 'var(--tz-surfaceMuted)',
+              color: status === 'active' ? 'var(--tz-success)' : 'var(--tz-textTertiary)',
             }}>
               {status === 'active' ? 'Active' : 'Inactive'}
             </span>
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: t.text }}>{part.description || 'Untitled Part'}</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tz-text)' }}>{part.description || 'Untitled Part'}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <a href="/parts" style={{
-            padding: '8px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard,
-            color: t.textSecondary, fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'inherit',
+            padding: '8px 16px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)',
+            color: 'var(--tz-textSecondary)', fontSize: 13, fontWeight: 600, textDecoration: 'none', fontFamily: 'inherit',
           }}>Back to Parts</a>
           {canEdit && !editing && (
             <button onClick={() => setEditing(true)} style={{
-              padding: '8px 16px', borderRadius: 8, border: 'none', background: t.accent,
-              color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+              padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--tz-accent)',
+              color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
             }}>Edit</button>
           )}
           {editing && (
             <>
               <button onClick={handleCancel} style={{
-                padding: '8px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: t.bgCard,
-                color: t.textSecondary, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                padding: '8px 16px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)',
+                color: 'var(--tz-textSecondary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
               }}>Cancel</button>
               <button onClick={handleSave} disabled={saving} style={{
-                padding: '8px 16px', borderRadius: 8, border: 'none', background: t.accent,
-                color: t.bgLight, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--tz-accent)',
+                color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                 opacity: saving ? 0.6 : 1,
               }}>{saving ? 'Saving...' : 'Save'}</button>
             </>
@@ -209,13 +209,13 @@ export default function PartDetailPage() {
               {Array.isArray(crossRefs) && crossRefs.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {crossRefs.map((ref: any, i: number) => (
-                    <div key={i} style={{ padding: '8px 12px', background: t.bgHover, borderRadius: 6, fontSize: 12, color: t.textSecondary, fontFamily: MONO }}>
+                    <div key={i} style={{ padding: '8px 12px', background: 'var(--tz-bgHover)', borderRadius: 6, fontSize: 12, color: 'var(--tz-textSecondary)', fontFamily: MONO }}>
                       {typeof ref === 'string' ? ref : (ref.part_number || ref.reference || JSON.stringify(ref))}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: t.textTertiary }}>No cross references</div>
+                <div style={{ fontSize: 13, color: 'var(--tz-textTertiary)' }}>No cross references</div>
               )}
             </div>
           </div>
@@ -229,7 +229,7 @@ export default function PartDetailPage() {
                 const cost = part.average_cost ?? part.cost_price ?? 0
                 const sell = part.selling_price ?? part.sell_price ?? 0
                 return cost > 0 && sell > 0 && sell < cost ? (
-                  <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 12, color: t.warning, marginBottom: 12, fontWeight: 600 }}>
+                  <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(217,119,6,.1)', border: '1px solid rgba(217,119,6,.25)', fontSize: 12, color: 'var(--tz-warning)', marginBottom: 12, fontWeight: 600 }}>
                     Sell price below cost — margin is negative
                   </div>
                 ) : null
@@ -273,7 +273,7 @@ export default function PartDetailPage() {
             <div style={cardStyle(t)}>
               <div style={sectionTitle(t)}>Inventory</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                <Field t={t} label="In Stock" value={editing ? undefined : fmtQty(onHand)} valueColor={onHand > 0 ? t.accent : t.textTertiary}>
+                <Field t={t} label="In Stock" value={editing ? undefined : fmtQty(onHand)} valueColor={onHand > 0 ? 'var(--tz-accent)' : 'var(--tz-textTertiary)'}>
                   {editing && <input type="number" step="0.01" value={form.on_hand ?? 0} onChange={e => setForm({ ...form, on_hand: parseFloat(e.target.value) || 0 })} style={inputStyle(t)} />}
                 </Field>
                 <Field t={t} label="Allocated" value={editing ? undefined : fmtQty(part.allocated ?? part.reserved_qty ?? 0)}>
@@ -305,7 +305,7 @@ export default function PartDetailPage() {
 
       {/* Tabs section */}
       <div style={{ marginTop: 24 }}>
-        <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${t.border}`, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 0, borderBottom: `2px solid ${'var(--tz-border)'}`, marginBottom: 16 }}>
           {[
             { key: 'exceptions' as const, label: 'Pricing Exceptions' },
             { key: 'history' as const, label: 'Field History' },
@@ -313,8 +313,8 @@ export default function PartDetailPage() {
           ].map(tab => (
             <button key={tab.key} onClick={() => { setActiveTab(tab.key); if (tab.key === 'pos') setPoPage(1) }} style={{
               padding: '10px 18px', background: 'none', border: 'none',
-              borderBottom: activeTab === tab.key ? `2px solid ${t.accent}` : '2px solid transparent',
-              color: activeTab === tab.key ? t.accent : t.textTertiary,
+              borderBottom: activeTab === tab.key ? `2px solid ${'var(--tz-accent)'}` : '2px solid transparent',
+              color: activeTab === tab.key ? 'var(--tz-accent)' : 'var(--tz-textTertiary)',
               fontWeight: activeTab === tab.key ? 700 : 500, fontSize: 13, cursor: 'pointer',
               fontFamily: 'inherit', marginBottom: -2,
             }}>{tab.label}</button>
@@ -323,26 +323,26 @@ export default function PartDetailPage() {
 
         <div style={cardStyle(t)}>
           {tabLoading ? (
-            <div style={{ padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>Loading...</div>
+            <div style={{ padding: 32, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>Loading...</div>
           ) : activeTab === 'exceptions' ? (
             tabData.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No pricing exceptions</div>
+              <div style={{ padding: 32, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>No pricing exceptions</div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                     {['Customer', 'Price', 'Discount', 'Effective Date'].map(h => (
-                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {tabData.map((row: any) => (
-                    <tr key={row.id} style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.text }}>{row.customer_name || row.customer_id || '--'}</td>
+                    <tr key={row.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-text)' }}>{row.customer_name || row.customer_id || '--'}</td>
                       <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12 }}>{row.price != null ? fmt(row.price) : '--'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.discount_pct ? `${row.discount_pct}%` : '--'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.effective_date || row.created_at ? new Date(row.effective_date || row.created_at).toLocaleDateString() : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>{row.discount_pct ? `${row.discount_pct}%` : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>{row.effective_date || row.created_at ? new Date(row.effective_date || row.created_at).toLocaleDateString() : '--'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -350,24 +350,24 @@ export default function PartDetailPage() {
             )
           ) : activeTab === 'history' ? (
             tabData.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No history records</div>
+              <div style={{ padding: 32, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>No history records</div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                     {['Date', 'Field', 'Old Value', 'New Value', 'Changed By'].map(h => (
-                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                      <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {tabData.map((row: any) => (
-                    <tr key={row.id} style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '--'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: t.text }}>{row.field_name || '--'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: t.textTertiary }}>{row.old_value ?? '--'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: t.text }}>{row.new_value ?? '--'}</td>
-                      <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.changed_by_name || row.changed_by || '--'}</td>
+                    <tr key={row.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: 'var(--tz-text)' }}>{row.field_name || '--'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: 'var(--tz-textTertiary)' }}>{row.old_value ?? '--'}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 11, color: 'var(--tz-text)' }}>{row.new_value ?? '--'}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>{row.changed_by_name || row.changed_by || '--'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -376,25 +376,25 @@ export default function PartDetailPage() {
           ) : (
             /* Purchase Orders tab */
             tabData.length === 0 ? (
-              <div style={{ padding: 32, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>No purchase orders</div>
+              <div style={{ padding: 32, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>No purchase orders</div>
             ) : (
               <>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                    <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                       {['PO #', 'Vendor', 'Date', 'Qty', 'Unit Cost', 'Total'].map(h => (
-                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                        <th key={h} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {tabData.map((row: any) => (
-                      <tr key={row.id} style={{ borderBottom: `1px solid ${t.border}` }}>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: t.accent }}>{row.po_number || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.text }}>{row.vendor || '--'}</td>
-                        <td style={{ padding: '10px 12px', fontSize: 12, color: t.textSecondary }}>{row.date ? new Date(row.date).toLocaleDateString() : '--'}</td>
+                      <tr key={row.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: 'var(--tz-accent)' }}>{row.po_number || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-text)' }}>{row.vendor || '--'}</td>
+                        <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>{row.date ? new Date(row.date).toLocaleDateString() : '--'}</td>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12 }}>{row.quantity ?? '--'}</td>
-                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: t.textSecondary }}>{row.cost_price != null ? fmt(row.cost_price) : '--'}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, color: 'var(--tz-textSecondary)' }}>{row.cost_price != null ? fmt(row.cost_price) : '--'}</td>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 600 }}>{row.cost_price != null && row.quantity != null ? fmt(row.cost_price * row.quantity) : '--'}</td>
                       </tr>
                     ))}
@@ -402,9 +402,9 @@ export default function PartDetailPage() {
                 </table>
                 {poTotal > 25 && (
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 8, padding: '12px 0', fontSize: 12 }}>
-                    <button disabled={poPage <= 1} onClick={() => setPoPage(p => p - 1)} style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${t.border}`, background: t.bgCard, color: poPage <= 1 ? t.textTertiary : t.textSecondary, cursor: poPage <= 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>Previous</button>
-                    <span style={{ color: t.textSecondary, lineHeight: '28px' }}>Page {poPage} of {Math.ceil(poTotal / 25)}</span>
-                    <button disabled={poPage >= Math.ceil(poTotal / 25)} onClick={() => setPoPage(p => p + 1)} style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${t.border}`, background: t.bgCard, color: poPage >= Math.ceil(poTotal / 25) ? t.textTertiary : t.textSecondary, cursor: poPage >= Math.ceil(poTotal / 25) ? 'default' : 'pointer', fontFamily: 'inherit' }}>Next</button>
+                    <button disabled={poPage <= 1} onClick={() => setPoPage(p => p - 1)} style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: poPage <= 1 ? 'var(--tz-textTertiary)' : 'var(--tz-textSecondary)', cursor: poPage <= 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>Previous</button>
+                    <span style={{ color: 'var(--tz-textSecondary)', lineHeight: '28px' }}>Page {poPage} of {Math.ceil(poTotal / 25)}</span>
+                    <button disabled={poPage >= Math.ceil(poTotal / 25)} onClick={() => setPoPage(p => p + 1)} style={{ padding: '4px 12px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: poPage >= Math.ceil(poTotal / 25) ? 'var(--tz-textTertiary)' : 'var(--tz-textSecondary)', cursor: poPage >= Math.ceil(poTotal / 25) ? 'default' : 'pointer', fontFamily: 'inherit' }}>Next</button>
                   </div>
                 )}
               </>

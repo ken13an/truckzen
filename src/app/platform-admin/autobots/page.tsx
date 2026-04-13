@@ -180,11 +180,11 @@ export default function AutoBotsPage() {
     setScenarioSteps(copy)
   }
 
-  if (loading) return <div style={{ color: t.textSecondary, fontSize: 13, padding: 40 }}>Loading...</div>
+  if (loading) return <div style={{ color: 'var(--tz-textSecondary)', fontSize: 13, padding: 40 }}>Loading...</div>
 
   const inputStyle: React.CSSProperties = {
-    padding: '8px 12px', background: t.border, border: `1px solid ${t.border}`,
-    borderRadius: 8, fontSize: 12, color: t.text, outline: 'none', fontFamily: 'inherit', width: '100%',
+    padding: '8px 12px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`,
+    borderRadius: 8, fontSize: 12, color: 'var(--tz-text)', outline: 'none', fontFamily: 'inherit', width: '100%',
   }
 
   const selectStyle: React.CSSProperties = {
@@ -197,7 +197,7 @@ export default function AutoBotsPage() {
     <div>
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 20, right: 20, background: t.accent, color: t.bgLight, padding: '10px 20px', borderRadius: 8, fontSize: 12, fontWeight: 600, zIndex: 9999, boxShadow: '0 4px 20px rgba(0,0,0,.4)' }}>
+        <div style={{ position: 'fixed', top: 20, right: 20, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', padding: '10px 20px', borderRadius: 8, fontSize: 12, fontWeight: 600, zIndex: 9999, boxShadow: '0 4px 20px rgba(0,0,0,.4)' }}>
           {toast}
         </div>
       )}
@@ -205,14 +205,14 @@ export default function AutoBotsPage() {
       {/* Confirm Reset Modal */}
       {confirmReset && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9998 }} onClick={() => setConfirmReset(false)}>
-          <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 24, maxWidth: 400, width: '90%' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: t.text, margin: '0 0 12px' }}>Reset All AutoBots?</h3>
-            <p style={{ fontSize: 12, color: t.textSecondary, margin: '0 0 20px', lineHeight: 1.5 }}>
+          <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 24, maxWidth: 400, width: '90%' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', margin: '0 0 12px' }}>Reset All AutoBots?</h3>
+            <p style={{ fontSize: 12, color: 'var(--tz-textSecondary)', margin: '0 0 20px', lineHeight: 1.5 }}>
               This will delete all AutoBot auth accounts and user entries. AutoBots will need to be re-deployed after reset.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => setConfirmReset(false)} style={{ padding: '8px 16px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 12, color: t.textSecondary, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={resetAll} disabled={resetting} style={{ padding: '8px 16px', background: '#D94F4F', border: 'none', borderRadius: 8, fontSize: 12, color: t.bgLight, fontWeight: 600, cursor: 'pointer', opacity: resetting ? 0.5 : 1 }}>
+              <button onClick={() => setConfirmReset(false)} style={{ padding: '8px 16px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 12, color: 'var(--tz-textSecondary)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={resetAll} disabled={resetting} style={{ padding: '8px 16px', background: '#D94F4F', border: 'none', borderRadius: 8, fontSize: 12, color: 'var(--tz-bgLight)', fontWeight: 600, cursor: 'pointer', opacity: resetting ? 0.5 : 1 }}>
                 {resetting ? 'Resetting...' : 'Reset All'}
               </button>
             </div>
@@ -224,14 +224,14 @@ export default function AutoBotsPage() {
       <div style={{ marginBottom: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: t.text, margin: 0 }}>AutoBot Fleet</h1>
-            <p style={{ fontSize: 12, color: t.textSecondary, margin: '4px 0 0' }}>Automated test agents for TruckZen workflow verification</p>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)', margin: 0 }}>AutoBot Fleet</h1>
+            <p style={{ fontSize: 12, color: 'var(--tz-textSecondary)', margin: '4px 0 0' }}>Automated test agents for TruckZen workflow verification</p>
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={() => setConfirmReset(true)} disabled={resetting} style={{ padding: '8px 16px', background: 'rgba(217,79,79,.12)', border: '1px solid rgba(217,79,79,.3)', borderRadius: 8, fontSize: 12, color: '#D94F4F', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
               <RotateCcw size={13} /> Reset AutoBots
             </button>
-            <button onClick={deployAll} disabled={deploying} style={{ padding: '8px 16px', background: t.accent, border: 'none', borderRadius: 8, fontSize: 12, color: t.bgLight, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: deploying ? 0.5 : 1 }}>
+            <button onClick={deployAll} disabled={deploying} style={{ padding: '8px 16px', background: 'var(--tz-accent)', border: 'none', borderRadius: 8, fontSize: 12, color: 'var(--tz-bgLight)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: deploying ? 0.5 : 1 }}>
               <Bot size={13} /> {deploying ? 'Deploying...' : 'Deploy All AutoBots'}
             </button>
           </div>
@@ -239,25 +239,25 @@ export default function AutoBotsPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
           {bots.map(bot => (
-            <div key={bot.id} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
+            <div key={bot.id} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <Bot size={16} color={bot.status === 'active' ? '#22C55E' : t.textTertiary} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{bot.name}</span>
+                <Bot size={16} color={bot.status === 'active' ? '#22C55E' : 'var(--tz-textTertiary)'} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)' }}>{bot.name}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                <span style={{ fontSize: 9, fontWeight: 600, color: t.accentLight, background: 'rgba(29,111,232,.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>
+                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--tz-accentLight)', background: 'rgba(29,111,232,.12)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>
                   {bot.role}
                 </span>
                 <span style={{
                   fontSize: 9, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
                   fontFamily: "'IBM Plex Mono', monospace",
-                  color: bot.status === 'active' ? '#22C55E' : t.textTertiary,
-                  background: bot.status === 'active' ? 'rgba(34,197,94,.12)' : t.border,
+                  color: bot.status === 'active' ? '#22C55E' : 'var(--tz-textTertiary)',
+                  background: bot.status === 'active' ? 'rgba(34,197,94,.12)' : 'var(--tz-border)',
                 }}>
                   {bot.status === 'active' ? 'DEPLOYED' : 'NOT DEPLOYED'}
                 </span>
               </div>
-              <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace" }}>{bot.email}</div>
+              <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: "'IBM Plex Mono', monospace" }}>{bot.email}</div>
             </div>
           ))}
         </div>
@@ -265,15 +265,15 @@ export default function AutoBotsPage() {
 
       {/* SECTION 2: Scenario Builder */}
       <div style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: t.text, margin: '0 0 16px' }}>Scenario Builder</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tz-text)', margin: '0 0 16px' }}>Scenario Builder</h2>
 
         {/* Preset scenarios */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12, marginBottom: 24 }}>
           {scenarios.filter(s => s.is_preset).map(s => (
-            <div key={s.id} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 6 }}>{s.name}</div>
-              <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 10, lineHeight: 1.4 }}>{s.description}</div>
-              <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace" }}>
+            <div key={s.id} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)', marginBottom: 6 }}>{s.name}</div>
+              <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginBottom: 10, lineHeight: 1.4 }}>{s.description}</div>
+              <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: "'IBM Plex Mono', monospace" }}>
                 {(s.steps as any[]).length} steps
               </div>
             </div>
@@ -283,13 +283,13 @@ export default function AutoBotsPage() {
         {/* Custom saved scenarios */}
         {scenarios.filter(s => !s.is_preset).length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: t.textSecondary, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Custom Scenarios</h3>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-textSecondary)', margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Custom Scenarios</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
               {scenarios.filter(s => !s.is_preset).map(s => (
-                <div key={s.id} style={{ background: t.bgCard, border: '1px solid rgba(29,111,232,.2)', borderRadius: 12, padding: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 6 }}>{s.name}</div>
-                  <div style={{ fontSize: 11, color: t.textSecondary, marginBottom: 10, lineHeight: 1.4 }}>{s.description || 'No description'}</div>
-                  <div style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace" }}>
+                <div key={s.id} style={{ background: 'var(--tz-bgCard)', border: '1px solid rgba(29,111,232,.2)', borderRadius: 12, padding: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)', marginBottom: 6 }}>{s.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginBottom: 10, lineHeight: 1.4 }}>{s.description || 'No description'}</div>
+                  <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: "'IBM Plex Mono', monospace" }}>
                     {(s.steps as any[]).length} steps
                   </div>
                 </div>
@@ -299,26 +299,26 @@ export default function AutoBotsPage() {
         )}
 
         {/* Builder form */}
-        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: t.text, margin: '0 0 16px' }}>Create Custom Scenario</h3>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--tz-text)', margin: '0 0 16px' }}>Create Custom Scenario</h3>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div>
-              <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Scenario Name</label>
+              <label style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Scenario Name</label>
               <input value={scenarioName} onChange={e => setScenarioName(e.target.value)} placeholder="e.g. Night Shift Workflow" style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Description</label>
+              <label style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Description</label>
               <input value={scenarioDesc} onChange={e => setScenarioDesc(e.target.value)} placeholder="Brief description of this scenario" style={inputStyle} />
             </div>
           </div>
 
-          <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>Steps</label>
+          <label style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>Steps</label>
 
           {scenarioSteps.map((step, idx) => (
             <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-              <GripVertical size={14} color={t.textTertiary} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace", width: 20, textAlign: 'center', flexShrink: 0 }}>{idx + 1}</span>
+              <GripVertical size={14} color={'var(--tz-textTertiary)'} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: "'IBM Plex Mono', monospace", width: 20, textAlign: 'center', flexShrink: 0 }}>{idx + 1}</span>
               <select value={step.bot} onChange={e => updateStep(idx, 'bot', e.target.value)} style={{ ...selectStyle, width: 180 }}>
                 {AVAILABLE_BOTS.map(b => <option key={b} value={b}>{b}</option>)}
               </select>
@@ -335,10 +335,10 @@ export default function AutoBotsPage() {
           ))}
 
           <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-            <button onClick={addStep} style={{ padding: '6px 14px', background: t.border, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 11, color: t.textSecondary, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button onClick={addStep} style={{ padding: '6px 14px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 11, color: 'var(--tz-textSecondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Plus size={12} /> Add Step
             </button>
-            <button onClick={saveScenario} disabled={savingScenario || !scenarioName.trim()} style={{ padding: '6px 14px', background: t.accent, border: 'none', borderRadius: 8, fontSize: 11, color: t.bgLight, fontWeight: 600, cursor: 'pointer', opacity: savingScenario || !scenarioName.trim() ? 0.5 : 1 }}>
+            <button onClick={saveScenario} disabled={savingScenario || !scenarioName.trim()} style={{ padding: '6px 14px', background: 'var(--tz-accent)', border: 'none', borderRadius: 8, fontSize: 11, color: 'var(--tz-bgLight)', fontWeight: 600, cursor: 'pointer', opacity: savingScenario || !scenarioName.trim() ? 0.5 : 1 }}>
               {savingScenario ? 'Saving...' : 'Save Scenario'}
             </button>
           </div>
@@ -347,12 +347,12 @@ export default function AutoBotsPage() {
 
       {/* SECTION 3: Run a Test */}
       <div style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: t.text, margin: '0 0 16px' }}>Run Test</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--tz-text)', margin: '0 0 16px' }}>Run Test</h2>
 
-        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 20 }}>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 20 }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 20 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Scenario</label>
+              <label style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Scenario</label>
               <select value={selectedScenario} onChange={e => setSelectedScenario(e.target.value)} style={selectStyle}>
                 <option value="">Select a scenario...</option>
                 {scenarios.map(s => (
@@ -361,7 +361,7 @@ export default function AutoBotsPage() {
               </select>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Target Shop</label>
+              <label style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 4 }}>Target Shop</label>
               <select value={targetShop} onChange={e => setTargetShop(e.target.value)} style={selectStyle}>
                 {shops.map((s: any) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -369,7 +369,7 @@ export default function AutoBotsPage() {
                 {shops.length === 0 && <option value={targetShop}>UGL Truck Center</option>}
               </select>
             </div>
-            <button onClick={runTest} disabled={running || !selectedScenario} style={{ padding: '10px 24px', background: t.accent, border: 'none', borderRadius: 8, fontSize: 13, color: t.bgLight, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: running || !selectedScenario ? 0.5 : 1, whiteSpace: 'nowrap', flexShrink: 0 }}>
+            <button onClick={runTest} disabled={running || !selectedScenario} style={{ padding: '10px 24px', background: 'var(--tz-accent)', border: 'none', borderRadius: 8, fontSize: 13, color: 'var(--tz-bgLight)', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: running || !selectedScenario ? 0.5 : 1, whiteSpace: 'nowrap', flexShrink: 0 }}>
               <Play size={14} /> {running ? 'Running...' : 'Run AutoBots'}
             </button>
           </div>
@@ -377,10 +377,10 @@ export default function AutoBotsPage() {
           {/* Progress */}
           {running && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ height: 4, background: t.border, borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: t.accent, borderRadius: 2, width: '60%', animation: 'pulse 1.5s ease-in-out infinite', transition: 'width .3s' }} />
+              <div style={{ height: 4, background: 'var(--tz-border)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: 'var(--tz-accent)', borderRadius: 2, width: '60%', animation: 'pulse 1.5s ease-in-out infinite', transition: 'width .3s' }} />
               </div>
-              <div style={{ fontSize: 11, color: t.textSecondary, marginTop: 6 }}>Running test steps...</div>
+              <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginTop: 6 }}>Running test steps...</div>
             </div>
           )}
 
@@ -396,28 +396,28 @@ export default function AutoBotsPage() {
                 }}>
                   {runResult.status === 'passed' ? 'ALL PASSED' : 'HAS FAILURES'}
                 </span>
-                <span style={{ fontSize: 11, color: t.textSecondary }}>
+                <span style={{ fontSize: 11, color: 'var(--tz-textSecondary)' }}>
                   {runResult.passed_steps}/{runResult.total_steps} passed | {runResult.duration_ms}ms
                 </span>
               </div>
 
               {/* Step details */}
               {runResult.steps_detail?.map((step: any) => (
-                <div key={step.index} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderBottom: `1px solid ${t.border}` }}>
+                <div key={step.index} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                   <span style={{
                     width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
                     background: step.status === 'passed' ? '#22C55E' : '#D94F4F',
                   }} />
-                  <span style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace", width: 24, flexShrink: 0 }}>#{step.index}</span>
-                  <span style={{ fontSize: 11, color: t.textSecondary, width: 160, flexShrink: 0 }}>{step.bot}</span>
-                  <span style={{ fontSize: 10, color: t.accentLight, fontFamily: "'IBM Plex Mono', monospace", width: 120, flexShrink: 0 }}>{step.action}</span>
-                  <span style={{ fontSize: 11, color: step.status === 'passed' ? t.textSecondary : '#D94F4F', flex: 1 }}>{step.log}</span>
-                  <span style={{ fontSize: 10, color: t.textTertiary, fontFamily: "'IBM Plex Mono', monospace" }}>{step.duration_ms}ms</span>
+                  <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: "'IBM Plex Mono', monospace", width: 24, flexShrink: 0 }}>#{step.index}</span>
+                  <span style={{ fontSize: 11, color: 'var(--tz-textSecondary)', width: 160, flexShrink: 0 }}>{step.bot}</span>
+                  <span style={{ fontSize: 10, color: 'var(--tz-accentLight)', fontFamily: "'IBM Plex Mono', monospace", width: 120, flexShrink: 0 }}>{step.action}</span>
+                  <span style={{ fontSize: 11, color: step.status === 'passed' ? 'var(--tz-textSecondary)' : '#D94F4F', flex: 1 }}>{step.log}</span>
+                  <span style={{ fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: "'IBM Plex Mono', monospace" }}>{step.duration_ms}ms</span>
                 </div>
               ))}
 
               <div style={{ marginTop: 16 }}>
-                <a href="/platform-admin/test-results" style={{ padding: '8px 16px', background: 'rgba(29,111,232,.12)', border: '1px solid rgba(29,111,232,.3)', borderRadius: 8, fontSize: 12, color: t.accentLight, fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}>
+                <a href="/platform-admin/test-results" style={{ padding: '8px 16px', background: 'rgba(29,111,232,.12)', border: '1px solid rgba(29,111,232,.3)', borderRadius: 8, fontSize: 12, color: 'var(--tz-accentLight)', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}>
                   View Full Report
                 </a>
               </div>

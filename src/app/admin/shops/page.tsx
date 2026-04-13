@@ -77,8 +77,8 @@ export default function PlatformAdminShops() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: t.textSecondary, fontFamily: FONT }}>Loading...</span>
+      <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: 'var(--tz-textSecondary)', fontFamily: FONT }}>Loading...</span>
       </div>
     )
   }
@@ -86,35 +86,35 @@ export default function PlatformAdminShops() {
   if (!user) return null
 
   const statusColor = (status: string) => {
-    if (status === 'active') return t.success
-    if (status === 'pending') return t.warning
-    if (status === 'suspended') return t.danger
-    return t.textSecondary
+    if (status === 'active') return 'var(--tz-success)'
+    if (status === 'pending') return 'var(--tz-warning)'
+    if (status === 'suspended') return 'var(--tz-danger)'
+    return 'var(--tz-textSecondary)'
   }
 
   const statusBg = (status: string) => {
-    if (status === 'active') return t.successBg
-    if (status === 'pending') return t.warningBg
-    if (status === 'suspended') return t.dangerBg
+    if (status === 'active') return 'var(--tz-successBg)'
+    if (status === 'pending') return 'var(--tz-warningBg)'
+    if (status === 'suspended') return 'var(--tz-dangerBg)'
     return 'transparent'
   }
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px 12px', background: t.bgAlt, border: `1px solid ${t.border}`,
-    borderRadius: 6, color: t.text, fontFamily: FONT, fontSize: 13, outline: 'none', boxSizing: 'border-box',
+    width: '100%', padding: '8px 12px', background: 'var(--tz-bgAlt)', border: `1px solid ${'var(--tz-border)'}`,
+    borderRadius: 6, color: 'var(--tz-text)', fontFamily: FONT, fontSize: 13, outline: 'none', boxSizing: 'border-box',
   }
 
   const labelStyle: React.CSSProperties = {
-    fontSize: 11, color: t.textSecondary, fontFamily: FONT, marginBottom: 4, display: 'block', fontWeight: 600,
+    fontSize: 11, color: 'var(--tz-textSecondary)', fontFamily: FONT, marginBottom: 4, display: 'block', fontWeight: 600,
     textTransform: 'uppercase', letterSpacing: '0.5px',
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: t.bg, color: t.text, fontFamily: FONT }}>
+    <div style={{ minHeight: '100vh', background: 'var(--tz-bg)', color: 'var(--tz-text)', fontFamily: FONT }}>
       {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', top: 20, right: 20, background: t.accent, color: t.bgLight,
+          position: 'fixed', top: 20, right: 20, background: 'var(--tz-accent)', color: 'var(--tz-bgLight)',
           padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, zIndex: 9999,
           boxShadow: '0 4px 20px rgba(0,0,0,.4)',
         }}>{toast}</div>
@@ -123,13 +123,13 @@ export default function PlatformAdminShops() {
       {/* Header */}
       <div style={{ padding: '32px 40px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: t.text }}>Platform Admin — All Shops</h1>
-          <p style={{ fontSize: 13, color: t.textSecondary, margin: '4px 0 0' }}>{shops.length} shops on the platform</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--tz-text)' }}>Platform Admin — All Shops</h1>
+          <p style={{ fontSize: 13, color: 'var(--tz-textSecondary)', margin: '4px 0 0' }}>{shops.length} shops on the platform</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
           style={{
-            background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8,
+            background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8,
             padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
           }}
         >
@@ -139,14 +139,14 @@ export default function PlatformAdminShops() {
 
       {/* Table */}
       <div style={{ padding: '24px 40px' }}>
-        <div style={{ background: t.bgCard, borderRadius: 12, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, border: `1px solid ${'var(--tz-border)'}`, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+              <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                 {['Name', 'Status', 'Users', 'Work Orders', 'Customers', 'Created'].map(h => (
                   <th key={h} style={{
                     padding: '12px 16px', textAlign: 'left', fontSize: 10, fontWeight: 700,
-                    color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '0.5px',
+                    color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '0.5px',
                   }}>{h}</th>
                 ))}
               </tr>
@@ -156,14 +156,14 @@ export default function PlatformAdminShops() {
                 <tr
                   key={shop.id}
                   onClick={() => window.location.href = `/admin/shops/${shop.id}`}
-                  style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background .12s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = t.border)}
+                  style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer', transition: 'background .12s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-border)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <td style={{ padding: '14px 16px' }}>
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{shop.dba || shop.name}</div>
                     {shop.dba && shop.name !== shop.dba && (
-                      <div style={{ fontSize: 11, color: t.textTertiary, marginTop: 2 }}>{shop.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--tz-textTertiary)', marginTop: 2 }}>{shop.name}</div>
                     )}
                   </td>
                   <td style={{ padding: '14px 16px' }}>
@@ -174,17 +174,17 @@ export default function PlatformAdminShops() {
                       {shop.status}
                     </span>
                   </td>
-                  <td style={{ padding: '14px 16px', fontSize: 13, color: t.textSecondary }}>{shop.user_count}</td>
-                  <td style={{ padding: '14px 16px', fontSize: 13, color: t.textSecondary }}>{shop.wo_count}</td>
-                  <td style={{ padding: '14px 16px', fontSize: 13, color: t.textSecondary }}>{shop.customer_count}</td>
-                  <td style={{ padding: '14px 16px', fontSize: 11, color: t.textTertiary }}>
+                  <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--tz-textSecondary)' }}>{shop.user_count}</td>
+                  <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--tz-textSecondary)' }}>{shop.wo_count}</td>
+                  <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--tz-textSecondary)' }}>{shop.customer_count}</td>
+                  <td style={{ padding: '14px 16px', fontSize: 11, color: 'var(--tz-textTertiary)' }}>
                     {new Date(shop.created_at).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
               {shops.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: 40, textAlign: 'center', color: t.textTertiary, fontSize: 13 }}>
+                  <td colSpan={6} style={{ padding: 40, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 13 }}>
                     No shops yet. Create your first shop to get started.
                   </td>
                 </tr>
@@ -203,12 +203,12 @@ export default function PlatformAdminShops() {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: t.bgCard, borderRadius: 16, border: `1px solid ${t.border}`,
+              background: 'var(--tz-bgCard)', borderRadius: 16, border: `1px solid ${'var(--tz-border)'}`,
               padding: 32, width: 560, maxHeight: '85vh', overflowY: 'auto',
               boxShadow: '0 20px 60px rgba(0,0,0,.5)',
             }}
           >
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 24px', color: t.text }}>Create New Shop</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 24px', color: 'var(--tz-text)' }}>Create New Shop</h2>
             <form onSubmit={handleCreate}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                 <div style={{ gridColumn: '1 / -1' }}>
@@ -253,8 +253,8 @@ export default function PlatformAdminShops() {
                 </div>
               </div>
 
-              <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 16, marginTop: 8, marginBottom: 16 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: t.accentLight, margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Shop Admin Account</p>
+              <div style={{ borderTop: `1px solid ${'var(--tz-border)'}`, paddingTop: 16, marginTop: 8, marginBottom: 16 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--tz-accentLight)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Shop Admin Account</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label style={labelStyle}>Admin Name *</label>
@@ -276,7 +276,7 @@ export default function PlatformAdminShops() {
                   type="button"
                   onClick={() => setShowCreate(false)}
                   style={{
-                    background: 'transparent', color: t.textSecondary, border: `1px solid ${t.border}`,
+                    background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}`,
                     borderRadius: 8, padding: '10px 20px', fontSize: 13, cursor: 'pointer', fontFamily: FONT,
                   }}
                 >
@@ -286,7 +286,7 @@ export default function PlatformAdminShops() {
                   type="submit"
                   disabled={creating}
                   style={{
-                    background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8,
+                    background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8,
                     padding: '10px 24px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
                     opacity: creating ? 0.6 : 1,
                   }}

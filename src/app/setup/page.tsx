@@ -60,17 +60,17 @@ export default function SetupPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:    { minHeight:'100vh', background:th.bg, color:th.text, fontFamily:"'Instrument Sans',sans-serif", display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 },
-    card:    { width:'100%', maxWidth:560, background:th.bgCard, border:`1px solid ${th.border}`, borderRadius:16, padding:'32px 28px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
+    page:    { minHeight:'100vh', background:'var(--tz-bg)', color:'var(--tz-text)', fontFamily:"'Instrument Sans',sans-serif", display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 },
+    card:    { width:'100%', maxWidth:560, background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:16, padding:'32px 28px', boxShadow:'0 24px 64px rgba(0,0,0,.5)' },
     steps:   { display:'flex', gap:6, marginBottom:28 },
-    stepDot: { flex:1, height:4, borderRadius:100, background:th.border, transition:'all .2s' },
-    stepOn:  { background:th.accent },
+    stepDot: { flex:1, height:4, borderRadius:100, background:'var(--tz-border)', transition:'all .2s' },
+    stepOn:  { background:'var(--tz-accent)' },
     stepDone:{ background:'#1DB870' },
-    title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:th.text, marginBottom:6 },
-    sub:     { fontSize:12, color:th.textSecondary, marginBottom:20, lineHeight:1.5 },
-    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:th.textSecondary, marginBottom:4, display:'block' },
-    input:   { width:'100%', padding:'9px 12px', background:th.inputBg, border:`1px solid ${th.border}`, borderRadius:8, fontSize:12, color:th.text, outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
-    btn:     { padding:'12px 24px', background:th.accent, border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:th.bgLight, cursor:'pointer', fontFamily:'inherit', marginTop:8 },
+    title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:26, letterSpacing:'.02em', color:'var(--tz-text)', marginBottom:6 },
+    sub:     { fontSize:12, color:'var(--tz-textSecondary)', marginBottom:20, lineHeight:1.5 },
+    label:   { fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:'.1em', textTransform:'uppercase' as const, color:'var(--tz-textSecondary)', marginBottom:4, display:'block' },
+    input:   { width:'100%', padding:'9px 12px', background:'var(--tz-inputBg)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:8, fontSize:12, color:'var(--tz-text)', outline:'none', fontFamily:'inherit', minHeight:38, boxSizing:'border-box' as const, marginBottom:10 },
+    btn:     { padding:'12px 24px', background:'var(--tz-accent)', border:'none', borderRadius:9, fontSize:13, fontWeight:700, color:'var(--tz-bgLight)', cursor:'pointer', fontFamily:'inherit', marginTop:8 },
     grid2:   { display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 },
   }
 
@@ -87,13 +87,13 @@ export default function SetupPage() {
       <div style={S.card}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:24 }}>
-          <div style={{ width:28, height:28, background:th.accent, borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ width:28, height:28, background:'var(--tz-accent)', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-          <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:th.text }}>
-            TRUCK<span style={{ color:th.accentLight }}>ZEN</span>
+          <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:'.1em', color:'var(--tz-text)' }}>
+            TRUCK<span style={{ color:'var(--tz-accentLight)' }}>ZEN</span>
           </span>
-          <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:th.textSecondary }}>Step {step + 1} of {STEPS.length}</span>
+          <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'var(--tz-textSecondary)' }}>Step {step + 1} of {STEPS.length}</span>
         </div>
 
         {/* Progress */}
@@ -129,16 +129,16 @@ export default function SetupPage() {
             <div style={S.title}>Teams & Bays</div>
             <div style={S.sub}>Your shop is already configured with 4 teams and 12 bays. You can adjust anytime in Settings.</div>
             {[
-              { team:'A', bays:'Bays 1–4', dept:'Engine & Diagnostics', color:th.accentLight },
+              { team:'A', bays:'Bays 1–4', dept:'Engine & Diagnostics', color:'var(--tz-accentLight)' },
               { team:'B', bays:'Bays 5–8', dept:'Electrical', color:'#8B5CF6' },
               { team:'C', bays:'Bays 9–10', dept:'Body & Chassis', color:'#E8692A' },
               { team:'D', bays:'Bays 11–12', dept:'Inspection', color:'#1DB870' },
             ].map(t => (
-              <div key={t.team} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:th.inputBg, border:`1px solid ${th.border}`, borderRadius:9, marginBottom:8 }}>
+              <div key={t.team} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'var(--tz-inputBg)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:9, marginBottom:8 }}>
                 <div style={{ width:28, height:28, borderRadius:7, background:`${t.color}20`, border:`1px solid ${t.color}33`, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Bebas Neue',sans-serif", fontSize:14, color:t.color }}>{t.team}</div>
                 <div>
-                  <div style={{ fontSize:12, fontWeight:700, color:th.text }}>Team {t.team} — {t.dept}</div>
-                  <div style={{ fontSize:10, color:th.textSecondary }}>{t.bays}</div>
+                  <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)' }}>Team {t.team} — {t.dept}</div>
+                  <div style={{ fontSize:10, color:'var(--tz-textSecondary)' }}>{t.bays}</div>
                 </div>
               </div>
             ))}
@@ -176,14 +176,14 @@ export default function SetupPage() {
                 )}
               </div>
             ))}
-            <button style={{ ...S.btn, background:'transparent', border:'1px dashed rgba(29,111,232,.3)', color:th.accentLight, marginBottom:8, display:'block', width:'100%', textAlign:'center' as const }}
+            <button style={{ ...S.btn, background:'transparent', border:'1px dashed rgba(29,111,232,.3)', color:'var(--tz-accentLight)', marginBottom:8, display:'block', width:'100%', textAlign:'center' as const }}
               onClick={() => setStaffRows(r => [...r, { full_name:'', email:'', role:'technician', team:'A' }])}>
               + Add Another
             </button>
             <button style={S.btn} onClick={inviteStaff} disabled={saving}>
               {saving ? 'Inviting...' : 'Send Invites & Continue →'}
             </button>
-            <button style={{ ...S.btn, background:'transparent', color:th.textSecondary, marginLeft:8 }} onClick={() => setStep(3)}>
+            <button style={{ ...S.btn, background:'transparent', color:'var(--tz-textSecondary)', marginLeft:8 }} onClick={() => setStep(3)}>
               Skip for now
             </button>
           </>
@@ -200,12 +200,12 @@ export default function SetupPage() {
                 { icon:'', label:'Add parts manually', sub:'Add parts one by one in Parts → Inventory' },
                 { icon:'', label:'Skip — add parts later', sub:'Start using TruckZen now, import parts when ready' },
               ].map(opt => (
-                <div key={opt.label} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'12px', background:th.inputBg, border:`1px solid ${th.border}`, borderRadius:9, cursor:'pointer' }}
+                <div key={opt.label} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'12px', background:'var(--tz-inputBg)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:9, cursor:'pointer' }}
                   onClick={() => setStep(4)}>
                   <span style={{ fontSize:18 }}>{opt.icon}</span>
                   <div>
-                    <div style={{ fontSize:12, fontWeight:600, color:th.text }}>{opt.label}</div>
-                    <div style={{ fontSize:10, color:th.textSecondary, marginTop:2 }}>{opt.sub}</div>
+                    <div style={{ fontSize:12, fontWeight:600, color:'var(--tz-text)' }}>{opt.label}</div>
+                    <div style={{ fontSize:10, color:'var(--tz-textSecondary)', marginTop:2 }}>{opt.sub}</div>
                   </div>
                 </div>
               ))}
@@ -219,8 +219,8 @@ export default function SetupPage() {
             <div style={{ textAlign:'center' as const, padding:'10px 0' }}>
               <div style={{ fontSize:16, fontWeight:700, color:'#1DB870', marginBottom:16 }}>All Set</div>
               <div style={S.title}>TruckZen is ready</div>
-              <div style={{ fontSize:13, color:th.textSecondary, lineHeight:1.7, marginBottom:24 }}>
-                Your shop is set up. Kiosk is live at <strong style={{ color:th.accentLight }}>truckzen.com/kiosk</strong>.<br/>
+              <div style={{ fontSize:13, color:'var(--tz-textSecondary)', lineHeight:1.7, marginBottom:24 }}>
+                Your shop is set up. Kiosk is live at <strong style={{ color:'var(--tz-accentLight)' }}>truckzen.com/kiosk</strong>.<br/>
                 Staff accounts have been created. Data migration is ready to run.<br/>
                 Everything is connected and waiting for your first job.
               </div>

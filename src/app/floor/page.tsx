@@ -62,15 +62,15 @@ export default function FloorPage() {
   }
 
   const S: Record<string, React.CSSProperties> = {
-    page:    { background:t.bg, minHeight:'100vh', color:t.text, fontFamily:"'Instrument Sans',sans-serif", padding:24 },
+    page:    { background:'var(--tz-bg)', minHeight:'100vh', color:'var(--tz-text)', fontFamily:"'Instrument Sans',sans-serif", padding:24 },
     header:  { display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:10 },
-    title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:'.02em', color:t.text },
-    viewBtn: { padding:'6px 14px', borderRadius:7, fontSize:11, fontWeight:600, cursor:'pointer', border:`1px solid ${t.border}`, background:t.inputBg, color:t.textSecondary, fontFamily:'inherit' },
-    viewOn:  { background:'rgba(29,111,232,.1)', color:t.accentLight, border:'1px solid rgba(29,111,232,.3)' },
+    title:   { fontFamily:"'Bebas Neue',sans-serif", fontSize:28, letterSpacing:'.02em', color:'var(--tz-text)' },
+    viewBtn: { padding:'6px 14px', borderRadius:7, fontSize:11, fontWeight:600, cursor:'pointer', border:`1px solid ${'var(--tz-border)'}`, background:'var(--tz-inputBg)', color:'var(--tz-textSecondary)', fontFamily:'inherit' },
+    viewOn:  { background:'rgba(29,111,232,.1)', color:'var(--tz-accentLight)', border:'1px solid rgba(29,111,232,.3)' },
   }
 
   const pill = (status: string) => {
-    const cfg = STATUS_CFG[status] || { label: status, color: 'rgba(72,83,106,.1)', dot: t.textSecondary }
+    const cfg = STATUS_CFG[status] || { label: status, color: 'rgba(72,83,106,.1)', dot: 'var(--tz-textSecondary)' }
     return (
       <span key={status} style={{ display:'inline-flex', alignItems:'center', gap:3, padding:'2px 8px', borderRadius:100, fontFamily:"'IBM Plex Mono',monospace", fontSize:8, background:cfg.color, color:cfg.dot, border:`1px solid ${cfg.dot}33` }}>
         <span style={{ width:4, height:4, borderRadius:'50%', background:'currentColor' }}/>
@@ -84,7 +84,7 @@ export default function FloorPage() {
       <div style={S.header}>
         <div>
           <div style={S.title}>Shop Floor</div>
-          <div style={{ fontSize:12, color:t.textSecondary }}>{jobs.length} active jobs · Live</div>
+          <div style={{ fontSize:12, color:'var(--tz-textSecondary)' }}>{jobs.length} active jobs · Live</div>
         </div>
         <div style={{ display:'flex', gap:6 }}>
           {(['table','kanban'] as const).map(v => (
@@ -96,16 +96,16 @@ export default function FloorPage() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign:'center', padding:60, color:t.textSecondary }}>Loading floor...</div>
+        <div style={{ textAlign:'center', padding:60, color:'var(--tz-textSecondary)' }}>Loading floor...</div>
       ) : view === 'table' ? (
         // TABLE VIEW
-        <div style={{ background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:12, overflow:'hidden' }}>
+        <div style={{ background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:12, overflow:'hidden' }}>
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', minWidth:600 }}>
               <thead>
                 <tr>
                   {['Bay','Truck','Customer','Job','Tech','Status','Next Status'].map(h => (
-                    <th key={h} style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:t.textTertiary, textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:t.bgInput, whiteSpace:'nowrap' }}>{h}</th>
+                    <th key={h} style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:8, color:'var(--tz-textTertiary)', textTransform:'uppercase', letterSpacing:'.1em', padding:'7px 10px', textAlign:'left', background:'var(--tz-bgInput)', whiteSpace:'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -118,17 +118,17 @@ export default function FloorPage() {
                   const nextStatus = STATUS_ORDER[curIdx + 1]
                   const nextCfg   = nextStatus ? STATUS_CFG[nextStatus] : null
                   return (
-                    <tr key={j.id} style={{ borderBottom:`1px solid ${t.border}` }}>
-                      <td style={{ padding:'10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:t.accentLight }}>
+                    <tr key={j.id} style={{ borderBottom:`1px solid ${'var(--tz-border)'}` }}>
+                      <td style={{ padding:'10px', fontFamily:"'IBM Plex Mono',monospace", fontSize:11, color:'var(--tz-accentLight)' }}>
                         {j.team && `T${j.team}`} {j.bay || '—'}
                       </td>
                       <td style={{ padding:'10px' }}>
-                        <div style={{ fontWeight:700, color:t.text }}>#{asset?.unit_number}</div>
-                        <div style={{ fontSize:9, color:t.textSecondary }}>{asset?.year} {asset?.make}</div>
+                        <div style={{ fontWeight:700, color:'var(--tz-text)' }}>#{asset?.unit_number}</div>
+                        <div style={{ fontSize:9, color:'var(--tz-textSecondary)' }}>{asset?.year} {asset?.make}</div>
                       </td>
-                      <td style={{ padding:'10px', color:t.text }}>{cust?.company_name}</td>
-                      <td style={{ padding:'10px', color:t.textSecondary, fontSize:11, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{j.complaint}</td>
-                      <td style={{ padding:'10px', color:t.text, fontSize:11 }}>{tech?.full_name || '—'}</td>
+                      <td style={{ padding:'10px', color:'var(--tz-text)' }}>{cust?.company_name}</td>
+                      <td style={{ padding:'10px', color:'var(--tz-textSecondary)', fontSize:11, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{j.complaint}</td>
+                      <td style={{ padding:'10px', color:'var(--tz-text)', fontSize:11 }}>{tech?.full_name || '—'}</td>
                       <td style={{ padding:'10px' }}>{pill(j.status)}</td>
                       <td style={{ padding:'10px' }}>
                         {nextCfg && nextStatus && (
@@ -152,25 +152,25 @@ export default function FloorPage() {
             const cfg        = STATUS_CFG[status]
             const statusJobs = jobs.filter(j => j.status === status)
             return (
-              <div key={status} style={{ background:t.bgCard, border:`1px solid ${t.border}`, borderRadius:11, overflow:'hidden' }}>
-                <div style={{ padding:'10px 12px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', gap:7 }}>
+              <div key={status} style={{ background:'var(--tz-bgCard)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:11, overflow:'hidden' }}>
+                <div style={{ padding:'10px 12px', borderBottom:`1px solid ${'var(--tz-border)'}`, display:'flex', alignItems:'center', gap:7 }}>
                   <div style={{ width:8, height:8, borderRadius:'50%', background:cfg.dot, flexShrink:0 }}/>
-                  <span style={{ fontSize:11, fontWeight:700, color:t.text }}>{cfg.label}</span>
-                  <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:t.textSecondary }}>{statusJobs.length}</span>
+                  <span style={{ fontSize:11, fontWeight:700, color:'var(--tz-text)' }}>{cfg.label}</span>
+                  <span style={{ marginLeft:'auto', fontFamily:"'IBM Plex Mono',monospace", fontSize:10, color:'var(--tz-textSecondary)' }}>{statusJobs.length}</span>
                 </div>
                 <div style={{ padding:8, display:'flex', flexDirection:'column', gap:6, minHeight:60 }}>
                   {statusJobs.length === 0 ? (
-                    <div style={{ fontSize:10, color:t.textTertiary, textAlign:'center', padding:10 }}>Empty</div>
+                    <div style={{ fontSize:10, color:'var(--tz-textTertiary)', textAlign:'center', padding:10 }}>Empty</div>
                   ) : statusJobs.map(j => {
                     const asset = j.assets as any
                     const cust  = j.customers as any
                     return (
-                      <div key={j.id} style={{ background:t.inputBg, border:`1px solid ${t.border}`, borderRadius:8, padding:10, cursor:'pointer' }}
+                      <div key={j.id} style={{ background:'var(--tz-inputBg)', border:`1px solid ${'var(--tz-border)'}`, borderRadius:8, padding:10, cursor:'pointer' }}
                         onClick={() => window.location.href = `/orders/${j.id}`}>
-                        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:t.accentLight, marginBottom:3 }}>{j.so_number}</div>
-                        <div style={{ fontSize:12, fontWeight:700, color:t.text }}>#{asset?.unit_number}</div>
-                        <div style={{ fontSize:10, color:t.textSecondary, marginTop:2 }}>{cust?.company_name}</div>
-                        <div style={{ fontSize:10, color:t.textTertiary, marginTop:4 }}>{j.bay || 'No bay'}</div>
+                        <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:9, color:'var(--tz-accentLight)', marginBottom:3 }}>{j.so_number}</div>
+                        <div style={{ fontSize:12, fontWeight:700, color:'var(--tz-text)' }}>#{asset?.unit_number}</div>
+                        <div style={{ fontSize:10, color:'var(--tz-textSecondary)', marginTop:2 }}>{cust?.company_name}</div>
+                        <div style={{ fontSize:10, color:'var(--tz-textTertiary)', marginTop:4 }}>{j.bay || 'No bay'}</div>
                       </div>
                     )
                   })}

@@ -48,11 +48,11 @@ export default function MaintenanceDashboard() {
 
   const statusColor: Record<string, string> = { in_progress: BLUE, waiting_parts: AMBER, draft: MUTED }
 
-  if (loading) return <div style={{ background: t.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED }}>Loading...</div>
+  if (loading) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: MUTED }}>Loading...</div>
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text, marginBottom: 20 }}>Maintenance</div>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)', marginBottom: 20 }}>Maintenance</div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
@@ -61,21 +61,21 @@ export default function MaintenanceDashboard() {
           { label: 'Warranty Checks', value: stats.warrantyChecks, color: RED },
           { label: 'Completed This Week', value: stats.completedWeek, color: GREEN },
         ].map(s => (
-          <div key={s.label} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: '16px 18px' }}>
-            <div style={{ fontSize: 10, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{s.label}</div>
+          <div key={s.label} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO, marginBottom: 6 }}>{s.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
         ))}
       </div>
 
       {/* Fleet In Shop */}
-      <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 12 }}>Fleet Trucks In Shop</div>
-        {fleetInShop.length === 0 ? <div style={{ padding: 20, textAlign: 'center', color: t.textTertiary, fontSize: 12 }}>No fleet trucks currently in shop</div> : fleetInShop.map(wo => (
-          <div key={wo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id, undefined, 'maintenance')}>
+      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Fleet Trucks In Shop</div>
+        {fleetInShop.length === 0 ? <div style={{ padding: 20, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 12 }}>No fleet trucks currently in shop</div> : fleetInShop.map(wo => (
+          <div key={wo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id, undefined, 'maintenance')}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: t.text }}>#{(wo.assets as any)?.unit_number || '—'}</span>
+                <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>#{(wo.assets as any)?.unit_number || '—'}</span>
                 <span style={{ fontSize: 12, color: MUTED }}>{[(wo.assets as any)?.make, (wo.assets as any)?.model].filter(Boolean).join(' ')}</span>
                 <span style={{ fontSize: 9, fontWeight: 600, color: statusColor[wo.status] || MUTED, background: `${statusColor[wo.status] || MUTED}18`, padding: '2px 6px', borderRadius: 4 }}>{wo.status?.replace(/_/g, ' ')}</span>
               </div>
@@ -88,24 +88,24 @@ export default function MaintenanceDashboard() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* Requests */}
-        <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 12 }}>Maintenance Requests</div>
-          {requests.length === 0 ? <div style={{ padding: 16, textAlign: 'center', color: t.textTertiary, fontSize: 12 }}>No pending requests</div> : requests.slice(0, 6).map(r => (
-            <div key={r.id} style={{ padding: '8px 0', borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }} onClick={() => window.location.href = '/service-requests'}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: t.text }}>{r.company_name} {r.unit_number ? `· #${r.unit_number}` : ''}</div>
+        <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Maintenance Requests</div>
+          {requests.length === 0 ? <div style={{ padding: 16, textAlign: 'center', color: 'var(--tz-textTertiary)', fontSize: 12 }}>No pending requests</div> : requests.slice(0, 6).map(r => (
+            <div key={r.id} style={{ padding: '8px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer' }} onClick={() => window.location.href = '/service-requests'}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-text)' }}>{r.company_name} {r.unit_number ? `· #${r.unit_number}` : ''}</div>
               <div style={{ fontSize: 11, color: MUTED, marginTop: 1 }}>{r.description?.slice(0, 50)}</div>
             </div>
           ))}
         </div>
 
         {/* Warranty — hidden if none */}
-        {warrantyPending.length > 0 && <div style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 12 }}>Warranty Checks Pending ({warrantyPending.length})</div>
+        {warrantyPending.length > 0 && <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 12 }}>Warranty Checks Pending ({warrantyPending.length})</div>
           {warrantyPending.map(wo => (
-            <div key={wo.id} style={{ padding: '8px 0', borderBottom: `1px solid ${t.border}`, cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id, undefined, 'maintenance')}>
+            <div key={wo.id} style={{ padding: '8px 0', borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer' }} onClick={() => window.location.href = getWorkorderRoute(wo.id, undefined, 'maintenance')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: BLUE }}>{wo.so_number}</span>
-                <span style={{ fontSize: 11, color: t.text }}>#{(wo.assets as any)?.unit_number}</span>
+                <span style={{ fontSize: 11, color: 'var(--tz-text)' }}>#{(wo.assets as any)?.unit_number}</span>
               </div>
               <div style={{ fontSize: 11, color: AMBER, marginTop: 2 }}>{(wo.assets as any)?.warranty_provider || 'Check needed'}</div>
             </div>

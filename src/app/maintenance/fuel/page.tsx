@@ -31,7 +31,7 @@ export default function FuelPage() {
     })
   }, [])
 
-  if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const cards = [
     { label: 'Spend This Month', value: `$${stats.spend.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, icon: DollarSign, color: BLUE },
@@ -41,20 +41,20 @@ export default function FuelPage() {
   ]
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>Fuel Entries</div>
-        <a href="/maintenance/fuel/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)' }}>Fuel Entries</div>
+        <a href="/maintenance/fuel/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {cards.map(c => {
           const Icon = c.icon
           return (
-            <div key={c.label} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px' }}>
+            <div key={c.label} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                 <Icon size={13} color={c.color} />
-                <span style={{ fontSize: 9, color: t.textTertiary, textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>{c.label}</span>
+                <span style={{ fontSize: 9, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: MONO }}>{c.label}</span>
               </div>
               <div style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{c.value}</div>
             </div>

@@ -31,7 +31,7 @@ export default function PMSchedulesPage() {
     })
   }, [])
 
-  if (!shopId) return <div style={{ background: t.bg, minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
+  if (!shopId) return <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: MUTED, fontFamily: FONT, padding: 40, textAlign: 'center' }}>Loading...</div>
 
   const filters = [
     { value: 'all', label: 'All' },
@@ -62,15 +62,15 @@ export default function PMSchedulesPage() {
   }
 
   return (
-    <div style={{ background: t.bg, minHeight: '100vh', color: t.text, fontFamily: FONT, padding: 24 }}>
+    <div style={{ background: 'var(--tz-bg)', minHeight: '100vh', color: 'var(--tz-text)', fontFamily: FONT, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: t.text }}>PM Schedules</div>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: 'var(--tz-text)' }}>PM Schedules</div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ display: 'flex', background: t.bgCard, borderRadius: 8, border: `1px solid ${t.border}`, overflow: 'hidden' }}>
-            <button onClick={() => setView('list')} style={{ padding: '6px 12px', background: view === 'list' ? 'rgba(29,111,232,.15)' : 'transparent', border: 'none', color: view === 'list' ? t.accentLight : MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT }}><List size={14} /> List</button>
-            <button onClick={() => setView('calendar')} style={{ padding: '6px 12px', background: view === 'calendar' ? 'rgba(29,111,232,.15)' : 'transparent', border: 'none', color: view === 'calendar' ? t.accentLight : MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT }}><Calendar size={14} /> Calendar</button>
+          <div style={{ display: 'flex', background: 'var(--tz-bgCard)', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, overflow: 'hidden' }}>
+            <button onClick={() => setView('list')} style={{ padding: '6px 12px', background: view === 'list' ? 'rgba(29,111,232,.15)' : 'transparent', border: 'none', color: view === 'list' ? 'var(--tz-accentLight)' : MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT }}><List size={14} /> List</button>
+            <button onClick={() => setView('calendar')} style={{ padding: '6px 12px', background: view === 'calendar' ? 'rgba(29,111,232,.15)' : 'transparent', border: 'none', color: view === 'calendar' ? 'var(--tz-accentLight)' : MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT }}><Calendar size={14} /> Calendar</button>
           </div>
-          <a href="/maintenance/pm/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: t.bgLight, fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
+          <a href="/maintenance/pm/new" style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#1B6EE6,#1248B0)', border: 'none', borderRadius: 8, color: 'var(--tz-bgLight)', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: FONT }}>+ New</a>
         </div>
       </div>
 
@@ -78,12 +78,12 @@ export default function PMSchedulesPage() {
         <>
           <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
             {filters.map(f => (
-              <button key={f.value} onClick={() => setFilter(f.value)} style={{ padding: '5px 12px', borderRadius: 100, border: filter === f.value ? '1px solid rgba(29,111,232,.3)' : `1px solid ${t.border}`, background: filter === f.value ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f.value ? t.accentLight : MUTED, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{f.label}</button>
+              <button key={f.value} onClick={() => setFilter(f.value)} style={{ padding: '5px 12px', borderRadius: 100, border: filter === f.value ? '1px solid rgba(29,111,232,.3)' : `1px solid ${'var(--tz-border)'}`, background: filter === f.value ? 'rgba(29,111,232,.1)' : 'transparent', color: filter === f.value ? 'var(--tz-accentLight)' : MUTED, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{f.label}</button>
             ))}
           </div>
           <DataTable
             columns={[
-              { key: 'service_type', label: 'Service', render: (r: any) => <span style={{ fontWeight: 600, color: t.text }}>{r.custom_name || r.service_type?.replace(/_/g, ' ')}</span> },
+              { key: 'service_type', label: 'Service', render: (r: any) => <span style={{ fontWeight: 600, color: 'var(--tz-text)' }}>{r.custom_name || r.service_type?.replace(/_/g, ' ')}</span> },
               { key: 'interval_miles', label: 'Interval', render: (r: any) => [r.interval_miles ? `${r.interval_miles.toLocaleString()} mi` : null, r.interval_days ? `${r.interval_days}d` : null].filter(Boolean).join(' / ') || '—' },
               { key: 'last_completed_date', label: 'Last Done', render: (r: any) => r.last_completed_date ? new Date(r.last_completed_date).toLocaleDateString() : '—' },
               { key: 'next_due_date', label: 'Next Due', render: (r: any) => r.next_due_date ? <span style={{ color: pmColor(r) }}>{new Date(r.next_due_date).toLocaleDateString()}</span> : '—' },
@@ -107,20 +107,20 @@ export default function PMSchedulesPage() {
       {view === 'calendar' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <button onClick={() => setCalMonth(new Date(year, month - 1, 1))} style={{ background: 'none', border: `1px solid ${t.border}`, borderRadius: 6, padding: '4px 12px', color: t.textSecondary, cursor: 'pointer', fontSize: 12, fontFamily: FONT }}>Prev</button>
-            <div style={{ fontWeight: 700, color: t.text, fontSize: 16 }}>{calMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</div>
-            <button onClick={() => setCalMonth(new Date(year, month + 1, 1))} style={{ background: 'none', border: `1px solid ${t.border}`, borderRadius: 6, padding: '4px 12px', color: t.textSecondary, cursor: 'pointer', fontSize: 12, fontFamily: FONT }}>Next</button>
+            <button onClick={() => setCalMonth(new Date(year, month - 1, 1))} style={{ background: 'none', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 6, padding: '4px 12px', color: 'var(--tz-textSecondary)', cursor: 'pointer', fontSize: 12, fontFamily: FONT }}>Prev</button>
+            <div style={{ fontWeight: 700, color: 'var(--tz-text)', fontSize: 16 }}>{calMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</div>
+            <button onClick={() => setCalMonth(new Date(year, month + 1, 1))} style={{ background: 'none', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 6, padding: '4px 12px', color: 'var(--tz-textSecondary)', cursor: 'pointer', fontSize: 12, fontFamily: FONT }}>Next</button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-              <div key={d} style={{ padding: 6, textAlign: 'center', fontSize: 10, color: t.textTertiary, fontFamily: MONO }}>{d}</div>
+              <div key={d} style={{ padding: 6, textAlign: 'center', fontSize: 10, color: 'var(--tz-textTertiary)', fontFamily: MONO }}>{d}</div>
             ))}
             {days.map((day, i) => {
               if (!day) return <div key={i} />
               const pms = pmsForDay(day)
               return (
-                <div key={i} style={{ background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 6, padding: 4, minHeight: 60 }}>
-                  <div style={{ fontSize: 10, color: t.textTertiary, marginBottom: 2 }}>{day}</div>
+                <div key={i} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 6, padding: 4, minHeight: 60 }}>
+                  <div style={{ fontSize: 10, color: 'var(--tz-textTertiary)', marginBottom: 2 }}>{day}</div>
                   {pms.slice(0, 3).map(pm => (
                     <div key={pm.id} onClick={() => window.location.href = `/maintenance/pm/${pm.id}`} style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: `${pmColor(pm)}18`, color: pmColor(pm), marginBottom: 1, cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {(pm.assets as any)?.unit_number ? `#${(pm.assets as any).unit_number}` : ''} {pm.custom_name || pm.service_type}
