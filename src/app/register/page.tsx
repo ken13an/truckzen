@@ -5,7 +5,7 @@ import { THEME } from '@/lib/config/colors'
 const _t = THEME.dark
 
 const FLEET_OPTIONS = ['1-10', '11-50', '51-200', '200+']
-const SOFTWARE_OPTIONS = ['Fullbay', 'TMT', 'BigShop', 'Excel', 'Paper', 'Other']
+const SOFTWARE_OPTIONS = ['Shop Management Software', 'Fleet Management Software', 'Spreadsheets', 'Paper', 'Other']
 
 export default function RegisterPage() {
   const [form, setForm] = useState({

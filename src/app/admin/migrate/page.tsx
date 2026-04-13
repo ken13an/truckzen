@@ -411,7 +411,7 @@ export default function MigrationHubPage() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
             {([
-              { key: 'fullbay', label: 'Fullbay API', desc: 'Connect directly to your Fullbay account', icon: '🔗' },
+              { key: 'fullbay', label: 'Legacy System API', desc: 'Connect directly to your legacy system account', icon: '🔗' },
               { key: 'csv', label: 'Upload Files', desc: 'CSV or Excel spreadsheets', icon: '📄' },
               { key: 'fresh', label: 'Start Fresh', desc: 'Skip import, start entering data', icon: '✨' },
             ] as const).map(s => (
@@ -447,9 +447,9 @@ export default function MigrationHubPage() {
       {/* ═══ STEP 2a: FULLBAY API CONNECT ═══ */}
       {step === 2 && source === 'fullbay' && (
         <div style={card}>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Connect to Fullbay</div>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Connect to Legacy System</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Enter your Fullbay API key"
+            <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Enter your legacy system API key"
               style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: `1px solid ${COLORS.border}`, background: _tz.bgInput, color: COLORS.text, fontSize: 13, fontFamily: FONT_MONO, outline: 'none' }} />
             <button onClick={testConnection} disabled={!apiKey || testingConnection}
               style={{ ...btnPrimary, opacity: !apiKey || testingConnection ? 0.5 : 1 }}>
@@ -460,7 +460,7 @@ export default function MigrationHubPage() {
           {connectionResult && (
             <>
               <div style={{ padding: 14, background: COLORS.greenBg, borderRadius: 8, marginBottom: 16, border: `1px solid ${COLORS.green}30` }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.green, marginBottom: 4 }}>Connected: {connectionResult.shop_name || 'Fullbay Shop'}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.green, marginBottom: 4 }}>Connected: {connectionResult.shop_name || 'Legacy Shop'}</div>
                 <div style={{ fontSize: 11, color: COLORS.textSecondary }}>
                   {Object.entries(connectionResult.counts || {}).map(([k, v]) => `${DATA_TYPE_LABELS[k as DataType] || k}: ${v}`).join(' · ')}
                 </div>

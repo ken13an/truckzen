@@ -552,7 +552,7 @@ export default function SmartDropPage() {
             color: mode === 'fullbay' ? _t.accentLight : DIM,
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ verticalAlign: 'middle', marginRight: 8 }}><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
-            Fullbay
+            Legacy System
           </button>
         </div>
       )}
@@ -570,9 +570,9 @@ export default function SmartDropPage() {
               background: fbConnected === true ? GREEN : fbConnected === false ? RED : DIM,
             }} />
             <div style={{ fontSize: 13, fontWeight: 600 }}>
-              {fbConnected === null && <span style={{ color: DIM }}>Checking Fullbay connection...</span>}
-              {fbConnected === true && <span style={{ color: GREEN }}>Connected to Fullbay{fbName ? ` \u2014 ${fbName}` : ''}</span>}
-              {fbConnected === false && <span style={{ color: RED }}>Fullbay not connected. Contact your administrator to configure the integration.</span>}
+              {fbConnected === null && <span style={{ color: DIM }}>Checking legacy system connection...</span>}
+              {fbConnected === true && <span style={{ color: GREEN }}>Connected to Legacy System{fbName ? ` \u2014 ${fbName}` : ''}</span>}
+              {fbConnected === false && <span style={{ color: RED }}>Legacy system not connected. Contact your administrator to configure the integration.</span>}
             </div>
           </div>
 
@@ -598,7 +598,7 @@ export default function SmartDropPage() {
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, textTransform: 'capitalize' }}>{type}</div>
                   <div style={{ fontSize: 11, color: DIM, marginTop: 2 }}>
-                    Pull {type} from Fullbay into TruckZen
+                    Pull {type} from legacy system into TruckZen
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -716,7 +716,7 @@ export default function SmartDropPage() {
           {isAdmin && importType === 'trucks' && fbStats && (
             <div style={{ ...card, marginTop: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Fullbay Work Orders</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>Legacy Work Orders</div>
                 <button onClick={syncFullbayWOs} disabled={!!fbSyncing} style={{ ...btnSecondary, fontSize: 11, padding: '6px 14px', color: fbSyncing ? DIM : _t.accentLight, borderColor: fbSyncing ? BORDER : BLUE }}>
                   {fbSyncing ? 'Syncing...' : 'Sync Active WOs'}
                 </button>
@@ -728,7 +728,7 @@ export default function SmartDropPage() {
               </div>
               {fbResult && (
                 <div style={{ marginTop: 10, fontSize: 11, color: GREEN }}>
-                  {fbResult.imported} imported, {fbResult.updated} updated, {fbResult.skipped} skipped from {fbResult.total_pulled} Fullbay records
+                  {fbResult.imported} imported, {fbResult.updated} updated, {fbResult.skipped} skipped from {fbResult.total_pulled} legacy records
                 </div>
               )}
             </div>

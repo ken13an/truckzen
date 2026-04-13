@@ -2,8 +2,8 @@
 import { useTheme } from '@/hooks/useTheme'
 
 const LABELS: Record<string, string> = {
-  fullbay: 'Fullbay',
-  fleetio: 'Fleetio',
+  fullbay: 'Legacy',
+  fleetio: 'Legacy',
   csv_import: 'Imported',
   import: 'Imported',
 }

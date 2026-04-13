@@ -169,12 +169,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Center: search + New WO */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div onClick={() => setCommandPaletteOpen(true)} style={{ position: 'relative', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              <Search size={14} style={{ position: 'absolute', left: 10, pointerEvents: 'none', color: t.textTertiary }} />
-              <div style={{ background: t.inputBg, border: `1px solid ${t.inputBorder}`, borderRadius: 8, padding: '6px 12px 6px 30px', fontSize: 13, color: t.textTertiary, width: isMobile ? 160 : 260, userSelect: 'none' }}>
+              <Search size={14} style={{ position: 'absolute', left: 10, pointerEvents: 'none', color: 'var(--tz-textSecondary)' }} />
+              <div style={{ background: 'var(--tz-bgCard)', border: '1px solid var(--tz-border)', borderRadius: 8, padding: '6px 12px 6px 30px', fontSize: 13, color: 'var(--tz-textSecondary)', width: isMobile ? 160 : 260, userSelect: 'none' }}>
                 Search truck #, company, SO #...
               </div>
               {!isMobile && (
-                <span style={{ position: 'absolute', right: 8, fontSize: 10, color: t.textTertiary, background: t.bgHover, borderRadius: 4, padding: '1px 5px', pointerEvents: 'none' }}>/</span>
+                <span style={{ position: 'absolute', right: 8, fontSize: 10, color: 'var(--tz-textTertiary)', background: 'var(--tz-bgHover)', border: '1px solid var(--tz-border)', borderRadius: 4, padding: '1px 5px', pointerEvents: 'none' }}>/</span>
               )}
             </div>
             <a href="/work-orders/new" style={{ textDecoration: 'none' }}>

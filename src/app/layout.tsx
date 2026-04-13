@@ -100,7 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             regardless of any React hydration timing issues. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var T=${JSON.stringify({ light: THEME.light, dark: THEME.dark })};var m=localStorage.getItem('tz-theme-mode');if(m!=='light'&&m!=='dark')m='dark';document.documentElement.setAttribute('data-tz-mode',m);var t=T[m];var vars='';for(var k in t){vars+='--tz-'+k+':'+t[k]+';'}var s=document.createElement('style');s.setAttribute('data-tz-boot','1');s.appendChild(document.createTextNode(':root{'+vars+'}html,html body{background:var(--tz-bg) !important;color:var(--tz-text)}'));document.head.appendChild(s);}catch(e){}})();`,
+            __html: `(function(){try{var T=${JSON.stringify({ light: THEME.light, dark: THEME.dark })};var m=localStorage.getItem('tz-theme-mode');if(m!=='light'&&m!=='dark')m='dark';document.documentElement.setAttribute('data-tz-mode',m);var t=T[m];var vars='';for(var k in t){vars+='--tz-'+k+':'+t[k]+';'}var s=document.createElement('style');s.setAttribute('data-tz-boot','1');s.appendChild(document.createTextNode(':root{'+vars+'}html,html body{background:var(--tz-bg) !important;color:var(--tz-text)}html[data-tz-mode] main>div{background:var(--tz-bg) !important}'));document.head.appendChild(s);}catch(e){}})();`,
           }}
         />
         {/* JSON-LD Structured Data */}

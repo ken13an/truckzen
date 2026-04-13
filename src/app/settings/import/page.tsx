@@ -128,8 +128,8 @@ export default function ImportPage() {
 
   return (
     <div style={sty.page}>
-      <div style={sty.h1}>Import from FullBay</div>
-      <div style={sty.sub}>Upload CSV exports from FullBay to migrate your shop data into TruckZen. Import in order: Customers → Vehicles → Work Orders → Invoices.</div>
+      <div style={sty.h1}>Import from Legacy System</div>
+      <div style={sty.sub}>Upload CSV exports from your legacy shop software to migrate your shop data into TruckZen. Import in order: Customers → Vehicles → Work Orders → Invoices.</div>
 
       {/* Step 1: Select type */}
       <div style={sty.card}>
@@ -161,7 +161,7 @@ export default function ImportPage() {
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, color: th.textSecondary, marginBottom: 8 }}>Upload File</div>
               <div style={{ fontSize: 14, color: th.textSecondary }}>Click to select a .csv file</div>
-              <div style={{ fontSize: 11, color: th.textTertiary, marginTop: 4 }}>Exported from FullBay → Reports → Export</div>
+              <div style={{ fontSize: 11, color: th.textTertiary, marginTop: 4 }}>Exported from your legacy system → Reports → Export</div>
             </div>
           )}
         </div>

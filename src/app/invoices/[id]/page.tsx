@@ -471,7 +471,7 @@ export default function InvoiceDetailPage() {
                     </>
                   ) : (
                     <>
-                      {/* No line items — show WO summary for Fullbay invoices */}
+                      {/* No line items — show WO summary for imported invoices */}
                       {so?.labor_total > 0 && (
                         <tr>
                           <td style={S.td}>Labor (from Work Order)</td>
