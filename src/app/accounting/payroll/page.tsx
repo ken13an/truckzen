@@ -9,8 +9,8 @@ const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = '#1D6FE8', GREEN = '#16A34A', AMBER = '#D97706'
 
 const PAY_TYPE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  hourly:           { label: 'Hourly',     bg: '#EFF6FF', color: '#1D6FE8' },
-  weekly_salary:    { label: 'Weekly',     bg: '#F0FDF4', color: '#16A34A' },
+  hourly:           { label: 'Hourly',     bg: 'var(--tz-accentBg)', color: '#1D6FE8' },
+  weekly_salary:    { label: 'Weekly',     bg: 'var(--tz-successBg)', color: '#16A34A' },
   biweekly_salary:  { label: 'Bi-Weekly',  bg: '#F5F3FF', color: '#7C3AED' },
   monthly_salary:   { label: 'Monthly',    bg: '#FFFBEB', color: '#D97706' },
 }

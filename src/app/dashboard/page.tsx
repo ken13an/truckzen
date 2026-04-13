@@ -106,7 +106,7 @@ export default function DashboardPage() {
           <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-textLight)' }}>{greeting}, {user?.full_name?.split(' ')[0] || 'there'}</div>
           <div style={{ fontSize: 13, color: GRAY, marginTop: 2 }}>{shop?.name || ''} · {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
         </div>
-        <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: '#EFF6FF', color: BLUE }}>{ROLE_LABEL[role] || role}</span>
+        <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: 'var(--tz-accentBg)', color: BLUE }}>{ROLE_LABEL[role] || role}</span>
       </div>
 
       {/* KPI Cards */}

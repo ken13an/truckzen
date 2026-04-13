@@ -175,7 +175,7 @@ export default function QuickAssignPage() {
                         const mech = mechanics.find((m: any) => m.id === e.target.value)
                         assignMechanic(j.id, j.wo_id, e.target.value, mech?.full_name || '')
                       }}
-                      style={{ width: '100%', padding: '4px 6px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, fontSize: 12, background: j.mechanic_name ? '#F0FDF4' : '#FEF2F2', cursor: 'pointer' }}
+                      style={{ width: '100%', padding: '4px 6px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, fontSize: 12, background: j.mechanic_name ? 'var(--tz-successBg)' : 'var(--tz-dangerBg)', cursor: 'pointer' }}
                     >
                       <option value="">— Unassigned —</option>
                       {mechanics.map((m: any) => (

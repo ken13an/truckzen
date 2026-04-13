@@ -131,7 +131,7 @@ export default function ExportPage() {
       </button>
 
       {done && (
-        <div style={{ marginTop: 16, padding: '12px 16px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, fontSize: 13, color: '#16A34A', fontWeight: 600 }}>
+        <div style={{ marginTop: 16, padding: '12px 16px', background: 'var(--tz-successBg)', border: '1px solid #BBF7D0', borderRadius: 8, fontSize: 13, color: '#16A34A', fontWeight: 600 }}>
           Export complete. Your download should have started automatically.
         </div>
       )}

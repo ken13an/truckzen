@@ -18,10 +18,10 @@ export default function AccountingPage() {
 
   const INVOICE_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
     draft:                { label: 'Draft',            bg: 'var(--tz-bgHover)', color: GRAY },
-    quality_check_failed: { label: 'QC Failed',        bg: '#FEF2F2', color: RED },
+    quality_check_failed: { label: 'QC Failed',        bg: 'var(--tz-dangerBg)', color: RED },
     accounting_review:    { label: 'Pending Review',   bg: '#FFFBEB', color: AMBER },
-    sent:                 { label: 'Sent',             bg: '#EFF6FF', color: BLUE },
-    paid:                 { label: 'Paid',             bg: '#F0FDF4', color: GREEN },
+    sent:                 { label: 'Sent',             bg: 'var(--tz-accentBg)', color: BLUE },
+    paid:                 { label: 'Paid',             bg: 'var(--tz-successBg)', color: GREEN },
     closed:               { label: 'Closed',           bg: 'var(--tz-bgHover)', color: GRAY },
   }
 
