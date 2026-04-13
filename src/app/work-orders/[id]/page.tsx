@@ -75,6 +75,7 @@ export default function WorkOrderDetail() {
   // ALL useState hooks — BEFORE any conditional returns
   const [user, setUser] = useState<UserProfile | null>(null)
   const [wo, setWo] = useState<any>(null)
+  const [loadError, setLoadError] = useState<{ status: number; code?: string; detail?: string; stages?: { stage: string; message: string }[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState(0)
   const [allUsers, setAllUsers] = useState<any[]>([])
@@ -147,17 +148,18 @@ export default function WorkOrderDetail() {
         return
       }
 
-      // Fetch WO with retry — handles transient failures after create redirect or auth delay
+      // Fetch WO with retry — handles transient failures after create redirect or auth delay.
+      // Do NOT retry on true 404 (not-found is terminal); only retry on 5xx/network.
       let woRes = await fetch(`/api/work-orders/${id}`)
-      if (!woRes.ok) {
+      if (!woRes.ok && woRes.status !== 404 && woRes.status !== 403) {
         await new Promise(r => setTimeout(r, 1000))
         woRes = await fetch(`/api/work-orders/${id}`)
       }
-      if (!woRes.ok) {
+      if (!woRes.ok && woRes.status !== 404 && woRes.status !== 403) {
         await new Promise(r => setTimeout(r, 2000))
         woRes = await fetch(`/api/work-orders/${id}`)
       }
-      if (!woRes.ok) {
+      if (!woRes.ok && woRes.status !== 404 && woRes.status !== 403) {
         await new Promise(r => setTimeout(r, 3000))
         woRes = await fetch(`/api/work-orders/${id}`)
       }
@@ -167,8 +169,17 @@ export default function WorkOrderDetail() {
         u?.shop_id ? fetch(`/api/settings/labor-rates?shop_id=${u.shop_id}`) : Promise.resolve(null),
       ])
 
-      if (!woRes.ok) { setLoading(false); return }
+      if (!woRes.ok) {
+        let errBody: any = null
+        try { errBody = await woRes.json() } catch {}
+        setLoadError({ status: woRes.status, code: errBody?.code, detail: errBody?.error || errBody?.detail || null })
+        setLoading(false)
+        return
+      }
       const woData = await woRes.json()
+      if (woData?.enrichmentErrors?.length) {
+        console.warn('[wo-detail] enrichment warnings', woData.enrichmentErrors)
+      }
       setWo(woData)
       setJobAssignments(woData.jobAssignments || [])
       setWoParts(woData.woParts || [])
@@ -191,6 +202,7 @@ export default function WorkOrderDetail() {
       }
     } catch (e) {
       console.error('Load error', e)
+      setLoadError({ status: 0, detail: e instanceof Error ? e.message : String(e) })
     } finally {
       setLoading(false)
     }
@@ -667,12 +679,31 @@ export default function WorkOrderDetail() {
       Loading...
     </div>
   )
-  if (!wo) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: FONT, color: RED, fontSize: 15, flexDirection: 'column', gap: 12 }}>
-      <span>Work order not found</span>
-      <a href="/work-orders" style={{ color: BLUE, fontSize: 13 }}>Back to Work Orders</a>
-    </div>
-  )
+  if (!wo) {
+    const isNotFound = loadError?.status === 404
+    const isForbidden = loadError?.status === 403
+    const title = isNotFound ? 'Work order not found'
+      : isForbidden ? 'You do not have access to this work order'
+      : 'Work order failed to load'
+    const subtitle = isNotFound ? null
+      : isForbidden ? null
+      : `Something went wrong while loading this work order. Please retry. ${loadError?.status ? `(status ${loadError.status})` : ''}`.trim()
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: FONT, color: RED, fontSize: 15, flexDirection: 'column', gap: 12, padding: 24, textAlign: 'center' }}>
+        <span style={{ fontWeight: 700 }}>{title}</span>
+        {subtitle && <span style={{ color: GRAY, fontSize: 13, maxWidth: 520 }}>{subtitle}</span>}
+        {loadError?.detail && !isNotFound && !isForbidden && (
+          <span style={{ color: GRAY, fontSize: 11, fontFamily: "'IBM Plex Mono', monospace", maxWidth: 520, wordBreak: 'break-word' }}>{loadError.detail}</span>
+        )}
+        <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+          {!isNotFound && !isForbidden && (
+            <button onClick={() => { setLoadError(null); setLoading(true); loadData() }} style={{ padding: '8px 16px', border: `1px solid ${BLUE}`, background: 'transparent', color: BLUE, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Retry</button>
+          )}
+          <a href="/work-orders" style={{ color: BLUE, fontSize: 13, alignSelf: 'center' }}>Back to Work Orders</a>
+        </div>
+      </div>
+    )
+  }
 
   // DERIVED DATA
   const asset = wo.assets || {}

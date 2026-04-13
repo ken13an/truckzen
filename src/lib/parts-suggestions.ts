@@ -477,14 +477,13 @@ export function splitComplaintIntoDeterministicSegments(rawComplaint: string): s
     const softCandidates = part.split(/\s*(?:,\s+|\band\b|&)\s*/i).map(s => s.trim()).filter(s => s.length > 2)
 
     if (softCandidates.length >= 2) {
-      // Only split if: left side is a complete segment AND right side starts with an action verb
-      // This prevents splitting "check and tighten fairings" or "remove and replace bumper"
-      let shouldSoftSplit = true
-      for (let i = 0; i < softCandidates.length; i++) {
-        if (i === 0 && !isCompleteSegment(softCandidates[i])) { shouldSoftSplit = false; break }
-        if (i > 0 && !startsWithActionVerb(softCandidates[i])) { shouldSoftSplit = false; break }
-      }
-      if (shouldSoftSplit) {
+      // Split when every candidate is a complete segment (≥2 words). This still
+      // blocks bare-verb splits like "check and tighten fairings" ("check" is
+      // 1 word → fails isCompleteSegment) but allows noun-led concerns like
+      // "tire replacement" to stay separate — they render as distinct draft
+      // lines and the existing per-line clarification UI resolves them.
+      const allComplete = softCandidates.every(seg => isCompleteSegment(seg))
+      if (allComplete) {
         result.push(...softCandidates)
       } else {
         result.push(part)
@@ -502,7 +501,16 @@ export function preRouteComplaintBeforeAi(rawComplaint: string): PreRouteResult 
   const trimmed = rawComplaint.trim()
   if (!trimmed) return { decision: 'send_to_ai', segments: [trimmed] }
 
-  // Long or multi-sentence → AI
+  // Strong-delimiter split runs first: the user explicitly separated concerns
+  // with newline/+/; — those boundaries MUST be preserved as separate draft
+  // lines, even if an individual segment classifies as ambiguous. Otherwise
+  // a single ambiguous segment collapses all concerns back into one line.
+  const strongSegments = trimmed.split(/\s*[+;\n]\s*/).map(s => s.trim()).filter(s => s.length > 2)
+  if (strongSegments.length >= 2) {
+    return { decision: 'deterministic_multi', segments: strongSegments }
+  }
+
+  // Long or multi-sentence without strong delimiters → AI
   if (trimmed.split(/\s+/).length > 12) return { decision: 'send_to_ai', segments: [trimmed] }
   if (/[.;]/.test(trimmed) && trimmed.split(/[.;]/).filter(s => s.trim().length > 3).length >= 2) {
     return { decision: 'send_to_ai', segments: [trimmed] }
@@ -518,11 +526,15 @@ export function preRouteComplaintBeforeAi(rawComplaint: string): PreRouteResult 
     return { decision: 'send_to_ai', segments: [trimmed] }
   }
 
-  // Multi-segment — classify each
-  const allSimple = segments.every(seg => preClassifyComplaint(seg) === 'deterministic_simple')
-  if (allSimple) return { decision: 'deterministic_multi', segments }
+  // Multi-segment via soft delimiters ("and", "&", ","): require every segment
+  // to classify deterministic_simple OR ambiguous_noun_only — both render as
+  // distinct draft lines; ambiguous segments surface per-line clarification.
+  // Only bail to AI if a segment is fully unclassifiable.
+  const classifications = segments.map(seg => preClassifyComplaint(seg))
+  if (classifications.every(c => c === 'deterministic_simple' || c === 'ambiguous_noun_only')) {
+    return { decision: 'deterministic_multi', segments }
+  }
 
-  // Not all segments are deterministic — fall back to AI
   return { decision: 'send_to_ai', segments: [trimmed] }
 }
 
@@ -631,6 +643,12 @@ function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[]
     return [{ rough_name: component, quantity: explicitQty, is_labor: false, needs_clarification: true }]
   }
 
+  // Spare tire — distinct from axle tires, no position semantics
+  if (lower.includes('spare') && (lower.includes('tire') || lower.includes('tyre'))) {
+    const spareQty = explicitQty > 1 ? explicitQty : 1
+    return [{ rough_name: 'Spare Tire', quantity: spareQty, is_labor: false }]
+  }
+
   // Tire jobs
   if (['tire', 'tyre', 'flat', 'blowout'].some(k => lower.includes(k))) {
     if (tirePositions && tirePositions.length > 0) {
@@ -668,10 +686,13 @@ function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[]
     return [{ rough_name: 'Brake Parts', quantity: brakeQty, is_labor: false }]
   }
 
-  // Oil change — preserve viscosity and quantity
+  // Oil change — preserve viscosity and quantity. Rough name uses plain
+  // "Engine Oil <viscosity>" (no parens) so server-side component-word match
+  // against shop inventory descriptions (e.g. "Rotella T4 15W-40 Engine Oil")
+  // can still find real shop oil before falling back to generic.
   if ((lower.includes('oil change') || lower.includes('oil filter') || lower.includes('engine oil')) && !lower.includes('pm')) {
     const viscosityMatch = text.match(/\b(\d+[Ww]-?\d+)\b/)
-    const oilName = viscosityMatch ? `Engine Oil (${viscosityMatch[1].toUpperCase()})` : 'Engine Oil (15W-40)'
+    const oilName = viscosityMatch ? `Engine Oil ${viscosityMatch[1].toUpperCase()}` : 'Engine Oil 15W-40'
     return [
       { rough_name: 'Oil Filter', quantity: 1, is_labor: false },
       { rough_name: oilName, quantity: 10, is_labor: false },

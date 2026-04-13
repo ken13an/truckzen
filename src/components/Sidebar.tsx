@@ -130,6 +130,7 @@ export default function Sidebar() {
   const [punchTime, setPunchTime] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState('')
   const [qaOpen, setQaOpen] = useState(false)
+  const [logoutWarn, setLogoutWarn] = useState(false)
   const punchInFlight = useRef(false)
 
   useEffect(() => {
@@ -163,11 +164,27 @@ export default function Sidebar() {
     window.dispatchEvent(new Event('storage'))
   }, [collapsed])
 
-  // Fetch punch status
+  const togglePunchRef = useRef<(() => void) | null>(null)
+
+  // Fetch punch status + broadcast to listeners (e.g. dashboard reminder)
   useEffect(() => {
-    fetch('/api/mechanic/work-punch').then(r => r.ok ? r.json() : null).then(d => {
-      if (d?.punchedIn && d.activePunch?.punch_in_at) { setPunchedIn(true); setPunchTime(d.activePunch.punch_in_at) }
-    }).catch(() => {})
+    const refresh = () => {
+      fetch('/api/mechanic/work-punch').then(r => r.ok ? r.json() : null).then(d => {
+        const on = !!(d?.punchedIn && d.activePunch?.punch_in_at)
+        setPunchedIn(on)
+        setPunchTime(on ? d.activePunch.punch_in_at : null)
+        try { window.dispatchEvent(new CustomEvent('tz-punch-status', { detail: { punchedIn: on } })) } catch {}
+      }).catch(() => {})
+    }
+    refresh()
+    const onRequest = () => { togglePunchRef.current?.() }
+    const onRefresh = () => refresh()
+    window.addEventListener('tz-request-clock-in', onRequest)
+    window.addEventListener('tz-punch-refresh', onRefresh)
+    return () => {
+      window.removeEventListener('tz-request-clock-in', onRequest)
+      window.removeEventListener('tz-punch-refresh', onRefresh)
+    }
   }, [])
 
   // Elapsed timer
@@ -238,7 +255,7 @@ export default function Sidebar() {
     setExpanded(prev => ({ ...prev, [label]: !prev[label] }))
   }
 
-  async function togglePunch() {
+  const togglePunch = async () => {
     async function send(body: Record<string, unknown>) {
       const res = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       let data: any = null
@@ -249,7 +266,7 @@ export default function Sidebar() {
     if (punchedIn) {
       if (!confirm(`Clock out after ${elapsed || '0m'}?`)) return
       const { ok, data } = await send({ action: 'punch_out' })
-      if (ok) { setPunchedIn(false); setPunchTime(null); setElapsed(''); toast('Clocked out', 'success') }
+      if (ok) { setPunchedIn(false); setPunchTime(null); setElapsed(''); toast('Clocked out', 'success'); try { window.dispatchEvent(new CustomEvent('tz-punch-status', { detail: { punchedIn: false } })) } catch {} }
       else { toast(data?.error || 'Could not clock out. Please try again.', 'error', 6000) }
       return
     }
@@ -291,6 +308,7 @@ export default function Sidebar() {
         setPunchedIn(true)
         setPunchTime(data?.punch?.punch_in_at || new Date().toISOString())
         toast(data?.insideGeofence === false ? 'Clocked in (outside shop area)' : 'Clocked in', 'success')
+        try { window.dispatchEvent(new CustomEvent('tz-punch-status', { detail: { punchedIn: true } })) } catch {}
         return
       }
 
@@ -303,6 +321,13 @@ export default function Sidebar() {
     } finally {
       punchInFlight.current = false
     }
+  }
+  togglePunchRef.current = togglePunch
+
+  const doSignOut = async () => {
+    try { await fetch('/api/auth/session', { method: 'DELETE' }) } catch {}
+    await supabase.auth.signOut()
+    window.location.href = '/login'
   }
 
   const qaItems = [
@@ -486,7 +511,7 @@ export default function Sidebar() {
           </span>
           {!collapsed && <span style={{ fontSize: 12, color: 'var(--tz-textSecondary)' }}>{mode === 'dark' ? 'Dark Mode' : 'Warm Mode'}</span>}
         </div>
-        <a href="#" onClick={async (e) => { e.preventDefault(); try { await fetch('/api/auth/session', { method: 'DELETE' }) } catch {}; await supabase.auth.signOut(); window.location.href = '/login' }} style={{ textDecoration: 'none' }}>
+        <a href="#" onClick={async (e) => { e.preventDefault(); if (punchedIn) { setLogoutWarn(true); return } await doSignOut() }} style={{ textDecoration: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: collapsed ? '9px 0' : '9px 16px', justifyContent: collapsed ? 'center' : 'flex-start', margin: '1px 6px', borderRadius: 8, cursor: 'pointer', transition: 'all .12s' }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,.08)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
@@ -516,6 +541,23 @@ export default function Sidebar() {
                   ))}
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Still-clocked-in logout warning */}
+      {logoutWarn && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setLogoutWarn(false)}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }} />
+          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: 420, maxWidth: '92vw', background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 14, padding: 22, zIndex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 6 }}>You are still clocked in</div>
+            <div style={{ fontSize: 13, color: 'var(--tz-textSecondary)', marginBottom: 16, lineHeight: 1.5 }}>
+              Your shift is still active{elapsed ? ` (${elapsed})` : ''}. Clock out before signing out so your hours are recorded correctly.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button onClick={async () => { setLogoutWarn(false); await togglePunch() }} style={{ padding: '10px 14px', borderRadius: 8, border: 'none', background: 'var(--tz-success)', color: 'var(--tz-bgLight)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Instrument Sans',sans-serif" }}>Clock Out Now</button>
+              <button onClick={() => setLogoutWarn(false)} style={{ padding: '10px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'transparent', color: 'var(--tz-textSecondary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans',sans-serif" }}>Stay Here</button>
+              <button onClick={async () => { setLogoutWarn(false); await doSignOut() }} style={{ padding: '10px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-danger)'}`, background: 'transparent', color: 'var(--tz-danger)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans',sans-serif" }}>Log Out Anyway</button>
             </div>
           </div>
         </div>

@@ -27,6 +27,10 @@ const TIRE_POSITIONS = [
 
 function isTireJob(desc: string): boolean {
   const d = desc.toLowerCase()
+  // Spare tire is distinct work with no axle position — don't surface the
+  // position selector for spare-tire lines and don't merge spare truth into
+  // axle tire rough-parts on toggle.
+  if (d.includes('spare')) return false
   return ['tire', 'tyre', 'flat', 'blowout', 'tire change', 'tire replacement', 'tire repair'].some(k => d.includes(k))
 }
 
@@ -462,6 +466,9 @@ export default function NewWorkOrderPage() {
   function toggleTirePosition(lineIdx: number, pos: string) {
     setJobLines(prev => prev.map((l, i) => {
       if (i !== lineIdx) return l
+      // Spare-tire lines do not have axle positions — never rewrite their
+      // rough-parts from positional regen (would erase spare intent).
+      if (l.description.toLowerCase().includes('spare')) return l
       const positions = l.tirePositions.includes(pos) ? l.tirePositions.filter(p => p !== pos) : [...l.tirePositions, pos]
       return { ...l, tirePositions: positions, roughParts: getAutoRoughParts(l.description, positions) }
     }))

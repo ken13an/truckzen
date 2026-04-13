@@ -25,14 +25,29 @@ async function _GET(_req: Request, { params }: Params) {
     .single()
 
   if (baseError || !base) {
-    return NextResponse.json({ error: 'Work order not found', detail: baseError?.message || null }, { status: 404 })
+    return NextResponse.json({ error: 'Work order not found', code: 'wo_not_found', detail: baseError?.message || null }, { status: 404 })
   }
   if (!ctx.actor.is_platform_owner && base.shop_id !== ctx.shopId) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    return NextResponse.json({ error: 'Forbidden', code: 'wo_forbidden' }, { status: 403 })
   }
 
-  // Stage 2: Fetch related data with individual queries (resilient to missing FKs)
-  const [
+  // Per-stage diagnostics: enrichment failures surface here instead of crashing the route.
+  // The parent WO already loaded — optional enrichment degrades safely.
+  const enrichmentErrors: { stage: string; message: string }[] = []
+  const recordErr = (stage: string, err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error(`[wo-detail ${id}] enrichment '${stage}' failed:`, message)
+    enrichmentErrors.push({ stage, message })
+  }
+
+  // Stage 2: Fetch related data with individual queries (resilient to missing FKs).
+  // Any rejection here is caught so a single bad sub-query cannot 500 the whole WO.
+  let asset: any = null, customer: any = null, assignedTech: any = null
+  let soLines: any = [], estimates: any = [], invoices: any = []
+  let woNotes: any = [], woFiles: any = [], activityLog: any = []
+  let shopCharges: any = [], shop: any = null, woParts: any = []
+  try {
+  ;[
     { data: asset },
     { data: customer },
     { data: assignedTech },
@@ -65,6 +80,7 @@ async function _GET(_req: Request, { params }: Params) {
     ctx.admin.from('shops').select('tax_rate, tax_labor, state, county, name, labor_rate, default_labor_rate, dba, phone, email, address, payment_payee_name, payment_bank_name, payment_ach_account, payment_ach_routing, payment_wire_account, payment_wire_routing, payment_zelle_email_1, payment_zelle_email_2, payment_mail_payee, payment_mail_address, payment_mail_address_2, payment_mail_city, payment_mail_state, payment_mail_zip, payment_note').eq('id', base.shop_id).single(),
     ctx.admin.from('wo_parts').select('*').eq('wo_id', id).order('created_at'),
   ])
+  } catch (err) { recordErr('relations', err) }
 
   // Assemble WO object matching previous shape
   const wo: any = {
@@ -82,73 +98,86 @@ async function _GET(_req: Request, { params }: Params) {
   }
 
   let createdByName = null
-  if (wo.created_by_user_id) {
-    const { data: creator } = await ctx.admin.from('users').select('full_name').eq('id', wo.created_by_user_id).single()
-    createdByName = creator?.full_name || null
-  }
-
-  const techIds = (wo.so_lines || []).map((l: any) => l.assigned_to).filter(Boolean)
-  let techMap: Record<string, string> = {}
-  if (techIds.length > 0) {
-    const { data: techs } = await ctx.admin.from('users').select('id, full_name, team').in('id', techIds)
-    if (techs) techMap = Object.fromEntries(techs.map((t: any) => [t.id, `${t.full_name} - Team ${t.team || '?'}`]))
-  }
-
-  const allUserIds = [
-    ...(wo.wo_notes || []).map((n: any) => n.user_id),
-    ...(wo.wo_activity_log || []).map((a: any) => a.user_id),
-    ...(wo.wo_files || []).map((f: any) => f.user_id),
-  ].filter(Boolean)
-  let userMap: Record<string, string> = {}
-  if (allUserIds.length > 0) {
-    const { data: users } = await ctx.admin.from('users').select('id, full_name').in('id', [...new Set(allUserIds)])
-    if (users) userMap = Object.fromEntries(users.map((u: any) => [u.id, u.full_name]))
-  }
-
-  const lineIds = (wo.so_lines || []).map((l: any) => l.id)
-  let jobAssignments: any[] = []
-  if (lineIds.length > 0) {
-    const { data: ja, error: jaErr } = await ctx.admin.from('wo_job_assignments').select('*').in('line_id', lineIds).order('created_at')
-    if (jaErr) {
-      // Table may not exist yet — return empty rather than failing
-      jobAssignments = []
-    } else {
-      // Resolve user names separately (avoids FK join requirement)
-      const assignUserIds = [...new Set((ja || []).map((a: any) => a.user_id).filter(Boolean))]
-      let assignUserMap: Record<string, { full_name: string; team: string | null }> = {}
-      if (assignUserIds.length > 0) {
-        const { data: aUsers } = await ctx.admin.from('users').select('id, full_name, team').in('id', assignUserIds)
-        if (aUsers) assignUserMap = Object.fromEntries(aUsers.map((u: any) => [u.id, { full_name: u.full_name, team: u.team }]))
-      }
-      jobAssignments = (ja || []).map((a: any) => ({
-        ...a,
-        users: assignUserMap[a.user_id] ? { id: a.user_id, full_name: assignUserMap[a.user_id].full_name, team: assignUserMap[a.user_id].team } : null,
-      }))
+  try {
+    if (wo.created_by_user_id) {
+      const { data: creator } = await ctx.admin.from('users').select('full_name').eq('id', wo.created_by_user_id).single()
+      createdByName = creator?.full_name || null
     }
-  }
+  } catch (err) { recordErr('createdByName', err) }
 
-  // Fetch time entries for ETC
-  const { data: timeEntries } = await ctx.admin.from('so_time_entries')
-    .select('id, user_id, so_line_id, duration_minutes, clocked_in_at, clocked_out_at')
-    .eq('service_order_id', id)
-    .is('deleted_at', null)
+  let techMap: Record<string, string> = {}
+  try {
+    const techIds = (wo.so_lines || []).map((l: any) => l.assigned_to).filter(Boolean)
+    if (techIds.length > 0) {
+      const { data: techs } = await ctx.admin.from('users').select('id, full_name, team').in('id', techIds)
+      if (techs) techMap = Object.fromEntries(techs.map((t: any) => [t.id, `${t.full_name} - Team ${t.team || '?'}`]))
+    }
+  } catch (err) { recordErr('techMap', err) }
 
-  // Derive automation visibility
-  const automation = deriveWOAutomation(wo)
+  let userMap: Record<string, string> = {}
+  try {
+    const allUserIds = [
+      ...(wo.wo_notes || []).map((n: any) => n.user_id),
+      ...(wo.wo_activity_log || []).map((a: any) => a.user_id),
+      ...(wo.wo_files || []).map((f: any) => f.user_id),
+    ].filter(Boolean)
+    if (allUserIds.length > 0) {
+      const { data: users } = await ctx.admin.from('users').select('id, full_name').in('id', [...new Set(allUserIds)])
+      if (users) userMap = Object.fromEntries(users.map((u: any) => [u.id, u.full_name]))
+    }
+  } catch (err) { recordErr('userMap', err) }
+
+  let jobAssignments: any[] = []
+  try {
+    const lineIds = (wo.so_lines || []).map((l: any) => l.id)
+    if (lineIds.length > 0) {
+      const { data: ja, error: jaErr } = await ctx.admin.from('wo_job_assignments').select('*').in('line_id', lineIds).order('created_at')
+      if (jaErr) {
+        jobAssignments = []
+      } else {
+        const assignUserIds = [...new Set((ja || []).map((a: any) => a.user_id).filter(Boolean))]
+        let assignUserMap: Record<string, { full_name: string; team: string | null }> = {}
+        if (assignUserIds.length > 0) {
+          const { data: aUsers } = await ctx.admin.from('users').select('id, full_name, team').in('id', assignUserIds)
+          if (aUsers) assignUserMap = Object.fromEntries(aUsers.map((u: any) => [u.id, { full_name: u.full_name, team: u.team }]))
+        }
+        jobAssignments = (ja || []).map((a: any) => ({
+          ...a,
+          users: assignUserMap[a.user_id] ? { id: a.user_id, full_name: assignUserMap[a.user_id].full_name, team: assignUserMap[a.user_id].team } : null,
+        }))
+      }
+    }
+  } catch (err) { recordErr('jobAssignments', err) }
+
+  let timeEntries: any[] = []
+  try {
+    const { data } = await ctx.admin.from('so_time_entries')
+      .select('id, user_id, so_line_id, duration_minutes, clocked_in_at, clocked_out_at')
+      .eq('service_order_id', id)
+      .is('deleted_at', null)
+    timeEntries = data || []
+  } catch (err) { recordErr('timeEntries', err) }
+
+  let automation: any = null
+  try { automation = deriveWOAutomation(wo) } catch (err) { recordErr('deriveWOAutomation', err) }
+
   const lineAutomation: Record<string, any> = {}
   for (const line of wo.so_lines || []) {
-    lineAutomation[line.id] = deriveLineAutomation(line)
+    try { lineAutomation[line.id] = deriveLineAutomation(line) } catch (err) { recordErr(`deriveLineAutomation:${line.id}`, err) }
   }
-  const etc = deriveWOETC(wo, timeEntries || [])
 
-  // Resolve service writer name
+  let etc: any = null
+  try { etc = deriveWOETC(wo, timeEntries) } catch (err) { recordErr('deriveWOETC', err) }
+
   let service_writer_name = null
-  if (wo.service_writer_id) {
-    const { data: sw } = await ctx.admin.from('users').select('full_name').eq('id', wo.service_writer_id).single()
-    service_writer_name = sw?.full_name || null
-  }
+  try {
+    if (wo.service_writer_id) {
+      const { data: sw } = await ctx.admin.from('users').select('full_name').eq('id', wo.service_writer_id).single()
+      service_writer_name = sw?.full_name || null
+    }
+  } catch (err) { recordErr('service_writer_name', err) }
 
-  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, service_writer_name, jobAssignments, woParts: woParts || [], automation, lineAutomation, etc })
+  return NextResponse.json({ ...wo, shop, techMap, userMap, createdByName, service_writer_name, jobAssignments, woParts: woParts || [], automation, lineAutomation, etc, enrichmentErrors: enrichmentErrors.length > 0 ? enrichmentErrors : undefined })
 }
 
 async function _PATCH(req: Request, { params }: Params) {

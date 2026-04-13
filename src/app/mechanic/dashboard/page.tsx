@@ -6,7 +6,9 @@ import { MECHANIC_ROLES } from '@/lib/roles'
 import { PARTS_PICKUP_STATUS, PARTS_READY_STATUS } from '@/lib/parts-status'
 import Logo from '@/components/Logo'
 import { ChevronRight, Wrench, Clock, CheckCircle2, XCircle, Package, Play, Square } from 'lucide-react'
-import { useTheme } from '@/hooks/useTheme'
+import { MECHANIC_LANGUAGES } from '@/lib/i18n/mechanic'
+import { useMechanicT, useMechanicLang, hydrateMechanicLang, changeMechanicLang } from '@/lib/i18n/MechanicI18nProvider'
+import type { MechanicLang } from '@/lib/i18n/mechanic'
 
 import { THEME } from '@/lib/config/colors'
 
@@ -41,13 +43,6 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   picked_up:  { bg: 'rgba(34,197,94,0.15)',  text: GREEN },
 }
 
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'es', label: 'Espa\u00f1ol' },
-  { code: 'ru', label: '\u0420\u0443\u0441\u0441\u043a\u0438\u0439' },
-  { code: 'uz', label: "O'zbek" },
-]
-
 function StatusPill({ status }: { status: string }) {
   const label = status || 'pending'
   const c = STATUS_COLORS[label] || { bg: 'var(--tz-surfaceMuted)', text: DIM }
@@ -63,7 +58,8 @@ function StatusPill({ status }: { status: string }) {
 }
 
 export default function MechanicDashboardPage() {
-  const { tokens: t } = useTheme()
+  const t = useMechanicT()
+  const language = useMechanicLang()
   const supabase = createClient()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -73,8 +69,6 @@ export default function MechanicDashboardPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [requestModal, setRequestModal] = useState<any | null>(null)
   const [requestForm, setRequestForm] = useState({ part_name: '', quantity: '1', notes: '' })
-  const [language, setLanguage] = useState('en')
-  const [savingLang, setSavingLang] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [declineModal, setDeclineModal] = useState<string | null>(null) // assignment ID
   const [declineReason, setDeclineReason] = useState('')
@@ -316,7 +310,7 @@ export default function MechanicDashboardPage() {
       const effectiveRole = profile.impersonate_role || profile.role
       if (!MECHANIC_ROLES.includes(effectiveRole)) { window.location.href = '/dashboard'; return }
       setUser(profile)
-      setLanguage(profile.language || 'en')
+      hydrateMechanicLang(profile.language || 'en')
       await Promise.all([fetchData(profile.id), fetchActiveClock(profile.id)])
       // Replay queued offline punch events — keep failed items for retry
       try {
@@ -388,15 +382,6 @@ export default function MechanicDashboardPage() {
     setActionLoading(null)
   }
 
-  const handleSaveLanguage = async () => {
-    if (!user) return
-    setSavingLang(true)
-    try {
-      await supabase.from('users').update({ language }).eq('id', user.id)
-    } catch { /* silent */ }
-    setSavingLang(false)
-  }
-
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/login'
@@ -408,7 +393,7 @@ export default function MechanicDashboardPage() {
       <div style={{ background: BG, color: TEXT, fontFamily: FONT, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <Wrench size={32} style={{ color: BLUE, marginBottom: 12, animation: 'spin 1.5s linear infinite' }} />
-          <p style={{ color: DIM, fontSize: 14 }}>Loading dashboard...</p>
+          <p style={{ color: DIM, fontSize: 14 }}>{t('mechanic.loading_dashboard')}</p>
         </div>
       </div>
     )
@@ -430,7 +415,7 @@ export default function MechanicDashboardPage() {
   const activeJobs = jobs.filter(j => ['accepted', 'in_progress'].includes(j.status))
 
   // ----- Tab labels -----
-  const tabLabels = ['My Jobs', 'Parts Requests', 'Profile']
+  const tabLabels = [t('mechanic.tab.my_jobs'), t('mechanic.tab.parts_requests'), t('mechanic.tab.profile')]
   const tabIcons = [<Wrench key="w" size={16} />, <Package key="p" size={16} />, null]
 
   return (
@@ -479,12 +464,12 @@ export default function MechanicDashboardPage() {
         {!workPunch && (
           <div style={{ background: 'rgba(239,68,68,0.08)', border: `1px solid ${RED}44`, borderRadius: 14, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: RED }}>Not Punched In</div>
-              <div style={{ fontSize: 11, color: DIM, marginTop: 2 }}>Punch in to start your shift before working on jobs</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: RED }}>{t('mechanic.not_punched_in')}</div>
+              <div style={{ fontSize: 11, color: DIM, marginTop: 2 }}>{t('mechanic.punch_message')}</div>
             </div>
             <button onClick={() => handleWorkPunch('punch_in')} disabled={punchLoading}
               style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: GREEN, color: 'var(--tz-bgLight)', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: FONT, opacity: punchLoading ? 0.5 : 1 }}>
-              {punchLoading ? 'Locating...' : 'Punch In'}
+              {punchLoading ? t('mechanic.locating') : t('mechanic.punch_in')}
             </button>
           </div>
         )}
@@ -509,13 +494,13 @@ export default function MechanicDashboardPage() {
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
             onClick={e => { if (e.target === e.currentTarget) setOverrideModal(false) }}>
             <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: AMBER }}>Outside Shop Area</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: AMBER }}>{t('mechanic.outside_shop_area')}</div>
               <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>You appear to be outside the shop geofence. Provide a reason to punch in for manager review.</div>
-              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder="Reason (e.g., road call, parking lot)" style={{ width: '100%', padding: '10px 12px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+              <input value={overrideReason} onChange={e => setOverrideReason(e.target.value)} placeholder={t('mechanic.override_reason_placeholder')} style={{ width: '100%', padding: '10px 12px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: 'var(--tz-text)', fontFamily: FONT, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button onClick={() => setOverrideModal(false)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: DIM, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+                <button onClick={() => setOverrideModal(false)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: DIM, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>{t('mechanic.common.cancel')}</button>
                 <button disabled={!overrideReason.trim() || punchLoading} onClick={() => handleWorkPunch('punch_in', overrideReason.trim())} style={{ padding: '8px 16px', background: AMBER, color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
-                  {punchLoading ? 'Punching...' : 'Override & Punch In'}
+                  {punchLoading ? t('mechanic.punching') : t('mechanic.override_punch_in')}
                 </button>
               </div>
             </div>
@@ -584,7 +569,7 @@ export default function MechanicDashboardPage() {
             {filteredJobs.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: DIM }}>
                 <Wrench size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
-                <p style={{ fontSize: 15, fontWeight: 600 }}>No jobs assigned to you yet</p>
+                <p style={{ fontSize: 15, fontWeight: 600 }}>{t('mechanic.no_jobs_assigned')}</p>
                 <p style={{ fontSize: 13, marginTop: 4 }}>When a manager assigns work, it will appear here.</p>
               </div>
             ) : (
@@ -605,10 +590,10 @@ export default function MechanicDashboardPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                           <span style={{ color: BLUE, fontWeight: 700, fontSize: 14 }}>{job.wo?.so_number || 'WO'}</span>
-                          {isActiveJob && <span style={{ padding: '2px 8px', borderRadius: 999, background: GREEN, color: 'var(--tz-bgLight)', fontSize: 10, fontWeight: 700 }}>Working Now</span>}
-                          {isPaused && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 10, fontWeight: 700 }}>Paused</span>}
-                          {job.status === 'completed' && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(34,197,94,0.15)', color: GREEN, fontSize: 10, fontWeight: 700 }}>Done</span>}
-                          {job.status === 'pending' && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 10, fontWeight: 700 }}>Pending</span>}
+                          {isActiveJob && <span style={{ padding: '2px 8px', borderRadius: 999, background: GREEN, color: 'var(--tz-bgLight)', fontSize: 10, fontWeight: 700 }}>{t('mechanic.status.working_now')}</span>}
+                          {isPaused && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 10, fontWeight: 700 }}>{t('mechanic.status.paused')}</span>}
+                          {job.status === 'completed' && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(34,197,94,0.15)', color: GREEN, fontSize: 10, fontWeight: 700 }}>{t('mechanic.status.done')}</span>}
+                          {job.status === 'pending' && <span style={{ padding: '2px 8px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 10, fontWeight: 700 }}>{t('mechanic.status.pending')}</span>}
                         </div>
                         {job.line?.description && <div style={{ fontSize: 13, fontWeight: 600, color: TEXT, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{job.line.description}</div>}
                         <div style={{ fontSize: 11, color: DIM }}>
@@ -659,8 +644,8 @@ export default function MechanicDashboardPage() {
                           const isAssigned = !isActive && !isPaused && job.status === 'in_progress'
                           if (job.status === 'completed') return <StatusPill status="completed" />
                           if (isActive) return <StatusPill status="active" />
-                          if (isPaused) return <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 12, fontWeight: 600 }}>Paused</span>
-                          if (isAssigned) return <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 999, background: 'rgba(29,111,232,0.1)', color: BLUE, fontSize: 12, fontWeight: 600 }}>Assigned</span>
+                          if (isPaused) return <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 999, background: 'rgba(245,158,11,0.15)', color: AMBER, fontSize: 12, fontWeight: 600 }}>{t('mechanic.status.paused')}</span>
+                          if (isAssigned) return <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: 999, background: 'rgba(29,111,232,0.1)', color: BLUE, fontSize: 12, fontWeight: 600 }}>{t('mechanic.status.assigned')}</span>
                           return <StatusPill status={job.status} />
                         })()}
                       </div>
@@ -876,7 +861,7 @@ export default function MechanicDashboardPage() {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                               }}
                             >
-                              <Package size={14} /> Request Parts
+                              <Package size={14} /> {t('mechanic.action.request_parts')}
                             </button>
                             {hasHours && (
                             <button
@@ -913,7 +898,7 @@ export default function MechanicDashboardPage() {
         {tab === 1 && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Parts Requests</h2>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{t('mechanic.parts.heading')}</h2>
               {activeJobs.length > 0 && (
                 <button
                   onClick={() => { setRequestModal(activeJobs[0]); setRequestForm({ part_name: '', quantity: '1', notes: '' }) }}
@@ -924,7 +909,7 @@ export default function MechanicDashboardPage() {
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}
                 >
-                  <Package size={14} /> Request Parts
+                  <Package size={14} /> {t('mechanic.action.request_parts')}
                 </button>
               )}
             </div>
@@ -932,7 +917,7 @@ export default function MechanicDashboardPage() {
             {partsRequests.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: DIM }}>
                 <Package size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
-                <p style={{ fontSize: 15, fontWeight: 600 }}>No parts requests yet</p>
+                <p style={{ fontSize: 15, fontWeight: 600 }}>{t('mechanic.no_parts_requests')}</p>
                 <p style={{ fontSize: 13, marginTop: 4 }}>Request parts from your active jobs.</p>
               </div>
             ) : (
@@ -966,7 +951,7 @@ export default function MechanicDashboardPage() {
         {/* ========== TAB 2: PROFILE ========== */}
         {tab === 2 && (
           <>
-            <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700 }}>Profile</h2>
+            <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700 }}>{t('mechanic.profile.heading')}</h2>
             <div style={{
               background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: 12,
               padding: '20px',
@@ -974,28 +959,28 @@ export default function MechanicDashboardPage() {
               <div style={{ display: 'grid', gap: 16 }}>
                 {/* Name */}
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('mechanic.profile.name')}</label>
                   <p style={{ margin: '4px 0 0', fontSize: 15, fontWeight: 600 }}>{user.full_name}</p>
                 </div>
                 {/* Email */}
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('mechanic.profile.email')}</label>
                   <p style={{ margin: '4px 0 0', fontSize: 14 }}>{user.email}</p>
                 </div>
                 {/* Role */}
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('mechanic.profile.role')}</label>
                   <p style={{ margin: '4px 0 0', fontSize: 14, textTransform: 'capitalize' }}>{user.role.replace(/_/g, ' ')}</p>
                 </div>
                 {/* Team */}
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Team</label>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('mechanic.profile.team')}</label>
                   <p style={{ margin: '4px 0 0', fontSize: 14 }}>{user.team || 'Unassigned'}</p>
                 </div>
                 {/* Skills */}
                 {(user as any).skills && (
                   <div>
-                    <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Skills</label>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('mechanic.profile.skills')}</label>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
                       {((user as any).skills || []).map((skill: string, i: number) => (
                         <span key={i} style={{
@@ -1012,11 +997,11 @@ export default function MechanicDashboardPage() {
                 {/* Language */}
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>
-                    Language
+                    {t('mechanic.profile.language')}
                   </label>
                   <select
                     value={language}
-                    onChange={e => setLanguage(e.target.value)}
+                    onChange={e => { void changeMechanicLang(e.target.value as MechanicLang) }}
                     style={{
                       width: '100%', padding: '10px 12px', borderRadius: 10,
                       border: `1px solid ${CARD_BORDER}`, background: BG, color: TEXT,
@@ -1024,24 +1009,11 @@ export default function MechanicDashboardPage() {
                       appearance: 'none', WebkitAppearance: 'none',
                     }}
                   >
-                    {LANGUAGES.map(l => (
+                    {MECHANIC_LANGUAGES.map(l => (
                       <option key={l.code} value={l.code}>{l.label}</option>
                     ))}
                   </select>
                 </div>
-
-                {/* Save Language */}
-                <button
-                  onClick={handleSaveLanguage}
-                  disabled={savingLang}
-                  style={{
-                    width: '100%', padding: '11px 20px', borderRadius: 10, border: 'none',
-                    background: BLUE, color: 'var(--tz-bgLight)', fontWeight: 700, fontSize: 14,
-                    cursor: 'pointer', fontFamily: FONT, opacity: savingLang ? 0.6 : 1,
-                  }}
-                >
-                  {savingLang ? 'Saving...' : 'Save Language'}
-                </button>
 
                 {/* Divider */}
                 <div style={{ borderTop: `1px solid ${CARD_BORDER}`, margin: '4px 0' }} />
@@ -1056,7 +1028,7 @@ export default function MechanicDashboardPage() {
                     cursor: 'pointer', fontFamily: FONT,
                   }}
                 >
-                  Sign Out
+                  {t('mechanic.profile.sign_out')}
                 </button>
               </div>
             </div>
@@ -1083,7 +1055,7 @@ export default function MechanicDashboardPage() {
               padding: '16px 20px', borderBottom: `1px solid ${CARD_BORDER}`,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Request Parts</h3>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{t('mechanic.action.request_parts')}</h3>
               <button onClick={() => setRequestModal(null)} style={{
                 background: 'none', border: 'none', color: DIM, cursor: 'pointer', fontSize: 18, padding: 4,
               }}>
@@ -1161,7 +1133,7 @@ export default function MechanicDashboardPage() {
                   value={requestForm.notes}
                   onChange={e => setRequestForm(f => ({ ...f, notes: e.target.value }))}
                   rows={3}
-                  placeholder="Any additional details..."
+                  placeholder={t('mechanic.action.parts_details_placeholder')}
                   style={{
                     width: '100%', padding: '10px 12px', borderRadius: 10,
                     border: `1px solid ${CARD_BORDER}`, background: BG, color: TEXT,
@@ -1182,7 +1154,7 @@ export default function MechanicDashboardPage() {
                   fontFamily: FONT, opacity: !requestForm.part_name.trim() || actionLoading === 'parts-submit' ? 0.5 : 1,
                 }}
               >
-                {actionLoading === 'parts-submit' ? 'Submitting...' : 'Submit Request'}
+                {actionLoading === 'parts-submit' ? t('mechanic.action.submitting') : t('mechanic.action.submit_request')}
               </button>
             </div>
           </div>
@@ -1193,16 +1165,16 @@ export default function MechanicDashboardPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) { setDeclineModal(null); setDeclineReason('') } }}>
           <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Decline Job</div>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{t('mechanic.action.decline_job')}</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>Why are you declining this job? (optional)</div>
             <textarea
               value={declineReason}
               onChange={e => setDeclineReason(e.target.value)}
-              placeholder="Reason for declining..."
+              placeholder={t('mechanic.action.decline_reason_placeholder')}
               style={{ width: '100%', padding: '10px 12px', background: 'var(--tz-border)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, fontSize: 13, color: TEXT, fontFamily: FONT, minHeight: 80, resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
-              <button onClick={() => { setDeclineModal(null); setDeclineReason('') }} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => { setDeclineModal(null); setDeclineReason('') }} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{t('mechanic.common.cancel')}</button>
               <button onClick={() => handleJobAction(declineModal, 'decline', declineReason)} disabled={!!actionLoading}
                 style={{ padding: '8px 16px', background: RED, color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                 Confirm Decline
@@ -1216,7 +1188,7 @@ export default function MechanicDashboardPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) setMoreTimeModal(null) }}>
           <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 380 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Request More Time</div>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{t('mechanic.action.request_more_time')}</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 16 }}>
               {moreTimeModal.wo?.so_number} — {moreTimeModal.line?.description?.slice(0, 40)}
             </div>
@@ -1230,7 +1202,7 @@ export default function MechanicDashboardPage() {
               ))}
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setMoreTimeModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => setMoreTimeModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{t('mechanic.common.cancel')}</button>
               <button disabled={actionLoading === 'more-time'} onClick={async () => {
                 setActionLoading('more-time')
                 const mins = parseInt(moreTimeAmount) || 60
@@ -1257,7 +1229,7 @@ export default function MechanicDashboardPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 20, paddingTop: 'max(60px, env(safe-area-inset-top, 60px))' }}
           onClick={e => { if (e.target === e.currentTarget) setCompleteModal(null) }}>
           <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 14, padding: 24, width: '100%', maxWidth: 400 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Complete Job?</div>
+            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{t('mechanic.action.complete_job')}</div>
             <div style={{ fontSize: 13, color: DIM, marginBottom: 8 }}>
               Are you sure you want to mark this job as complete?
             </div>
@@ -1271,7 +1243,7 @@ export default function MechanicDashboardPage() {
               )}
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={() => setCompleteModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>Cancel</button>
+              <button onClick={() => setCompleteModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, color: DIM, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>{t('mechanic.common.cancel')}</button>
               <button onClick={async () => { await handleJobAction(completeModal.id, 'complete'); setCompleteModal(null) }} disabled={!!actionLoading}
                 style={{ padding: '8px 16px', background: GREEN, color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                 Confirm Complete

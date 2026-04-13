@@ -5,6 +5,8 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { Check, ChevronRight } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 import { shouldRedirectFromDashboard } from '@/lib/navigation/role-landing'
+import { MECHANIC_ROLES } from '@/lib/roles'
+import WorkplacePunchReminder from '@/components/WorkplacePunchReminder'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
@@ -108,6 +110,8 @@ export default function DashboardPage() {
         </div>
         <span style={{ padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: 'var(--tz-accentBg)', color: BLUE }}>{ROLE_LABEL[role] || role}</span>
       </div>
+
+      {!MECHANIC_ROLES.includes(user?.impersonate_role || user?.role || '') && <WorkplacePunchReminder />}
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
