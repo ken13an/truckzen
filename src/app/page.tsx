@@ -110,37 +110,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Hero visual — browser frame */}
-      <div style={{ padding: '0 48px 120px', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', background: LANDING.surface1, boxShadow: `0 0 80px ${LANDING.accentBlur}` }}>
-          <div style={{ display: 'flex', gap: 6, padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, background: LANDING.surface1, alignItems: 'center' }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: DIM2 }} />
-            <span style={{ marginLeft: 12, fontSize: 10, color: DIM, padding: '3px 10px', background: LANDING.surface2, borderRadius: 4 }}>truckzen.pro</span>
-          </div>
-          <div style={{ padding: 32, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, minHeight: 300 }}>
-            {[
-              { t: 'Shop', rows: [['Bay 1', 'Assigned'], ['Bay 2', 'Active'], ['Bay 3', 'Open']] },
-              { t: 'Invoices', rows: [['Pending', '—'], ['Paid', '—'], ['Overdue', '—']] },
-              { t: 'Fleet', rows: [['Uptime', '—'], ['Utilization', '—'], ['PM Due', '—']] },
-              { t: 'Warranty', rows: [['Active', '—'], ['Pending', '—']] },
-            ].map(p => (
-              <div key={p.t} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 8, padding: 16, textAlign: 'left' }}>
-                <div style={{ fontSize: 9, color: DIM, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>{p.t}</div>
-                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {p.rows.map(([l, v]) => (
-                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: DIM, padding: '3px 0', borderBottom: `1px solid ${BORDER}` }}>
-                      <span>{l}</span><span style={{ color: TEXT, fontWeight: 600 }}>{v}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div style={dividerStyle} />
 
       {/* ── S2: TWO PILLARS ── */}
