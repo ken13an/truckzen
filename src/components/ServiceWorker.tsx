@@ -6,7 +6,28 @@ import { useEffect, useState } from 'react'
 export function ServiceWorkerRegistrar() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        // Force an update check on every page load so stale JS chunks don't
+        // linger across deploys. When a waiting worker is found, skip waiting
+        // and reload once so the new bundle takes over immediately.
+        reg.update().catch(() => {})
+        if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }) }
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing
+          if (!nw) return
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              nw.postMessage({ type: 'SKIP_WAITING' })
+            }
+          })
+        })
+        let reloaded = false
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloaded) return
+          reloaded = true
+          window.location.reload()
+        })
+      }).catch(() => {})
     }
   }, [])
   return null

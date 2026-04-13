@@ -1,5 +1,5 @@
 // TruckZen Service Worker — offline support + caching
-const CACHE_NAME = 'truckzen-v2'
+const CACHE_NAME = 'truckzen-v3'
 const OFFLINE_URL = '/offline'
 
 // Static assets to precache on install
@@ -10,6 +10,11 @@ const PRECACHE_URLS = [
   '/icon-512.png',
   '/apple-touch-icon.png',
 ]
+
+// Allow the client to force-activate a waiting worker after deploy
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting()
+})
 
 // Install: precache critical assets
 self.addEventListener('install', (event) => {
