@@ -502,6 +502,14 @@ export function preRouteComplaintBeforeAi(rawComplaint: string): PreRouteResult 
   const trimmed = rawComplaint.trim()
   if (!trimmed) return { decision: 'send_to_ai', segments: [trimmed] }
 
+  // Newline-separated input: user explicitly put one concern per line.
+  // This must win before the word-count guard — otherwise long multi-line
+  // input (many short concerns) gets collapsed into a single AI blob.
+  const newlineSegments = trimmed.split(/\r?\n+/).map(s => s.trim()).filter(s => s.length > 2)
+  if (newlineSegments.length >= 2) {
+    return { decision: 'deterministic_multi', segments: newlineSegments }
+  }
+
   // Long or multi-sentence → AI
   if (trimmed.split(/\s+/).length > 12) return { decision: 'send_to_ai', segments: [trimmed] }
   if (/[.;]/.test(trimmed) && trimmed.split(/[.;]/).filter(s => s.trim().length > 3).length >= 2) {
