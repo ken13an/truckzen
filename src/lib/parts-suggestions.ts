@@ -390,8 +390,11 @@ export type PreAiDecision = 'deterministic_simple' | 'ambiguous_noun_only' | 'se
  * Classify raw complaint text BEFORE sending to AI.
  * Returns whether the complaint can be handled deterministically or needs AI splitting.
  */
-// Known PM/Oil Change family phrases that are deterministic even without a leading verb (TZBridge7A)
-const PM_OIL_FAMILY_PHRASES = [/^pm$/i, /^pm\s+service/i, /^preventive\s+maint/i, /^preventative\s+maint/i, /^oil\s+change/i, /^engine\s+oil\s+change/i, /^perform\s+pm/i, /^do\s+pm/i, /^perform\s+preventive/i, /^perform\s+preventative/i, /^do\s+oil\s+change/i, /^perform\s+oil\s+change/i]
+// Known PM/Oil Change family phrases that are deterministic even without a
+// leading verb (TZBridge7A). End-anchored: must be the WHOLE trimmed input,
+// not a prefix — otherwise "oil change tire replacement ..." would match
+// `/^oil\s+change/i` and collapse into a single deterministic line.
+const PM_OIL_FAMILY_PHRASES = [/^pm$/i, /^pm\s+service\s*$/i, /^preventive\s+maint(enance)?\s*$/i, /^preventative\s+maint(enance)?\s*$/i, /^oil\s+change\s*$/i, /^engine\s+oil\s+change\s*$/i, /^perform\s+pm\s*$/i, /^do\s+pm\s*$/i, /^perform\s+preventive(\s+maint(enance)?)?\s*$/i, /^perform\s+preventative(\s+maint(enance)?)?\s*$/i, /^do\s+oil\s+change\s*$/i, /^perform\s+oil\s+change\s*$/i]
 
 function isPmOilFamilyPhrase(text: string): boolean {
   const lower = text.toLowerCase().trim()
