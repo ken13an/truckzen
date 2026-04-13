@@ -108,7 +108,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isImpersonating = !!user?.impersonate_role
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: t.bg }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--tz-bg)' }}>
       {/* Desktop sidebar */}
       {!isMobile && <Sidebar />}
 
@@ -156,8 +156,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         )}
-        {/* Sticky top bar — uses page bg so it blends with the body; seam provided by a subtle bottom border only */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 15, background: t.bg, borderBottom: `1px solid ${t.border}`, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))' }}>
+        {/* Sticky top bar — uses CSS vars directly so it paints correctly the moment the pre-hydration script sets data-tz-mode, bypassing React hydration timing. */}
+        <div style={{ position: 'sticky', top: 0, zIndex: 15, background: 'var(--tz-bg)', borderBottom: '1px solid var(--tz-border)', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, padding: isMobile ? '8px 12px' : '8px 20px', paddingTop: 'max(8px, env(safe-area-inset-top))' }}>
           {/* Left: mobile menu or spacer */}
           <div>
             {isMobile && (
@@ -178,7 +178,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
             <a href="/work-orders/new" style={{ textDecoration: 'none' }}>
-              <button style={{ background: t.accent, color: t.bgLight, border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+              <button style={{ background: 'var(--tz-accent)', color: 'var(--tz-bgLight)', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
                 <Plus size={14} strokeWidth={2.5} /> New WO
               </button>
             </a>

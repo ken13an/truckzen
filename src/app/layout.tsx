@@ -95,12 +95,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-startup-image" href="/splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"/>
         <link rel="apple-touch-startup-image" href="/splash-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"/>
         <link rel="apple-touch-startup-image" href="/splash-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"/>
-        {/* Pre-hydration theme mode script — reads canonical THEME tokens from
-            @/lib/config/colors at build time (no hardcoded hex) and paints
-            html/body bg+color immediately so the first paint is correct. */}
+        {/* Pre-hydration theme script — sets data-tz-mode and a full set of
+            CSS variables on <html> so the shell can paint correctly
+            regardless of any React hydration timing issues. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var T=${JSON.stringify({ light: { bg: THEME.light.bg, text: THEME.light.text }, dark: { bg: THEME.dark.bg, text: THEME.dark.text } })};var m=localStorage.getItem('tz-theme-mode');if(m!=='light'&&m!=='dark')m='dark';document.documentElement.setAttribute('data-tz-mode',m);var s=document.createElement('style');s.setAttribute('data-tz-boot','1');s.appendChild(document.createTextNode('html[data-tz-mode='+m+'],html[data-tz-mode='+m+'] body{background:'+T[m].bg+' !important;color:'+T[m].text+'}'));document.head.appendChild(s);}catch(e){}})();`,
+            __html: `(function(){try{var T=${JSON.stringify({ light: THEME.light, dark: THEME.dark })};var m=localStorage.getItem('tz-theme-mode');if(m!=='light'&&m!=='dark')m='dark';document.documentElement.setAttribute('data-tz-mode',m);var t=T[m];var vars='';for(var k in t){vars+='--tz-'+k+':'+t[k]+';'}var s=document.createElement('style');s.setAttribute('data-tz-boot','1');s.appendChild(document.createTextNode(':root{'+vars+'}html,html body{background:var(--tz-bg) !important;color:var(--tz-text)}'));document.head.appendChild(s);}catch(e){}})();`,
           }}
         />
         {/* JSON-LD Structured Data */}

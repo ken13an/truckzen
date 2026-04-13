@@ -55,6 +55,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     document.documentElement.setAttribute('data-tz-mode', mode)
     document.body.setAttribute('data-tz-mode', mode)
+    // Keep CSS variables in sync so shell surfaces using var(--tz-*) flip
+    // immediately on toggle, regardless of React subtree re-render timing.
+    const root = document.documentElement
+    for (const k of Object.keys(tokens)) {
+      root.style.setProperty(`--tz-${k}`, (tokens as Record<string, string>)[k])
+    }
     document.body.style.background = tokens.bg
     document.body.style.backgroundColor = tokens.bg
     document.body.style.color = tokens.text
