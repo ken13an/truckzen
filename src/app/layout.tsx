@@ -94,6 +94,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-startup-image" href="/splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"/>
         <link rel="apple-touch-startup-image" href="/splash-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"/>
         <link rel="apple-touch-startup-image" href="/splash-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"/>
+        {/* Pre-hydration theme mode script — runs before React so the first paint knows the saved mode */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=localStorage.getItem('tz-theme-mode');if(m!=='light'&&m!=='dark')m='dark';document.documentElement.setAttribute('data-tz-mode',m);}catch(e){}})();`,
+          }}
+        />
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
@@ -139,11 +145,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body suppressHydrationWarning style={{ margin: 0, padding: 0, fontFamily: "'Instrument Sans',sans-serif" }}>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=localStorage.getItem('tz-theme-mode');if(m!=='light'&&m!=='dark')m='dark';document.documentElement.setAttribute('data-tz-mode',m);document.body.setAttribute('data-tz-mode',m);}catch(e){}})();`,
-          }}
-        />
         <ThemeProvider>
           <ToastProvider>
             <AppShell>{children}</AppShell>

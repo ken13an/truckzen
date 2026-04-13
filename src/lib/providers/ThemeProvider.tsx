@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, ReactNode, useLayoutEffect, useMemo, useState } from 'react'
+import { createContext, ReactNode, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { THEME, ThemeMode, ThemeTokens } from '@/lib/config/colors'
 
 interface ThemeContextValue {
@@ -31,6 +31,23 @@ function getInitialMode(): ThemeMode {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [requestedMode, setRequestedModeState] = useState<ThemeMode>(getInitialMode)
+  const [mounted, setMounted] = useState(false)
+
+  // After mount, re-read the attribute and commit the client-side truth.
+  // This guarantees we are not stuck on server's default-'dark' state after
+  // a hydration mismatch silently resolved in favor of server output.
+  useEffect(() => {
+    try {
+      const attr = document.documentElement.getAttribute('data-tz-mode')
+      const saved = (attr === 'light' || attr === 'dark') ? attr : window.localStorage.getItem(STORAGE_KEY)
+      if (saved === 'light' || saved === 'dark') {
+        setRequestedModeState(prev => (prev === saved ? prev : saved))
+      }
+    } catch {
+      // ignore
+    }
+    setMounted(true)
+  }, [])
 
   const mode: ThemeMode = requestedMode
   const tokens = THEME[mode]
