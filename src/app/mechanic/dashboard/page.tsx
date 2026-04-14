@@ -139,16 +139,16 @@ export default function MechanicDashboardPage() {
           if (action === 'punch_in') {
             const code = geoErr?.code
             if (code === 1) { // PERMISSION_DENIED
-              alert('GPS blocked by browser. Tap the address-bar lock icon, set Location to Allow, then retry.')
+              alert('Location permission was denied. Please allow location access for this site and try again.')
               setPunchLoading(false); return
             } else if (code === 2) { // POSITION_UNAVAILABLE
-              alert('Could not determine your location. Make sure GPS/Location is enabled on your device.')
+              alert('Your device could not determine your location. Make sure GPS/location services are on and try again.')
               setPunchLoading(false); return
             } else if (code === 3) { // TIMEOUT
-              alert('Location request timed out. Please try again in an open area with better GPS signal.')
+              alert('Location request timed out. Move to an area with better signal and try again.')
               setPunchLoading(false); return
             }
-            alert('Could not get your location. Please check your GPS settings.')
+            alert('Could not determine your location. Please try again.')
             setPunchLoading(false); return
           }
           // For punch_out, proceed without coordinates

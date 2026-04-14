@@ -272,12 +272,17 @@ export default function Sidebar() {
     }
 
     // Clock In — attempt geolocation first to enable geofence check server-side
-    async function getCoords(): Promise<{ lat: number; lng: number; accuracy?: number } | 'denied' | 'unavailable'> {
+    async function getCoords(): Promise<{ lat: number; lng: number; accuracy?: number } | 'denied' | 'unavailable' | 'timeout' | 'unknown'> {
       if (typeof window === 'undefined' || !('geolocation' in navigator)) return 'unavailable'
       return new Promise(resolve => {
         navigator.geolocation.getCurrentPosition(
           pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-          err => resolve(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable'),
+          err => {
+            if (err.code === err.PERMISSION_DENIED) resolve('denied')
+            else if (err.code === err.POSITION_UNAVAILABLE) resolve('unavailable')
+            else if (err.code === err.TIMEOUT) resolve('timeout')
+            else resolve('unknown')
+          },
           { enableHighAccuracy: true, timeout: 15000 }
         )
       })
@@ -290,8 +295,10 @@ export default function Sidebar() {
     try {
       const coords = await getCoords()
       if (typeof coords !== 'object') {
-        if (coords === 'denied') toast('Location access was denied. Enable location in your browser to clock in.', 'error', 7000)
-        else toast('Location required to punch. Please enable GPS and try again.', 'error', 7000)
+        if (coords === 'denied') toast('Location permission was denied. Please allow location access for this site and try again.', 'error', 7000)
+        else if (coords === 'unavailable') toast('Your device could not determine your location. Make sure GPS/location services are on and try again.', 'error', 7000)
+        else if (coords === 'timeout') toast('Location request timed out. Move to an area with better signal and try again.', 'error', 7000)
+        else toast('Could not determine your location. Please try again.', 'error', 7000)
         return
       }
       // Server expects { action, lat, lng, accuracy, override_reason? }
