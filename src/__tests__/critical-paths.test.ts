@@ -175,6 +175,53 @@ describe('invoice critical path', () => {
     expect(partsLib).toMatch(/LABOR_ONLY_VERBS\s*=\s*\[[^\]]*'check'[^\]]*\]/)
   })
 
+  // Patch 128 regression guard: converted API routes must use canonical actor
+  // scoping via getAuthenticatedUserProfile + getActorShopId, not raw user.shop_id
+  // from getCurrentUser. Guards against silent reintroduction of impersonation
+  // scope leaks in the proven risk set.
+  it('shop scoping: converted API routes use canonical actor helpers, not raw user.shop_id', () => {
+    const converted = [
+      'src/app/api/invoices/route.ts',
+      'src/app/api/invoices/[id]/route.ts',
+      'src/app/api/invoices/[id]/send/route.ts',
+      'src/app/api/invoices/[id]/validate/route.ts',
+      'src/app/api/invoices/[id]/qr/route.ts',
+      'src/app/api/invoice-payments/route.ts',
+      'src/app/api/maintenance/route.ts',
+      'src/app/api/maintenance/[id]/route.ts',
+      'src/app/api/drivers/[id]/route.ts',
+      'src/app/api/assets/[id]/history/route.ts',
+      'src/app/api/accounting/route.ts',
+      'src/app/api/time-tracking/route.ts',
+      'src/app/api/reports/mechanics/route.ts',
+      'src/app/api/mobile/dashboard/route.ts',
+    ]
+    for (const path of converted) {
+      const c = readFile(path)
+      expect(c, `${path} must import getAuthenticatedUserProfile`).toMatch(/getAuthenticatedUserProfile/)
+      expect(c, `${path} must import getActorShopId`).toMatch(/getActorShopId/)
+      expect(c, `${path} must not use raw user.shop_id`).not.toMatch(/\buser\.shop_id\b/)
+    }
+  })
+
+  // Patch 129 regression guard: mobile dashboard impersonation Policy B is locked.
+  // Shop scope must go through getActorShopId(actor); user identity must come from
+  // actor.id (impersonation does not change user identity in TruckZen's model —
+  // only role and target_shop_id). Cache key must include shopId so platform-owner
+  // cross-shop impersonation does not share cached results.
+  it('mobile dashboard: Policy B — effective shop scope + real actor.id identity + shop-scoped cache', () => {
+    const c = readFile('src/app/api/mobile/dashboard/route.ts')
+    // Canonical actor helpers
+    expect(c).toMatch(/getAuthenticatedUserProfile/)
+    expect(c).toMatch(/getActorShopId/)
+    // No raw user.shop_id scoping truth
+    expect(c).not.toMatch(/\buser\.shop_id\b/)
+    // Identity comes from actor.id (Policy B — real actor)
+    expect(c).toMatch(/const\s+userId\s*=\s*actor\.id/)
+    // Cache key must include shopId to prevent impersonation cross-contamination
+    expect(c).toMatch(/cacheKey\s*=\s*`mobile:\$\{userId\}:\$\{shopId\}`/)
+  })
+
   // Patch 122+125: invoice outbound recipient is resolved by the canonical helper
   // resolveInvoiceRecipientEmail (kiosk_checkins.contact_email → customers.email).
   // Both accounting manual-send and sendPaymentNotifications must go through it so

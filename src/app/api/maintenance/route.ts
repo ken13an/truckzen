@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 import { parsePageParams } from '@/lib/query-limits'
 
 export async function GET(req: Request) {
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
   const { searchParams } = new URL(req.url)
   const assetId  = searchParams.get('asset_id')
@@ -16,7 +19,7 @@ export async function GET(req: Request) {
   let q = supabase
     .from('pm_schedules')
     .select('*, assets(id, unit_number, year, make, model, odometer, customers(company_name))', { count: 'exact' })
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .eq('active', true)
     .order('next_due_date')
 
@@ -30,17 +33,20 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
   const allowed = ['owner','gm','it_person','shop_manager','fleet_manager','maintenance_manager','office_admin']
-  if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  const effectiveRole = actor.impersonate_role || actor.role
+  if (!allowed.includes(effectiveRole)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
   const body = await req.json()
   if (!body.asset_id || !body.service_name) return NextResponse.json({ error: 'asset_id and service_name required' }, { status: 400 })
 
   const { data, error } = await supabase.from('pm_schedules').insert({
-    shop_id:          user.shop_id,
+    shop_id:          shopId,
     asset_id:         body.asset_id,
     service_name:     body.service_name.trim(),
     interval_miles:   body.interval_miles  || null,

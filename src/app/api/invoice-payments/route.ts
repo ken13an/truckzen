@@ -1,16 +1,17 @@
 import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
 
 // GET — list payments for an invoice
 export async function GET(req: Request) {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
   const { searchParams } = new URL(req.url)
   const invoiceId = searchParams.get('invoice_id')
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
     .from('invoice_payments')
     .select('*, users:recorded_by(full_name)')
     .eq('invoice_id', invoiceId)
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .order('received_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -30,10 +31,12 @@ export async function GET(req: Request) {
 
 // POST — record a payment
 export async function POST(req: Request) {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!ACCOUNTING_ROLES.includes(user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+  const effectiveRole = actor.impersonate_role || actor.role
+  if (!ACCOUNTING_ROLES.includes(effectiveRole)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await req.json()
   const { invoice_id, payment_method, amount, reference_number, received_at, notes } = body
@@ -44,13 +47,13 @@ export async function POST(req: Request) {
   // Record payment
   const { data: payment, error } = await s.from('invoice_payments').insert({
     invoice_id,
-    shop_id: user.shop_id,
+    shop_id: shopId,
     payment_method,
     amount: parseFloat(amount),
     reference_number: reference_number || null,
     received_at: received_at || new Date().toISOString(),
     notes: notes || null,
-    recorded_by: user.id,
+    recorded_by: actor.id,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

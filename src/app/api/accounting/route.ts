@@ -1,7 +1,7 @@
 import { ACCOUNTING_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 import { parsePageParams } from '@/lib/query-limits'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
@@ -9,12 +9,12 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 
 
 export async function GET(req: Request) {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!ACCOUNTING_ROLES.includes(user.impersonate_role || user.role) && !(user.is_platform_owner && !user.impersonate_role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!ACCOUNTING_ROLES.includes(actor.impersonate_role || actor.role) && !(actor.is_platform_owner && !actor.impersonate_role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const shopId = user.shop_id
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
   const { searchParams } = new URL(req.url)
   const { page, limit, offset } = parsePageParams(searchParams)
   const status = searchParams.get('invoice_status')

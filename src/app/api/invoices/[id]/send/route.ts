@@ -1,6 +1,7 @@
 // app/api/invoices/[id]/send/route.ts
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 import { sendInvoiceEmail } from '@/lib/integrations/resend'
 import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf'
 import { logAction } from '@/lib/services/auditLog'
@@ -12,13 +13,15 @@ type P = { params: Promise<{ id: string }> }
 async function _POST(_req: Request, { params }: P) {
   const { id } = await params;
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
   const { data: inv } = await supabase
     .from('invoices')
     .select(`*, service_orders(so_number, complaint, cause, correction, assets(unit_number,year,make,model,odometer), users!assigned_tech(full_name), so_lines(line_type, description, real_name, part_number, quantity, unit_price, total_price, parts_sell_price, billed_hours, estimated_hours, actual_hours, parts_status, related_labor_line_id)), customers(company_name,contact_name,email,phone), shops(name,dba,phone,email,address,payment_payee_name,payment_bank_name,payment_ach_account,payment_ach_routing,payment_wire_account,payment_wire_routing,payment_zelle_email_1,payment_zelle_email_2,payment_mail_payee,payment_mail_address,payment_mail_address_2,payment_mail_city,payment_mail_state,payment_mail_zip,payment_note)`)
-    .eq('id', id).eq('shop_id', user.shop_id).single()
+    .eq('id', id).eq('shop_id', shopId).single()
 
   if (!inv) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -60,7 +63,7 @@ async function _POST(_req: Request, { params }: P) {
   }
 
   // Fire and forget
-  logAction({ shop_id: user.shop_id, user_id: user.id, action: 'invoice.sent', entity_type: 'invoice', entity_id: id }).catch(() => {})
+  logAction({ shop_id: shopId, user_id: actor.id, action: 'invoice.sent', entity_type: 'invoice', entity_id: id }).catch(() => {})
 
   return NextResponse.json({ success: true, messageId: result.id })
 }

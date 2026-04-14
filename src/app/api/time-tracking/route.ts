@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 import { safeRoute } from '@/lib/api-handler'
 
 async function _GET(req: Request) {
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
   const { searchParams } = new URL(req.url)
   const from    = searchParams.get('from') || new Date(Date.now() - 7*86400000).toISOString().split('T')[0]
@@ -19,7 +22,7 @@ async function _GET(req: Request) {
       users(id, full_name, role, team),
       service_orders(so_number, status, assets(unit_number, make, model), customers(company_name))
     `)
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .is('deleted_at', null)
     .gte('clocked_in_at', from)
     .lte('clocked_in_at', to + 'T23:59:59')

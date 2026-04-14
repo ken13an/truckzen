@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 import { log } from '@/lib/security'
 import { logAction } from '@/lib/services/auditLog'
 import { safeRoute } from '@/lib/api-handler'
@@ -7,11 +8,14 @@ import { safeRoute } from '@/lib/api-handler'
 // ── GET list + POST create ────────────────────────────────────
 async function _GET(req: Request) {
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
   const allowed = ['owner','gm','it_person','shop_manager','accountant','accounting_manager','office_admin']
-  if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  const effectiveRole = actor.impersonate_role || actor.role
+  if (!allowed.includes(effectiveRole)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
@@ -38,7 +42,7 @@ async function _GET(req: Request) {
   let countQ = supabase
     .from('invoices')
     .select('*', { count: 'exact', head: true })
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .is('deleted_at', null)
   countQ = applyFilters(countQ)
 
@@ -49,10 +53,10 @@ async function _GET(req: Request) {
     return q
   }
   const summaryQ = Promise.all([
-    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null)),
-    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'sent')),
-    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'paid')),
-    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', user.shop_id).is('deleted_at', null).eq('status', 'overdue')),
+    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null)),
+    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('status', 'sent')),
+    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('status', 'paid')),
+    applySummaryHistFilter(supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null).eq('status', 'overdue')),
   ])
 
   // Page data query
@@ -61,7 +65,7 @@ async function _GET(req: Request) {
   let q = supabase
     .from('invoices')
     .select('id, invoice_number, status, subtotal, tax_amount, total, balance_due, amount_paid, due_date, paid_at, created_at, is_historical, source, customers(company_name), service_orders(so_number, is_historical, assets(unit_number))')
-    .eq('shop_id', user.shop_id)
+    .eq('shop_id', shopId)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .range(from, to)
@@ -87,11 +91,14 @@ async function _GET(req: Request) {
 
 async function _POST(req: Request) {
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
   const allowed = ['owner','gm','it_person','shop_manager','accountant','office_admin']
-  if (!allowed.includes(user.role)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  const effectiveRole = actor.impersonate_role || actor.role
+  if (!allowed.includes(effectiveRole)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
   const body = await req.json()
   const { so_id, customer_id, due_date, tax_rate, notes } = body
@@ -112,12 +119,12 @@ async function _POST(req: Request) {
   const total = subtotal + taxAmount
 
   // Generate invoice number
-  const { count } = await supabase.from('invoices').select('*', { count:'exact', head:true }).eq('shop_id', user.shop_id).is('deleted_at', null)
+  const { count } = await supabase.from('invoices').select('*', { count:'exact', head:true }).eq('shop_id', shopId).is('deleted_at', null)
   const year   = new Date().getFullYear()
   const invNum = `INV-${year}-${String((count || 0) + 1).padStart(4, '0')}`
 
   const { data: inv, error } = await supabase.from('invoices').insert({
-    shop_id:     user.shop_id,
+    shop_id:     shopId,
     so_id,
     customer_id: customer_id || (so as any).customer_id,
     invoice_number: invNum,
@@ -134,17 +141,17 @@ async function _POST(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  await log('invoice.created', user.shop_id, user.id, { table:'invoices', recordId: inv.id, newData:{ invoice_number: invNum, total } })
+  await log('invoice.created', shopId, actor.id, { table:'invoices', recordId: inv.id, newData:{ invoice_number: invNum, total } })
 
   // Fire and forget
-  logAction({ shop_id: user.shop_id, user_id: user.id, action: 'invoice.created', entity_type: 'invoice', entity_id: inv.id, details: { invoice_number: invNum } }).catch(() => {})
+  logAction({ shop_id: shopId, user_id: actor.id, action: 'invoice.created', entity_type: 'invoice', entity_id: inv.id, details: { invoice_number: invNum } }).catch(() => {})
 
   // Notify accounting team
   try {
     const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
-    const acctUsers = await getUserIdsByRole(user.shop_id, ['owner', 'gm', 'accountant', 'accounting_manager', 'office_admin'])
-    const others = acctUsers.filter(uid => uid !== user.id)
-    if (others.length > 0) await createNotification({ shopId: user.shop_id, recipientId: others, type: 'invoice_created', title: `Invoice #${invNum} created`, body: `Total: $${total.toFixed(2)}`, link: `/invoices/${inv.id}` })
+    const acctUsers = await getUserIdsByRole(shopId, ['owner', 'gm', 'accountant', 'accounting_manager', 'office_admin'])
+    const others = acctUsers.filter(uid => uid !== actor.id)
+    if (others.length > 0) await createNotification({ shopId: shopId, recipientId: others, type: 'invoice_created', title: `Invoice #${invNum} created`, body: `Total: $${total.toFixed(2)}`, link: `/invoices/${inv.id}` })
   } catch (err) { console.error('Notification failed:', err) }
 
   return NextResponse.json(inv, { status: 201 })

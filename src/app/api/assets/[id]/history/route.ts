@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const shopId = getActorShopId(actor)
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
   const { id: assetId } = await params
   const { searchParams } = new URL(req.url)
@@ -16,7 +19,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   // Build UNION ALL query for both sources
   let conditions = ''
-  const queryParams: any[] = [assetId, user.shop_id]
+  const queryParams: any[] = [assetId, shopId]
   let paramIdx = 3
 
   if (search) {
@@ -102,7 +105,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const [dataRes, countRes, summaryRes] = await Promise.all([
       supabase.rpc('exec_sql', { query: fullQuery, params: queryParams }).single(),
       supabase.rpc('exec_sql', { query: countQuery, params: countParams }).single(),
-      supabase.rpc('exec_sql', { query: summaryQuery, params: [assetId, user.shop_id] }).single(),
+      supabase.rpc('exec_sql', { query: summaryQuery, params: [assetId, shopId] }).single(),
     ])
 
     // If RPC not available, fall back to separate Supabase queries
@@ -123,7 +126,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             .from('service_orders')
             .select('id, so_number, status, complaint, grand_total, completed_at, created_at, assigned_tech, customer_id')
             .eq('asset_id', assetId)
-            .eq('shop_id', user.shop_id)
+            .eq('shop_id', shopId)
             .is('deleted_at', null)
             .order('created_at', { ascending: false })
         : Promise.resolve({ data: [] }),
@@ -132,7 +135,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             .from('maint_road_repairs')
             .select('id, repair_number, status, description, total_cost, repair_date, created_at, vendor_id')
             .eq('asset_id', assetId)
-            .eq('shop_id', user.shop_id)
+            .eq('shop_id', shopId)
             .order('created_at', { ascending: false })
         : Promise.resolve({ data: [] }),
     ])
