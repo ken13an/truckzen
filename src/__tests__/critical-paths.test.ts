@@ -129,6 +129,17 @@ describe('invoice critical path', () => {
     expect(content).toMatch(/is_historical/)
     expect(content).toMatch(/read-only|read.only/i)
   })
+
+  // Patch 122 regression guard: invoice send must resolve outbound recipient from kiosk
+  // check-in contact first (= actual owner/operator for maintained-but-owner-paid trucks)
+  // and fall back to customers.email. Must NOT silently collapse to customers.email only.
+  it('invoice send route resolves owner email via kiosk_checkins before customers.email', () => {
+    const content = readFile('src/app/api/invoices/[id]/send/route.ts')
+    expect(content).toMatch(/kiosk_checkins/)
+    expect(content).toMatch(/contact_email/)
+    // Must pass the resolved recipient (not customers.email directly) to sendInvoiceEmail
+    expect(content).toMatch(/email:\s*recipientEmail/)
+  })
 })
 
 // ──────────────────────────────────────────────────────────────
