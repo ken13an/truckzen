@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { sendWelcomeEmail } from '@/lib/integrations/resend'
 import { createAdminSupabaseClient, getActorShopId } from '@/lib/server-auth'
 import { requireAuthenticatedUser, requireRole } from '@/lib/route-guards'
@@ -6,6 +7,7 @@ import { MANAGEMENT_ROLES } from '@/lib/roles'
 import { logAction } from '@/lib/services/auditLog'
 
 const INVITE_ROLES = MANAGEMENT_ROLES
+const INVITE_EXPIRY_DAYS = 7
 
 export async function POST(req: Request) {
   const { actor, error } = await requireAuthenticatedUser()
@@ -25,19 +27,21 @@ export async function POST(req: Request) {
   const { data: targetUser } = await s.from('users').select('id, email, shop_id').eq('email', email).eq('shop_id', shopId).single()
   if (!targetUser) return NextResponse.json({ error: 'User not found in your shop' }, { status: 404 })
 
+  const token = randomBytes(32).toString('base64url')
+  const expiresAt = new Date(Date.now() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString()
+
+  const { error: updErr } = await s.from('users')
+    .update({ invite_token: token, invite_expires_at: expiresAt, invite_accepted_at: null })
+    .eq('id', targetUser.id)
+  if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 })
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'
-  const { data: linkData, error: linkErr } = await s.auth.admin.generateLink({
-    type: 'recovery',
-    email,
-    options: { redirectTo: `${appUrl}/reset-password` },
-  })
-  if (linkErr) return NextResponse.json({ error: linkErr.message }, { status: 500 })
+  const acceptUrl = `${appUrl}/accept-invite?token=${encodeURIComponent(token)}`
 
   const { data: shop } = await s.from('shops').select('name, dba').eq('id', shopId).single()
   const shopName = shop?.dba || shop?.name || 'TruckZen'
-  const setupUrl = linkData?.properties?.action_link || `${appUrl}/forgot-password`
 
-  const result = await sendWelcomeEmail(email, fullName, shopName, setupUrl)
+  const result = await sendWelcomeEmail(email, fullName, shopName, acceptUrl)
   if (!result.success) return NextResponse.json({ error: result.error || 'Failed to send' }, { status: 500 })
 
   logAction({

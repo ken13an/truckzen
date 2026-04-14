@@ -143,18 +143,18 @@ export async function sendInvoiceEmail(data: any) {
   }
 }
 
-export async function sendWelcomeEmail(to: string, name: string, shopName: string, loginUrl: string) {
+export async function sendWelcomeEmail(to: string, name: string, shopName: string, acceptUrl: string) {
   try {
     await getResend().emails.send({
       from:    getFrom(),
       to,
-      subject: `Welcome to TruckZen — ${shopName}`,
+      subject: `You're invited to TruckZen — ${shopName}`,
       html: `
         <div style="font-family:sans-serif;background:#060708;color:#DDE3EE;padding:40px;max-width:480px;margin:0 auto">
-          <div style="font-size:22px;font-weight:700;margin-bottom:16px">Welcome, ${name}</div>
-          <p style="color:#7C8BA0;line-height:1.7">You've been added to TruckZen for ${shopName}. Click below to set your password and log in.</p>
-          <a href="${loginUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:linear-gradient(135deg,#1D6FE8,#1248B0);color:#fff;text-decoration:none;border-radius:9px;font-weight:700">Set Password & Log In</a>
-          <p style="color:#48536A;font-size:12px">If you didn't expect this email, you can ignore it.</p>
+          <div style="font-size:22px;font-weight:700;margin-bottom:16px">You're invited, ${name}</div>
+          <p style="color:#7C8BA0;line-height:1.7">${shopName} has invited you to join their team on TruckZen. Accept your invitation to confirm your name, choose your language, and set a password.</p>
+          <a href="${acceptUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:linear-gradient(135deg,#1D6FE8,#1248B0);color:#fff;text-decoration:none;border-radius:9px;font-weight:700">Accept Invitation</a>
+          <p style="color:#48536A;font-size:12px">This invitation link expires in 7 days. If you didn't expect this email, you can ignore it.</p>
         </div>`,
     })
     return { success: true }
