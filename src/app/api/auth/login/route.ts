@@ -78,6 +78,44 @@ async function _POST(req: Request) {
     )
   }
 
+  // ── Canonical profile / orphan enforcement ─────────────────
+  // Auth-only users (no matching public.users row) must NOT receive a session —
+  // role/shop_id cannot be safely derived, so they would enter the app as
+  // half-users invisible to team truth. Block deterministically.
+  const { data: profileRows, error: profileLookupErr } = await s
+    .from('users')
+    .select('id, role, shop_id, active, deleted_at, totp_enabled, is_platform_owner')
+    .eq('id', data.user.id)
+  if (profileLookupErr) {
+    return NextResponse.json({ error: 'Sign-in temporarily unavailable. Please try again.' }, { status: 500 })
+  }
+  const liveProfiles = (profileRows || []).filter((p: any) => !p.deleted_at)
+  if (liveProfiles.length === 0) {
+    return NextResponse.json(
+      { error: 'Your account setup is incomplete. Please contact your administrator.', code: 'auth_orphan' },
+      { status: 403 }
+    )
+  }
+  if (liveProfiles.length > 1) {
+    return NextResponse.json(
+      { error: 'Duplicate account records exist for this user. Please contact your administrator.', code: 'duplicate_profile' },
+      { status: 403 }
+    )
+  }
+  const profile = liveProfiles[0]
+  if (profile.active === false) {
+    return NextResponse.json(
+      { error: 'This account has been deactivated. Please contact your administrator.', code: 'account_inactive' },
+      { status: 403 }
+    )
+  }
+  if (!profile.is_platform_owner && !profile.shop_id) {
+    return NextResponse.json(
+      { error: 'Your account is not linked to a shop. Please contact your administrator.', code: 'broken_profile' },
+      { status: 403 }
+    )
+  }
+
   // ── Login succeeded ────────────────────────────────────────
   // Record success and clear failed attempts for this email
   await s.from('login_attempts').insert({
@@ -93,14 +131,12 @@ async function _POST(req: Request) {
     .eq('email', normalizedEmail)
     .eq('success', false)
 
-  // Check if user has 2FA enabled
-  const { data: profile } = await s.from('users').select('role, totp_enabled').eq('id', data.user.id).single()
-  const requires2FA = profile?.totp_enabled === true
+  const requires2FA = profile.totp_enabled === true
 
   return NextResponse.json({
     ok: true,
     session: data.session,
-    user: { id: data.user.id, role: profile?.role },
+    user: { id: data.user.id, role: profile.role },
     requires2FA,
   })
 }

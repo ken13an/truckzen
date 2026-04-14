@@ -24,8 +24,27 @@ export async function POST(req: Request) {
   if (!shopId) return NextResponse.json({ error: 'shop context required' }, { status: 400 })
 
   const s = createAdminSupabaseClient()
-  const { data: targetUser } = await s.from('users').select('id, email, shop_id').eq('email', email).eq('shop_id', shopId).single()
-  if (!targetUser) return NextResponse.json({ error: 'User not found in your shop' }, { status: 404 })
+  const { data: matches, error: lookupErr } = await s.from('users')
+    .select('id, email, shop_id, invite_accepted_at, deleted_at')
+    .eq('email', email)
+    .eq('shop_id', shopId)
+  if (lookupErr) return NextResponse.json({ error: lookupErr.message }, { status: 500 })
+  const liveMatches = (matches || []).filter((r: any) => !r.deleted_at)
+  if (liveMatches.length === 0) return NextResponse.json({ error: 'User not found in your shop' }, { status: 404 })
+  if (liveMatches.length > 1) {
+    return NextResponse.json({
+      error: 'Duplicate profile rows exist for this email in your shop. Please reconcile before resending.',
+      code: 'duplicate_profiles',
+      rows: liveMatches.map((r: any) => ({ id: r.id, accepted: !!r.invite_accepted_at })),
+    }, { status: 409 })
+  }
+  const targetUser = liveMatches[0]
+  if (targetUser.invite_accepted_at) {
+    return NextResponse.json({
+      error: 'This account is already active. Ask the user to sign in, or send a password reset.',
+      code: 'already_active',
+    }, { status: 409 })
+  }
 
   const token = randomBytes(32).toString('base64url')
   const expiresAt = new Date(Date.now() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString()

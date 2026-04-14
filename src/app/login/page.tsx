@@ -129,6 +129,8 @@ export default function LoginPage() {
             ? `${body.error} ${body.remaining} attempt${body.remaining !== 1 ? 's' : ''} remaining.`
             : body.error
           setError(msg)
+        } else if (res.status === 403) {
+          setError(body.error || 'Your account cannot be signed in. Please contact your administrator.')
         } else {
           setError('Login failed. Contact your admin if this continues.')
         }
