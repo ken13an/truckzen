@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import StarfieldCanvas from '@/components/StarfieldCanvas'
+import StarfieldBackground from '@/components/landing/StarfieldBackground'
 import { LANDING } from '@/lib/config/colors'
 
 export const metadata: Metadata = {
@@ -32,7 +32,7 @@ const BORDER = LANDING.border
 const GREEN = LANDING.success
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif"
 
-const secStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 48px', textAlign: 'center', position: 'relative' }
+const secStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 48px', textAlign: 'center', position: 'relative', zIndex: 1 }
 const dividerStyle: React.CSSProperties = { height: 1, background: `linear-gradient(90deg, transparent, ${BORDER}, transparent)` }
 
 function LogoMark({ size = 30 }: { size?: number }) {
@@ -70,7 +70,7 @@ function PlaceholderBar({ w, color }: { w: string; color: string }) {
 export default function HomePage() {
   return (
     <div style={{ background: LANDING.bg, color: TEXT, fontFamily: FONT, overflowX: 'hidden', position: 'relative' }}>
-      <StarfieldCanvas />
+      <StarfieldBackground />
 
       {/* NAV */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, padding: '16px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: LANDING.scrim, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: `1px solid ${BORDER}` }}>
