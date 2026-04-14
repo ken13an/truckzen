@@ -317,10 +317,11 @@ export default function Sidebar() {
         return
       }
 
-      // Map the specific failure reason the API sent back
-      if (data?.outsideGeofence) { toast(data.error || 'You are outside the shop area. Move closer to the shop or ask a manager to override.', 'error', 7000); return }
-      if (status === 409) { toast(data?.error || 'You are already clocked in.', 'warning', 6000); return }
-      toast(data?.error || 'Could not clock in. Please try again.', 'error', 6000)
+      // Map the specific failure reason the API sent back — prefer server error text
+      if (data?.error) { toast(data.error, data?.outsideGeofence || status === 409 ? 'warning' : 'error', 7000); return }
+      toast(`Could not clock in (HTTP ${status || '—'}).`, 'error', 6000)
+    } catch (e: any) {
+      toast(`Punch request failed: ${e?.message || 'network error'}`, 'error', 7000)
     } finally {
       punchInFlight.current = false
     }

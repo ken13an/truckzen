@@ -175,11 +175,12 @@ export default function MechanicDashboardPage() {
         else { setWorkPunch(null); setActiveClock(null) }
         setOverrideModal(false); setOverrideReason('')
       } else {
-        const err = await res.json().catch(() => ({}))
-        if (err.outsideGeofence && !err.blocked) setOverrideModal(true)
-        else alert(err.error || 'Punch failed')
+        const err = await res.json().catch(() => ({} as any))
+        const serverMsg = typeof err?.error === 'string' && err.error.trim() ? err.error : `Punch failed (HTTP ${res.status})`
+        if (err?.outsideGeofence && !err?.blocked) { alert(serverMsg); setOverrideModal(true) }
+        else alert(serverMsg)
       }
-    } catch { alert('Something went wrong. Please try again.') }
+    } catch (e: any) { alert(`Punch request failed: ${e?.message || 'network error'}`) }
     setPunchLoading(false)
   }
 
