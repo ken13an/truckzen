@@ -143,6 +143,30 @@ describe('invoice critical path', () => {
     expect(newWo).toMatch(/if\s*\(hasRecognizedVerb\(desc\)\)\s*return\s+false/)
   })
 
+  // Patch 124 regression guard: edit-WO page has its own isUnrecognizedJob duplicate;
+  // must also consult canonical hasRecognizedVerb so CLEAN GAS TANKS etc. aren't
+  // flagged red in the add-job-to-existing-WO flow.
+  it('job recognition: WO detail add-job validator consults hasRecognizedVerb', () => {
+    const editWo = readFile('src/app/work-orders/[id]/page.tsx')
+    expect(editWo).toMatch(/hasRecognizedVerb/)
+    expect(editWo).toMatch(/if\s*\(hasRecognizedVerb\(desc\)\)\s*return\s+false/)
+  })
+
+  // Patch 125: picked_up parts must be classified via the canonical isPartReceived
+  // helper in the pre-invoice gate, WO stepper, floor-manager quick-assign, and
+  // wo-automation. Behavior of the helper itself is covered by helper-behavior.test.ts.
+  it('wo-parts aggregates: callers import canonical isPartReceived', () => {
+    const invoiceGate = readFile('src/app/api/work-orders/[id]/invoice/route.ts')
+    expect(invoiceGate).toMatch(/from '@\/lib\/parts-status'/)
+    expect(invoiceGate).toMatch(/isPartReceived/)
+    const stepper = readFile('src/components/work-orders/WOStepper.tsx')
+    expect(stepper).toMatch(/isPartReceived/)
+    const quickAssign = readFile('src/app/floor-manager/quick-assign/page.tsx')
+    expect(quickAssign).toMatch(/isPartReceived/)
+    const automation = readFile('src/lib/wo-automation.ts')
+    expect(automation).toMatch(/isPartReceived/)
+  })
+
   it('job recognition: canonical verb lists cover clean/check/grease/inspect families', () => {
     const partsLib = readFile('src/lib/parts-suggestions.ts')
     expect(partsLib).toMatch(/NO_AUTO_PARTS_VERBS\s*=\s*\[[^\]]*'clean'[^\]]*\]/)
@@ -151,15 +175,20 @@ describe('invoice critical path', () => {
     expect(partsLib).toMatch(/LABOR_ONLY_VERBS\s*=\s*\[[^\]]*'check'[^\]]*\]/)
   })
 
-  // Patch 122 regression guard: invoice send must resolve outbound recipient from kiosk
-  // check-in contact first (= actual owner/operator for maintained-but-owner-paid trucks)
-  // and fall back to customers.email. Must NOT silently collapse to customers.email only.
-  it('invoice send route resolves owner email via kiosk_checkins before customers.email', () => {
-    const content = readFile('src/app/api/invoices/[id]/send/route.ts')
-    expect(content).toMatch(/kiosk_checkins/)
-    expect(content).toMatch(/contact_email/)
-    // Must pass the resolved recipient (not customers.email directly) to sendInvoiceEmail
-    expect(content).toMatch(/email:\s*recipientEmail/)
+  // Patch 122+125: invoice outbound recipient is resolved by the canonical helper
+  // resolveInvoiceRecipientEmail (kiosk_checkins.contact_email → customers.email).
+  // Both accounting manual-send and sendPaymentNotifications must go through it so
+  // they cannot silently diverge. Helper behavior is covered by helper-behavior.test.ts.
+  it('invoice send + payment-notify both import resolveInvoiceRecipientEmail', () => {
+    const sendRoute = readFile('src/app/api/invoices/[id]/send/route.ts')
+    expect(sendRoute).toMatch(/resolveInvoiceRecipientEmail/)
+    expect(sendRoute).toMatch(/email:\s*recipientEmail/)
+    const paymentNotify = readFile('src/lib/notifications/sendPaymentNotifications.ts')
+    expect(paymentNotify).toMatch(/resolveInvoiceRecipientEmail/)
+    // The helper file itself must exist and look at kiosk_checkins first.
+    const helper = readFile('src/lib/notifications/resolveInvoiceRecipientEmail.ts')
+    expect(helper).toMatch(/kiosk_checkins/)
+    expect(helper).toMatch(/contact_email/)
   })
 })
 

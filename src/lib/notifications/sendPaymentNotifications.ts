@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getShopInfo } from '@/lib/services/email'
 import { sendInvoiceEmail } from '@/lib/integrations/resend'
 import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf'
+import { resolveInvoiceRecipientEmail } from '@/lib/notifications/resolveInvoiceRecipientEmail'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -14,12 +15,13 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
     .eq('id', woId).single()
   if (!wo) return
 
-  // Get contact info — kiosk checkin first, then customer record
+  // Contact resolution — email goes through canonical resolveInvoiceRecipientEmail so
+  // this auto-notify path and the accounting manual-send path cannot drift apart.
+  // Phone still prefers kiosk checkin then customer (no separate canonical path yet).
+  const email = await resolveInvoiceRecipientEmail(s as any, woId, (wo.customers as any)?.email)
   const { data: checkin } = await s.from('kiosk_checkins')
-    .select('contact_email, contact_phone')
-    .eq('wo_id', woId).order('created_at', { ascending: false }).limit(1).single()
-
-  const email = checkin?.contact_email || (wo.customers as any)?.email
+    .select('contact_phone')
+    .eq('wo_id', woId).order('created_at', { ascending: false }).limit(1).maybeSingle()
   const phone = checkin?.contact_phone || (wo.customers as any)?.phone
   const customerName = (wo.customers as any)?.contact_name || (wo.customers as any)?.company_name || 'Customer'
   const asset = wo.assets as any

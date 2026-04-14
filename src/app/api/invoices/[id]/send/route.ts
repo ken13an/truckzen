@@ -5,6 +5,7 @@ import { sendInvoiceEmail } from '@/lib/integrations/resend'
 import { generateInvoicePdf } from '@/lib/pdf/generateInvoicePdf'
 import { logAction } from '@/lib/services/auditLog'
 import { safeRoute } from '@/lib/api-handler'
+import { resolveInvoiceRecipientEmail } from '@/lib/notifications/resolveInvoiceRecipientEmail'
 
 type P = { params: Promise<{ id: string }> }
 
@@ -25,22 +26,9 @@ async function _POST(_req: Request, { params }: P) {
   const shop  = inv.shops as any
   const asset = so?.assets
 
-  // Canonical outbound recipient resolution — matches sendPaymentNotifications (Launch21b).
-  // Kiosk check-in contact is the actual person who dropped the truck (owner/operator for
-  // maintained-but-owner-paid trucks where invoices.customer_id points at the maintenance
-  // company). Fall back to customers.email only if no kiosk contact exists.
-  // Maintenance in-app visibility is session-based via /maintenance/invoices — separate from this.
-  let recipientEmail: string | null = null
-  if (inv.so_id) {
-    const { data: checkin } = await supabase.from('kiosk_checkins')
-      .select('contact_email')
-      .eq('wo_id', inv.so_id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    if (checkin?.contact_email) recipientEmail = checkin.contact_email
-  }
-  if (!recipientEmail) recipientEmail = (inv.customers as any)?.email || null
+  // Canonical outbound recipient resolution — single source of truth used by every
+  // outbound invoice-email caller (accounting manual send + sendPaymentNotifications).
+  const recipientEmail = await resolveInvoiceRecipientEmail(supabase, inv.so_id, (inv.customers as any)?.email)
   if (!recipientEmail) return NextResponse.json({ error: 'No email address found for owner/customer or kiosk contact' }, { status: 400 })
 
   // Generate invoice PDF — direct call, no HTTP

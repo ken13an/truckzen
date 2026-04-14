@@ -6,16 +6,17 @@ import { getPermissions } from '@/lib/getPermissions'
 import { getMechanics } from '@/lib/services/users'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import { useTheme } from '@/hooks/useTheme'
+import { isPartReceived } from '@/lib/parts-status'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 
 type Filter = 'unassigned' | 'assigned' | 'ready' | 'waiting_parts' | 'in_progress'
 
-// "Ready for assignment" = unassigned, not completed, and parts are not blocking
-// (no parts needed, or parts are received/ready_for_job/installed)
-const PARTS_NOT_BLOCKING = [null, undefined, '', 'received', 'ready_for_job', 'installed']
+// "Ready for assignment" = unassigned, not completed, and parts are not blocking.
+// Parts do not block once they are at or past received (canonical PARTS_RECEIVED_STATES).
 function isReadyForAssignment(j: any) {
-  return !j.mechanic_name && j.status !== 'completed' && PARTS_NOT_BLOCKING.includes(j.parts_status)
+  const partsBlocking = !!j.parts_status && !isPartReceived(j.parts_status)
+  return !j.mechanic_name && j.status !== 'completed' && !partsBlocking
 }
 
 export default function QuickAssignPage() {

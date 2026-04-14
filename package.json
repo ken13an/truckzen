@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "lint:strict": "next lint --max-warnings=0",
     "test": "vitest run",
-    "pre-deploy": "bash scripts/pre-deploy-check.sh"
+    "regression:critical": "vitest run src/__tests__/critical-paths.test.ts src/__tests__/helper-behavior.test.ts",
+    "pre-deploy": "bash scripts/pre-deploy-check.sh",
+    "deploy:prod": "bash scripts/pre-deploy-check.sh && vercel --prod --yes"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",

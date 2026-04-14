@@ -1,5 +1,6 @@
 'use client'
 import { useTheme } from '@/hooks/useTheme'
+import { isPartReceived } from '@/lib/parts-status'
 
 const BLUE = 'var(--tz-accent)', GREEN = 'var(--tz-success)', GRAY = 'var(--tz-textTertiary)', AMBER = 'var(--tz-warning)'
 const FONT = "'Inter', -apple-system, sans-serif"
@@ -44,7 +45,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
     // Parts step: check part-type lines — canceled parts are resolved, not blockers
     const allPartLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
     const activePartLines = allPartLines.filter((l: any) => l.parts_status !== 'canceled')
-    const partsReceived = activePartLines.filter((l: any) => ['received', 'ready_for_job', 'picked_up', 'installed'].includes(l.parts_status)).length
+    const partsReceived = activePartLines.filter((l: any) => isPartReceived(l.parts_status)).length
     const noParts = activePartLines.length === 0
     const hasParts = noParts || partsReceived >= activePartLines.length
 

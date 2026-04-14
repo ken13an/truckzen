@@ -13,7 +13,8 @@ import WOHeader from '@/components/work-orders/WOHeader'
 import JobsTab from '@/components/work-orders/JobsTab'
 import PartsTab from '@/components/work-orders/PartsTab'
 import EstimateTab from '@/components/work-orders/EstimateTab'
-import { getAutoRoughParts, isDiagnosticJob } from '@/lib/parts-suggestions'
+import { getAutoRoughParts, isDiagnosticJob, hasRecognizedVerb } from '@/lib/parts-suggestions'
+import { isPartReceived } from '@/lib/parts-status'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
 import { isInvoiceHardLocked, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
@@ -26,6 +27,8 @@ const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'ser
 
 function isUnrecognizedJob(desc: string): boolean {
   if (!desc || desc.trim().length < 2) return false
+  // Patch 124: same canonical verb-intent pre-check as work-orders/new (Patch 123).
+  if (hasRecognizedVerb(desc)) return false
   const d = desc.toLowerCase()
   return !KNOWN_REPAIR_WORDS.some(w => d.includes(w))
 }
@@ -1769,8 +1772,8 @@ export default function WorkOrderDetail() {
             const readyCount = activeParts.filter((p: any) => ['received', 'ready_for_job'].includes(p.parts_status)).length
             const pickedUpCount = activeParts.filter((p: any) => ['picked_up', 'installed'].includes(p.parts_status)).length
             const orderedCount = activeParts.filter((p: any) => p.parts_status === 'ordered').length
-            // Pending excludes everything from received onward (picked_up/installed not pending).
-            const roughCount = activeParts.filter((p: any) => !['received', 'ready_for_job', 'picked_up', 'installed', 'ordered'].includes(p.parts_status)).length
+            // Pending = anything not yet at or past received stage, and not ordered (ordered has its own counter).
+            const roughCount = activeParts.filter((p: any) => !isPartReceived(p.parts_status) && p.parts_status !== 'ordered').length
             const allPickedUp = activeParts.length > 0 && pickedUpCount === activeParts.length
             const allReadyForNotify = activeParts.length > 0 && (readyCount + pickedUpCount) === activeParts.length && readyCount > 0
 

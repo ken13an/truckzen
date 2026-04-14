@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { isPartReceived } from '@/lib/parts-status'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -222,7 +223,7 @@ async function _GET(req: Request, { params }: Params) {
 
   const checks = [
     { label: 'All jobs completed', passed: jobs.every(j => j.line_status === 'completed'), detail: `${jobs.filter(j => j.line_status === 'completed').length} of ${jobs.length} done` },
-    { label: 'All parts received', passed: parts.filter(p => !p.customer_provides_parts).every(p => !p.parts_status || ['received', 'ready_for_job', 'installed'].includes(p.parts_status)), detail: `${parts.filter(p => ['received', 'ready_for_job', 'installed'].includes(p.parts_status || '')).length} of ${parts.length} received` },
+    { label: 'All parts received', passed: parts.filter(p => !p.customer_provides_parts).every(p => !p.parts_status || isPartReceived(p.parts_status)), detail: `${parts.filter(p => isPartReceived(p.parts_status)).length} of ${parts.length} received` },
     { label: 'All parts have real names', passed: parts.filter(p => !p.customer_provides_parts).every(p => p.real_name || !p.rough_name), detail: `${parts.filter(p => p.real_name).length} of ${parts.filter(p => p.rough_name).length} sourced` },
   ]
 
