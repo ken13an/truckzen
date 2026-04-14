@@ -130,6 +130,27 @@ describe('invoice critical path', () => {
     expect(content).toMatch(/read-only|read.only/i)
   })
 
+  // Patch 123 regression guard: deterministic clean/labor-only phrases must not be
+  // flagged unrecognized by the entry/submit validator. The canonical recognition
+  // helper hasRecognizedVerb (parts-suggestions.ts) must be consulted before the
+  // KNOWN_REPAIR_WORDS noun fallback; failing that, CLEAN GAS TANKS / CHECK LIGHTS /
+  // FULL GREASE would be accepted by canonical parse and rejected by submit.
+  it('job recognition: hasRecognizedVerb is exported and consulted by WO entry validator', () => {
+    const partsLib = readFile('src/lib/parts-suggestions.ts')
+    expect(partsLib).toMatch(/export\s+function\s+hasRecognizedVerb/)
+    const newWo = readFile('src/app/work-orders/new/page.tsx')
+    expect(newWo).toMatch(/hasRecognizedVerb/)
+    expect(newWo).toMatch(/if\s*\(hasRecognizedVerb\(desc\)\)\s*return\s+false/)
+  })
+
+  it('job recognition: canonical verb lists cover clean/check/grease/inspect families', () => {
+    const partsLib = readFile('src/lib/parts-suggestions.ts')
+    expect(partsLib).toMatch(/NO_AUTO_PARTS_VERBS\s*=\s*\[[^\]]*'clean'[^\]]*\]/)
+    expect(partsLib).toMatch(/NO_AUTO_PARTS_VERBS\s*=\s*\[[^\]]*'grease'[^\]]*\]/)
+    expect(partsLib).toMatch(/NO_AUTO_PARTS_VERBS\s*=\s*\[[^\]]*'inspect'[^\]]*\]/)
+    expect(partsLib).toMatch(/LABOR_ONLY_VERBS\s*=\s*\[[^\]]*'check'[^\]]*\]/)
+  })
+
   // Patch 122 regression guard: invoice send must resolve outbound recipient from kiosk
   // check-in contact first (= actual owner/operator for maintained-but-owner-paid trucks)
   // and fall back to customers.email. Must NOT silently collapse to customers.email only.

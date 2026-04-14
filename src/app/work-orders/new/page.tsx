@@ -11,7 +11,7 @@ import { getCurrentUser, type UserProfile } from '@/lib/auth'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import { mergeDraftLines, type DraftJobLine } from '@/lib/merge-lines'
 import { SERVICE_WRITE_ROLES } from '@/lib/roles'
-import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob, needsClarification, getClarificationOptionsForInput, preRouteComplaintBeforeAi, getBrainAssist, type BrainAssistRequest, type BrainAssistResponse, resolveClarification } from '@/lib/parts-suggestions'
+import { getPartSuggestions, type PartSuggestion, getAutoRoughParts, isDiagnosticJob, needsClarification, getClarificationOptionsForInput, preRouteComplaintBeforeAi, getBrainAssist, type BrainAssistRequest, type BrainAssistResponse, resolveClarification, hasRecognizedVerb } from '@/lib/parts-suggestions'
 import { useTheme } from '@/hooks/useTheme'
 
 interface Customer { id: string; company_name: string; contact_name: string | null; phone: string | null; is_fleet?: boolean }
@@ -39,6 +39,11 @@ const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'ser
 function isUnrecognizedJob(desc: string, skills: string[]): boolean {
   if (!desc || desc.trim().length < 2) return true
   if (skills && skills.length > 0) return false
+  // Patch 123: consult canonical deterministic verb-intent recognition first. Jobs
+  // like "clean gas tanks" / "check lights" are recognized by verb even though they
+  // contain no KNOWN_REPAIR_WORDS noun. Noun-only input falls through to the
+  // KNOWN_REPAIR_WORDS fallback for clarification gating.
+  if (hasRecognizedVerb(desc)) return false
   const d = desc.toLowerCase()
   return !KNOWN_REPAIR_WORDS.some(w => d.includes(w))
 }

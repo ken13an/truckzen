@@ -591,6 +591,20 @@ function detectVerbIntent(text: string): { intent: VerbIntent; verb: string | nu
   return { intent: 'ambiguous', verb: null }
 }
 
+/**
+ * Patch 123 — canonical recognition helper exposed for the entry/submit path.
+ * Returns true if the job description has a recognized verb under the
+ * deterministic verb-intent rules (clean/wash/grease/inspect/diagnose/test,
+ * fix/adjust/tighten/align/check, replace/install/add, repair, change, or any
+ * compound verb phrase). Noun-only input returns false and is routed to the
+ * existing clarification/KNOWN_REPAIR_WORDS fallback by the caller.
+ */
+export function hasRecognizedVerb(text: string): boolean {
+  if (!text) return false
+  const { intent, verb } = detectVerbIntent(text)
+  return intent !== 'ambiguous' || !!verb
+}
+
 /** Check if repair text also has explicit replacement language */
 function hasExplicitReplacement(text: string): boolean {
   const lower = text.toLowerCase()
