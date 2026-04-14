@@ -69,7 +69,7 @@ function PlaceholderBar({ w, color }: { w: string; color: string }) {
 
 export default function HomePage() {
   return (
-    <div style={{ background: LANDING.bg, color: TEXT, fontFamily: FONT, overflowX: 'hidden', position: 'relative' }}>
+    <div style={{ background: LANDING.bg, color: TEXT, fontFamily: FONT, overflowX: 'hidden', position: 'relative', width: '100%', maxWidth: '100vw' }}>
       <StarfieldBackground />
 
       {/* NAV */}
@@ -85,23 +85,23 @@ export default function HomePage() {
 
       {/* ── S1: HERO ── */}
       <section style={{ ...secStyle, minHeight: '100vh', overflow: 'hidden' }}>
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 900 }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '100%' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 11, color: DIM, fontWeight: 500, marginBottom: 32, background: LANDING.surface1 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE, animation: 'tz-lp-pulse 2s infinite' }} />
             Now in production
           </div>
-          <h1 style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, letterSpacing: '-.04em', color: LANDING.white, marginBottom: 24 }}>
+          <h1 style={{ fontSize: 'clamp(24px, 6vw, 56px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-.04em', color: LANDING.white, marginBottom: 24 }}>
             You run the company.<br /><span style={{ color: BLUE }}>TruckZen runs everything&nbsp;else.</span>
           </h1>
-          <p style={{ fontSize: 21, color: DIM, lineHeight: 1.6, maxWidth: 560, margin: '0 auto 24px' }}>One platform for your entire heavy-duty operation.</p>
+          <p style={{ fontSize: 'clamp(14px, 3vw, 18px)', color: DIM, lineHeight: 1.6, maxWidth: 560, margin: '0 auto 24px' }}>One platform for your entire heavy-duty operation.</p>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
             {['Shop', 'Fleet', 'Parts', 'People'].map(t => (
               <span key={t} style={{ padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: DIM, fontWeight: 500, background: LANDING.surface1 }}>{t}</span>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-            <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: LANDING.white, fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: `0 4px 24px ${LANDING.accentShadow}` }}>Book a demo</a>
-            <a href="#platform" style={{ padding: '14px 36px', color: LANDING.white, fontSize: 16, fontWeight: 600, borderRadius: 12, border: `1px solid ${LANDING.borderStrong}`, textDecoration: 'none' }}>Learn more</a>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: LANDING.white, fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: `0 4px 24px ${LANDING.accentShadow}`, minHeight: 44, textAlign: 'center' }}>Book a demo</a>
+            <a href="#platform" style={{ padding: '14px 36px', color: LANDING.white, fontSize: 16, fontWeight: 600, borderRadius: 12, border: `1px solid ${LANDING.borderStrong}`, textDecoration: 'none', minHeight: 44, textAlign: 'center' }}>Learn more</a>
           </div>
         </div>
         <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', color: DIM, fontSize: 11, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, animation: 'tz-lp-bob 2s infinite' }}>
@@ -117,7 +117,7 @@ export default function HomePage() {
         <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>The Platform</div>
         <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8 }}>Two engines. One platform.</h2>
         <p style={{ fontSize: 18, color: DIM, marginBottom: 48, maxWidth: 520 }}>AI is built into every step. Not bolted on top.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, maxWidth: 1000, margin: '0 auto', background: BORDER, borderRadius: 16, overflow: 'hidden', textAlign: 'left' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, maxWidth: '100%', margin: '0 auto', background: BORDER, borderRadius: 16, overflow: 'hidden', textAlign: 'left' }}>
           <div style={{ background: LANDING.bg, padding: '48px 40px' }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: LANDING.accentBg4 }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={BLUE} strokeWidth="1.5"><path d="M3 15V8l7-5 7 5v7" /><path d="M8 15v-4h4v4" /></svg>
@@ -154,7 +154,7 @@ export default function HomePage() {
       {/* ── S3: COMPARISON — browser-frame mockups ── */}
       <section style={{ ...secStyle, minHeight: 'auto' }}>
         <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>Why shops are switching</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 1000, margin: '0 auto', textAlign: 'left' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: '100%', margin: '0 auto', textAlign: 'left' }}>
           {/* Left: generic competitor */}
           <div>
             <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 12, color: DIM }}>The platform you overpay for</div>
