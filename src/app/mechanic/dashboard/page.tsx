@@ -519,9 +519,34 @@ export default function MechanicDashboardPage() {
                 const woId = activeClock.service_order_id || activeClock.so_id
                 const priorMins = lineId ? (workedMinutesMap[lineId] || 0) : woId ? (workedMinutesMap[woId] || 0) : 0
                 const totalMins = priorMins + Math.floor(elapsedSec / 60)
-                return <div style={{ fontSize: 12, color: GREEN, marginTop: 4, fontWeight: 600 }}>
-                  Total on job: {+(totalMins / 60).toFixed(1)}h{priorMins > 0 ? ` (${+(priorMins / 60).toFixed(1)}h prior + this session)` : ''}
-                </div>
+                const activeJob = jobs.find((j: any) => (j.line_id || j.line?.id) === lineId)
+                const bookHrs = activeJob?.line?.estimated_hours || 0
+                const bookMins = bookHrs * 60
+                const usedHrs = +(totalMins / 60).toFixed(1)
+                const remainingMins = bookMins > 0 ? bookMins - totalMins : null
+                const exceeded = bookMins > 0 && totalMins >= bookMins
+                const fmtHrs = (m: number) => +(m / 60).toFixed(1) + 'h'
+                return (
+                  <>
+                    <div style={{ fontSize: 12, color: exceeded ? RED : GREEN, marginTop: 4, fontWeight: 600, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      <span>Expected: {bookHrs > 0 ? `${bookHrs}h` : 'not set'}</span>
+                      <span>Used: {usedHrs}h</span>
+                      {remainingMins !== null && !exceeded && <span>Remaining: {fmtHrs(Math.max(0, remainingMins))}</span>}
+                      {exceeded && <span>Exceeded by: {fmtHrs(totalMins - bookMins)}</span>}
+                    </div>
+                    {exceeded && (
+                      <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: `1px solid ${RED}`, color: RED, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span>Book time reached — request more time or pause.</span>
+                        {activeJob && (
+                          <button onClick={() => { setMoreTimeModal(activeJob); setMoreTimeAmount('60') }}
+                            style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: AMBER, color: 'var(--tz-bgLight)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                            Request More Time
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )
               })()}
             </div>
             <button
