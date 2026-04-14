@@ -136,10 +136,25 @@ export default function WorkOrderDetail() {
   const [toastMsg, setToastMsg] = useState('')
 
   // DATA LOADING
+  const loadInFlight = useRef(false)
   const loadData = useCallback(async () => {
     if (!id) return
+    if (loadInFlight.current) return
+    loadInFlight.current = true
     try {
-      const u = await getCurrentUser(supabase)
+      let u: any = null
+      try {
+        u = await getCurrentUser(supabase)
+      } catch (authErr: any) {
+        // Supabase auth processLock race (e.g. "Lock was stolen by another request") — transient; retry once.
+        const msg = authErr instanceof Error ? authErr.message : String(authErr)
+        if (/lock was stolen|navigator ?lock|lockmanager/i.test(msg)) {
+          await new Promise(r => setTimeout(r, 300))
+          u = await getCurrentUser(supabase)
+        } else {
+          throw authErr
+        }
+      }
       setUser(u)
 
       // Mechanic roles use the dedicated mechanic dashboard, not the full WO editor
@@ -204,6 +219,7 @@ export default function WorkOrderDetail() {
       console.error('Load error', e)
       setLoadError({ status: 0, detail: e instanceof Error ? e.message : String(e) })
     } finally {
+      loadInFlight.current = false
       setLoading(false)
     }
   }, [id])
@@ -1749,9 +1765,9 @@ export default function WorkOrderDetail() {
           {/* Parts status summary + notify mechanic */}
           {!wo.is_historical && !partsLocked && partLines.length > 0 && !isViewOnly && (() => {
             const activeParts = partLines.filter((p: any) => p.parts_status !== 'canceled')
-            const readyCount = activeParts.filter((p: any) => ['received', 'ready_for_job', 'installed'].includes(p.parts_status)).length
+            const readyCount = activeParts.filter((p: any) => ['received', 'ready_for_job', 'picked_up', 'installed'].includes(p.parts_status)).length
             const orderedCount = activeParts.filter((p: any) => p.parts_status === 'ordered').length
-            const roughCount = activeParts.filter((p: any) => !['received', 'ready_for_job', 'installed', 'ordered'].includes(p.parts_status)).length
+            const roughCount = activeParts.filter((p: any) => !['received', 'ready_for_job', 'picked_up', 'installed', 'ordered'].includes(p.parts_status)).length
             const allReady = activeParts.length > 0 && readyCount === activeParts.length
 
             if (partsSubmitted || allReady) {
