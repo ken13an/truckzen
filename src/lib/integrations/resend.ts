@@ -148,13 +148,13 @@ export async function sendWelcomeEmail(to: string, name: string, shopName: strin
     await getResend().emails.send({
       from:    getFrom(),
       to,
-      subject: `You're invited to TruckZen — ${shopName}`,
+      subject: `TruckZen invitation — ${shopName}`,
       html: `
         <div style="font-family:sans-serif;background:#060708;color:#DDE3EE;padding:40px;max-width:480px;margin:0 auto">
-          <div style="font-size:22px;font-weight:700;margin-bottom:16px">You're invited, ${name}</div>
-          <p style="color:#7C8BA0;line-height:1.7">${shopName} has invited you to join their team on TruckZen. Accept your invitation to confirm your name, choose your language, and set a password.</p>
-          <a href="${acceptUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:linear-gradient(135deg,#1D6FE8,#1248B0);color:#fff;text-decoration:none;border-radius:9px;font-weight:700">Accept Invitation</a>
-          <p style="color:#48536A;font-size:12px">This invitation link expires in 7 days. If you didn't expect this email, you can ignore it.</p>
+          <div style="font-size:22px;font-weight:700;margin-bottom:16px">Hello ${name},</div>
+          <p style="color:#7C8BA0;line-height:1.7">${shopName} has invited you to join their team on TruckZen. This is a first-time account setup — use the link below to confirm your name, pick your language, and choose a password.</p>
+          <a href="${acceptUrl}" style="display:inline-block;margin:20px 0;padding:12px 28px;background:linear-gradient(135deg,#1D6FE8,#1248B0);color:#fff;text-decoration:none;border-radius:9px;font-weight:700">Accept invitation</a>
+          <p style="color:#48536A;font-size:12px">This invitation is valid for 7 days. If you were not expecting this, you can safely ignore this message.</p>
         </div>`,
     })
     return { success: true }

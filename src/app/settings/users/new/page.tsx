@@ -56,7 +56,7 @@ export default function NewUserPage() {
         <div style={{ fontSize: 16, fontWeight: 700, color: '#1DB870', marginBottom: 16 }}>Success</div>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, color: 'var(--tz-text)', marginBottom: 8 }}>Invite Sent</div>
         <div style={{ fontSize: 13, color: 'var(--tz-textSecondary)', lineHeight: 1.6, marginBottom: 20 }}>
-          {form.full_name} will receive a welcome email at <strong style={{ color: 'var(--tz-text)' }}>{form.email}</strong> with instructions to set their password and log in.
+          {form.full_name} will receive an invitation email at <strong style={{ color: 'var(--tz-text)' }}>{form.email}</strong> with a link to set up their account. If they don&apos;t see it in the inbox within a few minutes, ask them to check Spam/Junk.
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button style={{ ...S.btn, width: 'auto', padding: '10px 20px', fontSize: 12 }} onClick={() => { setDone(false); setForm({ full_name: '', email: '', role: 'technician', department: 'floor', team: 'A', language: 'en' }) }}>+ Invite Another</button>

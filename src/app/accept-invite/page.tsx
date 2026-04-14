@@ -1,7 +1,8 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Logo from '@/components/Logo'
 import { THEME } from '@/lib/config/colors'
+import { createClient } from '@/lib/supabase/client'
 
 const _t = THEME.dark
 
@@ -11,6 +12,7 @@ type InviteStatus =
   | { state: 'error'; message: string; code: string }
 
 export default function AcceptInvitePage() {
+  const supabase = createClient()
   const [status, setStatus] = useState<InviteStatus>({ state: 'loading' })
   const [fullName, setFullName] = useState('')
   const [language, setLanguage] = useState('en')
@@ -19,12 +21,17 @@ export default function AcceptInvitePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
-  const [token, setToken] = useState('')
+  const tokenRef = useRef('')
+  const loadedForToken = useRef<string | null>(null)
+  const submittedRef = useRef(false)
+  const redirectedRef = useRef(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const t = params.get('token') || ''
-    setToken(t)
+    tokenRef.current = t
+    if (loadedForToken.current === t) return
+    loadedForToken.current = t
     ;(async () => {
       try {
         const res = await fetch(`/api/accept-invite?token=${encodeURIComponent(t)}`)
@@ -42,26 +49,58 @@ export default function AcceptInvitePage() {
     })()
   }, [])
 
+  function finalRedirect() {
+    if (redirectedRef.current) return
+    redirectedRef.current = true
+    window.location.replace('/login')
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submittedRef.current) return
     setError('')
     if (!fullName.trim()) { setError('Please enter your full name.'); return }
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
     if (password !== confirm) { setError('Passwords do not match.'); return }
+    submittedRef.current = true
     setSubmitting(true)
     try {
       const res = await fetch('/api/accept-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, full_name: fullName.trim(), language, password }),
+        body: JSON.stringify({ token: tokenRef.current, full_name: fullName.trim(), language, password }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error || 'Could not accept invitation.'); setSubmitting(false); return }
+      if (!res.ok) {
+        setError(data.error || 'Could not accept invitation.')
+        setSubmitting(false)
+        submittedRef.current = false
+        return
+      }
       setDone(true)
-      setTimeout(() => { window.location.href = '/login' }, 2000)
+
+      // Auto-authenticate so the user lands on their dashboard once, not back on /login.
+      try {
+        const loginRes = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: data.email, password }),
+        })
+        const loginBody = await loginRes.json()
+        if (loginRes.ok && loginBody.session) {
+          await supabase.auth.setSession({
+            access_token: loginBody.session.access_token,
+            refresh_token: loginBody.session.refresh_token,
+          })
+          try { await fetch('/api/auth/session', { method: 'POST' }) } catch {}
+        }
+      } catch {}
+
+      setTimeout(finalRedirect, 1200)
     } catch {
       setError('Network error. Please try again.')
       setSubmitting(false)
+      submittedRef.current = false
     }
   }
 
@@ -101,7 +140,7 @@ export default function AcceptInvitePage() {
       <div style={{ ...S.card, textAlign: 'center' as const }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: _t.success, marginBottom: 16 }}>Welcome aboard</div>
         <div style={S.title}>Account Ready</div>
-        <div style={S.sub}>Redirecting you to sign in...</div>
+        <div style={S.sub}>Signing you in...</div>
       </div>
     </div>
   )
