@@ -128,7 +128,7 @@ export default function MechanicDashboardPage() {
     if (!user) return
     setPunchLoading(true)
     try {
-      // Request geolocation with explicit permission check before requesting
+      // Request geolocation directly via getCurrentPosition — errors surface native codes.
       let pos: GeolocationPosition | null = null
       if (!navigator.geolocation) {
         if (action === 'punch_in') { alert('Location services are not available on this device.'); setPunchLoading(false); return }
@@ -139,7 +139,7 @@ export default function MechanicDashboardPage() {
           if (action === 'punch_in') {
             const code = geoErr?.code
             if (code === 1) { // PERMISSION_DENIED
-              alert('Location permission was not granted. Please allow location access when prompted, or enable it in your browser settings for this site.')
+              alert('GPS blocked by browser. Tap the address-bar lock icon, set Location to Allow, then retry.')
               setPunchLoading(false); return
             } else if (code === 2) { // POSITION_UNAVAILABLE
               alert('Could not determine your location. Make sure GPS/Location is enabled on your device.')
