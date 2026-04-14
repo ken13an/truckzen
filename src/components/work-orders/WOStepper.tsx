@@ -44,7 +44,7 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
     // Parts step: check part-type lines — canceled parts are resolved, not blockers
     const allPartLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
     const activePartLines = allPartLines.filter((l: any) => l.parts_status !== 'canceled')
-    const partsReceived = activePartLines.filter((l: any) => ['received', 'ready_for_job', 'installed'].includes(l.parts_status)).length
+    const partsReceived = activePartLines.filter((l: any) => ['received', 'ready_for_job', 'picked_up', 'installed'].includes(l.parts_status)).length
     const noParts = activePartLines.length === 0
     const hasParts = noParts || partsReceived >= activePartLines.length
 

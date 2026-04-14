@@ -105,7 +105,7 @@ function deriveBase(wo: any): BaseAutomation {
   const hasAssignedTech = !!wo.assigned_tech || laborLines.some((l: any) => l.assigned_to)
   const allJobsCompleted = laborLines.length > 0 && laborLines.every((l: any) => l.line_status === 'completed')
   const roughPartsRemaining = partLines.filter((l: any) => l.rough_name && !l.real_name && !l.customer_provides_parts).length
-  const partsNotReceived = partLines.filter((l: any) => l.parts_status && !['received', 'installed'].includes(l.parts_status) && !l.customer_provides_parts).length
+  const partsNotReceived = partLines.filter((l: any) => l.parts_status && !['received', 'ready_for_job', 'picked_up', 'installed'].includes(l.parts_status) && !l.customer_provides_parts).length
 
   // ── DRAFT ──
   if (status === 'draft') {
