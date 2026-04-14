@@ -1641,7 +1641,7 @@ export default function WorkOrderDetail() {
                           Request: <strong style={{ color: 'var(--tz-warning)' }}>{p.rough_name || p.description || '—'}</strong>
                         </div>
                         <span style={pillStyle(st.bg, st.color)}>{st.label}</span>
-                        {!wo.is_historical && !partsLocked && !isMechanic && p.parts_status !== 'canceled' && !['ready_for_job', 'installed'].includes(p.parts_status) && (
+                        {!wo.is_historical && !partsLocked && !isMechanic && p.parts_status !== 'canceled' && !['ready_for_job', 'picked_up', 'installed'].includes(p.parts_status) && (
                           <div style={{ display: 'flex', gap: 4, marginLeft: 6 }}>
                             {p.parts_status !== 'received' && <button onClick={async () => { await patchLine(p.id, { parts_status: 'received' }) }} style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${BLUE}44`, background: `${BLUE}0A`, color: BLUE, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Preparing</button>}
                             <button onClick={async () => { await patchLine(p.id, { parts_status: 'ready_for_job' }) }} style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${GREEN}44`, background: `${GREEN}0A`, color: GREEN, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Ready for Pickup</button>
@@ -1765,12 +1765,24 @@ export default function WorkOrderDetail() {
           {/* Parts status summary + notify mechanic */}
           {!wo.is_historical && !partsLocked && partLines.length > 0 && !isViewOnly && (() => {
             const activeParts = partLines.filter((p: any) => p.parts_status !== 'canceled')
-            const readyCount = activeParts.filter((p: any) => ['received', 'ready_for_job', 'picked_up', 'installed'].includes(p.parts_status)).length
+            // CTA ready-set = still pre-pickup (received/ready_for_job). picked_up/installed are post-pickup and handled separately.
+            const readyCount = activeParts.filter((p: any) => ['received', 'ready_for_job'].includes(p.parts_status)).length
+            const pickedUpCount = activeParts.filter((p: any) => ['picked_up', 'installed'].includes(p.parts_status)).length
             const orderedCount = activeParts.filter((p: any) => p.parts_status === 'ordered').length
+            // Pending excludes everything from received onward (picked_up/installed not pending).
             const roughCount = activeParts.filter((p: any) => !['received', 'ready_for_job', 'picked_up', 'installed', 'ordered'].includes(p.parts_status)).length
-            const allReady = activeParts.length > 0 && readyCount === activeParts.length
+            const allPickedUp = activeParts.length > 0 && pickedUpCount === activeParts.length
+            const allReadyForNotify = activeParts.length > 0 && (readyCount + pickedUpCount) === activeParts.length && readyCount > 0
 
-            if (partsSubmitted || allReady) {
+            if (allPickedUp) {
+              return (
+                <div style={{ ...cardStyle, marginTop: 12 }}>
+                  <div style={{ textAlign: 'center', color: GREEN, fontSize: 13, fontWeight: 700, padding: 8 }}>Mechanic Picked Up All Parts</div>
+                </div>
+              )
+            }
+
+            if (partsSubmitted || allReadyForNotify) {
               return (
                 <div style={{ ...cardStyle, marginTop: 12 }}>
                   <div style={{ textAlign: 'center', color: GREEN, fontSize: 13, fontWeight: 700, padding: 8 }}>All Parts Ready</div>
@@ -1788,6 +1800,7 @@ export default function WorkOrderDetail() {
               <div style={{ ...cardStyle, marginTop: 12, fontSize: 12 }}>
                 <div style={{ display: 'flex', gap: 12, color: GRAY }}>
                   {readyCount > 0 && <span style={{ color: GREEN, fontWeight: 600 }}>{readyCount} ready</span>}
+                  {pickedUpCount > 0 && <span style={{ color: GREEN, fontWeight: 600 }}>{pickedUpCount} picked up</span>}
                   {orderedCount > 0 && <span style={{ color: AMBER, fontWeight: 600 }}>{orderedCount} ordered</span>}
                   {roughCount > 0 && <span style={{ color: 'var(--tz-danger)', fontWeight: 600 }}>{roughCount} pending</span>}
                 </div>
