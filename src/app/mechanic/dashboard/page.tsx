@@ -133,16 +133,6 @@ export default function MechanicDashboardPage() {
       if (!navigator.geolocation) {
         if (action === 'punch_in') { alert('Location services are not available on this device.'); setPunchLoading(false); return }
       } else {
-        // Check permission state first so we know if the browser will actually prompt
-        if (action === 'punch_in' && navigator.permissions) {
-          try {
-            const permStatus = await navigator.permissions.query({ name: 'geolocation' })
-            if (permStatus.state === 'denied') {
-              alert('Location permission is blocked for this site. To fix:\n\n1. Tap the lock/settings icon in your browser address bar\n2. Find Location/GPS and change it to Allow\n3. Reload the page and try again')
-              setPunchLoading(false); return
-            }
-          } catch { /* permissions API not supported — fall through to getCurrentPosition */ }
-        }
         try {
           pos = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 }))
         } catch (geoErr: any) {

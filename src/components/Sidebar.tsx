@@ -278,7 +278,7 @@ export default function Sidebar() {
         navigator.geolocation.getCurrentPosition(
           pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
           err => resolve(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable'),
-          { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+          { enableHighAccuracy: true, timeout: 15000 }
         )
       })
     }
@@ -289,9 +289,14 @@ export default function Sidebar() {
     punchInFlight.current = true
     try {
       const coords = await getCoords()
+      if (typeof coords !== 'object') {
+        if (coords === 'denied') toast('Location access was denied. Enable location in your browser to clock in.', 'error', 7000)
+        else toast('Location required to punch. Please enable GPS and try again.', 'error', 7000)
+        return
+      }
       // Server expects { action, lat, lng, accuracy, override_reason? }
-      const body: Record<string, unknown> = { action: 'punch_in' }
-      if (typeof coords === 'object') { body.lat = coords.lat; body.lng = coords.lng; if (coords.accuracy != null) body.accuracy = coords.accuracy }
+      const body: Record<string, unknown> = { action: 'punch_in', lat: coords.lat, lng: coords.lng }
+      if (coords.accuracy != null) body.accuracy = coords.accuracy
 
       let { ok, status, data } = await send(body)
 
@@ -315,8 +320,6 @@ export default function Sidebar() {
       // Map the specific failure reason the API sent back
       if (data?.outsideGeofence) { toast(data.error || 'You are outside the shop area. Move closer to the shop or ask a manager to override.', 'error', 7000); return }
       if (status === 409) { toast(data?.error || 'You are already clocked in.', 'warning', 6000); return }
-      if (coords === 'denied') { toast('Location access was denied. Enable location in your browser to clock in.', 'error', 7000); return }
-      if (coords === 'unavailable') { toast('Location is unavailable. Clock in requires location access.', 'error', 7000); return }
       toast(data?.error || 'Could not clock in. Please try again.', 'error', 6000)
     } finally {
       punchInFlight.current = false
