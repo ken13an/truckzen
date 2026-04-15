@@ -70,6 +70,32 @@ export async function getAuthenticatedUserProfile(): Promise<AuthenticatedUser |
   const adminClient = createAdminSupabaseClient()
   const { data: authUser } = await adminClient.auth.admin.getUserById(user.id)
   const impersonation = authUser.user?.app_metadata?.platform_impersonation || null
+  let effectiveImpersonation = impersonation
+
+  // F-19 session-level revoke enforcement: if a session claims active
+  // impersonation, verify the ACL row is still present and un-revoked. If not,
+  // clear metadata using the same canonical path as /stop and proceed as a
+  // non-impersonating actor for this request.
+  if (impersonation?.active && impersonation?.target_shop_id) {
+    const { data: acl } = await adminClient
+      .from('platform_impersonation_acl')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .eq('shop_id', impersonation.target_shop_id)
+      .is('revoked_at', null)
+      .maybeSingle()
+    if (!acl) {
+      const currentMeta = authUser.user?.app_metadata || {}
+      const nextMetadata = { ...currentMeta }
+      delete (nextMetadata as any).platform_impersonation
+      try {
+        await adminClient.auth.admin.updateUserById(user.id, { app_metadata: nextMetadata })
+      } catch (e) {
+        console.error('[acl-enforce] Failed to clear impersonation metadata', e)
+      }
+      effectiveImpersonation = null
+    }
+  }
 
   const { data: profile } = await adminClient
     .from('users')
@@ -81,8 +107,8 @@ export async function getAuthenticatedUserProfile(): Promise<AuthenticatedUser |
 
   return {
     ...(profile as AuthenticatedUser),
-    effective_shop_id: impersonation?.active ? impersonation?.target_shop_id || null : profile.shop_id,
-    platform_impersonation: impersonation?.active ? impersonation : null,
+    effective_shop_id: effectiveImpersonation?.active ? effectiveImpersonation?.target_shop_id || null : profile.shop_id,
+    platform_impersonation: effectiveImpersonation?.active ? effectiveImpersonation : null,
   }
 }
 
