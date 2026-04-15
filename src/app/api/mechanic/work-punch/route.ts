@@ -110,15 +110,24 @@ export async function POST(req: Request) {
     }).select('id, punch_in_at').single()
 
     if (error) {
-      // Unique violation on (user_id, client_event_id) → racing replay; resolve to existing row.
       if ((error as any).code === '23505') {
-        const { data: existing } = await s.from('work_punches')
+        // Same-event replay → dedupe to existing row.
+        const { data: sameEvent } = await s.from('work_punches')
           .select('id, punch_in_at, inside_geofence')
           .eq('user_id', actor.id)
           .eq('client_event_id', client_event_id)
           .limit(1).maybeSingle()
-        if (existing) {
-          return NextResponse.json({ ok: true, deduped: true, punch: { id: existing.id, punch_in_at: existing.punch_in_at }, insideGeofence: existing.inside_geofence })
+        if (sameEvent) {
+          return NextResponse.json({ ok: true, deduped: true, punch: { id: sameEvent.id, punch_in_at: sameEvent.punch_in_at }, insideGeofence: sameEvent.inside_geofence })
+        }
+        // Active-row uniqueness violation → user already has an open punch with a different event_id.
+        const { data: active } = await s.from('work_punches')
+          .select('id, punch_in_at')
+          .eq('user_id', actor.id)
+          .is('punch_out_at', null)
+          .limit(1).maybeSingle()
+        if (active) {
+          return NextResponse.json({ error: 'Already punched in', activePunchId: active.id, activePunch: active }, { status: 409 })
         }
       }
       return NextResponse.json({ error: error.message }, { status: 500 })
