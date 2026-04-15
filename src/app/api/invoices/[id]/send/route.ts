@@ -25,6 +25,12 @@ async function _POST(_req: Request, { params }: P) {
 
   if (!inv) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  // F-12 parity: block manual send on financially-unready invoices.
+  const totalNum = typeof inv.total === 'number' ? inv.total : Number(inv.total)
+  if (!Number.isFinite(totalNum) || totalNum <= 0) {
+    return NextResponse.json({ error: `Invoice is not ready to send (total: ${inv.total})`, invoiceTotal: inv.total }, { status: 409 })
+  }
+
   const so    = inv.service_orders as any
   const shop  = inv.shops as any
   const asset = so?.assets
