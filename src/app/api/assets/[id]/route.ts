@@ -46,6 +46,12 @@ export async function PATCH(req: Request, { params }: P) {
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }
 
+  // Cross-shop FK guard: customer_id from body must belong to actor's shop.
+  if (update.customer_id) {
+    const { data: c } = await s.from('customers').select('shop_id').eq('id', update.customer_id).maybeSingle()
+    if (!c || c.shop_id !== shopId) return NextResponse.json({ error: 'Invalid customer_id' }, { status: 400 })
+  }
+
   const { data, error } = await s.from('assets').update(update).eq('id', id).eq('shop_id', shopId).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
