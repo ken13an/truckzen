@@ -26,6 +26,16 @@ export async function POST(req: Request) {
 
     if (shopError || !shop) return jsonError('Shop not found', 404)
 
+    // F-19: require an un-revoked ACL grant for (actor, target shop).
+    const { data: acl } = await s
+      .from('platform_impersonation_acl')
+      .select('user_id')
+      .eq('user_id', actor.id)
+      .eq('shop_id', shopId)
+      .is('revoked_at', null)
+      .maybeSingle()
+    if (!acl) return jsonError('Impersonation not permitted for this shop', 403)
+
     const metadata = {
       ...(actor as any),
       platform_impersonation: {
