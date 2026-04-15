@@ -8,6 +8,47 @@ import { deriveWOAutomation } from '@/lib/wo-automation'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { isDiagnosticJob, shouldCreateFallbackPart } from '@/lib/parts-suggestions'
 import { safeRoute } from '@/lib/api-handler'
+import { z } from 'zod'
+
+// Schemas scoped to this route. Do not invent enum allowlists for priority /
+// job_type — no canonical constant exists and business truth belongs
+// elsewhere. Shape + length only.
+const JobLineSchema = z.union([
+  z.string().max(1000),
+  z.object({
+    description: z.string().min(1).max(1000),
+    skills: z.array(z.string().max(64)).optional(),
+    estimated_hours: z.union([z.number(), z.string()]).optional().nullable(),
+    tire_position: z.string().max(32).optional().nullable(),
+    customer_provides_parts: z.boolean().optional(),
+    rough_parts: z.array(z.object({
+      rough_name: z.string().max(500).optional(),
+      description: z.string().max(500).optional(),
+      quantity: z.union([z.number(), z.string()]).optional(),
+    }).passthrough()).optional(),
+  }).passthrough(),
+])
+
+const WoPostSchema = z.object({
+  asset_id: z.string().uuid().optional().nullable(),
+  customer_id: z.string().uuid().optional().nullable(),
+  complaint: z.string().max(5000).optional().nullable(),
+  priority: z.string().max(32).optional().nullable(),
+  job_type: z.string().max(64).optional().nullable(),
+  job_lines: z.array(JobLineSchema).max(200).optional(),
+  mileage: z.union([z.number(), z.string()]).optional().nullable(),
+  status: z.string().max(32).optional(),
+  submitted_at: z.string().datetime().optional().nullable(),
+  estimate_required: z.boolean().optional().nullable(),
+}).strip()
+
+const WoDeleteSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(500),
+}).strip()
+
+function badInput(zErr: z.ZodError) {
+  return NextResponse.json({ error: 'Invalid payload', issues: zErr.issues.map(i => ({ path: i.path.join('.'), message: i.message })) }, { status: 400 })
+}
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -161,7 +202,11 @@ async function _POST(req: Request) {
   const user_id = actor.id
 
   const s = db()
-  const body = await req.json()
+  const raw = await req.json().catch(() => null)
+  if (!raw || typeof raw !== 'object') return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  const parsed = WoPostSchema.safeParse(raw)
+  if (!parsed.success) return badInput(parsed.error)
+  const body = parsed.data
   const { asset_id, customer_id, complaint, priority, job_lines, mileage, job_type, estimate_required: bodyEstimateRequired } = body
   const isDraftSave = body.status === 'draft'
   if (!isDraftSave && !complaint?.trim()) return NextResponse.json({ error: 'Concern description required' }, { status: 400 })
@@ -213,8 +258,8 @@ async function _POST(req: Request) {
     advisor_id: user_id || null,
     service_writer_id: user_id || null,
     created_by_user_id: user_id || null,
-    mileage_at_service: mileage ? parseInt(mileage) : null,
-    odometer_in: mileage ? parseInt(mileage) : null,
+    mileage_at_service: mileage ? parseInt(String(mileage)) : null,
+    odometer_in: mileage ? parseInt(String(mileage)) : null,
     ownership_type: assetOwnership,
     job_type: job_type || 'repair',
     estimate_required: bodyEstimateRequired != null ? bodyEstimateRequired : (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(job_type || 'repair'),
@@ -226,16 +271,16 @@ async function _POST(req: Request) {
 
   // Create job lines — skip for draft saves
   // Guard: empty array must fall back to complaint ([] is truthy in JS)
-  const lines = isDraftSave ? [] : (job_lines && job_lines.length > 0 ? job_lines : [complaint.trim()])
+  const lines = isDraftSave ? [] : (job_lines && job_lines.length > 0 ? job_lines : [(complaint || '').trim()])
   let laborLinesCreated = 0
   try {
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
+    const line: any = lines[i]
     const lineText = typeof line === 'string' ? line : line.description
     const lineSkills = typeof line === 'string' ? [] : (line.skills || [])
     if (!lineText?.trim()) continue
     // Labor hours: use explicit value from frontend, else fallback lookup, else null (mechanic uses Request Hours)
-    const explicitHours = typeof line === 'object' && line.estimated_hours ? parseFloat(line.estimated_hours) : null
+    const explicitHours = typeof line === 'object' && line.estimated_hours ? parseFloat(String(line.estimated_hours)) : null
     const lineEstimatedHours = explicitHours || getDefaultLaborHours(lineText.trim())
     const { data: laborLine } = await s.from('so_lines').insert({
       so_id: wo.id,
@@ -246,14 +291,14 @@ async function _POST(req: Request) {
       estimated_hours: lineEstimatedHours,
       line_status: 'unassigned',
       required_skills: lineSkills,
-      tire_position: line.tire_position || null,
-      customer_provides_parts: line.customer_provides_parts || false,
+      tire_position: (typeof line === 'object' && line.tire_position) || null,
+      customer_provides_parts: (typeof line === 'object' && line.customer_provides_parts) || false,
     }).select('id').single()
     const laborLineId = laborLine?.id || null
     if (laborLineId) laborLinesCreated++
 
     // Auto-insert rough parts for this job line — check inventory first
-    const roughParts = line.rough_parts || []
+    const roughParts = (typeof line === 'object' && Array.isArray(line.rough_parts)) ? line.rough_parts : []
     let partsCreated = 0
     for (const rp of roughParts) {
       const partName = rp.rough_name || rp.description || ''
@@ -360,12 +405,11 @@ async function _DELETE(req: Request) {
   }
 
   const s = db()
-  const body = await req.json()
-  const { ids } = body
-
-  if (!ids || !Array.isArray(ids) || ids.length === 0) {
-    return NextResponse.json({ error: 'ids array required' }, { status: 400 })
-  }
+  const raw = await req.json().catch(() => null)
+  if (!raw || typeof raw !== 'object') return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  const parsed = WoDeleteSchema.safeParse(raw)
+  if (!parsed.success) return badInput(parsed.error)
+  const { ids } = parsed.data
 
   // Get WOs — shop-scoped. Void is allowed from any status.
   const { data: wos } = await s.from('service_orders').select('id, status, so_number, shop_id').in('id', ids).eq('shop_id', shopId)
