@@ -1,7 +1,20 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { rateLimit } from '@/lib/ratelimit/core'
+import { getRequestIp } from '@/lib/ratelimit/request-ip'
 
 const ALLOWED_LANGUAGES = ['en', 'ru', 'uz', 'es']
+
+async function checkInviteLimits(req: Request, token: string) {
+  const ip = getRequestIp(req)
+  const ipLimit = await rateLimit('accept-invite-ip', ip)
+  if (!ipLimit.allowed) return false
+  if (token) {
+    const tokenLimit = await rateLimit('accept-invite-token', token)
+    if (!tokenLimit.allowed) return false
+  }
+  return true
+}
 
 type InviteRow = {
   id: string
@@ -37,6 +50,9 @@ async function lookupInvite(token: string): Promise<
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const token = searchParams.get('token') || ''
+  if (!(await checkInviteLimits(req, token))) {
+    return NextResponse.json({ error: 'Too many invite attempts' }, { status: 429 })
+  }
   const result = await lookupInvite(token)
   if (!result.ok) return NextResponse.json({ error: result.message, code: result.code }, { status: result.status })
   return NextResponse.json({
@@ -49,6 +65,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
   const token = typeof body?.token === 'string' ? body.token : ''
+  if (!(await checkInviteLimits(req, token))) {
+    return NextResponse.json({ error: 'Too many invite attempts' }, { status: 429 })
+  }
   const fullName = typeof body?.full_name === 'string' ? body.full_name.trim() : ''
   const language = typeof body?.language === 'string' ? body.language.trim() : ''
   const password = typeof body?.password === 'string' ? body.password : ''

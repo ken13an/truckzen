@@ -31,6 +31,12 @@ const POLICIES: Record<string, Policy> = {
   // Blanket per-IP floor for all /api/* traffic (Patch 21). Generous enough
   // not to block normal app usage; tight enough to stop volumetric floods.
   'api-floor': { limit: 600, window: '1 m' },
+  // Auth / public brute-force hardening (Patch 22).
+  'login-ip':            { limit: 20, window: '15 m' },
+  '2fa-validate-ip':     { limit: 5,  window: '15 m' },
+  '2fa-validate-user':   { limit: 5,  window: '15 m' },
+  'accept-invite-ip':    { limit: 10, window: '1 h' },
+  'accept-invite-token': { limit: 5,  window: '1 h' },
 }
 
 function requiredEnvPresent(): boolean {

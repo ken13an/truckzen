@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { safeRoute } from '@/lib/api-handler'
+import { rateLimit } from '@/lib/ratelimit/core'
+import { getRequestIp } from '@/lib/ratelimit/request-ip'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_MINUTES = 15
@@ -19,7 +21,14 @@ async function _POST(req: Request) {
   }
 
   const normalizedEmail = email.trim().toLowerCase()
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  const ip = getRequestIp(req)
+
+  // Per-IP brute-force limit on top of the existing per-email DB counter (20 / 15 min).
+  const ipLimit = await rateLimit('login-ip', ip)
+  if (!ipLimit.allowed) {
+    return NextResponse.json({ error: 'Too many login attempts' }, { status: 429 })
+  }
+
   const s = db()
 
   // ── Check lockout ──────────────────────────────────────────

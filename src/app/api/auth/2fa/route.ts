@@ -4,6 +4,8 @@ import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { verifySync, generateSecret, generateURI } from 'otplib'
 import * as QRCode from 'qrcode'
 import { safeRoute } from '@/lib/api-handler'
+import { rateLimit } from '@/lib/ratelimit/core'
+import { getRequestIp } from '@/lib/ratelimit/request-ip'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -17,6 +19,18 @@ async function _POST(req: Request) {
   if (action === 'validate') {
     // Validate during login — uses user_id from body (user not yet fully authenticated)
     if (!user_id || !code) return NextResponse.json({ error: 'user_id and code required' }, { status: 400 })
+
+    // Strict brute-force protection on the unauthenticated TOTP code check.
+    const ip = getRequestIp(req)
+    const ipLimit = await rateLimit('2fa-validate-ip', ip)
+    if (!ipLimit.allowed) {
+      return NextResponse.json({ error: 'Too many 2FA attempts' }, { status: 429 })
+    }
+    const userLimit = await rateLimit('2fa-validate-user', String(user_id))
+    if (!userLimit.allowed) {
+      return NextResponse.json({ error: 'Too many 2FA attempts' }, { status: 429 })
+    }
+
     const s = db()
     const { data: userData } = await s.from('users').select('totp_secret, totp_enabled').eq('id', user_id).single()
     if (!userData?.totp_enabled || !userData?.totp_secret) return NextResponse.json({ error: '2FA not enabled' }, { status: 400 })
