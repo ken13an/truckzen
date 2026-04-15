@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { staffEstimateApprovedEmail } from '@/lib/emails/staffEstimateApproved'
@@ -9,6 +10,7 @@ type P = { params: Promise<{ token: string }> }
 
 export async function POST(req: Request, { params }: P) {
   const { token } = await params
+  const _rl = await checkPortalLimits(req, token); if (_rl !== true) return _rl
   const s = db()
 
   const { data: wo } = await s.from('service_orders').select('id, so_number, shop_id, customer_id, created_by_user_id, grand_total, status').eq('portal_token', token).single()

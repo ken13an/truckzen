@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createStripeCheckout } from '@/lib/payments/qr'
-import { checkRateLimit } from '@/lib/security'
+import { rateLimit } from '@/lib/ratelimit/core'
+import { getRequestIp } from '@/lib/ratelimit/request-ip'
 import { safeRoute } from '@/lib/api-handler'
 
 async function _POST(req: Request) {
-  const ip    = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
-  const limit = await checkRateLimit('api', `pay-checkout:${ip}`)
+  const ip    = getRequestIp(req)
+  const limit = await rateLimit('pay-ip', ip)
   if (!limit.allowed) {
-    return NextResponse.json({ success: false, error: 'Too many requests' }, { status: 429 })
+    return NextResponse.json({ success: false, error: 'Too many payment attempts' }, { status: 429 })
   }
   try {
     const { token } = await req.json()

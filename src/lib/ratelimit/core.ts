@@ -37,6 +37,11 @@ const POLICIES: Record<string, Policy> = {
   '2fa-validate-user':   { limit: 5,  window: '15 m' },
   'accept-invite-ip':    { limit: 10, window: '1 h' },
   'accept-invite-token': { limit: 5,  window: '1 h' },
+  // Public token + payment + kiosk hardening (Patch 23).
+  'pay-ip':       { limit: 30,  window: '1 m' },
+  'portal-ip':    { limit: 120, window: '1 m' },
+  'portal-token': { limit: 30,  window: '1 m' },
+  'kiosk-pin-ip': { limit: 5,   window: '15 m' },
 }
 
 function requiredEnvPresent(): boolean {

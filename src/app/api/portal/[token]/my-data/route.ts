@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getStaffEmails } from '@/lib/services/email'
 
@@ -18,8 +19,9 @@ async function resolveToken(token: string) {
   return data
 }
 
-export async function GET(_req: Request, { params }: P) {
+export async function GET(req: Request, { params }: P) {
   const { token } = await params
+  const _rl = await checkPortalLimits(req, token); if (_rl !== true) return _rl
   const ctx = await resolveToken(token)
   if (!ctx) return NextResponse.json({ error: 'Invalid token' }, { status: 404 })
 
@@ -46,6 +48,7 @@ export async function GET(_req: Request, { params }: P) {
 
 export async function POST(req: Request, { params }: P) {
   const { token } = await params
+  const _rl = await checkPortalLimits(req, token); if (_rl !== true) return _rl
   const ctx = await resolveToken(token)
   if (!ctx) return NextResponse.json({ error: 'Invalid token' }, { status: 404 })
 

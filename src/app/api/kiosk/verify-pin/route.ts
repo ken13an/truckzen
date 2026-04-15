@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit } from '@/lib/ratelimit/core'
+import { getRequestIp } from '@/lib/ratelimit/request-ip'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -13,8 +15,12 @@ export async function GET(req: Request) {
 
   if (!code || !pin) return NextResponse.json({ error: 'code and pin required' }, { status: 400 })
 
-  // Rate limit by IP
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+  // Strict per-IP cap on the PIN brute-force surface (outer cap; durable).
+  const ip = getRequestIp(req)
+  const ipLimit = await rateLimit('kiosk-pin-ip', ip)
+  if (!ipLimit.allowed) {
+    return NextResponse.json({ valid: false, error: 'Too many kiosk attempts' }, { status: 429 })
+  }
   const key = `${ip}:${code}`
   const now = Date.now()
   const entry = attempts.get(key)

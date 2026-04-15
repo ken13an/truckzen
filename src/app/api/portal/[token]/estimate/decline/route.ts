@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { staffEstimateDeclinedEmail } from '@/lib/emails/staffEstimateDeclined'
@@ -9,6 +10,7 @@ type P = { params: Promise<{ token: string }> }
 
 export async function POST(req: Request, { params }: P) {
   const { token } = await params
+  const _rl = await checkPortalLimits(req, token); if (_rl !== true) return _rl
   const s = db()
   const body = await req.json().catch(() => ({}))
 

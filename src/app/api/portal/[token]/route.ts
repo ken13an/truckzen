@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -7,8 +8,9 @@ function db() {
 
 type P = { params: Promise<{ token: string }> }
 
-export async function GET(_req: Request, { params }: P) {
+export async function GET(req: Request, { params }: P) {
   const { token } = await params
+  const _rl = await checkPortalLimits(req, token); if (_rl !== true) return _rl
   const s = db()
 
   // Find WO by portal_token

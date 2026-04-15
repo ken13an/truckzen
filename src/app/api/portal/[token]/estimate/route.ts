@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
+import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
+  const _rl = await checkPortalLimits(req, token); if (_rl !== true) return _rl
   const supabase = db()
 
   // Find estimate by approval_token
