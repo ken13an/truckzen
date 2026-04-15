@@ -46,6 +46,14 @@ export async function POST(req: Request) {
 
   if (shopErr || !shop) return NextResponse.json({ error: shopErr?.message || 'Failed to create shop' }, { status: 500 })
 
+  // F-19 follow-up: auto-seed impersonation ACL for every current platform owner.
+  const { data: platformOwners } = await s.from('users').select('id').eq('is_platform_owner', true)
+  const aclRows = (platformOwners || []).map((u: any) => ({ user_id: u.id, shop_id: shop.id, granted_by: actor.id, reason: 'auto-seed:new-shop' }))
+  if (aclRows.length > 0) {
+    const { error: aclErr } = await s.from('platform_impersonation_acl').upsert(aclRows, { onConflict: 'user_id,shop_id', ignoreDuplicates: true })
+    if (aclErr) console.error('[acl-seed:new-shop] Failed for shop', shop.id, aclErr)
+  }
+
   const { data: auth, error: authErr } = await s.auth.admin.createUser({
     email: admin_email.toLowerCase().trim(), password: admin_password,
     email_confirm: true, user_metadata: { full_name: admin_name },

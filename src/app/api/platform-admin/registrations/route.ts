@@ -92,6 +92,14 @@ export async function PATCH(req: Request) {
     const { data: shop, error: shopErr } = await s.from('shops').insert({ name: reg.shop_name, phone: reg.owner_phone || null, email: reg.owner_email, address: reg.address || null, city: reg.city || null, state: reg.state || null, zip: reg.zip || null, status: 'active', kiosk_code: kioskCode, setup_complete: false, onboarded_at: new Date().toISOString(), onboarded_by: actor.id }).select().single()
     if (shopErr || !shop) return NextResponse.json({ error: shopErr?.message || 'Failed to create shop' }, { status: 500 })
 
+    // F-19 follow-up: auto-seed impersonation ACL for every current platform owner.
+    const { data: platformOwners } = await s.from('users').select('id').eq('is_platform_owner', true)
+    const aclRows = (platformOwners || []).map((u: any) => ({ user_id: u.id, shop_id: shop.id, granted_by: actor.id, reason: 'auto-seed:new-shop' }))
+    if (aclRows.length > 0) {
+      const { error: aclErr } = await s.from('platform_impersonation_acl').upsert(aclRows, { onConflict: 'user_id,shop_id', ignoreDuplicates: true })
+      if (aclErr) console.error('[acl-seed:new-shop] Failed for shop', shop.id, aclErr)
+    }
+
     const tempPassword = 'TZ-' + Math.random().toString(36).slice(2, 10).toUpperCase()
     const { data: auth, error: authErr } = await s.auth.admin.createUser({ email: reg.owner_email.toLowerCase().trim(), password: tempPassword, email_confirm: true, user_metadata: { full_name: reg.owner_name } })
     if (authErr || !auth.user) {
