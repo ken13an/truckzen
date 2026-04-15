@@ -49,6 +49,14 @@ async function _POST(req: Request) {
   const { customer_id, asset_id, complaint, priority, job_type, mileage, draft_data } = body
   if (!customer_id || !asset_id) return NextResponse.json({ error: 'customer and vehicle required' }, { status: 400 })
 
+  // Cross-shop FK guard: customer and asset must belong to actor's shop.
+  const [{ data: cust }, { data: asset }] = await Promise.all([
+    s.from('customers').select('shop_id').eq('id', customer_id).maybeSingle(),
+    s.from('assets').select('shop_id').eq('id', asset_id).maybeSingle(),
+  ])
+  if (!cust || cust.shop_id !== shop_id) return NextResponse.json({ error: 'Invalid customer_id' }, { status: 400 })
+  if (!asset || asset.shop_id !== shop_id) return NextResponse.json({ error: 'Invalid asset_id' }, { status: 400 })
+
   // Check for existing draft for this user + asset
   const { data: existing } = await s
     .from('service_orders')
