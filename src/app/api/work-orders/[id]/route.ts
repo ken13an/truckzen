@@ -197,6 +197,20 @@ async function _PATCH(req: Request, { params }: Params) {
   for (const f of allowedFields) if (body[f] !== undefined) update[f] = body[f]
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 })
 
+  const existingShopId = (existing as any).shop_id as string
+  // Cross-shop FK guard: body-supplied references must belong to the WO's shop.
+  if (update.customer_id) {
+    const { data: c } = await ctx.admin.from('customers').select('shop_id').eq('id', update.customer_id).maybeSingle()
+    if (!c || c.shop_id !== existingShopId) return NextResponse.json({ error: 'Invalid customer_id' }, { status: 400 })
+  }
+  const userFkFields = ['assigned_tech', 'service_writer_id', 'parts_person_id'] as const
+  const userFkVals = userFkFields.filter(f => typeof update[f] === 'string' && update[f]).map(f => update[f] as string)
+  if (userFkVals.length > 0) {
+    const { data: usersRows } = await ctx.admin.from('users').select('id, shop_id').in('id', userFkVals)
+    const ok = userFkVals.every(uid => usersRows?.find(u => u.id === uid)?.shop_id === existingShopId)
+    if (!ok) return NextResponse.json({ error: 'Invalid user assignment (cross-shop)' }, { status: 400 })
+  }
+
   // Guard WO status transitions (skip for historical/imported WOs)
   if (update.status && !(existing as any).is_historical) {
     const VALID_WO_TRANSITIONS: Record<string, string[]> = {
@@ -220,7 +234,7 @@ async function _PATCH(req: Request, { params }: Params) {
   // Auto-queue for accounting when WO reaches done (if not already in invoice flow)
   if (update.status === 'done' && !(existing as any).invoice_status) update.invoice_status = 'accounting_review'
 
-  const { data, error } = await ctx.admin.from('service_orders').update(update).eq('id', id).select().single()
+  const { data, error } = await ctx.admin.from('service_orders').update(update).eq('id', id).eq('shop_id', existingShopId).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const changes = Object.keys(update).filter(k => k !== 'updated_at').join(', ')
@@ -300,7 +314,7 @@ async function _DELETE(_req: Request, { params }: Params) {
 
   // Void is allowed from any status — soft delete + status change, preserves all records
   const now = new Date().toISOString()
-  await ctx.admin.from('service_orders').update({ deleted_at: now, status: 'void', updated_at: now }).eq('id', id)
+  await ctx.admin.from('service_orders').update({ deleted_at: now, status: 'void', updated_at: now }).eq('id', id).eq('shop_id', (wo as any).shop_id)
   await ctx.admin.from('wo_activity_log').insert({ wo_id: id, user_id: ctx.actor.id, action: `Voided work order (was: ${(wo as any).status})` })
   logAction({ shop_id: (wo as any).shop_id, user_id: ctx.actor.id, action: 'wo.voided', entity_type: 'service_order', entity_id: id, details: { so_number: (wo as any).so_number, previous_status: (wo as any).status } }).catch(() => {})
   return NextResponse.json({ ok: true })
