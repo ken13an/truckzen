@@ -41,8 +41,24 @@ export async function POST(req: Request) {
   if (!shopId) return jsonError('No shop context', 400)
 
   const s = db()
-  const { action, lat, lng, accuracy, override_reason } = await req.json()
+  const { action, lat, lng, accuracy, override_reason, client_event_id } = await req.json()
   if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
+
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (action === 'punch_in') {
+    if (!client_event_id || typeof client_event_id !== 'string' || !UUID_RE.test(client_event_id)) {
+      return NextResponse.json({ error: 'client_event_id required' }, { status: 400 })
+    }
+    // Idempotent replay: same (user_id, client_event_id) → return existing row.
+    const { data: prior } = await s.from('work_punches')
+      .select('id, punch_in_at, punch_out_at, inside_geofence')
+      .eq('user_id', actor.id)
+      .eq('client_event_id', client_event_id)
+      .limit(1).maybeSingle()
+    if (prior) {
+      return NextResponse.json({ ok: true, deduped: true, punch: { id: prior.id, punch_in_at: prior.punch_in_at }, insideGeofence: prior.inside_geofence })
+    }
+  }
 
   // Geofence from real shop record
   const { data: shop } = await s.from('shops').select('geofence_lat, geofence_lng, geofence_radius_meters').eq('id', shopId).single()
@@ -90,9 +106,23 @@ export async function POST(req: Request) {
       inside_geofence: insideGeofence,
       override_flag: !insideGeofence,
       override_reason: override_reason || null,
+      client_event_id,
     }).select('id, punch_in_at').single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      // Unique violation on (user_id, client_event_id) → racing replay; resolve to existing row.
+      if ((error as any).code === '23505') {
+        const { data: existing } = await s.from('work_punches')
+          .select('id, punch_in_at, inside_geofence')
+          .eq('user_id', actor.id)
+          .eq('client_event_id', client_event_id)
+          .limit(1).maybeSingle()
+        if (existing) {
+          return NextResponse.json({ ok: true, deduped: true, punch: { id: existing.id, punch_in_at: existing.punch_in_at }, insideGeofence: existing.inside_geofence })
+        }
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     return NextResponse.json({ ok: true, punch, insideGeofence })
   }
 

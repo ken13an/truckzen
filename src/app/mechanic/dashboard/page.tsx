@@ -25,6 +25,18 @@ const DIM = 'var(--tz-textTertiary)'
 
 type Filter = 'all' | 'pending' | 'accepted' | 'in_progress' | 'completed'
 
+function newClientEventId(): string {
+  const c: any = typeof crypto !== 'undefined' ? crypto : null
+  if (c?.randomUUID) return c.randomUUID()
+  const b = new Uint8Array(16)
+  if (c?.getRandomValues) c.getRandomValues(b)
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256)
+  b[6] = (b[6] & 0x0f) | 0x40
+  b[8] = (b[8] & 0x3f) | 0x80
+  const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20,32)}`
+}
+
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   pending:    { bg: 'rgba(245,158,11,0.15)', text: AMBER },
   accepted:   { bg: 'rgba(29,111,232,0.15)', text: BLUE },
@@ -154,7 +166,9 @@ export default function MechanicDashboardPage() {
           // For punch_out, proceed without coordinates
         }
       }
-      const payload = { action, lat: pos?.coords.latitude, lng: pos?.coords.longitude, accuracy: pos?.coords.accuracy, override_reason: override }
+      const eventId = action === 'punch_in' ? newClientEventId() : undefined
+      const payload: any = { action, lat: pos?.coords.latitude, lng: pos?.coords.longitude, accuracy: pos?.coords.accuracy, override_reason: override }
+      if (eventId) payload.client_event_id = eventId
       let res: Response | null = null
       try {
         res = await fetch('/api/mechanic/work-punch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })

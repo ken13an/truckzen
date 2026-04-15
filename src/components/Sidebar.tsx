@@ -15,6 +15,18 @@ import { useTheme } from '@/hooks/useTheme'
 import { useToast } from '@/components/Toast'
 import { COLORS } from '@/lib/config/colors'
 
+function newPunchEventId(): string {
+  const c: any = typeof crypto !== 'undefined' ? crypto : null
+  if (c?.randomUUID) return c.randomUUID()
+  const b = new Uint8Array(16)
+  if (c?.getRandomValues) c.getRandomValues(b)
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256)
+  b[6] = (b[6] & 0x0f) | 0x40
+  b[8] = (b[8] & 0x3f) | 0x80
+  const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20,32)}`
+}
+
 const UNLIMITED_ROLES = ADMIN_ROLES
 const SMART_DROP_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'service_writer']
 const TRASH_ROLES = [...UNLIMITED_ROLES, 'shop_manager', 'floor_supervisor', 'service_writer', 'office_admin']
@@ -301,8 +313,9 @@ export default function Sidebar() {
         else toast('Could not determine your location. Please try again.', 'error', 7000)
         return
       }
-      // Server expects { action, lat, lng, accuracy, override_reason? }
-      const body: Record<string, unknown> = { action: 'punch_in', lat: coords.lat, lng: coords.lng }
+      // Server expects { action, lat, lng, accuracy, override_reason?, client_event_id }
+      const eventId = newPunchEventId()
+      const body: Record<string, unknown> = { action: 'punch_in', lat: coords.lat, lng: coords.lng, client_event_id: eventId }
       if (coords.accuracy != null) body.accuracy = coords.accuracy
 
       let { ok, status, data } = await send(body)
