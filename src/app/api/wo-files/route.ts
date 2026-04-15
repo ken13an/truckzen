@@ -2,6 +2,7 @@ import { WO_FULL_ACCESS_ROLES } from '@/lib/roles'
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
 import { getActorShopId } from '@/lib/server-auth'
+import { rateLimit } from '@/lib/ratelimit/core'
 
 const SUPABASE_STORAGE_BASE = (process.env.NEXT_PUBLIC_SUPABASE_URL || '') + '/storage/v1/object/public/'
 const ALLOWED_BUCKETS = ['uploads']
@@ -37,6 +38,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
+  const uploadLimit = await rateLimit('upload-user', ctx.actor.id)
+  if (!uploadLimit.allowed) return NextResponse.json({ error: 'Too many upload requests' }, { status: 429 })
   const body = await req.json().catch(() => null)
   const woId = body?.wo_id
   const fileUrl = body?.file_url

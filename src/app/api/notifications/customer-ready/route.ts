@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { rateLimit } from '@/lib/ratelimit/core'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -8,6 +9,9 @@ export async function POST(req: Request) {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const burstLimit = await rateLimit('notify-user', user.id)
+  if (!burstLimit.allowed) return NextResponse.json({ error: 'Too many notification requests' }, { status: 429 })
 
   const { wo_id } = await req.json()
   if (!wo_id) return NextResponse.json({ error: 'wo_id required' }, { status: 400 })

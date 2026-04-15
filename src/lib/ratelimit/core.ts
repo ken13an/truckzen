@@ -46,6 +46,13 @@ const POLICIES: Record<string, Policy> = {
   'invite-admin':     { limit: 20, window: '1 h' },
   'invite-recipient': { limit: 1,  window: '5 m' },
   'ai-user':          { limit: 30, window: '1 m' },
+  // High-cost / high-fanout route hardening (Patch 25).
+  'notify-user':         { limit: 30,  window: '1 m' },
+  'estimate-send-user':  { limit: 20,  window: '1 h' },
+  'estimate-pdf-ip':     { limit: 60,  window: '1 h' },
+  'upload-user':         { limit: 60,  window: '1 h' },
+  'download-user':       { limit: 240, window: '1 h' },
+  'logo-user':           { limit: 10,  window: '1 h' },
 }
 
 function requiredEnvPresent(): boolean {

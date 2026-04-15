@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { safeRoute } from '@/lib/api-handler'
+import { rateLimit } from '@/lib/ratelimit/core'
+import { getRequestIp } from '@/lib/ratelimit/request-ip'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -8,6 +10,8 @@ type Params = { params: Promise<{ id: string }> }
 
 async function _GET(req: Request, { params }: Params) {
   const { id } = await params
+  const pdfLimit = await rateLimit('estimate-pdf-ip', getRequestIp(req))
+  if (!pdfLimit.allowed) return NextResponse.json({ error: 'Too many estimate requests' }, { status: 429 })
   const s = db()
 
   const { data: est } = await s.from('estimates').select('*, estimate_lines(*)').eq('id', id).single()

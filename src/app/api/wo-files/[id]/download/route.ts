@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
+import { rateLimit } from '@/lib/ratelimit/core'
 
 const PUBLIC_PREFIX = (process.env.NEXT_PUBLIC_SUPABASE_URL || '') + '/storage/v1/object/public/uploads/'
 
@@ -9,6 +10,8 @@ export async function GET(_req: Request, { params }: P) {
   const { id } = await params
   const ctx = await requireRouteContext()
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
+  const downloadLimit = await rateLimit('download-user', ctx.actor.id)
+  if (!downloadLimit.allowed) return NextResponse.json({ error: 'Too many download requests' }, { status: 429 })
 
   const { data: file } = await ctx.admin.from('wo_files').select('id, wo_id, file_url, filename').eq('id', id).single()
   if (!file) return NextResponse.json({ error: 'Not found' }, { status: 404 })

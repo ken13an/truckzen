@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { rateLimit } from '@/lib/ratelimit/core'
 
 const ALLOWED_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'webp'])
 const ALLOWED_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp'])
@@ -8,6 +9,9 @@ const MAX_SIZE = 2 * 1024 * 1024 // 2MB
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
+
+  const logoLimit = await rateLimit('logo-user', actor.id)
+  if (!logoLimit.allowed) return NextResponse.json({ error: 'Too many upload requests' }, { status: 429 })
 
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)

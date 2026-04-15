@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
+import { rateLimit } from '@/lib/ratelimit/core'
 
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
+
+  const burstLimit = await rateLimit('notify-user', actor.id)
+  if (!burstLimit.allowed) return NextResponse.json({ error: 'Too many notification requests' }, { status: 429 })
 
   const shopId = getActorShopId(actor)
   if (!shopId) return jsonError('No shop context', 400)

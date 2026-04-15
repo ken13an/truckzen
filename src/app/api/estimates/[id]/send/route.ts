@@ -3,6 +3,7 @@ import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 import { safeRoute } from '@/lib/api-handler'
+import { rateLimit } from '@/lib/ratelimit/core'
 
 async function getEstimateForActor(admin: any, actor: any, id: string) {
   let q = admin.from('estimates').select('*').eq('id', id)
@@ -15,6 +16,8 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
   const { id } = await params
   const ctx = await requireRouteContext([...INVOICE_ACTION_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
+  const sendLimit = await rateLimit('estimate-send-user', ctx.actor.id)
+  if (!sendLimit.allowed) return NextResponse.json({ error: 'Too many estimate requests' }, { status: 429 })
   const { data: estimate, error } = await getEstimateForActor(ctx.admin, ctx.actor, id)
   if (error || !estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
 
