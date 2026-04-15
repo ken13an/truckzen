@@ -166,6 +166,12 @@ async function _POST(req: Request) {
   const isDraftSave = body.status === 'draft'
   if (!isDraftSave && !complaint?.trim()) return NextResponse.json({ error: 'Concern description required' }, { status: 400 })
 
+  // Cross-shop FK guard: customer_id from body must belong to actor's shop.
+  if (customer_id) {
+    const { data: c } = await s.from('customers').select('shop_id').eq('id', customer_id).maybeSingle()
+    if (!c || c.shop_id !== shop_id) return NextResponse.json({ error: 'Invalid customer_id' }, { status: 400 })
+  }
+
   // Duplicate WO prevention — skip for draft saves
   if (asset_id && !isDraftSave) {
     const { data: activeWOs } = await s.from('service_orders')
@@ -185,10 +191,12 @@ async function _POST(req: Request) {
   let assetOwnership = 'fleet_asset'
   let assetUnitNumber = ''
   if (asset_id) {
-    const { data: assetData } = await s.from('assets').select('ownership_type, unit_number, is_owner_operator').eq('id', asset_id).single()
-    if (assetData?.ownership_type) assetOwnership = assetData.ownership_type
-    if (assetData?.is_owner_operator) assetOwnership = 'owner_operator'
-    if (assetData?.unit_number) assetUnitNumber = assetData.unit_number
+    const { data: assetData } = await s.from('assets').select('shop_id, ownership_type, unit_number, is_owner_operator').eq('id', asset_id).single()
+    // Cross-shop FK guard: asset must belong to actor's shop.
+    if (!assetData || assetData.shop_id !== shop_id) return NextResponse.json({ error: 'Invalid asset_id' }, { status: 400 })
+    if (assetData.ownership_type) assetOwnership = assetData.ownership_type
+    if (assetData.is_owner_operator) assetOwnership = 'owner_operator'
+    if (assetData.unit_number) assetUnitNumber = assetData.unit_number
   }
 
   // Generate WO number + insert with retry on duplicate
