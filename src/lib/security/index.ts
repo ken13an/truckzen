@@ -446,8 +446,13 @@ Check for: duplicate parts, incorrect labor hours, missing mechanic, mismatch be
 // SECTION 3 — RATE LIMITING
 // ============================================================
 
-export async function checkRateLimit(_type: string, _key: string) {
-  return { allowed: true, remaining: 100 }
+// Delegates to the real Upstash-backed limiter core. Preserves the existing
+// (type, key) call signature and {allowed, remaining} shape used by pay/* and
+// the safeRoute wrapper. Adds a `configured` flag for observability.
+import { rateLimit as _rateLimit, type RateLimitResult } from '@/lib/ratelimit/core'
+
+export async function checkRateLimit(type: string, key: string): Promise<RateLimitResult> {
+  return _rateLimit(type, key)
 }
 
 
