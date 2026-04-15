@@ -28,12 +28,22 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
   const unitNumber = asset?.unit_number || ''
   const truckInfo = [asset?.year, asset?.make, asset?.model].filter(Boolean).join(' ')
 
-  // Get or create invoice
-  let invoiceId: string | null = null
-  let invoiceNumber = ''
-  let totalAmount = 0
+  // Get invoice and gate on financial readiness.
   const { data: inv } = await s.from('invoices').select('id, invoice_number, total').eq('so_id', woId).limit(1).single()
-  if (inv) { invoiceId = inv.id; invoiceNumber = inv.invoice_number; totalAmount = inv.total }
+  if (!inv) {
+    console.warn(`[Notification] Skipped WO ${wo.so_number}: invoice not found`)
+    await logNotification(s, shopId, woId, 'email', null, email || null, 'skipped', 'Invoice not found')
+    return { skipped: true as const, reason: 'invoice_missing' }
+  }
+  const totalNum = typeof inv.total === 'number' ? inv.total : Number(inv.total)
+  if (!Number.isFinite(totalNum) || totalNum <= 0) {
+    console.warn(`[Notification] Skipped WO ${wo.so_number}: invalid invoice total (${inv.total})`)
+    await logNotification(s, shopId, woId, 'email', null, email || null, 'skipped', `Invalid invoice total: ${inv.total}`)
+    return { skipped: true as const, reason: 'invoice_not_ready' }
+  }
+  const invoiceId: string = inv.id
+  const invoiceNumber: string = inv.invoice_number
+  const totalAmount: number = totalNum
 
   const shop = await getShopInfo(shopId)
 
@@ -60,7 +70,7 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
         // Generate PDF attachment
         let pdfAttachments: { filename: string; content: Buffer }[] | undefined
         try {
-          const pdfResult = await generateInvoicePdf(invoiceId!)
+          const pdfResult = await generateInvoicePdf(invoiceId)
           if (pdfResult) pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
         } catch { /* PDF non-critical */ }
 
@@ -109,6 +119,7 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
   }
 
   await Promise.all(promises)
+  return { sent: true as const }
 }
 
 async function logNotification(s: any, shopId: string, woId: string, type: string, phone: string | null, email: string | null, status: string, error?: string) {
