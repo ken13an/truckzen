@@ -4,6 +4,7 @@ import { sendWelcomeEmail } from '@/lib/integrations/resend'
 import { getActorShopId } from '@/lib/server-auth'
 import { MANAGEMENT_ROLES } from '@/lib/roles'
 import { requireManagementContext, requireRouteContext } from '@/lib/api-route-auth'
+import { checkInviteSendLimits } from '@/lib/ratelimit/invite-guard'
 
 const INVITE_EXPIRY_DAYS = 7
 function newInviteToken() { return randomBytes(32).toString('base64url') }
@@ -67,6 +68,10 @@ export async function POST(req: Request) {
   if (!MANAGEMENT_ROLES.includes(ctx.actor.impersonate_role || ctx.actor.role) && !(ctx.actor.is_platform_owner && !ctx.actor.impersonate_role)) return managementError()
 
   const normalizedEmail = email.toLowerCase().trim()
+
+  // Invite spam / cost guard (per-admin + per-recipient).
+  const inviteGuard = await checkInviteSendLimits(ctx.actor.id, normalizedEmail)
+  if (inviteGuard !== true) return inviteGuard
 
   // ── Canonical lookup: all public.users rows for this email, across shops ──
   const { data: existingRows, error: lookupErr } = await ctx.admin

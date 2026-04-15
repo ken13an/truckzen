@@ -5,6 +5,7 @@ import { createAdminSupabaseClient, getActorShopId } from '@/lib/server-auth'
 import { requireAuthenticatedUser, requireRole } from '@/lib/route-guards'
 import { MANAGEMENT_ROLES } from '@/lib/roles'
 import { logAction } from '@/lib/services/auditLog'
+import { checkInviteSendLimits } from '@/lib/ratelimit/invite-guard'
 
 const INVITE_ROLES = MANAGEMENT_ROLES
 const INVITE_EXPIRY_DAYS = 7
@@ -19,6 +20,9 @@ export async function POST(req: Request) {
   const email = typeof body?.email === 'string' ? body.email.toLowerCase().trim() : ''
   const fullName = typeof body?.full_name === 'string' ? body.full_name.trim() : 'Team Member'
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
+
+  const inviteGuard = await checkInviteSendLimits(actor.id, email)
+  if (inviteGuard !== true) return inviteGuard
 
   const shopId = getActorShopId(actor)
   if (!shopId) return NextResponse.json({ error: 'shop context required' }, { status: 400 })

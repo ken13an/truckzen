@@ -5,6 +5,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { logAIUsage, checkAILimit } from '@/lib/ai-usage'
+import { rateLimit } from '@/lib/ratelimit/core'
+import { getRequestIp } from '@/lib/ratelimit/request-ip'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -22,8 +24,13 @@ CRITICAL RULES:
 Return JSON only: {"action_items": [{"description": "BRAKE SYSTEM INSPECTION", "skills": ["Brake Service"]}]}`
 
 export async function POST(req: Request) {
+  // Route has no auth guard — key burst cap by user_id when supplied, else IP.
   const { complaint, shop_id, user_id } = await req.json()
   if (!complaint?.trim()) return NextResponse.json({ error: 'complaint required' }, { status: 400 })
+
+  const burstKey = typeof user_id === 'string' && user_id ? user_id : getRequestIp(req)
+  const burstLimit = await rateLimit('ai-user', burstKey)
+  if (!burstLimit.allowed) return NextResponse.json({ error: 'Too many AI requests' }, { status: 429 })
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {

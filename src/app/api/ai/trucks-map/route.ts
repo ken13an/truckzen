@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { rateLimit } from '@/lib/ratelimit/core'
+import { getRequestIp } from '@/lib/ratelimit/request-ip'
 
 // POST /api/ai/trucks-map — AI column mapping for truck import
 export async function POST(req: Request) {
+  // Route has no auth guard — key burst cap by IP.
+  const burstLimit = await rateLimit('ai-user', getRequestIp(req))
+  if (!burstLimit.allowed) return NextResponse.json({ error: 'Too many AI requests' }, { status: 429 })
+
   const { headers: fileHeaders } = await req.json()
 
   if (!fileHeaders || !Array.isArray(fileHeaders)) {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { rateLimit } from '@/lib/ratelimit/core'
 
 function fallbackExpand(complaint: string) {
   return complaint
@@ -12,6 +13,9 @@ function fallbackExpand(complaint: string) {
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
+
+  const burstLimit = await rateLimit('ai-user', actor.id)
+  if (!burstLimit.allowed) return jsonError('Too many AI requests', 429)
 
   const body = await req.json().catch(() => null)
   const complaint = typeof body?.complaint === 'string' ? body.complaint.trim() : ''

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { logAIUsage, checkAILimit } from '@/lib/ai-usage'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { rateLimit } from '@/lib/ratelimit/core'
 
 const PROMPTS: Record<string, string> = {
   kiosk: `You are a professional truck service writer at a heavy-duty repair shop. A customer/driver is describing their truck problem at a check-in kiosk. They may type in any language. Generate a clean, professional concern description in English. If the input is not English, also provide the concern in the original language. Return ONLY valid JSON: {"concern": "...", "concern_native": null or "..."}`,
@@ -14,8 +15,6 @@ Use proper trucking terminology (Cummins, Detroit, PACCAR, Allison, Eaton Fuller
 {"cause": "...", "correction": "...", "parts": ["..."], "labor_hours": 0.0, "cause_native": null or "...", "correction_native": null or "..."}`,
   supervisor: `You are a professional truck shop floor supervisor. Format the following note into a clear, professional update for the work order record. If input is not English, translate to English and keep original. Return ONLY valid JSON: {"note": "...", "note_native": null or "..."}`,
 }
-
-const rateLimits = new Map<string, { count: number; resetAt: number }>()
 
 export async function POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
@@ -36,17 +35,9 @@ export async function POST(req: Request) {
     return jsonError('Invalid input', 400)
   }
 
-  const now = Date.now()
-  const rateLimitKey = actor.id
-  const limit = rateLimits.get(rateLimitKey)
-  if (limit && limit.resetAt > now && limit.count >= 30) {
-    return jsonError('Too many AI requests. Please wait a minute.', 429)
-  }
-  if (!limit || limit.resetAt <= now) {
-    rateLimits.set(rateLimitKey, { count: 1, resetAt: now + 60000 })
-  } else {
-    limit.count++
-  }
+  // Durable per-user burst cap via shared Upstash core (replaces prior in-memory Map).
+  const burstLimit = await rateLimit('ai-user', actor.id)
+  if (!burstLimit.allowed) return jsonError('Too many AI requests', 429)
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return jsonError('AI not configured', 500)

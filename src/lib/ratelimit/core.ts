@@ -42,6 +42,10 @@ const POLICIES: Record<string, Policy> = {
   'portal-ip':    { limit: 120, window: '1 m' },
   'portal-token': { limit: 30,  window: '1 m' },
   'kiosk-pin-ip': { limit: 5,   window: '15 m' },
+  // Email + AI cost hardening (Patch 24).
+  'invite-admin':     { limit: 20, window: '1 h' },
+  'invite-recipient': { limit: 1,  window: '5 m' },
+  'ai-user':          { limit: 30, window: '1 m' },
 }
 
 function requiredEnvPresent(): boolean {
