@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth'
 import { getPermissions } from '@/lib/getPermissions'
-import { LayoutDashboard, Store, FileText, Users, Activity, Shield, LogOut, ChevronLeft, DollarSign, Cpu, Bot, ClipboardCheck } from 'lucide-react'
+import { LayoutDashboard, Store, FileText, Users, Activity, Shield, ShieldCheck, LogOut, ChevronLeft, DollarSign, Cpu, Bot, ClipboardCheck } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 
 const NAV_ITEMS = [
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/platform-admin/shops', label: 'All Shops', icon: Store },
   { href: '/platform-admin/registrations', label: 'Registrations', icon: FileText },
   { href: '/platform-admin/impersonate', label: 'Impersonate', icon: Users },
+  { href: '/platform-admin/impersonation-acl', label: 'Impersonation ACL', icon: ShieldCheck },
   { href: '/platform-admin/activity', label: 'Activity Log', icon: Activity },
   { href: '/platform-admin/costs', label: 'Costs & Services', icon: DollarSign },
   { href: '/platform-admin/ai-usage', label: 'AI Usage', icon: Cpu },
