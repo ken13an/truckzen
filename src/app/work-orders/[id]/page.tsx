@@ -2211,7 +2211,7 @@ export default function WorkOrderDetail() {
               {files.map((f: any) => (
                 <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${'var(--tz-border)'}` }}>
                   <Paperclip size={14} color={GRAY} />
-                  <a href={f.file_url} target="_blank" rel="noreferrer" style={{ color: BLUE, fontSize: 13, fontWeight: 600, textDecoration: 'none', flex: 1 }}>
+                  <a href={`/api/wo-files/${f.id}/download`} target="_blank" rel="noreferrer" style={{ color: BLUE, fontSize: 13, fontWeight: 600, textDecoration: 'none', flex: 1 }}>
                     {f.filename}
                   </a>
                   <span style={{ fontSize: 11, color: GRAY }}>{userMap[f.user_id] || ''}</span>
