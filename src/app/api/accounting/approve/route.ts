@@ -77,21 +77,33 @@ export async function POST(req: Request) {
       const year = new Date().getFullYear()
       const invNum = `INV-${year}-${String((count || 0) + 1).padStart(4, '0')}`
 
-      await s.from('invoices').insert({
+      // invoices has no tax_rate column — shops.tax_rate is authoritative and
+      // tax_amount already carries the computed amount. Writing tax_rate here
+      // previously caused silent 42703 failures that let the flow continue
+      // marking the WO sent while no invoice row existed.
+      const { error: insertErr } = await s.from('invoices').insert({
         shop_id: wo.shop_id,
         so_id: wo_id,
         customer_id: wo.customer_id,
         invoice_number: invNum,
         status: 'sent',
-        subtotal, tax_rate: taxRate, tax_amount: taxAmount, total,
+        subtotal, tax_amount: taxAmount, total,
         balance_due: total, amount_paid: 0,
         due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       })
+      if (insertErr) {
+        console.error('[accounting.approve] invoice insert failed', { wo_id, error: insertErr.message })
+        return NextResponse.json({ error: 'Failed to create invoice: ' + insertErr.message }, { status: 500 })
+      }
     } else {
       const priorPaid = existingInv.amount_paid || 0
-      await s.from('invoices').update({
+      const { error: updateErr } = await s.from('invoices').update({
         status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total - priorPaid,
       }).eq('id', existingInv.id)
+      if (updateErr) {
+        console.error('[accounting.approve] invoice update failed', { wo_id, invoiceId: existingInv.id, error: updateErr.message })
+        return NextResponse.json({ error: 'Failed to update invoice: ' + updateErr.message }, { status: 500 })
+      }
     }
 
     // Update WO invoice_status to sent (matches WO workflow truth)

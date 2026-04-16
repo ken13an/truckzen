@@ -119,16 +119,26 @@ async function _POST(req: Request, { params }: Params) {
       const { count } = await s.from('invoices').select('*', { count: 'exact', head: true }).eq('shop_id', wo.shop_id).is('deleted_at', null)
       const year = new Date().getFullYear()
       const invNum = `INV-${year}-${String((count || 0) + 1).padStart(4, '0')}`
-      await s.from('invoices').insert({
+      // invoices has no tax_rate column — shops.tax_rate is authoritative and
+      // tax_amount already carries the computed amount.
+      const { error: insertErr } = await s.from('invoices').insert({
         shop_id: wo.shop_id, so_id: id, customer_id: wo.customer_id || null,
         invoice_number: invNum, status: 'sent',
-        subtotal, tax_rate: taxRate, tax_amount: taxAmount, total,
+        subtotal, tax_amount: taxAmount, total,
         balance_due: total, amount_paid: 0,
         due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       })
+      if (insertErr) {
+        console.error('[work-orders.invoice] invoice insert failed', { wo_id: id, error: insertErr.message })
+        return NextResponse.json({ error: 'Failed to create invoice: ' + insertErr.message }, { status: 500 })
+      }
     } else {
       const priorPaid = existingInv.amount_paid || 0
-      await s.from('invoices').update({ status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total - priorPaid }).eq('id', existingInv.id)
+      const { error: updateErr } = await s.from('invoices').update({ status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total - priorPaid }).eq('id', existingInv.id)
+      if (updateErr) {
+        console.error('[work-orders.invoice] invoice update failed', { wo_id: id, invoiceId: existingInv.id, error: updateErr.message })
+        return NextResponse.json({ error: 'Failed to update invoice: ' + updateErr.message }, { status: 500 })
+      }
     }
 
     await s.from('service_orders').update({
