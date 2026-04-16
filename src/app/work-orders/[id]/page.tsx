@@ -231,7 +231,22 @@ export default function WorkOrderDetail() {
 
   // HELPER FUNCTIONS
   const patchLine = async (lineId: string, data: Record<string, any>) => {
-    const res = await fetch(`/api/so-lines/${lineId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+    // Optimistic-concurrency precondition: send the line's last-seen
+    // updated_at from the loaded record (now exposed via the WO GET).
+    // On 409, surface the canonical conflict message and stop — caller's
+    // success path will not run because we do not invoke loadData.
+    const lineRecord = (wo?.so_lines || []).find((l: any) => l.id === lineId)
+    const expected_updated_at = lineRecord?.updated_at
+    const res = await fetch(`/api/so-lines/${lineId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...data, expected_updated_at }),
+    })
+    if (res.status === 409) {
+      setToastMsg('This record was updated by someone else. Refresh and try again.')
+      setTimeout(() => setToastMsg(''), 4000)
+      return res
+    }
     if (res.ok) await loadData()
     return res
   }
@@ -296,11 +311,16 @@ export default function WorkOrderDetail() {
   }
 
   const saveTeamAssign = async () => {
-    await fetch(`/api/work-orders/${id}`, {
+    const res = await fetch(`/api/work-orders/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...teamAssign }),
+      body: JSON.stringify({ ...teamAssign, expected_updated_at: wo?.updated_at }),
     })
+    if (res.status === 409) {
+      setToastMsg('This record was updated by someone else. Refresh and try again.')
+      setTimeout(() => setToastMsg(''), 4000)
+      return
+    }
     setShowTeamModal(false)
     await loadData()
   }
@@ -658,11 +678,17 @@ export default function WorkOrderDetail() {
   }
 
   const updatePartStatus = async (partId: string, status: string) => {
-    await fetch('/api/wo-parts', {
+    const part = woParts.find((p: any) => p.id === partId)
+    const res = await fetch('/api/wo-parts', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: partId, status, wo_id: id }),
+      body: JSON.stringify({ id: partId, status, wo_id: id, expected_updated_at: part?.updated_at }),
     })
+    if (res.status === 409) {
+      setToastMsg('This record was updated by someone else. Refresh and try again.')
+      setTimeout(() => setToastMsg(''), 4000)
+      return
+    }
     await loadData()
   }
 
@@ -673,11 +699,16 @@ export default function WorkOrderDetail() {
   }
 
   const updateWoStatus = async (status: string) => {
-    await fetch(`/api/work-orders/${id}`, {
+    const res = await fetch(`/api/work-orders/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, expected_updated_at: wo?.updated_at }),
     })
+    if (res.status === 409) {
+      setToastMsg('This record was updated by someone else. Refresh and try again.')
+      setTimeout(() => setToastMsg(''), 4000)
+      return
+    }
     setShowMenu(false)
     await loadData()
   }
@@ -848,8 +879,11 @@ export default function WorkOrderDetail() {
                       if (editDraft.cause !== (wo.cause || '')) updates.cause = editDraft.cause
                       if (editDraft.correction !== (wo.correction || '')) updates.correction = editDraft.correction
                       if (wo.status === 'draft' && editDraft.complaint?.trim()) updates.status = 'open'
-                      const res = await fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) })
-                      if (res.ok) {
+                      const res = await fetch(`/api/work-orders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...updates, expected_updated_at: wo?.updated_at }) })
+                      if (res.status === 409) {
+                        setToastMsg('This record was updated by someone else. Refresh and try again.')
+                        setTimeout(() => setToastMsg(''), 4000)
+                      } else if (res.ok) {
                         setEditMode(false)
                         setEditDraft(null)
                         setToastMsg('Work order updated')
@@ -2869,7 +2903,9 @@ export default function WorkOrderDetail() {
 
       {/* Estimate Approval Modal — 3 paths */}
       {approvalModal && (() => {
-        const estimateId = wo.estimates?.[0]?.id || wo.estimate_id
+        const estimateRecord = wo.estimates?.[0]
+        const estimateId = estimateRecord?.id || wo.estimate_id
+        const estimateUpdatedAt = estimateRecord?.updated_at
         const hasContact = !!(contactEmail || contactPhone)
 
         async function saveContactInfo() {
@@ -2886,27 +2922,42 @@ export default function WorkOrderDetail() {
           }
           // Also update estimate with contact info
           if (estimateId) {
-            await fetch(`/api/estimates/${estimateId}`, {
+            const estRes = await fetch(`/api/estimates/${estimateId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ customer_email: contactEmail, customer_phone: contactPhone }),
+              body: JSON.stringify({ customer_email: contactEmail, customer_phone: contactPhone, expected_updated_at: estimateUpdatedAt }),
             })
+            if (estRes.status === 409) {
+              setToastMsg('This record was updated by someone else. Refresh and try again.')
+              setTimeout(() => setToastMsg(''), 4000)
+              return
+            }
           }
         }
 
         async function approveEstimate(method: 'in_person' | 'printed_signed', notes?: string) {
           if (estimateId) {
-            await fetch(`/api/estimates/${estimateId}`, {
+            const estRes = await fetch(`/api/estimates/${estimateId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'approved', approval_method: method, approved_by: user?.id, approved_at: new Date().toISOString(), customer_notes: notes || null }),
+              body: JSON.stringify({ status: 'approved', approval_method: method, approved_by: user?.id, approved_at: new Date().toISOString(), customer_notes: notes || null, expected_updated_at: estimateUpdatedAt }),
             })
+            if (estRes.status === 409) {
+              setToastMsg('This record was updated by someone else. Refresh and try again.')
+              setTimeout(() => setToastMsg(''), 4000)
+              return
+            }
           }
-          await fetch(`/api/work-orders/${id}`, {
+          const woRes = await fetch(`/api/work-orders/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved', approval_method: method }),
+            body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved', approval_method: method, expected_updated_at: wo?.updated_at }),
           })
+          if (woRes.status === 409) {
+            setToastMsg('This record was updated by someone else. Refresh and try again.')
+            setTimeout(() => setToastMsg(''), 4000)
+            return
+          }
           const methodLabel = method === 'in_person' ? 'in person' : '(printed and signed)'
           logActivity(`Estimate approved ${methodLabel} by ${user?.full_name || 'service writer'}${notes ? ` — Notes: ${notes}` : ''}`)
           try {

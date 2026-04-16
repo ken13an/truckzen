@@ -51,7 +51,10 @@ async function _PATCH(req: Request, { params }: P) {
     }
   }
 
-  const body = await req.json()
+  const body = await req.json().catch(() => null)
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
 
   // Mechanic roles can only confirm parts receipt (parts_status → picked_up)
   const effectiveRole = ctx.actor.impersonate_role || ctx.actor.role
@@ -63,8 +66,25 @@ async function _PATCH(req: Request, { params }: P) {
 
   // total_price is a generated column — never write it directly
   const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name']
+  // Fields that must be numeric in the DB — coerce string→number and reject NaN
+  // so the update never silently writes a bad value.
+  const numericFields = new Set(['quantity', 'unit_price', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'parts_cost_price', 'parts_sell_price'])
   const update: Record<string, any> = {}
-  for (const f of allowedFields) if (body[f] !== undefined) update[f] = body[f]
+  for (const f of allowedFields) {
+    if (body[f] === undefined) continue
+    let val = body[f]
+    if (numericFields.has(f) && val !== null) {
+      const n = typeof val === 'number' ? val : Number(val)
+      if (!Number.isFinite(n)) {
+        return NextResponse.json({ error: `Field "${f}" must be a number` }, { status: 400 })
+      }
+      val = n
+    }
+    if (!numericFields.has(f) && val !== null && typeof val !== 'string' && typeof val !== 'boolean') {
+      return NextResponse.json({ error: `Field "${f}" has invalid type` }, { status: 400 })
+    }
+    update[f] = val
+  }
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 })
 
   // Validate line_status enum
@@ -81,8 +101,20 @@ async function _PATCH(req: Request, { params }: P) {
     }
   }
 
-  const { data, error } = await ctx.admin.from('so_lines').update(update).eq('id', id).select().single()
+  // Bump updated_at so optimistic-concurrency precondition works on this route.
+  update.updated_at = new Date().toISOString()
+
+  // Optimistic concurrency: when client provides last-seen updated_at,
+  // require match before writing. Missing value preserves legacy behavior.
+  const expectedUpdatedAt = typeof body.expected_updated_at === 'string' ? body.expected_updated_at : null
+  if (!expectedUpdatedAt) return NextResponse.json({ error: 'expected_updated_at is required' }, { status: 400 })
+  let soLineQ = ctx.admin.from('so_lines').update(update).eq('id', id)
+  if (expectedUpdatedAt) soLineQ = soLineQ.eq('updated_at', expectedUpdatedAt)
+  const { data, error } = await soLineQ.select().maybeSingle()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!data) {
+    return NextResponse.json({ error: 'Conflict', message: 'This record was updated by someone else. Refresh and try again.' }, { status: 409 })
+  }
 
   const recalcSoId = (data as any).so_id || soId
   const grandTotal = recalcSoId ? await recalcTotals(ctx.admin, recalcSoId) : null

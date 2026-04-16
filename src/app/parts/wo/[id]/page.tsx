@@ -80,22 +80,31 @@ export default function PartsWOView() {
   }, [])
 
   async function patchLine(lineId: string, data: Record<string, any>) {
+    const line = partLines.find(l => l.id === lineId)
     const res = await fetch(`/api/so-lines/${lineId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, expected_updated_at: line?.updated_at }),
     })
+    if (res.status === 409) {
+      flash('This record was updated by someone else. Refresh and try again.')
+      return res
+    }
     if (res.ok) await loadData()
     return res
   }
 
   // Save to DB without reloading — prevents focus loss on text inputs
   async function saveLineQuiet(lineId: string, data: Record<string, any>) {
-    await fetch(`/api/so-lines/${lineId}`, {
+    const line = partLines.find(l => l.id === lineId)
+    const res = await fetch(`/api/so-lines/${lineId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, expected_updated_at: line?.updated_at }),
     })
+    if (res.status === 409) {
+      flash('This record was updated by someone else. Refresh and try again.')
+    }
   }
 
   function updateLocalLine(lineId: string, field: string, value: any) {

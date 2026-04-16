@@ -89,11 +89,16 @@ export default function QuickViewPage() {
     setTimeSaving(true)
     const hrs = parseFloat(timeValue)
     if (isNaN(hrs) || hrs < 0) { setTimeSaving(false); return }
-    await fetch(`/api/so-lines/${timeModal.id}`, {
+    const res = await fetch(`/api/so-lines/${timeModal.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ estimated_hours: hrs }),
+      body: JSON.stringify({ estimated_hours: hrs, expected_updated_at: timeModal.updated_at }),
     })
+    if (res.status === 409) {
+      alert('This record was updated by someone else. Refresh and try again.')
+      setTimeSaving(false)
+      return
+    }
     setTimeModal(null)
     setTimeValue('')
     await loadData()

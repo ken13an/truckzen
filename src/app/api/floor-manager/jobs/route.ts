@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   // Get all job lines with assignments, WO info, customer, unit
   const { data: lines } = await s.from('so_lines')
-    .select(`id, description, line_status, estimated_hours, actual_hours, required_skills, line_type, assigned_to, parts_status,
+    .select(`id, description, line_status, estimated_hours, actual_hours, required_skills, line_type, assigned_to, parts_status, updated_at,
       service_orders!inner(id, so_number, status, shop_id, customer_id, asset_id, is_historical,
         estimate_required, estimate_approved, estimate_status, invoice_status,
         customers(company_name),
@@ -54,6 +54,7 @@ export async function GET(req: Request) {
       description: line.description,
       status: wja?.status || line.line_status || 'pending',
       estimated_hours: line.estimated_hours,
+      updated_at: line.updated_at,
       required_skills: line.required_skills || [],
       wo_id: wo?.id,
       wo_number: wo?.so_number,

@@ -786,17 +786,20 @@ export default function MechanicDashboardPage() {
                                   e.stopPropagation()
                                   setActionLoading('pickup-grouped')
                                   let failed = 0
+                                  let conflict = false
                                   for (const p of readyParts) {
                                     try {
                                       const res = await fetch(`/api/so-lines/${p.id}`, {
                                         method: 'PATCH',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ parts_status: PARTS_PICKUP_STATUS }),
+                                        body: JSON.stringify({ parts_status: PARTS_PICKUP_STATUS, expected_updated_at: p.updated_at }),
                                       })
+                                      if (res.status === 409) { conflict = true; break }
                                       if (!res.ok) failed++
                                     } catch { failed++ }
                                   }
-                                  if (failed > 0) alert(`${failed} part${failed > 1 ? 's' : ''} could not be confirmed. Please try again.`)
+                                  if (conflict) alert('This record was updated by someone else. Refresh and try again.')
+                                  else if (failed > 0) alert(`${failed} part${failed > 1 ? 's' : ''} could not be confirmed. Please try again.`)
                                   if (user) await fetchData(user.id)
                                   setActionLoading(null)
                                 }}

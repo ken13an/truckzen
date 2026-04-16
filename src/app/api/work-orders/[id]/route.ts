@@ -70,8 +70,8 @@ async function _GET(_req: Request, { params }: Params) {
     base.assigned_tech
       ? ctx.admin.from('users').select('id, full_name, role, team').eq('id', base.assigned_tech).single()
       : Promise.resolve({ data: null }),
-    ctx.admin.from('so_lines').select('id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price, related_labor_line_id').eq('so_id', id),
-    ctx.admin.from('estimates').select('id, estimate_number, status, total, subtotal, tax_amount, customer_email, customer_phone, approval_method, approved_at, customer_notes, sent_at').eq('wo_id', id),
+    ctx.admin.from('so_lines').select('id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, updated_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price, related_labor_line_id').eq('so_id', id),
+    ctx.admin.from('estimates').select('id, estimate_number, status, total, subtotal, tax_amount, customer_email, customer_phone, approval_method, approved_at, customer_notes, sent_at, updated_at').eq('wo_id', id),
     ctx.admin.from('invoices').select('id, invoice_number, status, total, balance_due, amount_paid, due_date').eq('so_id', id),
     ctx.admin.from('wo_notes').select('id, user_id, note_text, visible_to_customer, created_at').eq('wo_id', id),
     ctx.admin.from('wo_files').select('id, user_id, file_url, filename, caption, visible_to_customer, created_at').eq('wo_id', id),
@@ -191,10 +191,41 @@ async function _PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
   }
 
-  const body = await req.json()
+  const body = await req.json().catch(() => null)
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
   const allowedFields = ['status', 'priority', 'team', 'bay', 'assigned_tech', 'complaint', 'cause', 'correction', 'internal_notes', 'customer_id', 'grand_total', 'due_date', 'service_writer_id', 'parts_person_id', 'customer_contact_name', 'customer_contact_phone', 'fleet_contact_name', 'fleet_contact_phone', 'po_number', 'estimate_date', 'promised_date', 'estimate_approved', 'estimate_status', 'approval_method', 'estimate_declined_reason', 'customer_estimate_notes', 'submitted_at']
+  // Shape rules for fields that must be a specific primitive type. Enum
+  // allowlists for status/priority/team are not hardcoded here — status
+  // transitions are policed by VALID_WO_TRANSITIONS below, and no canonical
+  // priority/team constant exists.
+  const fieldTypes: Record<string, 'string' | 'boolean' | 'number'> = {
+    status: 'string', priority: 'string', team: 'string', bay: 'string',
+    assigned_tech: 'string', complaint: 'string', cause: 'string', correction: 'string',
+    internal_notes: 'string', customer_id: 'string', grand_total: 'number',
+    due_date: 'string', service_writer_id: 'string', parts_person_id: 'string',
+    customer_contact_name: 'string', customer_contact_phone: 'string',
+    fleet_contact_name: 'string', fleet_contact_phone: 'string', po_number: 'string',
+    estimate_date: 'string', promised_date: 'string', estimate_approved: 'boolean',
+    estimate_status: 'string', approval_method: 'string',
+    estimate_declined_reason: 'string', customer_estimate_notes: 'string',
+    submitted_at: 'string',
+  }
   const update: Record<string, any> = {}
-  for (const f of allowedFields) if (body[f] !== undefined) update[f] = body[f]
+  for (const f of allowedFields) {
+    if (body[f] === undefined) continue
+    const val = body[f]
+    if (val === null) { update[f] = null; continue }
+    const expected = fieldTypes[f]
+    if (typeof val !== expected) {
+      return NextResponse.json({ error: `Field "${f}" must be ${expected} or null` }, { status: 400 })
+    }
+    if (expected === 'string' && (val as string).length > 5000) {
+      return NextResponse.json({ error: `Field "${f}" too long` }, { status: 400 })
+    }
+    update[f] = val
+  }
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 })
 
   const existingShopId = (existing as any).shop_id as string
@@ -234,8 +265,20 @@ async function _PATCH(req: Request, { params }: Params) {
   // Auto-queue for accounting when WO reaches done (if not already in invoice flow)
   if (update.status === 'done' && !(existing as any).invoice_status) update.invoice_status = 'accounting_review'
 
-  const { data, error } = await ctx.admin.from('service_orders').update(update).eq('id', id).eq('shop_id', existingShopId).select().single()
+  // Optimistic concurrency: when the client sends the last-seen updated_at,
+  // require it to still match before writing. If another actor has updated
+  // the row in the meantime, return 409 so the UI can refresh rather than
+  // silently overwriting their edit. Missing expected_updated_at preserves
+  // legacy behavior for clients that haven't been wired yet.
+  const expectedUpdatedAt = typeof body.expected_updated_at === 'string' ? body.expected_updated_at : null
+  if (!expectedUpdatedAt) return NextResponse.json({ error: 'expected_updated_at is required' }, { status: 400 })
+  let updateQ = ctx.admin.from('service_orders').update(update).eq('id', id).eq('shop_id', existingShopId)
+  if (expectedUpdatedAt) updateQ = updateQ.eq('updated_at', expectedUpdatedAt)
+  const { data, error } = await updateQ.select().maybeSingle()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!data) {
+    return NextResponse.json({ error: 'Conflict', message: 'This record was updated by someone else. Refresh and try again.' }, { status: 409 })
+  }
 
   const changes = Object.keys(update).filter(k => k !== 'updated_at').join(', ')
   await ctx.admin.from('wo_activity_log').insert({ wo_id: id, user_id: ctx.actor.id, action: `Updated: ${changes}` }).then(() => {})
