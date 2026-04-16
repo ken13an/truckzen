@@ -138,13 +138,24 @@ export async function sendPaymentNotifications(woId: string, shopId: string): Pr
 }
 
 async function logNotification(s: any, shopId: string, woId: string, type: string, phone: string | null, email: string | null, status: string, error?: string) {
-  await s.from('notification_log').insert({
+  // Canonical notification_log schema (see supabase/000_full_setup.sql and
+  // lib/notifications/index.ts): shop_id, event, recipients uuid[], channels
+  // text[], message, sent_at. External customer recipients don't have user
+  // UUIDs, so recipients is left empty and the recipient address, wo_id, and
+  // error are packed into `message` as a greppable line. Previous code wrote
+  // invoice-specific columns that don't exist on the table, so every insert
+  // failed silently — this call now also surfaces insert errors to the log.
+  const recipient = email || phone || 'unknown'
+  const event = `invoice.${type}.${status}`
+  const message = `wo=${woId} recipient=${recipient}${error ? ` error=${error}` : ''}`
+  const { error: insertErr } = await s.from('notification_log').insert({
     shop_id: shopId,
-    wo_id: woId,
-    notification_type: type,
-    recipient_phone: phone,
-    recipient_email: email,
-    status,
-    error_message: error || null,
-  }).then(() => {})
+    event,
+    recipients: [],
+    channels: [type],
+    message,
+  })
+  if (insertErr) {
+    console.error('[notification_log] insert failed', { event, error: insertErr.message })
+  }
 }

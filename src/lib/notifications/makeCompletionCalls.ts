@@ -67,8 +67,21 @@ export async function makeCompletionCalls(woId: string, shopId: string) {
 }
 
 async function logNotification(s: any, shopId: string, woId: string, type: string, phone: string | null, email: string | null, status: string, error?: string) {
-  await s.from('notification_log').insert({
-    shop_id: shopId, wo_id: woId, notification_type: type,
-    recipient_phone: phone, recipient_email: email, status, error_message: error || null,
-  }).then(() => {})
+  // Canonical notification_log schema (see supabase/000_full_setup.sql and
+  // lib/notifications/index.ts). Kept in sync with the copy in
+  // sendPaymentNotifications.ts — previous writes to wo_id/recipient_phone/
+  // etc. columns did not exist on the table and failed silently.
+  const recipient = email || phone || 'unknown'
+  const event = `wo.${type}.${status}`
+  const message = `wo=${woId} recipient=${recipient}${error ? ` error=${error}` : ''}`
+  const { error: insertErr } = await s.from('notification_log').insert({
+    shop_id: shopId,
+    event,
+    recipients: [],
+    channels: [type],
+    message,
+  })
+  if (insertErr) {
+    console.error('[notification_log] insert failed', { event, error: insertErr.message })
+  }
 }
