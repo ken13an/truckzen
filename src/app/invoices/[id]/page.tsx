@@ -102,7 +102,13 @@ export default function InvoiceDetailPage() {
   async function sendInvoice() {
     setSending(true)
     await runInvoiceChecks()
-    await fetch(`/api/invoices/${params.id}/send`, { method: 'POST' })
+    const res = await fetch(`/api/invoices/${params.id}/send`, { method: 'POST' })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error || 'Failed to send invoice. Customer was NOT emailed.')
+      setSending(false)
+      return
+    }
     setInvoice((i: any) => ({ ...i, status: 'sent' }))
     setSending(false)
   }
@@ -154,7 +160,12 @@ export default function InvoiceDetailPage() {
       // PATCH existing lines — only update invoice-editable fields
       for (const line of editingLines) {
         if (line.id && originalIds.has(line.id)) {
-          await fetch(`/api/so-lines/${line.id}`, {
+          // The invoice GET returns service_orders.so_lines(*), so each
+          // edited line carries its own updated_at — use it as the
+          // optimistic-concurrency token. On 409 we surface the canonical
+          // message and abort the save loop so partial writes do not occur.
+          const original = originalLines.find((l: any) => l.id === line.id)
+          const lineRes = await fetch(`/api/so-lines/${line.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -163,8 +174,14 @@ export default function InvoiceDetailPage() {
               quantity: line.quantity,
               unit_price: line.unit_price,
               total_price: line.total_price,
+              expected_updated_at: original?.updated_at,
             }),
           })
+          if (lineRes.status === 409) {
+            alert('This record was updated by someone else. Refresh and try again.')
+            setSaving(false)
+            return
+          }
         }
       }
 
@@ -196,11 +213,16 @@ export default function InvoiceDetailPage() {
 
       // Recalculate totals
       const totals = recalcTotals(editingLines)
-      await fetch(`/api/invoices/${params.id}`, {
+      const invRes = await fetch(`/api/invoices/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(totals),
+        body: JSON.stringify({ ...totals, expected_updated_at: invoice?.updated_at }),
       })
+      if (invRes.status === 409) {
+        alert('This record was updated by someone else. Refresh and try again.')
+        setSaving(false)
+        return
+      }
 
       // Refresh
       const refreshRes = await fetch(`/api/invoices/${params.id}`)

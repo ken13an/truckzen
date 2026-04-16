@@ -40,12 +40,21 @@ async function _POST(_req: Request, { params }: P) {
   const recipientEmail = await resolveInvoiceRecipientEmail(supabase, inv.so_id, (inv.customers as any)?.email)
   if (!recipientEmail) return NextResponse.json({ error: 'No email address found for owner/customer or kiosk contact' }, { status: 400 })
 
-  // Generate invoice PDF — direct call, no HTTP
+  // Generate invoice PDF — direct call, no HTTP.
+  // PDF failure is logged clearly but does not block the email; customer
+  // still receives the invoice email and the server log records the missing
+  // attachment for follow-up.
   let pdfAttachments: { filename: string; content: Buffer }[] | undefined
   try {
     const pdfResult = await generateInvoicePdf(id)
-    if (pdfResult) pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
-  } catch { /* non-critical */ }
+    if (!pdfResult) {
+      console.error('[invoice.send] PDF generator returned null — sending email without attachment', { invoiceId: id })
+    } else {
+      pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
+    }
+  } catch (err: any) {
+    console.error('[invoice.send] PDF generation failed — sending email without attachment', { invoiceId: id, error: err?.message || String(err) })
+  }
 
   const emailData = {
     shop:        { name: shop?.name, dba: shop?.dba, phone: shop?.phone, email: shop?.email, address: shop?.address, payment_payee_name: shop?.payment_payee_name, payment_bank_name: shop?.payment_bank_name, payment_ach_account: shop?.payment_ach_account, payment_ach_routing: shop?.payment_ach_routing, payment_wire_account: shop?.payment_wire_account, payment_wire_routing: shop?.payment_wire_routing, payment_zelle_email_1: shop?.payment_zelle_email_1, payment_zelle_email_2: shop?.payment_zelle_email_2, payment_mail_payee: shop?.payment_mail_payee, payment_mail_address: shop?.payment_mail_address, payment_mail_city: shop?.payment_mail_city, payment_mail_state: shop?.payment_mail_state, payment_mail_zip: shop?.payment_mail_zip },
@@ -57,7 +66,10 @@ async function _POST(_req: Request, { params }: P) {
   }
 
   const result = await sendInvoiceEmail(emailData)
-  if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 })
+  if (!result.success) {
+    console.error('[invoice.send] Resend failed', { invoiceId: id, error: result.error })
+    return NextResponse.json({ error: result.error || 'Email delivery failed' }, { status: 500 })
+  }
 
   // Mark invoice as sent
   const now = new Date().toISOString()

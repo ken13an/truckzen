@@ -6,14 +6,14 @@ import { resolveInvoiceRecipientEmail } from '@/lib/notifications/resolveInvoice
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
-export async function sendPaymentNotifications(woId: string, shopId: string) {
+export async function sendPaymentNotifications(woId: string, shopId: string): Promise<{ sent: boolean; emailOk: boolean; emailError?: string; skipped?: boolean; reason?: string }> {
   const s = db()
 
   // Get WO with customer and asset info
   const { data: wo } = await s.from('service_orders')
     .select('id, so_number, customer_id, asset_id, customers(company_name, email, phone, contact_name), assets(unit_number, year, make, model)')
     .eq('id', woId).single()
-  if (!wo) return
+  if (!wo) return { sent: false, emailOk: false, emailError: 'Work order not found', skipped: true, reason: 'wo_missing' }
 
   // Contact resolution — email goes through canonical resolveInvoiceRecipientEmail so
   // this auto-notify path and the accounting manual-send path cannot drift apart.
@@ -33,13 +33,13 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
   if (!inv) {
     console.warn(`[Notification] Skipped WO ${wo.so_number}: invoice not found`)
     await logNotification(s, shopId, woId, 'email', null, email || null, 'skipped', 'Invoice not found')
-    return { skipped: true as const, reason: 'invoice_missing' }
+    return { sent: false, emailOk: false, emailError: 'Invoice not found', skipped: true, reason: 'invoice_missing' }
   }
   const totalNum = typeof inv.total === 'number' ? inv.total : Number(inv.total)
   if (!Number.isFinite(totalNum) || totalNum <= 0) {
     console.warn(`[Notification] Skipped WO ${wo.so_number}: invalid invoice total (${inv.total})`)
     await logNotification(s, shopId, woId, 'email', null, email || null, 'skipped', `Invalid invoice total: ${inv.total}`)
-    return { skipped: true as const, reason: 'invoice_not_ready' }
+    return { sent: false, emailOk: false, emailError: `Invalid invoice total: ${inv.total}`, skipped: true, reason: 'invoice_not_ready' }
   }
   const invoiceId: string = inv.id
   const invoiceNumber: string = inv.invoice_number
@@ -47,32 +47,42 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
 
   const shop = await getShopInfo(shopId)
 
-  // Send email + SMS in parallel
-  const promises: Promise<void>[] = []
+  // Email (awaited so failure can be surfaced) + SMS (still parallel, non-critical).
+  let emailOk = !email // if no email recipient, treat as trivially ok (nothing to send)
+  let emailError: string | undefined = email ? undefined : 'no email recipient'
+
+  const smsPromises: Promise<void>[] = []
 
   // Email with full invoice detail + PDF attachment
   if (email) {
-    promises.push((async () => {
-      try {
-        // Fetch full invoice data for the detailed email template
-        const { data: fullInv } = await s.from('invoices')
-          .select('*, service_orders(so_number, complaint, cause, correction, assets(unit_number,year,make,model,odometer), users!assigned_tech(full_name), so_lines(line_type, description, real_name, part_number, quantity, unit_price, total_price, parts_sell_price, billed_hours, estimated_hours, actual_hours, parts_status, related_labor_line_id)), shops(name,dba,phone,email,address,payment_payee_name,payment_bank_name,payment_ach_account,payment_ach_routing,payment_wire_account,payment_wire_routing,payment_zelle_email_1,payment_zelle_email_2,payment_mail_payee,payment_mail_address,payment_mail_address_2,payment_mail_city,payment_mail_state,payment_mail_zip,payment_note)')
-          .eq('id', invoiceId).single()
+    try {
+      // Fetch full invoice data for the detailed email template
+      const { data: fullInv } = await s.from('invoices')
+        .select('*, service_orders(so_number, complaint, cause, correction, assets(unit_number,year,make,model,odometer), users!assigned_tech(full_name), so_lines(line_type, description, real_name, part_number, quantity, unit_price, total_price, parts_sell_price, billed_hours, estimated_hours, actual_hours, parts_status, related_labor_line_id)), shops(name,dba,phone,email,address,payment_payee_name,payment_bank_name,payment_ach_account,payment_ach_routing,payment_wire_account,payment_wire_routing,payment_zelle_email_1,payment_zelle_email_2,payment_mail_payee,payment_mail_address,payment_mail_address_2,payment_mail_city,payment_mail_state,payment_mail_zip,payment_note)')
+        .eq('id', invoiceId).single()
 
-        if (!fullInv) {
-          await logNotification(s, shopId, woId, 'email', null, email, 'failed', 'Invoice not found for email')
-          return
-        }
-
+      if (!fullInv) {
+        emailError = 'Invoice not found for email'
+        console.error('[sendPaymentNotifications] Invoice not found for email', { woId, invoiceId })
+        await logNotification(s, shopId, woId, 'email', null, email, 'failed', emailError)
+      } else {
         const so = fullInv.service_orders as any
         const shopData = fullInv.shops as any
 
-        // Generate PDF attachment
+        // Generate PDF attachment — failure is logged but does not block the
+        // email. Customer still receives the invoice; server log captures the
+        // missing attachment for follow-up.
         let pdfAttachments: { filename: string; content: Buffer }[] | undefined
         try {
           const pdfResult = await generateInvoicePdf(invoiceId)
-          if (pdfResult) pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
-        } catch { /* PDF non-critical */ }
+          if (!pdfResult) {
+            console.error('[sendPaymentNotifications] PDF generator returned null — sending email without attachment', { invoiceId })
+          } else {
+            pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
+          }
+        } catch (pdfErr: any) {
+          console.error('[sendPaymentNotifications] PDF generation failed — sending email without attachment', { invoiceId, error: pdfErr?.message || String(pdfErr) })
+        }
 
         const result = await sendInvoiceEmail({
           shop: { name: shopData?.name, dba: shopData?.dba, phone: shopData?.phone, email: shopData?.email, address: shopData?.address, payment_payee_name: shopData?.payment_payee_name, payment_bank_name: shopData?.payment_bank_name, payment_ach_account: shopData?.payment_ach_account, payment_ach_routing: shopData?.payment_ach_routing, payment_wire_account: shopData?.payment_wire_account, payment_wire_routing: shopData?.payment_wire_routing, payment_zelle_email_1: shopData?.payment_zelle_email_1, payment_zelle_email_2: shopData?.payment_zelle_email_2, payment_mail_payee: shopData?.payment_mail_payee, payment_mail_address: shopData?.payment_mail_address, payment_mail_city: shopData?.payment_mail_city, payment_mail_state: shopData?.payment_mail_state, payment_mail_zip: shopData?.payment_mail_zip },
@@ -84,19 +94,24 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
         })
 
         if (result.success) {
+          emailOk = true
           await logNotification(s, shopId, woId, 'email', null, email, 'sent')
         } else {
-          await logNotification(s, shopId, woId, 'email', null, email, 'failed', result.error)
+          emailError = result.error || 'Resend returned failure'
+          console.error('[sendPaymentNotifications] Resend failed', { invoiceId, email, error: emailError })
+          await logNotification(s, shopId, woId, 'email', null, email, 'failed', emailError)
         }
-      } catch (err: any) {
-        await logNotification(s, shopId, woId, 'email', null, email, 'failed', err.message)
       }
-    })())
+    } catch (err: any) {
+      emailError = err?.message || String(err)
+      console.error('[sendPaymentNotifications] Email path threw', { invoiceId, email, error: emailError })
+      await logNotification(s, shopId, woId, 'email', null, email, 'failed', emailError)
+    }
   }
 
   // SMS via Twilio
   if (phone) {
-    promises.push((async () => {
+    smsPromises.push((async () => {
       try {
         const twilio = (await import('twilio')).default
         const client = twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
@@ -118,8 +133,8 @@ export async function sendPaymentNotifications(woId: string, shopId: string) {
     console.warn(`[Notification] No contact info for WO ${wo.so_number}`)
   }
 
-  await Promise.all(promises)
-  return { sent: true as const }
+  await Promise.all(smsPromises)
+  return { sent: emailOk, emailOk, emailError }
 }
 
 async function logNotification(s: any, shopId: string, woId: string, type: string, phone: string | null, email: string | null, status: string, error?: string) {

@@ -109,10 +109,26 @@ export async function POST(req: Request) {
       action: 'Accounting approved and sent invoice to customer',
     })
 
-    // Send payment notifications
-    sendPaymentNotifications(wo_id, wo.shop_id).catch(err => {
-      console.error('[Accounting] Payment notification failed:', err)
-    })
+    // Send payment notifications — awaited so the real email result surfaces
+    // to the user instead of being silently dropped. DB-side "sent" flags
+    // above are already committed, so email failure surfaces as a 200 + warning
+    // payload rather than a 500 (which would misleadingly imply the whole
+    // approve failed and the DB was not updated).
+    let notifyResult: Awaited<ReturnType<typeof sendPaymentNotifications>> | null = null
+    let emailWarning: string | undefined
+    try {
+      notifyResult = await sendPaymentNotifications(wo_id, wo.shop_id)
+    } catch (err: any) {
+      console.error('[Accounting] Payment notification threw:', err?.message || err)
+      emailWarning = err?.message || 'unknown'
+    }
+    if (notifyResult && !notifyResult.emailOk) {
+      console.error('[Accounting] Invoice email failed', { wo_id, emailError: notifyResult.emailError })
+      emailWarning = notifyResult.emailError || 'unknown'
+    }
+    if (emailWarning) {
+      console.error('[Accounting] Approve succeeded with email warning', { wo_id, emailWarning })
+    }
 
     // Notify service writer
     if (wo.service_writer_id) {
@@ -126,7 +142,11 @@ export async function POST(req: Request) {
       } catch {}
     }
 
-    return NextResponse.json({ success: true, action: 'approved' })
+    return NextResponse.json(
+      emailWarning
+        ? { success: true, action: 'approved', warning: 'Invoice saved, but customer email failed', email_error: emailWarning }
+        : { success: true, action: 'approved' }
+    )
   }
 
   if (action === 'return') {
