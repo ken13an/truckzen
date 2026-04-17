@@ -1281,7 +1281,7 @@ export default function WorkOrderDetail() {
                   {!wo.is_historical && !isViewOnly && (() => {
                     const as = line.approval_status || 'pre_approved'
                     const AB: Record<string, { bg: string; color: string; label: string }> = {
-                      pre_approved: { bg: 'var(--tz-successBg)', color: GREEN, label: 'Pre-Approved' },
+                      pre_approved: { bg: 'var(--tz-successBg)', color: GREEN, label: 'Pre-Quoted' },
                       needs_approval: { bg: 'var(--tz-warningBg)', color: AMBER, label: 'Needs Approval' },
                       pending: { bg: 'var(--tz-warningBg)', color: AMBER, label: 'Pending' },
                       approved: { bg: 'var(--tz-successBg)', color: GREEN, label: 'Approved' },
