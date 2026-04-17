@@ -282,9 +282,11 @@ export default function HomePage() {
 
       {/* ── S7: VISION ── */}
       <section style={{ ...secStyle, minHeight: 'auto' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', border: `1px solid ${LANDING.accentBorder}`, borderRadius: 16, padding: 48, background: LANDING.accentBg2, textAlign: 'left' }}>
-          <h3 style={{ fontSize: 28, fontWeight: 700, color: LANDING.white, marginBottom: 16 }}>Where we&apos;re headed</h3>
-          <p style={{ fontSize: 16, color: DIM, lineHeight: 1.7, margin: 0 }}>TruckZen is building toward a future where trucks communicate directly with shops. Predictive maintenance before breakdowns happen. Automated repair authorization for autonomous fleets. The infrastructure for the next era of heavy-duty starts here.</p>
+        <div style={{ position: 'relative', overflow: 'hidden', maxWidth: 800, margin: '0 auto', border: `1px solid ${LANDING.accentBorder}`, borderRadius: 16, padding: 48, background: LANDING.accentBg2, textAlign: 'left', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+          <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 55% at 88% 0%, ${LANDING.accentBg4} 0%, transparent 65%)`, pointerEvents: 'none' }} />
+          <div aria-hidden style={{ position: 'absolute', left: 40, right: 40, bottom: 0, height: 1, background: `linear-gradient(90deg, transparent 0%, ${LANDING.accentBorder} 50%, transparent 100%)`, pointerEvents: 'none' }} />
+          <h3 style={{ position: 'relative', fontSize: 28, fontWeight: 700, color: LANDING.white, marginBottom: 16, letterSpacing: '-.01em' }}>Where we&apos;re headed</h3>
+          <p style={{ position: 'relative', fontSize: 16, color: DIM, lineHeight: 1.7, margin: 0 }}>TruckZen is building toward a future where trucks communicate directly with shops. Predictive maintenance before breakdowns happen. Automated repair authorization for autonomous fleets. The infrastructure for the next era of heavy-duty starts here.</p>
         </div>
       </section>
 
