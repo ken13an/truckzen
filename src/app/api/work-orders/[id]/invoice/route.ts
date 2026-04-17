@@ -125,7 +125,7 @@ async function _POST(req: Request, { params }: Params) {
         shop_id: wo.shop_id, so_id: id, customer_id: wo.customer_id || null,
         invoice_number: invNum, status: 'sent',
         subtotal, tax_amount: taxAmount, total,
-        balance_due: total, amount_paid: 0,
+        amount_paid: 0,
         due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       })
       if (insertErr) {
@@ -134,7 +134,7 @@ async function _POST(req: Request, { params }: Params) {
       }
     } else {
       const priorPaid = existingInv.amount_paid || 0
-      const { error: updateErr } = await s.from('invoices').update({ status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total - priorPaid }).eq('id', existingInv.id)
+      const { error: updateErr } = await s.from('invoices').update({ status: 'sent', subtotal, tax_amount: taxAmount, total }).eq('id', existingInv.id)
       if (updateErr) {
         console.error('[work-orders.invoice] invoice update failed', { wo_id: id, invoiceId: existingInv.id, error: updateErr.message })
         return NextResponse.json({ error: 'Failed to update invoice: ' + updateErr.message }, { status: 500 })
@@ -164,7 +164,6 @@ async function _POST(req: Request, { params }: Params) {
       await s.from('invoices').update({
         status: 'paid',
         amount_paid: inv.total || 0,
-        balance_due: 0,
         paid_at: now,
       }).eq('id', inv.id)
     }

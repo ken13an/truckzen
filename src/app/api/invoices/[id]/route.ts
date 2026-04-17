@@ -62,7 +62,7 @@ async function _PATCH(req: Request, { params }: P) {
     return NextResponse.json({ error: `Invoice is locked — ${current.status} invoices cannot be edited directly` }, { status: 403 })
   }
 
-  const updateable = ['status','due_date','tax_rate','tax_amount','subtotal','total','balance_due','amount_paid','notes','payment_method','paid_at']
+  const updateable = ['status','due_date','tax_amount','subtotal','total','amount_paid','notes','payment_method','paid_at']
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }
   // Bump updated_at so optimistic-concurrency precondition works on this route.

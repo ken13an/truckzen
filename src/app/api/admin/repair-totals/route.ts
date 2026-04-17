@@ -75,14 +75,7 @@ export async function POST(req: Request) {
         subtotal: Math.round(subtotal * 100) / 100,
         tax_amount: Math.round(taxAmount * 100) / 100,
         total: grandTotal,
-        balance_due: grandTotal, // Will be corrected if amount_paid exists
       }).eq('id', inv.id)
-
-      // Correct balance_due if amount_paid exists
-      const { data: invFull } = await s.from('invoices').select('amount_paid').eq('id', inv.id).single()
-      if (invFull && invFull.amount_paid > 0) {
-        await s.from('invoices').update({ balance_due: Math.max(0, grandTotal - (invFull.amount_paid || 0)) }).eq('id', inv.id)
-      }
     }
 
     repaired++

@@ -88,7 +88,7 @@ export async function POST(req: Request) {
         invoice_number: invNum,
         status: 'sent',
         subtotal, tax_amount: taxAmount, total,
-        balance_due: total, amount_paid: 0,
+        amount_paid: 0,
         due_date: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       })
       if (insertErr) {
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
     } else {
       const priorPaid = existingInv.amount_paid || 0
       const { error: updateErr } = await s.from('invoices').update({
-        status: 'sent', subtotal, tax_amount: taxAmount, total, balance_due: total - priorPaid,
+        status: 'sent', subtotal, tax_amount: taxAmount, total,
       }).eq('id', existingInv.id)
       if (updateErr) {
         console.error('[accounting.approve] invoice update failed', { wo_id, invoiceId: existingInv.id, error: updateErr.message })

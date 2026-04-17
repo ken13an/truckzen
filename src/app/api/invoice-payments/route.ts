@@ -70,7 +70,6 @@ export async function POST(req: Request) {
   await s.from('invoices').update({
     status: newStatus,
     amount_paid: totalPaid,
-    balance_due: balanceDue,
     payment_method,
     paid_at: newStatus === 'paid' ? new Date().toISOString() : null,
     updated_at: new Date().toISOString(),
