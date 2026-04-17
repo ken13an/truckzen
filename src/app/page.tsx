@@ -315,16 +315,18 @@ export default function HomePage() {
       <div style={dividerStyle} />
 
       {/* ── S9: BOTTOM CTA ── */}
-      <section id="contact" style={secStyle}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8, lineHeight: 1.1 }}>
+      <section id="contact" style={{ ...secStyle, position: 'relative', overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 75% 55% at 50% 0%, ${LANDING.accentBg4} 0%, transparent 65%)`, pointerEvents: 'none' }} />
+        <div aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 120, background: `linear-gradient(180deg, transparent 0%, ${LANDING.bg} 100%)`, pointerEvents: 'none' }} />
+        <h2 style={{ position: 'relative', fontSize: 'clamp(36px, 5.5vw, 60px)', fontWeight: 800, letterSpacing: '-.035em', color: LANDING.white, marginBottom: 12, lineHeight: 1.05 }}>
           The future of heavy-duty<br /><span style={{ color: BLUE }}>starts here.</span>
         </h2>
-        <p style={{ fontSize: 18, color: DIM, maxWidth: 520, margin: '0 auto 32px' }}>See how TruckZen connects your shop, your fleet, and your people.</p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24 }}>
-          <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: LANDING.white, fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: `0 4px 24px ${LANDING.accentShadow}` }}>Book a demo</a>
-          <a href="mailto:info@truckzen.pro" style={{ padding: '14px 36px', color: LANDING.white, fontSize: 16, fontWeight: 600, borderRadius: 12, border: `1px solid ${LANDING.borderStrong}`, textDecoration: 'none' }}>Contact us</a>
+        <p style={{ position: 'relative', fontSize: 18, color: DIM, maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.6 }}>See how TruckZen connects your shop, your fleet, and your people.</p>
+        <div style={{ position: 'relative', display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 28, flexWrap: 'wrap' }}>
+          <a href="mailto:demo@truckzen.pro" className="tz-s9-cta-primary" style={{ padding: '16px 40px', background: BLUE, color: LANDING.white, fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: `0 4px 24px ${LANDING.accentShadow}`, minHeight: 44, textAlign: 'center', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>Book a demo</a>
+          <a href="mailto:info@truckzen.pro" className="tz-s9-cta-secondary" style={{ padding: '16px 40px', color: LANDING.white, fontSize: 16, fontWeight: 600, borderRadius: 12, border: `1px solid ${LANDING.borderStrong}`, textDecoration: 'none', minHeight: 44, textAlign: 'center', background: LANDING.surface1, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', transition: 'border-color 0.2s ease, background 0.2s ease' }}>Contact us</a>
         </div>
-        <div style={{ fontSize: 13, color: DIM }}>
+        <div style={{ position: 'relative', fontSize: 13, color: DIM }}>
           <a href="mailto:demo@truckzen.pro" style={{ color: BLUE, textDecoration: 'none' }}>demo@truckzen.pro</a>
           {' \u00B7 '}
           <a href="mailto:info@truckzen.pro" style={{ color: BLUE, textDecoration: 'none' }}>info@truckzen.pro</a>
@@ -399,6 +401,10 @@ export default function HomePage() {
         .tz-s8-row { transition: background 0.2s ease; }
         .tz-s8-row:last-child { border-bottom: none; }
         .tz-s8-row:hover { background: ${LANDING.surface2}; }
+        .tz-s9-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 32px ${LANDING.accentShadow}; }
+        .tz-s9-cta-secondary:hover { border-color: ${LANDING.buttonBorder}; background: ${LANDING.surface2}; }
+        .tz-s9-cta-primary:focus-visible,
+        .tz-s9-cta-secondary:focus-visible { outline: 2px solid ${LANDING.white}; outline-offset: 3px; }
         @media (prefers-reduced-motion: reduce) {
           .tz-hero-pulse-dot,
           .tz-hero-scroll-bob { animation: none !important; }
@@ -411,8 +417,11 @@ export default function HomePage() {
           .tz-s5-card,
           .tz-s5-card .tz-s5-sweep,
           .tz-s6-badge,
-          .tz-s8-row { transition: none; }
-          .tz-hero-cta-primary:hover { transform: none; }
+          .tz-s8-row,
+          .tz-s9-cta-primary,
+          .tz-s9-cta-secondary { transition: none; }
+          .tz-hero-cta-primary:hover,
+          .tz-s9-cta-primary:hover { transform: none; }
         }
       `}</style>
     </div>
