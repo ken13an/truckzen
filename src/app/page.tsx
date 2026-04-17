@@ -84,27 +84,32 @@ export default function HomePage() {
       </nav>
 
       {/* ── S1: HERO ── */}
-      <section style={{ ...secStyle, minHeight: '100vh', overflow: 'hidden' }}>
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '100%' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 11, color: DIM, fontWeight: 500, marginBottom: 32, background: LANDING.surface1 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE, animation: 'tz-lp-pulse 2s infinite' }} />
+      <section style={{ ...secStyle, padding: '160px 24px 120px', minHeight: '100vh', overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 85% 60% at 50% 0%, ${LANDING.accentBg5} 0%, transparent 65%)`, pointerEvents: 'none', zIndex: 0 }} />
+        <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 55% 50% at 18% 45%, ${LANDING.accentBg3} 0%, transparent 65%)`, pointerEvents: 'none', zIndex: 0 }} />
+        <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 55% 50% at 82% 45%, ${LANDING.accentBg3} 0%, transparent 65%)`, pointerEvents: 'none', zIndex: 0 }} />
+        <div aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 180, background: `linear-gradient(180deg, transparent 0%, ${LANDING.bg} 100%)`, pointerEvents: 'none', zIndex: 0 }} />
+
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 980, width: '100%', margin: '0 auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 11, color: DIM, fontWeight: 500, marginBottom: 36, background: LANDING.surface1, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+            <div className="tz-hero-pulse-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE, animation: 'tz-lp-pulse 2s infinite' }} />
             Now in production
           </div>
-          <h1 style={{ fontSize: 'clamp(24px, 6vw, 56px)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-.04em', color: LANDING.white, marginBottom: 24 }}>
+          <h1 style={{ fontSize: 'clamp(32px, 7.5vw, 76px)', fontWeight: 800, lineHeight: 1.02, letterSpacing: '-.045em', color: LANDING.white, marginBottom: 28, maxWidth: 880, marginLeft: 'auto', marginRight: 'auto' }}>
             You run the company.<br /><span style={{ color: BLUE }}>TruckZen runs everything&nbsp;else.</span>
           </h1>
-          <p style={{ fontSize: 'clamp(14px, 3vw, 18px)', color: DIM, lineHeight: 1.6, maxWidth: 560, margin: '0 auto 24px' }}>One platform for your entire heavy-duty operation.</p>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
+          <p style={{ fontSize: 'clamp(15px, 3vw, 20px)', color: DIM, lineHeight: 1.6, maxWidth: 600, margin: '0 auto 36px' }}>One platform for your entire heavy-duty operation.</p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 40 }}>
             {['Shop', 'Fleet', 'Parts', 'People'].map(t => (
-              <span key={t} style={{ padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: DIM, fontWeight: 500, background: LANDING.surface1 }}>{t}</span>
+              <span key={t} style={{ padding: '6px 16px', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: DIM, fontWeight: 500, background: LANDING.surface1, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>{t}</span>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="mailto:demo@truckzen.pro" style={{ padding: '14px 36px', background: BLUE, color: LANDING.white, fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: `0 4px 24px ${LANDING.accentShadow}`, minHeight: 44, textAlign: 'center' }}>Book a demo</a>
-            <a href="#platform" style={{ padding: '14px 36px', color: LANDING.white, fontSize: 16, fontWeight: 600, borderRadius: 12, border: `1px solid ${LANDING.borderStrong}`, textDecoration: 'none', minHeight: 44, textAlign: 'center' }}>Learn more</a>
+            <a href="mailto:demo@truckzen.pro" className="tz-hero-cta-primary" style={{ padding: '16px 40px', background: BLUE, color: LANDING.white, fontSize: 16, fontWeight: 700, borderRadius: 12, textDecoration: 'none', boxShadow: `0 4px 24px ${LANDING.accentShadow}`, minHeight: 44, textAlign: 'center', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>Book a demo</a>
+            <a href="#platform" className="tz-hero-cta-secondary" style={{ padding: '16px 40px', color: LANDING.white, fontSize: 16, fontWeight: 600, borderRadius: 12, border: `1px solid ${LANDING.borderStrong}`, textDecoration: 'none', minHeight: 44, textAlign: 'center', background: LANDING.surface1, backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', transition: 'border-color 0.2s ease, background 0.2s ease' }}>Learn more</a>
           </div>
         </div>
-        <div style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', color: DIM, fontSize: 11, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, animation: 'tz-lp-bob 2s infinite' }}>
+        <div className="tz-hero-scroll-bob" style={{ position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)', color: DIM, fontSize: 11, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, animation: 'tz-lp-bob 2s infinite', zIndex: 1 }}>
           Scroll
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" /></svg>
         </div>
@@ -356,6 +361,17 @@ export default function HomePage() {
       <style>{`
         @keyframes tz-lp-pulse { 0%,100% { opacity:1 } 50% { opacity:.4 } }
         @keyframes tz-lp-bob { 0%,100% { transform:translateX(-50%) translateY(0) } 50% { transform:translateX(-50%) translateY(6px) } }
+        .tz-hero-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 32px ${LANDING.accentShadow}; }
+        .tz-hero-cta-secondary:hover { border-color: ${LANDING.buttonBorder}; background: ${LANDING.surface2}; }
+        .tz-hero-cta-primary:focus-visible,
+        .tz-hero-cta-secondary:focus-visible { outline: 2px solid ${LANDING.white}; outline-offset: 3px; }
+        @media (prefers-reduced-motion: reduce) {
+          .tz-hero-pulse-dot,
+          .tz-hero-scroll-bob { animation: none !important; }
+          .tz-hero-cta-primary,
+          .tz-hero-cta-secondary { transition: none; }
+          .tz-hero-cta-primary:hover { transform: none; }
+        }
       `}</style>
     </div>
   )
