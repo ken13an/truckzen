@@ -49,9 +49,19 @@ export default function CustomerProfilePage() {
   const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    const el = () => Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0)
+    const tlog = (stage: string, extra?: Record<string, any>) => {
+      const kv = extra ? Object.entries(extra).map(([k, v]) => ` ${k}=${v}`).join('') : ''
+      console.log(`[customers.detail.timing.client] stage=${stage} cid=${id} elapsed_ms=${el()}${kv}`)
+    }
+
     let cancelled = false
+    let done = false
+    tlog('effect_start')
     const timeout = setTimeout(() => {
       if (!cancelled && loading) {
+        tlog('timer_fire', { done, cancelled })
         setLoading(false)
         setLoadError('Loading timed out. Please refresh the page.')
       }
@@ -59,32 +69,42 @@ export default function CustomerProfilePage() {
 
     async function load() {
       try {
+        tlog('before_getCurrentUser')
         const profile = await getCurrentUser(supabase)
+        tlog('after_getCurrentUser', { has_profile: !!profile })
         if (!profile) { router.push('/login'); return }
         if (cancelled) return
         setUser(profile)
 
         // Fetch customer data (includes assets + service_orders via API)
+        tlog('before_fetch_api')
         const res = await fetch(`/api/customers/${id}?shop_id=${profile.shop_id}`)
-        if (!res.ok) { router.push('/customers'); return }
+        tlog('after_fetch_api', { ok: res.ok, status: res.status })
+        if (!res.ok) { tlog('redirect_not_ok'); router.push('/customers'); return }
         if (cancelled) return
         const data = await res.json()
+        tlog('after_res_json')
         setCustomer(data)
         setUnits(data.assets || [])
         setWorkOrders(data.service_orders || [])
 
         // Fetch contacts and documents in parallel
+        tlog('before_contacts_docs')
         const [contactsRes, docsRes] = await Promise.all([
           supabase.from('customer_contacts').select('*').eq('customer_id', id).order('is_primary', { ascending: false }),
           supabase.from('customer_documents').select('*').eq('customer_id', id).order('created_at', { ascending: false }),
         ])
+        tlog('after_contacts_docs', { contacts: contactsRes.data?.length ?? 0, docs: docsRes.data?.length ?? 0 })
         if (cancelled) return
         setContacts(contactsRes.data || [])
         setDocuments(docsRes.data || [])
       } catch (err: any) {
+        tlog('catch_branch', { msg: JSON.stringify(err?.message || String(err)) })
         if (!cancelled) setLoadError(err.message || 'Failed to load customer')
       }
+      done = true
       if (!cancelled) setLoading(false)
+      tlog('load_finished', { done, cancelled })
     }
     load()
 
