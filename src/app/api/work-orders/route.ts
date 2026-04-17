@@ -273,6 +273,9 @@ async function _POST(req: Request) {
   // Guard: empty array must fall back to complaint ([] is truthy in JS)
   const lines = isDraftSave ? [] : (job_lines && job_lines.length > 0 ? job_lines : [(complaint || '').trim()])
   let laborLinesCreated = 0
+  const lineApprovalDefaults = (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer')
+    ? { approval_status: 'needs_approval' as const, approval_required: true }
+    : { approval_status: 'pre_approved' as const, approval_required: false }
   try {
   for (let i = 0; i < lines.length; i++) {
     const line: any = lines[i]
@@ -293,6 +296,7 @@ async function _POST(req: Request) {
       required_skills: lineSkills,
       tire_position: (typeof line === 'object' && line.tire_position) || null,
       customer_provides_parts: (typeof line === 'object' && line.customer_provides_parts) || false,
+      ...lineApprovalDefaults,
     }).select('id').single()
     const laborLineId = laborLine?.id || null
     if (laborLineId) laborLinesCreated++
@@ -341,6 +345,7 @@ async function _POST(req: Request) {
         parts_sell_price: inv ? (inv.sell_price || 0) : null,
         parts_status: 'rough',
         related_labor_line_id: laborLineId,
+        ...lineApprovalDefaults,
       })
       partsCreated++
     }
@@ -351,6 +356,7 @@ async function _POST(req: Request) {
       await s.from('so_lines').insert({
         so_id: wo.id, line_type: 'part', description: roughName, rough_name: roughName,
         quantity: 1, unit_price: 0, parts_status: 'rough', related_labor_line_id: laborLineId,
+        ...lineApprovalDefaults,
       })
     }
   }

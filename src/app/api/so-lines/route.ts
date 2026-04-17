@@ -69,7 +69,7 @@ async function _POST(req: Request) {
     return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
   }
 
-  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status, is_historical').eq('id', so_id).single()
+  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status, is_historical, ownership_type').eq('id', so_id).single()
   if (!so || so.shop_id !== ctx.shopId) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
 
   if (so.is_historical) {
@@ -84,6 +84,10 @@ async function _POST(req: Request) {
   const qty = parseFloat(quantity) || 1
   const price = parseFloat(unit_price) || 0
 
+  const lineApprovalDefaults = (so.ownership_type === 'owner_operator' || so.ownership_type === 'outside_customer')
+    ? { approval_status: 'needs_approval' as const, approval_required: true }
+    : { approval_status: 'pre_approved' as const, approval_required: false }
+
   const { data, error } = await ctx.admin.from('so_lines').insert({
     so_id,
     line_type,
@@ -96,6 +100,7 @@ async function _POST(req: Request) {
     rough_name: rough_name?.trim() || null,
     parts_status: parts_status || null,
     related_labor_line_id: related_labor_line_id || null,
+    ...lineApprovalDefaults,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

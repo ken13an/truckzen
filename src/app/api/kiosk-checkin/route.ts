@@ -102,6 +102,17 @@ export async function POST(req: Request) {
     }
   }
 
+  // Snapshot ownership_type from asset for default line approval state
+  let kioskOwnership = 'fleet_asset'
+  if (finalUnitId) {
+    const { data: assetOwn } = await s.from('assets').select('ownership_type, is_owner_operator').eq('id', finalUnitId).single()
+    if (assetOwn?.ownership_type) kioskOwnership = assetOwn.ownership_type
+    if (assetOwn?.is_owner_operator) kioskOwnership = 'owner_operator'
+  }
+  const lineApprovalDefaults = (kioskOwnership === 'owner_operator' || kioskOwnership === 'outside_customer')
+    ? { approval_status: 'needs_approval' as const, approval_required: true }
+    : { approval_status: 'pre_approved' as const, approval_required: false }
+
   // Create WO with atomic number generation + retry
   const portalToken = crypto.randomUUID()
   const { data: wo, error: woErr } = await insertServiceOrder(s, shop_id, {
@@ -167,6 +178,7 @@ export async function POST(req: Request) {
           unit_price: 0,
           line_status: 'unassigned',
           required_skills: skills,
+          ...lineApprovalDefaults,
         })
       }
     }
@@ -179,6 +191,7 @@ export async function POST(req: Request) {
       quantity: 0,
       unit_price: 0,
       line_status: 'unassigned',
+      ...lineApprovalDefaults,
     })
   }
 
