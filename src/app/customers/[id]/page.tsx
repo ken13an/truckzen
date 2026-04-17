@@ -49,18 +49,9 @@ export default function CustomerProfilePage() {
   const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
-    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
-    const el = () => Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0)
-    const tlog = (stage: string, extra?: Record<string, any>) => {
-      const kv = extra ? Object.entries(extra).map(([k, v]) => ` ${k}=${v}`).join('') : ''
-      console.log(`[customers.detail.timing.client] stage=${stage} cid=${id} elapsed_ms=${el()}${kv}`)
-    }
-
     let cancelled = false
     let done = false
-    tlog('effect_start')
     const timeout = setTimeout(() => {
-      tlog('timer_fire', { done, cancelled })
       if (!cancelled && !done) {
         setLoading(false)
         setLoadError('Loading timed out. Please refresh the page.')
@@ -70,25 +61,16 @@ export default function CustomerProfilePage() {
     async function loadProfileWithLockRetry() {
       const MAX_ATTEMPTS = 3
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        tlog('before_getCurrentUser', { attempt })
         try {
-          const p = await getCurrentUser(supabase)
-          tlog('after_getCurrentUser', { attempt, has_profile: !!p })
-          return p
+          return await getCurrentUser(supabase)
         } catch (e: any) {
           const m = e?.message || String(e)
           const isAuthLock =
             /Lock was stolen by another request/i.test(m) ||
             /Lock\s+".*-auth-token".*not released/i.test(m) ||
             /acquiring.*lock/i.test(m)
-          tlog('auth_error', { attempt, is_lock: isAuthLock, msg: JSON.stringify(m) })
-          if (!isAuthLock || attempt === MAX_ATTEMPTS) {
-            tlog('auth_retry_gave_up', { attempt, is_lock: isAuthLock })
-            throw e
-          }
-          const delay = 250 * attempt
-          tlog('auth_retry_delay', { attempt, delay_ms: delay })
-          await new Promise(r => setTimeout(r, delay))
+          if (!isAuthLock || attempt === MAX_ATTEMPTS) throw e
+          await new Promise(r => setTimeout(r, 250 * attempt))
         }
       }
       return null
@@ -102,35 +84,28 @@ export default function CustomerProfilePage() {
         setUser(profile)
 
         // Fetch customer data (includes assets + service_orders via API)
-        tlog('before_fetch_api')
         const res = await fetch(`/api/customers/${id}?shop_id=${profile.shop_id}`)
-        tlog('after_fetch_api', { ok: res.ok, status: res.status })
-        if (!res.ok) { tlog('redirect_not_ok'); router.push('/customers'); return }
+        if (!res.ok) { router.push('/customers'); return }
         if (cancelled) return
         const data = await res.json()
-        tlog('after_res_json')
         setCustomer(data)
         setUnits(data.assets || [])
         setWorkOrders(data.service_orders || [])
 
         // Fetch contacts and documents in parallel
-        tlog('before_contacts_docs')
         const [contactsRes, docsRes] = await Promise.all([
           supabase.from('customer_contacts').select('*').eq('customer_id', id).order('is_primary', { ascending: false }),
           supabase.from('customer_documents').select('*').eq('customer_id', id).order('created_at', { ascending: false }),
         ])
-        tlog('after_contacts_docs', { contacts: contactsRes.data?.length ?? 0, docs: docsRes.data?.length ?? 0 })
         if (cancelled) return
         setContacts(contactsRes.data || [])
         setDocuments(docsRes.data || [])
       } catch (err: any) {
-        tlog('catch_branch', { msg: JSON.stringify(err?.message || String(err)) })
         if (!cancelled) setLoadError(err.message || 'Failed to load customer')
       }
       done = true
       clearTimeout(timeout)
       if (!cancelled) setLoading(false)
-      tlog('load_finished', { done, cancelled })
     }
     load()
 

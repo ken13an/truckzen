@@ -5,17 +5,8 @@ import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 type P = { params: Promise<{ id: string }> }
 
 export async function GET(req: Request, { params }: P) {
-  const t0 = Date.now()
   const { id } = await params
-  const el = () => Date.now() - t0
-  const tlog = (stage: string, extra?: Record<string, any>) => {
-    const kv = extra ? Object.entries(extra).map(([k, v]) => ` ${k}=${v}`).join('') : ''
-    console.log(`[customers.detail.timing.api] stage=${stage} cid=${id} elapsed_ms=${el()}${kv}`)
-  }
-  tlog('route_entry')
-
   const ctx = await requireRouteContext()
-  tlog('after_requireRouteContext', { has_actor: !!ctx.actor, has_admin: !!ctx.admin, ctx_error: !!ctx.error })
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const requestedShopId = new URL(req.url).searchParams.get('shop_id')
   const shopScope = ctx.actor.is_platform_owner && requestedShopId ? requestedShopId : ctx.shopId
@@ -27,23 +18,18 @@ export async function GET(req: Request, { params }: P) {
     kiosk_checkins(id, unit_number, company_name, contact_name, complaint_en, checkin_ref, status, created_at)
   `).eq('id', id)
   if (shopScope) q = q.eq('shop_id', shopScope)
-  tlog('before_customers_query', { shop_scope: shopScope })
   const { data, error } = await q.single()
-  tlog('after_customers_query', { fail: !!error, err_code: error?.code })
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Fetch service_orders separately with limit to prevent timeout on large history
-  tlog('before_service_orders_query')
-  const { data: serviceOrders, error: soError } = await ctx.admin.from('service_orders')
+  const { data: serviceOrders } = await ctx.admin.from('service_orders')
     .select('id, so_number, status, priority, complaint, grand_total, labor_total, parts_total, created_at, completed_at, is_historical')
     .eq('customer_id', id)
     .is('deleted_at', null)
     .neq('is_historical', true)
     .order('created_at', { ascending: false })
     .limit(100)
-  tlog('after_service_orders_query', { fail: !!soError, rows: (serviceOrders || []).length })
 
-  tlog('before_response_return')
   return NextResponse.json({ ...data, service_orders: serviceOrders || [] })
 }
 
