@@ -60,8 +60,8 @@ export default function CustomerProfilePage() {
     let done = false
     tlog('effect_start')
     const timeout = setTimeout(() => {
-      if (!cancelled && loading) {
-        tlog('timer_fire', { done, cancelled })
+      tlog('timer_fire', { done, cancelled })
+      if (!cancelled && !done) {
         setLoading(false)
         setLoadError('Loading timed out. Please refresh the page.')
       }
@@ -128,6 +128,7 @@ export default function CustomerProfilePage() {
         if (!cancelled) setLoadError(err.message || 'Failed to load customer')
       }
       done = true
+      clearTimeout(timeout)
       if (!cancelled) setLoading(false)
       tlog('load_finished', { done, cancelled })
     }
