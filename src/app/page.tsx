@@ -344,7 +344,7 @@ export default function HomePage() {
                 { t: 'LinkedIn', d: 'M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.27c-.97 0-1.75-.79-1.75-1.76s.78-1.76 1.75-1.76 1.75.79 1.75 1.76-.78 1.76-1.75 1.76zm13.5 11.27h-3v-5.6c0-3.37-4-3.12-4 0v5.6h-3v-10h3v1.77c1.4-2.59 7-2.78 7 2.48v5.75z' },
                 { t: 'YouTube', d: 'M23.5 6.2c-.2-.7-.7-1.2-1.4-1.4C20.2 4.2 12 4.2 12 4.2s-8.2 0-10.1.6c-.7.2-1.2.7-1.4 1.4C0 8.1 0 12 0 12s0 3.9.5 5.8c.2.7.7 1.2 1.4 1.4 1.9.6 10.1.6 10.1.6s8.2 0 10.1-.6c.7-.2 1.2-.7 1.4-1.4.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.5 15.6V8.4l6.8 3.6-6.8 3.6z' },
               ].map(s => (
-                <a key={s.t} href="#" style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: DIM, textDecoration: 'none' }}>
+                <a key={s.t} href="#" aria-label={s.t} className="tz-foot-social" style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: DIM, textDecoration: 'none', transition: 'color 0.2s ease, border-color 0.2s ease' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d={s.d} /></svg>
                 </a>
               ))}
@@ -358,18 +358,18 @@ export default function HomePage() {
             <div key={col.h} style={{ textAlign: 'left' }}>
               <h4 style={{ fontSize: 11, fontWeight: 600, color: DIM, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 16 }}>{col.h}</h4>
               {col.links.map(l => (
-                <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: LANDING.textQuiet, padding: '4px 0', textDecoration: 'none' }}>{l}</a>
+                <a key={l} href="#" className="tz-foot-link" style={{ display: 'block', fontSize: 13, color: LANDING.textQuiet, padding: '6px 0', textDecoration: 'none', transition: 'color 0.2s ease' }}>{l}</a>
               ))}
-              {col.email && <a href={`mailto:${col.email}`} style={{ display: 'block', fontSize: 13, color: LANDING.textQuiet, padding: '4px 0', textDecoration: 'none' }}>{col.email}</a>}
+              {col.email && <a href={`mailto:${col.email}`} className="tz-foot-link" style={{ display: 'block', fontSize: 13, color: LANDING.textQuiet, padding: '6px 0', textDecoration: 'none', transition: 'color 0.2s ease' }}>{col.email}</a>}
             </div>
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 24, borderTop: `1px solid ${BORDER}`, fontSize: 11, color: LANDING.textFaint }}>
           <span>&copy; 2026 TruckZen. All rights reserved.</span>
           <div>
-            <a href="/privacy" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none' }}>Privacy</a>
-            <a href="/terms" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none' }}>Terms</a>
-            <a href="#" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none' }}>Security</a>
+            <a href="/privacy" className="tz-foot-legal" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none', transition: 'color 0.2s ease' }}>Privacy</a>
+            <a href="/terms" className="tz-foot-legal" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none', transition: 'color 0.2s ease' }}>Terms</a>
+            <a href="#" className="tz-foot-legal" style={{ color: LANDING.textFaint, marginLeft: 16, textDecoration: 'none', transition: 'color 0.2s ease' }}>Security</a>
           </div>
         </div>
       </footer>
@@ -405,6 +405,12 @@ export default function HomePage() {
         .tz-s9-cta-secondary:hover { border-color: ${LANDING.buttonBorder}; background: ${LANDING.surface2}; }
         .tz-s9-cta-primary:focus-visible,
         .tz-s9-cta-secondary:focus-visible { outline: 2px solid ${LANDING.white}; outline-offset: 3px; }
+        .tz-foot-link:hover { color: ${LANDING.white}; }
+        .tz-foot-social:hover { color: ${LANDING.white}; border-color: ${LANDING.borderStrong}; }
+        .tz-foot-legal:hover { color: ${LANDING.textQuiet}; }
+        .tz-foot-link:focus-visible,
+        .tz-foot-social:focus-visible,
+        .tz-foot-legal:focus-visible { outline: 2px solid ${LANDING.white}; outline-offset: 2px; border-radius: 4px; }
         @media (prefers-reduced-motion: reduce) {
           .tz-hero-pulse-dot,
           .tz-hero-scroll-bob { animation: none !important; }
@@ -419,7 +425,10 @@ export default function HomePage() {
           .tz-s6-badge,
           .tz-s8-row,
           .tz-s9-cta-primary,
-          .tz-s9-cta-secondary { transition: none; }
+          .tz-s9-cta-secondary,
+          .tz-foot-link,
+          .tz-foot-social,
+          .tz-foot-legal { transition: none; }
           .tz-hero-cta-primary:hover,
           .tz-s9-cta-primary:hover { transform: none; }
         }
