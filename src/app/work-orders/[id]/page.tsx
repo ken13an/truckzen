@@ -1301,7 +1301,7 @@ export default function WorkOrderDetail() {
                 )}
 
                 {/* Approval actions (when needs approval) */}
-                {!wo.is_historical && !isViewOnly && line.approval_status === 'needs_approval' && (
+                {!wo.is_historical && !isViewOnly && line.approval_status === 'needs_approval' && !wo.estimate_required && (
                   <div style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, padding: 10, marginBottom: 10, fontSize: 11 }}>
                     <div style={{ color: AMBER, fontWeight: 600, marginBottom: 6 }}>Waiting for customer approval</div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
