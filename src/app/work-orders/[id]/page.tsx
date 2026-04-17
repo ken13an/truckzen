@@ -978,42 +978,6 @@ export default function WorkOrderDetail() {
         </div>
       )}
 
-      {/* ESTIMATE REQUIREMENT BANNER */}
-      {!wo.is_historical && wo.estimate_required && (() => {
-        const estStatus = wo.estimate_status || 'draft'
-        const isApproved = wo.estimate_approved && estStatus !== 'approved_with_notes'
-        const isApprovedWithNotes = wo.estimate_approved && estStatus === 'approved_with_notes'
-        const isSent = estStatus === 'sent'
-        const isDeclined = estStatus === 'declined'
-        const bannerStyle = isApproved
-          ? { background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)', color: GREEN }
-          : isApprovedWithNotes
-          ? { background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.2)', color: AMBER }
-          : isSent
-          ? { background: 'rgba(29,111,232,0.08)', border: '1px solid rgba(29,111,232,0.2)', color: BLUE }
-          : isDeclined
-          ? { background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', color: RED }
-          : { background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.2)', color: AMBER }
-        const methodLabel = wo.approval_method === 'in_person' ? ' in person' : wo.approval_method === 'printed_signed' ? ' (printed and signed)' : wo.approval_method === 'email_portal' ? ' via customer portal' : wo.approval_method === 'email' ? ' via email' : ''
-        return (
-          <div style={{ padding: '12px 16px', borderRadius: 8, marginBottom: 12, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, ...bannerStyle }}>
-            <span>
-              {isApproved ? `Estimate approved${methodLabel} — work can begin`
-                : isApprovedWithNotes ? `Estimate approved with customer notes — review before starting`
-                : isSent ? 'Estimate sent to customer — awaiting approval'
-                : isDeclined ? `Estimate declined${wo.estimate_declined_reason ? ` — ${wo.estimate_declined_reason}` : ''} — follow up required`
-                : 'Estimate required — build and send before assigning work'}
-            </span>
-            {isApprovedWithNotes && wo.customer_estimate_notes && (
-              <div style={{ width: '100%', fontSize: 12, fontWeight: 400, marginTop: 4, padding: '6px 10px', background: 'rgba(217,119,6,0.06)', borderRadius: 6 }}>
-                Customer notes: &ldquo;{wo.customer_estimate_notes}&rdquo;
-              </div>
-            )}
-            {!wo.estimate_approved && <a href="#estimate" onClick={() => setTab(2)} style={{ fontSize: 12, fontWeight: 600, color: BLUE, textDecoration: 'none', marginLeft: 12 }}>Go to Estimate</a>}
-          </div>
-        )
-      })()}
-
       {/* WARRANTY BANNER — 3 scenarios */}
       {!wo.is_historical && !isViewOnly && (wo.warranty_status === 'not_checked' || wo.warranty_status === 'none' || !wo.warranty_status) && (() => {
         const isFleet = customer?.is_fleet
@@ -1064,13 +1028,6 @@ export default function WorkOrderDetail() {
           <div style={{ fontWeight: 700, marginBottom: 4 }}>SENT TO DEALER — WO Frozen</div>
           {wo.warranty_dealer_name && <div>Dealer: {wo.warranty_dealer_name}{wo.warranty_dealer_location ? ` — ${wo.warranty_dealer_location}` : ''}</div>}
           {wo.warranty_notes && <div style={{ marginTop: 2, color: GRAY }}>{wo.warranty_notes}</div>}
-        </div>
-      )}
-
-      {/* OWNER OPERATOR BANNER */}
-      {!wo.is_historical && !isViewOnly && (wo.ownership_type === 'owner_operator' || wo.assets?.is_owner_operator) && jobLines.some((l: any) => l.approval_status === 'needs_approval') && (
-        <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: '8px 16px', marginBottom: 12, fontSize: 12, color: AMBER, fontWeight: 600 }}>
-          Owner Operator truck — customer approval required before work begins
         </div>
       )}
 
