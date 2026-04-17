@@ -67,11 +67,36 @@ export default function CustomerProfilePage() {
       }
     }, 10000)
 
+    async function loadProfileWithLockRetry() {
+      const MAX_ATTEMPTS = 3
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        tlog('before_getCurrentUser', { attempt })
+        try {
+          const p = await getCurrentUser(supabase)
+          tlog('after_getCurrentUser', { attempt, has_profile: !!p })
+          return p
+        } catch (e: any) {
+          const m = e?.message || String(e)
+          const isAuthLock =
+            /Lock was stolen by another request/i.test(m) ||
+            /Lock\s+".*-auth-token".*not released/i.test(m) ||
+            /acquiring.*lock/i.test(m)
+          tlog('auth_error', { attempt, is_lock: isAuthLock, msg: JSON.stringify(m) })
+          if (!isAuthLock || attempt === MAX_ATTEMPTS) {
+            tlog('auth_retry_gave_up', { attempt, is_lock: isAuthLock })
+            throw e
+          }
+          const delay = 250 * attempt
+          tlog('auth_retry_delay', { attempt, delay_ms: delay })
+          await new Promise(r => setTimeout(r, delay))
+        }
+      }
+      return null
+    }
+
     async function load() {
       try {
-        tlog('before_getCurrentUser')
-        const profile = await getCurrentUser(supabase)
-        tlog('after_getCurrentUser', { has_profile: !!profile })
+        const profile = await loadProfileWithLockRetry()
         if (!profile) { router.push('/login'); return }
         if (cancelled) return
         setUser(profile)
