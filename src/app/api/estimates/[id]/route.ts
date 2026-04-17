@@ -100,6 +100,22 @@ async function _PATCH(req: Request, { params }: { params: Promise<{ id: string }
   if (!data) {
     return NextResponse.json({ error: 'Conflict', message: 'This record was updated by someone else. Refresh and try again.' }, { status: 409 })
   }
+  // Mirror the customer-portal approve path: when the estimate transitions to
+  // approved (in-person / printed-signed), move the linked WO out of
+  // waiting_approval so the automation panel stops reporting Blocked /
+  // Awaiting approval. Only transitions from waiting_approval → in_progress;
+  // no effect on other statuses. Intentionally does NOT touch updated_at so
+  // the client's follow-up PATCH /api/work-orders/[id] (estimate_approved,
+  // estimate_status, approval_method) can still match its expected_updated_at.
+  if (body?.status === 'approved') {
+    const repairOrderId = (estimate as any).repair_order_id || (estimate as any).wo_id
+    if (repairOrderId) {
+      const { data: wo } = await ctx.admin.from('service_orders').select('status').eq('id', repairOrderId).single()
+      if (wo?.status === 'waiting_approval') {
+        await ctx.admin.from('service_orders').update({ status: 'in_progress' }).eq('id', repairOrderId)
+      }
+    }
+  }
   if (body?.lines && Array.isArray(body.lines)) {
     await ctx.admin.from('estimate_lines').delete().eq('estimate_id', id)
     const laborTotal = body.lines.reduce((s: number, l: any) => s + (parseFloat(l.labor_total ?? l.total) || 0) * ((l.line_type === 'labor') ? 1 : 0), 0)
