@@ -1671,7 +1671,7 @@ export default function WorkOrderDetail() {
                   }
                   const st = statusColors[p.parts_status || 'rough'] || statusColors.rough
                   return (
-                    <div key={p.id} style={{ border: `1px solid ${isConfirmed ? 'var(--tz-successBg)' : 'var(--tz-warning)'}`, borderRadius: 10, padding: 12, background: isConfirmed ? 'var(--tz-bgLight)' : 'var(--tz-warningBg)' }}>
+                    <div key={p.id} style={{ border: `1px solid ${isConfirmed ? 'var(--tz-successBg)' : 'var(--tz-warning)'}`, borderRadius: 10, padding: 12, background: isConfirmed ? 'var(--tz-successBg)' : 'var(--tz-warningBg)' }}>
                       {/* Request layer — always visible */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                         <div style={{ fontSize: 11, color: 'var(--tz-warning)' }}>
