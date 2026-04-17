@@ -163,7 +163,7 @@ export default function HomePage() {
         <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>Why shops are switching</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: '100%', margin: '0 auto', textAlign: 'left' }}>
           {/* Left: generic competitor */}
-          <div>
+          <div className="tz-s3-card tz-s3-card-muted" style={{ background: LANDING.surface1, border: `1px solid ${LANDING.border}`, borderRadius: 16, padding: 28, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
             <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 12, color: DIM }}>The platform you overpay for</div>
             <BrowserFrame url="legacy-platform.com">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -188,20 +188,24 @@ export default function HomePage() {
             </BrowserFrame>
           </div>
           {/* Right: TruckZen */}
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 12, color: BLUE }}>TruckZen. The whole operation.</div>
-            <BrowserFrame url="truckzen.pro" accent>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {['Shop', 'Invoices', 'Fleet', 'Warranty'].map(label => (
-                  <div key={label} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 6, padding: 12 }}>
-                    <div style={{ fontSize: 9, color: BLUE, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>{label}</div>
-                    <PlaceholderBar w="80%" color={LANDING.accentBorder} />
-                    <PlaceholderBar w="55%" color={LANDING.accentBg5} />
-                    <PlaceholderBar w="65%" color={LANDING.accentBg4} />
-                  </div>
-                ))}
-              </div>
-            </BrowserFrame>
+          <div className="tz-s3-card tz-s3-card-luminous" style={{ position: 'relative', overflow: 'hidden', background: LANDING.surface2, border: `1px solid ${LANDING.accentBorder}`, borderRadius: 16, padding: 28, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 65% 55% at 90% 0%, ${LANDING.accentBg4} 0%, transparent 65%)`, pointerEvents: 'none' }} />
+            <div aria-hidden style={{ position: 'absolute', left: 28, right: 28, bottom: 0, height: 1, background: `linear-gradient(90deg, transparent 0%, ${LANDING.accentBorder} 50%, transparent 100%)`, pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 12, color: BLUE }}>TruckZen. The whole operation.</div>
+            <div style={{ position: 'relative' }}>
+              <BrowserFrame url="truckzen.pro" accent>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {['Shop', 'Invoices', 'Fleet', 'Warranty'].map(label => (
+                    <div key={label} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 6, padding: 12 }}>
+                      <div style={{ fontSize: 9, color: BLUE, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 8 }}>{label}</div>
+                      <PlaceholderBar w="80%" color={LANDING.accentBorder} />
+                      <PlaceholderBar w="55%" color={LANDING.accentBg5} />
+                      <PlaceholderBar w="65%" color={LANDING.accentBg4} />
+                    </div>
+                  ))}
+                </div>
+              </BrowserFrame>
+            </div>
           </div>
         </div>
       </section>
@@ -371,12 +375,16 @@ export default function HomePage() {
         .tz-s2-card:hover { background: ${LANDING.surface3}; }
         .tz-s2-card-left:hover { border-color: ${LANDING.accentBorder}; }
         .tz-s2-card-right:hover { border-color: ${LANDING.borderStrong}; }
+        .tz-s3-card { transition: border-color 0.3s ease, background 0.3s ease; }
+        .tz-s3-card-muted:hover { border-color: ${LANDING.borderStrong}; background: ${LANDING.surface2}; }
+        .tz-s3-card-luminous:hover { border-color: ${LANDING.buttonBorder}; }
         @media (prefers-reduced-motion: reduce) {
           .tz-hero-pulse-dot,
           .tz-hero-scroll-bob { animation: none !important; }
           .tz-hero-cta-primary,
           .tz-hero-cta-secondary,
-          .tz-s2-card { transition: none; }
+          .tz-s2-card,
+          .tz-s3-card { transition: none; }
           .tz-hero-cta-primary:hover { transform: none; }
         }
       `}</style>
