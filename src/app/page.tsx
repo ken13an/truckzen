@@ -238,17 +238,20 @@ export default function HomePage() {
 
       {/* ── S5: GET STARTED ── */}
       <section style={{ ...secStyle, minHeight: 'auto' }}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 48 }}>Running in days, not months.</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, maxWidth: 900, margin: '0 auto', textAlign: 'left' }}>
+        <h2 style={{ fontSize: 'clamp(34px, 5vw, 56px)', fontWeight: 800, letterSpacing: '-.035em', color: LANDING.white, marginBottom: 56, lineHeight: 1.05 }}>Running in days, not months.</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, maxWidth: 900, margin: '0 auto', textAlign: 'left' }}>
           {[
             { n: '1', t: 'We migrate your data', d: 'Complete history imported at no cost. Your team never has to re-enter anything.' },
             { n: '2', t: 'Set up your team', d: 'Bulk import staff. Assign roles. Configure bays. Your team is ready same day.' },
             { n: '3', t: 'Run your operation', d: 'Shop, fleet, parts, people. AI handles the paperwork. You run the business.' },
           ].map(s => (
-            <div key={s.n} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '36px 28px' }}>
-              <div style={{ fontSize: 48, fontWeight: 800, color: BLUE, lineHeight: 1, marginBottom: 12 }}>{s.n}</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: LANDING.white, marginBottom: 8 }}>{s.t}</h3>
-              <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, margin: 0 }}>{s.d}</p>
+            <div key={s.n} className="tz-s5-card" style={{ position: 'relative', overflow: 'hidden', background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 16, padding: '36px 28px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+              <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 55% at 88% 0%, ${LANDING.accentBg3} 0%, transparent 65%)`, pointerEvents: 'none' }} />
+              <div aria-hidden style={{ position: 'absolute', left: -20, top: -20, width: 120, height: 120, borderRadius: '50%', background: `radial-gradient(circle, ${LANDING.accentBg4} 0%, transparent 70%)`, pointerEvents: 'none' }} />
+              <div aria-hidden className="tz-s5-sweep" style={{ position: 'absolute', left: 24, right: 24, bottom: 0, height: 1, background: `linear-gradient(90deg, transparent 0%, ${LANDING.accentBorder} 50%, transparent 100%)`, pointerEvents: 'none' }} />
+              <div style={{ position: 'relative', fontSize: 48, fontWeight: 800, color: BLUE, lineHeight: 1, marginBottom: 14, letterSpacing: '-.04em' }}>{s.n}</div>
+              <h3 style={{ position: 'relative', fontSize: 16, fontWeight: 700, color: LANDING.white, marginBottom: 10, letterSpacing: '-.01em' }}>{s.t}</h3>
+              <p style={{ position: 'relative', fontSize: 13, color: DIM, lineHeight: 1.6, margin: 0 }}>{s.d}</p>
             </div>
           ))}
         </div>
@@ -384,6 +387,10 @@ export default function HomePage() {
         .tz-s4-card:hover { border-color: ${LANDING.accentBorder}; background: ${LANDING.surface2}; }
         .tz-s4-card .tz-s4-sweep { opacity: 0; transition: opacity 0.4s ease; }
         .tz-s4-card:hover .tz-s4-sweep { opacity: 1; }
+        .tz-s5-card { transition: border-color 0.3s ease, background 0.3s ease; }
+        .tz-s5-card:hover { border-color: ${LANDING.accentBorder}; background: ${LANDING.surface2}; }
+        .tz-s5-card .tz-s5-sweep { opacity: 0; transition: opacity 0.4s ease; }
+        .tz-s5-card:hover .tz-s5-sweep { opacity: 1; }
         @media (prefers-reduced-motion: reduce) {
           .tz-hero-pulse-dot,
           .tz-hero-scroll-bob { animation: none !important; }
@@ -392,7 +399,9 @@ export default function HomePage() {
           .tz-s2-card,
           .tz-s3-card,
           .tz-s4-card,
-          .tz-s4-card .tz-s4-sweep { transition: none; }
+          .tz-s4-card .tz-s4-sweep,
+          .tz-s5-card,
+          .tz-s5-card .tz-s5-sweep { transition: none; }
           .tz-hero-cta-primary:hover { transform: none; }
         }
       `}</style>
