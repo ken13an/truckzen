@@ -260,18 +260,19 @@ export default function HomePage() {
       <div style={dividerStyle} />
 
       {/* ── S6: APP STORE + TRUST ── */}
-      <section style={{ ...secStyle, minHeight: 'auto' }}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8 }}>Available everywhere.</h2>
-        <p style={{ fontSize: 18, color: DIM, marginBottom: 40, maxWidth: 520 }}>Your team accesses TruckZen from whatever device they have in hand.</p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 48 }}>
+      <section style={{ ...secStyle, minHeight: 'auto', position: 'relative', overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 50% at 50% 0%, ${LANDING.accentBg3} 0%, transparent 65%)`, pointerEvents: 'none' }} />
+        <h2 style={{ position: 'relative', fontSize: 'clamp(34px, 5vw, 56px)', fontWeight: 800, letterSpacing: '-.035em', color: LANDING.white, marginBottom: 12, lineHeight: 1.05 }}>Available everywhere.</h2>
+        <p style={{ position: 'relative', fontSize: 18, color: DIM, marginBottom: 48, maxWidth: 520, lineHeight: 1.6 }}>Your team accesses TruckZen from whatever device they have in hand.</p>
+        <div style={{ position: 'relative', display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 56, flexWrap: 'wrap' }}>
           {['App Store', 'Google Play', 'Web Browser'].map(b => (
-            <div key={b} style={{ padding: '12px 28px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 14, fontWeight: 600, color: LANDING.white, background: LANDING.surface1 }}>{b}</div>
+            <div key={b} className="tz-s6-badge" style={{ padding: '12px 28px', border: `1px solid ${BORDER}`, borderRadius: 10, fontSize: 14, fontWeight: 600, color: LANDING.white, background: LANDING.surface1, backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>{b}</div>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 32, justifyContent: 'center' }}>
+        <div style={{ position: 'relative', display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
           {['256-bit encryption', '99.9% uptime', 'Role-based access', 'Daily backups'].map(tr => (
             <div key={tr} style={{ fontSize: 12, color: DIM, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE }} />{tr}
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE, boxShadow: `0 0 8px ${LANDING.accentShadow}`, flexShrink: 0 }} />{tr}
             </div>
           ))}
         </div>
@@ -391,6 +392,8 @@ export default function HomePage() {
         .tz-s5-card:hover { border-color: ${LANDING.accentBorder}; background: ${LANDING.surface2}; }
         .tz-s5-card .tz-s5-sweep { opacity: 0; transition: opacity 0.4s ease; }
         .tz-s5-card:hover .tz-s5-sweep { opacity: 1; }
+        .tz-s6-badge { transition: border-color 0.3s ease, background 0.3s ease; }
+        .tz-s6-badge:hover { border-color: ${LANDING.accentBorder}; background: ${LANDING.surface2}; }
         @media (prefers-reduced-motion: reduce) {
           .tz-hero-pulse-dot,
           .tz-hero-scroll-bob { animation: none !important; }
@@ -401,7 +404,8 @@ export default function HomePage() {
           .tz-s4-card,
           .tz-s4-card .tz-s4-sweep,
           .tz-s5-card,
-          .tz-s5-card .tz-s5-sweep { transition: none; }
+          .tz-s5-card .tz-s5-sweep,
+          .tz-s6-badge { transition: none; }
           .tz-hero-cta-primary:hover { transform: none; }
         }
       `}</style>
