@@ -120,33 +120,35 @@ export default function HomePage() {
       {/* ── S2: TWO PILLARS ── */}
       <section id="platform" style={{ ...secStyle, minHeight: 'auto' }}>
         <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>The Platform</div>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8 }}>Two engines. One platform.</h2>
-        <p style={{ fontSize: 18, color: DIM, marginBottom: 48, maxWidth: 520 }}>AI is built into every step. Not bolted on top.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, maxWidth: '100%', margin: '0 auto', background: BORDER, borderRadius: 16, overflow: 'hidden', textAlign: 'left' }}>
-          <div style={{ background: LANDING.bg, padding: '48px 40px' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: LANDING.accentBg4 }}>
+        <h2 style={{ fontSize: 'clamp(34px, 5vw, 56px)', fontWeight: 800, letterSpacing: '-.035em', color: LANDING.white, marginBottom: 12, lineHeight: 1.05 }}>Two engines. One platform.</h2>
+        <p style={{ fontSize: 18, color: DIM, marginBottom: 56, maxWidth: 520, lineHeight: 1.6 }}>AI is built into every step. Not bolted on top.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: '100%', margin: '0 auto', textAlign: 'left' }}>
+          <div className="tz-s2-card tz-s2-card-left" style={{ position: 'relative', overflow: 'hidden', background: LANDING.surface2, border: `1px solid ${LANDING.border}`, borderRadius: 16, padding: '48px 40px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 55% at 85% 0%, ${LANDING.accentBg4} 0%, transparent 65%)`, pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, background: LANDING.accentBg4, border: `1px solid ${LANDING.accentBorder}` }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={BLUE} strokeWidth="1.5"><path d="M3 15V8l7-5 7 5v7" /><path d="M8 15v-4h4v4" /></svg>
             </div>
-            <h3 style={{ fontSize: 22, fontWeight: 700, color: LANDING.white, marginBottom: 8 }}>Shop operations</h3>
-            <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, marginBottom: 20 }}>Everything from truck arrival to payment collected. AI writes service notes, classifies jobs, suggests parts.</p>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, padding: 0 }}>
+            <h3 style={{ position: 'relative', fontSize: 22, fontWeight: 700, color: LANDING.white, marginBottom: 10, letterSpacing: '-.01em' }}>Shop operations</h3>
+            <p style={{ position: 'relative', fontSize: 13, color: DIM, lineHeight: 1.6, marginBottom: 24 }}>Everything from truck arrival to payment collected. AI writes service notes, classifies jobs, suggests parts.</p>
+            <ul style={{ position: 'relative', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, padding: 0, margin: 0 }}>
               {['AI service writer (4 languages)', 'Work orders + estimates + invoicing', 'Parts tracking + auto reorder', 'Mechanic time clock + payroll', 'Kiosk check-in for walk-ins', 'Customer portal for approvals', 'Dynamic pricing by customer type', 'Telegram bot for remote updates'].map(i => (
-                <li key={i} style={{ fontSize: 13, color: TEXT, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{i}
+                <li key={i} style={{ fontSize: 13, color: TEXT, display: 'flex', alignItems: 'center', gap: 10, lineHeight: 1.5 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE, flexShrink: 0 }} />{i}
                 </li>
               ))}
             </ul>
           </div>
-          <div style={{ background: LANDING.bg, padding: '48px 40px' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, background: LANDING.successBg }}>
+          <div className="tz-s2-card tz-s2-card-right" style={{ position: 'relative', overflow: 'hidden', background: LANDING.surface2, border: `1px solid ${LANDING.border}`, borderRadius: 16, padding: '48px 40px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 55% at 85% 0%, ${LANDING.successBg} 0%, transparent 65%)`, pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, background: LANDING.successBg, border: `1px solid ${LANDING.borderStrong}` }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={GREEN} strokeWidth="1.5"><rect x="2" y="8" width="16" height="7" rx="1.5" /><circle cx="5.5" cy="13.5" r="1.5" /><circle cx="14.5" cy="13.5" r="1.5" /><path d="M2 10l2.5-4h7l2.5 4" /></svg>
             </div>
-            <h3 style={{ fontSize: 22, fontWeight: 700, color: LANDING.white, marginBottom: 8 }}>Fleet intelligence</h3>
-            <p style={{ fontSize: 13, color: DIM, lineHeight: 1.6, marginBottom: 20 }}>Know the health of every truck before it breaks down. Connected to your shop.</p>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, padding: 0 }}>
+            <h3 style={{ position: 'relative', fontSize: 22, fontWeight: 700, color: LANDING.white, marginBottom: 10, letterSpacing: '-.01em' }}>Fleet intelligence</h3>
+            <p style={{ position: 'relative', fontSize: 13, color: DIM, lineHeight: 1.6, marginBottom: 24 }}>Know the health of every truck before it breaks down. Connected to your shop.</p>
+            <ul style={{ position: 'relative', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, padding: 0, margin: 0 }}>
               {['Preventive maintenance scheduling', 'Inspections + DVIR tracking', 'Warranty + recall management', 'Fuel + expense tracking', 'Driver management', 'Telematics integration ready', 'GPS + vehicle location tracking', 'Compliance alerts + renewals'].map(i => (
-                <li key={i} style={{ fontSize: 13, color: TEXT, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: GREEN, flexShrink: 0 }} />{i}
+                <li key={i} style={{ fontSize: 13, color: TEXT, display: 'flex', alignItems: 'center', gap: 10, lineHeight: 1.5 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, flexShrink: 0 }} />{i}
                 </li>
               ))}
             </ul>
@@ -365,11 +367,16 @@ export default function HomePage() {
         .tz-hero-cta-secondary:hover { border-color: ${LANDING.buttonBorder}; background: ${LANDING.surface2}; }
         .tz-hero-cta-primary:focus-visible,
         .tz-hero-cta-secondary:focus-visible { outline: 2px solid ${LANDING.white}; outline-offset: 3px; }
+        .tz-s2-card { transition: border-color 0.3s ease, background 0.3s ease; }
+        .tz-s2-card:hover { background: ${LANDING.surface3}; }
+        .tz-s2-card-left:hover { border-color: ${LANDING.accentBorder}; }
+        .tz-s2-card-right:hover { border-color: ${LANDING.borderStrong}; }
         @media (prefers-reduced-motion: reduce) {
           .tz-hero-pulse-dot,
           .tz-hero-scroll-bob { animation: none !important; }
           .tz-hero-cta-primary,
-          .tz-hero-cta-secondary { transition: none; }
+          .tz-hero-cta-secondary,
+          .tz-s2-card { transition: none; }
           .tz-hero-cta-primary:hover { transform: none; }
         }
       `}</style>
