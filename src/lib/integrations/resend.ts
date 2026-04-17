@@ -136,9 +136,14 @@ export async function sendInvoiceEmail(data: any) {
       sendPayload.attachments = data.attachments
     }
     const result = await getResend().emails.send(sendPayload)
+    if (result.error) {
+      const detail = `${result.error.name}: ${result.error.message}`
+      console.error('[Resend] API rejected send', { to: data.customer.email, error: detail })
+      return { success: false, error: detail }
+    }
     return { success: true, id: result.data?.id }
   } catch (err: any) {
-    console.error('Resend error:', err.message)
+    console.error('[Resend] network/exception error', { to: data.customer?.email, error: err.message })
     return { success: false, error: err.message }
   }
 }
