@@ -294,8 +294,8 @@ export default function HomePage() {
 
       {/* ── S8: FAQ ── */}
       <section id="faq" style={{ ...secStyle, minHeight: 'auto' }}>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 48 }}>FAQ</h2>
-        <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'left' }}>
+        <h2 style={{ fontSize: 'clamp(34px, 5vw, 56px)', fontWeight: 800, letterSpacing: '-.035em', color: LANDING.white, marginBottom: 56, lineHeight: 1.05 }}>FAQ</h2>
+        <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'left', background: LANDING.surface1, border: `1px solid ${LANDING.border}`, borderRadius: 16, padding: '8px 32px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
           {[
             { q: 'Is TruckZen only for repair shops?', a: 'No. TruckZen serves shops, fleets, and operations that run both. The platform connects repair operations to fleet management in one system.' },
             { q: 'How long does setup take?', a: '1\u20132 weeks total. Data migration takes 3\u20135 days. Your team can start using the platform the same day it\u2019s configured.' },
@@ -304,7 +304,7 @@ export default function HomePage() {
             { q: 'Can I migrate from my current platform?', a: 'Yes. Complete history \u2014 work orders, customers, units, parts, invoices. Zero cost migration. We handle everything.' },
             { q: 'Is there a long-term contract?', a: 'No. Month-to-month. Cancel anytime.' },
           ].map(f => (
-            <div key={f.q} style={{ borderBottom: `1px solid ${BORDER}`, padding: '20px 0' }}>
+            <div key={f.q} className="tz-s8-row" style={{ borderBottom: `1px solid ${BORDER}`, padding: '20px 0' }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: LANDING.white, marginBottom: 8 }}>{f.q}</div>
               <div style={{ fontSize: 14, color: DIM, lineHeight: 1.6 }}>{f.a}</div>
             </div>
@@ -396,6 +396,9 @@ export default function HomePage() {
         .tz-s5-card:hover .tz-s5-sweep { opacity: 1; }
         .tz-s6-badge { transition: border-color 0.3s ease, background 0.3s ease; }
         .tz-s6-badge:hover { border-color: ${LANDING.accentBorder}; background: ${LANDING.surface2}; }
+        .tz-s8-row { transition: background 0.2s ease; }
+        .tz-s8-row:last-child { border-bottom: none; }
+        .tz-s8-row:hover { background: ${LANDING.surface2}; }
         @media (prefers-reduced-motion: reduce) {
           .tz-hero-pulse-dot,
           .tz-hero-scroll-bob { animation: none !important; }
@@ -407,7 +410,8 @@ export default function HomePage() {
           .tz-s4-card .tz-s4-sweep,
           .tz-s5-card,
           .tz-s5-card .tz-s5-sweep,
-          .tz-s6-badge { transition: none; }
+          .tz-s6-badge,
+          .tz-s8-row { transition: none; }
           .tz-hero-cta-primary:hover { transform: none; }
         }
       `}</style>
