@@ -215,18 +215,20 @@ export default function HomePage() {
       {/* ── S4: FEATURES 2x2 ── */}
       <section id="features" style={{ ...secStyle, minHeight: 'auto' }}>
         <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 20, fontWeight: 600 }}>Built Different</div>
-        <h2 style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-.03em', color: LANDING.white, marginBottom: 8 }}>What you get that nobody else offers.</h2>
-        <p style={{ fontSize: 18, color: DIM, marginBottom: 48, maxWidth: 560 }}>Every feature built from real shop problems, not a product roadmap.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 900, margin: '0 auto', textAlign: 'left' }}>
+        <h2 style={{ fontSize: 'clamp(34px, 5vw, 56px)', fontWeight: 800, letterSpacing: '-.035em', color: LANDING.white, marginBottom: 12, lineHeight: 1.05 }}>What you get that nobody else offers.</h2>
+        <p style={{ fontSize: 18, color: DIM, marginBottom: 56, maxWidth: 560, lineHeight: 1.6 }}>Every feature built from real shop problems, not a product roadmap.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 900, margin: '0 auto', textAlign: 'left' }}>
           {[
             { t: 'Multilingual AI, native', d: 'AI that understands Russian, Spanish, Uzbek, and English natively. Built into every input across the platform.' },
             { t: 'Runs on any device', d: 'Web, iOS, Android, and kiosk. Mechanic on the floor, manager at home, owner on a plane.' },
             { t: 'Free data migration', d: 'Complete history from your current platform. Zero cost. Days, not months.' },
             { t: 'Shop + fleet, connected', d: 'Repair history flows into fleet health. Fleet alerts create work orders. One system.' },
           ].map(f => (
-            <div key={f.t} style={{ background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '36px 32px' }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: LANDING.white, marginBottom: 8 }}>{f.t}</h3>
-              <p style={{ fontSize: 14, color: DIM, lineHeight: 1.6, margin: 0 }}>{f.d}</p>
+            <div key={f.t} className="tz-s4-card" style={{ position: 'relative', overflow: 'hidden', background: LANDING.surface1, border: `1px solid ${BORDER}`, borderRadius: 16, padding: '36px 32px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+              <div aria-hidden style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 55% at 12% 0%, ${LANDING.accentBg3} 0%, transparent 65%)`, pointerEvents: 'none' }} />
+              <div aria-hidden className="tz-s4-sweep" style={{ position: 'absolute', left: 24, right: 24, bottom: 0, height: 1, background: `linear-gradient(90deg, transparent 0%, ${LANDING.accentBorder} 50%, transparent 100%)`, pointerEvents: 'none' }} />
+              <h3 style={{ position: 'relative', fontSize: 18, fontWeight: 700, color: LANDING.white, marginBottom: 10, letterSpacing: '-.01em' }}>{f.t}</h3>
+              <p style={{ position: 'relative', fontSize: 14, color: DIM, lineHeight: 1.6, margin: 0 }}>{f.d}</p>
             </div>
           ))}
         </div>
@@ -378,13 +380,19 @@ export default function HomePage() {
         .tz-s3-card { transition: border-color 0.3s ease, background 0.3s ease; }
         .tz-s3-card-muted:hover { border-color: ${LANDING.borderStrong}; background: ${LANDING.surface2}; }
         .tz-s3-card-luminous:hover { border-color: ${LANDING.buttonBorder}; }
+        .tz-s4-card { transition: border-color 0.3s ease, background 0.3s ease; }
+        .tz-s4-card:hover { border-color: ${LANDING.accentBorder}; background: ${LANDING.surface2}; }
+        .tz-s4-card .tz-s4-sweep { opacity: 0; transition: opacity 0.4s ease; }
+        .tz-s4-card:hover .tz-s4-sweep { opacity: 1; }
         @media (prefers-reduced-motion: reduce) {
           .tz-hero-pulse-dot,
           .tz-hero-scroll-bob { animation: none !important; }
           .tz-hero-cta-primary,
           .tz-hero-cta-secondary,
           .tz-s2-card,
-          .tz-s3-card { transition: none; }
+          .tz-s3-card,
+          .tz-s4-card,
+          .tz-s4-card .tz-s4-sweep { transition: none; }
           .tz-hero-cta-primary:hover { transform: none; }
         }
       `}</style>
