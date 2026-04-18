@@ -38,6 +38,35 @@ async function _POST(req: Request) {
     if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
     const shopId = (wo as any).shop_id
+
+    // Soft idempotency: reuse an existing open estimate (draft/sent) for this WO.
+    // Terminal statuses (approved, declined) are not reused — the UI surfaces a
+    // "Resend Modified Estimate" path for declined, which intentionally creates a fresh row.
+    const { data: existing, error: existingErr } = await ctx.admin
+      .from('estimates')
+      .select('*')
+      .eq('wo_id', woId)
+      .eq('shop_id', shopId)
+      .is('deleted_at', null)
+      .in('status', ['draft', 'sent'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (existingErr) {
+      console.error('[estimates.create_from_wo] existing-estimate lookup failed', { woId, shopId, error: existingErr.message })
+      return NextResponse.json({ error: existingErr.message }, { status: 500 })
+    }
+    if (existing) {
+      // Minimal FK repair: only when service_orders.estimate_id is missing (null).
+      // If it points to a different row (e.g. a prior terminal estimate), leave it —
+      // that decision belongs to a separate workflow patch.
+      if (!(wo as any).estimate_id) {
+        const { error: fkErr } = await ctx.admin.from('service_orders').update({ estimate_id: existing.id }).eq('id', woId)
+        if (fkErr) console.error('[estimates.create_from_wo] FK repair failed', { woId, estimateId: existing.id, error: fkErr.message })
+      }
+      return NextResponse.json(existing)
+    }
+
     const { data: shop } = await ctx.admin.from('shops').select('default_labor_rate, labor_rate, tax_rate, default_tax_rate').eq('id', shopId).single()
     const laborRate = shop?.default_labor_rate || shop?.labor_rate || DEFAULT_LABOR_RATE_FALLBACK
     const taxRate = shop?.tax_rate || shop?.default_tax_rate || 0
@@ -57,7 +86,10 @@ async function _POST(req: Request) {
       created_by: ctx.actor.id,
     }).select().single()
 
-    if (error || !est) return NextResponse.json({ error: error?.message || 'Failed' }, { status: 500 })
+    if (error || !est) {
+      console.error('[estimates.create_from_wo] insert failed', { woId, shopId, error: error?.message })
+      return NextResponse.json({ error: error?.message || 'Failed' }, { status: 500 })
+    }
 
     const estLines: any[] = []
     for (const line of lines || []) {
