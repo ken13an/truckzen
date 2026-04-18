@@ -4,6 +4,7 @@
  */
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { getSidebarItems, hasAccess } from '@/lib/permissions'
@@ -143,7 +144,10 @@ export default function Sidebar() {
   const [elapsed, setElapsed] = useState('')
   const [qaOpen, setQaOpen] = useState(false)
   const [logoutWarn, setLogoutWarn] = useState(false)
+  const [portalReady, setPortalReady] = useState(false)
   const punchInFlight = useRef(false)
+
+  useEffect(() => { setPortalReady(true) }, [])
 
   useEffect(() => {
     async function load() {
@@ -569,9 +573,9 @@ export default function Sidebar() {
           </div>
         </div>
       )}
-      {/* Still-clocked-in logout warning */}
-      {logoutWarn && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setLogoutWarn(false)}>
+      {/* Still-clocked-in logout warning — portaled to document.body so it escapes the <aside> stacking context */}
+      {logoutWarn && portalReady && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setLogoutWarn(false)}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }} />
           <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: 420, maxWidth: '92vw', background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 14, padding: 22, zIndex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 6 }}>You are still clocked in</div>
@@ -584,7 +588,8 @@ export default function Sidebar() {
               <button onClick={async () => { setLogoutWarn(false); await doSignOut() }} style={{ padding: '10px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-danger)'}`, background: 'transparent', color: 'var(--tz-danger)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Instrument Sans',sans-serif" }}>Log Out Anyway</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </aside>
   )
