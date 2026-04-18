@@ -113,6 +113,7 @@ export default function WorkOrderDetail() {
   const [newChargeAmt, setNewChargeAmt] = useState('')
   const [newPartForms, setNewPartForms] = useState<Record<string, { desc: string; pn: string; qty: string; cost: string }>>({})
   const [approvalModal, setApprovalModal] = useState(false)
+  const [sendingEstimate, setSendingEstimate] = useState(false)
   const [qcLoading, setQcLoading] = useState(false)
   const [qcErrors, setQcErrors] = useState<string[]>([])
   const [showQcErrors, setShowQcErrors] = useState(false)
@@ -2930,20 +2931,52 @@ export default function WorkOrderDetail() {
           await loadData()
         }
 
-        async function sendEstimateEmail() {
-          if (!estimateId) { alert('Build an estimate first'); return }
-          // Save contact info first
-          await saveContactInfo()
-          const res = await fetch(`/api/estimates/${estimateId}/send`, { method: 'POST' })
-          if (res.ok) {
-            logActivity(`Estimate sent to ${contactEmail || contactPhone}`)
-            setToastMsg('Estimate sent to customer')
-            setTimeout(() => setToastMsg(''), 4000)
-          } else {
-            alert('Failed to send estimate')
+        async function ensureEstimateForSend(): Promise<string | null> {
+          if (estimateId) return estimateId
+          try {
+            const r = await fetch('/api/estimates', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'create_from_wo', wo_id: id }),
+            })
+            const body = await r.json().catch(() => null)
+            if (!r.ok || !body?.id) {
+              console.error('[wo.estimate.ensureForSend] create_from_wo failed', { woId: id, status: r.status, error: body?.error })
+              return null
+            }
+            return body.id as string
+          } catch (e: any) {
+            console.error('[wo.estimate.ensureForSend] network error', { woId: id, error: e?.message })
+            return null
           }
-          setApprovalModal(false)
-          await loadData()
+        }
+
+        async function sendEstimateEmail() {
+          if (sendingEstimate) return
+          setSendingEstimate(true)
+          try {
+            await saveContactInfo()
+            const effectiveId = await ensureEstimateForSend()
+            if (!effectiveId) {
+              setToastMsg('Could not prepare estimate — try again')
+              setTimeout(() => setToastMsg(''), 4000)
+              return
+            }
+            const res = await fetch(`/api/estimates/${effectiveId}/send`, { method: 'POST' })
+            if (res.ok) {
+              logActivity(`Estimate sent to ${contactEmail || contactPhone}`)
+              setToastMsg('Estimate sent to customer')
+              setTimeout(() => setToastMsg(''), 4000)
+            } else {
+              const errBody = await res.json().catch(() => null)
+              console.error('[wo.estimate.send] send failed', { woId: id, estimateId: effectiveId, status: res.status, error: errBody?.error })
+              alert('Failed to send estimate')
+            }
+            setApprovalModal(false)
+            await loadData()
+          } finally {
+            setSendingEstimate(false)
+          }
         }
 
         return (
@@ -2996,10 +3029,10 @@ export default function WorkOrderDetail() {
                 <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>Send estimate via email and/or SMS with approval link</div>
                 <button
                   onClick={sendEstimateEmail}
-                  disabled={!hasContact}
-                  style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), width: '100%', justifyContent: 'center', opacity: hasContact ? 1 : 0.5, cursor: hasContact ? 'pointer' : 'not-allowed' }}
+                  disabled={!hasContact || sendingEstimate}
+                  style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), width: '100%', justifyContent: 'center', opacity: (hasContact && !sendingEstimate) ? 1 : 0.5, cursor: (hasContact && !sendingEstimate) ? 'pointer' : 'not-allowed' }}
                 >
-                  Send Estimate{contactEmail && contactPhone ? ' (Email + SMS)' : contactEmail ? ' (Email)' : contactPhone ? ' (SMS)' : ''}
+                  {sendingEstimate ? 'Sending…' : `Send Estimate${contactEmail && contactPhone ? ' (Email + SMS)' : contactEmail ? ' (Email)' : contactPhone ? ' (SMS)' : ''}`}
                 </button>
               </div>
 
