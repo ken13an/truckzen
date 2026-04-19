@@ -16,16 +16,19 @@ const PUBLIC_PATHS = [
   '/api/accept-invite', '/api/portal', '/api/pay', '/api/stripe/webhook', '/api/platform-admin/registrations',
 ]
 
-function isPublicPath(pathname: string) {
+function isPublicPath(pathname: string, searchParams?: URLSearchParams) {
   if (pathname === '/') return true
   // Customer portal submits approve/decline from an email link without a session
   // cookie. The /api/estimates/{id}/respond handler is token-guarded internally
   // (checks estimate.approval_token !== token). Narrow regex — the dynamic id
   // segment prevents a PUBLIC_PATHS prefix match.
-  // /pdf is intentionally NOT allowed here: it has no token check and the current
-  // customer email links to /portal/estimate/{token}, not to /pdf. Staff keep PDF
-  // access via session cookie.
   if (/^\/api\/estimates\/[^\/]+\/respond$/.test(pathname)) return true
+  // PDF route: customer access only when ?token= is present. The route handler
+  // verifies the token against estimate.approval_token. Staff keep access via
+  // session cookie (non-public gate).
+  if (/^\/api\/estimates\/[^\/]+\/pdf$/.test(pathname)) {
+    if (searchParams?.get('token')) return true
+  }
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
 
@@ -65,7 +68,7 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  if (pathname.startsWith('/_next') || pathname.startsWith('/favicon') || PUBLIC_FILE.test(pathname) || isPublicPath(pathname)) {
+  if (pathname.startsWith('/_next') || pathname.startsWith('/favicon') || PUBLIC_FILE.test(pathname) || isPublicPath(pathname, req.nextUrl.searchParams)) {
     return NextResponse.next()
   }
 

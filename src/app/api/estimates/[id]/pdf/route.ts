@@ -17,6 +17,18 @@ async function _GET(req: Request, { params }: Params) {
   const { data: est } = await s.from('estimates').select('*, estimate_lines(*)').eq('id', id).single()
   if (!est) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  // Customer token guard: if no staff session cookie, require matching approval_token.
+  // Staff access continues to work via existing session cookie flow.
+  const cookieHeader = req.headers.get('cookie') || ''
+  const hasSession = /(?:^|;\s*)(tz_session_token|sb-)/.test(cookieHeader)
+  if (!hasSession) {
+    const token = new URL(req.url).searchParams.get('token') || ''
+    const expected = (est as any).approval_token || ''
+    if (!token || !expected || token !== expected) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   const { data: wo } = await s.from('service_orders').select('so_number, complaint, ownership_type, assets(unit_number, year, make, model, vin, odometer), customers(company_name, contact_name, phone, email)').eq('id', est.repair_order_id).single()
 
   const { data: shop } = await s.from('shops').select('name, dba, phone, email, address, city, state, zip, tax_rate').eq('id', est.shop_id).single()
