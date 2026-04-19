@@ -112,10 +112,14 @@ async function _POST(req: Request) {
     const taxAmt = sub * (taxRate / 100)
     const grandTotal = sub + taxAmt
 
-    await ctx.admin.from('estimates').update({ labor_total: laborTotal, parts_total: partsTotal, subtotal: sub, tax_amount: taxAmt, grand_total: grandTotal, total: grandTotal }).eq('id', est.id)
+    // Chain .select().single() so the response carries the post-update
+    // updated_at. The BEFORE UPDATE trigger set_updated_at bumps the column,
+    // so the insert-time row the UI would otherwise cache is stale by the time
+    // the client sends its next PATCH with expected_updated_at.
+    const { data: updatedEst } = await ctx.admin.from('estimates').update({ labor_total: laborTotal, parts_total: partsTotal, subtotal: sub, tax_amount: taxAmt, grand_total: grandTotal, total: grandTotal }).eq('id', est.id).select().single()
     await ctx.admin.from('service_orders').update({ estimate_id: est.id }).eq('id', woId)
 
-    return NextResponse.json({ ...est, labor_total: laborTotal, parts_total: partsTotal, grand_total: grandTotal })
+    return NextResponse.json({ ...(updatedEst || est), labor_total: laborTotal, parts_total: partsTotal, grand_total: grandTotal })
   }
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })

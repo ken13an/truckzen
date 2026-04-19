@@ -2948,13 +2948,30 @@ export default function WorkOrderDetail() {
               return
             }
             // Only after the estimate row is successfully approved, propagate to the WO.
-            // approval_method is intentionally NOT sent: service_orders.approval_method
-            // column does not exist; the method is recorded on estimates.approval_method
-            // above.
+            // approval_method is intentionally NOT sent here; the method is recorded on
+            // estimates.approval_method above.
+            // The estimate PATCH handler side-effects service_orders.status on approved
+            // transitions (and the trg_so_updated trigger bumps service_orders.updated_at
+            // regardless of the handler's intent), so our closure's wo.updated_at is
+            // stale by the time we PATCH below. Refresh via a fresh GET; fall back to
+            // the closure value on refresh failure and let the existing 409 handling
+            // decide.
+            let woUpdatedAt: string | undefined = wo?.updated_at
+            try {
+              const woFreshRes = await fetch(`/api/work-orders/${id}`)
+              if (woFreshRes.ok) {
+                const woFresh = await woFreshRes.json().catch(() => null)
+                if (typeof woFresh?.updated_at === 'string') woUpdatedAt = woFresh.updated_at
+              } else {
+                console.error('[wo.estimate.approve] WO refresh GET failed', { woId: id, status: woFreshRes.status })
+              }
+            } catch (e: any) {
+              console.error('[wo.estimate.approve] WO refresh network error', { woId: id, error: e?.message })
+            }
             const woRes = await fetch(`/api/work-orders/${id}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved', expected_updated_at: wo?.updated_at }),
+              body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved', expected_updated_at: woUpdatedAt }),
             })
             if (woRes.status === 409) {
               setToastMsg('This record was updated by someone else. Refresh and try again.')
