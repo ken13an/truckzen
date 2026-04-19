@@ -4,6 +4,7 @@ import { requireRouteContext } from '@/lib/api-route-auth'
 import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 import { safeRoute } from '@/lib/api-handler'
 import { rateLimit } from '@/lib/ratelimit/core'
+import { generateEstimatePdf } from '@/lib/pdf/generateEstimatePdf'
 
 async function getEstimateForActor(admin: any, actor: any, id: string) {
   let q = admin.from('estimates').select('*').eq('id', id)
@@ -199,7 +200,19 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
     </div>
   </div>
 </div>`
-    const sent = await sendEmail((estimate as any).customer_email, `Estimate ${(estimate as any).estimate_number} from ${shopName}`, emailHtml)
+    let attachments: { filename: string; content: Buffer }[] | undefined
+    try {
+      const pdfResult = await generateEstimatePdf(id)
+      if (!pdfResult) {
+        console.warn('[Estimates] PDF generator returned null — sending email without attachment', { estimateId: id })
+      } else {
+        attachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
+      }
+    } catch (err: any) {
+      console.warn('[Estimates] PDF generation failed — sending email without attachment', { estimateId: id, error: err?.message || String(err) })
+    }
+
+    const sent = await sendEmail((estimate as any).customer_email, `Estimate ${(estimate as any).estimate_number} from ${shopName}`, emailHtml, attachments)
     if (sent) {
       sentVia.push('email')
       // Optional: track pdf_sent_at if column exists. Do not fail the send on error.
