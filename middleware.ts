@@ -18,6 +18,14 @@ const PUBLIC_PATHS = [
 
 function isPublicPath(pathname: string) {
   if (pathname === '/') return true
+  // Customer portal submits approve/decline from an email link without a session
+  // cookie. The /api/estimates/{id}/respond handler is token-guarded internally
+  // (checks estimate.approval_token !== token). Narrow regex — the dynamic id
+  // segment prevents a PUBLIC_PATHS prefix match.
+  // /pdf is intentionally NOT allowed here: it has no token check and the current
+  // customer email links to /portal/estimate/{token}, not to /pdf. Staff keep PDF
+  // access via session cookie.
+  if (/^\/api\/estimates\/[^\/]+\/respond$/.test(pathname)) return true
   return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 }
 
