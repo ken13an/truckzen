@@ -53,19 +53,122 @@ export async function GET(req: Request) {
   return NextResponse.json(data || [])
 }
 
+// Phase 4: match so-lines batch logic. If the linked so_line already carries
+// a pending supplement_batch_id, reuse that. Else if any pending supplement
+// exists on this WO (lines or parts), reuse. Otherwise mint a new UUID.
+async function getOrCreateOpenSupplementBatchForPart(admin: any, woId: string, lineId: string): Promise<{ batchId: string; opened: boolean }> {
+  const { data: lineWithBatch } = await admin
+    .from('so_lines')
+    .select('supplement_batch_id, is_additional, customer_approved')
+    .eq('id', lineId)
+    .limit(1)
+    .maybeSingle()
+  if (
+    lineWithBatch?.supplement_batch_id &&
+    lineWithBatch.is_additional === true &&
+    lineWithBatch.customer_approved === null
+  ) {
+    return { batchId: lineWithBatch.supplement_batch_id as string, opened: false }
+  }
+
+  const { data: existingLine } = await admin
+    .from('so_lines')
+    .select('supplement_batch_id')
+    .eq('so_id', woId)
+    .eq('is_additional', true)
+    .is('customer_approved', null)
+    .not('supplement_batch_id', 'is', null)
+    .limit(1)
+    .maybeSingle()
+  if (existingLine?.supplement_batch_id) return { batchId: existingLine.supplement_batch_id as string, opened: false }
+
+  const { data: existingPart } = await admin
+    .from('wo_parts')
+    .select('supplement_batch_id')
+    .eq('wo_id', woId)
+    .eq('is_additional', true)
+    .is('customer_approved', null)
+    .not('supplement_batch_id', 'is', null)
+    .limit(1)
+    .maybeSingle()
+  if (existingPart?.supplement_batch_id) return { batchId: existingPart.supplement_batch_id as string, opened: false }
+
+  return { batchId: crypto.randomUUID(), opened: true }
+}
+
 export async function POST(req: Request) {
   const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const raw = await req.json().catch(() => null)
   if (!raw || typeof raw !== 'object') return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  // NOTE: supplement fields are server-owned. WoPartsPostSchema.strip() already
+  // removes any is_additional / customer_approved / supplement_batch_id the client
+  // might send.
   const parsed = WoPartsPostSchema.safeParse(raw)
   if (!parsed.success) return badInput(parsed.error)
   const { wo_id, line_id, part_number, description, quantity, unit_cost } = parsed.data
-  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, wo_id, 'id')
+  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, wo_id, 'id, estimate_approved, ownership_type, invoice_status')
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  const { data, error } = await ctx.admin.from('wo_parts').insert({ wo_id, line_id, part_number: part_number?.trim() || null, description: description.trim(), quantity: quantity ?? 1, unit_cost: unit_cost ?? 0, status: 'needed' }).select().single()
+
+  // Phase 4: parity with /api/so-lines — cannot add parts after invoice is sent.
+  if ((wo as any).invoice_status && ['sent', 'paid', 'closed'].includes((wo as any).invoice_status)) {
+    return NextResponse.json({ error: 'Parts are locked — invoice has been sent to customer' }, { status: 403 })
+  }
+
+  // Phase 4: post-approval additions on owner/outside-customer WOs become pending supplements.
+  const isSupplementCandidate =
+    (wo as any).estimate_approved === true &&
+    ['owner_operator', 'outside_customer'].includes((wo as any).ownership_type)
+  let supplementFields: Record<string, any> = {}
+  let batchInfo: { batchId: string; opened: boolean } | null = null
+  if (isSupplementCandidate) {
+    batchInfo = await getOrCreateOpenSupplementBatchForPart(ctx.admin, wo_id, line_id)
+    supplementFields = {
+      is_additional: true,
+      customer_approved: null,
+      supplement_batch_id: batchInfo.batchId,
+    }
+  }
+
+  const { data, error } = await ctx.admin.from('wo_parts').insert({
+    wo_id, line_id,
+    part_number: part_number?.trim() || null,
+    description: description.trim(),
+    quantity: quantity ?? 1,
+    unit_cost: unit_cost ?? 0,
+    status: 'needed',
+    ...supplementFields,
+  }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  await ctx.admin.from('wo_activity_log').insert({ wo_id, user_id: ctx.actor.id, action: `Added part: ${description.trim()}` })
+
+  if (isSupplementCandidate && batchInfo) {
+    if (batchInfo.opened) {
+      await ctx.admin.from('wo_activity_log').insert({
+        wo_id,
+        user_id: ctx.actor.id,
+        action: 'Supplement batch opened (pending customer approval)',
+        details: { event: 'supplement_batch_opened', wo_id, supplement_batch_id: batchInfo.batchId, first_item_ref: { table: 'wo_parts', id: (data as any).id }, actor_user_id: ctx.actor.id },
+      })
+    }
+    await ctx.admin.from('wo_activity_log').insert({
+      wo_id,
+      user_id: ctx.actor.id,
+      action: `Supplement part added (pending): ${description.trim()}`,
+      details: {
+        event: 'supplement_part_created',
+        wo_id,
+        part_id: (data as any).id,
+        line_id,
+        description: description.trim(),
+        quantity: quantity ?? 1,
+        unit_cost: unit_cost ?? 0,
+        supplement_batch_id: batchInfo.batchId,
+        actor_user_id: ctx.actor.id,
+      },
+    })
+  } else {
+    await ctx.admin.from('wo_activity_log').insert({ wo_id, user_id: ctx.actor.id, action: `Added part: ${description.trim()}` })
+  }
   return NextResponse.json(data, { status: 201 })
 }
 

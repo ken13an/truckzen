@@ -59,17 +59,50 @@ async function _GET(req: Request) {
   return NextResponse.json(data)
 }
 
+// Phase 4: reuse an open pending supplement batch for this WO, or mint one.
+// A batch is "open" when at least one line (or wo_part) on the WO carries
+// is_additional=true AND customer_approved IS NULL AND a supplement_batch_id.
+// No batch table — the id is derived entirely from the items themselves.
+async function getOrCreateOpenSupplementBatch(admin: any, soId: string): Promise<{ batchId: string; opened: boolean }> {
+  const { data: existingLine } = await admin
+    .from('so_lines')
+    .select('supplement_batch_id')
+    .eq('so_id', soId)
+    .eq('is_additional', true)
+    .is('customer_approved', null)
+    .not('supplement_batch_id', 'is', null)
+    .limit(1)
+    .maybeSingle()
+  if (existingLine?.supplement_batch_id) return { batchId: existingLine.supplement_batch_id as string, opened: false }
+
+  const { data: existingPart } = await admin
+    .from('wo_parts')
+    .select('supplement_batch_id')
+    .eq('wo_id', soId)
+    .eq('is_additional', true)
+    .is('customer_approved', null)
+    .not('supplement_batch_id', 'is', null)
+    .limit(1)
+    .maybeSingle()
+  if (existingPart?.supplement_batch_id) return { batchId: existingPart.supplement_batch_id as string, opened: false }
+
+  return { batchId: crypto.randomUUID(), opened: true }
+}
+
 async function _POST(req: Request) {
   const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
   if (ctx.error || !ctx.shopId || !ctx.admin) return ctx.error!
   const body = await req.json()
+  // NOTE: supplement fields are server-owned. We deliberately do NOT destructure
+  // is_additional / customer_approved / supplement_batch_id / emergency_override_*
+  // from the body — clients cannot set them.
   const { so_id, line_type, description, part_number, quantity, unit_price, estimated_hours, line_status, rough_name, parts_status, related_labor_line_id } = body
 
   if (!so_id || !line_type || !description) {
     return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
   }
 
-  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status, is_historical, ownership_type').eq('id', so_id).single()
+  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status, is_historical, ownership_type, estimate_approved').eq('id', so_id).single()
   if (!so || so.shop_id !== ctx.shopId) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
 
   if (so.is_historical) {
@@ -88,6 +121,21 @@ async function _POST(req: Request) {
     ? { approval_status: 'needs_approval' as const, approval_required: true }
     : { approval_status: 'pre_approved' as const, approval_required: false }
 
+  // Phase 4: post-approval additions on owner/outside-customer WOs become pending supplements.
+  const isSupplementCandidate =
+    so.estimate_approved === true &&
+    (so.ownership_type === 'owner_operator' || so.ownership_type === 'outside_customer')
+  let supplementFields: Record<string, any> = {}
+  let batchInfo: { batchId: string; opened: boolean } | null = null
+  if (isSupplementCandidate) {
+    batchInfo = await getOrCreateOpenSupplementBatch(ctx.admin, so_id)
+    supplementFields = {
+      is_additional: true,
+      customer_approved: null,
+      supplement_batch_id: batchInfo.batchId,
+    }
+  }
+
   const { data, error } = await ctx.admin.from('so_lines').insert({
     so_id,
     line_type,
@@ -101,10 +149,38 @@ async function _POST(req: Request) {
     parts_status: parts_status || null,
     related_labor_line_id: related_labor_line_id || null,
     ...lineApprovalDefaults,
+    ...supplementFields,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   await recalcTotals(ctx.admin, so_id)
+
+  if (isSupplementCandidate && batchInfo) {
+    if (batchInfo.opened) {
+      await ctx.admin.from('wo_activity_log').insert({
+        wo_id: so_id,
+        user_id: ctx.actor?.id || null,
+        action: 'Supplement batch opened (pending customer approval)',
+        details: { event: 'supplement_batch_opened', wo_id: so_id, supplement_batch_id: batchInfo.batchId, first_item_ref: { table: 'so_lines', id: (data as any).id }, actor_user_id: ctx.actor?.id || null },
+      })
+    }
+    await ctx.admin.from('wo_activity_log').insert({
+      wo_id: so_id,
+      user_id: ctx.actor?.id || null,
+      action: `Supplement job line added (pending): ${description.trim()}`,
+      details: {
+        event: 'supplement_line_created',
+        so_id,
+        line_id: (data as any).id,
+        line_type,
+        description: description.trim(),
+        quantity: qty,
+        unit_price: price,
+        supplement_batch_id: batchInfo.batchId,
+        actor_user_id: ctx.actor?.id || null,
+      },
+    })
+  }
   return NextResponse.json(data, { status: 201 })
 }
 

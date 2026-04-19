@@ -148,8 +148,12 @@ export default function CustomerPortalPage() {
   }
 
   async function approveNewItems() {
+    // Phase 4: route the "Approve All New Items" CTA to the supplement-specific
+    // endpoint (approves pending is_additional so_lines AND wo_parts), not the
+    // whole-estimate approval route. The latter is reserved for the primary
+    // estimate approval flow in the Estimate tab.
     setActionLoading('new-items')
-    await fetch(`/api/portal/${token}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    await fetch(`/api/portal/${token}/estimate/new-items/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
     await fetchData()
     setActionLoading('')
   }
@@ -183,9 +187,11 @@ export default function CustomerPortalPage() {
   const checkin = wo.checkin || {}
   const lines = (wo.so_lines || []) as any[]
   const charges = (wo.wo_shop_charges || []) as any[]
+  const woParts = (wo.wo_parts || []) as any[]
   const jobLines = lines.filter((l: any) => l.line_type !== 'part')
   const partLines = lines.filter((l: any) => l.line_type === 'part')
   const additional = lines.filter((l: any) => l.is_additional && l.customer_approved === null)
+  const additionalParts = woParts.filter((p: any) => p.is_additional && p.customer_approved === null)
   const completed = jobLines.filter((l: any) => l.line_status === 'completed').length
   const total = jobLines.length
 
@@ -251,7 +257,7 @@ export default function CustomerPortalPage() {
             </div>
 
             {/* Additional repairs alert */}
-            {additional.length > 0 && (
+            {(additional.length > 0 || additionalParts.length > 0) && (
               <div style={{ ...c, border: `1px solid ${AMBER}40`, background: `${AMBER}10` }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: AMBER, marginBottom: 8 }}>Additional Repairs Recommended</div>
                 <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>Your technician found additional items that need attention.</div>
@@ -265,6 +271,15 @@ export default function CustomerPortalPage() {
                       </button>
                       <button onClick={() => declineJob(l.id)} disabled={actionLoading === l.id} style={{ ...btn('transparent', RED, isMobile), border: `1px solid ${RED}40` }}>Decline</button>
                     </div>
+                  </div>
+                ))}
+                {additionalParts.map((p: any) => (
+                  <div key={p.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+                      {p.description}
+                      <span style={{ ...pill(MUTED), marginLeft: 8, fontSize: 10, padding: '2px 6px' }}>Additional part</span>
+                    </div>
+                    {p.part_number && <div style={{ fontSize: 11, color: MUTED }}>Part #{p.part_number} · Qty {p.quantity || 1}</div>}
                   </div>
                 ))}
                 <div style={{ marginTop: 12 }}>

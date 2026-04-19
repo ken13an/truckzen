@@ -22,7 +22,8 @@ export async function GET(req: Request, { params }: P) {
       estimate_status, estimate_approved_date, estimate_declined_reason, estimate_created_date,
       assets(id, unit_number, year, make, model, vin, odometer),
       customers(id, company_name, contact_name, phone, email),
-      so_lines(id, line_type, description, quantity, unit_price, total_price, line_status, customer_approved, approved_at, is_additional, finding, resolution, estimated_hours, billed_hours),
+      so_lines(id, line_type, description, quantity, unit_price, total_price, line_status, customer_approved, approved_at, is_additional, supplement_batch_id, finding, resolution, estimated_hours, billed_hours),
+      wo_parts(id, line_id, part_number, description, quantity, unit_cost, status, is_additional, customer_approved, approved_at, supplement_batch_id),
       wo_shop_charges(id, description, amount, taxable)
     `)
     .eq('portal_token', token)

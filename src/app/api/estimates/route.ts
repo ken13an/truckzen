@@ -71,8 +71,13 @@ async function _POST(req: Request) {
     const laborRate = shop?.default_labor_rate || shop?.labor_rate || DEFAULT_LABOR_RATE_FALLBACK
     const taxRate = shop?.tax_rate || shop?.default_tax_rate || 0
 
-    const { data: lines } = await ctx.admin.from('so_lines').select('*').eq('so_id', woId)
-    const { data: woParts } = await ctx.admin.from('wo_parts').select('*').eq('wo_id', woId)
+    // Phase 4: exclude supplement rows from the ORIGINAL estimate snapshot.
+    // Post-approval additions (is_additional=true) belong to a separate supplement
+    // batch and must not land in the primary estimate_lines.
+    const { data: allLines } = await ctx.admin.from('so_lines').select('*').eq('so_id', woId)
+    const { data: allWoParts } = await ctx.admin.from('wo_parts').select('*').eq('wo_id', woId)
+    const lines = (allLines || []).filter((l: any) => l.is_additional !== true)
+    const woParts = (allWoParts || []).filter((p: any) => p.is_additional !== true)
     const { count } = await ctx.admin.from('estimates').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null)
     const estNum = `EST-${String((count || 0) + 1).padStart(5, '0')}`
     const cust = (wo as any).customers as any

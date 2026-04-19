@@ -19,6 +19,16 @@ export interface InvoiceTotals {
   grandTotal: number
 }
 
+// Phase 4 billable predicate. A supplement row is billable only after the
+// customer approves it OR a manager records an emergency override. Pending
+// supplements (is_additional=true, customer_approved IS NULL) are excluded
+// from invoice totals until they are resolved. Pre-approval rows and fleet
+// rows have is_additional=false/null and pass through unchanged.
+const isBillable = (l: any): boolean =>
+  l.is_additional !== true ||
+  l.customer_approved === true ||
+  l.emergency_override_at != null
+
 export function calcInvoiceTotals(
   lines: any[],
   laborRate: number,
@@ -26,8 +36,8 @@ export function calcInvoiceTotals(
   taxLabor: boolean,
   shopCharges?: any[],
 ): InvoiceTotals {
-  const laborLines = lines.filter((l: any) => l.line_type === 'labor')
-  const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
+  const laborLines = lines.filter((l: any) => l.line_type === 'labor' && isBillable(l))
+  const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled' && isBillable(l))
 
   // Labor: billed_hours preferred, fallback to estimated_hours for invoice truth
   const laborTotal = laborLines.reduce((sum: number, l: any) => {
@@ -71,8 +81,8 @@ export function calcWoOperationalTotals(
   taxLabor: boolean,
   shopCharges?: any[],
 ): InvoiceTotals {
-  const laborLines = lines.filter((l: any) => l.line_type === 'labor')
-  const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
+  const laborLines = lines.filter((l: any) => l.line_type === 'labor' && isBillable(l))
+  const partLines = lines.filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled' && isBillable(l))
 
   // Operational: fallback chain for internal display
   const laborTotal = laborLines.reduce((sum: number, l: any) => {

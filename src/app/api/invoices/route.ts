@@ -104,16 +104,24 @@ async function _POST(req: Request) {
   const { so_id, customer_id, due_date, tax_rate, notes } = body
   if (!so_id) return NextResponse.json({ error: 'so_id required' }, { status: 400 })
 
-  // Fetch SO and line items
+  // Fetch SO and line items (include supplement fields for the billable filter below).
   const { data: so } = await supabase
     .from('service_orders')
-    .select('id, so_number, customer_id, so_lines(line_type, description, quantity, unit_price, total_price)')
+    .select('id, so_number, customer_id, so_lines(line_type, description, quantity, unit_price, total_price, is_additional, customer_approved, emergency_override_at)')
     .eq('id', so_id)
     .single()
 
   if (!so) return NextResponse.json({ error: 'Service order not found' }, { status: 404 })
 
-  const lines = (so as any).so_lines || []
+  // Phase 4 minimal invoice guard: pending supplement lines (is_additional=true,
+  // customer_approved IS NULL) are excluded from the payable subtotal. Approved
+  // supplements and emergency overrides are included. Pre-Phase-4 rows all have
+  // is_additional=false/null so their historical totals are unchanged.
+  const lines = ((so as any).so_lines || []).filter((l: any) =>
+    l.is_additional !== true ||
+    l.customer_approved === true ||
+    l.emergency_override_at != null
+  )
   const subtotal = lines.reduce((s: number, l: any) => s + (l.total_price || 0), 0)
   const taxAmount = subtotal * ((tax_rate || 0) / 100)
   const total = subtotal + taxAmount
