@@ -114,6 +114,7 @@ export default function WorkOrderDetail() {
   const [newPartForms, setNewPartForms] = useState<Record<string, { desc: string; pn: string; qty: string; cost: string }>>({})
   const [approvalModal, setApprovalModal] = useState(false)
   const [sendingEstimate, setSendingEstimate] = useState(false)
+  const [approvingEstimate, setApprovingEstimate] = useState(false)
   const [qcLoading, setQcLoading] = useState(false)
   const [qcErrors, setQcErrors] = useState<string[]>([])
   const [showQcErrors, setShowQcErrors] = useState(false)
@@ -2893,46 +2894,13 @@ export default function WorkOrderDetail() {
           }
         }
 
-        async function approveEstimate(method: 'in_person' | 'printed_signed', notes?: string) {
-          if (estimateId) {
-            const estRes = await fetch(`/api/estimates/${estimateId}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'approved', approval_method: method, approved_by: user?.id, approved_at: new Date().toISOString(), customer_notes: notes || null, expected_updated_at: estimateUpdatedAt }),
-            })
-            if (estRes.status === 409) {
-              setToastMsg('This record was updated by someone else. Refresh and try again.')
-              setTimeout(() => setToastMsg(''), 4000)
-              return
-            }
-          }
-          const woRes = await fetch(`/api/work-orders/${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved', approval_method: method, expected_updated_at: wo?.updated_at }),
-          })
-          if (woRes.status === 409) {
-            setToastMsg('This record was updated by someone else. Refresh and try again.')
-            setTimeout(() => setToastMsg(''), 4000)
-            return
-          }
-          const methodLabel = method === 'in_person' ? 'in person' : '(printed and signed)'
-          logActivity(`Estimate approved ${methodLabel} by ${user?.full_name || 'service writer'}${notes ? ` — Notes: ${notes}` : ''}`)
-          try {
-            const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
-            const mgrs = await getUserIdsByRole(wo.shop_id, ['owner', 'gm', 'shop_manager', 'floor_manager'])
-            if (mgrs.length > 0) await createNotification({ shopId: wo.shop_id, recipientId: mgrs, type: 'estimate_approved', title: `Estimate approved — WO #${wo.so_number}`, body: `Ready to assign. Total: ${fmt(grandTotal)}`, link: `/work-orders/${id}`, relatedWoId: id })
-          } catch {}
-          setApprovalModal(false)
-          setApprovalConfirmModal(null)
-          setPrintedReady(false)
-          setToastMsg('Estimate approved — work order activated')
-          setTimeout(() => setToastMsg(''), 4000)
-          await loadData()
-        }
-
-        async function ensureEstimateForSend(): Promise<string | null> {
-          if (estimateId) return estimateId
+        // Returns the id + updated_at of either the existing open estimate (from the
+        // closure) or a freshly created/reused one from POST /api/estimates. null on
+        // failure. updatedAt is required by PATCH /api/estimates/{id} as the optimistic
+        // concurrency check; the API returns the full row on create_from_wo so a fresh
+        // row carries its own updated_at.
+        async function ensureEstimate(): Promise<{ id: string; updatedAt: string | null } | null> {
+          if (estimateId) return { id: estimateId, updatedAt: estimateUpdatedAt || null }
           try {
             const r = await fetch('/api/estimates', {
               method: 'POST',
@@ -2941,13 +2909,80 @@ export default function WorkOrderDetail() {
             })
             const body = await r.json().catch(() => null)
             if (!r.ok || !body?.id) {
-              console.error('[wo.estimate.ensureForSend] create_from_wo failed', { woId: id, status: r.status, error: body?.error })
+              console.error('[wo.estimate.ensure] create_from_wo failed', { woId: id, status: r.status, error: body?.error })
               return null
             }
-            return body.id as string
+            return { id: body.id as string, updatedAt: (body.updated_at as string) || null }
           } catch (e: any) {
-            console.error('[wo.estimate.ensureForSend] network error', { woId: id, error: e?.message })
+            console.error('[wo.estimate.ensure] network error', { woId: id, error: e?.message })
             return null
+          }
+        }
+
+        async function approveEstimate(method: 'in_person' | 'printed_signed', notes?: string) {
+          if (approvingEstimate) return
+          setApprovingEstimate(true)
+          try {
+            const result = await ensureEstimate()
+            if (!result) {
+              setToastMsg('Could not prepare estimate for approval — try again')
+              setTimeout(() => setToastMsg(''), 4000)
+              return
+            }
+            const { id: effectiveId, updatedAt } = result
+            const estRes = await fetch(`/api/estimates/${effectiveId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'approved', approval_method: method, approved_by: user?.id, approved_at: new Date().toISOString(), customer_notes: notes || null, expected_updated_at: updatedAt }),
+            })
+            if (estRes.status === 409) {
+              setToastMsg('This record was updated by someone else. Refresh and try again.')
+              setTimeout(() => setToastMsg(''), 4000)
+              return
+            }
+            if (!estRes.ok) {
+              const errBody = await estRes.json().catch(() => null)
+              console.error('[wo.estimate.approve] estimates PATCH failed', { woId: id, estimateId: effectiveId, method, status: estRes.status, error: errBody?.error })
+              setToastMsg('Failed to approve estimate')
+              setTimeout(() => setToastMsg(''), 4000)
+              return
+            }
+            // Only after the estimate row is successfully approved, propagate to the WO.
+            // approval_method is intentionally NOT sent: service_orders.approval_method
+            // column does not exist; the method is recorded on estimates.approval_method
+            // above.
+            const woRes = await fetch(`/api/work-orders/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ estimate_approved: true, estimate_status: 'approved', expected_updated_at: wo?.updated_at }),
+            })
+            if (woRes.status === 409) {
+              setToastMsg('This record was updated by someone else. Refresh and try again.')
+              setTimeout(() => setToastMsg(''), 4000)
+              return
+            }
+            if (!woRes.ok) {
+              const errBody = await woRes.json().catch(() => null)
+              console.error('[wo.estimate.approve] work-orders PATCH failed', { woId: id, estimateId: effectiveId, method, status: woRes.status, error: errBody?.error })
+              setToastMsg('Estimate approved but work order update failed — refresh to retry')
+              setTimeout(() => setToastMsg(''), 5000)
+              return
+            }
+            const methodLabel = method === 'in_person' ? 'in person' : '(printed and signed)'
+            logActivity(`Estimate approved ${methodLabel} by ${user?.full_name || 'service writer'}${notes ? ` — Notes: ${notes}` : ''}`)
+            try {
+              const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
+              const mgrs = await getUserIdsByRole(wo.shop_id, ['owner', 'gm', 'shop_manager', 'floor_manager'])
+              if (mgrs.length > 0) await createNotification({ shopId: wo.shop_id, recipientId: mgrs, type: 'estimate_approved', title: `Estimate approved — WO #${wo.so_number}`, body: `Ready to assign. Total: ${fmt(grandTotal)}`, link: `/work-orders/${id}`, relatedWoId: id })
+            } catch {}
+            setApprovalModal(false)
+            setApprovalConfirmModal(null)
+            setPrintedReady(false)
+            setToastMsg('Estimate approved — work order activated')
+            setTimeout(() => setToastMsg(''), 4000)
+            await loadData()
+          } finally {
+            setApprovingEstimate(false)
           }
         }
 
@@ -2956,12 +2991,13 @@ export default function WorkOrderDetail() {
           setSendingEstimate(true)
           try {
             await saveContactInfo()
-            const effectiveId = await ensureEstimateForSend()
-            if (!effectiveId) {
+            const result = await ensureEstimate()
+            if (!result) {
               setToastMsg('Could not prepare estimate — try again')
               setTimeout(() => setToastMsg(''), 4000)
               return
             }
+            const effectiveId = result.id
             const res = await fetch(`/api/estimates/${effectiveId}/send`, { method: 'POST' })
             if (res.ok) {
               logActivity(`Estimate sent to ${contactEmail || contactPhone}`)
@@ -3096,9 +3132,13 @@ export default function WorkOrderDetail() {
                     style={{ ...inputStyle, resize: 'vertical', marginBottom: 16 }}
                   />
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                    <button onClick={() => setApprovalConfirmModal(null)} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
-                    <button onClick={() => approveEstimate(approvalConfirmModal.method as 'in_person' | 'printed_signed', approvalConfirmModal.notes)} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
-                      Confirm Approval
+                    <button onClick={() => setApprovalConfirmModal(null)} disabled={approvingEstimate} style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), opacity: approvingEstimate ? 0.5 : 1, cursor: approvingEstimate ? 'not-allowed' : 'pointer' }}>Cancel</button>
+                    <button
+                      onClick={() => approveEstimate(approvalConfirmModal.method as 'in_person' | 'printed_signed', approvalConfirmModal.notes)}
+                      disabled={approvingEstimate}
+                      style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), opacity: approvingEstimate ? 0.5 : 1, cursor: approvingEstimate ? 'not-allowed' : 'pointer' }}
+                    >
+                      {approvingEstimate ? 'Approving…' : 'Confirm Approval'}
                     </button>
                   </div>
                 </div>
