@@ -10,7 +10,7 @@ const EstimatePatchSchema = z.object({
   // Optimistic-concurrency marker — see patch below. Optional for backward
   // compatibility with un-wired UI; when sent, a precondition match is
   // enforced and a 409 Conflict is returned on mismatch.
-  expected_updated_at: z.string().datetime().optional().nullable(),
+  expected_updated_at: z.string().datetime({ offset: true }).optional().nullable(),
   status: z.string().max(32).optional(),
   notes: z.string().max(5000).optional().nullable(),
   customer_name: z.string().max(200).optional().nullable(),
