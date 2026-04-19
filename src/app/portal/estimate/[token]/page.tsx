@@ -16,6 +16,7 @@ export default function EstimatePortalPage() {
   const [error, setError] = useState('')
   const [responded, setResponded] = useState(false)
   const [responseStatus, setResponseStatus] = useState('')
+  const [responseError, setResponseError] = useState('')
   const [actionLoading, setActionLoading] = useState('')
   const [showDecline, setShowDecline] = useState(false)
   const [declineReason, setDeclineReason] = useState('')
@@ -55,6 +56,7 @@ export default function EstimatePortalPage() {
 
   async function handleApprove() {
     setActionLoading('approve')
+    setResponseError('')
     try {
       const res = await fetch(`/api/estimates/${estimate.id}/respond`, {
         method: 'POST',
@@ -64,13 +66,22 @@ export default function EstimatePortalPage() {
       if (res.ok) {
         setResponded(true)
         setResponseStatus('approved')
+      } else {
+        const body = await res.json().catch(() => null)
+        console.error('[portal.approve] failed', { action: 'approve', estimateId: estimate.id, status: res.status, apiError: body?.error })
+        setResponseError('Could not approve estimate. Please refresh and try again.')
       }
-    } catch { /* ignore */ }
-    setActionLoading('')
+    } catch (e: any) {
+      console.error('[portal.approve] network error', { action: 'approve', estimateId: estimate.id, error: e?.message })
+      setResponseError('Network error. Please check your connection and try again.')
+    } finally {
+      setActionLoading('')
+    }
   }
 
   async function handleApproveWithNotes() {
     setActionLoading('approve_with_notes')
+    setResponseError('')
     try {
       const res = await fetch(`/api/estimates/${estimate.id}/respond`, {
         method: 'POST',
@@ -81,13 +92,22 @@ export default function EstimatePortalPage() {
         setResponded(true)
         setResponseStatus('approved_with_notes')
         setShowApproveNotes(false)
+      } else {
+        const body = await res.json().catch(() => null)
+        console.error('[portal.approve_with_notes] failed', { action: 'approve_with_notes', estimateId: estimate.id, status: res.status, apiError: body?.error })
+        setResponseError('Could not submit approval changes. Please refresh and try again.')
       }
-    } catch { /* ignore */ }
-    setActionLoading('')
+    } catch (e: any) {
+      console.error('[portal.approve_with_notes] network error', { action: 'approve_with_notes', estimateId: estimate.id, error: e?.message })
+      setResponseError('Network error. Please check your connection and try again.')
+    } finally {
+      setActionLoading('')
+    }
   }
 
   async function handleDecline() {
     setActionLoading('decline')
+    setResponseError('')
     try {
       const res = await fetch(`/api/estimates/${estimate.id}/respond`, {
         method: 'POST',
@@ -98,9 +118,17 @@ export default function EstimatePortalPage() {
         setResponded(true)
         setResponseStatus('declined')
         setShowDecline(false)
+      } else {
+        const body = await res.json().catch(() => null)
+        console.error('[portal.decline] failed', { action: 'decline', estimateId: estimate.id, status: res.status, apiError: body?.error })
+        setResponseError('Could not decline estimate. Please refresh and try again.')
       }
-    } catch { /* ignore */ }
-    setActionLoading('')
+    } catch (e: any) {
+      console.error('[portal.decline] network error', { action: 'decline', estimateId: estimate.id, error: e?.message })
+      setResponseError('Network error. Please check your connection and try again.')
+    } finally {
+      setActionLoading('')
+    }
   }
 
   if (loading) return (
@@ -257,6 +285,13 @@ export default function EstimatePortalPage() {
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 16, marginBottom: 12 }}>
             <div style={{ fontSize: 11, color: MUTED, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Notes</div>
             <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{estimate.notes}</div>
+          </div>
+        )}
+
+        {/* Error from a failed response action (approve / approve with notes / decline) */}
+        {responseError && !responded && (
+          <div role="alert" style={{ background: `${RED}15`, border: `1px solid ${RED}40`, borderRadius: 12, padding: 12, marginTop: 12, fontSize: 13, color: RED, textAlign: 'center' }}>
+            {responseError}
           </div>
         )}
 
