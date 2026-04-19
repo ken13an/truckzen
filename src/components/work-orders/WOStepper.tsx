@@ -35,8 +35,8 @@ export default function WOStepper({ wo, asset, jobLines, jobAssignments }: WOSte
   if (isNew) {
     const hasSubmit = !!wo.submitted_at
     const skipEstimate = isFleet
-    const hasEstimate = skipEstimate || !!wo.estimate_approved_at
-    const estimatePending = !skipEstimate && !!wo.estimate_sent_at && !wo.estimate_approved_at
+    const hasEstimate = skipEstimate || !!wo.estimate_approved_at || wo.estimate_approved === true
+    const estimatePending = !skipEstimate && (!!wo.estimate_sent_at || wo.estimate_status === 'sent') && !(wo.estimate_approved_at || wo.estimate_approved === true)
 
     const jobsAssigned = jobLines.filter((l: any) => jobAssignments.some((ja: any) => ja.line_id === l.id)).length
     const totalJobs = jobLines.length || 1
