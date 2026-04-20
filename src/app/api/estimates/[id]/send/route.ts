@@ -79,26 +79,32 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
   const linesHtml = (lines || []).map((l: any) => {
     const so = l.repair_order_line_id ? soLineMap[l.repair_order_line_id] : null
     const partNumber = so?.part_number || ''
-    const qty = so?.quantity ?? ''
+    const srcQty = so?.quantity ?? null
     const unitPrice = so?.parts_sell_price ?? so?.unit_price ?? null
-    const laborHours = l.labor_hours ?? ''
-    const laborRate = l.labor_rate ?? 0
+    const laborTotal = Number(l.labor_total) || 0
+    const partsTotal = Number(l.parts_total) || 0
+    const isLabor = laborTotal > 0 && partsTotal === 0
+    const isPart = partsTotal > 0 && laborTotal === 0
+    // Qty/Hrs column: hours for labor rows, quantity for part rows
+    const qtyHrsLabel = isLabor
+      ? (Number(l.labor_hours) > 0 ? `${l.labor_hours} hr` : '—')
+      : (srcQty != null && Number(srcQty) > 0 ? String(srcQty) : '—')
+    // Unit-price sub-line under description for part rows: "Qty 4 × $125.00"
+    const unitPriceSub = isPart && srcQty != null && Number(srcQty) > 0 && unitPrice != null && Number(unitPrice) > 0
+      ? `<div style="font-size:11px;color:#8a8a9a;margin-top:2px">Qty ${esc(srcQty)} × $${money(unitPrice)}</div>`
+      : ''
     return `
     <tr>
-      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#e0e0e0;font-size:13px;vertical-align:top">
+      <td style="padding:10px 12px;border-bottom:1px solid #2a2a3a;color:#e0e0e0;font-size:13px;vertical-align:top;line-height:1.4">
         <div>${esc(l.description)}</div>
-        ${partNumber ? `<div style="font-size:11px;color:#8a8a9a">Part #: ${esc(partNumber)}</div>` : ''}
-        ${so?.rough_name ? `<div style="font-size:11px;color:#D97706">~ ${esc(so.rough_name)}</div>` : ''}
+        ${partNumber ? `<div style="font-size:11px;color:#8a8a9a;margin-top:2px">Part # ${esc(partNumber)}</div>` : ''}
+        ${unitPriceSub}
+        ${so?.rough_name && !partNumber ? `<div style="font-size:11px;color:#D97706;margin-top:2px">~ ${esc(so.rough_name)}</div>` : ''}
       </td>
-      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:center">${qty !== '' ? esc(qty) : '—'}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:center">${laborHours !== '' ? esc(laborHours) : '—'}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:right">$${money(laborRate)}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:right">$${money(l.labor_total)}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:right">
-        ${unitPrice !== null ? `<div style="font-size:11px;color:#8a8a9a">@$${money(unitPrice)}</div>` : ''}
-        $${money(l.parts_total)}
-      </td>
-      <td style="padding:8px 12px;border-bottom:1px solid #2a2a3a;color:#e0e0e0;font-size:13px;font-weight:700;text-align:right">$${money(l.line_total || l.total)}</td>
+      <td style="padding:10px 8px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:center;vertical-align:top;white-space:nowrap">${qtyHrsLabel}</td>
+      <td style="padding:10px 8px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:right;vertical-align:top;white-space:nowrap">${isLabor ? '$' + money(laborTotal) : '—'}</td>
+      <td style="padding:10px 8px;border-bottom:1px solid #2a2a3a;color:#b0b0c0;font-size:13px;text-align:right;vertical-align:top;white-space:nowrap">${isPart ? '$' + money(partsTotal) : '—'}</td>
+      <td style="padding:10px 12px;border-bottom:1px solid #2a2a3a;color:#e0e0e0;font-size:13px;font-weight:700;text-align:right;vertical-align:top;white-space:nowrap">$${money(l.line_total || l.total)}</td>
     </tr>
   `
   }).join('')
@@ -163,16 +169,14 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
       <p style="color:#e0e0e0;font-size:14px;margin:0 0 8px">Hi ${esc((estimate as any).customer_name || customerRow?.contact_name || 'Customer')},</p>
       <p style="color:#b0b0c0;font-size:13px;margin:0 0 16px">Here is your repair estimate${truckInfo ? ` for <strong style="color:#e0e0e0">${esc(truckInfo)}</strong>` : ''}. Review the details below and approve to authorize the work.</p>
 
-      <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      <table style="width:100%;border-collapse:collapse;margin:16px 0;table-layout:auto">
         <thead>
           <tr style="background:#15152a">
-            <th style="padding:8px 12px;text-align:left;color:#8a8a9a;font-size:11px;text-transform:uppercase">Description</th>
-            <th style="padding:8px 12px;text-align:center;color:#8a8a9a;font-size:11px;text-transform:uppercase">Qty</th>
-            <th style="padding:8px 12px;text-align:center;color:#8a8a9a;font-size:11px;text-transform:uppercase">Hrs</th>
-            <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Rate</th>
-            <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Labor</th>
-            <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Parts</th>
-            <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Total</th>
+            <th style="padding:8px 12px;text-align:left;color:#8a8a9a;font-size:11px;text-transform:uppercase;letter-spacing:0.05em">Description</th>
+            <th style="padding:8px 8px;text-align:center;color:#8a8a9a;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap">Qty / Hrs</th>
+            <th style="padding:8px 8px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase;letter-spacing:0.05em">Labor</th>
+            <th style="padding:8px 8px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase;letter-spacing:0.05em">Parts</th>
+            <th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase;letter-spacing:0.05em">Total</th>
           </tr>
         </thead>
         <tbody>${linesHtml}</tbody>

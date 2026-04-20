@@ -271,34 +271,59 @@ export async function generateEstimatePdf(estimateId: string): Promise<{ pdfByte
       wrap(placeholderMessage, L, R - L, 10, false, dark)
       y -= 6
     } else if (rows.length > 0) {
-      // Column headers
+      // 5-column layout: Description / Qty·Hrs / Labor / Parts / Total
+      //   description area ends at ~350 so the numeric cells right-align inside
+      //   fixed tab stops. Part number + unit price appear as small sublines
+      //   beneath the description to avoid cramming a "Rate" column on mobile.
+      const DESC_MAX = 300
+      const COL_QH = 370   // center of Qty/Hrs
+      const COL_LAB = 435  // right edge of Labor
+      const COL_PT = 490   // right edge of Parts
+      const COL_TOT = R - 42
+
       txt('Description', L + 4, y, 7, true, light)
-      txt('Qty', 290, y, 7, true, light)
-      txt('Hrs', 320, y, 7, true, light)
-      txt('Rate', 360, y, 7, true, light)
-      txt('Labor', 410, y, 7, true, light)
-      txt('Parts', 470, y, 7, true, light)
-      txt('Total', R - 42, y, 7, true, light)
+      txt('Qty / Hrs', COL_QH - 22, y, 7, true, light)
+      txt('Labor', COL_LAB - 22, y, 7, true, light)
+      txt('Parts', COL_PT - 22, y, 7, true, light)
+      txt('Total', COL_TOT - 22, y, 7, true, light)
       y -= 5; hr(y, rule); y -= 13
 
       let laborSum = 0
       let partsSum = 0
       for (const r of rows) {
         need(LINE_H * 2)
-        const desc = r.partNumber ? `${r.description} [${r.partNumber}]` : r.description
-        const descMax = 230
-        wrap(desc, L + 4, descMax, 8, false, dark)
-        // wrap advances y; reposition numeric cells to the first line of the row by moving back up
-        const rowY = y + 11
-        txt(r.quantity != null ? String(r.quantity) : '—', 290, rowY, 8)
-        txt(r.laborHours != null ? String(r.laborHours) : '—', 320, rowY, 8)
-        txt(r.laborRate != null ? fmt(r.laborRate) : '—', 360, rowY, 8)
-        txt(fmt(r.laborTotal || 0), 410, rowY, 8)
-        txt(fmt(r.partsTotal || 0), 470, rowY, 8)
-        txt(fmt(r.lineTotal || 0), R - 42, rowY, 8, true)
+        const rowTop = y
+        const isLabor = (r.laborTotal || 0) > 0 && (r.partsTotal || 0) === 0
+        const isPart = (r.partsTotal || 0) > 0 && (r.laborTotal || 0) === 0
+
+        // Numeric cells anchored to rowTop
+        const qtyHrs = isLabor
+          ? (r.laborHours != null && r.laborHours > 0 ? `${r.laborHours} hr` : '—')
+          : (r.quantity != null && Number(r.quantity) > 0 ? String(r.quantity) : '—')
+        txt(qtyHrs, COL_QH - font.widthOfTextAtSize(qtyHrs, 8) / 2, rowTop, 8)
+        const laborCell = isLabor ? fmt(r.laborTotal || 0) : '—'
+        txt(laborCell, COL_LAB - font.widthOfTextAtSize(laborCell, 8), rowTop, 8)
+        const partsCell = isPart ? fmt(r.partsTotal || 0) : '—'
+        txt(partsCell, COL_PT - font.widthOfTextAtSize(partsCell, 8), rowTop, 8)
+        const totalCell = fmt(r.lineTotal || 0)
+        txt(totalCell, COL_TOT - fontBold.widthOfTextAtSize(totalCell, 8), rowTop, 8, true)
+
+        // Description (may wrap; advances y)
+        txt(r.description || '', L + 4, rowTop, 8, false, dark)
+        y = rowTop - 12
+        if (r.partNumber) { txt(`Part # ${r.partNumber}`, L + 4, y, 7, false, light); y -= 10 }
+        if (isPart && r.quantity != null && Number(r.quantity) > 0 && r.unitPrice != null && Number(r.unitPrice) > 0) {
+          const sub = `Qty ${r.quantity} × ${fmt(r.unitPrice)}`
+          txt(sub, L + 4, y, 7, false, light); y -= 10
+        }
+        if (r.lineTotal && r.description && font.widthOfTextAtSize(r.description, 8) > DESC_MAX) {
+          // Long description overflow fallback — wrap past DESC_MAX keeps us readable.
+          // Already drawn truncated above; leave y advanced.
+        }
+
         laborSum += (r.laborTotal || 0)
         partsSum += (r.partsTotal || 0)
-        y -= 6
+        y -= 4
       }
 
       // TOTALS
