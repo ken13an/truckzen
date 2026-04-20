@@ -67,9 +67,10 @@ async function _POST(req: Request) {
       return NextResponse.json(existing)
     }
 
-    const { data: shop } = await ctx.admin.from('shops').select('default_labor_rate, labor_rate, tax_rate, default_tax_rate').eq('id', shopId).single()
+    const { data: shop } = await ctx.admin.from('shops').select('default_labor_rate, labor_rate, tax_rate, default_tax_rate, tax_labor').eq('id', shopId).single()
     const laborRate = shop?.default_labor_rate || shop?.labor_rate || DEFAULT_LABOR_RATE_FALLBACK
     const taxRate = shop?.tax_rate || shop?.default_tax_rate || 0
+    const taxLabor = shop?.tax_labor === true
 
     const { data: lines } = await ctx.admin.from('so_lines').select('*').eq('so_id', woId)
     const { data: woParts } = await ctx.admin.from('wo_parts').select('*').eq('wo_id', woId)
@@ -169,7 +170,10 @@ async function _POST(req: Request) {
     const laborTotal = snapshot.reduce((sum, r) => sum + (Number(r.labor_total) || 0), 0)
     const partsTotal = snapshot.reduce((sum, r) => sum + (Number(r.parts_total) || 0), 0)
     const sub = laborTotal + partsTotal
-    const taxAmt = sub * (taxRate / 100)
+    // Canonical tax rule — parity with calcInvoiceTotals / calcWoOperationalTotals / Estimate tab.
+    // Parts are taxable; labor is taxable only when shop.tax_labor is explicitly true.
+    const taxableAmount = partsTotal + (taxLabor ? laborTotal : 0)
+    const taxAmt = taxRate > 0 ? taxableAmount * (taxRate / 100) : 0
     const grandTotal = sub + taxAmt
 
     // Chain .select().single() so the response carries the post-update
