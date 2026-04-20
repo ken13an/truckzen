@@ -73,6 +73,72 @@ async function _POST(req: Request) {
 
     const { data: lines } = await ctx.admin.from('so_lines').select('*').eq('so_id', woId)
     const { data: woParts } = await ctx.admin.from('wo_parts').select('*').eq('wo_id', woId)
+
+    // Phase 4 supplement filter: the original estimate snapshot excludes is_additional rows.
+    const nonAdditionalLines = (lines || []).filter((l: any) => !l.is_additional)
+    const nonAdditionalWoParts = (woParts || []).filter((p: any) => !p.is_additional)
+
+    // Build snapshot payload BEFORE creating the estimate row, so we can reject
+    // an empty snapshot up-front without leaving a zombie estimate behind.
+    // Live estimate_lines columns (verified against DB, not inferred from stale types):
+    //   id, estimate_id, repair_order_line_id, description, line_number,
+    //   labor_hours, labor_rate, labor_total, parts_total, line_total,
+    //   is_approved, customer_response, created_at.
+    // There is NO line_type / quantity / unit_price / part_number / total / so_line_id
+    // column — prior inserts writing those fields silently failed because of PostgREST schema cache,
+    // which is why every historical estimate has zero estimate_lines.
+    const snapshot: Array<Record<string, any>> = []
+    let lineNum = 1
+    for (const line of nonAdditionalLines) {
+      if (line.line_type === 'labor') {
+        const hrs = Number(line.estimated_hours || line.billed_hours || line.actual_hours || 1)
+        const laborTotal = hrs * laborRate
+        snapshot.push({
+          repair_order_line_id: line.id,
+          description: line.description || '',
+          labor_hours: hrs,
+          labor_rate: laborRate,
+          labor_total: laborTotal,
+          parts_total: 0,
+          line_total: laborTotal,
+          line_number: lineNum++,
+        })
+      } else if (line.line_type === 'part' && (line.real_name || line.rough_name || line.description)) {
+        const price = Number(line.parts_sell_price || line.unit_price || 0)
+        const qty = Number(line.quantity || 1)
+        const partsTotal = price * qty
+        snapshot.push({
+          repair_order_line_id: line.id,
+          description: line.real_name || line.rough_name || line.description || '',
+          labor_hours: 0,
+          labor_rate: 0,
+          labor_total: 0,
+          parts_total: partsTotal,
+          line_total: partsTotal,
+          line_number: lineNum++,
+        })
+      }
+    }
+    for (const part of nonAdditionalWoParts) {
+      const price = Number(part.unit_cost || 0)
+      const qty = Number(part.quantity || 1)
+      const partsTotal = price * qty
+      snapshot.push({
+        repair_order_line_id: part.line_id || null,
+        description: part.description || '',
+        labor_hours: 0,
+        labor_rate: 0,
+        labor_total: 0,
+        parts_total: partsTotal,
+        line_total: partsTotal,
+        line_number: lineNum++,
+      })
+    }
+
+    if (snapshot.length === 0) {
+      return NextResponse.json({ error: 'No estimate lines available for this work order' }, { status: 400 })
+    }
+
     const { count } = await ctx.admin.from('estimates').select('*', { count: 'exact', head: true }).eq('shop_id', shopId).is('deleted_at', null)
     const estNum = `EST-${String((count || 0) + 1).padStart(5, '0')}`
     const cust = (wo as any).customers as any
@@ -91,23 +157,17 @@ async function _POST(req: Request) {
       return NextResponse.json({ error: error?.message || 'Failed' }, { status: 500 })
     }
 
-    const estLines: any[] = []
-    for (const line of lines || []) {
-      if (line.line_type === 'labor') {
-        const hrs = line.estimated_hours || line.billed_hours || line.actual_hours || 1
-        estLines.push({ estimate_id: est.id, line_type: 'labor', description: line.description, quantity: hrs, unit_price: laborRate, total: hrs * laborRate, so_line_id: line.id })
-      } else if (line.line_type === 'part' && (line.real_name || line.rough_name || line.description)) {
-        const price = line.parts_sell_price || line.unit_price || 0
-        estLines.push({ estimate_id: est.id, line_type: 'part', description: line.real_name || line.rough_name || line.description, part_number: line.part_number, quantity: line.quantity || 1, unit_price: price, total: (line.quantity || 1) * price, so_line_id: line.id })
-      }
+    const rowsToInsert = snapshot.map(r => ({ ...r, estimate_id: est.id }))
+    const { error: linesErr } = await ctx.admin.from('estimate_lines').insert(rowsToInsert)
+    if (linesErr) {
+      console.error('[estimates.create_from_wo] estimate_lines insert failed', { woId, shopId, estimateId: est.id, error: linesErr.message })
+      // Clean up the zombie estimate so service_orders.estimate_id never points at an empty snapshot.
+      await ctx.admin.from('estimates').delete().eq('id', est.id)
+      return NextResponse.json({ error: 'Failed to snapshot estimate lines: ' + linesErr.message }, { status: 500 })
     }
-    for (const part of woParts || []) {
-      estLines.push({ estimate_id: est.id, line_type: 'part', description: part.description, part_number: part.part_number || null, quantity: part.quantity || 1, unit_price: part.unit_cost || 0, total: (part.quantity || 1) * (part.unit_cost || 0), so_line_id: part.line_id || null })
-    }
-    if (estLines.length > 0) await ctx.admin.from('estimate_lines').insert(estLines)
 
-    const laborTotal = estLines.filter((l) => l.line_type === 'labor').reduce((sum, l) => sum + l.total, 0)
-    const partsTotal = estLines.filter((l) => l.line_type === 'part').reduce((sum, l) => sum + l.total, 0)
+    const laborTotal = snapshot.reduce((sum, r) => sum + (Number(r.labor_total) || 0), 0)
+    const partsTotal = snapshot.reduce((sum, r) => sum + (Number(r.parts_total) || 0), 0)
     const sub = laborTotal + partsTotal
     const taxAmt = sub * (taxRate / 100)
     const grandTotal = sub + taxAmt
@@ -116,10 +176,18 @@ async function _POST(req: Request) {
     // updated_at. The BEFORE UPDATE trigger set_updated_at bumps the column,
     // so the insert-time row the UI would otherwise cache is stale by the time
     // the client sends its next PATCH with expected_updated_at.
-    const { data: updatedEst } = await ctx.admin.from('estimates').update({ labor_total: laborTotal, parts_total: partsTotal, subtotal: sub, tax_amount: taxAmt, grand_total: grandTotal, total: grandTotal }).eq('id', est.id).select().single()
+    const { data: updatedEst, error: totalsErr } = await ctx.admin.from('estimates').update({ labor_total: laborTotal, parts_total: partsTotal, subtotal: sub, tax_amount: taxAmt, grand_total: grandTotal, total: grandTotal }).eq('id', est.id).select().single()
+    if (totalsErr || !updatedEst) {
+      console.error('[estimates.create_from_wo] totals update failed', { woId, estimateId: est.id, error: totalsErr?.message })
+      await ctx.admin.from('estimate_lines').delete().eq('estimate_id', est.id)
+      await ctx.admin.from('estimates').delete().eq('id', est.id)
+      return NextResponse.json({ error: 'Failed to finalize estimate totals: ' + (totalsErr?.message || 'unknown') }, { status: 500 })
+    }
+
+    // Only point the WO at the new estimate after snapshot + totals are known-good.
     await ctx.admin.from('service_orders').update({ estimate_id: est.id }).eq('id', woId)
 
-    return NextResponse.json({ ...(updatedEst || est), labor_total: laborTotal, parts_total: partsTotal, grand_total: grandTotal })
+    return NextResponse.json({ ...updatedEst, labor_total: laborTotal, parts_total: partsTotal, grand_total: grandTotal })
   }
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
