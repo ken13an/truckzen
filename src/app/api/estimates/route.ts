@@ -34,7 +34,7 @@ async function _POST(req: Request) {
   if (action === 'create_from_wo') {
     const woId = body.wo_id
     if (!woId) return NextResponse.json({ error: 'wo_id required' }, { status: 400 })
-    const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, woId, '*, customers(id, company_name, contact_name, email, phone), assets(id, unit_number, year, make, model), shop_id')
+    const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, woId, '*, customers(id, company_name, contact_name, email, phone), assets(id, unit_number, year, make, model, ownership_type), shop_id')
     if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
     const shopId = (wo as any).shop_id
@@ -68,7 +68,13 @@ async function _POST(req: Request) {
     }
 
     const { data: shop } = await ctx.admin.from('shops').select('default_labor_rate, labor_rate, tax_rate, default_tax_rate, tax_labor').eq('id', shopId).single()
-    const laborRate = shop?.default_labor_rate || shop?.labor_rate || DEFAULT_LABOR_RATE_FALLBACK
+
+    // Labor-rate parity — match the Estimate tab rule (src/app/work-orders/[id]/page.tsx:780):
+    //   ownershipRate?.rate_per_hour || shop.labor_rate || shop.default_labor_rate || FALLBACK
+    // Same order used by generateInvoicePdf + accounting approve-and-send.
+    const woOwnership = (wo as any).ownership_type || ((wo as any).assets as any)?.ownership_type || 'outside_customer'
+    const { data: ownershipRate } = await ctx.admin.from('shop_labor_rates').select('rate_per_hour').eq('shop_id', shopId).eq('ownership_type', woOwnership).maybeSingle()
+    const laborRate = ownershipRate?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK
     const taxRate = shop?.tax_rate || shop?.default_tax_rate || 0
     const taxLabor = shop?.tax_labor === true
 
