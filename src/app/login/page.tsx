@@ -8,6 +8,7 @@ const _t = THEME.dark
 
 import { ROLE_REDIRECT } from '@/lib/permissions'
 import Logo from '@/components/Logo'
+import StarfieldBackground from '@/components/landing/StarfieldBackground'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -166,6 +167,7 @@ export default function LoginPage() {
   if (checkingSession) {
     return (
       <div style={styles.checkingWrap}>
+        <StarfieldBackground />
         <div style={styles.spinner}/>
       </div>
     )
@@ -174,6 +176,9 @@ export default function LoginPage() {
   // ── RENDER ───────────────────────────────────────────────
   return (
     <div style={styles.page}>
+      {/* Cool starry backdrop — behind everything, pointer-events-none */}
+      <StarfieldBackground />
+
       {/* Background grain */}
       <div style={styles.grain}/>
 
