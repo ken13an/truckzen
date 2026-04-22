@@ -19,3 +19,6 @@ out/
 next-env.d.ts
 .claude/
 .vercel
+
+# local data archives (migration/recovery/backup artifacts; never deploy)
+backups/
