@@ -605,6 +605,35 @@ export default function WorkOrderDetail() {
       })
       const created = res.ok ? await res.json().catch(() => null) : null
       createdLines.push({ id: created?.id, description: line.description })
+      // Auto-set parts_requirement on the new labor so the server approval gate
+      // can pass without the labor-level chip UI on the job card. Defers to the
+      // canonical verb-intent classifier in @/lib/parts-suggestions
+      // (RepairVerb_NoAutoPartsRequirement_Fix): if getAutoRoughParts produces
+      // any non-labor rough part candidate, the job expects parts → 'needed';
+      // otherwise (labor-only repair/fix/check/adjust/clean/inspect/diagnose/
+      // test, or diagnostic-keyword jobs that produce no rough parts) →
+      // 'not_needed' with an auto-note. Without this gate, lines like
+      // "repair bumper" would force a false unresolved-parts approval block.
+      // Writers can still flip the chip via the Parts tab if real parts get
+      // added later.
+      if (created?.id && created?.updated_at) {
+        const expectsParts = getAutoRoughParts(line.description).some(p => !p.is_labor)
+        const reqPayload: Record<string, any> = expectsParts
+          ? { parts_requirement: 'needed' }
+          : {
+              parts_requirement: 'not_needed',
+              parts_requirement_note: isDiagnosticJob(line.description)
+                ? 'Diagnostic — no parts required'
+                : 'Labor-only — no parts required',
+            }
+        try {
+          await fetch(`/api/so-lines/${created.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...reqPayload, expected_updated_at: created.updated_at }),
+          })
+        } catch { /* non-fatal — writer can still resolve via Parts tab */ }
+      }
     }
 
     for (const line of createdLines) {
