@@ -2034,19 +2034,45 @@ export default function WorkOrderDetail() {
               buttons above, next to the status banner) is preserved. */}
           {(() => {
             type LaborRow = { description: string; hours: number; rate: number; total: number }
-            type PartRow = { part: string; qty: number; price: number; total: number }
+            type PartRow = { part: string; qty: number; price: number; total: number; nonBillable?: 'customer_supplied' | 'no_part_needed' | null }
             type CardStatus = { label: string; bg: string; color: string }
 
-            // Local table-header style. Mirrors labelStyle visually (small,
-            // uppercase, gray, letterspaced) but drops display:'block' and
-            // marginBottom so <th> retains its default display:table-cell.
+            // Display-only splitter for merged labor descriptions — same
+            // rule the Jobs tab uses (newline → " + " → " • " → fallback).
+            // Stored description is not mutated.
+            const splitConcernLocal = (desc: string | null | undefined): string[] => {
+              const s = (desc || '').trim()
+              if (!s) return []
+              const byNewline = s.split(/\r?\n+/).map(p => p.trim()).filter(Boolean)
+              if (byNewline.length > 1) return byNewline
+              const byPlus = s.split(/\s*\+\s*/).map(p => p.trim()).filter(Boolean)
+              if (byPlus.length > 1) return byPlus
+              const byBullet = s.split(/\s*•\s*/).map(p => p.trim()).filter(Boolean)
+              if (byBullet.length > 1) return byBullet
+              return [s]
+            }
+
+            // Local table-header style — fixes <th> stacking by avoiding
+            // labelStyle's display:'block'. Color upgraded to the brighter
+            // textSecondary token for dark-mode contrast inside the Estimate
+            // tab (packet-4 visual polish).
             const tableHeaderStyle: React.CSSProperties = {
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: 700,
-              color: GRAY,
+              color: 'var(--tz-textSecondary)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
             }
+            // Locally scoped secondary-text color + divider — cool grey that
+            // reads cleanly on the dark card background. Existing tokens,
+            // no global changes.
+            const dimText = 'var(--tz-textSecondary)'
+            const dividerStrong = 'var(--tz-border)'
+
+            // Inline non-billable predicates matching source's
+            // parts-status helpers (destination does not export these).
+            const isCustomerSuppliedPart = (l: any) => l?.line_type === 'part' && l?.parts_requirement === 'customer_supplied'
+            const isNoPartNeededPart = (l: any) => l?.line_type === 'part' && l?.parts_requirement === 'not_needed'
 
             const isCanceled = (row: any) => row?.parts_status === 'canceled' || row?.line_status === 'canceled' || row?.status === 'canceled'
 
@@ -2060,85 +2086,121 @@ export default function WorkOrderDetail() {
               actions?: React.ReactNode
             }) => (
               <div key={opts.keyId} style={{ ...cardStyle, marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 20, fontWeight: 800 }}>{opts.title}</span>
+                {/* Header — title + status pill on the left, Total on the
+                    right. Spacing tuned so the badge breathes from the title
+                    (packet-4 visual polish). */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--tz-text)' }}>{opts.title}</span>
                   <span style={pillStyle(opts.status.bg, opts.status.color)}>{opts.status.label}</span>
-                  <span style={{ marginLeft: 'auto', fontSize: 13, color: GRAY }}>
+                  <span style={{ marginLeft: 'auto', fontSize: 13, color: dimText }}>
                     Total <strong style={{ color: 'var(--tz-text)', fontSize: 18, marginLeft: 8 }}>{fmt(opts.totals.grand)}</strong>
                   </span>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>
+                {/* Body — Labor first, then Parts, vertically stacked
+                    (packet-4). Cleaner invoice-like reading flow than the
+                    prior side-by-side grid. */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Labor</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: 'var(--tz-text)' }}>Labor</div>
                     {opts.laborRows.length > 0 ? (
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                         <thead>
-                          <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                            <th style={{ textAlign: 'left', padding: '6px 8px', ...tableHeaderStyle }}>Description</th>
-                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 60 }}>Hours</th>
-                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 60 }}>Rate</th>
-                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 80 }}>Total</th>
+                          <tr style={{ borderBottom: `1px solid ${dividerStrong}` }}>
+                            <th style={{ textAlign: 'left', padding: '8px 10px', ...tableHeaderStyle }}>Description</th>
+                            <th style={{ textAlign: 'right', padding: '8px 10px', ...tableHeaderStyle, width: 80 }}>Hours</th>
+                            <th style={{ textAlign: 'right', padding: '8px 10px', ...tableHeaderStyle, width: 100 }}>Rate</th>
+                            <th style={{ textAlign: 'right', padding: '8px 10px', ...tableHeaderStyle, width: 120 }}>Total</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {opts.laborRows.map((r, i) => (
-                            <tr key={i} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                              <td style={{ padding: '6px 8px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{r.description}</td>
-                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{(Math.round(r.hours * 100) / 100).toFixed(2)}</td>
-                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(r.rate)}</td>
-                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(r.total)}</td>
-                            </tr>
-                          ))}
+                          {opts.laborRows.map((r, i) => {
+                            // Multi-job merged descriptions render as a
+                            // numbered list — matches Jobs tab readability.
+                            // Single concerns render as plain text.
+                            const items = splitConcernLocal(r.description)
+                            return (
+                              <tr key={i} style={{ borderBottom: `1px solid ${dividerStrong}` }}>
+                                <td style={{ padding: '8px 10px', wordBreak: 'break-word', overflowWrap: 'anywhere', color: 'var(--tz-text)' }}>
+                                  {items.length > 1 ? (
+                                    <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                      {items.map((c, ci) => <li key={ci}>{c}</li>)}
+                                    </ol>
+                                  ) : r.description}
+                                </td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--tz-text)' }}>{(Math.round(r.hours * 100) / 100).toFixed(2)}</td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--tz-text)' }}>{fmt(r.rate)}</td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: 'var(--tz-text)' }}>{fmt(r.total)}</td>
+                              </tr>
+                            )
+                          })}
                         </tbody>
                       </table>
                     ) : (
-                      <div style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', padding: '6px 8px' }}>No labor</div>
+                      <div style={{ fontSize: 12, color: dimText, fontStyle: 'italic', padding: '6px 8px' }}>No labor</div>
                     )}
                   </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Parts</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: 'var(--tz-text)' }}>Parts</div>
                     {opts.partsRows.length > 0 ? (
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                         <thead>
-                          <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                            <th style={{ textAlign: 'left', padding: '6px 8px', ...tableHeaderStyle }}>Part</th>
-                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 50 }}>Qty</th>
-                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 70 }}>Price</th>
-                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 80 }}>Total</th>
+                          <tr style={{ borderBottom: `1px solid ${dividerStrong}` }}>
+                            <th style={{ textAlign: 'left', padding: '8px 10px', ...tableHeaderStyle }}>Part</th>
+                            <th style={{ textAlign: 'right', padding: '8px 10px', ...tableHeaderStyle, width: 80 }}>Qty</th>
+                            <th style={{ textAlign: 'right', padding: '8px 10px', ...tableHeaderStyle, width: 100 }}>Price</th>
+                            <th style={{ textAlign: 'right', padding: '8px 10px', ...tableHeaderStyle, width: 120 }}>Total</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {opts.partsRows.map((r, i) => (
-                            <tr key={i} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                              <td style={{ padding: '6px 8px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{r.part}</td>
-                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{r.qty}</td>
-                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(r.price)}</td>
-                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(r.total)}</td>
-                            </tr>
-                          ))}
+                          {opts.partsRows.map((r, i) => {
+                            // Customer-supplied / no-part-needed rows get a
+                            // non-billable badge under the part name, and
+                            // their price/total render as "—" (they're also
+                            // excluded from the Parts total below).
+                            const badge = r.nonBillable === 'customer_supplied'
+                              ? { text: 'Customer-supplied — non-billable', color: AMBER }
+                              : r.nonBillable === 'no_part_needed'
+                                ? { text: 'No part needed — non-billable', color: GREEN }
+                                : null
+                            return (
+                              <tr key={i} style={{ borderBottom: `1px solid ${dividerStrong}` }}>
+                                <td style={{ padding: '8px 10px', wordBreak: 'break-word', overflowWrap: 'anywhere', color: 'var(--tz-text)' }}>
+                                  <div>{r.part}</div>
+                                  {badge && (
+                                    <div style={{ fontSize: 11, color: badge.color, fontWeight: 700, marginTop: 2 }}>{badge.text}</div>
+                                  )}
+                                </td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--tz-text)' }}>{r.qty}</td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', color: r.nonBillable ? dimText : 'var(--tz-text)' }}>{r.nonBillable ? '—' : fmt(r.price)}</td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: r.nonBillable ? dimText : 'var(--tz-text)' }}>{r.nonBillable ? '—' : fmt(r.total)}</td>
+                              </tr>
+                            )
+                          })}
                         </tbody>
                       </table>
                     ) : (
-                      <div style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', padding: '6px 8px' }}>No parts</div>
+                      <div style={{ fontSize: 12, color: dimText, fontStyle: 'italic', padding: '6px 8px' }}>No parts</div>
                     )}
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 16, gap: 14, flexWrap: 'wrap' }}>
+                {/* Totals block (right) + actions (left). Spacing tuned so
+                    the grand total never overlaps the action row. */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 18, gap: 14, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {opts.actions}
                   </div>
-                  <div style={{ minWidth: 240, padding: '12px 16px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgHover)' }}>
+                  <div style={{ minWidth: 260, padding: '14px 18px', borderRadius: 8, border: `1px solid ${dividerStrong}`, background: 'var(--tz-bgHover)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
-                      <span style={{ color: GRAY }}>Labor total</span>
-                      <span style={{ fontWeight: 700 }}>{fmt(opts.totals.labor)}</span>
+                      <span style={{ color: dimText }}>Labor total</span>
+                      <span style={{ fontWeight: 700, color: 'var(--tz-text)' }}>{fmt(opts.totals.labor)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
-                      <span style={{ color: GRAY }}>Parts total</span>
-                      <span style={{ fontWeight: 700 }}>{fmt(opts.totals.parts)}</span>
+                      <span style={{ color: dimText }}>Parts total</span>
+                      <span style={{ fontWeight: 700, color: 'var(--tz-text)' }}>{fmt(opts.totals.parts)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '8px 0 4px', borderTop: `1px solid ${'var(--tz-border)'}`, marginTop: 4 }}>
-                      <span style={{ fontWeight: 800 }}>Grand total</span>
-                      <span style={{ fontWeight: 800 }}>{fmt(opts.totals.grand)}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, padding: '8px 0 4px', borderTop: `1px solid ${dividerStrong}`, marginTop: 6 }}>
+                      <span style={{ fontWeight: 800, color: 'var(--tz-text)' }}>Grand total</span>
+                      <span style={{ fontWeight: 800, color: 'var(--tz-text)' }}>{fmt(opts.totals.grand)}</span>
                     </div>
                   </div>
                 </div>
@@ -2162,12 +2224,21 @@ export default function WorkOrderDetail() {
                 const total = isImportedHistory ? (l.unit_price || 0) : hrs * rate
                 return { description: l.description || '—', hours: hrs, rate, total }
               })
+            // Non-billable so_lines parts (customer-supplied / no-part-
+            // needed) are INCLUDED in the visible Parts list with a
+            // non-billable badge so the writer sees them near related
+            // work. They are excluded from the Parts total below.
             const e1PartsFromLines: PartRow[] = partLines
               .filter((p: any) => p.is_additional !== true && !isCanceled(p))
               .map((p: any) => {
                 const sell = p.parts_sell_price || 0
                 const qty = p.quantity || 1
-                return { part: p.real_name || p.rough_name || p.description || '—', qty, price: sell, total: sell * qty }
+                const nonBillable: PartRow['nonBillable'] = isCustomerSuppliedPart(p)
+                  ? 'customer_supplied'
+                  : isNoPartNeededPart(p)
+                    ? 'no_part_needed'
+                    : null
+                return { part: p.real_name || p.rough_name || p.description || '—', qty, price: sell, total: sell * qty, nonBillable }
               })
             const e1PartsFromWoParts: PartRow[] = woParts
               .filter((p: any) => p.is_additional !== true && !isCanceled(p))
@@ -2178,7 +2249,7 @@ export default function WorkOrderDetail() {
               })
             const e1Parts = [...e1PartsFromLines, ...e1PartsFromWoParts]
             const e1LaborTotal = e1Labor.reduce((s, r) => s + r.total, 0)
-            const e1PartsTotal = e1Parts.reduce((s, r) => s + r.total, 0)
+            const e1PartsTotal = e1Parts.filter(r => !r.nonBillable).reduce((s, r) => s + r.total, 0)
             const e1Grand = e1LaborTotal + e1PartsTotal
 
             // ── Supplement batches → Estimate 2, 3, … ──
@@ -2233,7 +2304,12 @@ export default function WorkOrderDetail() {
                   const partsFromLines: PartRow[] = b.parts.map((l: any) => {
                     const sell = l.parts_sell_price || l.unit_price || 0
                     const qty = l.quantity || 1
-                    return { part: l.real_name || l.rough_name || l.description || '—', qty, price: sell, total: sell * qty }
+                    const nonBillable: PartRow['nonBillable'] = isCustomerSuppliedPart(l)
+                      ? 'customer_supplied'
+                      : isNoPartNeededPart(l)
+                        ? 'no_part_needed'
+                        : null
+                    return { part: l.real_name || l.rough_name || l.description || '—', qty, price: sell, total: sell * qty, nonBillable }
                   })
                   const partsFromWoParts: PartRow[] = b.woParts.map((p: any) => {
                     const cost = p.unit_cost || 0
@@ -2242,7 +2318,7 @@ export default function WorkOrderDetail() {
                   })
                   const parts = [...partsFromLines, ...partsFromWoParts]
                   const laborTotal = labor.reduce((s, r) => s + r.total, 0)
-                  const partsTotal = parts.reduce((s, r) => s + r.total, 0)
+                  const partsTotal = parts.filter(r => !r.nonBillable).reduce((s, r) => s + r.total, 0)
                   const grand = laborTotal + partsTotal
                   const status = supStatus(b)
                   const titleSuffix = b.isUnbatched ? ' — Unbatched' : ''
@@ -3342,9 +3418,28 @@ export default function WorkOrderDetail() {
         return (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(null)}>
             <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <span style={{ fontSize: 16, fontWeight: 700 }}>{modalTitle}</span>
-                <button onClick={() => setApprovalModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--tz-text)' }}>{modalTitle}</span>
+                {/* Modal close — dark-mode contrast lift (packet-4).
+                    Larger hit target, brighter icon, clear affordance. */}
+                <button
+                  onClick={() => setApprovalModal(null)}
+                  aria-label="Close"
+                  style={{
+                    background: 'transparent',
+                    border: `1px solid ${'var(--tz-border)'}`,
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--tz-text)',
+                  }}
+                >
+                  <X size={18} />
+                </button>
               </div>
               <div style={{ fontSize: 13, marginBottom: 16, padding: '10px 14px', background: 'var(--tz-bgHover)', borderRadius: 8 }}>
                 <div style={{ marginBottom: 4 }}>Estimate total: <strong style={{ color: GREEN }}>{fmt(modalTotal)}</strong></div>
