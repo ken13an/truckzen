@@ -34,15 +34,6 @@ type P = { params: Promise<{ id: string }> }
  * Body: { supplement_batch_id: string }
  * Never trusts client totals / shop_id / user_id — everything re-derived
  * server-side from the DB via service role.
- *
- * NOTE: This destination does not yet expose the customer-facing
- * /api/portal/[token]/estimate/supplement/respond endpoint. To avoid
- * shipping dead email links, the customer-facing approve/decline buttons
- * are intentionally omitted from the email body; staff can approve or
- * decline the supplement in person via /api/estimates/[id]/supplement-respond.
- * When the customer-portal supplement-respond endpoint is later added, the
- * `customerActionsBlock` variable below can be restored to include approve
- * and decline links without any other change to this route.
  */
 async function _POST(req: Request, { params }: P) {
   const { id } = await params
@@ -137,10 +128,9 @@ async function _POST(req: Request, { params }: P) {
   const batchNumber = batchOrder.findIndex(([bid]) => bid === supplementBatchId) + 1 || 1
   const estimateNumber = batchNumber + 1
 
-  // Customer-facing email body — supplement-only content. Approve/decline
-  // CTAs are intentionally omitted: destination does not expose
-  // /api/portal/[token]/estimate/supplement/respond, and we will not ship
-  // dead links. Customer is directed to contact the shop to approve.
+  // Customer-facing email body — supplement-only content. The approve/decline
+  // CTAs are GET links the customer can click directly; the portal routes
+  // update only rows in this supplement_batch_id.
   const shopInfo = await getShopInfo((estimate as any).shop_id)
   const shopName = shopRow?.dba || shopRow?.name || shopInfo.name || 'TruckZen'
   const cust = (wo as any).customers as any
@@ -149,8 +139,10 @@ async function _POST(req: Request, { params }: P) {
   const customerName = cust?.company_name || cust?.contact_name || (estimate as any).customer_name || 'Customer'
   const truckInfo = asset ? `Unit #${asset.unit_number} - ${asset.year || ''} ${asset.make || ''} ${asset.model || ''}`.trim() : ''
   const woNumber = (wo as any).so_number || ''
-  const shopPhone = shopRow?.phone || ''
-  const shopEmail = shopRow?.email || ''
+  const portalToken = (wo as any).portal_token
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'
+  const approveLink = portalToken ? `${baseUrl}/api/portal/${portalToken}/estimate/supplement/respond?action=approve&batch_id=${supplementBatchId}` : ''
+  const declineLink = portalToken ? `${baseUrl}/api/portal/${portalToken}/estimate/supplement/respond?action=decline&batch_id=${supplementBatchId}` : ''
 
   const linesHtml = [
     ...pendingLines.filter((l: any) => !isNonBillablePartRequirementRow(l)).map((l: any) => {
@@ -185,15 +177,6 @@ async function _POST(req: Request, { params }: P) {
     }),
   ].join('')
 
-  // Contact-the-shop block in place of customer-portal approve/decline links
-  // until the portal supplement-respond route is added.
-  const contactBlock = `<div style="text-align:center;margin:24px 0 8px;padding:16px;background:#15152a;border-radius:10px">
-    <div style="color:#ffffff;font-size:14px;font-weight:700;margin-bottom:6px">Please contact ${esc(shopName)} to approve Estimate ${estimateNumber}</div>
-    ${shopPhone ? `<div style="color:#b0b0c0;font-size:13px">Phone: ${esc(shopPhone)}</div>` : ''}
-    ${shopEmail ? `<div style="color:#b0b0c0;font-size:13px">Email: ${esc(shopEmail)}</div>` : ''}
-    <div style="color:#8a8a9a;font-size:11px;margin-top:10px">This approval covers only Estimate ${estimateNumber}. Your Estimate 1 remains unchanged.</div>
-  </div>`
-
   const emailHtml = `<div style="background:#0f0f1a;padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
   <div style="max-width:640px;margin:0 auto;background:#1a1a2e;border-radius:12px;overflow:hidden">
     <div style="padding:24px;background:#1d1d35;border-bottom:1px solid #2a2a3a">
@@ -222,7 +205,13 @@ async function _POST(req: Request, { params }: P) {
         <div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Tax${taxRate ? ` (${esc(taxRate)}%)` : ''}: $${money(taxAmount)}</div>
         <div style="color:#ffffff;font-size:16px;font-weight:800">Estimate ${estimateNumber} Total: $${money(grandTotal)}</div>
       </div>
-      ${contactBlock}
+      ${approveLink && declineLink ? `
+      <div style="text-align:center;margin:24px 0 8px">
+        <a href="${approveLink}" style="display:inline-block;padding:14px 32px;background:#16A34A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:700;margin-right:8px">Approve Estimate</a>
+        <a href="${declineLink}" style="display:inline-block;padding:14px 32px;background:#DC2626;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:700">Decline Estimate</a>
+      </div>
+      <p style="color:#8a8a9a;font-size:11px;text-align:center;margin:12px 0 0">This approval covers only Estimate ${estimateNumber}. Your Estimate 1 is unchanged.</p>
+      ` : ''}
     </div>
   </div>
 </div>`
