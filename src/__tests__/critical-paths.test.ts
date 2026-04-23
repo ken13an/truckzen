@@ -130,6 +130,39 @@ describe('invoice critical path', () => {
     expect(content).toMatch(/read-only|read.only/i)
   })
 
+  // Security_P1_Patch1_InvoiceHardLock_2 (F-07 corrected) regression guard:
+  // direct PATCH on /api/invoices/[id] must block 'paid' and 'closed' only.
+  // 'sent' stays editable because TruckZen accounting corrects invoices
+  // after send but before payment. Canonical isInvoiceHardLocked (which
+  // also locks 'sent') must NOT be used here, and must remain unchanged for
+  // other callers that legitimately treat 'sent' as locked.
+  it('invoice PATCH blocks only paid/closed and allows sent (route-local rule)', () => {
+    const content = readFile('src/app/api/invoices/[id]/route.ts')
+    // Route-local locked set is explicit and includes paid + closed but NOT sent
+    expect(content).toMatch(/DIRECT_PATCH_LOCKED_STATUSES\s*=\s*\[\s*'paid'\s*,\s*'closed'\s*\]/)
+    // Guard call references DIRECT_PATCH_LOCKED_STATUSES and current.status
+    expect(content).toMatch(/DIRECT_PATCH_LOCKED_STATUSES\.includes\(current\.status\)/)
+    // This route must NOT import or call isInvoiceHardLocked (which would wrongly lock 'sent').
+    // Bare mention in the explanatory comment is allowed; import/call is not.
+    expect(content).not.toMatch(/import\s*\{[^}]*isInvoiceHardLocked/)
+    expect(content).not.toMatch(/isInvoiceHardLocked\s*\(/)
+    // Guard must appear before the supabase.update call in PATCH
+    const patchIdx = content.indexOf('_PATCH')
+    const guardIdx = content.indexOf('DIRECT_PATCH_LOCKED_STATUSES.includes(current.status)')
+    const updateIdx = content.indexOf('.update(update)')
+    expect(patchIdx).toBeGreaterThan(-1)
+    expect(guardIdx).toBeGreaterThan(patchIdx)
+    expect(updateIdx).toBeGreaterThan(guardIdx)
+  })
+
+  // Canonical helper preservation: isInvoiceHardLocked must still list
+  // 'sent','paid','closed' for other callers (so-lines PATCH/DELETE, merge,
+  // work-orders/[id]/invoice) that legitimately treat sent as locked.
+  it('isInvoiceHardLocked canonical helper keeps sent/paid/closed unchanged', () => {
+    const helper = readFile('src/lib/invoice-lock.ts')
+    expect(helper).toMatch(/HARD_LOCKED_STATUSES\s*=\s*\[\s*'sent'\s*,\s*'paid'\s*,\s*'closed'\s*\]/)
+  })
+
   // Patch 123 regression guard: deterministic clean/labor-only phrases must not be
   // flagged unrecognized by the entry/submit validator. The canonical recognition
   // helper hasRecognizedVerb (parts-suggestions.ts) must be consulted before the
