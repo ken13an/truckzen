@@ -26,9 +26,9 @@ ALLOWED_PROD_BRANCH_REGEX="${ALLOWED_PROD_BRANCH_REGEX:-^main$}"
 # procedure for adding new entries when a UI/design change is accepted live.
 REQUIRED_LIVE_COMMITS=(
   # design(landing): apply generated Base44-style landing page
-  "6d1680a"
+  "a93b4f6"
   # design(login): add cool starfield background
-  "1e531d5"
+  "6af01bd"
 )
 
 # ── Pretty output ─────────────────────────────────────────────────────────────
