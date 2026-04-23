@@ -27,6 +27,27 @@ Root cause: any `vercel --prod` from any branch / any worktree — clean or
 dirty — competes for the same production alias. There was no workflow guard
 preventing accidental promotion.
 
+## 2A. Production Lineage Rule — do not deploy backward
+
+**NEVER PROD-DEPLOY A BRANCH/SNAPSHOT THAT IS BEHIND CURRENT LIVE ACCEPTED UI/DESIGN TRUTH.**
+
+A Vercel production deploy is a whole snapshot, not an additive patch. If
+your deploy source is missing a commit that is already accepted and live,
+that accepted change will silently vanish from `truckzen.pro` the moment you
+deploy.
+
+`scripts/deploy_prod_guarded.sh` enforces this via a `REQUIRED_LIVE_COMMITS`
+ancestor check against HEAD. If your branch does not contain a required
+commit, the script refuses to deploy before build.
+
+When a new UI/design change is intentionally accepted into production, add
+its short SHA to `REQUIRED_LIVE_COMMITS` in `scripts/deploy_prod_guarded.sh`
+with a one-line comment describing what it protects, then commit that
+update alongside (or immediately after) the accepted deploy.
+
+See `docs/deploy/TRUCKZEN_PRODUCTION_LINEAGE_RULE.md` for full rationale and
+the lineage-fix procedure.
+
 ## 3. Forbidden production behaviors
 
 Do not, under any circumstance:

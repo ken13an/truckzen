@@ -19,6 +19,18 @@ EXPECTED_ORG_ID="team_KQcTGcvlPxpFDRLd2dGz2fdV"
 PROD_DOMAIN="truckzen.pro"
 ALLOWED_PROD_BRANCH_REGEX="${ALLOWED_PROD_BRANCH_REGEX:-^main$}"
 
+# Production Lineage Rule — accepted-and-live UI/design truth that must never
+# be rolled back. Every deploy source must contain each of these as an
+# ancestor of HEAD, or this script refuses to deploy. See
+# docs/deploy/TRUCKZEN_PRODUCTION_LINEAGE_RULE.md for rationale and the
+# procedure for adding new entries when a UI/design change is accepted live.
+REQUIRED_LIVE_COMMITS=(
+  # design(landing): apply generated Base44-style landing page
+  "6d1680a"
+  # design(login): add cool starfield background
+  "1e531d5"
+)
+
 # ── Pretty output ─────────────────────────────────────────────────────────────
 red()    { printf '\033[0;31m%s\033[0m\n' "$*" >&2; }
 yellow() { printf '\033[0;33m%s\033[0m\n' "$*"; }
@@ -68,6 +80,24 @@ if ! [[ "$BRANCH" =~ $ALLOWED_PROD_BRANCH_REGEX ]]; then
         Override with ALLOWED_PROD_BRANCH_REGEX env var ONLY if this is an intentional release branch."
 fi
 green "[4/9] Branch OK: $BRANCH"
+
+# ── Production lineage check ─────────────────────────────────────────────────
+# A prod deploy replaces the entire live snapshot. Refuse to deploy if HEAD
+# is missing any accepted-live UI/design commit — see the Production Lineage
+# Rule in docs/deploy/TRUCKZEN_PRODUCTION_LINEAGE_RULE.md.
+yellow "[lineage] Production lineage check:"
+LINEAGE_MISSING=0
+for LIVE_COMMIT in "${REQUIRED_LIVE_COMMITS[@]}"; do
+  if git merge-base --is-ancestor "$LIVE_COMMIT" HEAD 2>/dev/null; then
+    echo "  OK   $LIVE_COMMIT is an ancestor of HEAD"
+  else
+    red "  MISS $LIVE_COMMIT is NOT an ancestor of HEAD"
+    LINEAGE_MISSING=1
+  fi
+done
+[ "$LINEAGE_MISSING" -eq 0 ] \
+  || fail "Production lineage check failed. HEAD is missing required live commit(s). See docs/deploy/TRUCKZEN_PRODUCTION_LINEAGE_RULE.md."
+green "[lineage] All required live commits present."
 
 # ── Print HEAD identity ───────────────────────────────────────────────────────
 HEAD_SHA=$(git rev-parse HEAD)
