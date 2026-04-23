@@ -17,7 +17,8 @@
     "test": "vitest run",
     "regression:critical": "vitest run src/__tests__/critical-paths.test.ts src/__tests__/helper-behavior.test.ts",
     "pre-deploy": "bash scripts/pre-deploy-check.sh",
-    "deploy:prod": "bash scripts/pre-deploy-check.sh && vercel --prod --yes"
+    "deploy:prod": "bash scripts/pre-deploy-check.sh && vercel --prod --yes",
+    "deploy:prod:guarded": "bash scripts/deploy_prod_guarded.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
