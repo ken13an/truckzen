@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
-import { ChevronLeft, Users, MessageSquare, Clock, DollarSign, MoreHorizontal, Plus, Mic, Upload, X, Paperclip } from 'lucide-react'
+import { ChevronLeft, ChevronDown, ChevronRight, User, Users, MessageSquare, Clock, DollarSign, MoreHorizontal, Plus, Mic, Upload, X, Paperclip } from 'lucide-react'
 import AITextInput from '@/components/ai-text-input'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
@@ -131,6 +131,7 @@ export default function WorkOrderDetail() {
   const [partNoteOpen, setPartNoteOpen] = useState<string | null>(null)
   const [shopLaborRates, setShopLaborRates] = useState<any[]>([])
   const [mergeSelected, setMergeSelected] = useState<Set<string>>(new Set())
+  const [expandedJobLines, setExpandedJobLines] = useState<Record<string, boolean>>({})
   const [merging, setMerging] = useState(false)
   const [contactEmail, setContactEmail] = useState('')
   const [contactPhone, setContactPhone] = useState('')
@@ -1212,44 +1213,111 @@ export default function WorkOrderDetail() {
             const st = LINE_STATUS[line.line_status] || LINE_STATUS.unassigned
             const lineAssignments = jobAssignments.filter((a: any) => a.line_id === line.id)
             const isAdditional = line.is_additional
+            // lineParts retained for future Parts-tab linkage; the visual
+            // rendering has moved to the Parts tab per packet-1 intent.
             const lineParts = woParts.filter((p: any) => p.line_id === line.id)
+            void lineParts
+            const expanded = !!expandedJobLines[line.id]
+            // Primary status pill — priority-resolved (packet-1: two-row header).
+            // Declined > Waiting > Approved > In Progress > Completed > Waiting Assignment > fallback.
+            const primary = (() => {
+              if (line.is_additional === true && line.customer_approved === false) return { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
+              if (line.approval_status === 'declined') return { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
+              if (line.is_additional === true && line.customer_approved == null) return { label: 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
+              if (!line.is_additional && !wo.estimate_approved && (line.approval_status === 'needs_approval' || line.approval_status === 'pending')) return { label: 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
+              if (line.is_additional === true && line.customer_approved === true) return { label: 'APPROVED', bg: 'var(--tz-accentBg)', color: BLUE }
+              if (!line.is_additional && wo.estimate_approved) return { label: 'APPROVED', bg: 'var(--tz-successBg)', color: GREEN }
+              if (line.approval_status === 'approved') return { label: 'APPROVED', bg: 'var(--tz-successBg)', color: GREEN }
+              if (line.line_status === 'in_progress') return { label: 'IN PROGRESS', bg: 'var(--tz-accentBg)', color: BLUE }
+              if (line.line_status === 'completed') return { label: 'COMPLETED', bg: 'var(--tz-successBg)', color: GREEN }
+              if (lineAssignments.length === 0 || line.line_status === 'unassigned') return { label: 'WAITING ASSIGNMENT', bg: 'var(--tz-bgHover)', color: GRAY }
+              return { label: st.label, bg: st.bg, color: st.color }
+            })()
+            const mechanicLabel = lineAssignments.length > 0
+              ? lineAssignments.map((a: any) => a.users?.full_name || 'Unknown').join(', ')
+              : 'Unassigned'
+            const estHoursCompact = line.estimated_hours || 0
+            const isWaitingOrDeclined = primary.label === 'WAITING FOR APPROVAL' || primary.label === 'DECLINED'
+            // Display-only splitter for merged concern descriptions. Splits
+            // by newline, " + " (merge-helper output), and " • " preview.
+            // Falls back to a single item. Stored description is not mutated.
+            const splitConcern = (desc: string | null | undefined): string[] => {
+              const s = (desc || '').trim()
+              if (!s) return []
+              const byNewline = s.split(/\r?\n+/).map(p => p.trim()).filter(Boolean)
+              if (byNewline.length > 1) return byNewline
+              const byPlus = s.split(/\s*\+\s*/).map(p => p.trim()).filter(Boolean)
+              if (byPlus.length > 1) return byPlus
+              const byBullet = s.split(/\s*•\s*/).map(p => p.trim()).filter(Boolean)
+              if (byBullet.length > 1) return byBullet
+              return [s]
+            }
+            const concernItems = splitConcern(line.description)
+            void isAdditional
 
             return (
-              <div key={line.id} style={{ ...cardStyle, borderLeft: `3px solid ${isAdditional ? AMBER : st.color}`, position: 'relative' }}>
-                {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-                  {!wo.is_historical && !isViewOnly && jobLines.length > 1 && (
-                    <input type="checkbox" checked={mergeSelected.has(line.id)} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(line.id) ? n.delete(line.id) : n.add(line.id); return n })} style={{ cursor: 'pointer', accentColor: 'var(--tz-accent)', width: 16, height: 16, flexShrink: 0 }} />
+              <div key={line.id} style={{ ...cardStyle, position: 'relative' }}>
+                {/* Two-row collapsible header (packet-1):
+                    Row 1 = chrome (checkbox, chevron, Job #) + one resolved
+                    status pill + outlined chips for mechanic, concern count
+                    (when ≥2), and Est hours (right-aligned).
+                    Row 2 = concern preview joined by " • ".
+                    Border stays neutral; status is conveyed by the pill. */}
+                <div onClick={() => setExpandedJobLines(m => ({ ...m, [line.id]: !m[line.id] }))} style={{ cursor: 'pointer', marginBottom: expanded ? 10 : 0 }}>
+                  {/* Row 1 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    {!wo.is_historical && !isViewOnly && jobLines.length > 1 && (
+                      <input type="checkbox" checked={mergeSelected.has(line.id)} onClick={e => e.stopPropagation()} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(line.id) ? n.delete(line.id) : n.add(line.id); return n })} style={{ cursor: 'pointer', accentColor: 'var(--tz-accent)', width: 16, height: 16, flexShrink: 0 }} />
+                    )}
+                    {expanded ? <ChevronDown size={14} color={GRAY} /> : <ChevronRight size={14} color={GRAY} />}
+                    <span style={{ fontSize: 14, fontWeight: 700 }}>Job {idx + 1}</span>
+                    <span style={pillStyle(primary.bg, primary.color)}>{primary.label}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 600, background: 'transparent', color: lineAssignments.length > 0 ? 'var(--tz-text)' : GRAY, border: `1px solid ${'var(--tz-border)'}` }}>
+                      <User size={12} />
+                      {mechanicLabel}
+                    </span>
+                    {concernItems.length >= 2 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}` }}>
+                        <MessageSquare size={12} />
+                        {concernItems.length} concerns
+                      </span>
+                    )}
+                    {estHoursCompact > 0 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}`, marginLeft: 'auto' }}>
+                        Est {estHoursCompact}h
+                      </span>
+                    )}
+                  </div>
+                  {/* Row 2 — concern preview, dot-separated */}
+                  {concernItems.length > 0 && (
+                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${'var(--tz-border)'}`, fontSize: 13, color: 'var(--tz-textSecondary)', wordBreak: 'break-word', lineHeight: 1.5 }}>
+                      {concernItems.join(' • ')}
+                    </div>
                   )}
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>Job {idx + 1}</span>
-                  {wo.is_historical ? (
-                    <span style={pillStyle(st.bg, st.color)}>{st.label}</span>
-                  ) : (
-                    <select
-                      value={line.line_status || 'unassigned'}
-                      onChange={e => patchLine(line.id, { line_status: e.target.value })}
-                      style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: 11, fontWeight: 700, background: st.bg, color: st.color, border: 'none', borderRadius: 100 }}
-                    >
-                      {Object.entries(LINE_STATUS).map(([k, v]) => (
-                        <option key={k} value={k}>{v.label}</option>
-                      ))}
-                    </select>
-                  )}
-                  {isAdditional && <span style={pillStyle('var(--tz-warningBg)', AMBER)}>ADDITIONAL</span>}
-                  {/* Approval badge */}
-                  {!wo.is_historical && !isViewOnly && (() => {
-                    const as = line.approval_status || 'pre_approved'
-                    const AB: Record<string, { bg: string; color: string; label: string }> = {
-                      pre_approved: { bg: 'var(--tz-successBg)', color: GREEN, label: 'Pre-Quoted' },
-                      needs_approval: { bg: 'var(--tz-warningBg)', color: AMBER, label: 'Needs Approval' },
-                      pending: { bg: 'var(--tz-warningBg)', color: AMBER, label: 'Pending' },
-                      approved: { bg: 'var(--tz-successBg)', color: GREEN, label: 'Approved' },
-                      declined: { bg: 'var(--tz-dangerBg)', color: RED, label: 'Declined' },
-                    }
-                    const b = AB[as] || AB.pre_approved
-                    return <span style={pillStyle(b.bg, b.color)}>{b.label}</span>
-                  })()}
                 </div>
+
+                {expanded && (
+                <>
+                {/* Editable line_status control (expanded only). For waiting/declined
+                    lines the dropdown is suppressed — read-only approval state
+                    lives in the header pill (packet-1). */}
+                {!isWaitingOrDeclined && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                    {wo.is_historical ? (
+                      <span style={pillStyle(st.bg, st.color)}>{st.label}</span>
+                    ) : (
+                      <select
+                        value={line.line_status || 'unassigned'}
+                        onChange={e => patchLine(line.id, { line_status: e.target.value })}
+                        style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: 11, fontWeight: 700, background: st.bg, color: st.color, border: 'none', borderRadius: 100 }}
+                      >
+                        {Object.entries(LINE_STATUS).map(([k, v]) => (
+                          <option key={k} value={k}>{v.label}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
 
                 {/* Pre-Approval Toggle */}
                 {editMode && !wo.is_historical && !isViewOnly && (line.approval_status === 'pre_approved' || line.approval_status === 'needs_approval' || !line.approval_status) && (
@@ -1283,7 +1351,10 @@ export default function WorkOrderDetail() {
                   ) : (
                     <span style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>Unassigned</span>
                   )}
-                  {!wo.is_historical && !isViewOnly && (
+                  {!wo.is_historical && !isViewOnly && isWaitingOrDeclined && (
+                    <span style={{ fontSize: 11, color: AMBER, fontStyle: 'italic' }}>Approval required before assignment.</span>
+                  )}
+                  {!wo.is_historical && !isViewOnly && !isWaitingOrDeclined && (
                     <button onClick={() => {
                       const bypassJobTypes = ['diagnostic', 'full_inspection']
                       if (wo.estimate_required && !wo.estimate_approved && !bypassJobTypes.includes(wo.job_type)) {
@@ -1324,11 +1395,21 @@ export default function WorkOrderDetail() {
                   )
                 })()}
 
-                {/* Concern / Work Description */}
+                {/* Concern / Work Description — numbered list for multi-item
+                    descriptions (packet-1). Single items render as plain text.
+                    Display only — DB value is not mutated. */}
                 {line.description && (
                   <div style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: '10px 12px', marginBottom: 6, fontSize: 13, color: 'var(--tz-textSecondary)' }}>
                     <span style={{ ...labelStyle, marginBottom: 6 }}>{wo.is_historical ? 'Work Description' : 'Concern'}</span>
-                    {line.description}
+                    {concernItems.length > 1 ? (
+                      <ol style={{ margin: '4px 0 0 0', paddingLeft: 22, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {concernItems.map((c, i) => (
+                          <li key={i} style={{ color: 'var(--tz-text)' }}>{c}</li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <div>{line.description}</div>
+                    )}
                   </div>
                 )}
 
@@ -1435,29 +1516,10 @@ export default function WorkOrderDetail() {
                   )
                 })()}
 
-                {/* Parts for this job */}
-                {lineParts.length > 0 && (
-                  <div style={{ marginBottom: 10 }}>
-                    <span style={labelStyle}>Parts</span>
-                    {lineParts.map((p: any) => (
-                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12, borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                        <span style={{ flex: 1 }}>{p.description} {p.part_number ? `(${p.part_number})` : ''}</span>
-                        <span>{p.quantity}x</span>
-                        <span style={{ fontWeight: 600 }}>{fmt(p.unit_cost || 0)}</span>
-                        <select
-                          value={p.status || 'needed'}
-                          onChange={e => updatePartStatus(p.id, e.target.value)}
-                          style={{ padding: '2px 6px', fontSize: 11, borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, fontFamily: FONT }}
-                        >
-                          {Object.entries(PART_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                        </select>
-                        <button onClick={() => removePart(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, fontSize: 11 }}>
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* Billable parts list moved to the Parts tab (packet-1).
+                    Parts tab remains the source of parts truth; backend parts
+                    gate (parts-status.ts) is unchanged. Add Parts action below
+                    still opens the inline form for adding a rough part line. */}
 
                 {/* Actions */}
                 {!wo.is_historical && !isViewOnly && (
@@ -1498,6 +1560,8 @@ export default function WorkOrderDetail() {
                     <button onClick={() => addPart(line.id)} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>Add</button>
                     <button onClick={() => setNewPartForms(p => { const n = { ...p }; delete n[line.id]; return n })} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
                   </div>
+                )}
+                </>
                 )}
               </div>
             )
