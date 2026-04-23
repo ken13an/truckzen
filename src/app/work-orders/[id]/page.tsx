@@ -14,7 +14,7 @@ import JobsTab from '@/components/work-orders/JobsTab'
 import PartsTab from '@/components/work-orders/PartsTab'
 import EstimateTab from '@/components/work-orders/EstimateTab'
 import { getAutoRoughParts, isDiagnosticJob, hasRecognizedVerb } from '@/lib/parts-suggestions'
-import { isPartReceived } from '@/lib/parts-status'
+import { isPartReceived, isCustomerSuppliedPartRow, isNoPartNeededPartRow, isNonBillablePartRequirementRow, PARTS_REQUIREMENT_DEFAULT_NOTES, PARTS_REQUIREMENT_CONFIRM_COPY } from '@/lib/parts-status'
 import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
 import { isInvoiceHardLocked, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
@@ -1751,6 +1751,53 @@ export default function WorkOrderDetail() {
                         )}
                       </div>
 
+                      {/* Part ownership — Shop supplied / Customer supplied / No part needed.
+                          This is the row-level truth the approval gate reads. Shop-supplied
+                          requires a sell price > 0 (set via the Sell field below); the other
+                          two require a note. */}
+                      {!wo.is_historical && !partsLocked && !isMechanic && p.parts_status !== 'canceled' && (() => {
+                        const pReq = p.parts_requirement
+                        const pNote = p.parts_requirement_note
+                        async function setPartReq(next: 'needed' | 'customer_supplied' | 'not_needed') {
+                          // Confirmation-only flow — no free-text input required. The
+                          // approval gate still needs a note to satisfy API validation,
+                          // so we persist a deterministic default. Writers can edit the
+                          // note later via a future inline edit if ever needed.
+                          let noteVal: string | null = null
+                          if (next === 'customer_supplied' || next === 'not_needed') {
+                            const ok = window.confirm(PARTS_REQUIREMENT_CONFIRM_COPY[next])
+                            if (!ok) return
+                            noteVal = PARTS_REQUIREMENT_DEFAULT_NOTES[next]
+                          }
+                          await patchLine(p.id, { parts_requirement: next, parts_requirement_note: noteVal })
+                          await loadData()
+                        }
+                        const chip = (label: string, value: 'needed' | 'customer_supplied' | 'not_needed', bg: string, color: string) => (
+                          <button
+                            key={label}
+                            onClick={() => setPartReq(value)}
+                            style={{
+                              padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 600, fontFamily: FONT, cursor: 'pointer',
+                              background: pReq === value || (value === 'needed' && (!pReq || pReq === 'needed')) ? bg : 'transparent',
+                              color: pReq === value || (value === 'needed' && (!pReq || pReq === 'needed')) ? color : GRAY,
+                              border: pReq === value || (value === 'needed' && (!pReq || pReq === 'needed')) ? `1px solid ${color}` : `1px solid ${'var(--tz-border)'}`,
+                            }}>{label}</button>
+                        )
+                        return (
+                          <div style={{ display: 'flex', gap: 6, marginTop: 6, marginBottom: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: GRAY }}>Part source</span>
+                            {chip('Shop', 'needed', 'var(--tz-accentBg)', BLUE)}
+                            {chip('Customer', 'customer_supplied', 'var(--tz-warningBg)', AMBER)}
+                            {chip('None', 'not_needed', 'var(--tz-successBg)', GREEN)}
+                            {(pReq === 'customer_supplied' || pReq === 'not_needed') && pNote && (
+                              <span style={{ fontSize: 11, color: GRAY, fontStyle: 'italic' }} title={pNote}>
+                                &ldquo;{pNote.length > 40 ? pNote.slice(0, 40) + '…' : pNote}&rdquo;
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })()}
+
                       {/* Confirmed layer — shown when real_name exists */}
                       {p.real_name && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, padding: '4px 0' }}>
@@ -1768,8 +1815,28 @@ export default function WorkOrderDetail() {
                       )}
                       {p.finding && partNoteOpen !== p.id && <div style={{ fontSize: 11, color: GRAY, marginTop: 2, marginBottom: 4, fontStyle: 'italic' }}>Note: {p.finding}</div>}
 
-                      {/* Editable fields for parts dept (rough/sourced state) */}
-                      {partsEditable && !wo.is_historical && !isViewOnly && (
+                      {/* Non-billable stamp — replaces the editable price row when the writer
+                          has resolved the placeholder as customer_supplied or not_needed. Keeps
+                          the OWNERSHIP chip row above so the row can be switched back to
+                          shop-supplied to re-enter normal billable behaviour. */}
+                      {isNonBillablePartRequirementRow(p) && (
+                        <div style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, background: isCustomerSuppliedPartRow(p) ? 'var(--tz-warningBg)' : 'var(--tz-successBg)', border: `1px dashed ${isCustomerSuppliedPartRow(p) ? AMBER : GREEN}` }}>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: isCustomerSuppliedPartRow(p) ? AMBER : GREEN, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 2 }}>
+                            {isCustomerSuppliedPartRow(p) ? 'Customer-supplied part — non-billable' : 'No part needed — non-billable'}
+                          </div>
+                          {p.parts_requirement_note && (
+                            <div style={{ fontSize: 12, color: 'var(--tz-text)', marginBottom: 2 }}>{p.parts_requirement_note}</div>
+                          )}
+                          {isCustomerSuppliedPartRow(p) && (
+                            <div style={{ fontSize: 10, color: GRAY, fontStyle: 'italic' }}>Shop is not responsible for customer-supplied part defects or warranty.</div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Editable fields for parts dept (rough/sourced state).
+                          Hidden when the row is non-billable (customer_supplied / not_needed) —
+                          the OWNERSHIP chip is the only control needed on those rows. */}
+                      {partsEditable && !wo.is_historical && !isViewOnly && !isNonBillablePartRequirementRow(p) && (
                         <div style={{ position: 'relative' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
                             <div style={{ position: 'relative' }}>
