@@ -112,7 +112,15 @@ export default function WorkOrderDetail() {
   const [newChargeDesc, setNewChargeDesc] = useState('')
   const [newChargeAmt, setNewChargeAmt] = useState('')
   const [newPartForms, setNewPartForms] = useState<Record<string, { desc: string; pn: string; qty: string; cost: string }>>({})
-  const [approvalModal, setApprovalModal] = useState(false)
+  // Packet-3 modal-reuse: approvalModal holds context so Estimate 2+
+  // (supplement batches) can reuse the same modal JSX as Estimate 1.
+  // null = closed. { kind: 'estimate_1' } = Estimate 1 flow.
+  // { kind: 'supplement', batchId, estimateNumber } = Estimate 2+ flow.
+  const [approvalModal, setApprovalModal] = useState<
+    | null
+    | { kind: 'estimate_1' }
+    | { kind: 'supplement'; batchId: string; estimateNumber: number }
+  >(null)
   const [sendingEstimate, setSendingEstimate] = useState(false)
   const [approvingEstimate, setApprovingEstimate] = useState(false)
   const [qcLoading, setQcLoading] = useState(false)
@@ -1632,7 +1640,7 @@ export default function WorkOrderDetail() {
           {/* Get Approval — only show when estimate required and NOT yet approved */}
           {!wo.is_historical && wo.estimate_required && !wo.estimate_approved && (
             <div style={{ textAlign: 'right', marginTop: 8 }}>
-              <button onClick={() => setApprovalModal(true)} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
+              <button onClick={() => setApprovalModal({ kind: 'estimate_1' })} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
                 <DollarSign size={14} /> Get Approval
               </button>
             </div>
@@ -1974,12 +1982,12 @@ export default function WorkOrderDetail() {
                 {!wo.estimate_approved && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
-                      onClick={() => setApprovalModal(true)}
+                      onClick={() => setApprovalModal({ kind: 'estimate_1' })}
                       style={btnStyle(BLUE, 'var(--tz-bgLight)')}
                     >
                       {estStatus === 'sent' ? 'Resend / Approve' : estStatus === 'declined' ? 'Resend Modified Estimate' : 'Send Estimate'}
                     </button>
-                    <button onClick={() => { setApprovalModal(true); setApprovalConfirmModal({ method: 'in_person', notes: '' }) }} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), border: `1px solid ${BLUE}` }}>
+                    <button onClick={() => { setApprovalModal({ kind: 'estimate_1' }); setApprovalConfirmModal({ method: 'in_person', notes: '' }) }} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), border: `1px solid ${BLUE}` }}>
                       Approve In Person
                     </button>
                   </div>
@@ -2049,6 +2057,7 @@ export default function WorkOrderDetail() {
               laborRows: LaborRow[]
               partsRows: PartRow[]
               totals: { labor: number; parts: number; grand: number }
+              actions?: React.ReactNode
             }) => (
               <div key={opts.keyId} style={{ ...cardStyle, marginBottom: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, flexWrap: 'wrap' }}>
@@ -2114,7 +2123,10 @@ export default function WorkOrderDetail() {
                     )}
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 16, gap: 14, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {opts.actions}
+                  </div>
                   <div style={{ minWidth: 240, padding: '12px 16px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgHover)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
                       <span style={{ color: GRAY }}>Labor total</span>
@@ -2234,13 +2246,31 @@ export default function WorkOrderDetail() {
                   const grand = laborTotal + partsTotal
                   const status = supStatus(b)
                   const titleSuffix = b.isUnbatched ? ' — Unbatched' : ''
+                  // Packet-3 modal-reuse: pending real batches (not the legacy
+                  // __unbatched__ bucket) get a single "Send for Approval" CTA
+                  // that opens the shared approval modal in supplement context.
+                  // The modal's sendEstimateEmail() / approveEstimate() handlers
+                  // branch on approvalModal.kind === 'supplement' and call
+                  // /api/estimates/[id]/send-supplement and
+                  // /api/estimates/[id]/supplement-respond respectively.
+                  const isPending = status.label === 'WAITING FOR APPROVAL' && !b.isUnbatched
+                  const estimateNumber = idx + 2
+                  const actions = isPending ? (
+                    <button
+                      onClick={() => setApprovalModal({ kind: 'supplement', batchId: b.id, estimateNumber })}
+                      style={btnStyle(BLUE, 'var(--tz-bgLight)')}
+                    >
+                      <DollarSign size={14} /> Send for Approval
+                    </button>
+                  ) : undefined
                   return renderEstimateCard({
                     keyId: b.id,
-                    title: `Estimate ${idx + 2}${titleSuffix}`,
+                    title: `Estimate ${estimateNumber}${titleSuffix}`,
                     status,
                     laborRows: labor,
                     partsRows: parts,
                     totals: { labor: laborTotal, parts: partsTotal, grand },
+                    actions,
                   })
                 })}
               </>
@@ -3117,6 +3147,39 @@ export default function WorkOrderDetail() {
           if (approvingEstimate) return
           setApprovingEstimate(true)
           try {
+            // Packet-3 modal-reuse: supplement context routes to the batch-scoped
+            // staff respond endpoint. Estimate 1 state machine is not touched.
+            if (approvalModal && approvalModal.kind === 'supplement') {
+              if (!wo.estimate_id) {
+                setToastMsg('Estimate not found')
+                setTimeout(() => setToastMsg(''), 4000)
+                return
+              }
+              const res = await fetch(`/api/estimates/${wo.estimate_id}/supplement-respond`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'approve',
+                  supplement_batch_id: approvalModal.batchId,
+                  approval_method: method,
+                  approval_notes: notes || null,
+                }),
+              })
+              if (!res.ok) {
+                const errBody = await res.json().catch(() => null)
+                setToastMsg(errBody?.error || 'Failed to approve estimate')
+                setTimeout(() => setToastMsg(''), 4000)
+                return
+              }
+              logActivity(`Estimate ${approvalModal.estimateNumber} approved ${method === 'in_person' ? 'in person' : '(printed and signed)'} by ${user?.full_name || 'service writer'}${notes ? ` — Notes: ${notes}` : ''}`)
+              setApprovalModal(null)
+              setApprovalConfirmModal(null)
+              setPrintedReady(false)
+              setToastMsg(`Estimate ${approvalModal.estimateNumber} approved`)
+              setTimeout(() => setToastMsg(''), 4000)
+              await loadData()
+              return
+            }
             const result = await ensureEstimate()
             if (!result) {
               setToastMsg('Could not prepare estimate for approval — try again')
@@ -3186,7 +3249,7 @@ export default function WorkOrderDetail() {
               const mgrs = await getUserIdsByRole(wo.shop_id, ['owner', 'gm', 'shop_manager', 'floor_manager'])
               if (mgrs.length > 0) await createNotification({ shopId: wo.shop_id, recipientId: mgrs, type: 'estimate_approved', title: `Estimate approved — WO #${wo.so_number}`, body: `Ready to assign. Total: ${fmt(grandTotal)}`, link: `/work-orders/${id}`, relatedWoId: id })
             } catch {}
-            setApprovalModal(false)
+            setApprovalModal(null)
             setApprovalConfirmModal(null)
             setPrintedReady(false)
             setToastMsg('Estimate approved — work order activated')
@@ -3201,6 +3264,32 @@ export default function WorkOrderDetail() {
           if (sendingEstimate) return
           setSendingEstimate(true)
           try {
+            // Packet-3 modal-reuse: supplement context routes to the batch-scoped
+            // send endpoint instead of /api/estimates/[id]/send.
+            if (approvalModal && approvalModal.kind === 'supplement') {
+              if (!wo.estimate_id) {
+                setToastMsg('Estimate not found')
+                setTimeout(() => setToastMsg(''), 4000)
+                return
+              }
+              const res = await fetch(`/api/estimates/${wo.estimate_id}/send-supplement`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ supplement_batch_id: approvalModal.batchId }),
+              })
+              if (res.ok) {
+                logActivity(`Estimate ${approvalModal.estimateNumber} sent to ${contactEmail || contactPhone}`)
+                setToastMsg(`Estimate ${approvalModal.estimateNumber} sent to customer`)
+                setTimeout(() => setToastMsg(''), 4000)
+              } else {
+                const errBody = await res.json().catch(() => null)
+                alert(errBody?.error || 'Failed to send estimate')
+                return
+              }
+              setApprovalModal(null)
+              await loadData()
+              return
+            }
             await saveContactInfo()
             const result = await ensureEstimate()
             if (!result) {
@@ -3219,22 +3308,46 @@ export default function WorkOrderDetail() {
               console.error('[wo.estimate.send] send failed', { woId: id, estimateId: effectiveId, status: res.status, error: errBody?.error })
               alert('Failed to send estimate')
             }
-            setApprovalModal(false)
+            setApprovalModal(null)
             await loadData()
           } finally {
             setSendingEstimate(false)
           }
         }
 
+        // Packet-3 modal-reuse: modal title + summary total branch on context.
+        // For supplement context the total is summed from the specific batch's
+        // lines/wo_parts using the same rate/price formulas; Estimate 1 keeps
+        // the global grandTotal. Formulas unchanged — display only.
+        const modalTitle = approvalModal && approvalModal.kind === 'supplement'
+          ? `Get Estimate ${approvalModal.estimateNumber} Approval`
+          : 'Get Estimate Approval'
+        const modalTotal = (() => {
+          if (approvalModal && approvalModal.kind === 'supplement') {
+            const bid = approvalModal.batchId
+            const labor = jobLines
+              .filter((l: any) => l.is_additional === true && l.supplement_batch_id === bid)
+              .reduce((s: number, l: any) => s + (Number(l.billed_hours || l.actual_hours || l.estimated_hours || 0) * laborRate), 0)
+            const partsFromLines = partLines
+              .filter((p: any) => p.is_additional === true && p.supplement_batch_id === bid)
+              .reduce((s: number, p: any) => s + (Number(p.parts_sell_price || p.unit_price || 0) * Number(p.quantity || 1)), 0)
+            const partsFromWoParts = woParts
+              .filter((p: any) => p.is_additional === true && p.supplement_batch_id === bid)
+              .reduce((s: number, p: any) => s + (Number(p.unit_cost || 0) * Number(p.quantity || 1)), 0)
+            return labor + partsFromLines + partsFromWoParts
+          }
+          return grandTotal
+        })()
+
         return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(false)}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(null)}>
             <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <span style={{ fontSize: 16, fontWeight: 700 }}>Get Estimate Approval</span>
-                <button onClick={() => setApprovalModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
+                <span style={{ fontSize: 16, fontWeight: 700 }}>{modalTitle}</span>
+                <button onClick={() => setApprovalModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={18} /></button>
               </div>
               <div style={{ fontSize: 13, marginBottom: 16, padding: '10px 14px', background: 'var(--tz-bgHover)', borderRadius: 8 }}>
-                <div style={{ marginBottom: 4 }}>Estimate total: <strong style={{ color: GREEN }}>{fmt(grandTotal)}</strong></div>
+                <div style={{ marginBottom: 4 }}>Estimate total: <strong style={{ color: GREEN }}>{fmt(modalTotal)}</strong></div>
                 <div>Customer: <strong>{customer?.contact_name || customer?.company_name || '—'}</strong></div>
               </div>
 
