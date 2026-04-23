@@ -801,6 +801,16 @@ export default function WorkOrderDetail() {
   const jobLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'labor')
   const partLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
   const feeLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'fee')
+  // Invoice-tab display split. Non-billable rows (customer_supplied /
+  // not_needed) sum to $0 in calcInvoiceTotals (parts_sell_price=0 and
+  // unit_price=0), so pulling them into a separate display section does
+  // not change any total — it only surfaces audit truth to the customer.
+  const invoiceBillableParts = partLines.filter((p: any) =>
+    p.parts_status !== 'canceled' && !isNonBillablePartRequirementRow(p)
+  )
+  const invoiceNonBillableParts = partLines.filter((p: any) =>
+    p.parts_status !== 'canceled' && isNonBillablePartRequirementRow(p)
+  )
   // Parts locked after invoice sent to customer (sent, paid, closed) — NOT during accounting_review
   const partsLocked = isInvoiceHardLocked(wo.invoice_status)
   const shopCharges = wo.wo_shop_charges || []
@@ -2714,13 +2724,13 @@ export default function WorkOrderDetail() {
 
           {/* ── Job-Grouped Invoice Body ── */}
           {(() => {
-            const orphanParts = partLines.filter((p: any) => !p.related_labor_line_id || !jobLines.some((j: any) => j.id === p.related_labor_line_id))
+            const orphanParts = invoiceBillableParts.filter((p: any) => !p.related_labor_line_id || !jobLines.some((j: any) => j.id === p.related_labor_line_id))
             return (
               <>
                 {jobLines.map((line: any, idx: number) => {
                   const hrs = line.billed_hours || line.actual_hours || line.estimated_hours || 0
                   const jobLaborAmt = hrs * laborRate
-                  const jobParts = partLines.filter((p: any) => p.related_labor_line_id === line.id)
+                  const jobParts = invoiceBillableParts.filter((p: any) => p.related_labor_line_id === line.id)
                   const jobPartsTotal = jobParts.reduce((s: number, p: any) => s + ((p.parts_sell_price || p.unit_price || 0) * (p.quantity || 1)), 0)
                   const jobTotal = jobLaborAmt + jobPartsTotal
 
@@ -2812,6 +2822,32 @@ export default function WorkOrderDetail() {
                   )
                 })}
 
+                {/* Non-billable placeholders — customer-supplied / no-part-needed.
+                    Kept out of priced rows/totals; shown once as a compact
+                    stamp so the customer/writer can see the audit truth. */}
+                {invoiceNonBillableParts.length > 0 && (
+                  <div style={{ background: 'var(--tz-bgCard)', border: `1px dashed ${'var(--tz-border)'}`, borderRadius: 12, marginBottom: 16, padding: '12px 18px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Non-billable placeholders</div>
+                    {invoiceNonBillableParts.some((p: any) => isCustomerSuppliedPartRow(p)) && (
+                      <div style={{ fontSize: 11, color: GRAY, marginBottom: 8 }}>Shop is not responsible for customer-supplied part defect/warranty.</div>
+                    )}
+                    <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: 'var(--tz-textSecondary)' }}>
+                      {invoiceNonBillableParts.map((p: any) => {
+                        const label = isCustomerSuppliedPartRow(p)
+                          ? 'Customer supplied part'
+                          : isNoPartNeededPartRow(p) ? 'No part needed' : 'Non-billable'
+                        const name = p.real_name || p.rough_name || p.description || '—'
+                        return (
+                          <li key={p.id} style={{ marginBottom: 2 }}>
+                            <span style={{ color: 'var(--tz-text)', fontWeight: 500 }}>{label}:</span> {name}
+                            <span style={{ color: GRAY }}> — no part charge</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                )}
+
                 {/* Orphan Parts — parts not linked to any specific job */}
                 {orphanParts.length > 0 && (
                   <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, marginBottom: 16, overflow: 'hidden' }}>
@@ -2874,7 +2910,7 @@ export default function WorkOrderDetail() {
                 <span style={{ fontWeight: 600 }}>{fmt(laborTotal)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
-                <span>Parts ({partLines.length} {partLines.length === 1 ? 'item' : 'items'})</span>
+                <span>Parts ({invoiceBillableParts.length} {invoiceBillableParts.length === 1 ? 'item' : 'items'})</span>
                 <span style={{ fontWeight: 600 }}>{fmt(partsLineTotal + woPartsTotal)}</span>
               </div>
               {shopCharges.length > 0 && (
