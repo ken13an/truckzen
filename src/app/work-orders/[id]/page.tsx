@@ -1233,6 +1233,42 @@ export default function WorkOrderDetail() {
                 const ids = Array.from(mergeSelected)
                 const destId = ids[0]
                 const srcIds = ids.slice(1)
+                // Client-side preflight mirror of server approval-boundary
+                // guard (LineMerge_EstimateGroupApprovalGuard_Fix). Server
+                // remains authoritative; this preflight avoids a needless
+                // round-trip and shows user-facing wording for obvious bad
+                // merges without leaking supplement_batch_id.
+                const selectedLines = jobLines.filter((l: any) => ids.includes(l.id))
+                const mergeGroup = (l: any): string => l.is_additional === true
+                  ? (l.supplement_batch_id ? `batch:${l.supplement_batch_id}` : 'unbatched_added')
+                  : 'original'
+                const mergeState = (l: any): 'approved' | 'declined' | 'pending' => {
+                  if (l.is_additional === true) {
+                    if (l.customer_approved === true) return 'approved'
+                    if (l.customer_approved === false) return 'declined'
+                    return 'pending'
+                  }
+                  if (wo.estimate_approved === true) return 'approved'
+                  if (l.approval_status === 'approved') return 'approved'
+                  if (l.approval_status === 'declined') return 'declined'
+                  return 'pending'
+                }
+                // LineMerge_AllowApprovedApproved_Fix — mirrors the relaxed
+                // server guard. All-approved merges pass; mixed approval
+                // states block.
+                const preflight: string[] = []
+                const preflightStates = new Set(selectedLines.map(mergeState))
+                if (preflightStates.has('declined') && preflightStates.size > 1) {
+                  preflight.push('Cannot merge declined estimate lines.')
+                }
+                if (preflightStates.has('approved') && preflightStates.has('pending')) {
+                  preflight.push('Cannot merge approved work with work still waiting for approval.')
+                }
+                if (preflightStates.size === 1 && preflightStates.has('pending')) {
+                  const pendingGroups = new Set(selectedLines.map(mergeGroup))
+                  if (pendingGroups.size > 1) preflight.push('Cannot merge lines from different pending estimates.')
+                }
+                if (preflight.length > 0) { alert(preflight.join('\n')); return }
                 setMerging(true)
                 try {
                   const res = await fetch('/api/so-lines/merge', {
