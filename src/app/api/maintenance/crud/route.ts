@@ -29,6 +29,31 @@ function validateTable(table: string | null): string | null {
   return null
 }
 
+// Identifier safety. Query params that become PostgREST column names or
+// select lists must not contain parens, commas-in-wrong-place, or filter
+// syntax — otherwise a caller can embed foreign tables (select=*,users(*))
+// or break out of the .or() clause. Service-role bypasses RLS, so shop
+// scoping depends entirely on the filter string staying intact.
+const IDENT_RE = /^[a-z_][a-z0-9_]*$/
+function isIdent(v: string | null | undefined): v is string {
+  return !!v && IDENT_RE.test(v)
+}
+function isIdentList(v: string): boolean {
+  return v.split(',').every(c => IDENT_RE.test(c.trim()))
+}
+// select: allow '*' or a comma-separated list of bare identifiers only.
+// No parens = no FK embeds = no way to pull a joined table whose rows are
+// not shop-filtered.
+function isSafeSelect(v: string): boolean {
+  if (v === '*') return true
+  return isIdentList(v)
+}
+// Strip PostgREST-meaningful characters from a user-supplied search term
+// before interpolating it into an ilike pattern inside .or().
+function sanitizeSearchTerm(s: string): string {
+  return s.replace(/[,()\\`]/g, '')
+}
+
 export async function GET(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
@@ -42,14 +67,18 @@ export async function GET(req: Request) {
   if (tableErr) return jsonError(tableErr, 400)
 
   const select = searchParams.get('select') || '*'
+  if (!isSafeSelect(select)) return jsonError('Invalid select', 400)
   const page = Math.max(parseInt(searchParams.get('page') || '1'), 1)
   const limit = Math.min(parseInt(searchParams.get('limit') || '25'), 50)
   const search = searchParams.get('q')
   const searchCols = searchParams.get('search_cols')
   const orderBy = searchParams.get('order_by') || 'created_at'
+  if (!isIdent(orderBy)) return jsonError('Invalid order_by', 400)
   const orderAsc = searchParams.get('order_asc') === 'true'
   const filterKey = searchParams.get('filter_key')
   const filterVal = searchParams.get('filter_val')
+  if (filterKey !== null && !isIdent(filterKey)) return jsonError('Invalid filter_key', 400)
+  if (filterKey === 'shop_id') return jsonError('filter_key cannot override shop scope', 400)
 
   const s = createAdminSupabaseClient()
   const offset = (page - 1) * limit
@@ -57,7 +86,9 @@ export async function GET(req: Request) {
 
   if (filterKey && filterVal && filterVal !== 'all') q = q.eq(filterKey, filterVal)
   if (search && searchCols) {
-    const clauses = searchCols.split(',').map(c => `${c.trim()}.ilike.%${search}%`).join(',')
+    if (!isIdentList(searchCols)) return jsonError('Invalid search_cols', 400)
+    const safe = sanitizeSearchTerm(search)
+    const clauses = searchCols.split(',').map(c => `${c.trim()}.ilike.%${safe}%`).join(',')
     q = q.or(clauses)
   }
 
