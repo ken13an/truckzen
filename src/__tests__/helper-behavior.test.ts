@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest'
 import { hasRecognizedVerb, getAutoRoughParts, isDiagnosticJob } from '../lib/parts-suggestions'
 import { isPartReceived, PARTS_RECEIVED_STATES, VALID_PARTS_STATUSES, PARTS_PICKUP_STATUS, PARTS_READY_STATUS } from '../lib/parts-status'
 import { resolveInvoiceRecipientEmail } from '../lib/notifications/resolveInvoiceRecipientEmail'
+import { shouldRedirectForNativeShell, NATIVE_BLOCKED_PATHS, NATIVE_BLOCKED_PREFIXES } from '../lib/native-shell'
 
 // ──────────────────────────────────────────────────────────────
 // JOB RECOGNITION — canonical verb-intent helper behavior
@@ -140,5 +141,49 @@ describe('resolveInvoiceRecipientEmail (Patch 125)', () => {
     const supabase = fakeSupabaseReturning('should-not-be-read@example.com')
     const out = await resolveInvoiceRecipientEmail(supabase, null, 'customer@example.com')
     expect(out).toBe('customer@example.com')
+  })
+})
+
+// ──────────────────────────────────────────────────────────────
+// NATIVE SHELL — Security_P0_Patch2_NativeBlock_1 (F-06)
+// ──────────────────────────────────────────────────────────────
+describe('shouldRedirectForNativeShell (F-06)', () => {
+  it('blocks exact public marketing/auth/legal paths', () => {
+    for (const p of ['/', '/register', '/forgot-password', '/reset-password', '/privacy', '/terms', '/support', '/accept-invite']) {
+      expect(shouldRedirectForNativeShell(p), `${p} must be blocked`).toBe(true)
+    }
+  })
+
+  it('blocks prefix families /portal, /pay, /kiosk, /smart-drop', () => {
+    expect(shouldRedirectForNativeShell('/portal')).toBe(true)
+    expect(shouldRedirectForNativeShell('/portal/abc123')).toBe(true)
+    expect(shouldRedirectForNativeShell('/portal/estimate/xyz')).toBe(true)
+    expect(shouldRedirectForNativeShell('/pay')).toBe(true)
+    expect(shouldRedirectForNativeShell('/pay/token-123')).toBe(true)
+    expect(shouldRedirectForNativeShell('/kiosk')).toBe(true)
+    expect(shouldRedirectForNativeShell('/kiosk/shop-code')).toBe(true)
+    expect(shouldRedirectForNativeShell('/smart-drop')).toBe(true)
+    expect(shouldRedirectForNativeShell('/smart-drop/anything')).toBe(true)
+  })
+
+  it('does NOT match path that only starts with a prefix as a substring', () => {
+    // /portal is blocked; /portalxyz must not match (prefix family only at segment boundary)
+    expect(shouldRedirectForNativeShell('/portalxyz')).toBe(false)
+    expect(shouldRedirectForNativeShell('/payment')).toBe(false)
+    expect(shouldRedirectForNativeShell('/kiosks-admin')).toBe(false)
+  })
+
+  it('does NOT block the login sink or app-safe operational routes', () => {
+    expect(shouldRedirectForNativeShell('/login'), '/login is the redirect sink — must NOT be blocked').toBe(false)
+    for (const p of ['/dashboard', '/work-orders', '/work-orders/abc', '/mechanic/dashboard', '/parts', '/parts/queue', '/accounting', '/floor-manager/quick-assign', '/maintenance/invoices', '/notifications', '/settings', '/settings/users']) {
+      expect(shouldRedirectForNativeShell(p), `${p} must NOT be blocked`).toBe(false)
+    }
+  })
+
+  it('exports the blocked sets as expected shapes', () => {
+    expect(NATIVE_BLOCKED_PATHS).toBeInstanceOf(Set)
+    expect(NATIVE_BLOCKED_PATHS.has('/')).toBe(true)
+    expect(Array.isArray(NATIVE_BLOCKED_PREFIXES)).toBe(true)
+    expect(NATIVE_BLOCKED_PREFIXES).toContain('/portal')
   })
 })

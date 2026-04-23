@@ -1,7 +1,7 @@
 // Canonical native-shell (iOS/Android app WebView) detection.
-// Single source of truth used by middleware to suppress public marketing paths
-// in native app mode. Browsers never send any of these signals, so web users
-// are unaffected.
+// Single source of truth used by middleware to suppress public marketing and
+// customer-token-public routes in native app mode. Browsers never send any of
+// these signals, so web users are unaffected.
 import type { NextRequest } from 'next/server'
 
 export const NATIVE_COOKIE = 'tz_native'
@@ -17,14 +17,37 @@ export function isNativeShellRequest(req: NextRequest): boolean {
   return false
 }
 
-// Paths that must not render inside the native app shell. Keep narrow —
-// only public marketing / acquisition entry points. Authenticated operational
-// routes are intentionally excluded.
+// Exact paths that must not render inside the native app shell — public
+// marketing / acquisition / legal / password-reset / invite-acceptance entry
+// points. /login is intentionally NOT blocked: it is the redirect sink used by
+// this module and blocking it would infinite-loop. Stripping marketing chrome
+// from /login itself is a separate concern out of scope here.
 export const NATIVE_BLOCKED_PATHS: ReadonlySet<string> = new Set([
   '/',
   '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/privacy',
+  '/terms',
+  '/support',
+  '/accept-invite',
 ])
 
+// Prefix families that must not render inside native. Every path starting with
+// one of these strings (followed by '/' or end-of-string) is blocked. Covers
+// token-public customer surfaces and in-shop kiosk flows that are not intended
+// for the authenticated fleet worker running the app.
+export const NATIVE_BLOCKED_PREFIXES: readonly string[] = [
+  '/portal',
+  '/pay',
+  '/kiosk',
+  '/smart-drop',
+]
+
 export function shouldRedirectForNativeShell(pathname: string): boolean {
-  return NATIVE_BLOCKED_PATHS.has(pathname)
+  if (NATIVE_BLOCKED_PATHS.has(pathname)) return true
+  for (const p of NATIVE_BLOCKED_PREFIXES) {
+    if (pathname === p || pathname.startsWith(p + '/')) return true
+  }
+  return false
 }
