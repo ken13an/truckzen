@@ -2012,110 +2012,240 @@ export default function WorkOrderDetail() {
             )
           })()}
 
-          {/* Labor detail per job */}
-          <div style={cardStyle}>
-            <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Labor</span>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                  <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Job</th>
-                  <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Est Hours</th>
-                  <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Actual</th>
-                  <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle }}>Billed</th>
-                  <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Rate</th>
-                  <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobLines.map((line: any, idx: number) => {
-                  const hrs = line.billed_hours || line.actual_hours || line.estimated_hours || 0
-                  return (
-                    <tr key={line.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                      <td style={{ padding: '6px 8px' }}>Job {idx + 1}: {line.description?.slice(0, 40)}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.estimated_hours || 0}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.actual_hours || 0}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>{line.billed_hours || 0}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{isImportedHistory ? (line.labor_rate ? `${fmt(line.labor_rate)}/hr` : '—') : `${fmt(laborRate)}/hr`}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{isImportedHistory ? fmt(line.unit_price || 0) : fmt(hrs * laborRate)}</td>
-                    </tr>
-                  )
+          {/* Per-estimate cards — structure-only packet-2 port
+              (TruckZen_WOEstimate_ReauthorPacket2_StructureOnly).
+              Each estimate group renders as one clean card: header (title
+              + status pill left, Total right), Labor table (left) and
+              Parts table (right) side-by-side, totals block bottom-right
+              with Labor / Parts / Grand total. Structure only — pending
+              supplement cards do NOT render send/approve/decline action
+              buttons because destination does not yet expose the required
+              /api/estimates/[id]/send-supplement and
+              /api/estimates/[id]/supplement-respond routes. Current
+              destination approval UX (Send Estimate / Approve In Person
+              buttons above, next to the status banner) is preserved. */}
+          {(() => {
+            type LaborRow = { description: string; hours: number; rate: number; total: number }
+            type PartRow = { part: string; qty: number; price: number; total: number }
+            type CardStatus = { label: string; bg: string; color: string }
+
+            // Local table-header style. Mirrors labelStyle visually (small,
+            // uppercase, gray, letterspaced) but drops display:'block' and
+            // marginBottom so <th> retains its default display:table-cell.
+            const tableHeaderStyle: React.CSSProperties = {
+              fontSize: 10,
+              fontWeight: 700,
+              color: GRAY,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }
+
+            const isCanceled = (row: any) => row?.parts_status === 'canceled' || row?.line_status === 'canceled' || row?.status === 'canceled'
+
+            const renderEstimateCard = (opts: {
+              keyId: string
+              title: string
+              status: CardStatus
+              laborRows: LaborRow[]
+              partsRows: PartRow[]
+              totals: { labor: number; parts: number; grand: number }
+            }) => (
+              <div key={opts.keyId} style={{ ...cardStyle, marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 20, fontWeight: 800 }}>{opts.title}</span>
+                  <span style={pillStyle(opts.status.bg, opts.status.color)}>{opts.status.label}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 13, color: GRAY }}>
+                    Total <strong style={{ color: 'var(--tz-text)', fontSize: 18, marginLeft: 8 }}>{fmt(opts.totals.grand)}</strong>
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Labor</div>
+                    {opts.laborRows.length > 0 ? (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed' }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                            <th style={{ textAlign: 'left', padding: '6px 8px', ...tableHeaderStyle }}>Description</th>
+                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 60 }}>Hours</th>
+                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 60 }}>Rate</th>
+                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 80 }}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {opts.laborRows.map((r, i) => (
+                            <tr key={i} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                              <td style={{ padding: '6px 8px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{r.description}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{(Math.round(r.hours * 100) / 100).toFixed(2)}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(r.rate)}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(r.total)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', padding: '6px 8px' }}>No labor</div>
+                    )}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>Parts</div>
+                    {opts.partsRows.length > 0 ? (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed' }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                            <th style={{ textAlign: 'left', padding: '6px 8px', ...tableHeaderStyle }}>Part</th>
+                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 50 }}>Qty</th>
+                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 70 }}>Price</th>
+                            <th style={{ textAlign: 'right', padding: '6px 8px', ...tableHeaderStyle, width: 80 }}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {opts.partsRows.map((r, i) => (
+                            <tr key={i} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                              <td style={{ padding: '6px 8px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{r.part}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{r.qty}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(r.price)}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(r.total)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div style={{ fontSize: 12, color: GRAY, fontStyle: 'italic', padding: '6px 8px' }}>No parts</div>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+                  <div style={{ minWidth: 240, padding: '12px 16px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgHover)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
+                      <span style={{ color: GRAY }}>Labor total</span>
+                      <span style={{ fontWeight: 700 }}>{fmt(opts.totals.labor)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
+                      <span style={{ color: GRAY }}>Parts total</span>
+                      <span style={{ fontWeight: 700 }}>{fmt(opts.totals.parts)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '8px 0 4px', borderTop: `1px solid ${'var(--tz-border)'}`, marginTop: 4 }}>
+                      <span style={{ fontWeight: 800 }}>Grand total</span>
+                      <span style={{ fontWeight: 800 }}>{fmt(opts.totals.grand)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+
+            // ── Estimate 1 — original scope (non-additional lines) ──
+            const e1Status: CardStatus = wo.estimate_approved
+              ? { label: 'APPROVED', bg: 'var(--tz-successBg)', color: GREEN }
+              : wo.estimate_status === 'sent'
+                ? { label: 'PENDING APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
+                : wo.estimate_status === 'declined'
+                  ? { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
+                  : { label: 'DRAFT', bg: 'var(--tz-bgHover)', color: GRAY }
+
+            const e1Labor: LaborRow[] = jobLines
+              .filter((l: any) => l.is_additional !== true && !isCanceled(l))
+              .map((l: any) => {
+                const hrs = l.billed_hours || l.actual_hours || l.estimated_hours || 0
+                const rate = isImportedHistory && l.labor_rate ? l.labor_rate : laborRate
+                const total = isImportedHistory ? (l.unit_price || 0) : hrs * rate
+                return { description: l.description || '—', hours: hrs, rate, total }
+              })
+            const e1PartsFromLines: PartRow[] = partLines
+              .filter((p: any) => p.is_additional !== true && !isCanceled(p))
+              .map((p: any) => {
+                const sell = p.parts_sell_price || 0
+                const qty = p.quantity || 1
+                return { part: p.real_name || p.rough_name || p.description || '—', qty, price: sell, total: sell * qty }
+              })
+            const e1PartsFromWoParts: PartRow[] = woParts
+              .filter((p: any) => p.is_additional !== true && !isCanceled(p))
+              .map((p: any) => {
+                const cost = p.unit_cost || 0
+                const qty = p.quantity || 1
+                return { part: p.description || '—', qty, price: cost, total: cost * qty }
+              })
+            const e1Parts = [...e1PartsFromLines, ...e1PartsFromWoParts]
+            const e1LaborTotal = e1Labor.reduce((s, r) => s + r.total, 0)
+            const e1PartsTotal = e1Parts.reduce((s, r) => s + r.total, 0)
+            const e1Grand = e1LaborTotal + e1PartsTotal
+
+            // ── Supplement batches → Estimate 2, 3, … ──
+            // Groups additional lines/parts by supplement_batch_id (added to
+            // the schema by the remote 20260420 migration). Legacy additional
+            // rows without a batch id fall into an __unbatched__ group.
+            const suppJobLines = jobLines.filter((l: any) => l.is_additional === true && !isCanceled(l))
+            const suppPartLines = partLines.filter((p: any) => p.is_additional === true && !isCanceled(p))
+            const suppWoParts = woParts.filter((p: any) => p.is_additional === true && !isCanceled(p))
+            type BatchGroup = { id: string; jobs: any[]; parts: any[]; woParts: any[]; minCreated: string; isUnbatched: boolean }
+            const groupsMap: Record<string, BatchGroup> = {}
+            const seed = (row: any, bucket: 'jobs' | 'parts' | 'woParts') => {
+              const bid = row.supplement_batch_id || '__unbatched__'
+              if (!groupsMap[bid]) {
+                groupsMap[bid] = { id: bid, jobs: [], parts: [], woParts: [], minCreated: row.created_at || '', isUnbatched: bid === '__unbatched__' }
+              }
+              const g = groupsMap[bid]
+              if (!g.minCreated || (row.created_at && row.created_at < g.minCreated)) g.minCreated = row.created_at || g.minCreated
+              g[bucket].push(row)
+            }
+            for (const l of suppJobLines) seed(l, 'jobs')
+            for (const p of suppPartLines) seed(p, 'parts')
+            for (const p of suppWoParts) seed(p, 'woParts')
+            const batches = Object.values(groupsMap).sort((a, b) => a.minCreated.localeCompare(b.minCreated))
+
+            const supStatus = (g: BatchGroup): CardStatus => {
+              const all = [...g.jobs, ...g.parts, ...g.woParts]
+              if (all.length === 0) return { label: 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
+              const set = new Set(all.map((r: any) => r.customer_approved))
+              if (set.size > 1) return { label: 'REVIEW REQUIRED', bg: 'var(--tz-warningBg)', color: AMBER }
+              const v = [...set][0]
+              if (v === true) return { label: 'APPROVED', bg: 'var(--tz-successBg)', color: GREEN }
+              if (v === false) return { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
+              return { label: 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
+            }
+
+            return (
+              <>
+                {renderEstimateCard({
+                  keyId: 'estimate-1',
+                  title: 'Estimate 1',
+                  status: e1Status,
+                  laborRows: e1Labor,
+                  partsRows: e1Parts,
+                  totals: { labor: e1LaborTotal, parts: e1PartsTotal, grand: e1Grand },
                 })}
-                <tr style={{ fontWeight: 700 }}>
-                  <td colSpan={5} style={{ padding: '8px 8px', textAlign: 'right' }}>Labor Total</td>
-                  <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(laborTotal)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Parts detail */}
-          {partLines.length > 0 && (
-            <div style={cardStyle}>
-              <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Parts</span>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                    <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part</th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part #</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Sell</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {partLines.map((p: any) => {
-                    const sell = p.parts_sell_price || 0
+                {batches.map((b, idx) => {
+                  const labor: LaborRow[] = b.jobs.map((l: any) => {
+                    const hrs = l.billed_hours || l.actual_hours || l.estimated_hours || 0
+                    return { description: l.description || '—', hours: hrs, rate: laborRate, total: hrs * laborRate }
+                  })
+                  const partsFromLines: PartRow[] = b.parts.map((l: any) => {
+                    const sell = l.parts_sell_price || l.unit_price || 0
+                    const qty = l.quantity || 1
+                    return { part: l.real_name || l.rough_name || l.description || '—', qty, price: sell, total: sell * qty }
+                  })
+                  const partsFromWoParts: PartRow[] = b.woParts.map((p: any) => {
+                    const cost = p.unit_cost || 0
                     const qty = p.quantity || 1
-                    const lineTotal = sell * qty
-                    return (
-                      <tr key={p.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
-                        <td style={{ padding: '6px 8px' }}>{p.real_name || p.rough_name || p.description || '—'}</td>
-                        <td style={{ padding: '6px 8px', color: GRAY }}>{p.part_number || '—'}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(sell)}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(lineTotal)}</td>
-                      </tr>
-                    )
-                  })}
-                  <tr style={{ fontWeight: 700 }}>
-                    <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right' }}>Parts Total</td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(partsLineTotal)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* wo_parts (inline added parts) */}
-          {woParts.length > 0 && (
-            <div style={cardStyle}>
-              <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Additional Parts</span>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                    <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Part</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Unit Cost</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {woParts.map((p: any) => (
-                    <tr key={p.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>{p.quantity || 1}</td>
-                      <td style={{ padding: '6px 8px' }}>{p.description || '—'}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(p.unit_cost)}</td>
-                      <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt((p.quantity || 1) * (p.unit_cost || 0))}</td>
-                    </tr>
-                  ))}
-                  <tr style={{ fontWeight: 700 }}>
-                    <td colSpan={3} style={{ padding: '8px 8px', textAlign: 'right' }}>Additional Parts Total</td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(woPartsTotal)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
+                    return { part: p.description || '—', qty, price: cost, total: cost * qty }
+                  })
+                  const parts = [...partsFromLines, ...partsFromWoParts]
+                  const laborTotal = labor.reduce((s, r) => s + r.total, 0)
+                  const partsTotal = parts.reduce((s, r) => s + r.total, 0)
+                  const grand = laborTotal + partsTotal
+                  const status = supStatus(b)
+                  const titleSuffix = b.isUnbatched ? ' — Unbatched' : ''
+                  return renderEstimateCard({
+                    keyId: b.id,
+                    title: `Estimate ${idx + 2}${titleSuffix}`,
+                    status,
+                    laborRows: labor,
+                    partsRows: parts,
+                    totals: { labor: laborTotal, parts: partsTotal, grand },
+                  })
+                })}
+              </>
+            )
+          })()}
 
           {/* Shop Charges */}
           {shopCharges.length > 0 && (
