@@ -4,6 +4,7 @@ import { requireRouteContext } from '@/lib/api-route-auth'
 import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 import { safeRoute } from '@/lib/api-handler'
 import { rateLimit } from '@/lib/ratelimit/core'
+import { generateEstimatePdf } from '@/lib/pdf/generateEstimatePdf'
 
 async function getEstimateForActor(admin: any, actor: any, id: string) {
   let q = admin.from('estimates').select('*').eq('id', id)
@@ -47,7 +48,18 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
 
   if ((estimate as any).customer_email) {
     const emailHtml = `<div style="background:#0f0f1a;padding:32px;font-family:-apple-system,sans-serif"><div style="max-width:600px;margin:0 auto;background:#1a1a2e;border-radius:12px;overflow:hidden"><div style="padding:24px;background:#1d1d35;border-bottom:1px solid #2a2a3a"><h1 style="margin:0;color:#ffffff;font-size:20px">${shop.name}</h1><p style="margin:4px 0 0;color:#8a8a9a;font-size:13px">Estimate ${(estimate as any).estimate_number}</p></div><div style="padding:24px"><p style="color:#e0e0e0;font-size:14px;margin:0 0 8px">Hi ${(estimate as any).customer_name || 'Customer'},</p><p style="color:#b0b0c0;font-size:13px;margin:0 0 16px">Here is your repair estimate${truckInfo ? ` for <strong style="color:#e0e0e0">${truckInfo}</strong>` : ''}.</p><table style="width:100%;border-collapse:collapse;margin:16px 0"><thead><tr style="background:#15152a"><th style="padding:8px 12px;text-align:left;color:#8a8a9a;font-size:11px;text-transform:uppercase">Description</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Labor</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Parts</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Total</th></tr></thead><tbody>${linesHtml}</tbody></table><div style="text-align:right;padding:12px 0;border-top:1px solid #2a2a3a"><div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Subtotal: $${((estimate as any).subtotal || 0).toFixed(2)}</div><div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Tax: $${((estimate as any).tax_amount || 0).toFixed(2)}</div><div style="color:#ffffff;font-size:18px;font-weight:800">Total: $${((estimate as any).total || 0).toFixed(2)}</div></div><div style="text-align:center;margin:24px 0 8px"><a href="${portalLink}" style="display:inline-block;padding:14px 32px;background:#16A34A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:700">Review & Approve Estimate</a></div></div></div></div>`
-    const sent = await sendEmail((estimate as any).customer_email, `Estimate ${(estimate as any).estimate_number} from ${shop.name}`, emailHtml)
+    let attachments: { filename: string; content: Buffer }[] | undefined
+    try {
+      const pdfResult = await generateEstimatePdf(id)
+      if (!pdfResult) {
+        console.warn('[Estimates] PDF generator returned null — sending email without attachment', { estimateId: id })
+      } else {
+        attachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
+      }
+    } catch (err: any) {
+      console.warn('[Estimates] PDF generation failed — sending email without attachment', { estimateId: id, error: err?.message || String(err) })
+    }
+    const sent = await sendEmail((estimate as any).customer_email, `Estimate ${(estimate as any).estimate_number} from ${shop.name}`, emailHtml, attachments)
     if (sent) sentVia.push('email')
   }
   if ((estimate as any).customer_phone) {
