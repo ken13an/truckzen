@@ -122,6 +122,10 @@ export default function WorkOrderDetail() {
     | { kind: 'supplement'; batchId: string; estimateNumber: number }
   >(null)
   const [sendingEstimate, setSendingEstimate] = useState(false)
+  // In-modal error surface for the Get Estimate Approval modal. Set with
+  // the server's specific reason on send failure; cleared on each new send
+  // attempt and when the modal closes. Replaces a window.alert popup.
+  const [sendError, setSendError] = useState<string | null>(null)
   const [approvingEstimate, setApprovingEstimate] = useState(false)
   const [qcLoading, setQcLoading] = useState(false)
   const [qcErrors, setQcErrors] = useState<string[]>([])
@@ -3507,6 +3511,7 @@ export default function WorkOrderDetail() {
         async function sendEstimateEmail() {
           if (sendingEstimate) return
           setSendingEstimate(true)
+          setSendError(null)
           try {
             // Packet-3 modal-reuse: supplement context routes to the batch-scoped
             // send endpoint instead of /api/estimates/[id]/send.
@@ -3528,7 +3533,7 @@ export default function WorkOrderDetail() {
               } else {
                 const errBody = await res.json().catch(() => null)
                 console.error('[wo.estimate.send-supplement] send failed', { woId: id, estimateId: wo.estimate_id, batchId: approvalModal.batchId, status: res.status, error: errBody?.error })
-                alert(`Failed to send estimate: ${errBody?.error || `HTTP ${res.status}`}`)
+                setSendError(`Failed to send estimate: ${errBody?.error || `HTTP ${res.status}`}`)
                 return
               }
               setApprovalModal(null)
@@ -3558,13 +3563,14 @@ export default function WorkOrderDetail() {
               logActivity(`Estimate sent to ${contactEmail || contactPhone}`)
               setToastMsg('Estimate sent to customer')
               setTimeout(() => setToastMsg(''), 4000)
+              setApprovalModal(null)
+              await loadData()
             } else {
               const errBody = await res.json().catch(() => null)
               console.error('[wo.estimate.send] send failed', { woId: id, estimateId: effectiveId, status: res.status, error: errBody?.error })
-              alert(`Failed to send estimate: ${errBody?.error || `HTTP ${res.status}`}`)
+              setSendError(`Failed to send estimate: ${errBody?.error || `HTTP ${res.status}`}`)
+              // Keep modal open so the user can read the error and retry.
             }
-            setApprovalModal(null)
-            await loadData()
           } finally {
             setSendingEstimate(false)
           }
@@ -3595,14 +3601,14 @@ export default function WorkOrderDetail() {
         })()
 
         return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setApprovalModal(null)}>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => { setSendError(null); setApprovalModal(null) }}>
             <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 520, maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
                 <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--tz-text)' }}>{modalTitle}</span>
                 {/* Modal close — dark-mode contrast lift (packet-4).
                     Larger hit target, brighter icon, clear affordance. */}
                 <button
-                  onClick={() => setApprovalModal(null)}
+                  onClick={() => { setSendError(null); setApprovalModal(null) }}
                   aria-label="Close"
                   style={{
                     background: 'transparent',
@@ -3660,7 +3666,14 @@ export default function WorkOrderDetail() {
               {/* Path 1: Send Estimate */}
               <div style={{ marginBottom: 12, padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Send Estimate</div>
-                <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>Send estimate via email and/or SMS with approval link</div>
+                <div style={{ fontSize: 12, color: GRAY, marginBottom: 8 }}>
+                  Send estimate via email and/or SMS with approval link
+                  {contactEmail && (
+                    <span style={{ display: 'block', marginTop: 4, color: 'var(--tz-textSecondary)' }}>
+                      Recipient: <strong style={{ color: 'var(--tz-text)' }}>{contactEmail}</strong>
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={sendEstimateEmail}
                   disabled={!hasContact || sendingEstimate}
@@ -3668,6 +3681,16 @@ export default function WorkOrderDetail() {
                 >
                   {sendingEstimate ? 'Sending…' : `Send Estimate${contactEmail && contactPhone ? ' (Email + SMS)' : contactEmail ? ' (Email)' : contactPhone ? ' (SMS)' : ''}`}
                 </button>
+                {sendError && (
+                  <div role="alert" style={{ marginTop: 10, padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(220,38,38,0.25)', background: 'var(--tz-dangerBg)', color: 'var(--tz-danger)', fontSize: 12, lineHeight: 1.4, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ flex: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{sendError}</span>
+                    <button
+                      onClick={() => setSendError(null)}
+                      aria-label="Dismiss error"
+                      style={{ background: 'none', border: 'none', color: 'var(--tz-danger)', fontSize: 14, fontWeight: 700, cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                    >×</button>
+                  </div>
+                )}
               </div>
 
               {/* Path 2: Approve In Person */}
