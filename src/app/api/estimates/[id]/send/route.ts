@@ -43,24 +43,28 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
   // RULE 7 step 1 — snapshot ensure (idempotent, no overwrite of existing rows).
   const ensure = await ensureEstimateSnapshot(ctx.admin, id)
   if (!ensure.ok) {
-    console.warn('[estimate-send] snapshot ensure failed', { estimateId: id, reason: ensure.reason })
+    console.warn('[estimate-send] snapshot ensure failed', { estimateId: id, reason: ensure.reason, created: ensure.created, existed: ensure.existed })
     return NextResponse.json({ error: `Cannot send: snapshot ensure failed (${ensure.reason})` }, { status: 422 })
   }
+  console.info('[estimate-send] snapshot ensure ok', { estimateId: id, created: ensure.created, existed: ensure.existed })
 
-  // RULE 7 step 2 — snapshot validate (read-only).
+  // RULE 7 step 2 — snapshot validate (read-only). Structural-only — does
+  // not reject on $0 totals (those are normal placeholder states).
   const validation = await validateEstimateSnapshot(ctx.admin, id)
   if (!validation.ok) {
-    console.warn('[estimate-send] snapshot validation failed', { estimateId: id, reason: validation.reason })
+    console.warn('[estimate-send] snapshot validation failed', { estimateId: id, reason: validation.reason, laborCount: validation.laborCount, partCount: validation.partCount })
     return NextResponse.json({ error: `Cannot send: snapshot incomplete (${validation.reason})` }, { status: 422 })
   }
+  console.info('[estimate-send] snapshot validation ok', { estimateId: id, laborCount: validation.laborCount, partCount: validation.partCount, grandTotal: validation.grandTotal })
 
   // RULE 7 step 3 — generate PDF (must succeed before email goes out).
   const pdfResult = await generateEstimatePdf(id)
   if (!pdfResult) {
-    console.warn('[estimate-send] PDF generation failed — refusing to send email', { estimateId: id })
+    console.warn('[estimate-send] PDF generation failed — refusing to send email', { estimateId: id, laborCount: validation.laborCount, partCount: validation.partCount })
     return NextResponse.json({ error: 'Cannot send: PDF generation failed' }, { status: 500 })
   }
   const attachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
+  console.info('[estimate-send] pdf generated', { estimateId: id, filename: pdfResult.filename, bytes: pdfResult.pdfBytes.length })
 
   const repairOrderId = (estimate as any).repair_order_id || (estimate as any).wo_id
   const shop = await getShopInfo((estimate as any).shop_id)

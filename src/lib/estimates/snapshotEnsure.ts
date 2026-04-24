@@ -150,12 +150,19 @@ export async function ensureEstimateSnapshot(admin: any, estimateId: string): Pr
 }
 
 /**
- * Read-only validation that the estimate has a complete snapshot ready for
- * customer send. Does NOT modify any data.
+ * Read-only validation that the estimate has a snapshot the customer-facing
+ * PDF can render. Does NOT modify any data.
  *
- * Per RULE 6: a row is "complete enough" when it has description + a
- * non-zero total (handles both create_from_wo's thin schema and the
- * PATCH-route's full schema).
+ * Structural completeness only:
+ *   - estimate row exists
+ *   - at least one estimate_lines row exists
+ *   - every row has a non-empty description
+ *
+ * Totals are NOT required to be non-zero. A $0 part row (placeholder, not
+ * yet priced, customer-supplied at no charge, etc.) is a normal estimate
+ * state that canonical create_from_wo legitimately produces, and the prior
+ * send route accepted them. The PDF generator renders whatever totals are
+ * stored. Rejecting on $0 totals here causes false-negative send failures.
  */
 export async function validateEstimateSnapshot(admin: any, estimateId: string): Promise<ValidateResult> {
   const { data: est } = await admin
@@ -179,25 +186,13 @@ export async function validateEstimateSnapshot(admin: any, estimateId: string): 
     if (!l.description || !String(l.description).trim()) {
       return { ok: false, reason: 'labor_missing_description', laborCount: labors.length, partCount: parts.length, grandTotal: 0 }
     }
-    const t = Number(l.labor_total) || Number(l.line_total) || Number(l.total) || 0
-    if (t <= 0) {
-      return { ok: false, reason: 'labor_missing_total', laborCount: labors.length, partCount: parts.length, grandTotal: 0 }
-    }
   }
   for (const p of parts) {
     if (!p.description || !String(p.description).trim()) {
       return { ok: false, reason: 'part_missing_description', laborCount: labors.length, partCount: parts.length, grandTotal: 0 }
     }
-    const t = Number(p.parts_total) || Number(p.line_total) || Number(p.total) || 0
-    if (t <= 0) {
-      return { ok: false, reason: 'part_missing_total', laborCount: labors.length, partCount: parts.length, grandTotal: 0 }
-    }
   }
 
   const grand = Number((est as any).grand_total) || Number((est as any).total) || 0
-  if (grand <= 0) {
-    return { ok: false, reason: 'estimate_total_missing', laborCount: labors.length, partCount: parts.length, grandTotal: 0 }
-  }
-
   return { ok: true, laborCount: labors.length, partCount: parts.length, grandTotal: grand }
 }
