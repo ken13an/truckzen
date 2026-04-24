@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requirePlatformOwner } from '@/lib/route-guards'
 
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
-
+// POST /api/platform-admin/autobots/run — execute an autobot scenario.
+// Platform-owner only: actor identity (run_by / performed_by) is derived
+// from the server session. Body-supplied user_id is no longer trusted —
+// the previous F-04 pattern allowed any caller who knew a platform owner's
+// UUID to fake-run as them.
 export async function POST(req: Request) {
-  const s = db()
-  const body = await req.json()
-  const { user_id, scenario_id, shop_id } = body
+  const { actor, error: authError } = await requirePlatformOwner()
+  if (authError || !actor) return authError!
 
-  if (!user_id || !scenario_id) return NextResponse.json({ error: 'user_id and scenario_id required' }, { status: 400 })
+  const s = createAdminSupabaseClient()
+  const body = await req.json().catch(() => ({}))
+  const { scenario_id, shop_id } = body
 
-  const { data: caller } = await s.from('users').select('is_platform_owner').eq('id', user_id).single()
-  if (!caller?.is_platform_owner) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  if (!scenario_id) return NextResponse.json({ error: 'scenario_id required' }, { status: 400 })
 
   // Get scenario
   const { data: scenario } = await s.from('autobot_scenarios').select('*').eq('id', scenario_id).single()
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
     scenario_name: scenario.name,
     total_steps: steps.length,
     status: 'running',
-    run_by: user_id,
+    run_by: actor.id,
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -78,7 +80,7 @@ export async function POST(req: Request) {
   await s.from('platform_activity_log').insert({
     action_type: 'autobot_test_run',
     description: `Ran scenario "${scenario.name}" — ${passed}/${steps.length} passed`,
-    performed_by: user_id,
+    performed_by: actor.id,
     shop_id: shop_id || null,
   })
 
