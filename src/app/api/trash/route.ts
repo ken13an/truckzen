@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
 import { logAction } from '@/lib/services/auditLog'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
 
 const TRASH_TABLES = [
   { table: 'service_orders', type: 'Work Order', nameCol: 'so_number', extraCols: 'complaint' },
@@ -23,14 +20,20 @@ const TRASH_TABLES = [
 
 const ALLOWED_ROLES = ['owner', 'gm', 'it_person', 'shop_manager', 'floor_supervisor', 'service_writer', 'office_admin']
 
+// Trash routes are shop-scoped operational tools for the roles in
+// ALLOWED_ROLES. Body/query shop_id and user_id are no longer trusted —
+// shop scope and audit attribution come from the server session.
+
 // GET — fetch all soft-deleted items
 export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  const filterType = searchParams.get('type') // optional filter by entity type
+  const ctx = await requireRouteContext([...ALLOWED_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const s = createAdminSupabaseClient()
+  const { searchParams } = new URL(req.url)
+  const filterType = searchParams.get('type') // optional filter by entity type
 
   const results: any[] = []
 
@@ -73,12 +76,17 @@ export async function GET(req: Request) {
 
 // POST — restore item
 export async function POST(req: Request) {
-  const s = db()
-  const body = await req.json()
-  const { table, id, shop_id, user_id } = body
+  const ctx = await requireRouteContext([...ALLOWED_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
-  if (!table || !id || !shop_id) {
-    return NextResponse.json({ error: 'table, id, and shop_id required' }, { status: 400 })
+  const s = createAdminSupabaseClient()
+  const body = await req.json().catch(() => ({}))
+  const { table, id } = body
+
+  if (!table || !id) {
+    return NextResponse.json({ error: 'table and id required' }, { status: 400 })
   }
 
   const validTable = TRASH_TABLES.find(t => t.table === table)
@@ -88,34 +96,35 @@ export async function POST(req: Request) {
     .from(table)
     .update({ deleted_at: null })
     .eq('id', id)
-    .eq('shop_id', shop_id)
+    .eq('shop_id', shopId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  if (user_id) {
-    logAction({
-      shop_id, user_id,
-      action: 'trash.restore',
-      entity_type: validTable.type,
-      entity_id: id,
-      details: { table },
-    }).catch(() => {})
-  }
+  logAction({
+    shop_id: shopId, user_id: ctx.actor.id,
+    action: 'trash.restore',
+    entity_type: validTable.type,
+    entity_id: id,
+    details: { table },
+  }).catch(() => {})
 
   return NextResponse.json({ success: true })
 }
 
 // DELETE — permanently delete item
 export async function DELETE(req: Request) {
-  const s = db()
+  const ctx = await requireRouteContext([...ALLOWED_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+
+  const s = createAdminSupabaseClient()
   const { searchParams } = new URL(req.url)
   const table = searchParams.get('table')
   const id = searchParams.get('id')
-  const shop_id = searchParams.get('shop_id')
-  const user_id = searchParams.get('user_id')
 
-  if (!table || !id || !shop_id) {
-    return NextResponse.json({ error: 'table, id, and shop_id required' }, { status: 400 })
+  if (!table || !id) {
+    return NextResponse.json({ error: 'table and id required' }, { status: 400 })
   }
 
   const validTable = TRASH_TABLES.find(t => t.table === table)
@@ -125,19 +134,17 @@ export async function DELETE(req: Request) {
     .from(table)
     .delete()
     .eq('id', id)
-    .eq('shop_id', shop_id)
+    .eq('shop_id', shopId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  if (user_id) {
-    logAction({
-      shop_id, user_id,
-      action: 'trash.permanent_delete',
-      entity_type: validTable.type,
-      entity_id: id,
-      details: { table },
-    }).catch(() => {})
-  }
+  logAction({
+    shop_id: shopId, user_id: ctx.actor.id,
+    action: 'trash.permanent_delete',
+    entity_type: validTable.type,
+    entity_id: id,
+    details: { table },
+  }).catch(() => {})
 
   return NextResponse.json({ success: true })
 }

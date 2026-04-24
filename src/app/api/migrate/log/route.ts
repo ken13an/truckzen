@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requirePlatformOwner } from '@/lib/route-guards'
 
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+// /api/migrate/log — read/write rows in migration_logs. Platform-owner only:
+// this is operational tooling paired with /api/migrate/import (also
+// platform-owner gated). Body/query shop_id and body user_id are no longer
+// trusted — the actor identity comes from the server session.
 
 // ── GET: list migration logs for shop ───────────────────────
 export async function GET(req: Request) {
-  const supabase = db()
+  const { error: authError } = await requirePlatformOwner()
+  if (authError) return authError
+
+  const supabase = createAdminSupabaseClient()
   const { searchParams } = new URL(req.url)
   const shopId = searchParams.get('shop_id')
 
@@ -41,11 +46,14 @@ export async function GET(req: Request) {
 
 // ── POST: create new migration log entry ────────────────────
 export async function POST(req: Request) {
-  const supabase = db()
+  const { actor, error: authError } = await requirePlatformOwner()
+  if (authError || !actor) return authError!
+
+  const supabase = createAdminSupabaseClient()
 
   try {
     const body = await req.json()
-    const { shop_id, user_id, source, data_type, status, notes } = body
+    const { shop_id, source, data_type, status, notes } = body
 
     if (!shop_id || !source || !data_type) {
       return NextResponse.json({ error: 'shop_id, source, and data_type are required' }, { status: 400 })
@@ -53,7 +61,7 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabase.from('migration_logs').insert({
       shop_id,
-      user_id: user_id || null,
+      user_id: actor.id,
       source,
       data_type,
       status: status || 'started',
@@ -77,7 +85,10 @@ export async function POST(req: Request) {
 
 // ── PATCH: update migration log (status, stats, errors) ─────
 export async function PATCH(req: Request) {
-  const supabase = db()
+  const { error: authError } = await requirePlatformOwner()
+  if (authError) return authError
+
+  const supabase = createAdminSupabaseClient()
 
   try {
     const body = await req.json()

@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { SERVICE_WRITE_ROLES } from '@/lib/roles'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
-
+// DELETE /api/smart-import/parts/undo/[batch_id] — undo a smart-import batch
+// within its 24h window. Shop-scoped: actor must hold a SERVICE_WRITE_ROLES
+// role (matches the smart-drop import gate). Body/query shop_id is no longer
+// trusted — the shop scope comes from the server session.
 export async function DELETE(req: Request, { params }: { params: Promise<{ batch_id: string }> }) {
-  const s = db()
-  const { batch_id } = await params
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
+  const ctx = await requireRouteContext([...SERVICE_WRITE_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
-  if (!batch_id || !shopId) return NextResponse.json({ error: 'batch_id and shop_id required' }, { status: 400 })
+  const s = createAdminSupabaseClient()
+  const { batch_id } = await params
+  if (!batch_id) return NextResponse.json({ error: 'batch_id required' }, { status: 400 })
 
   const { data: history } = await s.from('import_history')
     .select('id, undo_available_until, error_report')
