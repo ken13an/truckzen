@@ -1,6 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
-import { isNonBillablePartRequirementRow } from '@/lib/parts-status'
+import { isNonBillablePartRequirementRow, isCustomerSuppliedPartRow, isNoPartNeededPartRow } from '@/lib/parts-status'
+import { calcInvoiceTotals } from '@/lib/invoice-calc'
+
+// CANONICAL ESTIMATE PDF GENERATOR
+// All estimate PDF surfaces (email attachment, printable route) MUST go through
+// this single function. Do NOT re-implement estimate math or layout in the
+// route files. Totals come from calcInvoiceTotals (same reducer the
+// EstimateTab screen uses); line-item rows come from so_lines filtered to
+// !is_additional (Estimate 1 / original-scope rows).
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -16,16 +24,8 @@ function sanitizeFilename(s: string): string {
   return (s || 'estimate').replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 80)
 }
 
-type Row = {
-  description: string
-  partNumber: string | null
-  quantity: number | null
-  laborHours: number | null
-  laborRate: number | null
-  laborTotal: number | null
-  partsTotal: number | null
-  unitPrice: number | null
-  lineTotal: number | null
+function fmtMoney(n: number): string {
+  return '$' + (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
 export async function generateEstimatePdf(estimateId: string): Promise<{ pdfBytes: Uint8Array; filename: string } | null> {
@@ -34,118 +34,69 @@ export async function generateEstimatePdf(estimateId: string): Promise<{ pdfByte
 
     const { data: est } = await supabase
       .from('estimates')
-      .select('*, estimate_lines(*)')
+      .select('*')
       .eq('id', estimateId)
       .single()
     if (!est) return null
 
     const soId = (est as any).repair_order_id || (est as any).wo_id
-    let so: any = null
-    let asset: any = null
-    let cust: any = null
-    if (soId) {
-      const { data: soRow } = await supabase
-        .from('service_orders')
-        .select('so_number, complaint, cause, correction, mileage_at_service, created_at, ownership_type, assets(unit_number, year, make, model, odometer, vin), customers(company_name, contact_name, phone, email, address)')
-        .eq('id', soId).single()
-      so = soRow
-      asset = soRow?.assets || null
-      cust = soRow?.customers || null
+    if (!soId) {
+      console.warn('[estimate-pdf] estimate has no linked WO', { estimateId })
+      return null
     }
+
+    const { data: so } = await supabase
+      .from('service_orders')
+      .select('so_number, complaint, cause, correction, mileage_at_service, created_at, ownership_type, assets(unit_number, year, make, model, odometer, vin), customers(company_name, contact_name, phone, email, address)')
+      .eq('id', soId).single()
 
     const { data: shop } = await supabase
       .from('shops')
       .select('name, dba, phone, email, address, city, state, zip, labor_rate, default_labor_rate, tax_rate, tax_labor')
       .eq('id', (est as any).shop_id).single()
 
-    const estLines: any[] = (est as any).estimate_lines || []
-    const status = (est as any).status || 'draft'
-    const isDraft = status === 'draft'
+    // Live so_lines — same source the EstimateTab screen reads from. Filter to
+    // !is_additional so this PDF reflects Estimate 1 (the original customer
+    // estimate). Supplements are out of scope for the estimate PDF.
+    const { data: allLines } = await supabase
+      .from('so_lines')
+      .select('id, line_type, description, real_name, rough_name, part_number, quantity, unit_price, parts_sell_price, billed_hours, estimated_hours, actual_hours, parts_status, line_status, parts_requirement, parts_requirement_note, is_additional')
+      .eq('so_id', soId)
 
-    // Source-of-truth rule:
-    // - estimate_lines present → use them (snapshot truth)
-    // - empty + draft → fall back to current so_lines for preview
-    // - empty + sent/approved/declined → explicit placeholder, do NOT pull current WO truth
-    let rows: Row[] = []
-    let placeholderMessage: string | null = null
-    let fallbackUsed = false
+    const estimateOneLines = (allLines || []).filter((l: any) => l.is_additional !== true)
 
-    if (estLines.length > 0) {
-      // Optional enrichment: join so_lines for part_number/quantity when estimate_lines store only the labor/parts totals
-      const refIds = estLines.map(l => l.repair_order_line_id).filter(Boolean)
-      const soLineMap: Record<string, any> = {}
-      if (refIds.length) {
-        const { data: srcLines } = await supabase
-          .from('so_lines')
-          .select('id, part_number, quantity, parts_sell_price, unit_price, rough_name, real_name')
-          .in('id', refIds)
-        for (const r of srcLines || []) soLineMap[r.id] = r
-      }
-      rows = estLines
-        .sort((a, b) => (a.line_number || 0) - (b.line_number || 0))
-        .map(l => {
-          const src = l.repair_order_line_id ? soLineMap[l.repair_order_line_id] : null
-          return {
-            description: l.description || src?.real_name || src?.rough_name || '',
-            partNumber: src?.part_number || null,
-            quantity: src?.quantity ?? null,
-            laborHours: Number(l.labor_hours) || null,
-            laborRate: Number(l.labor_rate) || null,
-            laborTotal: Number(l.labor_total) || 0,
-            partsTotal: Number(l.parts_total) || 0,
-            unitPrice: src?.parts_sell_price ?? src?.unit_price ?? null,
-            lineTotal: Number(l.line_total) || Number(l.total) || 0,
-          }
-        })
-    } else if (isDraft && soId) {
-      console.warn('[estimate-pdf] empty estimate_lines fallback used for draft estimate', { estimateId })
-      fallbackUsed = true
-      const { data: src } = await supabase
-        .from('so_lines')
-        .select('id, line_type, description, real_name, rough_name, part_number, quantity, unit_price, parts_sell_price, billed_hours, estimated_hours, actual_hours, parts_status, is_additional')
-        .eq('so_id', soId)
-      const laborRate = shop?.labor_rate || shop?.default_labor_rate || 125
-      for (const l of (src || [])) {
-        if ((l as any).is_additional) continue
-        if (l.line_type === 'labor') {
-          const hrs = Number(l.billed_hours || l.estimated_hours || l.actual_hours || 0)
-          const laborTotal = hrs * laborRate
-          rows.push({
-            description: l.description || '',
-            partNumber: null,
-            quantity: null,
-            laborHours: hrs || null,
-            laborRate,
-            laborTotal,
-            partsTotal: 0,
-            unitPrice: null,
-            lineTotal: laborTotal,
-          })
-        } else if (l.line_type === 'part' && l.parts_status !== 'canceled' && !isNonBillablePartRequirementRow(l)) {
-          const qty = Number(l.quantity || 1)
-          const sell = Number(l.parts_sell_price || l.unit_price || 0)
-          const partsTotal = qty * sell
-          rows.push({
-            description: l.real_name || l.rough_name || l.description || '',
-            partNumber: l.part_number || null,
-            quantity: qty,
-            laborHours: null,
-            laborRate: null,
-            laborTotal: 0,
-            partsTotal,
-            unitPrice: sell,
-            lineTotal: partsTotal,
-          })
-        }
-      }
-    } else {
-      console.warn('[estimate-pdf] missing snapshot for non-draft estimate', { estimateId, status })
-      placeholderMessage = 'No line-item snapshot is available for this estimate. Please contact the shop for the detailed breakdown.'
-    }
+    // Resolve labor rate the same way the screen does — ownership-typed
+    // shop_labor_rates first, then shop default. Mirrors page.tsx:815-818.
+    const ownership = (so?.assets as any)?.ownership_type || (so as any)?.ownership_type || 'outside_customer'
+    const { data: ownershipRate } = await supabase
+      .from('shop_labor_rates')
+      .select('rate_per_hour')
+      .eq('shop_id', (est as any).shop_id)
+      .eq('ownership_type', ownership)
+      .maybeSingle()
+    const laborRate = Number(ownershipRate?.rate_per_hour || shop?.labor_rate || shop?.default_labor_rate || 0)
+    const taxRate = Number(shop?.tax_rate) || 0
+    const taxLabor = shop?.tax_labor === true
+
+    // Canonical totals — calcInvoiceTotals is the same reducer used by the
+    // WO Invoice tab and accounting/approve. Single source of truth.
+    const totals = calcInvoiceTotals(estimateOneLines, laborRate, taxRate, taxLabor)
+
+    // Display rows
+    const laborRows = estimateOneLines
+      .filter((l: any) => l.line_type === 'labor' && l.parts_status !== 'canceled' && l.line_status !== 'canceled')
+    const partRowsAll = estimateOneLines
+      .filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
+    const partRowsBillable = partRowsAll.filter((p: any) => !isNonBillablePartRequirementRow(p))
+    const partRowsNonBillable = partRowsAll.filter((p: any) => isNonBillablePartRequirementRow(p))
 
     const estimateNumber = (est as any).estimate_number || ''
+    const status = (est as any).status || 'draft'
     const approvalToken = (est as any).approval_token || ''
     const portalLink = approvalToken ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/estimate/${approvalToken}` : ''
+
+    const asset = (so?.assets as any) || {}
+    const cust = (so?.customers as any) || {}
 
     const pdf = await PDFDocument.create()
     let page = pdf.addPage([612, 792])
@@ -157,22 +108,23 @@ export async function generateEstimatePdf(estimateId: string): Promise<{ pdfByte
     const light = rgb(0.6, 0.63, 0.67)
     const rule = rgb(0.85, 0.87, 0.89)
     const accent = rgb(0.11, 0.44, 0.91)
+    const accentSoft = rgb(0.93, 0.96, 1.0)
     const money = rgb(0.06, 0.52, 0.30)
-    const warn = rgb(0.85, 0.45, 0.05)
 
-    let y = 750
     const L = 50
     const R = 562
+    const W = R - L
     const BOTTOM = 65
-    const LINE_H = 14
+    let y = 750
+
     const shopName = shop?.dba || shop?.name || 'TruckZen'
-    const fmt = (n: number) => '$' + (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
     function drawFooter() {
       page.drawLine({ start: { x: L, y: 38 }, end: { x: R, y: 38 }, thickness: 0.3, color: rule })
       const footerText = `${shopName}  |  ${shop?.phone || ''}  |  ${shop?.email || ''}`.replace(/[\r\n\t]+/g, ' ')
       page.drawText(footerText, { x: L, y: 28, size: 7, font, color: light })
-      page.drawText('Powered by TruckZen', { x: R - font.widthOfTextAtSize('Powered by TruckZen', 6), y: 28, size: 6, font, color: light })
+      const pwr = 'Powered by TruckZen'
+      page.drawText(pwr, { x: R - font.widthOfTextAtSize(pwr, 6), y: 28, size: 6, font, color: light })
     }
     function newPage() { drawFooter(); page = pdf.addPage([612, 792]); y = 750 }
     function need(h: number) { if (y - h < BOTTOM) newPage() }
@@ -182,179 +134,263 @@ export async function generateEstimatePdf(estimateId: string): Promise<{ pdfByte
     function txt(t: string, x: number, yPos: number, size = 9, bold = false, color = dark) {
       page.drawText(clean(t), { x, y: yPos, size, font: bold ? fontBold : font, color })
     }
-    function hr(yPos: number, color = rule) {
-      page.drawLine({ start: { x: L, y: yPos }, end: { x: R, y: yPos }, thickness: 0.5, color })
+    function txtRight(t: string, xRight: number, yPos: number, size = 9, bold = false, color = dark) {
+      const s = clean(t)
+      const f = bold ? fontBold : font
+      page.drawText(s, { x: xRight - f.widthOfTextAtSize(s, size), y: yPos, size, font: f, color })
     }
-    function wrap(t: string, x: number, maxW: number, size: number, bold: boolean, color: typeof dark) {
+    function txtCenter(t: string, xCenter: number, yPos: number, size = 9, bold = false, color = dark) {
+      const s = clean(t)
+      const f = bold ? fontBold : font
+      page.drawText(s, { x: xCenter - f.widthOfTextAtSize(s, size) / 2, y: yPos, size, font: f, color })
+    }
+    function hr(yPos: number, color = rule, thickness = 0.5) {
+      page.drawLine({ start: { x: L, y: yPos }, end: { x: R, y: yPos }, thickness, color })
+    }
+    function rect(x: number, yPos: number, w: number, h: number, color: typeof accent) {
+      page.drawRectangle({ x, y: yPos, width: w, height: h, color })
+    }
+    function wrap(t: string, x: number, maxW: number, size: number, bold: boolean, color: typeof dark): number {
       const f = bold ? fontBold : font
       const words = clean(t).split(' ')
       let ln = ''
+      let lines = 0
       for (const word of words) {
         const test = ln ? ln + ' ' + word : word
         if (f.widthOfTextAtSize(test, size) > maxW && ln) {
-          need(LINE_H); txt(ln, x, y, size, bold, color); y -= size + 3; ln = word
+          need(size + 4); txt(ln, x, y, size, bold, color); y -= size + 3; ln = word; lines++
         } else { ln = test }
       }
-      if (ln) { need(LINE_H); txt(ln, x, y, size, bold, color); y -= size + 3 }
+      if (ln) { need(size + 4); txt(ln, x, y, size, bold, color); y -= size + 3; lines++ }
+      return lines
     }
 
-    // HEADER
-    txt(shopName, L, y, 16, true, accent)
-    txt('ESTIMATE', R - fontBold.widthOfTextAtSize('ESTIMATE', 18), y, 18, true, accent)
-    y -= 22
-    hr(y, accent); y -= 16
+    // ── HEADER (blue band) ──────────────────────────────────────────────
+    rect(L, 720, W, 30, accent)
+    page.drawText(shopName, { x: L + 12, y: 730, size: 14, font: fontBold, color: rgb(1, 1, 1) })
+    const titleStr = 'ESTIMATE'
+    page.drawText(titleStr, { x: R - fontBold.widthOfTextAtSize(titleStr, 16) - 12, y: 730, size: 16, font: fontBold, color: rgb(1, 1, 1) })
+    y = 705
 
-    if (shop?.address) { txt(shop.address, L, y, 8, false, mid); y -= 12 }
-    const shopCity = [shop?.city, shop?.state, shop?.zip].filter(Boolean).join(', ')
-    if (shopCity) { txt(shopCity, L, y, 8, false, mid); y -= 12 }
-    if (shop?.phone) { txt(shop.phone, L, y, 8, false, mid); y -= 12 }
-    if (shop?.email) { txt(shop.email, L, y, 8, false, mid); y -= 12 }
+    // Shop contact strip
+    const shopAddr = [shop?.address, [shop?.city, shop?.state, shop?.zip].filter(Boolean).join(', ')].filter(Boolean).join(' · ')
+    if (shopAddr) { txt(shopAddr, L, y, 8, false, mid); y -= 11 }
+    const shopContact = [shop?.phone, shop?.email].filter(Boolean).join(' · ')
+    if (shopContact) { txt(shopContact, L, y, 8, false, mid); y -= 11 }
 
-    // Right column meta
-    let ry = y + 48
-    const dets: [string, string][] = [
-      ['Estimate #', estimateNumber],
-      ['Date', fmtDate((est as any).sent_at || (est as any).created_at)],
+    // Right-side meta block (Estimate #, date, valid until, status, WO #)
+    let ry = 705
+    const metaX = 400
+    const metaLabelW = 75
+    const metaPairs: [string, string][] = [
+      ['Estimate #', estimateNumber || '—'],
+      ['Date', fmtDate((est as any).sent_at || (est as any).created_at) || '—'],
       ['Valid Until', fmtDate((est as any).valid_until) || '—'],
       ['Status', String(status).toUpperCase()],
-      ['WO #', so?.so_number || ''],
+      ['WO #', so?.so_number || '—'],
     ]
-    if (asset?.unit_number) dets.push(['Unit #', asset.unit_number])
-    for (const [label, val] of dets) {
-      txt(label, 400, ry, 8, true, light); txt(val, 460, ry, 8, false, dark); ry -= 13
+    for (const [label, val] of metaPairs) {
+      txt(label, metaX, ry, 8, true, light)
+      txt(val, metaX + metaLabelW, ry, 8, false, dark)
+      ry -= 12
     }
-    y = Math.min(y, ry) - 16
+    y = Math.min(y, ry) - 12
+    hr(y, rule); y -= 14
 
-    // BILL TO + VEHICLE
-    need(60)
-    hr(y); y -= 16
-    const colStart = y
-    let ly = colStart
-    txt('BILL TO', L, ly, 8, true, light); ly -= 14
-    if (cust?.company_name) { txt(cust.company_name, L, ly, 10, true); ly -= 14 }
-    if (cust?.contact_name) { txt(cust.contact_name, L, ly, 8, false, mid); ly -= 12 }
-    if (cust?.phone) { txt(cust.phone, L, ly, 8, false, mid); ly -= 12 }
-    if (cust?.email) { txt(cust.email, L, ly, 8, false, mid); ly -= 12 }
-    if (cust?.address) { txt(cust.address, L, ly, 8, false, mid); ly -= 12 }
+    // ── BILL TO + VEHICLE (two columns) ─────────────────────────────────
+    need(80)
+    const colTop = y
+    let ly = colTop
+    txt('BILL TO', L, ly, 8, true, light); ly -= 13
+    if (cust?.company_name) { txt(cust.company_name, L, ly, 11, true); ly -= 13 }
+    if (cust?.contact_name && cust.contact_name !== cust.company_name) { txt(cust.contact_name, L, ly, 9, false, mid); ly -= 11 }
+    if (cust?.phone) { txt(cust.phone, L, ly, 9, false, mid); ly -= 11 }
+    if (cust?.email) { txt(cust.email, L, ly, 9, false, mid); ly -= 11 }
+    if (cust?.address) { txt(cust.address, L, ly, 9, false, mid); ly -= 11 }
 
-    let vy = colStart
-    if (asset) {
-      txt('VEHICLE', 340, vy, 8, true, light); vy -= 14
-      txt('#' + (asset.unit_number || ''), 340, vy, 10, true); vy -= 14
-      const vh = [asset.year, asset.make, asset.model].filter(Boolean).join(' ')
-      if (vh) { txt(vh, 340, vy, 9); vy -= 12 }
-      if (asset.vin) { txt('VIN: ' + asset.vin, 340, vy, 7, false, light); vy -= 12 }
-      const mi = so?.mileage_at_service || asset.odometer
-      if (mi) { txt('Mileage: ' + Number(mi).toLocaleString(), 340, vy, 8, false, mid); vy -= 12 }
+    let vy = colTop
+    const vehX = 320
+    txt('VEHICLE', vehX, vy, 8, true, light); vy -= 13
+    if (asset?.unit_number) { txt('#' + asset.unit_number, vehX, vy, 11, true); vy -= 13 }
+    const vehLine = [asset?.year, asset?.make, asset?.model].filter(Boolean).join(' ')
+    if (vehLine) { txt(vehLine, vehX, vy, 9, false, dark); vy -= 11 }
+    if (asset?.vin) { txt('VIN: ' + asset.vin, vehX, vy, 8, false, light); vy -= 11 }
+    const mi = (so as any)?.mileage_at_service || asset?.odometer
+    if (mi) { txt('Mileage: ' + Number(mi).toLocaleString(), vehX, vy, 9, false, mid); vy -= 11 }
+    y = Math.min(ly, vy) - 14
+
+    // ── COMPLAINT / CAUSE / CORRECTION ──────────────────────────────────
+    if ((so as any)?.complaint || (so as any)?.cause || (so as any)?.correction) {
+      need(30)
+      hr(y, rule); y -= 12
+      txt('CONCERN', L, y, 8, true, light); y -= 12
+      if ((so as any).complaint) {
+        txt('Complaint:', L, y, 8, true, mid); y -= 11
+        wrap((so as any).complaint, L + 8, W - 16, 9, false, dark); y -= 4
+      }
+      if ((so as any).cause) {
+        txt('Cause:', L, y, 8, true, mid); y -= 11
+        wrap((so as any).cause, L + 8, W - 16, 9, false, dark); y -= 4
+      }
+      if ((so as any).correction) {
+        txt('Correction:', L, y, 8, true, mid); y -= 11
+        wrap((so as any).correction, L + 8, W - 16, 9, false, dark); y -= 4
+      }
+      y -= 4
     }
-    y = Math.min(ly, vy) - 16
 
-    // Complaint/Cause/Correction
-    if (so?.complaint || so?.cause || so?.correction) {
-      need(30); hr(y); y -= 14
-      if (so?.complaint) { txt('Complaint:', L, y, 8, true, light); y -= 12; wrap(so.complaint, L + 4, R - L - 8, 8, false, mid); y -= 4 }
-      if (so?.cause) { txt('Cause:', L, y, 8, true, light); y -= 12; wrap(so.cause, L + 4, R - L - 8, 8, false, mid); y -= 4 }
-      if (so?.correction) { txt('Correction:', L, y, 8, true, light); y -= 12; wrap(so.correction, L + 4, R - L - 8, 8, false, mid); y -= 4 }
-      y -= 6
-    }
-
-    // Fallback / placeholder notices
-    if (fallbackUsed) {
-      need(20); hr(y, warn); y -= 14
-      txt('DRAFT PREVIEW — items below are pulled from current work order and may change before sending.', L, y, 8, true, warn); y -= 16
-    }
-
-    // LINE ITEMS
-    need(40); hr(y, accent); y -= 6
-    if (placeholderMessage) {
-      txt('LINE ITEMS', L, y, 9, true, accent); y -= 18
+    // ── LABOR TABLE ────────────────────────────────────────────────────
+    if (laborRows.length > 0) {
       need(40)
-      wrap(placeholderMessage, L, R - L, 10, false, dark)
-      y -= 6
-    } else if (rows.length > 0) {
-      // 5-column layout: Description / Qty·Hrs / Labor / Parts / Total
-      //   description area ends at ~350 so the numeric cells right-align inside
-      //   fixed tab stops. Part number + unit price appear as small sublines
-      //   beneath the description to avoid cramming a "Rate" column on mobile.
-      const DESC_MAX = 300
-      const COL_QH = 370   // center of Qty/Hrs
-      const COL_LAB = 435  // right edge of Labor
-      const COL_PT = 490   // right edge of Parts
-      const COL_TOT = R - 42
+      hr(y, accent, 1); y -= 14
+      txt('LABOR', L, y, 9, true, accent); y -= 14
 
-      txt('Description', L + 4, y, 7, true, light)
-      txt('Qty / Hrs', COL_QH - 22, y, 7, true, light)
-      txt('Labor', COL_LAB - 22, y, 7, true, light)
-      txt('Parts', COL_PT - 22, y, 7, true, light)
-      txt('Total', COL_TOT - 22, y, 7, true, light)
-      y -= 5; hr(y, rule); y -= 13
+      // header row (light gray strip)
+      rect(L, y - 2, W, 16, accentSoft)
+      txt('Description', L + 8, y + 4, 8, true, mid)
+      txt('Hours', 360, y + 4, 8, true, mid)
+      txt('Rate', 425, y + 4, 8, true, mid)
+      txtRight('Amount', R - 8, y + 4, 8, true, mid)
+      y -= 18
 
       let laborSum = 0
-      let partsSum = 0
-      for (const r of rows) {
-        need(LINE_H * 2)
-        const rowTop = y
-        const isLabor = (r.laborTotal || 0) > 0 && (r.partsTotal || 0) === 0
-        const isPart = (r.partsTotal || 0) > 0 && (r.laborTotal || 0) === 0
-
-        // Numeric cells anchored to rowTop
-        const qtyHrs = isLabor
-          ? (r.laborHours != null && r.laborHours > 0 ? `${r.laborHours} hr` : '—')
-          : (r.quantity != null && Number(r.quantity) > 0 ? String(r.quantity) : '—')
-        txt(qtyHrs, COL_QH - font.widthOfTextAtSize(qtyHrs, 8) / 2, rowTop, 8)
-        const laborCell = isLabor ? fmt(r.laborTotal || 0) : '—'
-        txt(laborCell, COL_LAB - font.widthOfTextAtSize(laborCell, 8), rowTop, 8)
-        const partsCell = isPart ? fmt(r.partsTotal || 0) : '—'
-        txt(partsCell, COL_PT - font.widthOfTextAtSize(partsCell, 8), rowTop, 8)
-        const totalCell = fmt(r.lineTotal || 0)
-        txt(totalCell, COL_TOT - fontBold.widthOfTextAtSize(totalCell, 8), rowTop, 8, true)
-
-        // Description (may wrap; advances y)
-        txt(r.description || '', L + 4, rowTop, 8, false, dark)
-        y = rowTop - 12
-        if (r.partNumber) { txt(`Part # ${r.partNumber}`, L + 4, y, 7, false, light); y -= 10 }
-        if (isPart && r.quantity != null && Number(r.quantity) > 0 && r.unitPrice != null && Number(r.unitPrice) > 0) {
-          const sub = `Qty ${r.quantity} × ${fmt(r.unitPrice)}`
-          txt(sub, L + 4, y, 7, false, light); y -= 10
+      for (const l of laborRows) {
+        need(18)
+        const hrs = Number((l as any).billed_hours || (l as any).estimated_hours || (l as any).actual_hours || 0)
+        const amt = hrs * laborRate
+        const desc = (l as any).description || '—'
+        // description may be long; wrap
+        const descX = L + 8
+        const descMax = 360 - descX - 6
+        if (font.widthOfTextAtSize(desc, 9) > descMax) {
+          const rowTop = y
+          txt(String(hrs || '—'), 360, rowTop, 9)
+          txt(fmtMoney(laborRate) + '/hr', 425, rowTop, 9)
+          txtRight(fmtMoney(amt), R - 8, rowTop, 9, true)
+          wrap(desc, descX, descMax, 9, false, dark)
+          y -= 4
+        } else {
+          txt(desc, descX, y, 9)
+          txt(String(hrs || '—'), 360, y, 9)
+          txt(fmtMoney(laborRate) + '/hr', 425, y, 9)
+          txtRight(fmtMoney(amt), R - 8, y, 9, true)
+          y -= 14
         }
-        if (r.lineTotal && r.description && font.widthOfTextAtSize(r.description, 8) > DESC_MAX) {
-          // Long description overflow fallback — wrap past DESC_MAX keeps us readable.
-          // Already drawn truncated above; leave y advanced.
-        }
-
-        laborSum += (r.laborTotal || 0)
-        partsSum += (r.partsTotal || 0)
-        y -= 4
+        laborSum += amt
       }
 
-      // TOTALS
-      y -= 4
-      need(80); hr(y, accent); y -= 18
-      const sx = R - 180
-      txt('Labor', sx, y, 10); txt(fmt(laborSum), R - 42, y, 10, true); y -= 18
-      txt('Parts', sx, y, 10); txt(fmt(partsSum), R - 42, y, 10, true); y -= 18
-      const subtotal = Number((est as any).subtotal) || (laborSum + partsSum)
-      const storedTax = Number((est as any).tax_amount) || 0
-      const total = Number((est as any).total ?? (est as any).grand_total) || (subtotal + storedTax)
-      hr(y + 4, rule); y -= 14
-      txt('Subtotal', sx, y, 10, false, mid); txt(fmt(subtotal), R - 42, y, 10, true); y -= 18
-      if (storedTax > 0) {
-        txt(`Tax (${shop?.tax_rate || 0}%${shop?.tax_labor ? ' incl. labor' : ' parts only'})`, sx, y, 9, false, mid)
-        txt(fmt(storedTax), R - 42, y, 9); y -= 18
-      }
-      hr(y + 4, accent); y -= 16
-      txt('Total', sx, y, 14, true); txt(fmt(total), R - 48, y, 14, true, money); y -= 28
-    } else {
-      // status-is-draft but zero lines AND no soId — render neutral placeholder
-      txt('No line items available.', L, y, 10, false, mid); y -= 18
+      // labor subtotal
+      hr(y + 2, rule); y -= 14
+      txt('Labor Total', 425, y, 9, true, mid)
+      txtRight(fmtMoney(laborSum), R - 8, y, 10, true)
+      y -= 18
     }
 
-    // Approval instructions + portal link
-    need(70); hr(y, rule); y -= 16
-    txt('APPROVAL', L, y, 9, true, accent); y -= 16
-    wrap('Click the approval link in your email or visit the portal link below to approve this estimate. Once approved, the shop is authorized to begin the listed work. Additional repairs discovered during service will be sent to you for separate approval.', L, R - L, 9, false, dark)
-    y -= 4
-    if (portalLink) { txt('Portal:', L, y, 8, true, light); txt(portalLink, L + 40, y, 8, false, accent); y -= 16 }
+    // ── PARTS TABLE ────────────────────────────────────────────────────
+    if (partRowsBillable.length > 0) {
+      need(40)
+      hr(y, accent, 1); y -= 14
+      txt('PARTS', L, y, 9, true, accent); y -= 14
+
+      rect(L, y - 2, W, 16, accentSoft)
+      txt('Qty', L + 8, y + 4, 8, true, mid)
+      txt('Description', 90, y + 4, 8, true, mid)
+      txt('Part #', 360, y + 4, 8, true, mid)
+      txt('Sell', 445, y + 4, 8, true, mid)
+      txtRight('Amount', R - 8, y + 4, 8, true, mid)
+      y -= 18
+
+      let partsSum = 0
+      for (const p of partRowsBillable) {
+        need(18)
+        const qty = Number((p as any).quantity || 1)
+        const sell = Number((p as any).parts_sell_price || (p as any).unit_price || 0)
+        const amt = qty * sell
+        const name = (p as any).real_name || (p as any).rough_name || (p as any).description || '—'
+        const pn = (p as any).part_number || '—'
+
+        const descX = 90
+        const descMax = 360 - descX - 6
+        if (font.widthOfTextAtSize(name, 9) > descMax) {
+          const rowTop = y
+          txtCenter(String(qty), L + 20, rowTop, 9)
+          txt(pn, 360, rowTop, 9, false, mid)
+          txt(fmtMoney(sell), 445, rowTop, 9)
+          txtRight(fmtMoney(amt), R - 8, rowTop, 9, true)
+          wrap(name, descX, descMax, 9, false, dark)
+          y -= 4
+        } else {
+          txtCenter(String(qty), L + 20, y, 9)
+          txt(name, descX, y, 9)
+          txt(pn, 360, y, 9, false, mid)
+          txt(fmtMoney(sell), 445, y, 9)
+          txtRight(fmtMoney(amt), R - 8, y, 9, true)
+          y -= 14
+        }
+        partsSum += amt
+      }
+
+      hr(y + 2, rule); y -= 14
+      txt('Parts Total', 425, y, 9, true, mid)
+      txtRight(fmtMoney(partsSum), R - 8, y, 10, true)
+      y -= 18
+    }
+
+    // ── NON-BILLABLE PLACEHOLDERS ──────────────────────────────────────
+    if (partRowsNonBillable.length > 0) {
+      need(30 + partRowsNonBillable.length * 12)
+      hr(y, rule); y -= 12
+      txt('NON-BILLABLE PLACEHOLDERS', L, y, 8, true, light); y -= 12
+      for (const p of partRowsNonBillable) {
+        const label = isCustomerSuppliedPartRow(p as any)
+          ? 'Customer supplied'
+          : isNoPartNeededPartRow(p as any) ? 'No part needed' : 'Non-billable'
+        const name = (p as any).real_name || (p as any).rough_name || (p as any).description || '—'
+        txt(`• ${label}: ${name} — no part charge`, L + 6, y, 8, false, mid); y -= 11
+      }
+      y -= 4
+    }
+
+    // ── SUMMARY BOX ────────────────────────────────────────────────────
+    need(110)
+    hr(y, accent, 1); y -= 16
+    const sumX = R - 200
+    txt('Labor', sumX, y, 10, false, mid); txtRight(fmtMoney(totals.laborTotal), R - 8, y, 10, true); y -= 16
+    txt('Parts', sumX, y, 10, false, mid); txtRight(fmtMoney(totals.partsTotal), R - 8, y, 10, true); y -= 16
+    if (totals.chargesTotal > 0) {
+      txt('Shop Charges', sumX, y, 10, false, mid); txtRight(fmtMoney(totals.chargesTotal), R - 8, y, 10, true); y -= 16
+    }
+    page.drawLine({ start: { x: sumX, y: y + 6 }, end: { x: R - 8, y: y + 6 }, thickness: 0.5, color: rule })
+    txt('Subtotal', sumX, y, 10, true); txtRight(fmtMoney(totals.subtotal), R - 8, y, 10, true); y -= 16
+    if (totals.taxAmount > 0) {
+      const taxLabel = `Tax (${taxRate}%${taxLabor ? ' incl. labor' : ' parts only'})`
+      txt(taxLabel, sumX, y, 9, false, mid); txtRight(fmtMoney(totals.taxAmount), R - 8, y, 9); y -= 16
+    } else {
+      txt('Tax', sumX, y, 9, false, mid); txtRight('Exempt', R - 8, y, 9, false, mid); y -= 16
+    }
+    page.drawLine({ start: { x: sumX, y: y + 6 }, end: { x: R - 8, y: y + 6 }, thickness: 1, color: accent })
+    txt('TOTAL', sumX, y - 4, 13, true)
+    txtRight(fmtMoney(totals.grandTotal), R - 8, y - 4, 16, true, money)
+    y -= 30
+
+    // ── APPROVAL ────────────────────────────────────────────────────────
+    // Reserve enough room for the WHOLE approval block (hr + label + wrap
+    // body + button) so we don't orphan the header on the previous page.
+    need(120)
+    hr(y, accent, 1); y -= 14
+    txt('APPROVAL', L, y, 9, true, accent); y -= 14
+    wrap('Click the approval link in your email or visit the portal link below to approve this estimate. Once approved, the shop is authorized to begin the listed work. Additional repairs discovered during service will be sent to you for separate approval.', L, W, 9, false, dark)
+    y -= 6
+    if (portalLink) {
+      // Approval-button-style box
+      const btnY = y - 22
+      rect(L, btnY, 200, 26, accent)
+      const btnText = 'Review & Approve Estimate'
+      page.drawText(btnText, { x: L + (200 - fontBold.widthOfTextAtSize(btnText, 10)) / 2, y: btnY + 9, size: 10, font: fontBold, color: rgb(1, 1, 1) })
+      txt('Portal:', L + 210, btnY + 14, 8, true, light)
+      txt(portalLink, L + 210, btnY + 4, 8, false, accent)
+      y = btnY - 14
+    }
 
     drawFooter()
 
