@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requirePlatformOwner } from '@/lib/route-guards'
 import { fetchInvoices, mapCustomer, mapTruck, mapServiceOrder } from '@/lib/fullbay/client'
-import { ADMIN_ROLES } from '@/lib/roles'
 import * as Sentry from '@sentry/nextjs'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+function db() { return createAdminSupabaseClient() }
 
 // Simple string similarity
 function similarity(a: string, b: string): number {
@@ -33,16 +33,20 @@ const STATUS_MAP: Record<string, string> = {
   'draft': 'draft',
 }
 
-// POST /api/fullbay/sync/work-orders — sync active WOs from Fullbay
+// POST /api/fullbay/sync/work-orders — sync active WOs from Fullbay.
+// Platform-owner only: writes cross-shop data using the shared
+// FULLBAY_API_KEY and a service-role client, so the actor must prove
+// platform-owner status on the server. Body-supplied user_role / user_id
+// are ignored (previous F-04 pattern).
 export async function POST(req: Request) {
-  const s = db()
-  const { shop_id, user_id, user_role } = await req.json()
+  const { actor, error } = await requirePlatformOwner()
+  if (error || !actor) return error!
 
-  if (!user_role || !ADMIN_ROLES.includes(user_role)) {
-    return NextResponse.json({ error: 'Only shop owners can trigger sync' }, { status: 403 })
-  }
+  const { shop_id } = await req.json().catch(() => ({ shop_id: null }))
   if (!process.env.FULLBAY_API_KEY) return NextResponse.json({ error: 'FULLBAY_API_KEY not configured' }, { status: 500 })
   if (!shop_id) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+
+  const s = db()
 
   try {
     // Pull last 30 days of invoices (which contain WO data)
@@ -234,7 +238,7 @@ export async function POST(req: Request) {
       shop_id,
       sync_type: 'work_orders',
       status: 'completed',
-      triggered_by: user_id || null,
+      triggered_by: actor.id,
       records_pulled: invoices.length,
       records_imported: imported + updated,
       records_skipped: skipped,
