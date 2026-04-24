@@ -34,7 +34,7 @@ function fmtMoney(n: number): string {
   return '$' + (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
-export async function generateEstimatePdf(estimateId: string): Promise<{ pdfBytes: Uint8Array; filename: string } | null> {
+export async function generateEstimatePdf(estimateId: string, mode: 'email' | 'print' = 'email'): Promise<{ pdfBytes: Uint8Array; filename: string } | null> {
   try {
     const supabase = db()
 
@@ -346,20 +346,40 @@ export async function generateEstimatePdf(estimateId: string): Promise<{ pdfByte
     y = sumBottom - 16
 
     // ── APPROVAL ────────────────────────────────────────────────────────
-    need(120)
-    txt('APPROVAL', L, y, 9, true, accent); y -= 14
-    wrap('Review and approve this estimate using the customer portal link. This estimate covers the listed labor and parts only. Any additional work will require separate approval.', L, W, 9, false, dark)
-    y -= 6
-    if (portalLink) {
-      const btnY = y - 26
-      rect(L, btnY, 220, 28, accent)
-      const btnText = 'REVIEW & APPROVE ESTIMATE'
-      page.drawText(btnText, { x: L + (220 - fontBold.widthOfTextAtSize(btnText, 9)) / 2, y: btnY + 10, size: 9, font: fontBold, color: rgb(1, 1, 1) })
-      txt('Portal:', L + 230, btnY + 16, 8, true, light)
-      // Trim very long portal links to keep them on one line
-      const portalShown = portalLink.length > 60 ? portalLink.slice(0, 57) + '...' : portalLink
-      txt(portalShown, L + 230, btnY + 4, 8, false, accent)
-      y = btnY - 14
+    if (mode === 'print') {
+      // Physical printed copy: signature/date lines, no portal CTA/link.
+      need(140)
+      txt('APPROVAL', L, y, 9, true, accent); y -= 14
+      wrap('This estimate covers the listed labor and parts only. Any additional work will require separate approval. Sign below to authorize the work.', L, W, 9, false, dark)
+      y -= 18
+      const lineColor = rule
+      const sigW = W - 130
+      txt('Customer Signature:', L, y, 9, true, mid)
+      page.drawLine({ start: { x: L + 120, y: y - 2 }, end: { x: L + 120 + sigW, y: y - 2 }, thickness: 0.6, color: lineColor })
+      y -= 28
+      txt('Printed Name:', L, y, 9, true, mid)
+      page.drawLine({ start: { x: L + 120, y: y - 2 }, end: { x: L + 120 + sigW, y: y - 2 }, thickness: 0.6, color: lineColor })
+      y -= 28
+      const dateW = 200
+      txt('Date:', L, y, 9, true, mid)
+      page.drawLine({ start: { x: L + 120, y: y - 2 }, end: { x: L + 120 + dateW, y: y - 2 }, thickness: 0.6, color: lineColor })
+      y -= 14
+    } else {
+      need(120)
+      txt('APPROVAL', L, y, 9, true, accent); y -= 14
+      wrap('Review and approve this estimate using the customer portal link. This estimate covers the listed labor and parts only. Any additional work will require separate approval.', L, W, 9, false, dark)
+      y -= 6
+      if (portalLink) {
+        const btnY = y - 26
+        rect(L, btnY, 220, 28, accent)
+        const btnText = 'REVIEW & APPROVE ESTIMATE'
+        page.drawText(btnText, { x: L + (220 - fontBold.widthOfTextAtSize(btnText, 9)) / 2, y: btnY + 10, size: 9, font: fontBold, color: rgb(1, 1, 1) })
+        txt('Portal:', L + 230, btnY + 16, 8, true, light)
+        // Trim very long portal links to keep them on one line
+        const portalShown = portalLink.length > 60 ? portalLink.slice(0, 57) + '...' : portalLink
+        txt(portalShown, L + 230, btnY + 4, 8, false, accent)
+        y = btnY - 14
+      }
     }
 
     drawFooter()

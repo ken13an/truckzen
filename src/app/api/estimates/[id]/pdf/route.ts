@@ -23,17 +23,19 @@ async function _GET(req: Request, { params }: Params) {
 
   // Same auth gate the source repo uses on this route — session cookie OR a
   // valid approval_token query param. Customer email links carry the token.
+  const url = new URL(req.url)
   const cookieHeader = req.headers.get('cookie') || ''
   const hasSession = /(?:^|;\s*)(tz_session_token|sb-)/.test(cookieHeader)
   if (!hasSession) {
-    const token = new URL(req.url).searchParams.get('token') || ''
+    const token = url.searchParams.get('token') || ''
     const expected = (est as any).approval_token || ''
     if (!token || !expected || token !== expected) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
   }
 
-  const result = await generateEstimatePdf(id)
+  const mode = url.searchParams.get('mode') === 'print' ? 'print' : 'email'
+  const result = await generateEstimatePdf(id, mode)
   if (!result) return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 })
 
   return new NextResponse(Buffer.from(result.pdfBytes) as any, {

@@ -3702,49 +3702,35 @@ export default function WorkOrderDetail() {
                 </button>
               </div>
 
-              {/* Path 3: Print & Sign */}
+              {/* Path 3: Print */}
               <div style={{ padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Print and Sign</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {/* Print Estimate — reuses the existing ensureEstimate()
-                      helper so the modal can print whenever a total is
-                      shown (i.e., the WO has so_lines), even if the
-                      estimate DB record hasn't been created yet. The
-                      blank tab is opened synchronously from the user's
-                      click so popup blockers stay out of the way, then
-                      navigated to the PDF URL after ensure completes. */}
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Print</div>
+                <div>
                   <button
                     onClick={async () => {
-                      const w = typeof window !== 'undefined' ? window.open('about:blank', '_blank', 'noopener') : null
                       let id = estimateId
                       if (!id) {
                         const result = await ensureEstimate()
                         if (!result) {
-                          if (w) w.close()
                           setToastMsg('Could not prepare estimate — try again')
                           setTimeout(() => setToastMsg(''), 4000)
                           return
                         }
                         id = result.id
                       }
-                      const pdfUrl = `/api/estimates/${id}/pdf`
-                      if (w) w.location.href = pdfUrl
-                      else if (typeof window !== 'undefined') window.location.href = pdfUrl
+                      const pdfUrl = `/api/estimates/${id}/pdf?mode=print`
+                      const w = typeof window !== 'undefined' ? window.open(pdfUrl, '_blank', 'noopener,noreferrer') : null
+                      if (!w) {
+                        setToastMsg('Popup blocked. Allow popups or use the print link again.')
+                        setTimeout(() => setToastMsg(''), 4000)
+                        return
+                      }
                       setPrintedReady(true)
                     }}
-                    style={{ ...btnStyle('var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', border: `1px solid ${'var(--tz-border)'}` }}
+                    style={{ ...btnStyle('var(--tz-bgLight)', GRAY), padding: '6px 14px', fontSize: 12, border: `1px solid ${'var(--tz-border)'}` }}
                   >
                     Print Estimate
                   </button>
-                  {printedReady ? (
-                    <button onClick={() => setApprovalConfirmModal({ method: 'printed_signed', notes: '' })} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), flex: 1, justifyContent: 'center' }}>
-                      Mark as Signed &amp; Approved
-                    </button>
-                  ) : (
-                    <button disabled title="Print estimate first" style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', border: `1px solid ${'var(--tz-border)'}`, opacity: 0.5, cursor: 'not-allowed' }}>
-                      Print estimate first
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
