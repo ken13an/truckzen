@@ -51,8 +51,20 @@ async function _POST(req: Request) {
   if (!line_id || !Array.isArray(assignments)) return NextResponse.json({ error: 'line_id and assignments[] required' }, { status: 400 })
   const targetWoId = wo_id || (await ctx.admin.from('so_lines').select('so_id, service_order_id').eq('id', line_id).single()).data?.so_id
   if (!targetWoId) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
-  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, targetWoId, 'id, shop_id, so_number, assets(unit_number)')
+  const { data: wo } = await getWorkOrderForActor(ctx.admin, ctx.actor, targetWoId, 'id, shop_id, so_number, estimate_required, estimate_approved, job_type, assets(unit_number)')
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Mechanic-assignment gate: block when a customer-facing estimate is
+  // required and not yet approved. Same predicate + bypass-job-type list
+  // as the WO detail UI (page.tsx:1170, 1447). Server is the hard gate;
+  // the floor/shop-manager UI disables the action as defense-in-depth.
+  {
+    const BYPASS_JOB_TYPES = ['diagnostic', 'full_inspection']
+    const jt = (wo as any).job_type
+    if ((wo as any).estimate_required && !(wo as any).estimate_approved && !BYPASS_JOB_TYPES.includes(jt)) {
+      return NextResponse.json({ error: 'Estimate approval required before mechanic assignment' }, { status: 409 })
+    }
+  }
 
   await ctx.admin.from('wo_job_assignments').delete().eq('line_id', line_id)
   if (assignments.length > 0) {

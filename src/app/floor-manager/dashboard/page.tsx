@@ -214,9 +214,21 @@ export default function FloorManagerDashboardPage() {
     } catch { /* silent */ }
   }
 
+  // Mirror the WO detail page (page.tsx:1170) bypass-job-type list and
+  // predicate so the floor-manager Assign action is blocked on exactly the
+  // same conditions as the WO-level Assign action. Server enforces the
+  // same gate (wo-job-assignments route) — this is defense-in-depth.
+  const BYPASS_JOB_TYPES = ['diagnostic', 'full_inspection']
+  const isAssignmentBlockedByEstimate = (job: any): boolean =>
+    !!(job && job.wo_estimate_required && !job.wo_estimate_approved && !BYPASS_JOB_TYPES.includes(job.wo_job_type))
+
   // -- Assign mechanic (via canonical wo_job_assignments) --
   const handleAssign = async () => {
     if (!assignModal || !selectedMechanic) return
+    if (isAssignmentBlockedByEstimate(assignModal)) {
+      alert('Estimate approval required before mechanic assignment')
+      return
+    }
     setActionLoading(true)
     try {
       const res = await fetch('/api/wo-job-assignments', {
@@ -232,6 +244,9 @@ export default function FloorManagerDashboardPage() {
         await fetchData(user.shop_id)
         setAssignModal(null)
         setSelectedMechanic('')
+      } else if (res.status === 409) {
+        const body = await res.json().catch(() => null)
+        alert(body?.error || 'Estimate approval required before mechanic assignment')
       }
     } catch { /* silent */ }
     setActionLoading(false)
@@ -870,6 +885,11 @@ export default function FloorManagerDashboardPage() {
             </div>
 
             <div style={{ padding: 20 }}>
+              {isAssignmentBlockedByEstimate(assignModal) && (
+                <div role="alert" style={{ marginBottom: 14, padding: '10px 12px', borderRadius: 8, border: `1px solid ${AMBER}`, background: `${AMBER}12`, color: AMBER, fontSize: 12, fontWeight: 600 }}>
+                  Estimate approval required before mechanic assignment
+                </div>
+              )}
               {/* Job info */}
               <div style={{ marginBottom: 16, padding: 12, background: 'var(--tz-border)', borderRadius: 8, border: `1px solid ${CARD_BORDER}` }}>
                 <div style={{ fontSize: 11, color: BLUE, fontFamily: 'monospace', fontWeight: 600, marginBottom: 4 }}>
@@ -980,12 +1000,13 @@ export default function FloorManagerDashboardPage() {
                 </button>
                 <button
                   onClick={handleAssign}
-                  disabled={!selectedMechanic || actionLoading}
+                  disabled={!selectedMechanic || actionLoading || isAssignmentBlockedByEstimate(assignModal)}
+                  title={isAssignmentBlockedByEstimate(assignModal) ? 'Estimate approval required before mechanic assignment' : ''}
                   style={{
                     padding: '9px 18px', borderRadius: 10, border: 'none',
                     background: BLUE, color: 'var(--tz-bgLight)', fontWeight: 700, fontSize: 13,
-                    cursor: selectedMechanic && !actionLoading ? 'pointer' : 'not-allowed',
-                    fontFamily: FONT, opacity: !selectedMechanic || actionLoading ? 0.5 : 1,
+                    cursor: selectedMechanic && !actionLoading && !isAssignmentBlockedByEstimate(assignModal) ? 'pointer' : 'not-allowed',
+                    fontFamily: FONT, opacity: (!selectedMechanic || actionLoading || isAssignmentBlockedByEstimate(assignModal)) ? 0.5 : 1,
                   }}
                 >
                   {actionLoading ? 'Assigning...' : 'Assign'}

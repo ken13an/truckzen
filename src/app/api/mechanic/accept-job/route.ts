@@ -32,6 +32,20 @@ export async function POST(req: Request) {
   }
 
   if (action === 'accept') {
+    // Mechanic-start gate: block accept when the linked WO requires a
+    // customer-facing estimate that has not been approved. Same predicate
+    // and bypass-job-type list the WO detail UI and assignment API use.
+    if (woId) {
+      const { data: woRow } = await s.from('service_orders')
+        .select('estimate_required, estimate_approved, job_type')
+        .eq('id', woId)
+        .single()
+      const BYPASS_JOB_TYPES = ['diagnostic', 'full_inspection']
+      if (woRow && (woRow as any).estimate_required && !(woRow as any).estimate_approved && !BYPASS_JOB_TYPES.includes((woRow as any).job_type)) {
+        return NextResponse.json({ error: 'Estimate approval required before work can start' }, { status: 409 })
+      }
+    }
+
     await s.from('wo_job_assignments').update({ updated_at: now }).eq('id', assignment_id)
     if (lineId) await s.from('so_lines').update({ line_status: 'in_progress' }).eq('id', lineId)
     if (woId) await s.from('wo_activity_log').insert({ wo_id: woId, user_id: actor.id, action: `Mechanic accepted job: ${lineDesc}` })
