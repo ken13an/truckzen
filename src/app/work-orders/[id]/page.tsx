@@ -3527,7 +3527,8 @@ export default function WorkOrderDetail() {
                 setTimeout(() => setToastMsg(''), 4000)
               } else {
                 const errBody = await res.json().catch(() => null)
-                alert(errBody?.error || 'Failed to send estimate')
+                console.error('[wo.estimate.send-supplement] send failed', { woId: id, estimateId: wo.estimate_id, batchId: approvalModal.batchId, status: res.status, error: errBody?.error })
+                alert(`Failed to send estimate: ${errBody?.error || `HTTP ${res.status}`}`)
                 return
               }
               setApprovalModal(null)
@@ -3550,7 +3551,7 @@ export default function WorkOrderDetail() {
             } else {
               const errBody = await res.json().catch(() => null)
               console.error('[wo.estimate.send] send failed', { woId: id, estimateId: effectiveId, status: res.status, error: errBody?.error })
-              alert('Failed to send estimate')
+              alert(`Failed to send estimate: ${errBody?.error || `HTTP ${res.status}`}`)
             }
             setApprovalModal(null)
             await loadData()
