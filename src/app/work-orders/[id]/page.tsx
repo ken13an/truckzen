@@ -3706,27 +3706,43 @@ export default function WorkOrderDetail() {
               <div style={{ padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Print and Sign</div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {estimateId ? (
-                    <a
-                      href={`/api/estimates/${estimateId}/pdf`}
-                      target="_blank"
-                      onClick={() => setPrintedReady(true)}
-                      style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', textDecoration: 'none', textAlign: 'center', border: `1px solid ${'var(--tz-border)'}` }}
-                    >
-                      Print Estimate
-                    </a>
-                  ) : (
-                    <button disabled style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', border: `1px solid ${'var(--tz-border)'}`, opacity: 0.5, cursor: 'not-allowed' }}>
-                      Build estimate first
-                    </button>
-                  )}
+                  {/* Print Estimate — reuses the existing ensureEstimate()
+                      helper so the modal can print whenever a total is
+                      shown (i.e., the WO has so_lines), even if the
+                      estimate DB record hasn't been created yet. The
+                      blank tab is opened synchronously from the user's
+                      click so popup blockers stay out of the way, then
+                      navigated to the PDF URL after ensure completes. */}
+                  <button
+                    onClick={async () => {
+                      const w = typeof window !== 'undefined' ? window.open('about:blank', '_blank', 'noopener') : null
+                      let id = estimateId
+                      if (!id) {
+                        const result = await ensureEstimate()
+                        if (!result) {
+                          if (w) w.close()
+                          setToastMsg('Could not prepare estimate — try again')
+                          setTimeout(() => setToastMsg(''), 4000)
+                          return
+                        }
+                        id = result.id
+                      }
+                      const pdfUrl = `/api/estimates/${id}/pdf`
+                      if (w) w.location.href = pdfUrl
+                      else if (typeof window !== 'undefined') window.location.href = pdfUrl
+                      setPrintedReady(true)
+                    }}
+                    style={{ ...btnStyle('var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', border: `1px solid ${'var(--tz-border)'}` }}
+                  >
+                    Print Estimate
+                  </button>
                   {printedReady ? (
                     <button onClick={() => setApprovalConfirmModal({ method: 'printed_signed', notes: '' })} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), flex: 1, justifyContent: 'center' }}>
                       Mark as Signed &amp; Approved
                     </button>
                   ) : (
-                    <button disabled style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', border: `1px solid ${'var(--tz-border)'}`, opacity: 0.5, cursor: 'not-allowed' }}>
-                      Print first →
+                    <button disabled title="Print estimate first" style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), flex: 1, justifyContent: 'center', border: `1px solid ${'var(--tz-border)'}`, opacity: 0.5, cursor: 'not-allowed' }}>
+                      Print estimate first
                     </button>
                   )}
                 </div>
