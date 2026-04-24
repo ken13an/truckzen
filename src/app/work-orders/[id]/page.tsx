@@ -3543,7 +3543,17 @@ export default function WorkOrderDetail() {
               return
             }
             const effectiveId = result.id
-            const res = await fetch(`/api/estimates/${effectiveId}/send`, { method: 'POST' })
+            // Send the user-selected recipient explicitly so the server does
+            // not silently fall back to a stale estimate.customer_email when
+            // the saveContactInfo PATCH above 409s or is skipped.
+            const res = await fetch(`/api/estimates/${effectiveId}/send`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to_email: contactEmail.trim() || undefined,
+                to_phone: contactPhone.trim() || undefined,
+              }),
+            })
             if (res.ok) {
               logActivity(`Estimate sent to ${contactEmail || contactPhone}`)
               setToastMsg('Estimate sent to customer')

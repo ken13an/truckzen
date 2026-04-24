@@ -31,7 +31,19 @@ async function getEstimateForActor(admin: any, actor: any, id: string) {
   return { data, error }
 }
 
-async function _POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+// Single-recipient override: caller may pass `to_email` / `to_phone` to send
+// the estimate to a specific recipient for THIS send action only. The route
+// auth/shop-scoped estimate lookup still gates access. The override does NOT
+// mutate the customer profile or the estimate row — that persistence is the
+// caller's separate responsibility (see saveContactInfo in the WO modal).
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+function maskEmail(s: string): string {
+  if (!s || !s.includes('@')) return s || ''
+  const [local, domain] = s.split('@')
+  return `${local.slice(0, 2)}***@${domain}`
+}
+
+async function _POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const ctx = await requireRouteContext([...INVOICE_ACTION_ROLES])
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
@@ -39,6 +51,27 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
   if (!sendLimit.allowed) return NextResponse.json({ error: 'Too many estimate requests' }, { status: 429 })
   const { data: estimate, error } = await getEstimateForActor(ctx.admin, ctx.actor, id)
   if (error || !estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
+
+  // Optional recipient override from request body. If invalid, ignore the
+  // override and fall back to the stored estimate.customer_email; do NOT 422
+  // — the stored value may still be valid.
+  let bodyJson: any = null
+  try { bodyJson = await req.json() } catch { bodyJson = null }
+  const rawToEmail = typeof bodyJson?.to_email === 'string' ? bodyJson.to_email.trim() : ''
+  const rawToPhone = typeof bodyJson?.to_phone === 'string' ? bodyJson.to_phone.trim() : ''
+  const overrideEmail = rawToEmail && EMAIL_RE.test(rawToEmail) ? rawToEmail : ''
+  const overridePhone = rawToPhone || ''
+  if (rawToEmail && !overrideEmail) {
+    console.warn('[estimate-send] override email rejected as invalid format', { estimateId: id, masked: maskEmail(rawToEmail) })
+  }
+  const recipientEmail = overrideEmail || (estimate as any).customer_email || ''
+  const recipientPhone = overridePhone || (estimate as any).customer_phone || ''
+  console.info('[estimate-send] recipient resolved', {
+    estimateId: id,
+    emailSource: overrideEmail ? 'override' : ((estimate as any).customer_email ? 'estimate.customer_email' : 'none'),
+    phoneSource: overridePhone ? 'override' : ((estimate as any).customer_phone ? 'estimate.customer_phone' : 'none'),
+    emailMasked: maskEmail(recipientEmail),
+  })
 
   // RULE 7 step 1 — snapshot ensure (idempotent, no overwrite of existing rows).
   const ensure = await ensureEstimateSnapshot(ctx.admin, id)
@@ -96,12 +129,12 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
   const total = Number((estPostEnsure as any)?.grand_total) || Number((estPostEnsure as any)?.total) || 0
 
   const sentVia: string[] = []
-  if ((estimate as any).customer_email) {
+  if (recipientEmail) {
     const emailHtml = `<div style="background:#0f0f1a;padding:32px;font-family:-apple-system,sans-serif"><div style="max-width:600px;margin:0 auto;background:#1a1a2e;border-radius:12px;overflow:hidden"><div style="padding:24px;background:#1d1d35;border-bottom:1px solid #2a2a3a"><h1 style="margin:0;color:#ffffff;font-size:20px">${shop.name}</h1><p style="margin:4px 0 0;color:#8a8a9a;font-size:13px">Estimate ${(estimate as any).estimate_number}</p></div><div style="padding:24px"><p style="color:#e0e0e0;font-size:14px;margin:0 0 8px">Hi ${(estimate as any).customer_name || 'Customer'},</p><p style="color:#b0b0c0;font-size:13px;margin:0 0 16px">Here is your repair estimate${truckInfo ? ` for <strong style="color:#e0e0e0">${truckInfo}</strong>` : ''}. The full breakdown is attached as a PDF.</p><table style="width:100%;border-collapse:collapse;margin:16px 0"><thead><tr style="background:#15152a"><th style="padding:8px 12px;text-align:left;color:#8a8a9a;font-size:11px;text-transform:uppercase">Description</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Labor</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Parts</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Total</th></tr></thead><tbody>${linesHtml}</tbody></table><div style="text-align:right;padding:12px 0;border-top:1px solid #2a2a3a"><div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Subtotal: $${subtotal.toFixed(2)}</div><div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Tax: $${tax.toFixed(2)}</div><div style="color:#ffffff;font-size:18px;font-weight:800">Total: $${total.toFixed(2)}</div></div><div style="text-align:center;margin:24px 0 8px"><a href="${portalLink}" style="display:inline-block;padding:14px 32px;background:#16A34A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:700">Review & Approve Estimate</a></div></div></div></div>`
-    const sent = await sendEmail((estimate as any).customer_email, `Estimate ${(estimate as any).estimate_number} from ${shop.name}`, emailHtml, attachments)
+    const sent = await sendEmail(recipientEmail, `Estimate ${(estimate as any).estimate_number} from ${shop.name}`, emailHtml, attachments)
     if (sent) sentVia.push('email')
   }
-  if ((estimate as any).customer_phone) {
+  if (recipientPhone) {
     try {
       const accountSid = process.env.TWILIO_ACCOUNT_SID
       const authToken = process.env.TWILIO_AUTH_TOKEN
@@ -110,7 +143,7 @@ async function _POST(_req: Request, { params }: { params: Promise<{ id: string }
         const twilio = (await import('twilio')).default
         const client = twilio(accountSid, authToken)
         const smsBody = `${shop.name} - Estimate ${(estimate as any).estimate_number}\n${truckInfo ? truckInfo + '\n' : ''}Total: $${total.toFixed(2)}\n\nReview & approve: ${portalLink}`
-        await client.messages.create({ body: smsBody, from: fromPhone, to: (estimate as any).customer_phone })
+        await client.messages.create({ body: smsBody, from: fromPhone, to: recipientPhone })
         sentVia.push('sms')
       }
     } catch (err) {
