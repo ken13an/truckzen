@@ -74,44 +74,62 @@ export async function ensureEstimateSnapshot(admin: any, estimateId: string): Pr
   const { data: lines } = await admin.from('so_lines').select('*').eq('so_id', woId)
   const { data: woParts } = await admin.from('wo_parts').select('*').eq('wo_id', woId)
 
-  // Mirror /api/estimates POST create_from_wo (route.ts:95-106) exactly.
+  // Build snapshot rows using ONLY the live estimate_lines columns:
+  //   estimate_id, description, complaint, labor_hours, labor_rate,
+  //   labor_total, parts_total, line_total, line_number,
+  //   is_approved, customer_response, repair_order_line_id.
+  // Part number is embedded into description because the live schema
+  // has no part_number column. Labor vs part is discriminated downstream
+  // by labor_total>0 vs parts_total>0 (no line_type column exists).
   const estLines: any[] = []
+  let lineNumber = 1
   for (const line of lines || []) {
     if ((line as any).line_type === 'labor') {
       const hrs = (line as any).estimated_hours || (line as any).billed_hours || (line as any).actual_hours || 1
+      const amt = hrs * laborRate
       estLines.push({
         estimate_id: estimateId,
-        line_type: 'labor',
-        description: (line as any).description,
-        quantity: hrs,
-        unit_price: laborRate,
-        total: hrs * laborRate,
-        so_line_id: (line as any).id,
+        description: (line as any).description || '',
+        labor_hours: hrs,
+        labor_rate: laborRate,
+        labor_total: amt,
+        parts_total: 0,
+        line_total: amt,
+        line_number: lineNumber++,
       })
     } else if ((line as any).line_type === 'part' && ((line as any).real_name || (line as any).rough_name || (line as any).description)) {
       const price = (line as any).parts_sell_price || (line as any).unit_price || 0
+      const qty = (line as any).quantity || 1
+      const amt = qty * price
+      const baseDesc = (line as any).real_name || (line as any).rough_name || (line as any).description
+      const desc = (line as any).part_number ? `${baseDesc} - Part # ${(line as any).part_number}` : baseDesc
       estLines.push({
         estimate_id: estimateId,
-        line_type: 'part',
-        description: (line as any).real_name || (line as any).rough_name || (line as any).description,
-        part_number: (line as any).part_number,
-        quantity: (line as any).quantity || 1,
-        unit_price: price,
-        total: ((line as any).quantity || 1) * price,
-        so_line_id: (line as any).id,
+        description: desc,
+        labor_hours: 0,
+        labor_rate: 0,
+        labor_total: 0,
+        parts_total: amt,
+        line_total: amt,
+        line_number: lineNumber++,
       })
     }
   }
   for (const part of woParts || []) {
+    const qty = (part as any).quantity || 1
+    const price = (part as any).unit_cost || 0
+    const amt = qty * price
+    const baseDesc = (part as any).description || ''
+    const desc = (part as any).part_number ? `${baseDesc} - Part # ${(part as any).part_number}` : baseDesc
     estLines.push({
       estimate_id: estimateId,
-      line_type: 'part',
-      description: (part as any).description,
-      part_number: (part as any).part_number || null,
-      quantity: (part as any).quantity || 1,
-      unit_price: (part as any).unit_cost || 0,
-      total: ((part as any).quantity || 1) * ((part as any).unit_cost || 0),
-      so_line_id: (part as any).line_id || null,
+      description: desc,
+      labor_hours: 0,
+      labor_rate: 0,
+      labor_total: 0,
+      parts_total: amt,
+      line_total: amt,
+      line_number: lineNumber++,
     })
   }
 
@@ -134,9 +152,11 @@ export async function ensureEstimateSnapshot(admin: any, estimateId: string): Pr
     return { ok: false, reason: `insert_failed:${insertErr.message}`, created: 0, existed: 0 }
   }
 
-  // Mirror create_from_wo totals formula exactly (route.ts:109-119).
-  const laborTotal = estLines.filter((l) => l.line_type === 'labor').reduce((sum, l) => sum + l.total, 0)
-  const partsTotal = estLines.filter((l) => l.line_type === 'part').reduce((sum, l) => sum + l.total, 0)
+  // Totals: same formula as create_from_wo (sum labor + sum parts → tax →
+  // grand). Adapted to read labor_total / parts_total directly off the
+  // schema-aligned rows (no line_type discriminator needed).
+  const laborTotal = estLines.reduce((sum, l) => sum + (Number(l.labor_total) || 0), 0)
+  const partsTotal = estLines.reduce((sum, l) => sum + (Number(l.parts_total) || 0), 0)
   const sub = laborTotal + partsTotal
   const taxAmt = sub * (taxRate / 100)
   const grandTotal = sub + taxAmt
@@ -174,25 +194,23 @@ export async function validateEstimateSnapshot(admin: any, estimateId: string): 
 
   const { data: lines } = await admin
     .from('estimate_lines')
-    .select('line_type, description, total, labor_total, parts_total, line_total')
+    .select('description, labor_hours, labor_total, parts_total, line_total')
     .eq('estimate_id', estimateId)
-  const labors = ((lines || []) as any[]).filter((l) => l.line_type === 'labor')
-  const parts = ((lines || []) as any[]).filter((l) => l.line_type === 'part')
-  if (labors.length === 0 && parts.length === 0) {
+  const all = ((lines || []) as any[])
+  if (all.length === 0) {
     return { ok: false, reason: 'no_snapshot_lines', laborCount: 0, partCount: 0, grandTotal: 0 }
   }
 
-  for (const l of labors) {
+  for (const l of all) {
     if (!l.description || !String(l.description).trim()) {
-      return { ok: false, reason: 'labor_missing_description', laborCount: labors.length, partCount: parts.length, grandTotal: 0 }
-    }
-  }
-  for (const p of parts) {
-    if (!p.description || !String(p.description).trim()) {
-      return { ok: false, reason: 'part_missing_description', laborCount: labors.length, partCount: parts.length, grandTotal: 0 }
+      return { ok: false, reason: 'line_missing_description', laborCount: 0, partCount: 0, grandTotal: 0 }
     }
   }
 
+  // Discriminate by amount fields (no line_type column exists in schema).
+  // A row is treated as labor when it has any labor signal; otherwise part.
+  const laborCount = all.filter((l) => (Number(l.labor_total) || 0) > 0 || (Number(l.labor_hours) || 0) > 0).length
+  const partCount = all.length - laborCount
   const grand = Number((est as any).grand_total) || Number((est as any).total) || 0
-  return { ok: true, laborCount: labors.length, partCount: parts.length, grandTotal: grand }
+  return { ok: true, laborCount, partCount, grandTotal: grand }
 }

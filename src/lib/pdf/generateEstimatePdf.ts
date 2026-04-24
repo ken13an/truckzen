@@ -89,10 +89,12 @@ export async function generateEstimatePdf(estimateId: string): Promise<{ pdfByte
     const taxRate = Number((est as any).tax_rate ?? shop?.tax_rate) || 0
     const taxLabor = shop?.tax_labor === true
 
-    // Split snapshot rows by line_type. Both create_from_wo (thin) and
-    // PATCH (full) shapes resolve to the same display fields below.
-    const laborRows = estLines.filter((l) => l.line_type === 'labor')
-    const partRows = estLines.filter((l) => l.line_type === 'part')
+    // Discriminate rows by amount fields — the live estimate_lines schema
+    // has no line_type column. A row is labor when it carries any labor
+    // signal (labor_total > 0 OR labor_hours > 0); otherwise it's a part.
+    const isLaborRow = (l: any) => (Number(l.labor_total) || 0) > 0 || (Number(l.labor_hours) || 0) > 0
+    const laborRows = estLines.filter(isLaborRow)
+    const partRows = estLines.filter((l: any) => !isLaborRow(l))
 
     const estimateNumber = (est as any).estimate_number || ''
     const status = (est as any).status || 'draft'
@@ -254,12 +256,11 @@ export async function generateEstimatePdf(estimateId: string): Promise<{ pdfByte
 
       for (const l of laborRows) {
         need(18)
-        // Both shapes:
-        //   - create_from_wo: quantity=hrs, unit_price=rate, total=line total
-        //   - PATCH: labor_hours, labor_rate, labor_total / line_total / total
-        const hrs = Number((l as any).labor_hours) || Number((l as any).quantity) || 0
-        const rate = Number((l as any).labor_rate) || Number((l as any).unit_price) || 0
-        const amt = Number((l as any).labor_total) || Number((l as any).line_total) || Number((l as any).total) || (hrs * rate)
+        // Schema fields only: labor_hours, labor_rate, labor_total
+        // (with line_total fallback for the amount).
+        const hrs = Number((l as any).labor_hours) || 0
+        const rate = Number((l as any).labor_rate) || 0
+        const amt = Number((l as any).labor_total) || Number((l as any).line_total) || (hrs * rate)
         const desc = (l as any).description || '—'
         const descX = L + 10
         const descMax = 360 - descX - 6
@@ -289,32 +290,26 @@ export async function generateEstimatePdf(estimateId: string): Promise<{ pdfByte
       rect(L, y - 2, W, 16, headerStripBg)
       box(L, y - 2, W, 16)
       txt('PART', L + 10, y + 4, 8, true, mid)
-      txt('QTY', 380, y + 4, 8, true, mid)
-      txt('PRICE', 430, y + 4, 8, true, mid)
       txtRight('TOTAL', R - 10, y + 4, 8, true, mid)
       y -= 18
 
+      // Schema fields only: parts_total (with line_total fallback). The
+      // live estimate_lines schema does not store quantity/unit_price/
+      // part_number — those are embedded in description by the snapshot
+      // helper when available.
       for (const p of partRows) {
         need(18)
-        const qty = Number((p as any).quantity || 1)
-        const price = Number((p as any).unit_price) || 0
-        const amt = Number((p as any).parts_total) || Number((p as any).line_total) || Number((p as any).total) || (qty * price)
+        const amt = Number((p as any).parts_total) || Number((p as any).line_total) || 0
         const desc = (p as any).description || '—'
-        const pn = (p as any).part_number ? ` · Part # ${(p as any).part_number}` : ''
-        const fullDesc = clean(desc + pn)
         const descX = L + 10
-        const descMax = 380 - descX - 6
-        if (font.widthOfTextAtSize(fullDesc, 9) > descMax) {
+        const descMax = R - 60 - descX
+        if (font.widthOfTextAtSize(desc, 9) > descMax) {
           const rowTop = y
-          txtCenter(String(qty), 388, rowTop, 9)
-          txt(fmtMoney(price), 430, rowTop, 9)
           txtRight(fmtMoney(amt), R - 10, rowTop, 9, true)
-          wrap(fullDesc, descX, descMax, 9, false, dark)
+          wrap(desc, descX, descMax, 9, false, dark)
           y -= 4
         } else {
-          txt(fullDesc, descX, y, 9)
-          txtCenter(String(qty), 388, y, 9)
-          txt(fmtMoney(price), 430, y, 9)
+          txt(desc, descX, y, 9)
           txtRight(fmtMoney(amt), R - 10, y, 9, true)
           y -= 14
         }
