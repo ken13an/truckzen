@@ -117,17 +117,62 @@ async function _PATCH(req: Request, { params }: { params: Promise<{ id: string }
     }
   }
   if (body?.lines && Array.isArray(body.lines)) {
-    await ctx.admin.from('estimate_lines').delete().eq('estimate_id', id)
+    // Sum totals by reading the body's labor_total / parts_total / total
+    // fields (which the UI sends). Discrimination uses the body's
+    // line_type ONLY to bucket the sum — that field is NOT written to
+    // estimate_lines (no such column in the live schema).
     const laborTotal = body.lines.reduce((s: number, l: any) => s + (parseFloat(l.labor_total ?? l.total) || 0) * ((l.line_type === 'labor') ? 1 : 0), 0)
     const partsTotal = body.lines.reduce((s: number, l: any) => s + (parseFloat(l.parts_total ?? l.total) || 0) * ((l.line_type === 'part') ? 1 : 0), 0)
     const subtotal = laborTotal + partsTotal
-    const { data: shop } = await ctx.admin.from('shops').select('tax_rate').eq('id', (estimate as any).shop_id).single()
+    // Tax mirrors calcInvoiceTotals (parts-only when tax_labor=false;
+    // labor+parts when tax_labor=true).
+    const { data: shop } = await ctx.admin.from('shops').select('tax_rate, tax_labor').eq('id', (estimate as any).shop_id).single()
     const taxRate = shop?.tax_rate || 0
-    const taxAmount = subtotal * (taxRate / 100)
+    const taxLabor = shop?.tax_labor === true
+    const taxableAmount = partsTotal + (taxLabor ? laborTotal : 0)
+    const taxAmount = taxRate > 0 ? taxableAmount * (taxRate / 100) : 0
     const total = subtotal + taxAmount
+
+    // Delete-then-insert rebuild — scoped to this estimate_id only.
+    const { error: delErr } = await ctx.admin.from('estimate_lines').delete().eq('estimate_id', id)
+    if (delErr) {
+      console.error('[estimates.patch] estimate_lines delete failed', { estimateId: id, error: delErr.message })
+      return NextResponse.json({ error: `Failed to clear estimate lines: ${delErr.message}` }, { status: 500 })
+    }
+
     await ctx.admin.from('estimates').update({ labor_total: laborTotal, parts_total: partsTotal, subtotal, tax_amount: taxAmount, total, grand_total: total }).eq('id', id)
-    const lineRows = body.lines.map((l: any, i: number) => ({ estimate_id: id, repair_order_line_id: l.repair_order_line_id || null, description: l.description || '', complaint: l.complaint || null, labor_hours: parseFloat(l.labor_hours) || 0, labor_rate: parseFloat(l.labor_rate) || 0, labor_total: parseFloat(l.labor_total) || 0, parts_total: parseFloat(l.parts_total) || 0, line_total: parseFloat(l.line_total) || 0, is_approved: l.is_approved ?? null, customer_response: l.customer_response || null, line_number: i + 1, line_type: l.line_type || 'labor', total: parseFloat(l.total ?? l.line_total) || 0, quantity: parseFloat(l.quantity) || 1, unit_price: parseFloat(l.unit_price) || 0, so_line_id: l.so_line_id || null, part_number: l.part_number || null }))
-    await ctx.admin.from('estimate_lines').insert(lineRows)
+
+    // Schema-safe row shape — only columns that exist in estimate_lines.
+    // (no line_type / total / quantity / unit_price / so_line_id /
+    // part_number columns). Part numbers are embedded in description so
+    // they survive the snapshot.
+    const lineRows = body.lines.map((l: any, i: number) => {
+      const baseDesc = l.description || ''
+      const desc = (l.line_type === 'part' && l.part_number)
+        ? `${baseDesc} - Part # ${l.part_number}`
+        : baseDesc
+      return {
+        estimate_id: id,
+        repair_order_line_id: l.repair_order_line_id || null,
+        description: desc,
+        complaint: l.complaint || null,
+        labor_hours: parseFloat(l.labor_hours) || 0,
+        labor_rate: parseFloat(l.labor_rate) || 0,
+        labor_total: parseFloat(l.labor_total) || 0,
+        parts_total: parseFloat(l.parts_total) || 0,
+        line_total: parseFloat(l.line_total ?? l.total) || 0,
+        is_approved: l.is_approved ?? null,
+        customer_response: l.customer_response || null,
+        line_number: i + 1,
+      }
+    })
+    if (lineRows.length > 0) {
+      const { error: insErr } = await ctx.admin.from('estimate_lines').insert(lineRows)
+      if (insErr) {
+        console.error('[estimates.patch] estimate_lines insert failed', { estimateId: id, error: insErr.message })
+        return NextResponse.json({ error: `Failed to write estimate lines: ${insErr.message}` }, { status: 500 })
+      }
+    }
   }
   return NextResponse.json(data)
 }

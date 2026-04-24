@@ -67,9 +67,28 @@ async function _POST(req: Request) {
       return NextResponse.json(existing)
     }
 
-    const { data: shop } = await ctx.admin.from('shops').select('default_labor_rate, labor_rate, tax_rate, default_tax_rate').eq('id', shopId).single()
-    const laborRate = shop?.default_labor_rate || shop?.labor_rate || DEFAULT_LABOR_RATE_FALLBACK
+    // Shop config — tax_labor included so the tax math respects the same
+    // shop setting the WO Estimate tab displays (calcInvoiceTotals:49-50).
+    const { data: shop } = await ctx.admin.from('shops').select('default_labor_rate, labor_rate, tax_rate, default_tax_rate, tax_labor').eq('id', shopId).single()
     const taxRate = shop?.tax_rate || shop?.default_tax_rate || 0
+    const taxLabor = shop?.tax_labor === true
+
+    // Ownership-typed labor rate priority — mirrors page.tsx:826-828 and
+    // src/lib/estimates/snapshotEnsure.ts so the snapshot here matches what
+    // the writer sees on the WO Estimate tab.
+    const ownershipType = (wo as any)?.ownership_type
+      || (wo as any)?.assets?.ownership_type
+      || 'outside_customer'
+    const { data: ownershipRate } = await ctx.admin
+      .from('shop_labor_rates')
+      .select('rate_per_hour')
+      .eq('shop_id', shopId)
+      .eq('ownership_type', ownershipType)
+      .maybeSingle()
+    const laborRate = Number(ownershipRate?.rate_per_hour)
+      || Number(shop?.labor_rate)
+      || Number(shop?.default_labor_rate)
+      || DEFAULT_LABOR_RATE_FALLBACK
 
     const { data: lines } = await ctx.admin.from('so_lines').select('*').eq('so_id', woId)
     const { data: woParts } = await ctx.admin.from('wo_parts').select('*').eq('wo_id', woId)
@@ -91,25 +110,79 @@ async function _POST(req: Request) {
       return NextResponse.json({ error: error?.message || 'Failed' }, { status: 500 })
     }
 
+    // Build estimate_lines using ONLY columns that exist in the live schema:
+    //   estimate_id, description, labor_hours, labor_rate, labor_total,
+    //   parts_total, line_total, line_number.
+    // No line_type / quantity / unit_price / so_line_id / part_number column
+    // exists. Labor vs part is discriminated by amount fields. Part numbers
+    // are embedded into description.
     const estLines: any[] = []
+    let lineNumber = 1
     for (const line of lines || []) {
       if (line.line_type === 'labor') {
         const hrs = line.estimated_hours || line.billed_hours || line.actual_hours || 1
-        estLines.push({ estimate_id: est.id, line_type: 'labor', description: line.description, quantity: hrs, unit_price: laborRate, total: hrs * laborRate, so_line_id: line.id })
+        const amt = hrs * laborRate
+        estLines.push({
+          estimate_id: est.id,
+          description: line.description || '',
+          labor_hours: hrs,
+          labor_rate: laborRate,
+          labor_total: amt,
+          parts_total: 0,
+          line_total: amt,
+          line_number: lineNumber++,
+        })
       } else if (line.line_type === 'part' && (line.real_name || line.rough_name || line.description)) {
         const price = line.parts_sell_price || line.unit_price || 0
-        estLines.push({ estimate_id: est.id, line_type: 'part', description: line.real_name || line.rough_name || line.description, part_number: line.part_number, quantity: line.quantity || 1, unit_price: price, total: (line.quantity || 1) * price, so_line_id: line.id })
+        const qty = line.quantity || 1
+        const amt = qty * price
+        const baseDesc = line.real_name || line.rough_name || line.description
+        const desc = line.part_number ? `${baseDesc} - Part # ${line.part_number}` : baseDesc
+        estLines.push({
+          estimate_id: est.id,
+          description: desc,
+          labor_hours: 0,
+          labor_rate: 0,
+          labor_total: 0,
+          parts_total: amt,
+          line_total: amt,
+          line_number: lineNumber++,
+        })
       }
     }
     for (const part of woParts || []) {
-      estLines.push({ estimate_id: est.id, line_type: 'part', description: part.description, part_number: part.part_number || null, quantity: part.quantity || 1, unit_price: part.unit_cost || 0, total: (part.quantity || 1) * (part.unit_cost || 0), so_line_id: part.line_id || null })
+      const qty = part.quantity || 1
+      const price = part.unit_cost || 0
+      const amt = qty * price
+      const baseDesc = part.description || ''
+      const desc = part.part_number ? `${baseDesc} - Part # ${part.part_number}` : baseDesc
+      estLines.push({
+        estimate_id: est.id,
+        description: desc,
+        labor_hours: 0,
+        labor_rate: 0,
+        labor_total: 0,
+        parts_total: amt,
+        line_total: amt,
+        line_number: lineNumber++,
+      })
     }
-    if (estLines.length > 0) await ctx.admin.from('estimate_lines').insert(estLines)
+    if (estLines.length > 0) {
+      const { error: linesErr } = await ctx.admin.from('estimate_lines').insert(estLines)
+      if (linesErr) {
+        console.error('[estimates.create_from_wo] estimate_lines insert failed', { estimateId: est.id, error: linesErr.message })
+        return NextResponse.json({ error: `Estimate created but lines snapshot failed: ${linesErr.message}` }, { status: 500 })
+      }
+    }
 
-    const laborTotal = estLines.filter((l) => l.line_type === 'labor').reduce((sum, l) => sum + l.total, 0)
-    const partsTotal = estLines.filter((l) => l.line_type === 'part').reduce((sum, l) => sum + l.total, 0)
+    // Totals — read schema-aligned amount fields directly. Tax mirrors
+    // calcInvoiceTotals (parts-only when tax_labor=false; labor+parts when
+    // tax_labor=true) — same reducer the WO Estimate tab displays.
+    const laborTotal = estLines.reduce((sum, l) => sum + (Number(l.labor_total) || 0), 0)
+    const partsTotal = estLines.reduce((sum, l) => sum + (Number(l.parts_total) || 0), 0)
     const sub = laborTotal + partsTotal
-    const taxAmt = sub * (taxRate / 100)
+    const taxableAmount = partsTotal + (taxLabor ? laborTotal : 0)
+    const taxAmt = taxRate > 0 ? taxableAmount * (taxRate / 100) : 0
     const grandTotal = sub + taxAmt
 
     // Chain .select().single() so the response carries the post-update
