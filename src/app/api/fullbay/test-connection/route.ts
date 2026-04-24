@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server'
+import { requirePlatformOwner } from '@/lib/route-guards'
 import crypto from 'crypto'
 
+// GET /api/fullbay/test-connection — probe the shared Fullbay account from
+// the server. Platform-owner only: the response leaks the server's public
+// IP and Fullbay-config presence; not appropriate for normal users to probe.
 export async function GET() {
+  const { error: authError } = await requirePlatformOwner()
+  if (authError) return authError
+
   const key = process.env.FULLBAY_API_KEY
   if (!key) return NextResponse.json({ ok: false, error: 'FULLBAY_API_KEY not configured' })
 

@@ -252,8 +252,13 @@ export async function POST(req: Request) {
   }
 }
 
-// GET — get sync stats
+// GET — get sync stats. Platform-owner only: the body-supplied shop_id
+// returns counts/last-sync timestamp for arbitrary shops, so the actor must
+// prove platform-owner status on the server (matches the POST handler gate).
 export async function GET(req: Request) {
+  const { error: authError } = await requirePlatformOwner()
+  if (authError) return authError
+
   const s = db()
   const { searchParams } = new URL(req.url)
   const shopId = searchParams.get('shop_id')
