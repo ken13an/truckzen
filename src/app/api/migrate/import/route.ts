@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requirePlatformOwner } from '@/lib/route-guards'
 import * as Sentry from '@sentry/nextjs'
 import type { RawCustomer, RawVehicle, RawServiceOrder, RawInvoice, RawPart, RawTechnician } from '@/lib/services/connectors/base'
 import { mapSOStatus, mapInvoiceStatus, parseMoney, parseDate } from '@/lib/services/connectors/csv'
 
 function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+  return createAdminSupabaseClient()
 }
 
 const BATCH_SIZE = 50
@@ -662,14 +663,22 @@ async function importTechnicians(supabase: any, shopId: string, rows: RawTechnic
   return result
 }
 
-// ── MAIN HANDLER ────────────────────────────────────────────
+// POST /api/migrate/import — bulk cross-shop migration ingest.
+// Platform-owner only: the body-supplied shop_id drives service-role inserts
+// into customers/vehicles/service_orders/invoices/parts/technicians across
+// arbitrary shops, so the actor must prove platform-owner status on the
+// server. Body-supplied user_id is ignored for permission; migration_logs
+// uses the server-derived actor.id instead.
 export async function POST(req: Request) {
+  const { actor, error: authError } = await requirePlatformOwner()
+  if (authError || !actor) return authError!
+
   const supabase = db()
   let body: any = {}
 
   try {
     body = await req.json()
-    const { shop_id, user_id, source, data_type, rows, options = {} } = body
+    const { shop_id, source, data_type, rows, options = {} } = body
 
     if (!shop_id || !data_type || !Array.isArray(rows)) {
       return NextResponse.json({ error: 'shop_id, data_type, and rows[] are required' }, { status: 400 })
@@ -708,7 +717,7 @@ export async function POST(req: Request) {
     // Log the migration event
     await supabase.from('migration_logs').insert({
       shop_id,
-      user_id: user_id || null,
+      user_id: actor.id,
       source: source || 'csv_import',
       data_type,
       status: result.errors.length > 0 ? 'completed_with_errors' : 'completed',

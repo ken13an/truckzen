@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requirePlatformOwner } from '@/lib/route-guards'
 import { parse } from 'csv-parse/sync'
 
 function getSupabase() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+  return createAdminSupabaseClient()
 }
 
 // ── COLUMN NAME RESOLVER ────────────────────────────────────
@@ -67,7 +68,14 @@ function parseCSV(text: string): any[] {
 }
 
 // ── MAIN HANDLER ────────────────────────────────────────────
+// POST /api/import/fullbay — import CSV-exported Fullbay data into a shop.
+// Platform-owner only: the form-supplied shop_id is destructive (service-role
+// inserts across customers/assets/service_orders/invoices/parts), so the actor
+// must prove platform-owner status on the server before any write is permitted.
 export async function POST(req: Request) {
+  const { error: authError } = await requirePlatformOwner()
+  if (authError) return authError
+
   const supabase = getSupabase()
 
   try {
