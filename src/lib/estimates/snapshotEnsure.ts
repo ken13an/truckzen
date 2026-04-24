@@ -63,13 +63,42 @@ export async function ensureEstimateSnapshot(admin: any, estimateId: string): Pr
   const woId = (est as any).repair_order_id || (est as any).wo_id
   if (!woId) return { ok: false, reason: 'estimate_has_no_wo', created: 0, existed: 0 }
 
+  // WO ownership_type — needed for ownership-typed labor rate lookup. Mirrors
+  // page.tsx:826 EstimateTab logic so the snapshot's labor rate matches what
+  // the writer sees on the WO Estimate tab before sending.
+  const { data: woRow } = await admin
+    .from('service_orders')
+    .select('ownership_type, assets(ownership_type)')
+    .eq('id', woId)
+    .single()
+  const ownershipType = (woRow as any)?.ownership_type
+    || (woRow as any)?.assets?.ownership_type
+    || 'outside_customer'
+
+  // Shop config — tax_labor must be read so the snapshot's tax math
+  // matches calcInvoiceTotals (the same reducer the WO Estimate tab
+  // displays).
   const { data: shop } = await admin
     .from('shops')
-    .select('default_labor_rate, labor_rate, tax_rate, default_tax_rate')
+    .select('default_labor_rate, labor_rate, tax_rate, default_tax_rate, tax_labor')
     .eq('id', (est as any).shop_id)
     .single()
-  const laborRate = shop?.default_labor_rate || shop?.labor_rate || DEFAULT_LABOR_RATE_FALLBACK
-  const taxRate = shop?.tax_rate || shop?.default_tax_rate || 0
+
+  // Ownership-typed labor rate (preferred). Falls back to shop.labor_rate,
+  // then default_labor_rate, then the project fallback — same priority order
+  // as page.tsx:828.
+  const { data: ownershipRate } = await admin
+    .from('shop_labor_rates')
+    .select('rate_per_hour')
+    .eq('shop_id', (est as any).shop_id)
+    .eq('ownership_type', ownershipType)
+    .maybeSingle()
+  const laborRate = Number(ownershipRate?.rate_per_hour)
+    || Number(shop?.labor_rate)
+    || Number(shop?.default_labor_rate)
+    || DEFAULT_LABOR_RATE_FALLBACK
+  const taxRate = Number(shop?.tax_rate) || Number(shop?.default_tax_rate) || 0
+  const taxLabor = shop?.tax_labor === true
 
   const { data: lines } = await admin.from('so_lines').select('*').eq('so_id', woId)
   const { data: woParts } = await admin.from('wo_parts').select('*').eq('wo_id', woId)
@@ -152,13 +181,16 @@ export async function ensureEstimateSnapshot(admin: any, estimateId: string): Pr
     return { ok: false, reason: `insert_failed:${insertErr.message}`, created: 0, existed: 0 }
   }
 
-  // Totals: same formula as create_from_wo (sum labor + sum parts → tax →
-  // grand). Adapted to read labor_total / parts_total directly off the
-  // schema-aligned rows (no line_type discriminator needed).
+  // Totals — mirrors calcInvoiceTotals (the reducer the WO Estimate tab
+  // displays). Critical: tax respects shop.tax_labor exactly the same way
+  // (parts-only when taxLabor=false; labor+parts when taxLabor=true). Reads
+  // labor_total / parts_total directly off the schema-aligned rows (no
+  // line_type discriminator needed).
   const laborTotal = estLines.reduce((sum, l) => sum + (Number(l.labor_total) || 0), 0)
   const partsTotal = estLines.reduce((sum, l) => sum + (Number(l.parts_total) || 0), 0)
   const sub = laborTotal + partsTotal
-  const taxAmt = sub * (taxRate / 100)
+  const taxableAmount = partsTotal + (taxLabor ? laborTotal : 0)
+  const taxAmt = taxRate > 0 ? taxableAmount * (taxRate / 100) : 0
   const grandTotal = sub + taxAmt
 
   await admin
