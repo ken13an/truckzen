@@ -1,16 +1,22 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { SERVICE_PARTS_ROLES } from '@/lib/roles'
 
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+// Parts-lifecycle routes are shop-scoped operational tools. Body/query
+// shop_id is no longer trusted — shop scope comes from the server session.
+// Every write to part_installs / part_type_configs / part_vendor_prices is
+// constrained by `.eq('shop_id', shopId)` to prevent cross-shop mutation
+// through a stolen install_id / asset_id.
 
 export async function GET(req: Request) {
-  const s = db()
-  const { searchParams: p } = new URL(req.url)
-  const shopId = p.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
+  const s = createAdminSupabaseClient()
+  const { searchParams: p } = new URL(req.url)
   const view = p.get('view')
   const assetId = p.get('asset_id')
   const partType = p.get('part_type')
@@ -117,10 +123,15 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const s = db()
+  const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+
+  const s = createAdminSupabaseClient()
   const body = await req.json()
-  const { action, shop_id } = body
-  if (!shop_id || !action) return NextResponse.json({ error: 'shop_id and action required' }, { status: 400 })
+  const { action } = body
+  if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
 
   switch (action) {
     case 'install': {
@@ -128,15 +139,15 @@ export async function POST(req: Request) {
       // Mark previous active install of same type as replaced
       await s.from('part_installs')
         .update({ status: 'replaced', replaced_date: install_date || new Date().toISOString().split('T')[0], replaced_mileage: install_mileage, replaced_reason: 'scheduled_replacement' })
-        .eq('asset_id', asset_id).eq('part_type', part_type).eq('status', 'active')
+        .eq('shop_id', shopId).eq('asset_id', asset_id).eq('part_type', part_type).eq('status', 'active')
       // If position specified, only replace that position
       if (position) {
         await s.from('part_installs')
           .update({ status: 'replaced', replaced_date: install_date || new Date().toISOString().split('T')[0], replaced_mileage: install_mileage })
-          .eq('asset_id', asset_id).eq('part_type', part_type).eq('position', position).eq('status', 'active')
+          .eq('shop_id', shopId).eq('asset_id', asset_id).eq('part_type', part_type).eq('position', position).eq('status', 'active')
       }
       const { data, error } = await s.from('part_installs').insert({
-        shop_id, asset_id, part_type, part_number, brand, description, position,
+        shop_id: shopId, asset_id, part_type, part_number, brand, description, position,
         install_date: install_date || new Date().toISOString().split('T')[0],
         install_mileage: install_mileage || 0, install_hours: install_hours || 0,
         expected_life_mi, expected_life_days, cost: cost || 0, vendor,
@@ -145,8 +156,8 @@ export async function POST(req: Request) {
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
       // Deduct from inventory if part_id provided
       if (part_id) {
-        const { data: pt } = await s.from('parts').select('on_hand').eq('id', part_id).single()
-        if (pt) await s.from('parts').update({ on_hand: Math.max(0, (pt.on_hand || 0) - 1) }).eq('id', part_id)
+        const { data: pt } = await s.from('parts').select('on_hand, shop_id').eq('id', part_id).single()
+        if (pt && pt.shop_id === shopId) await s.from('parts').update({ on_hand: Math.max(0, (pt.on_hand || 0) - 1) }).eq('id', part_id).eq('shop_id', shopId)
       }
       return NextResponse.json(data, { status: 201 })
     }
@@ -156,7 +167,7 @@ export async function POST(req: Request) {
       await s.from('part_installs').update({
         status: 'replaced', replaced_date: new Date().toISOString().split('T')[0],
         replaced_mileage: mileage, replaced_reason: reason || 'replaced',
-      }).eq('id', install_id)
+      }).eq('id', install_id).eq('shop_id', shopId)
       return NextResponse.json({ ok: true })
     }
 
@@ -165,14 +176,14 @@ export async function POST(req: Request) {
       await s.from('part_installs').update({
         status: 'failed', replaced_date: new Date().toISOString().split('T')[0],
         replaced_mileage: mileage, replaced_reason: reason || 'failure', notes,
-      }).eq('id', install_id)
+      }).eq('id', install_id).eq('shop_id', shopId)
       return NextResponse.json({ ok: true })
     }
 
     case 'save_config': {
       const { part_type, display_name, category, default_life_mi, default_life_days, preferred_vendor, preferred_brand, preferred_pn, icon } = body
       const { error } = await s.from('part_type_configs').upsert({
-        shop_id, part_type, display_name, category, default_life_mi, default_life_days,
+        shop_id: shopId, part_type, display_name, category, default_life_mi, default_life_days,
         preferred_vendor, preferred_brand, preferred_pn, icon: icon || '', active: true,
       }, { onConflict: 'shop_id,part_type' })
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -181,7 +192,7 @@ export async function POST(req: Request) {
 
     case 'add_price': {
       const { part_type, part_number, brand, vendor, price, notes } = body
-      await s.from('part_vendor_prices').insert({ shop_id, part_type, part_number, brand, vendor, price, notes })
+      await s.from('part_vendor_prices').insert({ shop_id: shopId, part_type, part_number, brand, vendor, price, notes })
       return NextResponse.json({ ok: true })
     }
 

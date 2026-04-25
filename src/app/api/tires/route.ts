@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { SERVICE_PARTS_ROLES } from '@/lib/roles'
 
-function getSupabase() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+// Tire routes are shop-scoped operational tools. Body/query shop_id is no
+// longer trusted — shop scope comes from the server session. Every write to
+// the `tires` table by id is also constrained by `.eq('shop_id', shopId)`
+// to prevent cross-shop tire mutation through a stolen tire_id.
 
-// GET /api/tires?shop_id=...&asset_id=...&status=...
+// GET /api/tires?asset_id=...&status=...
 export async function GET(req: Request) {
-  const supabase = getSupabase()
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
+  const supabase = createAdminSupabaseClient()
+  const { searchParams } = new URL(req.url)
   const assetId = searchParams.get('asset_id')
   const status = searchParams.get('status') || 'active'
   const view = searchParams.get('view') // 'fleet' = grouped by asset
@@ -69,11 +74,16 @@ export async function GET(req: Request) {
 
 // POST /api/tires — create/update tire, log tread, log pressure, rotate, record failure
 export async function POST(req: Request) {
-  const supabase = getSupabase()
-  const body = await req.json()
-  const { action, shop_id } = body
+  const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
-  if (!shop_id || !action) return NextResponse.json({ error: 'shop_id and action required' }, { status: 400 })
+  const supabase = createAdminSupabaseClient()
+  const body = await req.json()
+  const { action } = body
+
+  if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
 
   switch (action) {
     case 'install': {
@@ -81,7 +91,7 @@ export async function POST(req: Request) {
       const qr = `TZ-TIRE-${Date.now().toString(36).toUpperCase()}`
       const legalMin = position?.startsWith('steer') ? 4.0 : 2.0
       const { data, error } = await supabase.from('tires').insert({
-        shop_id, asset_id, position, brand, model, size, dot_code, is_recap: is_recap || false, recap_vendor,
+        shop_id: shopId, asset_id, position, brand, model, size, dot_code, is_recap: is_recap || false, recap_vendor,
         install_date: new Date().toISOString().split('T')[0],
         install_mileage: install_mileage || 0, expected_life: expected_life || 100000,
         cost: cost || 0, vendor, current_tread: current_tread || 12,
@@ -92,25 +102,25 @@ export async function POST(req: Request) {
     }
 
     case 'log_tread': {
-      const { tire_id, tread_depth, mileage, measured_by } = body
-      await supabase.from('tire_tread_logs').insert({ tire_id, shop_id, tread_depth, mileage, measured_by })
-      await supabase.from('tires').update({ current_tread: tread_depth, updated_at: new Date().toISOString() }).eq('id', tire_id)
+      const { tire_id, tread_depth, mileage } = body
+      await supabase.from('tire_tread_logs').insert({ tire_id, shop_id: shopId, tread_depth, mileage, measured_by: ctx.actor.id })
+      await supabase.from('tires').update({ current_tread: tread_depth, updated_at: new Date().toISOString() }).eq('id', tire_id).eq('shop_id', shopId)
       return NextResponse.json({ ok: true })
     }
 
     case 'log_pressure': {
-      const { tire_id, asset_id, psi, target_psi, logged_by, dvir_id } = body
-      await supabase.from('tire_pressure_logs').insert({ tire_id, shop_id, asset_id, psi, target_psi: target_psi || 100, logged_by, dvir_id })
+      const { tire_id, asset_id, psi, target_psi, dvir_id } = body
+      await supabase.from('tire_pressure_logs').insert({ tire_id, shop_id: shopId, asset_id, psi, target_psi: target_psi || 100, logged_by: ctx.actor.id, dvir_id })
       return NextResponse.json({ ok: true })
     }
 
     case 'rotate': {
-      const { asset_id, mileage, rotated_by, moves, notes } = body
+      const { asset_id, mileage, moves, notes } = body
       // moves: [{ tire_id, from_position, to_position }]
       for (const m of moves || []) {
-        await supabase.from('tires').update({ position: m.to_position }).eq('id', m.tire_id)
+        await supabase.from('tires').update({ position: m.to_position }).eq('id', m.tire_id).eq('shop_id', shopId)
       }
-      await supabase.from('tire_rotations').insert({ shop_id, asset_id, mileage, rotated_by, moves, notes })
+      await supabase.from('tire_rotations').insert({ shop_id: shopId, asset_id, mileage, rotated_by: ctx.actor.id, moves, notes })
       return NextResponse.json({ ok: true })
     }
 
@@ -120,13 +130,13 @@ export async function POST(req: Request) {
       await supabase.from('tires').update({
         status, removed_date: new Date().toISOString().split('T')[0],
         removed_mileage, removal_reason, failure_notes, failure_photos: failure_photos || [],
-      }).eq('id', tire_id)
+      }).eq('id', tire_id).eq('shop_id', shopId)
       return NextResponse.json({ ok: true })
     }
 
     case 'add_price': {
       const { vendor, brand: b, model: m, size: sz, is_recap: recap, price, notes } = body
-      await supabase.from('tire_vendor_prices').insert({ shop_id, vendor, brand: b, model: m, size: sz, is_recap: recap || false, price, notes })
+      await supabase.from('tire_vendor_prices').insert({ shop_id: shopId, vendor, brand: b, model: m, size: sz, is_recap: recap || false, price, notes })
       return NextResponse.json({ ok: true })
     }
 
@@ -135,6 +145,7 @@ export async function POST(req: Request) {
       const { data } = await supabase.from('tires')
         .select('*, assets(unit_number, year, make, model, odometer), tire_tread_logs(tread_depth, mileage, measured_at), tire_pressure_logs(psi, logged_at)')
         .eq('qr_token', qr_token)
+        .eq('shop_id', shopId)
         .single()
       if (!data) return NextResponse.json({ error: 'Tire not found' }, { status: 404 })
       return NextResponse.json(data)

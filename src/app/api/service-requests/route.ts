@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { SERVICE_WRITE_ROLES } from '@/lib/roles'
 
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+// Service-request routes are shop-scoped operational tools (service-writer
+// check-in Path B). Body/query shop_id and user_id are no longer trusted —
+// shop scope and audit attribution come from the server session.
 
-// GET /api/service-requests?shop_id=...&status=...
+// GET /api/service-requests?status=...
 export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const ctx = await requireRouteContext([...SERVICE_WRITE_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
+  const s = createAdminSupabaseClient()
+  const { searchParams } = new URL(req.url)
   const status = searchParams.get('status')
 
   let q = s.from('service_requests')
@@ -29,14 +33,19 @@ export async function GET(req: Request) {
 
 // POST /api/service-requests — create, convert, schedule, or reject
 export async function POST(req: Request) {
-  const s = db()
+  const ctx = await requireRouteContext([...SERVICE_WRITE_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+
+  const s = createAdminSupabaseClient()
   const body = await req.json()
   const { action } = body
 
   // ── CREATE (service writer check-in Path B) ──
   if (action === 'create') {
-    const { shop_id, user_id, customer_id, new_customer, unit_id, new_unit, description, priority, internal_notes } = body
-    if (!shop_id || !description) return NextResponse.json({ error: 'shop_id and description required' }, { status: 400 })
+    const { customer_id, new_customer, unit_id, new_unit, description } = body
+    if (!description) return NextResponse.json({ error: 'description required' }, { status: 400 })
 
     let finalCustomerId = customer_id || null
     let finalAssetId = unit_id || null // UI sends assets.id as unit_id
@@ -48,7 +57,7 @@ export async function POST(req: Request) {
     // Create new customer if needed
     if (new_customer && !finalCustomerId) {
       const { data: cust, error: custErr } = await s.from('customers').insert({
-        shop_id,
+        shop_id: shopId,
         company_name: new_customer.company_name || 'Walk-in',
         contact_name: new_customer.contact_name || null,
         phone: new_customer.phone || null,
@@ -60,14 +69,15 @@ export async function POST(req: Request) {
       contactName = cust.contact_name || ''
       phone = cust.phone || ''
     } else if (finalCustomerId) {
-      const { data: c } = await s.from('customers').select('company_name, contact_name, phone').eq('id', finalCustomerId).single()
-      if (c) { companyName = c.company_name || ''; contactName = c.contact_name || ''; phone = c.phone || '' }
+      const { data: c } = await s.from('customers').select('company_name, contact_name, phone, shop_id').eq('id', finalCustomerId).single()
+      if (!c || c.shop_id !== shopId) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
+      companyName = c.company_name || ''; contactName = c.contact_name || ''; phone = c.phone || ''
     }
 
     // Create new asset if needed (UI fetches from assets table, so new units go there too)
     if (new_unit && !finalAssetId) {
       const { data: a, error: aErr } = await s.from('assets').insert({
-        shop_id,
+        shop_id: shopId,
         customer_id: finalCustomerId,
         unit_number: new_unit.unit_number || null,
         year: new_unit.year ? parseInt(new_unit.year) : null,
@@ -83,12 +93,13 @@ export async function POST(req: Request) {
       finalAssetId = a.id
       unitNumber = a.unit_number || ''
     } else if (finalAssetId) {
-      const { data: a } = await s.from('assets').select('unit_number').eq('id', finalAssetId).single()
-      if (a) unitNumber = a.unit_number || ''
+      const { data: a } = await s.from('assets').select('unit_number, shop_id').eq('id', finalAssetId).single()
+      if (!a || a.shop_id !== shopId) return NextResponse.json({ error: 'Unit not found' }, { status: 404 })
+      unitNumber = a.unit_number || ''
     }
 
     const { data: sr, error: srErr } = await s.from('service_requests').insert({
-      shop_id,
+      shop_id: shopId,
       customer_id: finalCustomerId,
       asset_id: finalAssetId,
       unit_number: unitNumber,
@@ -98,7 +109,7 @@ export async function POST(req: Request) {
       description,
       source: 'service_writer',
       check_in_type: 'service_writer',
-      created_by: user_id || 'service_writer',
+      created_by: ctx.actor.id,
       status: 'new',
     }).select().single()
 
@@ -107,11 +118,11 @@ export async function POST(req: Request) {
   }
 
   // ── CONVERT / SCHEDULE / REJECT ──
-  const { request_id, shop_id, user_id } = body
+  const { request_id } = body
   if (!request_id || !action) return NextResponse.json({ error: 'request_id and action required' }, { status: 400 })
 
   const { data: sr } = await s.from('service_requests').select('*').eq('id', request_id).single()
-  if (!sr) return NextResponse.json({ error: 'Request not found' }, { status: 404 })
+  if (!sr || sr.shop_id !== shopId) return NextResponse.json({ error: 'Request not found' }, { status: 404 })
 
   switch (action) {
     case 'convert': {
@@ -130,7 +141,7 @@ export async function POST(req: Request) {
         source: 'kiosk',
         priority: 'normal',
         status: 'draft',
-        advisor_id: user_id || null,
+        advisor_id: ctx.actor.id,
         workorder_lane: 'shop_internal',
         status_family: 'draft',
       }).select().single()
