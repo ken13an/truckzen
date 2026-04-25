@@ -2,12 +2,32 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { DEPARTMENT_PERMISSIONS } from '@/lib/permissionDefinitions'
 
+// Settings/permissions audience — same as src/app/settings/permissions/page.tsx
+// MANAGER_ROLES (the page that owns this UI). Kept inline because no canonical
+// constant in src/lib/roles.ts matches this exact set; src/lib/roles.ts is out
+// of scope for this patch.
+const PERMISSIONS_SETTINGS_ROLES = [
+  'owner', 'gm', 'it_person', 'shop_manager',
+  'parts_manager', 'maintenance_manager', 'office_admin',
+]
+
+function actorShopId(user: any): string | null {
+  return (user?.effective_shop_id as string) || (user?.shop_id as string) || null
+}
+
 export async function GET(req: Request, { params }: { params: Promise<{ shopId: string; department: string }> }) {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user.is_platform_owner && !PERMISSIONS_SETTINGS_ROLES.includes(user.role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { shopId, department } = await params
+
+  if (!user.is_platform_owner && actorShopId(user) !== shopId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   // Find the department definition to get employee roles
   const deptDef = DEPARTMENT_PERMISSIONS.find(d => d.department === department)
