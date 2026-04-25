@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 
 function getSupabase() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
-// Public endpoint — secured by shop token, not user auth
-// Used by cross-dept share link, external dispatch systems, customer portal
+// Dual-mode endpoint:
+//   - With ?token=, secured by the shop's share_token (cross-dept share link,
+//     external dispatch systems, customer portal). Public, no session needed.
+//   - Without a token, requires an authenticated session AND the requested
+//     shop_id must match the actor's effective shop. Prevents any authed
+//     user from probing arbitrary shops without a token.
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const shopId = searchParams.get('shop_id')
@@ -14,11 +19,19 @@ export async function GET(req: Request) {
 
   if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
 
-  // Verify token matches shop's share_token (set in shops table)
   if (token) {
+    // Public token path — verify token matches shop's share_token
     const { data: shop } = await getSupabase().from('shops').select('share_token').eq('id', shopId).single()
     if (!shop || shop.share_token !== token) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 403 })
+    }
+  } else {
+    // Session path — require authenticated actor and match actor shop
+    const actor = await getAuthenticatedUserProfile()
+    if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const actorShopId = getActorShopId(actor)
+    if (!actor.is_platform_owner && actorShopId !== shopId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
   }
 

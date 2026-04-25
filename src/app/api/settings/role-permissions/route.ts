@@ -1,20 +1,27 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { MANAGEMENT_ROLES } from '@/lib/roles'
 import { getCache, setCache } from '@/lib/cache'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
-
+// Role permissions read. Management-only: settings surface that reveals
+// what each role is allowed to do. Shop scope comes from the server session.
+// Query shop_id is no longer trusted.
 export async function GET(req: Request) {
+  const ctx = await requireRouteContext([...MANAGEMENT_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
   const role = searchParams.get('role')
-  if (!shopId || !role) return NextResponse.json([])
+  if (!role) return NextResponse.json([])
 
   const cacheKey = `role-perms:${shopId}:${role}`
   const cached = getCache<any>(cacheKey)
   if (cached) return NextResponse.json(cached)
 
-  const { data } = await db().from('role_permissions').select('module, allowed').eq('shop_id', shopId).eq('role', role).limit(100)
+  const { data } = await createAdminSupabaseClient().from('role_permissions').select('module, allowed').eq('shop_id', shopId).eq('role', role).limit(100)
   setCache(cacheKey, data || [], 120) // 2 min TTL
   return NextResponse.json(data || [])
 }

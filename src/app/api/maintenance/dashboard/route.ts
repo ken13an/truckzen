@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { WO_FULL_ACCESS_ROLES } from '@/lib/roles'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
-
+// Maintenance dashboard counts. Shop-scoped: actor must hold a
+// WO_FULL_ACCESS_ROLES role and shop scope comes from the server session.
+// Query shop_id is no longer trusted.
 export async function GET(req: Request) {
-  const s = db()
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+
+  const s = createAdminSupabaseClient()
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]

@@ -1,19 +1,28 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { WO_FULL_ACCESS_ROLES } from '@/lib/roles'
 import { safeRoute } from '@/lib/api-handler'
-
-function db() {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
 
 type P = { params: Promise<{ id: string }> }
 
+// Service-order audit/time/parts timeline. Auth-required and SO ownership
+// must match actor shop. Path id is no longer trusted to grant cross-shop
+// read.
 async function _GET(_req: Request, { params }: P) {
+  const ctx = await requireRouteContext([...WO_FULL_ACCESS_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+
   const { id } = await params
-  const s = db()
+  const s = createAdminSupabaseClient()
 
   const { data: so } = await s.from('service_orders').select('id, so_number, shop_id').eq('id', id).single()
   if (!so) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!ctx.actor.is_platform_owner && so.shop_id !== shopId) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
 
   const { data: logs } = await s
     .from('audit_log')

@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { SERVICE_PARTS_ROLES } from '@/lib/roles'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
-
+// Part purchase history. Shop-scoped: actor must hold a SERVICE_PARTS_ROLES
+// role and shop scope comes from the server session. Query shop_id is no
+// longer trusted.
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
-  if (!shopId) return NextResponse.json({ error: 'shop_id required' }, { status: 400 })
+  const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
+  const { searchParams } = new URL(req.url)
   const page = parseInt(searchParams.get('page') || '1')
   const perPage = Math.min(parseInt(searchParams.get('per_page') || '50'), 200)
   const search = searchParams.get('search') || ''
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
-  const s = db()
+  const s = createAdminSupabaseClient()
 
   let q = s
     .from('purchase_order_lines')
