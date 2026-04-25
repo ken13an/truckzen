@@ -21,14 +21,17 @@ function getQboConfig() {
 }
 
 // ── OAUTH FLOW ──────────────────────────────────────────────
-export function getAuthUrl(shopId: string): string {
+// `signedState` must come from signQboState() — it binds the QBO
+// authorize → callback round-trip to the actor + shop. Raw shopId is no
+// longer accepted as state.
+export function getAuthUrl(signedState: string): string {
   const { clientId, redirectUri } = getQboConfig()
   const params = new URLSearchParams({
     client_id:     clientId,
     response_type: 'code',
     scope:         'com.intuit.quickbooks.accounting',
     redirect_uri:  redirectUri,
-    state:         shopId,
+    state:         signedState,
   })
   return `${OAUTH_URL}?${params}`
 }
