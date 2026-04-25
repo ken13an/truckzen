@@ -1,22 +1,29 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { ASSIGNMENT_ROLES } from '@/lib/roles'
 import { safeRoute } from '@/lib/api-handler'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
-
+// Mechanic weekly-report read. Manager-level surface (productivity review).
+// Shop scope comes from the server session — query shop_id is no longer
+// trusted.
 async function _GET(req: Request) {
+  const ctx = await requireRouteContext([...ASSIGNMENT_ROLES])
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+
   const { searchParams } = new URL(req.url)
-  const shopId = searchParams.get('shop_id')
   const mechanicId = searchParams.get('mechanic_id')
   const from = searchParams.get('from')
   const to = searchParams.get('to')
 
-  let query = db()
+  let query = createAdminSupabaseClient()
     .from('mechanic_weekly_reports')
     .select('*, users:mechanic_id(id, full_name, email)')
+    .eq('shop_id', shopId)
     .order('week_start', { ascending: false })
 
-  if (shopId) query = query.eq('shop_id', shopId)
   if (mechanicId) query = query.eq('mechanic_id', mechanicId)
   if (from) query = query.gte('week_start', from)
   if (to) query = query.lte('week_end', to)

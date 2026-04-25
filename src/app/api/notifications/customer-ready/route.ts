@@ -2,13 +2,21 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
 import { rateLimit } from '@/lib/ratelimit/core'
+import { WO_FULL_ACCESS_ROLES } from '@/lib/roles'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
+// Customer-ready notification trigger. Authenticated WO_FULL_ACCESS_ROLES
+// actor required. The target work order must belong to the actor's shop —
+// without this gate, any authed user could spam SMS+email to any shop's
+// customers using the canonical WO id as a pivot.
 export async function POST(req: Request) {
   const supabase = await createServerSupabaseClient()
   const user = await getCurrentUser(supabase)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user.is_platform_owner && !WO_FULL_ACCESS_ROLES.includes(user.role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const burstLimit = await rateLimit('notify-user', user.id)
   if (!burstLimit.allowed) return NextResponse.json({ error: 'Too many notification requests' }, { status: 429 })
@@ -33,6 +41,13 @@ export async function POST(req: Request) {
     .single()
 
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
+
+  // Cross-shop guard: prevent spamming another shop's customer using a
+  // foreign WO id. 404 (not 403) so we don't leak whether the WO exists.
+  const actorShopId = (user as any).effective_shop_id || (user as any).shop_id || null
+  if (!user.is_platform_owner && (wo as any).shop_id !== actorShopId) {
+    return NextResponse.json({ error: 'WO not found' }, { status: 404 })
+  }
 
   const customer = wo.customers as any
   const asset = wo.assets as any

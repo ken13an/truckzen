@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabaseClient } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
+import { ASSIGNMENT_ROLES } from '@/lib/roles'
 import { safeRoute } from '@/lib/api-handler'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
+// Mechanic unplanned-job tracking. Self-service for the mechanic; supervisors
+// in ASSIGNMENT_ROLES may read another mechanic's history. shop_id is derived
+// from the server session — body/query mechanic_id and shop_id are no longer
+// trusted for permission.
 
 async function _GET(req: Request) {
+  const ctx = await requireRouteContext()
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+
   const { searchParams } = new URL(req.url)
   const mechanicId = searchParams.get('mechanic_id')
   const from = searchParams.get('from')
@@ -12,9 +22,27 @@ async function _GET(req: Request) {
 
   if (!mechanicId) return NextResponse.json({ error: 'mechanic_id required' }, { status: 400 })
 
-  let query = db()
+  // Self-read OR supervisor-read. Cross-mechanic queries require an
+  // assignment-level role.
+  const isSelf = mechanicId === ctx.actor.id
+  const isSupervisor = ctx.actor.is_platform_owner || ASSIGNMENT_ROLES.includes(ctx.actor.role)
+  if (!isSelf && !isSupervisor) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const s = createAdminSupabaseClient()
+
+  // Verify the target mechanic belongs to the actor's shop. 404 (not 403) so
+  // we don't leak whether a mechanic_id exists in another shop.
+  if (!ctx.actor.is_platform_owner) {
+    const { data: mech } = await s.from('users').select('id').eq('id', mechanicId).eq('shop_id', shopId).single()
+    if (!mech) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
+  let query = s
     .from('mechanic_unplanned_jobs')
     .select('*')
+    .eq('shop_id', shopId)
     .eq('mechanic_id', mechanicId)
     .order('created_at', { ascending: false })
 
@@ -28,18 +56,26 @@ async function _GET(req: Request) {
 }
 
 async function _POST(req: Request) {
-  const body = await req.json()
-  const { shop_id, mechanic_id, description, duration_minutes, category } = body
+  const ctx = await requireRouteContext()
+  if (ctx.error || !ctx.actor) return ctx.error!
+  const shopId = ctx.actor.effective_shop_id || ctx.actor.shop_id
+  if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
 
-  if (!shop_id || !mechanic_id || !description) {
-    return NextResponse.json({ error: 'shop_id, mechanic_id, and description are required' }, { status: 400 })
+  const body = await req.json()
+  const { description, duration_minutes, category } = body
+
+  if (!description) {
+    return NextResponse.json({ error: 'description required' }, { status: 400 })
   }
 
-  const { data, error } = await db()
+  // POST is self-only: only the mechanic can log their own unplanned job.
+  // shop_id and mechanic_id are derived from the session, not the body.
+  const s = createAdminSupabaseClient()
+  const { data, error } = await s
     .from('mechanic_unplanned_jobs')
     .insert({
-      shop_id,
-      mechanic_id,
+      shop_id: shopId,
+      mechanic_id: ctx.actor.id,
       description,
       duration_minutes: duration_minutes || null,
       category: category || null,
