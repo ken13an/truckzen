@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
 import { createClient } from '@supabase/supabase-js'
+import { assertPartsRequirementResolved } from '@/lib/parts-status'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 type P = { params: Promise<{ token: string }> }
@@ -50,6 +51,16 @@ async function handle(req: Request, { params }: P) {
 
   const { data: wo } = await s.from('service_orders').select('id, so_number').eq('portal_token', token).single()
   if (!wo) return htmlOrJson(req, 404, 'Not found or link expired', 'not_found')
+
+  // Parts-readiness gate — only on approve. Decline path is unchanged so
+  // customers can always reject. Portal uses a non-override actor role.
+  if (action === 'approve') {
+    const partsGate = await assertPartsRequirementResolved(s, wo.id, 'customer_portal')
+    if (!partsGate.ok) {
+      console.warn('[portal-supplement-respond] parts gate blocked', { woId: wo.id, supplementBatchId: batchId, failures: partsGate.failures })
+      return htmlOrJson(req, 422, 'Resolve parts decisions before approving this estimate.', 'parts_unresolved')
+    }
+  }
 
   const now = new Date().toISOString()
   const nextValue = action === 'approve' ? true : false

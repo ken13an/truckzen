@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { staffEstimateApprovedEmail } from '@/lib/emails/staffEstimateApproved'
 import { sendPushToUser } from '@/lib/services/notifications'
+import { assertPartsRequirementResolved } from '@/lib/parts-status'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 type P = { params: Promise<{ token: string }> }
@@ -15,6 +16,18 @@ export async function POST(req: Request, { params }: P) {
 
   const { data: wo } = await s.from('service_orders').select('id, so_number, shop_id, customer_id, created_by_user_id, grand_total, status').eq('portal_token', token).single()
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Parts-readiness gate — every non-canceled labor line must have a resolved
+  // parts_requirement before flipping any line/WO approval flags. Portal uses
+  // a non-override actor role so 'override'-labeled lines fail-safe to blocked.
+  const partsGate = await assertPartsRequirementResolved(s, wo.id, 'customer_portal')
+  if (!partsGate.ok) {
+    console.warn('[portal-estimate-approve] parts gate blocked', { woId: wo.id, failures: partsGate.failures })
+    return NextResponse.json({
+      error: 'Resolve parts decisions before approving this estimate.',
+      unresolved_lines: partsGate.failures,
+    }, { status: 422 })
+  }
 
   const now = new Date().toISOString()
   const woUpdate: Record<string, any> = {

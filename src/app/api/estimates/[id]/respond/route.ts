@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo, getStaffEmails } from '@/lib/services/email'
 import { safeRoute } from '@/lib/api-handler'
+import { assertPartsRequirementResolved } from '@/lib/parts-status'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -32,6 +33,22 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
 
   const now = new Date().toISOString()
   const { notes: customerNotes } = body
+
+  // Parts-readiness gate — block approve / approve_with_notes when any non-canceled
+  // labor line on the underlying WO has an unresolved parts_requirement. Decline
+  // is unchanged so customers can always reject. Portal context passes a non-
+  // override actor role so 'override'-labeled lines fail-safe to blocked unless
+  // staff with manager role re-runs the staff-side path. Mirrors 929f6a8.
+  if ((action === 'approve' || action === 'approve_with_notes') && estimate.repair_order_id) {
+    const partsGate = await assertPartsRequirementResolved(supabase, estimate.repair_order_id, 'customer_portal')
+    if (!partsGate.ok) {
+      console.warn('[estimate-respond] parts gate blocked', { estimateId: id, woId: estimate.repair_order_id, action, failures: partsGate.failures })
+      return NextResponse.json({
+        error: 'Resolve parts decisions before approving this estimate.',
+        unresolved_lines: partsGate.failures,
+      }, { status: 422 })
+    }
+  }
 
   if (action === 'approve') {
     await supabase.from('estimates').update({
