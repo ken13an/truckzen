@@ -13,11 +13,19 @@ const OAUTH_URL  = 'https://appcenter.intuit.com/connect/oauth2'
 const TOKEN_URL  = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer'
 
 function getQboConfig() {
-  return {
-    clientId: process.env.QBO_CLIENT_ID!,
-    clientSecret: process.env.QBO_CLIENT_SECRET!,
-    redirectUri: `${process.env.NEXT_PUBLIC_APP_URL}/api/integrations/qbo/callback`,
+  // Production env names are QUICKBOOKS_* (existing in Vercel). Local/dev
+  // setups may have used QBO_* — keep that as a fallback. Fail with a
+  // generic message if required values are absent (do not name which
+  // var is missing in user-facing errors; logs may name it).
+  const clientId = process.env.QUICKBOOKS_CLIENT_ID || process.env.QBO_CLIENT_ID
+  const clientSecret = process.env.QUICKBOOKS_CLIENT_SECRET || process.env.QBO_CLIENT_SECRET
+  const redirectUri = process.env.QUICKBOOKS_REDIRECT_URI
+    || process.env.QBO_REDIRECT_URI
+    || `${process.env.NEXT_PUBLIC_APP_URL}/api/integrations/qbo/callback`
+  if (!clientId || !clientSecret) {
+    throw new Error('QBO is not configured')
   }
+  return { clientId, clientSecret, redirectUri }
 }
 
 // ── OAUTH FLOW ──────────────────────────────────────────────
