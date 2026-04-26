@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
 import { rateLimit } from '@/lib/ratelimit/core'
-import { getRequestIp } from '@/lib/ratelimit/request-ip'
 
-// POST /api/ai/trucks-map — AI column mapping for truck import
+// POST /api/ai/trucks-map — AI column mapping for truck import.
+// Authenticated actor required. The route does not read any DB record, so
+// no shop_id derivation is needed beyond gating access (cost control +
+// abuse prevention). Smart-drop UI caller already runs authenticated; the
+// page is in middleware PUBLIC_PATHS but its own useEffect redirects to
+// /login when no session, so the fetch from the page carries the cookie.
 export async function POST(req: Request) {
-  // Route has no auth guard — key burst cap by IP.
-  const burstLimit = await rateLimit('ai-user', getRequestIp(req))
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+
+  const burstLimit = await rateLimit('ai-user', actor.id)
   if (!burstLimit.allowed) return NextResponse.json({ error: 'Too many AI requests' }, { status: 429 })
 
   const { headers: fileHeaders } = await req.json()

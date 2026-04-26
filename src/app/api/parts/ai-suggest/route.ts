@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthenticatedUserProfile, jsonError } from '@/lib/server-auth'
+import { rateLimit } from '@/lib/ratelimit/core'
 
-function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
-
+// POST /api/parts/ai-suggest — AI parts suggestion from a job description.
+// Authenticated actor required. The route does not read any DB record, so
+// shop_id derivation isn't needed; gating is for cost control + abuse
+// prevention.
 export async function POST(req: Request) {
+  const actor = await getAuthenticatedUserProfile()
+  if (!actor) return jsonError('Unauthorized', 401)
+
+  const burstLimit = await rateLimit('ai-user', actor.id)
+  if (!burstLimit.allowed) return jsonError('Too many AI requests', 429)
+
   const { job_description } = await req.json()
 
   if (!job_description || typeof job_description !== 'string' || job_description.trim().length === 0) {
