@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo, getStaffEmails } from '@/lib/services/email'
 import { safeRoute } from '@/lib/api-handler'
 import { assertPartsRequirementResolved } from '@/lib/parts-status'
+import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -13,6 +14,12 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
 
   if (!action || !token) return NextResponse.json({ error: 'action and token required' }, { status: 400 })
   if (!['approve', 'approve_with_notes', 'decline'].includes(action)) return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+
+  // Match the per-IP + per-token portal rate limit applied to all
+  // /api/portal/[token]/* routes. Without this, the public estimate-respond
+  // endpoint had no abuse cap.
+  const _rl = await checkPortalLimits(req, String(token))
+  if (_rl !== true) return _rl
 
   const supabase = db()
 

@@ -13,8 +13,12 @@ export async function GET(req: Request, { params }: P) {
   const { data: wo } = await s.from('service_orders').select('customer_id').eq('portal_token', token).single()
   if (!wo || !wo.customer_id) return NextResponse.json([])
 
+  // portal_token deliberately excluded from the response — exposing tokens
+  // for sibling WOs let any single valid portal link pivot to all of the
+  // customer's other tokens. The portal UI only renders so_number / status
+  // / complaint / grand_total / created_at / asset summary.
   const { data } = await s.from('service_orders')
-    .select('id, so_number, status, complaint, grand_total, created_at, portal_token, assets(unit_number, year, make, model)')
+    .select('id, so_number, status, complaint, grand_total, created_at, assets(unit_number, year, make, model)')
     .eq('customer_id', wo.customer_id)
     .is('deleted_at', null)
     .not('status', 'eq', 'void')
