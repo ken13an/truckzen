@@ -156,12 +156,22 @@ export async function POST(req: Request) {
     concern_text_original: concern_text_original || concern_text.trim(),
   })
 
-  // Generate AI job lines
+  // Generate AI job lines via signed internal call. /api/ai/action-items
+  // is gated for browser session OR HMAC; kiosk has no session so it must
+  // sign its server-to-server fetch with TRUCKZEN_INTERNAL_API_SECRET.
   try {
-    const aiRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/api/ai/action-items`, {
+    const aiPathname = '/api/ai/action-items'
+    const aiBody = JSON.stringify({ complaint: concern_text.trim(), shop_id })
+    const { signInternalRequest, INTERNAL_TS_HEADER, INTERNAL_SIG_HEADER } = await import('@/lib/internal-request-auth')
+    const { timestamp, signature } = signInternalRequest({ method: 'POST', pathname: aiPathname, rawBody: aiBody })
+    const aiRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}${aiPathname}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ complaint: concern_text.trim() }),
+      headers: {
+        'Content-Type': 'application/json',
+        [INTERNAL_TS_HEADER]: timestamp,
+        [INTERNAL_SIG_HEADER]: signature,
+      },
+      body: aiBody,
     })
     if (aiRes.ok) {
       const aiData = await aiRes.json()
