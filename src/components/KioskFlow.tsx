@@ -616,7 +616,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
     switch (step) {
       case 1: return !!(selectedCustomer || (showNewCustomer && newCustomer.company_name.trim()))
       case 2: return !!(selectedUnit || (showNewUnit && newUnit.unit_number.trim()))
-      case 3: return concernText.trim().length >= 10 && concernText.trim().split(/\s+/).length >= 3
+      case 3: return concernText.trim().length >= 5 && concernText.trim().split(/\s+/).length >= 2
       case 4: return staying !== null && !!parkedLocation.trim() && !!keysLeft && !!priority
       case 5: return !!needByDate && !!needByTime
       case 6: return !!(authType) && !!contactEmail.trim() && !!contactPhone.trim() && (authType === 'estimate_first' || authLimit !== null)
@@ -1071,7 +1071,7 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
               rows={4}
               style={{ ...inputStyle, minHeight: 120, maxHeight: 200, resize: 'vertical', overflow: 'auto' } as React.CSSProperties}
             />
-            {concernText.trim().length > 0 && (concernText.trim().length < 10 || concernText.trim().split(/\s+/).length < 3) && (
+            {concernText.trim().length > 0 && (concernText.trim().length < 5 || concernText.trim().split(/\s+/).length < 2) && (
               <div style={{ color: '#DC2626', fontSize: 13, marginTop: 8 }}>
                 {lang === 'es' ? 'Por favor describa con más detalle qué trabajo necesita su camión.' :
                  lang === 'ru' ? 'Пожалуйста, опишите подробнее какие работы нужны.' :
