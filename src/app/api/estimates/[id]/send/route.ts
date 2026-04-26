@@ -6,6 +6,7 @@ import { safeRoute } from '@/lib/api-handler'
 import { rateLimit } from '@/lib/ratelimit/core'
 import { generateEstimatePdf } from '@/lib/pdf/generateEstimatePdf'
 import { ensureEstimateSnapshot, validateEstimateSnapshot } from '@/lib/estimates/snapshotEnsure'
+import { assertPartsRequirementResolved } from '@/lib/parts-status'
 
 // CUSTOMER-SEND GATE
 //
@@ -89,6 +90,24 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
     return NextResponse.json({ error: `Cannot send: snapshot incomplete (${validation.reason})` }, { status: 422 })
   }
   console.info('[estimate-send] snapshot validation ok', { estimateId: id, laborCount: validation.laborCount, partCount: validation.partCount, grandTotal: validation.grandTotal })
+
+  // Parts-readiness gate — every non-canceled labor line on this WO must
+  // have a resolved parts_requirement (needed + priced child, customer_supplied
+  // with note, not_needed, override with role+note, or canonical labor-only).
+  // Mirrors the canonical predicate in src/lib/parts-status.ts so original and
+  // later-added job lines are validated by the same rule before customer send.
+  const repairOrderIdForGate = (estimate as any).repair_order_id || (estimate as any).wo_id
+  if (repairOrderIdForGate) {
+    const actorRole = ctx.actor.impersonate_role || ctx.actor.role
+    const partsGate = await assertPartsRequirementResolved(ctx.admin, repairOrderIdForGate, actorRole)
+    if (!partsGate.ok) {
+      console.warn('[estimate-send] parts gate blocked', { estimateId: id, woId: repairOrderIdForGate, failures: partsGate.failures })
+      return NextResponse.json({
+        error: 'Resolve parts decisions before sending this estimate.',
+        unresolved_lines: partsGate.failures,
+      }, { status: 422 })
+    }
+  }
 
   // RULE 7 step 3 — generate PDF (must succeed before email goes out).
   const pdfResult = await generateEstimatePdf(id)

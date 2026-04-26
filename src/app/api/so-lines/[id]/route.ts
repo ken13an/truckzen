@@ -1,5 +1,5 @@
 import { WO_FULL_ACCESS_ROLES, SERVICE_WRITE_ROLES, MECHANIC_ROLES } from '@/lib/roles'
-import { VALID_PARTS_STATUSES, VALID_LINE_STATUSES, PARTS_PICKUP_STATUS } from '@/lib/parts-status'
+import { VALID_PARTS_STATUSES, VALID_LINE_STATUSES, PARTS_PICKUP_STATUS, VALID_PARTS_REQUIREMENTS } from '@/lib/parts-status'
 import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
@@ -65,7 +65,7 @@ async function _PATCH(req: Request, { params }: P) {
   }
 
   // total_price is a generated column — never write it directly
-  const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name']
+  const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name', 'parts_requirement', 'parts_requirement_note']
   // Fields that must be numeric in the DB — coerce string→number and reject NaN
   // so the update never silently writes a bad value.
   const numericFields = new Set(['quantity', 'unit_price', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'parts_cost_price', 'parts_sell_price'])
@@ -98,6 +98,13 @@ async function _PATCH(req: Request, { params }: P) {
   if (update.parts_status !== undefined) {
     if (!(VALID_PARTS_STATUSES as readonly string[]).includes(update.parts_status)) {
       return NextResponse.json({ error: `Invalid parts_status "${update.parts_status}"` }, { status: 400 })
+    }
+  }
+
+  // Validate parts_requirement enum (null allowed to clear)
+  if (update.parts_requirement !== undefined && update.parts_requirement !== null) {
+    if (!(VALID_PARTS_REQUIREMENTS as readonly string[]).includes(update.parts_requirement)) {
+      return NextResponse.json({ error: `Invalid parts_requirement "${update.parts_requirement}"` }, { status: 400 })
     }
   }
 

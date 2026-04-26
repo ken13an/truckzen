@@ -4,6 +4,7 @@ import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 import { safeRoute } from '@/lib/api-handler'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { rateLimit } from '@/lib/ratelimit/core'
+import { assertPartsRequirementResolved } from '@/lib/parts-status'
 
 // Local inline predicate mirroring the canonical helper from source's
 // parts-status.ts. Kept local here so this route does not require editing
@@ -61,6 +62,22 @@ async function _POST(req: Request, { params }: P) {
     .eq('id', woId).single()
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
   if ((wo as any).shop_id !== (estimate as any).shop_id) return NextResponse.json({ error: 'WO/estimate shop mismatch' }, { status: 403 })
+
+  // Parts-readiness gate — every non-canceled labor line on this WO must have
+  // a resolved parts_requirement before the supplement goes to the customer.
+  // Same canonical predicate as the original Estimate 1 send so original and
+  // later-added (supplement) job lines are validated by the same rule.
+  {
+    const actorRole = ctx.actor.impersonate_role || ctx.actor.role
+    const partsGate = await assertPartsRequirementResolved(ctx.admin, woId, actorRole)
+    if (!partsGate.ok) {
+      console.warn('[supplement-send] parts gate blocked', { estimateId: id, woId, supplementBatchId, failures: partsGate.failures })
+      return NextResponse.json({
+        error: 'Resolve parts decisions before sending this estimate.',
+        unresolved_lines: partsGate.failures,
+      }, { status: 422 })
+    }
+  }
 
   // Pending lines in this batch.
   const { data: batchLines } = await ctx.admin.from('so_lines')
