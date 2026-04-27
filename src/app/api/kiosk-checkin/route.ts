@@ -113,8 +113,15 @@ export async function POST(req: Request) {
     ? { approval_status: 'needs_approval' as const, approval_required: true }
     : { approval_status: 'pre_approved' as const, approval_required: false }
 
-  // Create WO with atomic number generation + retry
+  // Create WO with atomic number generation + retry. Carry the same canonical
+  // intake truth that /api/work-orders/route.ts:248-266 writes — without it,
+  // downstream UI (work-order page banner, customer portal approval gate,
+  // automation engine) cannot decide owner-operator vs fleet behavior.
   const portalToken = crypto.randomUUID()
+  const kioskJobType = 'repair'
+  const kioskEstimateRequired =
+    (kioskOwnership === 'owner_operator' || kioskOwnership === 'outside_customer')
+      && !['diagnostic', 'full_inspection'].includes(kioskJobType)
   const { data: wo, error: woErr } = await insertServiceOrder(s, shop_id, {
     asset_id: finalUnitId || null,
     customer_id: finalCustomerId || null,
@@ -125,6 +132,9 @@ export async function POST(req: Request) {
     portal_token: portalToken,
     auth_type: auth_type || 'estimate_first',
     auth_limit: auth_limit || null,
+    ownership_type: kioskOwnership,
+    job_type: kioskJobType,
+    estimate_required: kioskEstimateRequired,
   })
 
   if (woErr) return NextResponse.json({ error: 'Failed to create WO: ' + woErr.message }, { status: 500 })

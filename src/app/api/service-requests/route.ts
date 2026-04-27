@@ -131,19 +131,39 @@ export async function POST(req: Request) {
       const year = new Date().getFullYear()
       const soNum = `SO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
 
-      // Create service order from request
+      // Snapshot ownership_type from the linked asset, same pattern as
+      // /api/work-orders/route.ts:235-245. Falls back to 'fleet_asset' if no
+      // asset is attached or asset has no ownership data.
+      let convertOwnership = 'fleet_asset'
+      if (sr.asset_id) {
+        const { data: assetData } = await s.from('assets').select('ownership_type, is_owner_operator').eq('id', sr.asset_id).single()
+        if (assetData?.ownership_type) convertOwnership = assetData.ownership_type
+        if (assetData?.is_owner_operator) convertOwnership = 'owner_operator'
+      }
+      const convertJobType = 'repair'
+      const convertEstimateRequired =
+        (convertOwnership === 'owner_operator' || convertOwnership === 'outside_customer')
+          && !['diagnostic', 'full_inspection'].includes(convertJobType)
+
+      // Create service order from request. source preserves the originating
+      // service_request.source ('service_writer' from the create branch) — was
+      // previously hardcoded to 'kiosk' which corrupted the audit trail.
       const { data: so, error: soErr } = await s.from('service_orders').insert({
         shop_id: sr.shop_id,
         so_number: soNum,
         asset_id: sr.asset_id || null,
         customer_id: sr.customer_id || null,
         complaint: sr.description,
-        source: 'kiosk',
+        source: sr.source || 'service_writer',
         priority: 'normal',
         status: 'draft',
         advisor_id: ctx.actor.id,
+        service_writer_id: ctx.actor.id,
         workorder_lane: 'shop_internal',
         status_family: 'draft',
+        ownership_type: convertOwnership,
+        job_type: convertJobType,
+        estimate_required: convertEstimateRequired,
       }).select().single()
 
       if (soErr) return NextResponse.json({ error: soErr.message }, { status: 500 })
