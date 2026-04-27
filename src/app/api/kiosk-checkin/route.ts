@@ -234,6 +234,8 @@ export async function POST(req: Request) {
           reference: checkinRef,
           portalLink: portalUrl,
           shop,
+          estimateExpected: kioskEstimateRequired,
+          concern: concern_text.trim(),
         })
         await sendEmail(contact_email, subject, html)
       } catch {}
