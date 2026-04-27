@@ -12,7 +12,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { COLORS } from '@/lib/config/colors'
 import CommandPalette from '@/components/CommandPalette'
 
-const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password', '/tech', '/offline', '/403', '/mechanic', '/floor-manager', '/platform-admin', '/register']
+const FULL_SCREEN = ['/login', '/setup', '/kiosk', '/pay', '/portal', '/waiting', '/forgot-password', '/reset-password', '/tech', '/offline', '/403', '/mechanic', '/floor-manager', '/platform-admin', '/register', '/privacy', '/terms']
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { tokens: t } = useTheme()
