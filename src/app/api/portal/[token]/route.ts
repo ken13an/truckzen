@@ -20,6 +20,7 @@ export async function GET(req: Request, { params }: P) {
       id, shop_id, so_number, status, complaint, priority, grand_total, created_at, updated_at,
       auth_type, auth_limit, approved_at, approved_by, portal_token,
       estimate_status, estimate_approved_date, estimate_declined_reason, estimate_created_date,
+      estimate_required, ownership_type, job_type,
       assets(id, unit_number, year, make, model, vin, odometer),
       customers(id, company_name, contact_name, phone, email),
       so_lines(id, line_type, description, quantity, unit_price, total_price, line_status, customer_approved, approved_at, is_additional, finding, resolution, estimated_hours, billed_hours),

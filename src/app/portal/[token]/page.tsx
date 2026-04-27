@@ -196,8 +196,15 @@ export default function CustomerPortalPage() {
   const grandTotal = wo.grand_total || (laborTotal + partsTotal + chargesTotal + tax)
 
   const vin = asset.vin || ''
-  const st = STATUS_MAP[wo.status] || STATUS_MAP.draft
-  const TABS = ['Status', 'Estimate', 'Pay', 'History']
+  const isDraft = wo.status === 'draft'
+  const hasEstimate = Boolean(wo.estimate_status) || Boolean(wo.estimate_created_date)
+  const hasApprovalTruth = Boolean(wo.approved_at) || Boolean(wo.estimate_approved_date)
+  const hasPricedWork = grandTotal > 0
+  const isUnreviewedIntake = isDraft && !hasEstimate && !hasApprovalTruth && !hasPricedWork
+  const st = isUnreviewedIntake
+    ? { label: 'Under review', color: AMBER }
+    : (STATUS_MAP[wo.status] || STATUS_MAP.draft)
+  const TABS = isUnreviewedIntake ? ['Status', 'History'] : ['Status', 'Estimate', 'Pay', 'History']
   const c = card(isMobile)
 
   return (
@@ -227,7 +234,7 @@ export default function CustomerPortalPage() {
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 16, flexWrap: 'wrap' }}>
           {TABS.map((t, i) => (
-            <button key={t} onClick={() => { setTab(i); if (i === 3 && history.length === 0) fetchHistory() }} style={{
+            <button key={t} onClick={() => { setTab(i); if (t === 'History' && history.length === 0) fetchHistory() }} style={{
               padding: isMobile ? '8px 12px' : '10px 16px',
               fontSize: isMobile ? 12 : 13,
               fontWeight: tab === i ? 700 : 400,
@@ -239,19 +246,27 @@ export default function CustomerPortalPage() {
           ))}
         </div>
 
-        {/* Tab 0: Status */}
-        {tab === 0 && (
+        {/* Tab: Status */}
+        {TABS[tab] === 'Status' && (
           <div>
-            {/* Progress */}
-            <div style={{ ...c }}>
-              <div style={{ fontSize: 13, color: MUTED, marginBottom: 8 }}>{completed} of {total} jobs completed</div>
-              <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: total > 0 ? `${(completed / total) * 100}%` : '0%', background: GREEN, borderRadius: 3, transition: 'width 0.3s' }} />
+            {isUnreviewedIntake ? (
+              <div style={{ ...c, border: `1px solid ${AMBER}40`, background: `${AMBER}10` }}>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Request received</div>
+                <div style={{ fontSize: 13, color: MUTED }}>
+                  Your request is under shop review. We'll notify you when an estimate or update is ready.
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ ...c }}>
+                <div style={{ fontSize: 13, color: MUTED, marginBottom: 8 }}>{completed} of {total} jobs completed</div>
+                <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: total > 0 ? `${(completed / total) * 100}%` : '0%', background: GREEN, borderRadius: 3, transition: 'width 0.3s' }} />
+                </div>
+              </div>
+            )}
 
             {/* Additional repairs alert */}
-            {additional.length > 0 && (
+            {!isUnreviewedIntake && additional.length > 0 && (
               <div style={{ ...c, border: `1px solid ${AMBER}40`, background: `${AMBER}10` }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: AMBER, marginBottom: 8 }}>Additional Repairs Recommended</div>
                 <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>Your technician found additional items that need attention.</div>
@@ -276,7 +291,7 @@ export default function CustomerPortalPage() {
             )}
 
             {/* Job list */}
-            {jobLines.map((l: any) => {
+            {!isUnreviewedIntake && jobLines.map((l: any) => {
               const ls = LINE_STATUS[l.line_status] || LINE_STATUS.unassigned
               return (
                 <div key={l.id} style={{ ...c, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -293,8 +308,8 @@ export default function CustomerPortalPage() {
           </div>
         )}
 
-        {/* Tab 1: Estimate */}
-        {tab === 1 && (
+        {/* Tab: Estimate */}
+        {TABS[tab] === 'Estimate' && (
           <div>
             {/* Estimate status section */}
             {wo.estimate_status === 'pending' && (
@@ -326,8 +341,8 @@ export default function CustomerPortalPage() {
                 <button onClick={() => setDeclineModal(true)} style={{ ...btn(BLUE, '#fff'), marginTop: 10 }}>Request New Estimate</button>
               </div>
             )}
-            {/* Fallback for legacy auth_type approach */}
-            {!wo.estimate_status && wo.auth_type === 'estimate_first' && !wo.approved_at && (
+            {/* Stricter fallback: only show approve when estimate truth exists (not just auth_type=estimate_first on a $0 draft) */}
+            {!wo.estimate_status && wo.estimate_required === true && hasPricedWork && !wo.approved_at && !isUnreviewedIntake && (
               <div style={{ ...c, border: `1px solid ${AMBER}40`, background: `${AMBER}10`, marginBottom: 16 }}>
                 <span style={pill(AMBER)}>Estimate Pending Approval</span>
                 <div style={{ display: 'flex', gap: 10, marginTop: 12, flexDirection: isMobile ? 'column' : 'row' }}>
@@ -391,7 +406,7 @@ export default function CustomerPortalPage() {
             </div>
 
             {/* Bottom approve button for pending estimates */}
-            {(wo.estimate_status === 'pending' || (!wo.estimate_status && wo.auth_type === 'estimate_first' && !wo.approved_at)) && (
+            {!isUnreviewedIntake && (wo.estimate_status === 'pending' || (!wo.estimate_status && wo.estimate_required === true && hasPricedWork && !wo.approved_at)) && (
               <div style={{ display: 'flex', gap: 10, marginTop: 8, flexDirection: isMobile ? 'column' : 'row' }}>
                 <button onClick={approveEstimate} disabled={!!actionLoading} style={btn(GREEN, '#fff', isMobile)}>
                   {actionLoading === 'approve' ? 'Approving...' : 'Approve Estimate'}
@@ -405,8 +420,8 @@ export default function CustomerPortalPage() {
           </div>
         )}
 
-        {/* Tab 2: Pay */}
-        {tab === 2 && (
+        {/* Tab: Pay */}
+        {TABS[tab] === 'Pay' && (
           <div style={c}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Payment</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
@@ -429,8 +444,8 @@ export default function CustomerPortalPage() {
           </div>
         )}
 
-        {/* Tab 3: History */}
-        {tab === 3 && (
+        {/* Tab: History */}
+        {TABS[tab] === 'History' && (
           <div>
             {history.length === 0 && <div style={{ ...c, textAlign: 'center', color: MUTED }}>No previous work orders</div>}
             {history.map((h: any) => {
