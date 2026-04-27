@@ -28,13 +28,14 @@ export async function GET(req: Request, { params }: P) {
   const s = db()
   const { customer_id, shop_id } = ctx
 
-  // Fetch all customer data in parallel
+  // Fetch all customer data in parallel — explicit field whitelists for the
+  // customer-facing My Data & Privacy modal. so_lines intentionally excluded.
   const [customerRes, contactsRes, unitsRes, ordersRes, invoicesRes] = await Promise.all([
-    s.from('customers').select('*').eq('id', customer_id).single(),
-    s.from('contacts').select('*').eq('customer_id', customer_id).is('deleted_at', null),
-    s.from('assets').select('*').eq('customer_id', customer_id).is('deleted_at', null),
-    s.from('service_orders').select('*, so_lines(*)').eq('customer_id', customer_id).eq('shop_id', shop_id).is('deleted_at', null).order('created_at', { ascending: false }),
-    s.from('invoices').select('*').eq('customer_id', customer_id).eq('shop_id', shop_id).is('deleted_at', null).order('created_at', { ascending: false }),
+    s.from('customers').select('id, company_name, contact_name, phone, email').eq('id', customer_id).single(),
+    s.from('contacts').select('id, name, phone, email').eq('customer_id', customer_id).is('deleted_at', null),
+    s.from('assets').select('id, unit_number, year, make, model, vin, license_plate').eq('customer_id', customer_id).is('deleted_at', null),
+    s.from('service_orders').select('id, so_number, status, complaint, grand_total, created_at, estimate_required, estimate_approved, estimate_status, auth_type, auth_limit, source').eq('customer_id', customer_id).eq('shop_id', shop_id).is('deleted_at', null).order('created_at', { ascending: false }),
+    s.from('invoices').select('id, invoice_number, total, status, sent_at, created_at').eq('customer_id', customer_id).eq('shop_id', shop_id).is('deleted_at', null).order('created_at', { ascending: false }),
   ])
 
   return NextResponse.json({

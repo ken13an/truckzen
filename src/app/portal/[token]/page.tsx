@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Logo from '@/components/Logo'
 import { Loader2 } from 'lucide-react'
+import { isIntakeSoSource } from '@/lib/services/serviceOrderSource'
 
 const FONT = "'Inter', -apple-system, sans-serif"
 const BG = '#151520', TEXT = '#EDEDF0', MUTED = '#8A8A9A'
@@ -529,17 +530,26 @@ export default function CustomerPortalPage() {
                   </div>
                 )}
 
-                {/* Recent service orders */}
+                {/* Recent requests */}
                 {myData.service_orders && myData.service_orders.length > 0 && (
                   <div style={{ ...card(isMobile), marginBottom: 12 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: MUTED }}>Recent Service Orders</div>
-                    {myData.service_orders.map((so: any, i: number) => (
-                      <div key={i} style={{ padding: '6px 0', borderBottom: i < myData.service_orders.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{so.so_number}</div>
-                        <div style={{ fontSize: 12, color: MUTED }}>{so.complaint?.slice(0, 80) || '-'}</div>
-                        <div style={{ fontSize: 11, color: MUTED }}>{so.created_at ? new Date(so.created_at).toLocaleDateString() : '-'} - {(STATUS_MAP[so.status] || STATUS_MAP.draft).label}</div>
-                      </div>
-                    ))}
+                    <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: MUTED }}>Recent Requests</div>
+                    {myData.service_orders.map((so: any, i: number) => {
+                      const unreviewed =
+                        so.status === 'draft' &&
+                        !so.estimate_status &&
+                        !so.estimate_approved &&
+                        (Number(so.grand_total) || 0) === 0 &&
+                        isIntakeSoSource(so.source)
+                      const statusLabel = unreviewed ? 'Under review' : (STATUS_MAP[so.status] || STATUS_MAP.draft).label
+                      return (
+                        <div key={i} style={{ padding: '6px 0', borderBottom: i < myData.service_orders.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                          <div style={{ fontSize: 13, fontWeight: 600 }}>{so.so_number}</div>
+                          <div style={{ fontSize: 12, color: MUTED }}>{unreviewed ? 'Pending shop review' : (so.complaint?.slice(0, 80) || '-')}</div>
+                          <div style={{ fontSize: 11, color: MUTED }}>{so.created_at ? new Date(so.created_at).toLocaleDateString() : '-'} - {statusLabel}</div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
 
