@@ -559,15 +559,17 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   // ---- Customer search (debounced) ----
   async function handleCustomerSearch(q: string) {
     setCustomerSearch(q)
-    if (q.length < 1 || !shopId) { setCustomerResults([]); return }
+    if (q.length < 1 || !kioskCode) { setCustomerResults([]); return }
     // Debounce 300ms to avoid race conditions on rapid typing
     if (customerSearchTimer.current) clearTimeout(customerSearchTimer.current)
     customerSearchTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/customers?shop_id=${shopId}&q=${encodeURIComponent(q)}&per_page=8`)
+        const res = await fetch(`/api/kiosk/customers?code=${encodeURIComponent(kioskCode)}&q=${encodeURIComponent(q)}&per_page=8`)
         if (res.ok) {
           const data = await res.json()
-          setCustomerResults(Array.isArray(data) ? data : data.data || [])
+          setCustomerResults(Array.isArray(data?.customers) ? data.customers : [])
+        } else {
+          console.warn('[Kiosk] Customer search non-OK:', res.status)
         }
       } catch (err) {
         console.error('[Kiosk] Customer search error:', err)
@@ -578,14 +580,16 @@ export default function KioskFlow({ shopId, shopName, kioskCode }: { shopId: str
   // ---- Unit search (debounced) ----
   async function handleUnitSearch(q: string) {
     setUnitSearch(q)
-    if (q.length < 1 || !shopId || !selectedCustomer) { setUnitResults([]); return }
+    if (q.length < 1 || !kioskCode || !selectedCustomer) { setUnitResults([]); return }
     if (unitSearchTimer.current) clearTimeout(unitSearchTimer.current)
     unitSearchTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/assets?shop_id=${shopId}&customer_id=${selectedCustomer.id}&q=${encodeURIComponent(q)}`)
+        const res = await fetch(`/api/kiosk/assets?code=${encodeURIComponent(kioskCode)}&customer_id=${encodeURIComponent(selectedCustomer.id)}&q=${encodeURIComponent(q)}`)
         if (res.ok) {
           const data = await res.json()
-          setUnitResults(Array.isArray(data) ? data : data.data || [])
+          setUnitResults(Array.isArray(data?.assets) ? data.assets : [])
+        } else {
+          console.warn('[Kiosk] Unit search non-OK:', res.status)
         }
       } catch (err) {
         console.error('[Kiosk] Unit search error:', err)
