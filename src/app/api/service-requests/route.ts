@@ -7,6 +7,20 @@ import { SERVICE_WRITE_ROLES } from '@/lib/roles'
 // check-in Path B). Body/query shop_id and user_id are no longer trusted —
 // shop scope and audit attribution come from the server session.
 
+// Map service_requests.source to a valid service_orders.source enum value
+// (Postgres enum so_source). The SR source field accepts free strings (e.g.
+// 'kiosk_checkin', 'service_writer'), but the SO enum only admits a fixed
+// set proven by other production write sites: 'kiosk' (kiosk-checkin route
+// at production baseline 0775997), 'walk_in' (work-orders create + draft),
+// 'fullbay', 'gps_auto', 'migration'. Map kiosk-originated requests to
+// 'kiosk' so the SO's source still reflects the customer-self-service
+// origin; everything else routes through 'walk_in' (the proven enum value
+// for service-writer-initiated intake). origin_service_request_id and
+// service_requests.source preserve the unmapped truth on the SR side.
+function srSourceToSoSource(srSource: string | null | undefined): 'kiosk' | 'walk_in' {
+  return srSource === 'kiosk_checkin' || srSource === 'kiosk' ? 'kiosk' : 'walk_in'
+}
+
 // GET /api/service-requests?status=...
 export async function GET(req: Request) {
   const ctx = await requireRouteContext([...SERVICE_WRITE_ROLES])
@@ -159,18 +173,19 @@ export async function POST(req: Request) {
         if (kc?.portal_token) portalTokenCarry = kc.portal_token
       }
 
-      // Create service order from request. source preserves the originating
-      // service_request.source ('service_writer' from the create branch) — was
-      // previously hardcoded to 'kiosk' which corrupted the audit trail.
-      // origin_service_request_id (added by 20260331_hulkmode1_schema.sql)
-      // closes the bidirectional audit trail with service_requests.converted_so_id.
+      // Create service order from request. source maps the SR's free-string
+      // source onto the live so_source enum via srSourceToSoSource (kiosk-
+      // originated SRs → 'kiosk'; everything else → 'walk_in'). The unmapped
+      // truth is still preserved on service_requests.source (unchanged here)
+      // and via origin_service_request_id (added by 20260331_hulkmode1_schema.sql)
+      // which closes the bidirectional audit trail with service_requests.converted_so_id.
       const { data: so, error: soErr } = await s.from('service_orders').insert({
         shop_id: sr.shop_id,
         so_number: soNum,
         asset_id: sr.asset_id || null,
         customer_id: sr.customer_id || null,
         complaint: sr.description,
-        source: sr.source || 'service_writer',
+        source: srSourceToSoSource(sr.source),
         priority: 'normal',
         status: 'draft',
         advisor_id: ctx.actor.id,
