@@ -202,10 +202,21 @@ export default function CustomerPortalPage() {
   const hasApprovalTruth = Boolean(wo.approved_at) || Boolean(wo.estimate_approved_date)
   const hasPricedWork = grandTotal > 0
   const isUnreviewedIntake = isDraft && !hasEstimate && !hasApprovalTruth && !hasPricedWork
+  // Portal visibility mode driven by customer-type signals already returned
+  // by /api/portal/[token]. fleet_asset and unknown ownership default to
+  // status-only for safety (legacy rows without ownership_type land here).
+  // Approve/Decline UI gates on portalMode === 'full'; backend action routes
+  // enforce the same predicate independently.
+  type PortalMode = 'pending' | 'status_only' | 'maintenance' | 'full'
+  let portalMode: PortalMode = 'status_only'
+  if (isUnreviewedIntake) portalMode = 'pending'
+  else if (wo.workorder_lane === 'maintenance_external') portalMode = 'maintenance'
+  else if (wo.ownership_type === 'owner_operator' || wo.ownership_type === 'outside_customer') portalMode = 'full'
+  else portalMode = 'status_only'
   const st = isUnreviewedIntake
     ? { label: 'Under review', color: AMBER }
     : (STATUS_MAP[wo.status] || STATUS_MAP.draft)
-  const TABS = isUnreviewedIntake ? ['Status', 'History'] : ['Status', 'Estimate', 'Pay', 'History']
+  const TABS = portalMode === 'full' ? ['Status', 'Estimate', 'Pay', 'History'] : ['Status', 'History']
   const c = card(isMobile)
 
   return (
@@ -267,7 +278,7 @@ export default function CustomerPortalPage() {
             )}
 
             {/* Additional repairs alert */}
-            {!isUnreviewedIntake && additional.length > 0 && (
+            {portalMode === 'full' && additional.length > 0 && (
               <div style={{ ...c, border: `1px solid ${AMBER}40`, background: `${AMBER}10` }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: AMBER, marginBottom: 8 }}>Additional Repairs Recommended</div>
                 <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>Your technician found additional items that need attention.</div>

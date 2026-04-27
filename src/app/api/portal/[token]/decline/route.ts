@@ -11,8 +11,18 @@ export async function POST(req: Request, { params }: P) {
   const s = db()
   const body = await req.json().catch(() => ({}))
 
-  const { data: wo } = await s.from('service_orders').select('id, so_number').eq('portal_token', token).single()
+  const { data: wo } = await s.from('service_orders').select('id, so_number, ownership_type, workorder_lane').eq('portal_token', token).single()
   if (!wo) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Customer-type guard — only owner_operator / outside_customer may call
+  // approve/decline; fleet_asset, unknown ownership, and maintenance_external
+  // are status-only.
+  const isPortalActionAllowed =
+    (wo.ownership_type === 'owner_operator' || wo.ownership_type === 'outside_customer') &&
+    wo.workorder_lane !== 'maintenance_external'
+  if (!isPortalActionAllowed) {
+    return NextResponse.json({ error: 'Not authorized for this portal action' }, { status: 403 })
+  }
 
   await s.from('service_orders').update({
     estimate_status: 'declined',
