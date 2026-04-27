@@ -13,7 +13,7 @@ const PUBLIC_FILE = /\.(.*)$/
 const PUBLIC_PATHS = [
   '/login', '/register', '/forgot-password', '/reset-password', '/privacy', '/terms', '/support', '/robots.txt',
   '/portal', '/pay', '/kiosk', '/smart-drop', '/accept-invite', '/api/health', '/api/auth/login', '/api/auth/2fa',
-  '/api/accept-invite', '/api/portal', '/api/pay', '/api/stripe/webhook', '/api/platform-admin/registrations',
+  '/api/accept-invite', '/api/portal', '/api/pay', '/api/kiosk', '/api/kiosk-checkin', '/api/stripe/webhook', '/api/platform-admin/registrations',
 ]
 
 function isPublicPath(pathname: string) {
