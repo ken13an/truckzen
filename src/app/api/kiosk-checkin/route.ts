@@ -163,8 +163,10 @@ export async function POST(req: Request) {
 
   // 2. Create service_requests Pending Request linked to the kiosk_checkins
   // row. The service writer will review and convert this to a real WO via
-  // /api/service-requests action='convert'.
-  const srPriority = priority === 'breakdown' ? 'critical' : priority === 'urgent' ? 'high' : 'normal'
+  // /api/service-requests action='convert'. The raw kiosk priority is kept
+  // on kiosk_checkins (above) — service_requests has no priority column in
+  // the live schema, so we don't write it here. Service writer can read it
+  // off kiosk_checkins at conversion if needed.
   const { data: sr, error: srErr } = await s.from('service_requests').insert({
     shop_id,
     customer_id: finalCustomerId || null,
@@ -177,7 +179,6 @@ export async function POST(req: Request) {
     source: 'kiosk_checkin',
     check_in_type: 'kiosk',
     status: 'new',
-    priority: srPriority,
     parking_location: parked_location || null,
     key_location: keys_left || null,
     kiosk_checkin_id: checkin.id,
