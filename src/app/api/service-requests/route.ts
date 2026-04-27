@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/server-auth'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { SERVICE_WRITE_ROLES } from '@/lib/roles'
+import { insertServiceOrder } from '@/lib/generateWoNumber'
+import { getDefaultLaborHours } from '@/lib/labor-hours'
+import { logAction } from '@/lib/services/auditLog'
 
 // Service-request routes are shop-scoped operational tools (service-writer
 // check-in Path B). Body/query shop_id and user_id are no longer trusted —
@@ -140,11 +143,6 @@ export async function POST(req: Request) {
 
   switch (action) {
     case 'convert': {
-      // Generate SO number
-      const { count } = await s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', sr.shop_id)
-      const year = new Date().getFullYear()
-      const soNum = `SO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
-
       // Snapshot ownership_type from the linked asset, same pattern as
       // /api/work-orders/route.ts:235-245. Falls back to 'fleet_asset' if no
       // asset is attached or asset has no ownership data.
@@ -158,6 +156,10 @@ export async function POST(req: Request) {
       const convertEstimateRequired =
         (convertOwnership === 'owner_operator' || convertOwnership === 'outside_customer')
           && !['diagnostic', 'full_inspection'].includes(convertJobType)
+      // Mirror normal /api/work-orders create: fleet_asset goes straight to
+      // in_progress; owner_operator / outside_customer goes to waiting_approval
+      // so the estimate-approval gate fires before mechanic assignment readies.
+      const convertStatus = convertOwnership === 'fleet_asset' ? 'in_progress' : 'waiting_approval'
 
       // If kiosk-originated, carry the customer's portal token onto the SO so
       // the customer's existing /portal/<token> link continues to work after
@@ -173,33 +175,34 @@ export async function POST(req: Request) {
         if (kc?.portal_token) portalTokenCarry = kc.portal_token
       }
 
-      // Create service order from request. source maps the SR's free-string
-      // source onto the live so_source enum via srSourceToSoSource (kiosk-
-      // originated SRs → 'kiosk'; everything else → 'walk_in'). The unmapped
-      // truth is still preserved on service_requests.source (unchanged here)
-      // and via origin_service_request_id (added by 20260331_hulkmode1_schema.sql)
-      // which closes the bidirectional audit trail with service_requests.converted_so_id.
-      const { data: so, error: soErr } = await s.from('service_orders').insert({
-        shop_id: sr.shop_id,
-        so_number: soNum,
+      // Create service order via the canonical helper used by /api/work-orders
+      // POST. This generates a real WO-NNNNNN number from the next_wo_number
+      // DB sequence (with retry on collision) and applies the canonical
+      // workorder_lane / status_family defaults — same path normal WO creation
+      // takes. source maps the SR's free-string source onto the live so_source
+      // enum via srSourceToSoSource. The unmapped truth is still preserved on
+      // service_requests.source (untouched here) and via origin_service_request_id
+      // (added by 20260331_hulkmode1_schema.sql) which closes the bidirectional
+      // audit trail with service_requests.converted_so_id.
+      const { data: so, error: soErr } = await insertServiceOrder(s, sr.shop_id, {
         asset_id: sr.asset_id || null,
         customer_id: sr.customer_id || null,
         complaint: sr.description,
         source: srSourceToSoSource(sr.source),
         priority: 'normal',
-        status: 'draft',
+        status: convertStatus,
+        submitted_at: new Date().toISOString(),
         advisor_id: ctx.actor.id,
         service_writer_id: ctx.actor.id,
-        workorder_lane: 'shop_internal',
-        status_family: 'draft',
+        created_by_user_id: ctx.actor.id,
         ownership_type: convertOwnership,
         job_type: convertJobType,
         estimate_required: convertEstimateRequired,
         portal_token: portalTokenCarry,
         origin_service_request_id: sr.id,
-      }).select().single()
+      })
 
-      if (soErr) return NextResponse.json({ error: soErr.message }, { status: 500 })
+      if (soErr || !so) return NextResponse.json({ error: soErr?.message ?? 'Failed to create work order' }, { status: 500 })
 
       // Insert customer-visible "Note from Customer" preserving the original
       // request text separate from any reviewed job lines. Fail-closed: if the
@@ -233,13 +236,20 @@ export async function POST(req: Request) {
           .slice(0, 25)
       }
       if (reviewedLinesClean.length > 0) {
+        // Mirror normal /api/work-orders create line defaults: lookup labor
+        // hours by description; gate approval by ownership type.
+        const lineApprovalDefaults = (convertOwnership === 'owner_operator' || convertOwnership === 'outside_customer')
+          ? { approval_status: 'needs_approval' as const, approval_required: true }
+          : { approval_status: 'pre_approved' as const, approval_required: false }
         const linesPayload = reviewedLinesClean.map(l => ({
           so_id: so.id,
           line_type: 'labor' as const,
           description: l.description,
           quantity: 0,
           unit_price: 0,
+          estimated_hours: getDefaultLaborHours(l.description),
           line_status: 'unassigned' as const,
+          ...lineApprovalDefaults,
         }))
         const { error: linesErr } = await s.from('so_lines').insert(linesPayload)
         if (linesErr) {
@@ -254,6 +264,23 @@ export async function POST(req: Request) {
       if (sr.kiosk_checkin_id) {
         await s.from('kiosk_checkins').update({ converted_so_id: so.id, status: 'converted' }).eq('id', sr.kiosk_checkin_id)
       }
+
+      // Same wo.created audit entry that normal /api/work-orders create writes,
+      // with extra detail about the converted SR origin so the audit trail
+      // distinguishes pending-request conversions from walk-in WO creations.
+      logAction({
+        shop_id: sr.shop_id,
+        user_id: ctx.actor.id,
+        action: 'wo.created',
+        entity_type: 'service_order',
+        entity_id: so.id,
+        details: {
+          so_number: so.so_number,
+          source: 'pending_request_convert',
+          origin_service_request_id: sr.id,
+          service_request_source: sr.source,
+        },
+      }).catch(() => {})
 
       return NextResponse.json({ ok: true, so_id: so.id, so_number: so.so_number })
     }
