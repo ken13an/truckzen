@@ -299,7 +299,7 @@ export default function WorkOrdersPage() {
                 const reqNumber = `REQ-${String(r.id || '').slice(0, 6).toUpperCase()}`
                 return (
                   <tr key={`pr-${r.id}`} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer', background: 'var(--tz-warningBg)' }}
-                    onClick={() => { window.location.href = '/service-requests' }}
+                    onClick={() => { window.location.href = `/service-requests/${r.id}` }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--tz-bgHover)' }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'var(--tz-warningBg)' }}>
                     {canBulkVoid && <td style={{ padding: '10px 6px 10px 12px', width: 32 }} onClick={e => e.stopPropagation()}>
