@@ -864,6 +864,26 @@ export default function WorkOrderDetail() {
   const fmt = (n: number) => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return d } }
 
+  // Display-only predicate: customer-intake WO that has not yet been
+  // service-reviewed. Uses fields already persisted by /api/kiosk-checkin
+  // (source='kiosk') and /api/service-requests convert (source='service_writer').
+  // Does NOT mutate any data; gates only WO-detail presentation.
+  const intakeSources = new Set(['kiosk', 'service_writer', 'portal'])
+  const isUnreviewedIntake =
+    !wo.is_historical &&
+    wo.status === 'draft' &&
+    intakeSources.has(wo.source) &&
+    !wo.estimate_status &&
+    !wo.estimate_approved &&
+    grandTotal === 0
+  const intakeSourceLabel = wo.source === 'kiosk'
+    ? 'Kiosk Intake'
+    : wo.source === 'service_writer'
+      ? 'Service Request Intake'
+      : wo.source === 'portal'
+        ? 'Portal Intake'
+        : 'Customer Intake'
+
   // RENDER
   return (
     <div style={{ fontFamily: FONT, color: 'var(--tz-text)', background: 'var(--tz-bgCard)', minHeight: '100vh', maxWidth: 960, margin: '0 auto', padding: 'clamp(10px, 3vw, 20px)' }}>
@@ -887,13 +907,39 @@ export default function WorkOrderDetail() {
         </div>
       )}
 
+      {/* CUSTOMER INTAKE BANNER — display-only, gated by isUnreviewedIntake */}
+      {isUnreviewedIntake && (
+        <div style={{ background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)', borderRadius: 10, padding: '14px 16px', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: AMBER, textTransform: 'uppercase', letterSpacing: '.04em' }}>Customer Requested Work</span>
+            <span style={pillStyle('var(--tz-warningBg)', AMBER)}>Needs Service Review</span>
+            <span style={pillStyle('var(--tz-bgHover)', GRAY)}>{intakeSourceLabel}</span>
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--tz-text)', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {wo.complaint || <span style={{ color: GRAY, fontStyle: 'italic' }}>No request text on file</span>}
+          </div>
+          {jobLines.length === 0 && (
+            <div style={{ fontSize: 12, color: GRAY, marginTop: 8, fontStyle: 'italic' }}>
+              No reviewed job lines yet. Use Add Job Line below to confirm scope before estimating.
+            </div>
+          )}
+        </div>
+      )}
+
       <WOHeader>
       {/* HEADER */}
       <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, borderBottom: `2px solid ${'var(--tz-border)'}` }}>
         <div style={{ flex: 1, minWidth: 200 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <span style={{ fontSize: 26, fontWeight: 800 }}>{wo.so_number || ('WO-' + wo.id?.slice(0, 6))}</span>
-            <span style={pillStyle(woStatus.bg, woStatus.color)}>{woStatus.label}</span>
+            {isUnreviewedIntake ? (
+              <>
+                <span style={pillStyle('var(--tz-warningBg)', AMBER)}>Customer Intake — Needs Review</span>
+                <span style={pillStyle('var(--tz-bgHover)', GRAY)}>{intakeSourceLabel}</span>
+              </>
+            ) : (
+              <span style={pillStyle(woStatus.bg, woStatus.color)}>{woStatus.label}</span>
+            )}
             <SourceBadge source={wo.source} />
             {wo.payment_terms === 'cod' && <span style={pillStyle('var(--tz-dangerBg)', RED)}>COD</span>}
             {wo.invoice_status && wo.invoice_status !== 'draft' && (() => {
@@ -1311,7 +1357,7 @@ export default function WorkOrderDetail() {
               if (line.is_additional === true && line.customer_approved === false) return { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
               if (line.approval_status === 'declined') return { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
               if (line.is_additional === true && line.customer_approved == null) return { label: 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
-              if (!line.is_additional && !wo.estimate_approved && (line.approval_status === 'needs_approval' || line.approval_status === 'pending')) return { label: 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
+              if (!line.is_additional && !wo.estimate_approved && (line.approval_status === 'needs_approval' || line.approval_status === 'pending')) return { label: isUnreviewedIntake ? 'PENDING REVIEW' : 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
               if (line.is_additional === true && line.customer_approved === true) return { label: 'APPROVED', bg: 'var(--tz-accentBg)', color: BLUE }
               if (!line.is_additional && wo.estimate_approved) return { label: 'APPROVED', bg: 'var(--tz-successBg)', color: GREEN }
               if (line.approval_status === 'approved') return { label: 'APPROVED', bg: 'var(--tz-successBg)', color: GREEN }
@@ -1324,7 +1370,7 @@ export default function WorkOrderDetail() {
               ? lineAssignments.map((a: any) => a.users?.full_name || 'Unknown').join(', ')
               : 'Unassigned'
             const estHoursCompact = line.estimated_hours || 0
-            const isWaitingOrDeclined = primary.label === 'WAITING FOR APPROVAL' || primary.label === 'DECLINED'
+            const isWaitingOrDeclined = primary.label === 'WAITING FOR APPROVAL' || primary.label === 'PENDING REVIEW' || primary.label === 'DECLINED'
             // Display-only splitter for merged concern descriptions. Splits
             // by newline, " + " (merge-helper output), and " • " preview.
             // Falls back to a single item. Stored description is not mutated.
@@ -1369,7 +1415,7 @@ export default function WorkOrderDetail() {
                         {concernItems.length} concerns
                       </span>
                     )}
-                    {estHoursCompact > 0 && (
+                    {estHoursCompact > 0 && !isUnreviewedIntake && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}`, marginLeft: 'auto' }}>
                         Est {estHoursCompact}h
                       </span>
@@ -1526,7 +1572,7 @@ export default function WorkOrderDetail() {
                 })()}
 
                 {/* AI Parts Suggestion Bar */}
-                {!wo.is_historical && !isViewOnly && line.description && line.description.length >= 10 && (
+                {!wo.is_historical && !isViewOnly && !isUnreviewedIntake && line.description && line.description.length >= 10 && (
                   <>
                     {!aiSuggestions[line.id] && aiLoadingLine !== line.id && (
                       <button onClick={() => fetchAiSuggestions(line.id, line.description)} style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '8px 12px', marginBottom: 10, background: 'var(--tz-aiPurpleBg)', border: `1px solid ${'var(--tz-aiPurple)'}`, borderRadius: 8, color: 'var(--tz-aiPurple)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
@@ -1716,8 +1762,9 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* Get Approval — only show when estimate required and NOT yet approved */}
-          {!wo.is_historical && wo.estimate_required && !wo.estimate_approved && (
+          {/* Get Approval — only show when estimate required and NOT yet approved.
+              Suppressed for unreviewed customer intake (no real estimate yet). */}
+          {!wo.is_historical && !isUnreviewedIntake && wo.estimate_required && !wo.estimate_approved && (
             <div style={{ textAlign: 'right', marginTop: 8 }}>
               <button onClick={() => setApprovalModal({ kind: 'estimate_1' })} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
                 <DollarSign size={14} /> Get Approval
