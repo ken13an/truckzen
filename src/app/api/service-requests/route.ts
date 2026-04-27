@@ -204,7 +204,35 @@ export async function POST(req: Request) {
         }
       }
 
-      // Update request status (only after note succeeded)
+      // Optional reviewed-lines payload from the new Pending Request review
+      // page. The existing /service-requests queue page convert button does
+      // NOT send this — convert remains backward compatible (no lines created
+      // when the field is absent). Server-side validation: array shape, each
+      // item has a non-empty trimmed description, hard caps on count + length.
+      const rawReviewedLines = (body as any)?.reviewed_lines
+      let reviewedLinesClean: Array<{ description: string }> = []
+      if (Array.isArray(rawReviewedLines)) {
+        reviewedLinesClean = rawReviewedLines
+          .map((l: any) => ({ description: typeof l?.description === 'string' ? l.description.trim().slice(0, 500) : '' }))
+          .filter(l => l.description.length > 0)
+          .slice(0, 25)
+      }
+      if (reviewedLinesClean.length > 0) {
+        const linesPayload = reviewedLinesClean.map(l => ({
+          so_id: so.id,
+          line_type: 'labor' as const,
+          description: l.description,
+          quantity: 0,
+          unit_price: 0,
+          line_status: 'unassigned' as const,
+        }))
+        const { error: linesErr } = await s.from('so_lines').insert(linesPayload)
+        if (linesErr) {
+          return NextResponse.json({ error: 'Failed to create reviewed job lines: ' + linesErr.message }, { status: 500 })
+        }
+      }
+
+      // Update request status (only after note + reviewed lines succeeded)
       await s.from('service_requests').update({ status: 'converted', converted_so_id: so.id }).eq('id', request_id)
 
       // Also update the kiosk_checkin if linked

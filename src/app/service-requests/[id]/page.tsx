@@ -45,6 +45,10 @@ export default function PendingRequestReviewPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [converting, setConverting] = useState(false)
   const [convertError, setConvertError] = useState('')
+  // Reviewed job lines the service writer enters before conversion. The
+  // customer's original request stays as a Note from Customer; reviewed
+  // lines become the operational so_lines on the new WO.
+  const [reviewedLines, setReviewedLines] = useState<Array<{ description: string }>>([{ description: '' }])
 
   useEffect(() => {
     let cancelled = false
@@ -70,6 +74,10 @@ export default function PendingRequestReviewPage() {
             return
           }
           setRequest(found)
+          // Seed the first reviewed-line input with the customer's text as a
+          // starting point. Service writer is expected to edit/normalize.
+          const seed = String(found.description || '').trim()
+          if (seed) setReviewedLines([{ description: seed }])
           if (found.status === 'converted') setStatus('converted')
           else if (found.status === 'rejected') setStatus('rejected')
           else setStatus('ready')
@@ -89,6 +97,18 @@ export default function PendingRequestReviewPage() {
 
   async function convertToWorkOrder() {
     if (!user || !request || converting) return
+    // Build the reviewed-lines payload. Convert is blocked client-side if
+    // the service writer has not entered at least one reviewed line; this
+    // is enforced only on the new review page (the existing /service-requests
+    // queue page convert button continues to call without reviewed_lines and
+    // remains backward-compatible).
+    const cleaned = reviewedLines
+      .map(l => ({ description: String(l.description || '').trim() }))
+      .filter(l => l.description.length > 0)
+    if (cleaned.length === 0) {
+      setConvertError('Add at least one reviewed job line before converting.')
+      return
+    }
     setConverting(true)
     setConvertError('')
     try {
@@ -100,6 +120,7 @@ export default function PendingRequestReviewPage() {
           request_id: request.id,
           shop_id: user.shop_id,
           user_id: user.id,
+          reviewed_lines: cleaned,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -198,12 +219,60 @@ export default function PendingRequestReviewPage() {
             </div>
           </div>
 
+          {/* Reviewed job lines — service writer enters/normalizes the actual
+              operational lines that will be created on the WO at conversion */}
+          {status === 'ready' && (
+            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 16, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 6 }}>Reviewed Job Lines</div>
+              <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 12, lineHeight: 1.5 }}>
+                These reviewed lines will become WO job lines. The original customer request stays preserved as Note from Customer.
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {reviewedLines.map((line, idx) => (
+                  <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <textarea
+                      value={line.description}
+                      onChange={e => setReviewedLines(prev => prev.map((l, i) => i === idx ? { description: e.target.value } : l))}
+                      placeholder={`Job line ${idx + 1} (e.g. replace front-left tire)`}
+                      rows={2}
+                      style={{
+                        flex: 1, padding: 10, fontSize: 13, fontFamily: 'inherit', borderRadius: 8,
+                        border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bg)', color: 'var(--tz-text)',
+                        resize: 'vertical', minHeight: 44,
+                      }}
+                    />
+                    {reviewedLines.length > 1 && (
+                      <button
+                        onClick={() => setReviewedLines(prev => prev.filter((_, i) => i !== idx))}
+                        style={{
+                          padding: '6px 12px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`,
+                          background: 'var(--tz-bgCard)', color: 'var(--tz-textSecondary)', fontSize: 12, fontWeight: 600,
+                          cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
+                        }}>
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setReviewedLines(prev => [...prev, { description: '' }])}
+                style={{
+                  marginTop: 10, padding: '6px 14px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`,
+                  background: 'var(--tz-bgCard)', color: 'var(--tz-text)', fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}>
+                + Add Line
+              </button>
+            </div>
+          )}
+
           {/* Convert action */}
           {status === 'ready' && (
             <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, padding: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', marginBottom: 6 }}>Convert to Work Order</div>
               <div style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginBottom: 12, lineHeight: 1.5 }}>
-                Creates a real work order from this request. The customer's original text is kept as a Note from Customer on the new work order. You can normalize and add reviewed job lines after conversion.
+                Creates a real work order from this request with the reviewed job lines above. The customer's original text is kept as a Note from Customer on the new work order.
               </div>
               <button
                 onClick={convertToWorkOrder}
