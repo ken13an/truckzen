@@ -22,6 +22,7 @@ import { SERVICE_WRITE_ROLES, ACCOUNTING_ROLES } from '@/lib/roles'
 import { useTheme } from '@/hooks/useTheme'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import { THEME } from '@/lib/config/colors'
+import { isIntakeSoSource, intakeSourceLabel } from '@/lib/services/serviceOrderSource'
 
 const KNOWN_REPAIR_WORDS = ['oil', 'brake', 'engine', 'tire', 'tyre', 'pm', 'service', 'inspect', 'replace', 'repair', 'check', 'fix', 'leak', 'light', 'lamp', 'filter', 'belt', 'hose', 'cool', 'heat', 'ac', 'air', 'fuel', 'exhaust', 'trans', 'clutch', 'steer', 'align', 'suspen', 'shock', 'spring', 'weld', 'body', 'frame', 'door', 'window', 'mirror', 'wiper', 'horn', 'def', 'dpf', 'egr', 'turbo', 'alternator', 'starter', 'battery', 'charge', 'electric', 'wire', 'fuse', 'sensor', 'valve', 'pump', 'compressor', 'radiator', 'thermostat', 'diagnostic', 'dot', 'annual', 'wheel', 'hub', 'axle', 'drive', 'shaft', 'bearing', 'seal', 'gasket', 'mount', 'install', 'remove', 'adjust', 'bleed', 'flush', 'change', 'swap', 'lube', 'grease', 'paint', 'cab', 'fender', 'bumper', 'hood', 'trailer', 'fifth', 'glad', 'slack', 'drum', 'rotor', 'pad', 'shoe', 'caliper', 'abs', 'preventive', 'maintenance', 'full inspection', 'safety']
 
@@ -865,24 +866,17 @@ export default function WorkOrderDetail() {
   const fmtDate = (d: string) => { try { return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return d } }
 
   // Display-only predicate: customer-intake WO that has not yet been
-  // service-reviewed. Uses fields already persisted by /api/kiosk-checkin
-  // (source='kiosk') and /api/service-requests convert (source='service_writer').
-  // Does NOT mutate any data; gates only WO-detail presentation.
-  const intakeSources = new Set(['kiosk', 'service_writer', 'portal'])
+  // service-reviewed. Source classification comes from the canonical helper
+  // at @/lib/services/serviceOrderSource. Does NOT mutate any data;
+  // gates only WO-detail presentation.
   const isUnreviewedIntake =
     !wo.is_historical &&
     wo.status === 'draft' &&
-    intakeSources.has(wo.source) &&
+    isIntakeSoSource(wo.source) &&
     !wo.estimate_status &&
     !wo.estimate_approved &&
     grandTotal === 0
-  const intakeSourceLabel = wo.source === 'kiosk'
-    ? 'Kiosk Intake'
-    : wo.source === 'service_writer'
-      ? 'Service Request Intake'
-      : wo.source === 'portal'
-        ? 'Portal Intake'
-        : 'Customer Intake'
+  const intakeSourceDisplayLabel = intakeSourceLabel(wo.source)
 
   // RENDER
   return (
@@ -913,7 +907,7 @@ export default function WorkOrderDetail() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 13, fontWeight: 800, color: AMBER, textTransform: 'uppercase', letterSpacing: '.04em' }}>Customer Requested Work</span>
             <span style={pillStyle('var(--tz-warningBg)', AMBER)}>Needs Service Review</span>
-            <span style={pillStyle('var(--tz-bgHover)', GRAY)}>{intakeSourceLabel}</span>
+            <span style={pillStyle('var(--tz-bgHover)', GRAY)}>{intakeSourceDisplayLabel}</span>
           </div>
           <div style={{ fontSize: 14, color: 'var(--tz-text)', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             {wo.complaint || <span style={{ color: GRAY, fontStyle: 'italic' }}>No request text on file</span>}
@@ -935,7 +929,7 @@ export default function WorkOrderDetail() {
             {isUnreviewedIntake ? (
               <>
                 <span style={pillStyle('var(--tz-warningBg)', AMBER)}>Customer Intake — Needs Review</span>
-                <span style={pillStyle('var(--tz-bgHover)', GRAY)}>{intakeSourceLabel}</span>
+                <span style={pillStyle('var(--tz-bgHover)', GRAY)}>{intakeSourceDisplayLabel}</span>
               </>
             ) : (
               <span style={pillStyle(woStatus.bg, woStatus.color)}>{woStatus.label}</span>
