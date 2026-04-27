@@ -3,15 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 import { sendEmail, getStaffEmails, getShopInfo } from '@/lib/services/email'
 import { checkinConfirmedEmail } from '@/lib/emails/checkinConfirmed'
 import { staffCheckinAlertEmail } from '@/lib/emails/staffCheckinAlert'
-import { insertServiceOrder } from '@/lib/generateWoNumber'
 import { sendPushToRole } from '@/lib/services/notifications'
 import { checkKioskLimit } from '@/lib/kioskRateLimit'
+
+// Kiosk submit creates a Pending Request (kiosk_checkins audit row +
+// service_requests Pending Request) — NOT a service_order. The service writer
+// reviews and converts to a real WO via /api/service-requests action='convert'.
+// AI job-line generation moves to the service-writer review/convert step.
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
-// POST — submit a kiosk check-in, create WO + job lines
+// POST — submit a kiosk check-in
 export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown'
   if (!checkKioskLimit(ip)) {
@@ -34,6 +38,7 @@ export async function POST(req: Request) {
   let finalCustomerId = customer_id
   let finalUnitId = unit_id
   let companyName = ''
+  let resolvedContactName = ''
 
   // Create new customer if needed
   if (new_customer && !finalCustomerId) {
@@ -49,9 +54,11 @@ export async function POST(req: Request) {
     if (custErr) return NextResponse.json({ error: 'Failed to create customer: ' + custErr.message }, { status: 500 })
     finalCustomerId = cust.id
     companyName = cust.company_name
+    resolvedContactName = cust.contact_name || new_customer.contact_name || ''
   } else if (finalCustomerId) {
-    const { data: c } = await s.from('customers').select('company_name').eq('id', finalCustomerId).single()
+    const { data: c } = await s.from('customers').select('company_name, contact_name').eq('id', finalCustomerId).single()
     companyName = c?.company_name || ''
+    resolvedContactName = c?.contact_name || ''
   }
 
   // Create new unit if needed
@@ -89,8 +96,10 @@ export async function POST(req: Request) {
     finalUnitId = u.id
   }
 
-  // Generate WO number
-  // Duplicate WO prevention
+  // Duplicate WO prevention — preserved. If an active service_order already
+  // exists for this asset, the customer is told to check with the front desk
+  // rather than submitting a new Pending Request. (Pending-request-vs-pending-
+  // request duplicate detection is a future concern handled at conversion.)
   if (finalUnitId) {
     const { data: activeWOs } = await s.from('service_orders')
       .select('id, so_number').eq('asset_id', finalUnitId).eq('shop_id', shop_id)
@@ -102,46 +111,28 @@ export async function POST(req: Request) {
     }
   }
 
-  // Snapshot ownership_type from asset for default line approval state
+  // Snapshot ownership_type and unit_number. ownership_type is used only for
+  // the customer email's estimateExpected wording — operational ownership/
+  // job/estimate truth is set at conversion time when the service writer
+  // creates the SO.
   let kioskOwnership = 'fleet_asset'
+  let unitNumber = ''
   if (finalUnitId) {
-    const { data: assetOwn } = await s.from('assets').select('ownership_type, is_owner_operator').eq('id', finalUnitId).single()
+    const { data: assetOwn } = await s.from('assets').select('unit_number, ownership_type, is_owner_operator').eq('id', finalUnitId).single()
+    unitNumber = assetOwn?.unit_number || ''
     if (assetOwn?.ownership_type) kioskOwnership = assetOwn.ownership_type
     if (assetOwn?.is_owner_operator) kioskOwnership = 'owner_operator'
   }
-  const lineApprovalDefaults = (kioskOwnership === 'owner_operator' || kioskOwnership === 'outside_customer')
-    ? { approval_status: 'needs_approval' as const, approval_required: true }
-    : { approval_status: 'pre_approved' as const, approval_required: false }
-
-  // Create WO with atomic number generation + retry. Carry the same canonical
-  // intake truth that /api/work-orders/route.ts:248-266 writes — without it,
-  // downstream UI (work-order page banner, customer portal approval gate,
-  // automation engine) cannot decide owner-operator vs fleet behavior.
-  const portalToken = crypto.randomUUID()
   const kioskJobType = 'repair'
   const kioskEstimateRequired =
     (kioskOwnership === 'owner_operator' || kioskOwnership === 'outside_customer')
       && !['diagnostic', 'full_inspection'].includes(kioskJobType)
-  const { data: wo, error: woErr } = await insertServiceOrder(s, shop_id, {
-    asset_id: finalUnitId || null,
-    customer_id: finalCustomerId || null,
-    complaint: concern_text.trim(),
-    source: 'kiosk',
-    priority: priority === 'breakdown' ? 'critical' : priority === 'urgent' ? 'high' : 'normal',
-    status: 'draft',
-    portal_token: portalToken,
-    auth_type: auth_type || 'estimate_first',
-    auth_limit: auth_limit || null,
-    ownership_type: kioskOwnership,
-    job_type: kioskJobType,
-    estimate_required: kioskEstimateRequired,
-  })
 
-  if (woErr) return NextResponse.json({ error: 'Failed to create WO: ' + woErr.message }, { status: 500 })
-
-  // Create kiosk checkin record
+  const portalToken = crypto.randomUUID()
   const checkinRef = `CK-${Date.now().toString(36).toUpperCase()}`
-  await s.from('kiosk_checkins').insert({
+
+  // 1. Create kiosk_checkins audit row FIRST (status='new', no SO link).
+  const { data: checkin, error: kcErr } = await s.from('kiosk_checkins').insert({
     shop_id,
     customer_id: finalCustomerId || null,
     asset_id: finalUnitId || null,
@@ -157,70 +148,53 @@ export async function POST(req: Request) {
     contact_email: contact_email || null,
     contact_phone: contact_phone || null,
     portal_token: portalToken,
-    wo_id: wo.id,
+    wo_id: null,
     checkin_ref: checkinRef,
     company_name: companyName,
-    status: 'converted',
-    converted_so_id: wo.id,
+    status: 'new',
+    converted_so_id: null,
     customer_type: customer_type || 'company',
     concern_text_original: concern_text_original || concern_text.trim(),
-  })
+  }).select().single()
 
-  // Generate AI job lines via signed internal call. /api/ai/action-items
-  // is gated for browser session OR HMAC; kiosk has no session so it must
-  // sign its server-to-server fetch with TRUCKZEN_INTERNAL_API_SECRET.
-  try {
-    const aiPathname = '/api/ai/action-items'
-    const aiBody = JSON.stringify({ complaint: concern_text.trim(), shop_id })
-    const { signInternalRequest, INTERNAL_TS_HEADER, INTERNAL_SIG_HEADER } = await import('@/lib/internal-request-auth')
-    const { timestamp, signature } = signInternalRequest({ method: 'POST', pathname: aiPathname, rawBody: aiBody })
-    const aiRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}${aiPathname}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        [INTERNAL_TS_HEADER]: timestamp,
-        [INTERNAL_SIG_HEADER]: signature,
-      },
-      body: aiBody,
-    })
-    if (aiRes.ok) {
-      const aiData = await aiRes.json()
-      const items = aiData.action_items || [{ description: concern_text.trim().toUpperCase(), skills: [] }]
-      for (const item of items) {
-        const desc = typeof item === 'string' ? item : item.description
-        const skills = typeof item === 'string' ? [] : (item.skills || [])
-        if (!desc?.trim()) continue
-        await s.from('so_lines').insert({
-          so_id: wo.id,
-          line_type: 'labor',
-          description: desc.trim(),
-          quantity: 0,
-          unit_price: 0,
-          line_status: 'unassigned',
-          required_skills: skills,
-          ...lineApprovalDefaults,
-        })
-      }
-    }
-  } catch {
-    // Fallback: single job line
-    await s.from('so_lines').insert({
-      so_id: wo.id,
-      line_type: 'labor',
-      description: concern_text.trim().toUpperCase(),
-      quantity: 0,
-      unit_price: 0,
-      line_status: 'unassigned',
-      ...lineApprovalDefaults,
-    })
+  if (kcErr || !checkin) {
+    return NextResponse.json({ error: 'Failed to record check-in: ' + (kcErr?.message || 'unknown error') }, { status: 500 })
   }
 
-  // Log activity
-  await s.from('wo_activity_log').insert({ wo_id: wo.id, action: `Kiosk check-in: ${checkinRef}` })
+  // 2. Create service_requests Pending Request linked to the kiosk_checkins
+  // row. The service writer will review and convert this to a real WO via
+  // /api/service-requests action='convert'.
+  const srPriority = priority === 'breakdown' ? 'critical' : priority === 'urgent' ? 'high' : 'normal'
+  const { data: sr, error: srErr } = await s.from('service_requests').insert({
+    shop_id,
+    customer_id: finalCustomerId || null,
+    asset_id: finalUnitId || null,
+    unit_number: unitNumber,
+    company_name: companyName,
+    contact_name: resolvedContactName || null,
+    phone: contact_phone || null,
+    description: concern_text.trim(),
+    source: 'kiosk_checkin',
+    check_in_type: 'kiosk',
+    status: 'new',
+    priority: srPriority,
+    parking_location: parked_location || null,
+    key_location: keys_left || null,
+    kiosk_checkin_id: checkin.id,
+    created_by: 'kiosk',
+  }).select().single()
 
-  // Fire-and-forget email notifications
-  const unitLabel = new_unit?.unit_number || ''
-  const customerName = new_customer?.contact_name || new_customer?.company_name || companyName || 'Customer'
+  if (srErr || !sr) {
+    // Mark the kiosk audit row so we don't leave a dangling row behind a
+    // failed SR insert. No customer email is sent on partial failure.
+    await s.from('kiosk_checkins').update({ status: 'error' }).eq('id', checkin.id)
+    return NextResponse.json({ error: 'Failed to create pending request: ' + (srErr?.message || 'unknown error') }, { status: 500 })
+  }
+
+  // Fire-and-forget email + push notifications. Sent only after both inserts
+  // succeed so customers don't receive a confirmation for a failed request.
+  const unitLabel = unitNumber || new_unit?.unit_number || ''
+  const customerName = new_customer?.contact_name || resolvedContactName || new_customer?.company_name || companyName || 'Customer'
   const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://truckzen.pro'}/portal/${portalToken}`
 
   // 1. Checkin confirmation to customer
@@ -242,7 +216,8 @@ export async function POST(req: Request) {
     })()
   }
 
-  // 2. Staff checkin alert to service writers
+  // 2. Staff alert to service writers — template already says "checked in
+  // via the kiosk" without implying a real WO exists.
   ;(async () => {
     try {
       const shop = await getShopInfo(shop_id)
@@ -263,15 +238,23 @@ export async function POST(req: Request) {
   // 3. Push notification to service writers
   ;(async () => {
     try {
-      await sendPushToRole(shop_id, 'service_writer', 'New Check-In', `Unit ${unitLabel}, ${concern_text.trim()}`)
+      await sendPushToRole(shop_id, 'service_writer', 'New Pending Request', `Unit ${unitLabel}, ${concern_text.trim()}`)
     } catch {}
   })()
 
+  // Response shape preserved enough for KioskFlow success screen, which
+  // reads data.wo_number (used as the customer-facing reference) and
+  // data.portal_token. checkinRef is the right reference value here — the
+  // request is not a WO yet, but the customer's printable reference is the
+  // CK- code generated above.
   return NextResponse.json({
-    ok: true,
-    wo_id: wo.id,
-    wo_number: wo.so_number,
+    success: true,
+    request_id: sr.id,
+    checkin_id: checkin.id,
+    reference: checkinRef,
+    wo_number: checkinRef,
     portal_token: portalToken,
-    checkin_ref: checkinRef,
+    portal_url: portalUrl,
+    mode: 'pending_request',
   }, { status: 201 })
 }
