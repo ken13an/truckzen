@@ -145,9 +145,25 @@ export async function POST(req: Request) {
         (convertOwnership === 'owner_operator' || convertOwnership === 'outside_customer')
           && !['diagnostic', 'full_inspection'].includes(convertJobType)
 
+      // If kiosk-originated, carry the customer's portal token onto the SO so
+      // the customer's existing /portal/<token> link continues to work after
+      // conversion (the SR-aware resolver already handles the pre-conversion
+      // case via kiosk_checkins.portal_token).
+      let portalTokenCarry: string | null = null
+      if (sr.kiosk_checkin_id) {
+        const { data: kc } = await s.from('kiosk_checkins')
+          .select('id, shop_id, portal_token, status')
+          .eq('id', sr.kiosk_checkin_id)
+          .eq('shop_id', sr.shop_id)
+          .maybeSingle()
+        if (kc?.portal_token) portalTokenCarry = kc.portal_token
+      }
+
       // Create service order from request. source preserves the originating
       // service_request.source ('service_writer' from the create branch) — was
       // previously hardcoded to 'kiosk' which corrupted the audit trail.
+      // origin_service_request_id (added by 20260331_hulkmode1_schema.sql)
+      // closes the bidirectional audit trail with service_requests.converted_so_id.
       const { data: so, error: soErr } = await s.from('service_orders').insert({
         shop_id: sr.shop_id,
         so_number: soNum,
@@ -164,11 +180,31 @@ export async function POST(req: Request) {
         ownership_type: convertOwnership,
         job_type: convertJobType,
         estimate_required: convertEstimateRequired,
+        portal_token: portalTokenCarry,
+        origin_service_request_id: sr.id,
       }).select().single()
 
       if (soErr) return NextResponse.json({ error: soErr.message }, { status: 500 })
 
-      // Update request status
+      // Insert customer-visible "Note from Customer" preserving the original
+      // request text separate from any reviewed job lines. Fail-closed: if the
+      // note insert fails after the SO insert, return 500 and DO NOT mark the
+      // SR converted (the next convert attempt will succeed and the SO row
+      // already created remains, but the SR/kiosk linkage is honest).
+      const customerNoteText = (sr.description ?? '').trim()
+      if (customerNoteText) {
+        const { error: noteErr } = await s.from('wo_notes').insert({
+          wo_id: so.id,
+          user_id: ctx.actor.id,
+          note_text: `Note from Customer: ${customerNoteText}`,
+          visible_to_customer: true,
+        })
+        if (noteErr) {
+          return NextResponse.json({ error: 'Failed to preserve customer note: ' + noteErr.message }, { status: 500 })
+        }
+      }
+
+      // Update request status (only after note succeeded)
       await s.from('service_requests').update({ status: 'converted', converted_so_id: so.id }).eq('id', request_id)
 
       // Also update the kiosk_checkin if linked
