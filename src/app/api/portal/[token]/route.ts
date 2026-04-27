@@ -29,7 +29,8 @@ const SO_SELECT = `
   assets(id, unit_number, year, make, model, vin, odometer),
   customers(id, company_name, contact_name, phone, email),
   so_lines(id, line_type, description, quantity, unit_price, total_price, line_status, customer_approved, approved_at, is_additional, finding, resolution, estimated_hours, billed_hours),
-  wo_shop_charges(id, description, amount, taxable)
+  wo_shop_charges(id, description, amount, taxable),
+  estimates(id, status, approval_token, created_at)
 `
 
 type P = { params: Promise<{ token: string }> }
@@ -177,6 +178,7 @@ export async function GET(req: Request, { params }: P) {
     customers,
     so_lines: [] as unknown[],
     wo_shop_charges: [] as unknown[],
+    estimates: [] as unknown[],
     kind: 'pending_request' as const,
   }
 
