@@ -2,27 +2,22 @@ import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/server-auth'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { SERVICE_WRITE_ROLES } from '@/lib/roles'
-import { insertServiceOrder } from '@/lib/generateWoNumber'
-import { getDefaultLaborHours } from '@/lib/labor-hours'
-import { logAction } from '@/lib/services/auditLog'
+import {
+  parseReviewedLines,
+  validateReviewedLines,
+  applyPendingRequestConversion,
+} from '@/lib/services/pendingRequestAdapter'
 
 // Service-request routes are shop-scoped operational tools (service-writer
 // check-in Path B). Body/query shop_id and user_id are no longer trusted —
 // shop scope and audit attribution come from the server session.
-
-// Map service_requests.source to a valid service_orders.source enum value
-// (Postgres enum so_source). The SR source field accepts free strings (e.g.
-// 'kiosk_checkin', 'service_writer'), but the SO enum only admits a fixed
-// set proven by other production write sites: 'kiosk' (kiosk-checkin route
-// at production baseline 0775997), 'walk_in' (work-orders create + draft),
-// 'fullbay', 'gps_auto', 'migration'. Map kiosk-originated requests to
-// 'kiosk' so the SO's source still reflects the customer-self-service
-// origin; everything else routes through 'walk_in' (the proven enum value
-// for service-writer-initiated intake). origin_service_request_id and
-// service_requests.source preserve the unmapped truth on the SR side.
-function srSourceToSoSource(srSource: string | null | undefined): 'kiosk' | 'walk_in' {
-  return srSource === 'kiosk_checkin' || srSource === 'kiosk' ? 'kiosk' : 'walk_in'
-}
+//
+// The convert action is a thin shell over the Pending Request adapter at
+// src/lib/services/pendingRequestAdapter.ts. Raw intake sources (kiosk
+// check-ins, service writer intake, future maintenance/dispatcher/customer
+// portal sources) all flow through that adapter into the canonical
+// insertServiceOrder() helper /api/work-orders POST also uses. No source
+// is allowed to bypass that adapter with its own service_orders.insert(...).
 
 // GET /api/service-requests?status=...
 export async function GET(req: Request) {
@@ -143,146 +138,21 @@ export async function POST(req: Request) {
 
   switch (action) {
     case 'convert': {
-      // Snapshot ownership_type from the linked asset, same pattern as
-      // /api/work-orders/route.ts:235-245. Falls back to 'fleet_asset' if no
-      // asset is attached or asset has no ownership data.
-      let convertOwnership = 'fleet_asset'
-      if (sr.asset_id) {
-        const { data: assetData } = await s.from('assets').select('ownership_type, is_owner_operator').eq('id', sr.asset_id).single()
-        if (assetData?.ownership_type) convertOwnership = assetData.ownership_type
-        if (assetData?.is_owner_operator) convertOwnership = 'owner_operator'
+      // Raw SR + reviewed lines → adapter → canonical WO. The adapter at
+      // src/lib/services/pendingRequestAdapter.ts owns the orchestration:
+      // ownership snapshot, status/estimate derivation, source enum mapping,
+      // canonical insertServiceOrder() call, Note from Customer + reviewed
+      // so_lines + bidirectional audit links + wo.created log.
+      const reviewedLines = parseReviewedLines((body as any)?.reviewed_lines)
+      const reviewedLinesError = validateReviewedLines(reviewedLines)
+      if (reviewedLinesError) {
+        return NextResponse.json({ error: reviewedLinesError }, { status: 400 })
       }
-      const convertJobType = 'repair'
-      const convertEstimateRequired =
-        (convertOwnership === 'owner_operator' || convertOwnership === 'outside_customer')
-          && !['diagnostic', 'full_inspection'].includes(convertJobType)
-      // Mirror normal /api/work-orders create: fleet_asset goes straight to
-      // in_progress; owner_operator / outside_customer goes to waiting_approval
-      // so the estimate-approval gate fires before mechanic assignment readies.
-      const convertStatus = convertOwnership === 'fleet_asset' ? 'in_progress' : 'waiting_approval'
-
-      // If kiosk-originated, carry the customer's portal token onto the SO so
-      // the customer's existing /portal/<token> link continues to work after
-      // conversion (the SR-aware resolver already handles the pre-conversion
-      // case via kiosk_checkins.portal_token).
-      let portalTokenCarry: string | null = null
-      if (sr.kiosk_checkin_id) {
-        const { data: kc } = await s.from('kiosk_checkins')
-          .select('id, shop_id, portal_token, status')
-          .eq('id', sr.kiosk_checkin_id)
-          .eq('shop_id', sr.shop_id)
-          .maybeSingle()
-        if (kc?.portal_token) portalTokenCarry = kc.portal_token
+      const result = await applyPendingRequestConversion({ s, sr, reviewedLines, ctx })
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status ?? 500 })
       }
-
-      // Create service order via the canonical helper used by /api/work-orders
-      // POST. This generates a real WO-NNNNNN number from the next_wo_number
-      // DB sequence (with retry on collision) and applies the canonical
-      // workorder_lane / status_family defaults — same path normal WO creation
-      // takes. source maps the SR's free-string source onto the live so_source
-      // enum via srSourceToSoSource. The unmapped truth is still preserved on
-      // service_requests.source (untouched here) and via origin_service_request_id
-      // (added by 20260331_hulkmode1_schema.sql) which closes the bidirectional
-      // audit trail with service_requests.converted_so_id.
-      const { data: so, error: soErr } = await insertServiceOrder(s, sr.shop_id, {
-        asset_id: sr.asset_id || null,
-        customer_id: sr.customer_id || null,
-        complaint: sr.description,
-        source: srSourceToSoSource(sr.source),
-        priority: 'normal',
-        status: convertStatus,
-        submitted_at: new Date().toISOString(),
-        advisor_id: ctx.actor.id,
-        service_writer_id: ctx.actor.id,
-        created_by_user_id: ctx.actor.id,
-        ownership_type: convertOwnership,
-        job_type: convertJobType,
-        estimate_required: convertEstimateRequired,
-        portal_token: portalTokenCarry,
-        origin_service_request_id: sr.id,
-      })
-
-      if (soErr || !so) return NextResponse.json({ error: soErr?.message ?? 'Failed to create work order' }, { status: 500 })
-
-      // Insert customer-visible "Note from Customer" preserving the original
-      // request text separate from any reviewed job lines. Fail-closed: if the
-      // note insert fails after the SO insert, return 500 and DO NOT mark the
-      // SR converted (the next convert attempt will succeed and the SO row
-      // already created remains, but the SR/kiosk linkage is honest).
-      const customerNoteText = (sr.description ?? '').trim()
-      if (customerNoteText) {
-        const { error: noteErr } = await s.from('wo_notes').insert({
-          wo_id: so.id,
-          user_id: ctx.actor.id,
-          note_text: `Note from Customer: ${customerNoteText}`,
-          visible_to_customer: true,
-        })
-        if (noteErr) {
-          return NextResponse.json({ error: 'Failed to preserve customer note: ' + noteErr.message }, { status: 500 })
-        }
-      }
-
-      // Optional reviewed-lines payload from the new Pending Request review
-      // page. The existing /service-requests queue page convert button does
-      // NOT send this — convert remains backward compatible (no lines created
-      // when the field is absent). Server-side validation: array shape, each
-      // item has a non-empty trimmed description, hard caps on count + length.
-      const rawReviewedLines = (body as any)?.reviewed_lines
-      let reviewedLinesClean: Array<{ description: string }> = []
-      if (Array.isArray(rawReviewedLines)) {
-        reviewedLinesClean = rawReviewedLines
-          .map((l: any) => ({ description: typeof l?.description === 'string' ? l.description.trim().slice(0, 500) : '' }))
-          .filter(l => l.description.length > 0)
-          .slice(0, 25)
-      }
-      if (reviewedLinesClean.length > 0) {
-        // Mirror normal /api/work-orders create line defaults: lookup labor
-        // hours by description; gate approval by ownership type.
-        const lineApprovalDefaults = (convertOwnership === 'owner_operator' || convertOwnership === 'outside_customer')
-          ? { approval_status: 'needs_approval' as const, approval_required: true }
-          : { approval_status: 'pre_approved' as const, approval_required: false }
-        const linesPayload = reviewedLinesClean.map(l => ({
-          so_id: so.id,
-          line_type: 'labor' as const,
-          description: l.description,
-          quantity: 0,
-          unit_price: 0,
-          estimated_hours: getDefaultLaborHours(l.description),
-          line_status: 'unassigned' as const,
-          ...lineApprovalDefaults,
-        }))
-        const { error: linesErr } = await s.from('so_lines').insert(linesPayload)
-        if (linesErr) {
-          return NextResponse.json({ error: 'Failed to create reviewed job lines: ' + linesErr.message }, { status: 500 })
-        }
-      }
-
-      // Update request status (only after note + reviewed lines succeeded)
-      await s.from('service_requests').update({ status: 'converted', converted_so_id: so.id }).eq('id', request_id)
-
-      // Also update the kiosk_checkin if linked
-      if (sr.kiosk_checkin_id) {
-        await s.from('kiosk_checkins').update({ converted_so_id: so.id, status: 'converted' }).eq('id', sr.kiosk_checkin_id)
-      }
-
-      // Same wo.created audit entry that normal /api/work-orders create writes,
-      // with extra detail about the converted SR origin so the audit trail
-      // distinguishes pending-request conversions from walk-in WO creations.
-      logAction({
-        shop_id: sr.shop_id,
-        user_id: ctx.actor.id,
-        action: 'wo.created',
-        entity_type: 'service_order',
-        entity_id: so.id,
-        details: {
-          so_number: so.so_number,
-          source: 'pending_request_convert',
-          origin_service_request_id: sr.id,
-          service_request_source: sr.source,
-        },
-      }).catch(() => {})
-
-      return NextResponse.json({ ok: true, so_id: so.id, so_number: so.so_number })
+      return NextResponse.json({ ok: true, so_id: result.so_id, so_number: result.so_number })
     }
 
     case 'schedule': {
