@@ -286,6 +286,65 @@ export default function WorkOrderDetail() {
   useEffect(() => { loadData() }, [loadData])
 
   // HELPER FUNCTIONS
+
+  // Fields that, when changed on a so_line, alter the customer-facing
+  // estimate snapshot (estimate_lines + totals). Mutations that only touch
+  // tracking/assignment fields (assigned_to, finding/resolution-only,
+  // tire_position, etc.) do NOT trigger a snapshot refresh.
+  const ESTIMATE_TRUTH_FIELDS = new Set([
+    'description', 'estimated_hours', 'billed_hours', 'actual_hours', 'labor_rate',
+    'quantity', 'unit_price', 'parts_cost_price', 'parts_sell_price',
+    'parts_status', 'real_name', 'rough_name', 'part_number',
+    'line_status', 'status', 'is_canceled',
+  ])
+
+  // Find the current pre-approval estimate (first draft/sent row). Approved
+  // and declined estimates stay frozen as historical truth.
+  const findRefreshableEstimate = (): { id: string; updated_at: string | null } | null => {
+    const rows = ((wo?.estimates || []) as any[])
+    const open = rows.find(e => {
+      const s = String(e?.status || '').toLowerCase()
+      return s === 'draft' || s === 'sent'
+    })
+    if (!open?.id) return null
+    return { id: open.id, updated_at: open.updated_at || null }
+  }
+
+  // Best-effort snapshot refresh after the live WO truth changed. Failures
+  // do not block the underlying edit — they surface a non-blocking toast so
+  // the writer knows the customer-facing estimate is now out of sync.
+  const refreshOpenEstimateIfAny = async (): Promise<void> => {
+    const target = findRefreshableEstimate()
+    if (!target) return
+    try {
+      const res = await fetch(`/api/estimates/${target.id}/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expected_updated_at: target.updated_at }),
+      })
+      if (res.status === 409) {
+        setToastMsg('Estimate was updated elsewhere — refresh and try again.')
+        setTimeout(() => setToastMsg(''), 4000)
+        return
+      }
+      if (!res.ok) return
+      const json = await res.json().catch(() => null) as any
+      if (json && json.ok === false && json.skipped) {
+        const reason = String(json.reason || '')
+        if (reason === 'estimate_approved' || reason === 'estimate_declined') {
+          setToastMsg('Estimate is already approved — customer-facing copy stays frozen until you create a new one.')
+          setTimeout(() => setToastMsg(''), 5000)
+        } else if (reason === 'wo_invoice_locked' || reason === 'wo_is_historical') {
+          setToastMsg('WO is locked — customer-facing estimate stays frozen.')
+          setTimeout(() => setToastMsg(''), 4000)
+        }
+      }
+    } catch {
+      // Network blip — don't block the edit. loadData() will run anyway and
+      // surface whatever truth the server has now.
+    }
+  }
+
   const patchLine = async (lineId: string, data: Record<string, any>) => {
     // Optimistic-concurrency precondition: send the line's last-seen
     // updated_at from the loaded record (now exposed via the WO GET).
@@ -303,7 +362,11 @@ export default function WorkOrderDetail() {
       setTimeout(() => setToastMsg(''), 4000)
       return res
     }
-    if (res.ok) await loadData()
+    if (res.ok) {
+      const touchesEstimate = Object.keys(data).some(k => ESTIMATE_TRUTH_FIELDS.has(k))
+      if (touchesEstimate) await refreshOpenEstimateIfAny()
+      await loadData()
+    }
     return res
   }
 
@@ -735,6 +798,7 @@ export default function WorkOrderDetail() {
     setAddingJob(false)
     // Small delay to ensure all DB inserts commit before re-fetching
     await new Promise(r => setTimeout(r, 300))
+    await refreshOpenEstimateIfAny()
     await loadData()
   }
 
@@ -780,6 +844,7 @@ export default function WorkOrderDetail() {
   const removeJobLine = async (lineId: string) => {
     await fetch(`/api/so-lines/${lineId}`, { method: 'DELETE' })
     logActivity('Removed a job line')
+    await refreshOpenEstimateIfAny()
     await loadData()
   }
 
@@ -1676,6 +1741,10 @@ export default function WorkOrderDetail() {
                               if (responses.some(r => r.status === 409)) {
                                 setToastMsg('This record was updated by someone else. Refresh and try again.')
                                 setTimeout(() => setToastMsg(''), 4000)
+                              } else {
+                                // Either the labor line or a linked tire part
+                                // changed; both invalidate the snapshot.
+                                await refreshOpenEstimateIfAny()
                               }
                               await loadData()
                             }
@@ -2061,7 +2130,8 @@ export default function WorkOrderDetail() {
               <button onClick={() => {
                 const name = prompt('Part name or description:')
                 if (!name?.trim()) return
-                fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) }).then(() => loadData())
+                fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) })
+                  .then(async () => { await refreshOpenEstimateIfAny(); await loadData() })
               }} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '8px 20px' }}>
                 + Add Part
               </button>
@@ -2075,7 +2145,8 @@ export default function WorkOrderDetail() {
                   <button onClick={() => {
                     const name = prompt('Part name or description:')
                     if (!name?.trim()) return
-                    fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) }).then(() => loadData())
+                    fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) })
+                      .then(async () => { await refreshOpenEstimateIfAny(); await loadData() })
                   }} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '5px 12px', fontSize: 11 }}>
                     + Add Part
                   </button>
@@ -2244,7 +2315,7 @@ export default function WorkOrderDetail() {
                       {/* Delete button for editable parts */}
                       {partsEditable && !wo.is_historical && !isViewOnly && (
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                          <button onClick={async () => { if (!confirm('Delete this part line?')) return; await fetch(`/api/so-lines/${p.id}`, { method: 'DELETE' }); await loadData() }} style={{ background: 'none', border: `1px solid ${RED}33`, borderRadius: 6, color: RED, fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '4px 10px', fontFamily: FONT }}>
+                          <button onClick={async () => { if (!confirm('Delete this part line?')) return; await fetch(`/api/so-lines/${p.id}`, { method: 'DELETE' }); await refreshOpenEstimateIfAny(); await loadData() }} style={{ background: 'none', border: `1px solid ${RED}33`, borderRadius: 6, color: RED, fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: '4px 10px', fontFamily: FONT }}>
                             Delete Part
                           </button>
                         </div>
@@ -2284,6 +2355,7 @@ export default function WorkOrderDetail() {
                     body: JSON.stringify({ so_id: id, line_type: 'part', description: input.value.trim(), rough_name: input.value.trim(), parts_status: 'rough', quantity: 1 }),
                   })
                   input.value = ''
+                  await refreshOpenEstimateIfAny()
                   await loadData()
                 }} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>
                   Request

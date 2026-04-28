@@ -1,4 +1,5 @@
 import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
+import { isLineCanceled } from '@/lib/work-orders/jobLineValidation'
 
 // CANONICAL ESTIMATE SNAPSHOT ENSURE / VALIDATE
 //
@@ -24,6 +25,120 @@ export interface ValidateResult {
   laborCount: number
   partCount: number
   grandTotal: number
+}
+
+export interface BuiltSnapshot {
+  estLines: any[]
+  laborTotal: number
+  partsTotal: number
+  subtotal: number
+  taxAmount: number
+  grandTotal: number
+}
+
+export interface BuildSnapshotInput {
+  estimateId: string
+  shopId: string
+  woId: string
+  ownershipType: string | null | undefined
+}
+
+/**
+ * Build estimate_lines rows + totals from current live so_lines / wo_parts.
+ * Pure assembly — performs reads but no writes. Used by both the idempotent
+ * ensure path (when no rows exist yet) and the explicit refresh path
+ * (DELETE-then-INSERT). Mirrors create_from_wo formula in
+ * /api/estimates/route.ts. Canceled labor lines and canceled parts are
+ * excluded — they must not appear on customer-facing estimate truth.
+ */
+export async function buildSnapshotLinesAndTotals(admin: any, input: BuildSnapshotInput): Promise<BuiltSnapshot> {
+  const { estimateId, shopId, woId, ownershipType } = input
+  const effectiveOwnership = ownershipType || 'outside_customer'
+
+  const { data: shop } = await admin
+    .from('shops')
+    .select('default_labor_rate, labor_rate, tax_rate, default_tax_rate, tax_labor')
+    .eq('id', shopId)
+    .single()
+
+  const { data: ownershipRate } = await admin
+    .from('shop_labor_rates')
+    .select('rate_per_hour')
+    .eq('shop_id', shopId)
+    .eq('ownership_type', effectiveOwnership)
+    .maybeSingle()
+
+  const laborRate = Number(ownershipRate?.rate_per_hour)
+    || Number(shop?.labor_rate)
+    || Number(shop?.default_labor_rate)
+    || DEFAULT_LABOR_RATE_FALLBACK
+  const taxRate = Number(shop?.tax_rate) || Number(shop?.default_tax_rate) || 0
+  const taxLabor = shop?.tax_labor === true
+
+  const { data: lines } = await admin.from('so_lines').select('*').eq('so_id', woId)
+  const { data: woParts } = await admin.from('wo_parts').select('*').eq('wo_id', woId)
+
+  const estLines: any[] = []
+  let lineNumber = 1
+  for (const line of lines || []) {
+    if (isLineCanceled(line as any)) continue
+    if ((line as any).line_type === 'labor') {
+      const hrs = (line as any).estimated_hours || (line as any).billed_hours || (line as any).actual_hours || 1
+      const amt = hrs * laborRate
+      estLines.push({
+        estimate_id: estimateId,
+        description: (line as any).description || '',
+        labor_hours: hrs,
+        labor_rate: laborRate,
+        labor_total: amt,
+        parts_total: 0,
+        line_total: amt,
+        line_number: lineNumber++,
+      })
+    } else if ((line as any).line_type === 'part' && ((line as any).real_name || (line as any).rough_name || (line as any).description)) {
+      const price = (line as any).parts_sell_price || (line as any).unit_price || 0
+      const qty = (line as any).quantity || 1
+      const amt = qty * price
+      const baseDesc = (line as any).real_name || (line as any).rough_name || (line as any).description
+      const desc = (line as any).part_number ? `${baseDesc} - Part # ${(line as any).part_number}` : baseDesc
+      estLines.push({
+        estimate_id: estimateId,
+        description: desc,
+        labor_hours: 0,
+        labor_rate: 0,
+        labor_total: 0,
+        parts_total: amt,
+        line_total: amt,
+        line_number: lineNumber++,
+      })
+    }
+  }
+  for (const part of woParts || []) {
+    const qty = (part as any).quantity || 1
+    const price = (part as any).unit_cost || 0
+    const amt = qty * price
+    const baseDesc = (part as any).description || ''
+    const desc = (part as any).part_number ? `${baseDesc} - Part # ${(part as any).part_number}` : baseDesc
+    estLines.push({
+      estimate_id: estimateId,
+      description: desc,
+      labor_hours: 0,
+      labor_rate: 0,
+      labor_total: 0,
+      parts_total: amt,
+      line_total: amt,
+      line_number: lineNumber++,
+    })
+  }
+
+  const laborTotal = estLines.reduce((sum, l) => sum + (Number(l.labor_total) || 0), 0)
+  const partsTotal = estLines.reduce((sum, l) => sum + (Number(l.parts_total) || 0), 0)
+  const subtotal = laborTotal + partsTotal
+  const taxableAmount = partsTotal + (taxLabor ? laborTotal : 0)
+  const taxAmount = taxRate > 0 ? taxableAmount * (taxRate / 100) : 0
+  const grandTotal = subtotal + taxAmount
+
+  return { estLines, laborTotal, partsTotal, subtotal, taxAmount, grandTotal }
 }
 
 /**
@@ -75,94 +190,14 @@ export async function ensureEstimateSnapshot(admin: any, estimateId: string): Pr
     || (woRow as any)?.assets?.ownership_type
     || 'outside_customer'
 
-  // Shop config — tax_labor must be read so the snapshot's tax math
-  // matches calcInvoiceTotals (the same reducer the WO Estimate tab
-  // displays).
-  const { data: shop } = await admin
-    .from('shops')
-    .select('default_labor_rate, labor_rate, tax_rate, default_tax_rate, tax_labor')
-    .eq('id', (est as any).shop_id)
-    .single()
+  const built = await buildSnapshotLinesAndTotals(admin, {
+    estimateId,
+    shopId: (est as any).shop_id,
+    woId,
+    ownershipType,
+  })
 
-  // Ownership-typed labor rate (preferred). Falls back to shop.labor_rate,
-  // then default_labor_rate, then the project fallback — same priority order
-  // as page.tsx:828.
-  const { data: ownershipRate } = await admin
-    .from('shop_labor_rates')
-    .select('rate_per_hour')
-    .eq('shop_id', (est as any).shop_id)
-    .eq('ownership_type', ownershipType)
-    .maybeSingle()
-  const laborRate = Number(ownershipRate?.rate_per_hour)
-    || Number(shop?.labor_rate)
-    || Number(shop?.default_labor_rate)
-    || DEFAULT_LABOR_RATE_FALLBACK
-  const taxRate = Number(shop?.tax_rate) || Number(shop?.default_tax_rate) || 0
-  const taxLabor = shop?.tax_labor === true
-
-  const { data: lines } = await admin.from('so_lines').select('*').eq('so_id', woId)
-  const { data: woParts } = await admin.from('wo_parts').select('*').eq('wo_id', woId)
-
-  // Build snapshot rows using ONLY the live estimate_lines columns:
-  //   estimate_id, description, complaint, labor_hours, labor_rate,
-  //   labor_total, parts_total, line_total, line_number,
-  //   is_approved, customer_response, repair_order_line_id.
-  // Part number is embedded into description because the live schema
-  // has no part_number column. Labor vs part is discriminated downstream
-  // by labor_total>0 vs parts_total>0 (no line_type column exists).
-  const estLines: any[] = []
-  let lineNumber = 1
-  for (const line of lines || []) {
-    if ((line as any).line_type === 'labor') {
-      const hrs = (line as any).estimated_hours || (line as any).billed_hours || (line as any).actual_hours || 1
-      const amt = hrs * laborRate
-      estLines.push({
-        estimate_id: estimateId,
-        description: (line as any).description || '',
-        labor_hours: hrs,
-        labor_rate: laborRate,
-        labor_total: amt,
-        parts_total: 0,
-        line_total: amt,
-        line_number: lineNumber++,
-      })
-    } else if ((line as any).line_type === 'part' && ((line as any).real_name || (line as any).rough_name || (line as any).description)) {
-      const price = (line as any).parts_sell_price || (line as any).unit_price || 0
-      const qty = (line as any).quantity || 1
-      const amt = qty * price
-      const baseDesc = (line as any).real_name || (line as any).rough_name || (line as any).description
-      const desc = (line as any).part_number ? `${baseDesc} - Part # ${(line as any).part_number}` : baseDesc
-      estLines.push({
-        estimate_id: estimateId,
-        description: desc,
-        labor_hours: 0,
-        labor_rate: 0,
-        labor_total: 0,
-        parts_total: amt,
-        line_total: amt,
-        line_number: lineNumber++,
-      })
-    }
-  }
-  for (const part of woParts || []) {
-    const qty = (part as any).quantity || 1
-    const price = (part as any).unit_cost || 0
-    const amt = qty * price
-    const baseDesc = (part as any).description || ''
-    const desc = (part as any).part_number ? `${baseDesc} - Part # ${(part as any).part_number}` : baseDesc
-    estLines.push({
-      estimate_id: estimateId,
-      description: desc,
-      labor_hours: 0,
-      labor_rate: 0,
-      labor_total: 0,
-      parts_total: amt,
-      line_total: amt,
-      line_number: lineNumber++,
-    })
-  }
-
-  if (estLines.length === 0) {
+  if (built.estLines.length === 0) {
     return { ok: false, reason: 'no_lines_to_snapshot', created: 0, existed: 0 }
   }
 
@@ -175,30 +210,25 @@ export async function ensureEstimateSnapshot(admin: any, estimateId: string): Pr
     return { ok: true, created: 0, existed: recheck!.length }
   }
 
-  const { error: insertErr } = await admin.from('estimate_lines').insert(estLines)
+  const { error: insertErr } = await admin.from('estimate_lines').insert(built.estLines)
   if (insertErr) {
     console.error('[estimate-snapshot] insert failed', { estimateId, error: insertErr.message })
     return { ok: false, reason: `insert_failed:${insertErr.message}`, created: 0, existed: 0 }
   }
 
-  // Totals — mirrors calcInvoiceTotals (the reducer the WO Estimate tab
-  // displays). Critical: tax respects shop.tax_labor exactly the same way
-  // (parts-only when taxLabor=false; labor+parts when taxLabor=true). Reads
-  // labor_total / parts_total directly off the schema-aligned rows (no
-  // line_type discriminator needed).
-  const laborTotal = estLines.reduce((sum, l) => sum + (Number(l.labor_total) || 0), 0)
-  const partsTotal = estLines.reduce((sum, l) => sum + (Number(l.parts_total) || 0), 0)
-  const sub = laborTotal + partsTotal
-  const taxableAmount = partsTotal + (taxLabor ? laborTotal : 0)
-  const taxAmt = taxRate > 0 ? taxableAmount * (taxRate / 100) : 0
-  const grandTotal = sub + taxAmt
-
   await admin
     .from('estimates')
-    .update({ labor_total: laborTotal, parts_total: partsTotal, subtotal: sub, tax_amount: taxAmt, grand_total: grandTotal, total: grandTotal })
+    .update({
+      labor_total: built.laborTotal,
+      parts_total: built.partsTotal,
+      subtotal: built.subtotal,
+      tax_amount: built.taxAmount,
+      grand_total: built.grandTotal,
+      total: built.grandTotal,
+    })
     .eq('id', estimateId)
 
-  return { ok: true, created: estLines.length, existed: 0 }
+  return { ok: true, created: built.estLines.length, existed: 0 }
 }
 
 /**
