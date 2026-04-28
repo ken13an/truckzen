@@ -19,7 +19,10 @@ const JobLineSchema = z.union([
     description: z.string().min(1).max(1000),
     skills: z.array(z.string().max(64)).optional(),
     estimated_hours: z.union([z.number(), z.string()]).optional().nullable(),
-    tire_position: z.string().max(32).optional().nullable(),
+    // May contain multiple selected positions joined by ", " — single field
+    // matches so_lines.tire_position storage and the merge-route split/rejoin
+    // contract in /api/so-lines/merge.
+    tire_position: z.string().max(512).optional().nullable(),
     customer_provides_parts: z.boolean().optional(),
     rough_parts: z.array(z.object({
       rough_name: z.string().max(500).optional(),

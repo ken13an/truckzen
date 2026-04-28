@@ -666,10 +666,13 @@ function parseSingleSegment(text: string, tirePositions?: string[]): RoughPart[]
       const driveCount = tirePositions.filter(p => p.includes('2nd')).length
       const rearCount = tirePositions.filter(p => p.includes('3rd')).length
       const parts: RoughPart[] = []
-      if (steerCount > 0) parts.push({ rough_name: `${steerCount}x Steer Tire${steerCount > 1 ? 's' : ''}`, quantity: steerCount, is_labor: false })
-      if (driveCount > 0) parts.push({ rough_name: `${driveCount}x Drive Axle Tire${driveCount > 1 ? 's' : ''}`, quantity: driveCount, is_labor: false })
-      if (rearCount > 0) parts.push({ rough_name: `${rearCount}x Rear Axle Tire${rearCount > 1 ? 's' : ''}`, quantity: rearCount, is_labor: false })
-      if (parts.length === 0) parts.push({ rough_name: `${tirePositions.length}x Tire${tirePositions.length > 1 ? 's' : ''}`, quantity: tirePositions.length, is_labor: false })
+      // rough_name carries the part name only; quantity carries the count.
+      // The UI prefixes "${quantity}x " separately — embedding the count here
+      // doubled the prefix to "2x 2x Steer Tires".
+      if (steerCount > 0) parts.push({ rough_name: 'Steer Tire', quantity: steerCount, is_labor: false })
+      if (driveCount > 0) parts.push({ rough_name: 'Drive Axle Tire', quantity: driveCount, is_labor: false })
+      if (rearCount > 0) parts.push({ rough_name: 'Rear Axle Tire', quantity: rearCount, is_labor: false })
+      if (parts.length === 0) parts.push({ rough_name: 'Tire', quantity: tirePositions.length, is_labor: false })
       return parts
     }
     // No positions selected — use explicit quantity if stated (e.g. "replace 4 tires"), otherwise 1
