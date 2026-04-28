@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
 import { createClient } from '@supabase/supabase-js'
 import { assertPartsRequirementResolved } from '@/lib/parts-status'
+import { onEstimateApproved } from '@/lib/approvals/onEstimateApproved'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 type P = { params: Promise<{ token: string }> }
@@ -52,5 +53,11 @@ export async function POST(req: Request, { params }: P) {
 
   await s.from('wo_activity_log').insert({ wo_id: wo.id, action: `Estimate approved by customer via portal` })
 
-  return NextResponse.json({ ok: true })
+  const repairTrackingEmail = await onEstimateApproved({
+    supabase: s,
+    serviceOrderId: wo.id,
+    source: 'portal_approve',
+  })
+
+  return NextResponse.json({ ok: true, repairTrackingEmail })
 }

@@ -5,6 +5,7 @@ import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { staffEstimateApprovedEmail } from '@/lib/emails/staffEstimateApproved'
 import { sendPushToUser } from '@/lib/services/notifications'
 import { assertPartsRequirementResolved } from '@/lib/parts-status'
+import { onEstimateApproved } from '@/lib/approvals/onEstimateApproved'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 type P = { params: Promise<{ token: string }> }
@@ -90,5 +91,11 @@ export async function POST(req: Request, { params }: P) {
     })
   } catch {}
 
-  return NextResponse.json({ ok: true })
+  const repairTrackingEmail = await onEstimateApproved({
+    supabase: s,
+    serviceOrderId: wo.id,
+    source: 'portal_estimate_approve',
+  })
+
+  return NextResponse.json({ ok: true, repairTrackingEmail })
 }
