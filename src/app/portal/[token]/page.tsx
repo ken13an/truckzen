@@ -76,6 +76,7 @@ export default function CustomerPortalPage() {
   const [deletionReason, setDeletionReason] = useState('')
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [showEstimateDetails, setShowEstimateDetails] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [, forceUpdate] = useState(0)
 
@@ -176,7 +177,10 @@ export default function CustomerPortalPage() {
   const st = isUnreviewedIntake
     ? { label: 'Under review', color: AMBER }
     : (STATUS_MAP[wo.status] || STATUS_MAP.draft)
-  const TABS = portalMode === 'full' ? ['Status', 'Estimate', 'Pay', 'History'] : ['Status', 'History']
+  // Pay tab is intentionally hidden on the repair-tracking page until online
+  // payment is wired end-to-end. Showing a disabled "Pay Now" button on a
+  // tracking surface confused customers; payment lives elsewhere for now.
+  const TABS = portalMode === 'full' ? ['Status', 'Estimate', 'History'] : ['Status', 'History']
   // Canonical estimate-approval link target. The portal page no longer hosts
   // its own approve/decline (those wrote to service_orders + so_lines without
   // touching estimates/estimate_lines and could drift from /portal/estimate
@@ -196,7 +200,7 @@ export default function CustomerPortalPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
           <Logo size="sm" />
           {shop.dba && <span style={{ fontSize: 13, fontWeight: 600, color: MUTED }}>{shop.dba}</span>}
-          <span style={{ ...pill(BLUE), marginLeft: 'auto' }}>Customer Portal</span>
+          <span style={{ ...pill(BLUE), marginLeft: 'auto' }}>Repair Tracking</span>
         </div>
 
         {/* WO Info Card */}
@@ -207,7 +211,7 @@ export default function CustomerPortalPage() {
           </div>
           <div style={{ fontSize: 13, color: MUTED, marginBottom: 4 }}>{customer.company_name || 'Customer'}</div>
           <div style={{ fontSize: 14, fontWeight: 600 }}>Unit #{asset.unit_number} — {asset.year} {asset.make} {asset.model}</div>
-          {vin && <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>VIN: {vin.slice(0, -6)}<strong>{vin.slice(-6)}</strong></div>}
+          {vin && <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>VIN ending in <strong>{vin.slice(-6)}</strong></div>}
           {checkin.need_by_date && <div style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>Need by: {new Date(checkin.need_by_date + 'T12:00:00').toLocaleDateString()}</div>}
           {lastUpdated && <div style={{ fontSize: 11, color: MUTED, marginTop: 6 }}>Last updated {timeAgo(lastUpdated)}</div>}
         </div>
@@ -353,7 +357,22 @@ export default function CustomerPortalPage() {
               </div>
             )}
 
-            {/* Estimate breakdown */}
+            {/* When the estimate is already approved this is a tracking page,
+                not an approval page — show a compact "Approved Total" card and
+                tuck the full breakdown behind a toggle. Pending/declined/draft
+                estimates keep the full breakdown rendered up front. */}
+            {wo.estimate_status === 'approved' && !showEstimateDetails && (
+              <div style={c}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700 }}>Approved Total</span>
+                  <span style={{ fontSize: 18, fontWeight: 800 }}>${grandTotal.toFixed(2)}</span>
+                </div>
+                <button onClick={() => setShowEstimateDetails(true)} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.12)', color: MUTED, padding: '8px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT, width: '100%' }}>Show estimate details</button>
+              </div>
+            )}
+
+            {/* Estimate breakdown — full when not approved; toggleable when approved */}
+            {(wo.estimate_status !== 'approved' || showEstimateDetails) && (
             <div style={c}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Estimate Breakdown</div>
               {jobLines.map((l: any) => {
@@ -394,7 +413,11 @@ export default function CustomerPortalPage() {
                 <span>Total</span>
                 <span>${grandTotal.toFixed(2)}</span>
               </div>
+              {wo.estimate_status === 'approved' && showEstimateDetails && (
+                <button onClick={() => setShowEstimateDetails(false)} style={{ marginTop: 12, background: 'none', border: '1px solid rgba(255,255,255,0.12)', color: MUTED, padding: '8px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT, width: '100%' }}>Hide estimate details</button>
+              )}
             </div>
+            )}
 
             {/* Bottom canonical-link / Call Shop pair for pending estimates */}
             {!isUnreviewedIntake && (wo.estimate_status === 'pending' || (!wo.estimate_status && wo.estimate_required === true && hasPricedWork && !wo.approved_at)) && (
@@ -410,33 +433,10 @@ export default function CustomerPortalPage() {
           </div>
         )}
 
-        {/* Tab: Pay */}
-        {TABS[tab] === 'Pay' && (
-          <div style={c}>
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Payment</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-              <span style={{ color: MUTED }}>Labor</span><span style={{ fontFamily: 'monospace' }}>${laborTotal.toFixed(2)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-              <span style={{ color: MUTED }}>Parts</span><span style={{ fontFamily: 'monospace' }}>${partsTotal.toFixed(2)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-              <span style={{ color: MUTED }}>Shop Charges</span><span style={{ fontFamily: 'monospace' }}>${chargesTotal.toFixed(2)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-              <span style={{ color: MUTED }}>Tax</span><span style={{ fontFamily: 'monospace' }}>${tax.toFixed(2)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18, fontWeight: 800, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, marginTop: 8 }}>
-              <span>Amount Due</span><span>${grandTotal.toFixed(2)}</span>
-            </div>
-            <button disabled style={{ ...btn(BLUE, '#fff', true), opacity: 0.5, marginTop: 16, cursor: 'not-allowed' }}>Pay Now</button>
-            <div style={{ fontSize: 12, color: MUTED, textAlign: 'center', marginTop: 8 }}>Online payments coming soon. Contact the shop at {shop.phone || 'the number on your invoice'}.</div>
-          </div>
-        )}
-
         {/* Tab: History */}
         {TABS[tab] === 'History' && (
           <div>
+            <div style={{ fontSize: 12, color: MUTED, marginBottom: 8 }}>This vehicle's repair history</div>
             {history.length === 0 && <div style={{ ...c, textAlign: 'center', color: MUTED }}>No previous work orders</div>}
             {history.map((h: any) => {
               const hs = STATUS_MAP[h.status] || STATUS_MAP.draft

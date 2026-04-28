@@ -21,13 +21,19 @@ function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
+// Customer-facing fields only. auth_type / auth_limit are internal estimate-
+// authorization fields and were never read by the portal page; dropped to
+// keep the public response narrow. customers.phone / customers.email are
+// fetched separately by the My Data modal route, so they stay out of this
+// shape. estimates.approval_token is intentionally retained — the page uses
+// it to build the canonical /portal/estimate/[token] approval link.
 const SO_SELECT = `
   id, shop_id, so_number, status, complaint, priority, grand_total, created_at, updated_at,
-  auth_type, auth_limit, approved_at, approved_by, portal_token,
+  approved_at, approved_by, portal_token,
   estimate_status, estimate_approved_date, estimate_declined_reason, estimate_created_date,
   estimate_required, ownership_type, job_type, source, workorder_lane,
   assets(id, unit_number, year, make, model, vin, odometer),
-  customers(id, company_name, contact_name, phone, email),
+  customers(id, company_name, contact_name),
   so_lines(id, line_type, description, quantity, unit_price, total_price, line_status, customer_approved, approved_at, is_additional, finding, resolution, estimated_hours, billed_hours),
   wo_shop_charges(id, description, amount, taxable),
   estimates(id, status, approval_token, created_at)
@@ -160,8 +166,6 @@ export async function GET(req: Request, { params }: P) {
     grand_total: 0,
     created_at: sr.created_at,
     updated_at: null as string | null,
-    auth_type: null as string | null,
-    auth_limit: null as number | null,
     approved_at: null as string | null,
     approved_by: null as string | null,
     portal_token: kc.portal_token,
