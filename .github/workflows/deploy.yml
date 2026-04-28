@@ -25,14 +25,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: nextjs/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: nextjs
         run: npm ci
 
       - name: TypeScript check
-        working-directory: nextjs
         run: npx tsc --noEmit
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -40,7 +38,6 @@ jobs:
           NEXT_PUBLIC_APP_URL: https://truckzen.com
 
       - name: ESLint
-        working-directory: nextjs
         run: npm run lint
 
   # ── JOB 2: SECURITY SCAN ──────────────────────────────────
@@ -59,7 +56,6 @@ jobs:
           extra_args: --only-verified
 
       - name: Dependency vulnerability scan
-        working-directory: nextjs
         run: |
           npm ci
           npm audit --audit-level=high
@@ -79,14 +75,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: nextjs/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: nextjs
         run: npm ci
 
       - name: Build Next.js app
-        working-directory: nextjs
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -97,7 +91,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nextjs-build
-          path: nextjs/.next
+          path: .next
           retention-days: 1
 
   # ── JOB 4: DEPLOY STAGING ─────────────────────────────────
@@ -117,7 +111,6 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Deploy to Vercel (Preview)
-        working-directory: nextjs
         run: |
           vercel pull --yes --environment=preview \
             --token=${{ secrets.VERCEL_TOKEN }}
@@ -155,7 +148,6 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Deploy to Vercel (Production)
-        working-directory: nextjs
         run: |
           vercel pull --yes --environment=production \
             --token=${{ secrets.VERCEL_TOKEN }}
