@@ -35,6 +35,15 @@ function isUnrecognizedJob(desc: string): boolean {
   return !KNOWN_REPAIR_WORDS.some(w => d.includes(w))
 }
 
+// Keep in sync with TIRE_POSITIONS in src/app/work-orders/new/page.tsx — the
+// inline Edit Job Line dropdown must speak the same vocabulary the creation
+// flow writes, so saved values round-trip cleanly through the dropdown.
+const TIRE_POSITION_OPTIONS: Array<{ group: string; positions: string[] }> = [
+  { group: 'Steer (Axle 1)', positions: ['DS Steer', 'PS Steer'] },
+  { group: 'Drive (Axle 2)', positions: ['DS 2nd Axle Outer', 'DS 2nd Axle Inner', 'PS 2nd Axle Outer', 'PS 2nd Axle Inner'] },
+  { group: 'Rear (Axle 3)', positions: ['DS 3rd Axle Outer', 'DS 3rd Axle Inner', 'PS 3rd Axle Outer', 'PS 3rd Axle Inner'] },
+]
+
 const FONT = "'Inter', -apple-system, sans-serif"
 const BLUE = 'var(--tz-accent)', GREEN = 'var(--tz-success)', RED = 'var(--tz-danger)', AMBER = 'var(--tz-warning)', GRAY = 'var(--tz-textSecondary)'
 
@@ -158,7 +167,7 @@ export default function WorkOrderDetail() {
   // can be in inline-edit mode at a time. The generic WO-level Edit button
   // does NOT control this — it controls the WO header edit.
   const [editingJobLineId, setEditingJobLineId] = useState<string | null>(null)
-  const [editingJobLineForm, setEditingJobLineForm] = useState<{ description: string; tire_position: string }>({ description: '', tire_position: '' })
+  const [editingJobLineForm, setEditingJobLineForm] = useState<{ description: string; tire_position: string; estimated_hours: string }>({ description: '', tire_position: '', estimated_hours: '' })
   const [savingJobLineEdit, setSavingJobLineEdit] = useState(false)
   const [approvalConfirmModal, setApprovalConfirmModal] = useState<{ method: string; notes: string } | null>(null)
   const [printedReady, setPrintedReady] = useState(false)
@@ -1501,6 +1510,7 @@ export default function WorkOrderDetail() {
                         setEditingJobLineForm({
                           description: line.description || '',
                           tire_position: line.tire_position || '',
+                          estimated_hours: line.estimated_hours != null ? String(line.estimated_hours) : '',
                         })
                         setEditingJobLineId(line.id)
                       }}
@@ -1510,7 +1520,11 @@ export default function WorkOrderDetail() {
                     </button>
                   </div>
                 )}
-                {isEditingThisLine && (
+                {isEditingThisLine && (() => {
+                  const estHoursRaw = editingJobLineForm.estimated_hours.trim()
+                  const estHoursNum = estHoursRaw === '' ? null : Number(estHoursRaw)
+                  const estHoursInvalid = estHoursRaw !== '' && (!Number.isFinite(estHoursNum as number) || (estHoursNum as number) < 0)
+                  return (
                   <div style={{ marginBottom: 10, padding: '12px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgLight)' }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>Edit Job Line</div>
                     <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Description</label>
@@ -1527,18 +1541,30 @@ export default function WorkOrderDetail() {
                       style={{ ...inputStyle, fontSize: 13, width: '100%', marginBottom: 10 }}
                     >
                       <option value="">— None / not applicable —</option>
-                      <option value="Steer - DS">Steer - DS</option>
-                      <option value="Steer - PS">Steer - PS</option>
-                      <option value="Drive - DS">Drive - DS</option>
-                      <option value="Drive - PS">Drive - PS</option>
-                      <option value="Drive axle / inside">Drive axle / inside</option>
-                      <option value="Drive axle / outside">Drive axle / outside</option>
-                      <option value="Trailer">Trailer</option>
-                      <option value="Other / specify in description">Other / specify in description</option>
+                      {TIRE_POSITION_OPTIONS.map(g => (
+                        <optgroup key={g.group} label={g.group}>
+                          {g.positions.map(pos => (
+                            <option key={pos} value={pos}>{pos}</option>
+                          ))}
+                        </optgroup>
+                      ))}
                     </select>
+                    <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Estimated Hours</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.25"
+                      name="job-line-estimated-hours"
+                      value={editingJobLineForm.estimated_hours}
+                      onChange={e => setEditingJobLineForm(f => ({ ...f, estimated_hours: e.target.value }))}
+                      style={{ ...inputStyle, fontSize: 13, width: '100%', marginBottom: estHoursInvalid ? 4 : 10, borderColor: estHoursInvalid ? RED : undefined }}
+                    />
+                    {estHoursInvalid && (
+                      <div style={{ fontSize: 11, color: RED, marginBottom: 10 }}>Enter a non-negative number (e.g. 1.5).</div>
+                    )}
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                       <button
-                        onClick={() => { setEditingJobLineId(null); setEditingJobLineForm({ description: '', tire_position: '' }) }}
+                        onClick={() => { setEditingJobLineId(null); setEditingJobLineForm({ description: '', tire_position: '', estimated_hours: '' }) }}
                         disabled={savingJobLineEdit}
                         style={{ ...btnStyle('transparent', GRAY), padding: '6px 12px', fontSize: 12, border: `1px solid ${'var(--tz-border)'}` }}
                       >
@@ -1547,6 +1573,7 @@ export default function WorkOrderDetail() {
                       <button
                         onClick={async () => {
                           if (savingJobLineEdit) return
+                          if (estHoursInvalid) return
                           setSavingJobLineEdit(true)
                           try {
                             const updates: Record<string, unknown> = {}
@@ -1554,23 +1581,26 @@ export default function WorkOrderDetail() {
                             const newPos = editingJobLineForm.tire_position.trim() || null
                             if (newDesc !== (line.description || '')) updates.description = newDesc
                             if ((newPos || '') !== (line.tire_position || '')) updates.tire_position = newPos
+                            const oldHours = line.estimated_hours == null ? null : Number(line.estimated_hours)
+                            if (estHoursNum !== oldHours) updates.estimated_hours = estHoursNum
                             if (Object.keys(updates).length > 0) {
                               await patchLine(line.id, updates)
                             }
                             setEditingJobLineId(null)
-                            setEditingJobLineForm({ description: '', tire_position: '' })
+                            setEditingJobLineForm({ description: '', tire_position: '', estimated_hours: '' })
                           } finally {
                             setSavingJobLineEdit(false)
                           }
                         }}
-                        disabled={savingJobLineEdit}
-                        style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '6px 12px', fontSize: 12, opacity: savingJobLineEdit ? 0.5 : 1, cursor: savingJobLineEdit ? 'not-allowed' : 'pointer' }}
+                        disabled={savingJobLineEdit || estHoursInvalid}
+                        style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '6px 12px', fontSize: 12, opacity: (savingJobLineEdit || estHoursInvalid) ? 0.5 : 1, cursor: (savingJobLineEdit || estHoursInvalid) ? 'not-allowed' : 'pointer' }}
                       >
                         {savingJobLineEdit ? 'Saving…' : 'Save'}
                       </button>
                     </div>
                   </div>
-                )}
+                  )
+                })()}
                 {/* Editable line_status control (expanded only). For waiting/declined
                     lines the dropdown is suppressed — read-only approval state
                     lives in the header pill (packet-1). */}
