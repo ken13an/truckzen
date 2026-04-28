@@ -148,6 +148,11 @@ export default function WorkOrderDetail() {
   const [merging, setMerging] = useState(false)
   const [contactEmail, setContactEmail] = useState('')
   const [contactPhone, setContactPhone] = useState('')
+  // Saved customer contacts (customer_contacts rows). Fetched after the WO
+  // loads so the estimate-send modal can offer them as additional recipients.
+  // None are auto-checked — service writer must explicitly opt each one in.
+  const [customerContacts, setCustomerContacts] = useState<Array<{ id: string; name: string | null; email: string | null; role: string | null; is_primary: boolean | null }>>([])
+  const [selectedExtraEmails, setSelectedExtraEmails] = useState<Set<string>>(new Set())
   const [approvalConfirmModal, setApprovalConfirmModal] = useState<{ method: string; notes: string } | null>(null)
   const [printedReady, setPrintedReady] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -221,6 +226,25 @@ export default function WorkOrderDetail() {
       setTeamAssign({ team: woData.team || '', bay: woData.bay || '', assigned_tech: woData.assigned_tech || '' })
       setContactEmail(woData.customers?.email || '')
       setContactPhone(woData.customers?.phone || '')
+      // Load saved customer_contacts so the estimate-send modal can offer
+      // them as additional recipients. RLS scopes to the user's shop. Failure
+      // is non-blocking — the modal still works with just the primary input.
+      if (woData.customers?.id) {
+        supabase.from('customer_contacts')
+          .select('id, name, email, role, is_primary')
+          .eq('customer_id', woData.customers.id)
+          .order('is_primary', { ascending: false })
+          .then(({ data, error }: { data: any; error: any }) => {
+            if (error) {
+              console.warn('[wo-detail] customer_contacts load failed', error.message)
+              return
+            }
+            setCustomerContacts(data || [])
+          })
+      } else {
+        setCustomerContacts([])
+      }
+      setSelectedExtraEmails(new Set())
       // Fetch extra-time requests for this WO
       fetch(`/api/mechanic-requests?status=pending`).then(r => r.ok ? r.json() : []).then(reqs => {
         setExtraTimeRequests((reqs || []).filter((r: any) => r.so_id === id && r.request_type === 'labor_extension'))
@@ -3592,16 +3616,34 @@ export default function WorkOrderDetail() {
             // Send the user-selected recipient explicitly so the server does
             // not silently fall back to a stale estimate.customer_email when
             // the saveContactInfo PATCH above 409s or is skipped.
+            //
+            // Phase 2A: when extra customer_contacts checkboxes are selected,
+            // pass them as `to_emails` (server validates each against the
+            // estimate's customer_id and sends one email per recipient). The
+            // legacy `to_email` field is kept for back-compat when no extras
+            // are picked, so existing single-recipient behavior is unchanged.
+            const primaryEmail = contactEmail.trim()
+            const primaryEmailLower = primaryEmail.toLowerCase()
+            const extraEmails = Array.from(selectedExtraEmails).filter(e => e && e !== primaryEmailLower)
+            const hasExtras = extraEmails.length > 0
+            const sendBody: Record<string, unknown> = {
+              to_phone: contactPhone.trim() || undefined,
+            }
+            if (hasExtras) {
+              sendBody.to_emails = primaryEmail ? [primaryEmail, ...extraEmails] : extraEmails
+            } else {
+              sendBody.to_email = primaryEmail || undefined
+            }
             const res = await fetch(`/api/estimates/${effectiveId}/send`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                to_email: contactEmail.trim() || undefined,
-                to_phone: contactPhone.trim() || undefined,
-              }),
+              body: JSON.stringify(sendBody),
             })
             if (res.ok) {
-              logActivity(`Estimate sent to ${contactEmail || contactPhone}`)
+              const recipientLabel = hasExtras
+                ? `${(primaryEmail ? 1 : 0) + extraEmails.length} recipients`
+                : (contactEmail || contactPhone)
+              logActivity(`Estimate sent to ${recipientLabel}`)
               setToastMsg('Estimate sent to customer')
               setTimeout(() => setToastMsg(''), 4000)
               setApprovalModal(null)
@@ -3703,6 +3745,55 @@ export default function WorkOrderDetail() {
                   </div>
                 )}
               </div>
+
+              {/* Saved customer contacts as additional recipients (Phase 2A).
+                  Only shown when the customer has saved contacts. None are
+                  preselected — the service writer must opt each one in. The
+                  primary email above is always sent if present; checked
+                  contacts are sent in addition. Internal app users belong in
+                  TruckZen dashboards, not here. */}
+              {customerContacts.filter(c => c.email && c.email.trim()).length > 0 && (
+                <div style={{ marginBottom: 16, padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>Also send to (optional)</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {customerContacts.filter(c => c.email && c.email.trim()).map(contact => {
+                      const emailKey = (contact.email || '').trim().toLowerCase()
+                      const checked = selectedExtraEmails.has(emailKey)
+                      const matchesPrimary = emailKey === contactEmail.trim().toLowerCase()
+                      return (
+                        <label key={contact.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: matchesPrimary ? 'not-allowed' : 'pointer', opacity: matchesPrimary ? 0.5 : 1 }}>
+                          <input
+                            type="checkbox"
+                            checked={checked && !matchesPrimary}
+                            disabled={matchesPrimary}
+                            onChange={e => {
+                              setSelectedExtraEmails(prev => {
+                                const next = new Set(prev)
+                                if (e.target.checked) next.add(emailKey); else next.delete(emailKey)
+                                return next
+                              })
+                            }}
+                          />
+                          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <strong style={{ color: 'var(--tz-text)' }}>{contact.name || contact.email}</strong>
+                            <span style={{ color: GRAY }}> — {contact.email}</span>
+                            {contact.role && <span style={{ color: GRAY }}> · {contact.role}</span>}
+                          </span>
+                          {contact.is_primary && (
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'var(--tz-bgLight)', color: GRAY, border: `1px solid ${'var(--tz-border)'}` }}>PRIMARY</span>
+                          )}
+                          {matchesPrimary && (
+                            <span style={{ fontSize: 10, color: GRAY }}>(already in primary)</span>
+                          )}
+                        </label>
+                      )
+                    })}
+                  </div>
+                  <div style={{ fontSize: 11, color: GRAY, marginTop: 8 }}>
+                    Only checked recipients will receive the estimate link. Internal TruckZen app users see estimates in their dashboards.
+                  </div>
+                </div>
+              )}
 
               {/* Path 1: Send Estimate */}
               <div style={{ marginBottom: 12, padding: '12px 14px', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8 }}>

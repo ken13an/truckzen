@@ -32,11 +32,15 @@ async function getEstimateForActor(admin: any, actor: any, id: string) {
   return { data, error }
 }
 
-// Single-recipient override: caller may pass `to_email` / `to_phone` to send
-// the estimate to a specific recipient for THIS send action only. The route
-// auth/shop-scoped estimate lookup still gates access. The override does NOT
-// mutate the customer profile or the estimate row — that persistence is the
-// caller's separate responsibility (see saveContactInfo in the WO modal).
+// Recipient overrides (Phase 2A). Caller may pass:
+//   - { to_email: string }      legacy single-recipient (free-form, regex only)
+//   - { to_emails: string[] }   new multi-recipient. Element [0] is the
+//                               primary and keeps legacy free-form behavior;
+//                               elements [1..] must each match customers.email
+//                               or customer_contacts.email for the estimate's
+//                               customer_id. The route auth/shop-scoped
+//                               estimate lookup still gates access. Overrides
+//                               do NOT mutate customers/estimates rows.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 function maskEmail(s: string): string {
   if (!s || !s.includes('@')) return s || ''
@@ -53,25 +57,87 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
   const { data: estimate, error } = await getEstimateForActor(ctx.admin, ctx.actor, id)
   if (error || !estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
 
-  // Optional recipient override from request body. If invalid, ignore the
+  // Optional recipient overrides from request body. If invalid, ignore the
   // override and fall back to the stored estimate.customer_email; do NOT 422
   // — the stored value may still be valid.
   let bodyJson: any = null
   try { bodyJson = await req.json() } catch { bodyJson = null }
+  const rawToEmails: string[] = Array.isArray(bodyJson?.to_emails)
+    ? bodyJson.to_emails.filter((x: any) => typeof x === 'string').map((s: string) => s.trim()).filter(Boolean)
+    : []
   const rawToEmail = typeof bodyJson?.to_email === 'string' ? bodyJson.to_email.trim() : ''
   const rawToPhone = typeof bodyJson?.to_phone === 'string' ? bodyJson.to_phone.trim() : ''
-  const overrideEmail = rawToEmail && EMAIL_RE.test(rawToEmail) ? rawToEmail : ''
-  const overridePhone = rawToPhone || ''
-  if (rawToEmail && !overrideEmail) {
-    console.warn('[estimate-send] override email rejected as invalid format', { estimateId: id, masked: maskEmail(rawToEmail) })
+
+  // Resolve the final email recipient list (multi-recipient path or legacy
+  // single-recipient path). Returns display strings; dedupe is by lowercase.
+  // The first element is treated as the "primary" and keeps legacy free-form
+  // override semantics. Elements [1..] must match customers.email or
+  // customer_contacts.email for the estimate's customer_id.
+  const recipientEmails: string[] = []
+  if (rawToEmails.length > 0) {
+    const formatValid = rawToEmails.filter(e => EMAIL_RE.test(e))
+    if (formatValid.length < rawToEmails.length) {
+      console.warn('[estimate-send] some to_emails entries rejected as invalid format', {
+        estimateId: id,
+        provided: rawToEmails.length,
+        valid: formatValid.length,
+      })
+    }
+    if (formatValid.length > 0) {
+      const customerId = (estimate as any).customer_id || null
+      const allowedEmailsLc = new Set<string>()
+      const estCustEmail = (estimate as any).customer_email
+      if (estCustEmail) allowedEmailsLc.add(String(estCustEmail).toLowerCase())
+      if (customerId) {
+        const { data: cust } = await ctx.admin.from('customers').select('email').eq('id', customerId).maybeSingle()
+        if (cust?.email) allowedEmailsLc.add(String(cust.email).toLowerCase())
+        const { data: contacts } = await ctx.admin.from('customer_contacts').select('email').eq('customer_id', customerId)
+        for (const c of contacts || []) {
+          if (c?.email) allowedEmailsLc.add(String(c.email).toLowerCase())
+        }
+      }
+      const seen = new Set<string>()
+      for (let i = 0; i < formatValid.length; i++) {
+        const email = formatValid[i]
+        const lower = email.toLowerCase()
+        if (seen.has(lower)) continue
+        if (i === 0) {
+          // Primary: free-form allowed (legacy override behavior)
+          seen.add(lower)
+          recipientEmails.push(email)
+        } else if (allowedEmailsLc.has(lower)) {
+          seen.add(lower)
+          recipientEmails.push(email)
+        } else {
+          console.warn('[estimate-send] extra recipient rejected — not in customer scope', {
+            estimateId: id,
+            customerId,
+            masked: maskEmail(email),
+          })
+        }
+      }
+    }
+  } else if (rawToEmail) {
+    if (EMAIL_RE.test(rawToEmail)) {
+      recipientEmails.push(rawToEmail)
+    } else {
+      console.warn('[estimate-send] override email rejected as invalid format', { estimateId: id, masked: maskEmail(rawToEmail) })
+    }
   }
-  const recipientEmail = overrideEmail || (estimate as any).customer_email || ''
-  const recipientPhone = overridePhone || (estimate as any).customer_phone || ''
-  console.info('[estimate-send] recipient resolved', {
+
+  // Final fallback to stored estimate.customer_email if nothing valid above.
+  if (recipientEmails.length === 0 && (estimate as any).customer_email) {
+    recipientEmails.push((estimate as any).customer_email)
+  }
+
+  const recipientEmail = recipientEmails[0] || ''
+  const recipientPhone = rawToPhone || (estimate as any).customer_phone || ''
+  console.info('[estimate-send] recipients resolved', {
     estimateId: id,
-    emailSource: overrideEmail ? 'override' : ((estimate as any).customer_email ? 'estimate.customer_email' : 'none'),
-    phoneSource: overridePhone ? 'override' : ((estimate as any).customer_phone ? 'estimate.customer_phone' : 'none'),
-    emailMasked: maskEmail(recipientEmail),
+    emailCount: recipientEmails.length,
+    primaryMasked: maskEmail(recipientEmail),
+    extraCount: Math.max(0, recipientEmails.length - 1),
+    phoneSource: rawToPhone ? 'override' : ((estimate as any).customer_phone ? 'estimate.customer_phone' : 'none'),
   })
 
   // RULE 7 step 1 — snapshot ensure (idempotent, no overwrite of existing rows).
@@ -148,10 +214,28 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
   const total = Number((estPostEnsure as any)?.grand_total) || Number((estPostEnsure as any)?.total) || 0
 
   const sentVia: string[] = []
-  if (recipientEmail) {
+  const sentEmails: string[] = []
+  const failedEmails: Array<{ email: string; error: string }> = []
+  if (recipientEmails.length > 0) {
     const emailHtml = `<div style="background:#0f0f1a;padding:32px;font-family:-apple-system,sans-serif"><div style="max-width:600px;margin:0 auto;background:#1a1a2e;border-radius:12px;overflow:hidden"><div style="padding:24px;background:#1d1d35;border-bottom:1px solid #2a2a3a"><h1 style="margin:0;color:#ffffff;font-size:20px">${shop.name}</h1><p style="margin:4px 0 0;color:#8a8a9a;font-size:13px">Estimate ${(estimate as any).estimate_number}</p></div><div style="padding:24px"><p style="color:#e0e0e0;font-size:14px;margin:0 0 8px">Hi ${(estimate as any).customer_name || 'Customer'},</p><p style="color:#b0b0c0;font-size:13px;margin:0 0 16px">Here is your repair estimate${truckInfo ? ` for <strong style="color:#e0e0e0">${truckInfo}</strong>` : ''}. The full breakdown is attached as a PDF.</p><table style="width:100%;border-collapse:collapse;margin:16px 0"><thead><tr style="background:#15152a"><th style="padding:8px 12px;text-align:left;color:#8a8a9a;font-size:11px;text-transform:uppercase">Description</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Labor</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Parts</th><th style="padding:8px 12px;text-align:right;color:#8a8a9a;font-size:11px;text-transform:uppercase">Total</th></tr></thead><tbody>${linesHtml}</tbody></table><div style="text-align:right;padding:12px 0;border-top:1px solid #2a2a3a"><div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Subtotal: $${subtotal.toFixed(2)}</div><div style="color:#8a8a9a;font-size:12px;margin-bottom:4px">Tax: $${tax.toFixed(2)}</div><div style="color:#ffffff;font-size:18px;font-weight:800">Total: $${total.toFixed(2)}</div></div><div style="text-align:center;margin:24px 0 8px"><a href="${portalLink}" style="display:inline-block;padding:14px 32px;background:#16A34A;color:#fff;text-decoration:none;border-radius:10px;font-size:15px;font-weight:700">Review & Approve Estimate</a></div></div></div></div>`
-    const sent = await sendEmail(recipientEmail, `Estimate ${(estimate as any).estimate_number} from ${shop.name}`, emailHtml, attachments)
-    if (sent) sentVia.push('email')
+    const subjectLine = `Estimate ${(estimate as any).estimate_number} from ${shop.name}`
+    // One Resend call per recipient so we get per-recipient success tracking
+    // and a per-recipient notification_log row.
+    for (const recipient of recipientEmails) {
+      const ok = await sendEmail(recipient, subjectLine, emailHtml, attachments)
+      const logMessage = `estimate=${id} estimate_number=${(estimate as any).estimate_number ?? ''} recipient=${recipient} ok=${ok}`
+      const { error: logErr } = await ctx.admin.from('notification_log').insert({
+        shop_id: (estimate as any).shop_id,
+        event: 'estimate.email.sent',
+        recipients: [],
+        channels: ['email'],
+        message: logMessage,
+      })
+      if (logErr) console.error('[notification_log] insert failed', { event: 'estimate.email.sent', error: logErr.message })
+      if (ok) sentEmails.push(recipient)
+      else failedEmails.push({ email: recipient, error: 'send_failed' })
+    }
+    if (sentEmails.length > 0) sentVia.push('email')
   }
   if (recipientPhone) {
     try {
@@ -184,7 +268,16 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
   await ctx.admin.from('estimates').update({ status: 'sent', sent_at: now, valid_until: validUntil, updated_at: now, sent_via: sentVia.join(',') }).eq('id', id)
   if (repairOrderId) await ctx.admin.from('service_orders').update({ estimate_status: 'sent', updated_at: now }).eq('id', repairOrderId)
 
-  return NextResponse.json({ success: true, sent_via: sentVia, portal_link: portalLink, snapshot_lines: validation.laborCount + validation.partCount })
+  return NextResponse.json({
+    success: true,
+    sent_via: sentVia,
+    portal_link: portalLink,
+    snapshot_lines: validation.laborCount + validation.partCount,
+    recipients: sentEmails,
+    sent_count: sentEmails.length,
+    failed_count: failedEmails.length,
+    ...(failedEmails.length > 0 ? { failures: failedEmails } : {}),
+  })
 }
 
 export const POST = safeRoute(_POST)
