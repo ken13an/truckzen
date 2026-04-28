@@ -367,18 +367,28 @@ export async function generateEstimatePdf(estimateId: string, mode: 'email' | 'p
     } else {
       need(120)
       txt('APPROVAL', L, y, 9, true, accent); y -= 14
-      wrap('Review and approve this estimate using the customer portal link. This estimate covers the listed labor and parts only. Any additional work will require separate approval.', L, W, 9, false, dark)
-      y -= 6
-      if (portalLink) {
-        const btnY = y - 26
-        rect(L, btnY, 220, 28, accent)
-        const btnText = 'REVIEW & APPROVE ESTIMATE'
-        page.drawText(btnText, { x: L + (220 - fontBold.widthOfTextAtSize(btnText, 9)) / 2, y: btnY + 10, size: 9, font: fontBold, color: rgb(1, 1, 1) })
-        txt('Portal:', L + 230, btnY + 16, 8, true, light)
-        // Trim very long portal links to keep them on one line
-        const portalShown = portalLink.length > 60 ? portalLink.slice(0, 57) + '...' : portalLink
-        txt(portalShown, L + 230, btnY + 4, 8, false, accent)
-        y = btnY - 14
+      // Once the customer has approved, the CTA + portal link become noise
+      // (and worse, can mislead the customer into thinking another action is
+      // pending). Replace with a static confirmation note; print mode keeps
+      // its physical signature lines.
+      const isApproved = String(status).toLowerCase() === 'approved'
+      if (isApproved) {
+        wrap('This estimate has been approved. No further customer action is required.', L, W, 9, false, dark)
+        y -= 6
+      } else {
+        wrap('Review and approve this estimate using the customer portal link. This estimate covers the listed labor and parts only. Any additional work will require separate approval.', L, W, 9, false, dark)
+        y -= 6
+        if (portalLink) {
+          const btnY = y - 26
+          rect(L, btnY, 220, 28, accent)
+          const btnText = 'REVIEW & APPROVE ESTIMATE'
+          page.drawText(btnText, { x: L + (220 - fontBold.widthOfTextAtSize(btnText, 9)) / 2, y: btnY + 10, size: 9, font: fontBold, color: rgb(1, 1, 1) })
+          txt('Portal:', L + 230, btnY + 16, 8, true, light)
+          // Trim very long portal links to keep them on one line
+          const portalShown = portalLink.length > 60 ? portalLink.slice(0, 57) + '...' : portalLink
+          txt(portalShown, L + 230, btnY + 4, 8, false, accent)
+          y = btnY - 14
+        }
       }
     }
 

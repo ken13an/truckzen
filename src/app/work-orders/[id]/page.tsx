@@ -2495,7 +2495,7 @@ export default function WorkOrderDetail() {
                     <input
                       type="email"
                       name="estimate-recipient-email"
-                      autoComplete="off"
+                      autoComplete="email"
                       inputMode="email"
                       value={contactEmail}
                       onChange={e => setContactEmail(e.target.value)}
@@ -2509,7 +2509,7 @@ export default function WorkOrderDetail() {
                     <input
                       type="tel"
                       name="estimate-recipient-phone"
-                      autoComplete="off"
+                      autoComplete="tel"
                       inputMode="tel"
                       value={contactPhone}
                       onChange={e => setContactPhone(e.target.value)}
@@ -4054,7 +4054,7 @@ export default function WorkOrderDetail() {
                     <input
                       type="email"
                       name="estimate-recipient-email"
-                      autoComplete="off"
+                      autoComplete="email"
                       inputMode="email"
                       value={contactEmail}
                       onChange={e => setContactEmail(e.target.value)}
@@ -4068,7 +4068,7 @@ export default function WorkOrderDetail() {
                     <input
                       type="tel"
                       name="estimate-recipient-phone"
-                      autoComplete="off"
+                      autoComplete="tel"
                       inputMode="tel"
                       value={contactPhone}
                       onChange={e => setContactPhone(e.target.value)}
