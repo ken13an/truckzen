@@ -19,6 +19,7 @@ import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
 import { isInvoiceHardLocked, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { SERVICE_WRITE_ROLES, ACCOUNTING_ROLES } from '@/lib/roles'
+import { validateJobLine, type JobLineValidationResult } from '@/lib/work-orders/jobLineValidation'
 import { useTheme } from '@/hooks/useTheme'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import { THEME } from '@/lib/config/colors'
@@ -153,6 +154,12 @@ export default function WorkOrderDetail() {
   // None are auto-checked — service writer must explicitly opt each one in.
   const [customerContacts, setCustomerContacts] = useState<Array<{ id: string; name: string | null; email: string | null; role: string | null; is_primary: boolean | null }>>([])
   const [selectedExtraEmails, setSelectedExtraEmails] = useState<Set<string>>(new Set())
+  // Per-line edit mode for the WO detail page (Phase 2B). Only one job line
+  // can be in inline-edit mode at a time. The generic WO-level Edit button
+  // does NOT control this — it controls the WO header edit.
+  const [editingJobLineId, setEditingJobLineId] = useState<string | null>(null)
+  const [editingJobLineForm, setEditingJobLineForm] = useState<{ description: string; tire_position: string }>({ description: '', tire_position: '' })
+  const [savingJobLineEdit, setSavingJobLineEdit] = useState(false)
   const [approvalConfirmModal, setApprovalConfirmModal] = useState<{ method: string; notes: string } | null>(null)
   const [printedReady, setPrintedReady] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -830,6 +837,21 @@ export default function WorkOrderDetail() {
   const jobLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'labor')
   const partLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
   const feeLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'fee')
+  // Phase 2B: derive per-line validation results so the UI can render
+  // warnings and the Send Estimate button can be gated. Pure derivation;
+  // safe to compute every render.
+  const jobLineValidations: Record<string, JobLineValidationResult> = {}
+  for (const line of jobLines) {
+    jobLineValidations[line.id] = validateJobLine({
+      id: line.id,
+      description: line.description,
+      line_type: line.line_type,
+      line_status: line.line_status,
+      status: line.status,
+      tire_position: line.tire_position,
+    })
+  }
+  const hasBlockingJobLineIssue = Object.values(jobLineValidations).some(v => !v.valid)
   // Invoice-tab display split. Non-billable rows (customer_supplied /
   // not_needed) sum to $0 in calcInvoiceTotals (parts_sell_price=0 and
   // unit_price=0), so pulling them into a separate display section does
@@ -1364,6 +1386,11 @@ export default function WorkOrderDetail() {
             const st = LINE_STATUS[line.line_status] || LINE_STATUS.unassigned
             const lineAssignments = jobAssignments.filter((a: any) => a.line_id === line.id)
             const isAdditional = line.is_additional
+            // Phase 2B: per-line validation result + helpers for the warning
+            // chrome and the inline "Edit Job Line" affordance.
+            const lineValidation = jobLineValidations[line.id]
+            const lineInvalid = !!lineValidation && !lineValidation.valid
+            const isEditingThisLine = editingJobLineId === line.id
             // lineParts retained for future Parts-tab linkage; the visual
             // rendering has moved to the Parts tab per packet-1 intent.
             const lineParts = woParts.filter((p: any) => p.line_id === line.id)
@@ -1407,7 +1434,7 @@ export default function WorkOrderDetail() {
             void isAdditional
 
             return (
-              <div key={line.id} style={{ ...cardStyle, position: 'relative' }}>
+              <div key={line.id} style={{ ...cardStyle, position: 'relative', ...(lineInvalid ? { border: '1px solid rgba(220,38,38,0.45)', boxShadow: 'inset 4px 0 0 0 var(--tz-danger)' } : {}) }}>
                 {/* Two-row collapsible header (packet-1):
                     Row 1 = chrome (checkbox, chevron, Job #) + one resolved
                     status pill + outlined chips for mechanic, concern count
@@ -1423,6 +1450,11 @@ export default function WorkOrderDetail() {
                     {expanded ? <ChevronDown size={14} color={GRAY} /> : <ChevronRight size={14} color={GRAY} />}
                     <span style={{ fontSize: 14, fontWeight: 700 }}>Job {idx + 1}</span>
                     <span style={pillStyle(primary.bg, primary.color)}>{primary.label}</span>
+                    {lineInvalid && (
+                      <span style={pillStyle('var(--tz-dangerBg)', RED)} title={lineValidation && !lineValidation.valid ? lineValidation.message : ''}>
+                        Tire position required
+                      </span>
+                    )}
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 600, background: 'transparent', color: lineAssignments.length > 0 ? 'var(--tz-text)' : GRAY, border: `1px solid ${'var(--tz-border)'}` }}>
                       <User size={12} />
                       {mechanicLabel}
@@ -1449,6 +1481,96 @@ export default function WorkOrderDetail() {
 
                 {expanded && (
                 <>
+                {/* Phase 2B: invalid-line warning + per-line "Edit Job Line"
+                    affordance. The warning explains what to fix; the Edit
+                    button toggles the small inline editor for description +
+                    tire_position. The generic WO-level Edit button does NOT
+                    drive this — it controls the WO header. */}
+                {lineInvalid && lineValidation && !lineValidation.valid && (
+                  <div style={{ marginBottom: 10, padding: '10px 12px', borderRadius: 8, background: 'var(--tz-dangerBg)', border: '1px solid rgba(220,38,38,0.25)', color: RED, fontSize: 12, lineHeight: 1.4 }}>
+                    <div style={{ fontWeight: 700, marginBottom: 2 }}>{lineValidation.message}</div>
+                    <div style={{ color: 'var(--tz-textSecondary)' }}>
+                      Add steer/drive/trailer, axle, DS/PS, or inside/outside detail. Required before this estimate can be sent.
+                    </div>
+                  </div>
+                )}
+                {!wo.is_historical && !isViewOnly && !isEditingThisLine && (
+                  <div style={{ marginBottom: 10 }}>
+                    <button
+                      onClick={() => {
+                        setEditingJobLineForm({
+                          description: line.description || '',
+                          tire_position: line.tire_position || '',
+                        })
+                        setEditingJobLineId(line.id)
+                      }}
+                      style={{ ...btnStyle('var(--tz-bgLight)', 'var(--tz-text)'), padding: '6px 12px', fontSize: 12, border: `1px solid ${lineInvalid ? 'rgba(220,38,38,0.45)' : 'var(--tz-border)'}`, color: lineInvalid ? RED : 'var(--tz-text)' }}
+                    >
+                      Edit Job Line
+                    </button>
+                  </div>
+                )}
+                {isEditingThisLine && (
+                  <div style={{ marginBottom: 10, padding: '12px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgLight)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>Edit Job Line</div>
+                    <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Description</label>
+                    <textarea
+                      value={editingJobLineForm.description}
+                      onChange={e => setEditingJobLineForm(f => ({ ...f, description: e.target.value }))}
+                      rows={3}
+                      style={{ ...inputStyle, fontSize: 13, width: '100%', resize: 'vertical', marginBottom: 10 }}
+                    />
+                    <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Tire position (required for tire jobs)</label>
+                    <select
+                      value={editingJobLineForm.tire_position}
+                      onChange={e => setEditingJobLineForm(f => ({ ...f, tire_position: e.target.value }))}
+                      style={{ ...inputStyle, fontSize: 13, width: '100%', marginBottom: 10 }}
+                    >
+                      <option value="">— None / not applicable —</option>
+                      <option value="Steer - DS">Steer - DS</option>
+                      <option value="Steer - PS">Steer - PS</option>
+                      <option value="Drive - DS">Drive - DS</option>
+                      <option value="Drive - PS">Drive - PS</option>
+                      <option value="Drive axle / inside">Drive axle / inside</option>
+                      <option value="Drive axle / outside">Drive axle / outside</option>
+                      <option value="Trailer">Trailer</option>
+                      <option value="Other / specify in description">Other / specify in description</option>
+                    </select>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => { setEditingJobLineId(null); setEditingJobLineForm({ description: '', tire_position: '' }) }}
+                        disabled={savingJobLineEdit}
+                        style={{ ...btnStyle('transparent', GRAY), padding: '6px 12px', fontSize: 12, border: `1px solid ${'var(--tz-border)'}` }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (savingJobLineEdit) return
+                          setSavingJobLineEdit(true)
+                          try {
+                            const updates: Record<string, unknown> = {}
+                            const newDesc = editingJobLineForm.description.trim()
+                            const newPos = editingJobLineForm.tire_position.trim() || null
+                            if (newDesc !== (line.description || '')) updates.description = newDesc
+                            if ((newPos || '') !== (line.tire_position || '')) updates.tire_position = newPos
+                            if (Object.keys(updates).length > 0) {
+                              await patchLine(line.id, updates)
+                            }
+                            setEditingJobLineId(null)
+                            setEditingJobLineForm({ description: '', tire_position: '' })
+                          } finally {
+                            setSavingJobLineEdit(false)
+                          }
+                        }}
+                        disabled={savingJobLineEdit}
+                        style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '6px 12px', fontSize: 12, opacity: savingJobLineEdit ? 0.5 : 1, cursor: savingJobLineEdit ? 'not-allowed' : 'pointer' }}
+                      >
+                        {savingJobLineEdit ? 'Saving…' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {/* Editable line_status control (expanded only). For waiting/declined
                     lines the dropdown is suppressed — read-only approval state
                     lives in the header pill (packet-1). */}
@@ -2170,6 +2292,10 @@ export default function WorkOrderDetail() {
                   <div>
                     <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Email</label>
                     <input
+                      type="email"
+                      name="estimate-recipient-email"
+                      autoComplete="off"
+                      inputMode="email"
                       value={contactEmail}
                       onChange={e => setContactEmail(e.target.value)}
                       onBlur={saveContact}
@@ -2180,6 +2306,10 @@ export default function WorkOrderDetail() {
                   <div>
                     <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Phone</label>
                     <input
+                      type="tel"
+                      name="estimate-recipient-phone"
+                      autoComplete="off"
+                      inputMode="tel"
                       value={contactPhone}
                       onChange={e => setContactPhone(e.target.value)}
                       onBlur={saveContact}
@@ -3721,6 +3851,10 @@ export default function WorkOrderDetail() {
                   <div>
                     <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Email</label>
                     <input
+                      type="email"
+                      name="estimate-recipient-email"
+                      autoComplete="off"
+                      inputMode="email"
                       value={contactEmail}
                       onChange={e => setContactEmail(e.target.value)}
                       onBlur={saveContactInfo}
@@ -3731,6 +3865,10 @@ export default function WorkOrderDetail() {
                   <div>
                     <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Phone</label>
                     <input
+                      type="tel"
+                      name="estimate-recipient-phone"
+                      autoComplete="off"
+                      inputMode="tel"
                       value={contactPhone}
                       onChange={e => setContactPhone(e.target.value)}
                       onBlur={saveContactInfo}
@@ -3806,10 +3944,15 @@ export default function WorkOrderDetail() {
                     </span>
                   )}
                 </div>
+                {hasBlockingJobLineIssue && (
+                  <div role="alert" style={{ marginBottom: 8, padding: '8px 10px', borderRadius: 6, border: '1px solid rgba(220,38,38,0.25)', background: 'var(--tz-dangerBg)', color: RED, fontSize: 12, lineHeight: 1.4 }}>
+                    Fix highlighted job lines before sending estimate.
+                  </div>
+                )}
                 <button
                   onClick={sendEstimateEmail}
-                  disabled={!hasContact || sendingEstimate}
-                  style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), width: '100%', justifyContent: 'center', opacity: (hasContact && !sendingEstimate) ? 1 : 0.5, cursor: (hasContact && !sendingEstimate) ? 'pointer' : 'not-allowed' }}
+                  disabled={!hasContact || sendingEstimate || hasBlockingJobLineIssue}
+                  style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), width: '100%', justifyContent: 'center', opacity: (hasContact && !sendingEstimate && !hasBlockingJobLineIssue) ? 1 : 0.5, cursor: (hasContact && !sendingEstimate && !hasBlockingJobLineIssue) ? 'pointer' : 'not-allowed' }}
                 >
                   {sendingEstimate ? 'Sending…' : `Send Estimate${contactEmail && contactPhone ? ' (Email + SMS)' : contactEmail ? ' (Email)' : contactPhone ? ' (SMS)' : ''}`}
                 </button>

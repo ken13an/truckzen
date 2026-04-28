@@ -7,6 +7,7 @@ import { rateLimit } from '@/lib/ratelimit/core'
 import { generateEstimatePdf } from '@/lib/pdf/generateEstimatePdf'
 import { ensureEstimateSnapshot, validateEstimateSnapshot } from '@/lib/estimates/snapshotEnsure'
 import { assertPartsRequirementResolved } from '@/lib/parts-status'
+import { validateJobLines } from '@/lib/work-orders/jobLineValidation'
 
 // CUSTOMER-SEND GATE
 //
@@ -171,6 +172,24 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
       return NextResponse.json({
         error: 'Resolve parts decisions before sending this estimate.',
         unresolved_lines: partsGate.failures,
+      }, { status: 422 })
+    }
+
+    // Phase 2B: deterministic job-line validation. Currently catches generic
+    // tire descriptions that lack position metadata. Mirrors the parts-gate
+    // 422 shape so the modal can surface unresolved_lines uniformly.
+    const { data: jobLinesForGate } = await ctx.admin
+      .from('so_lines')
+      .select('id, description, line_type, line_status, status, parts_status, tire_position')
+      .eq('so_id', repairOrderIdForGate)
+      .eq('line_type', 'labor')
+    const lineFailures = validateJobLines(jobLinesForGate || [])
+    if (lineFailures.length > 0) {
+      console.warn('[estimate-send] job-line gate blocked', { estimateId: id, woId: repairOrderIdForGate, failures: lineFailures.map(f => f.code) })
+      return NextResponse.json({
+        error: 'invalid_job_lines',
+        message: 'Fix highlighted job lines before sending estimate.',
+        unresolved_lines: lineFailures,
       }, { status: 422 })
     }
   }

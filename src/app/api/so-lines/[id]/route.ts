@@ -64,8 +64,12 @@ async function _PATCH(req: Request, { params }: P) {
     }
   }
 
-  // total_price is a generated column — never write it directly
-  const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name', 'parts_requirement', 'parts_requirement_note']
+  // total_price is a generated column — never write it directly. tire_position
+  // was settable at line creation but not editable afterwards; Phase 2B opens
+  // it for service-writer roles so generic tire jobs can be qualified before
+  // estimate send. Mechanic restriction above (single-key parts_status only)
+  // prevents mechanics from reaching this field.
+  const allowedFields = ['description', 'part_number', 'quantity', 'unit_price', 'finding', 'resolution', 'line_status', 'status', 'assigned_to', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'real_name', 'parts_cost_price', 'parts_sell_price', 'parts_status', 'rough_name', 'parts_requirement', 'parts_requirement_note', 'tire_position']
   // Fields that must be numeric in the DB — coerce string→number and reject NaN
   // so the update never silently writes a bad value.
   const numericFields = new Set(['quantity', 'unit_price', 'estimated_hours', 'actual_hours', 'billed_hours', 'labor_rate', 'parts_cost_price', 'parts_sell_price'])
