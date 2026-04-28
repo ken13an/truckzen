@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { logAction } from '@/lib/services/auditLog'
 import { checkRateLimit } from '@/lib/rateLimit'
-import { insertServiceOrder } from '@/lib/generateWoNumber'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { deriveWOAutomation } from '@/lib/wo-automation'
-import { getDefaultLaborHours } from '@/lib/labor-hours'
-import { isDiagnosticJob, shouldCreateFallbackPart } from '@/lib/parts-suggestions'
+import {
+  createWorkOrderFromCanonicalInput,
+  type CanonicalJobLineInput,
+} from '@/lib/services/workOrderCreation'
 import { safeRoute } from '@/lib/api-handler'
 import { z } from 'zod'
 
@@ -146,54 +146,6 @@ async function _GET(req: Request) {
   })
 }
 
-/** Rollback a just-created WO: delete children then header, verify cleanup, log result */
-async function rollbackNewWO(s: any, woId: string, woNumber: string, reason: string): Promise<{ clean: boolean }> {
-  let childDeleteOk = true
-  let headerDeleteOk = true
-  let verified = false
-
-  // Step 1: delete child so_lines
-  const { error: childErr } = await s.from('so_lines').delete().eq('so_id', woId)
-  if (childErr) {
-    console.error(`[WO ${woNumber}] ROLLBACK: failed to delete child so_lines:`, childErr.message)
-    childDeleteOk = false
-  }
-
-  // Step 2: delete WO header
-  const { error: headerErr } = await s.from('service_orders').delete().eq('id', woId)
-  if (headerErr) {
-    console.error(`[WO ${woNumber}] ROLLBACK: failed to delete WO header:`, headerErr.message)
-    headerDeleteOk = false
-  }
-
-  // Step 3: verify final DB truth — always query regardless of delete booleans
-  let headerGone = false
-  let childRowsGone = false
-  try {
-    const { data: headerCheck } = await s.from('service_orders').select('id').eq('id', woId).maybeSingle()
-    headerGone = !headerCheck
-    if (headerCheck) {
-      console.error(`[WO ${woNumber}] ROLLBACK VERIFICATION FAILED: WO header still exists after delete`)
-    }
-  } catch (verifyErr: unknown) {
-    console.error(`[WO ${woNumber}] ROLLBACK VERIFICATION: header query failed:`, verifyErr instanceof Error ? verifyErr.message : verifyErr)
-  }
-  try {
-    const { data: childCheck, count: childCount } = await s.from('so_lines').select('id', { count: 'exact', head: true }).eq('so_id', woId)
-    childRowsGone = (childCount ?? (childCheck ? childCheck.length : 0)) === 0
-    if (!childRowsGone) {
-      console.error(`[WO ${woNumber}] ROLLBACK VERIFICATION FAILED: ${childCount ?? '?'} child so_lines still exist after delete`)
-    }
-  } catch (verifyErr: unknown) {
-    console.error(`[WO ${woNumber}] ROLLBACK VERIFICATION: child query failed:`, verifyErr instanceof Error ? verifyErr.message : verifyErr)
-  }
-  verified = headerGone && childRowsGone
-
-  const clean = childDeleteOk && headerDeleteOk && verified
-  console.error(`[WO ${woNumber}] ROLLBACK ${clean ? 'SUCCESS' : 'PARTIAL/FAILED'}: reason=${reason}, childDelete=${childDeleteOk}, headerDelete=${headerDeleteOk}, headerGone=${headerGone}, childRowsGone=${childRowsGone}`)
-  return { clean }
-}
-
 async function _POST(req: Request) {
   const actor = await getAuthenticatedUserProfile()
   if (!actor) return jsonError('Unauthorized', 401)
@@ -244,16 +196,50 @@ async function _POST(req: Request) {
     if (assetData.unit_number) assetUnitNumber = assetData.unit_number
   }
 
-  // Generate WO number + insert with retry on duplicate
-  const { data: wo, error } = await insertServiceOrder(s, shop_id, {
+  // Hand off to the canonical WO creation service. The route's job ends with
+  // the request-shape concerns above (auth, Zod, FK guards, duplicate guard,
+  // ownership snapshot). Everything from here — WO numbering, so_lines insert,
+  // labor-hour defaults, rough-parts inventory match, fallback part, line
+  // invariant + rollback, wo_activity_log, wo.created audit, estimate-required
+  // notification — lives in src/lib/services/workOrderCreation.ts and is
+  // shared with the Pending Request adapter.
+  const status = body.status === 'submitted'
+    ? (assetOwnership === 'fleet_asset' ? 'in_progress' : 'waiting_approval')
+    : 'draft'
+  const estimateRequired = bodyEstimateRequired != null
+    ? bodyEstimateRequired
+    : (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer')
+        && !['diagnostic', 'full_inspection'].includes(job_type || 'repair')
+
+  // Empty body.job_lines falls back to a single line built from the complaint
+  // text. Empty descriptions are skipped inside the service.
+  const rawLines: Array<string | { [k: string]: any }> = isDraftSave
+    ? []
+    : (job_lines && job_lines.length > 0 ? job_lines : [(complaint || '').trim()])
+  const canonicalJobLines: CanonicalJobLineInput[] = rawLines.map((line: any) => {
+    if (typeof line === 'string') {
+      return { description: line }
+    }
+    const explicitHours = line.estimated_hours != null
+      ? Number(parseFloat(String(line.estimated_hours)))
+      : null
+    return {
+      description: String(line.description || ''),
+      estimated_hours: (explicitHours !== null && !Number.isNaN(explicitHours)) ? explicitHours : null,
+      required_skills: line.skills || [],
+      tire_position: line.tire_position || null,
+      customer_provides_parts: !!line.customer_provides_parts,
+      rough_parts: Array.isArray(line.rough_parts) ? line.rough_parts : [],
+    }
+  })
+
+  const result = await createWorkOrderFromCanonicalInput(s, shop_id, user_id, {
     asset_id: asset_id || null,
     customer_id: customer_id || null,
     complaint: complaint?.trim() || '',
     source: 'walk_in',
     priority: priority || 'normal',
-    status: body.status === 'submitted'
-      ? (assetOwnership === 'fleet_asset' ? 'in_progress' : 'waiting_approval')
-      : 'draft',
+    status,
     submitted_at: body.submitted_at || null,
     advisor_id: user_id || null,
     service_writer_id: user_id || null,
@@ -262,142 +248,20 @@ async function _POST(req: Request) {
     odometer_in: mileage ? parseInt(String(mileage)) : null,
     ownership_type: assetOwnership,
     job_type: job_type || 'repair',
-    estimate_required: bodyEstimateRequired != null ? bodyEstimateRequired : (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer') && !['diagnostic', 'full_inspection'].includes(job_type || 'repair'),
+    estimate_required: estimateRequired,
+    asset_unit_number: assetUnitNumber || null,
+  }, canonicalJobLines, {
+    isDraftSave,
+    notifyEstimateRequired: true,
   })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Mileage saved on WO only — truck odometer updates when WO closes
-
-  // Create job lines — skip for draft saves
-  // Guard: empty array must fall back to complaint ([] is truthy in JS)
-  const lines = isDraftSave ? [] : (job_lines && job_lines.length > 0 ? job_lines : [(complaint || '').trim()])
-  let laborLinesCreated = 0
-  const lineApprovalDefaults = (assetOwnership === 'owner_operator' || assetOwnership === 'outside_customer')
-    ? { approval_status: 'needs_approval' as const, approval_required: true }
-    : { approval_status: 'pre_approved' as const, approval_required: false }
-  try {
-  for (let i = 0; i < lines.length; i++) {
-    const line: any = lines[i]
-    const lineText = typeof line === 'string' ? line : line.description
-    const lineSkills = typeof line === 'string' ? [] : (line.skills || [])
-    if (!lineText?.trim()) continue
-    // Labor hours: use explicit value from frontend, else fallback lookup, else null (mechanic uses Request Hours)
-    const explicitHours = typeof line === 'object' && line.estimated_hours ? parseFloat(String(line.estimated_hours)) : null
-    const lineEstimatedHours = explicitHours || getDefaultLaborHours(lineText.trim())
-    const { data: laborLine } = await s.from('so_lines').insert({
-      so_id: wo.id,
-      line_type: 'labor',
-      description: lineText.trim(),
-      quantity: 0,
-      unit_price: 0,
-      estimated_hours: lineEstimatedHours,
-      line_status: 'unassigned',
-      required_skills: lineSkills,
-      tire_position: (typeof line === 'object' && line.tire_position) || null,
-      customer_provides_parts: (typeof line === 'object' && line.customer_provides_parts) || false,
-      ...lineApprovalDefaults,
-    }).select('id').single()
-    const laborLineId = laborLine?.id || null
-    if (laborLineId) laborLinesCreated++
-
-    // Auto-insert rough parts for this job line — check inventory first
-    const roughParts = (typeof line === 'object' && Array.isArray(line.rough_parts)) ? line.rough_parts : []
-    let partsCreated = 0
-    for (const rp of roughParts) {
-      const partName = rp.rough_name || rp.description || ''
-      if (!partName) continue
-
-      // Try to match against shop inventory — conservative match only
-      const { data: invMatch } = await s.from('parts')
-        .select('id, description, part_number, cost_price, sell_price, on_hand')
-        .eq('shop_id', shop_id)
-        .is('deleted_at', null)
-        .ilike('description', `%${partName}%`)
-        .gt('on_hand', 0)
-        .limit(5)
-
-      // Conservative component-level match: only auto-confirm when inventory is the SAME component
-      // Reject sibling/subcomponent matches (e.g. "Windshield Seal" for "Windshield", "Door Mirror" for "Door")
-      const partWords = partName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean)
-      const inv = (invMatch || []).find((item: any) => {
-        const invWords: string[] = (item.description || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean)
-        // All requested words must be present in inventory description
-        if (!partWords.every((w: string) => invWords.some((iw: string) => iw === w || iw === w + 's' || iw + 's' === w))) return false
-        // Inventory must not have significant extra nouns that change the component identity
-        // Allow generic suffixes: assembly, kit, set, oem, aftermarket, heavy duty
-        const safeExtras = new Set(['assembly', 'assy', 'kit', 'set', 'oem', 'aftermarket', 'heavy', 'duty', 'hd', 'lh', 'rh', 'left', 'right', 'front', 'rear', 'new', 'replacement'])
-        const extraWords = invWords.filter((w: string) => !partWords.includes(w) && !partWords.some((pw: string) => w === pw + 's' || w + 's' === pw))
-        const unsafeExtras = extraWords.filter((w: string) => !safeExtras.has(w))
-        return unsafeExtras.length === 0
-      }) || null
-
-      await s.from('so_lines').insert({
-        so_id: wo.id,
-        line_type: 'part',
-        description: partName,
-        rough_name: partName,
-        real_name: inv ? inv.description : null,
-        part_number: inv ? inv.part_number : null,
-        quantity: rp.quantity || 1,
-        unit_price: inv ? (inv.sell_price || 0) : 0,
-        parts_cost_price: inv ? (inv.cost_price || 0) : null,
-        parts_sell_price: inv ? (inv.sell_price || 0) : null,
-        parts_status: 'rough',
-        related_labor_line_id: laborLineId,
-        ...lineApprovalDefaults,
-      })
-      partsCreated++
-    }
-
-    // Fallback rough part: only for safely proven part-candidate/material lines (TZBridgeFixAB)
-    if (partsCreated === 0 && shouldCreateFallbackPart(lineText.trim())) {
-      const roughName = lineText.trim().replace(/^(replace|install|swap|new|remove\s+and\s+replace|drain\s+and\s+refill)\s+/i, '').trim() || lineText.trim()
-      await s.from('so_lines').insert({
-        so_id: wo.id, line_type: 'part', description: roughName, rough_name: roughName,
-        quantity: 1, unit_price: 0, parts_status: 'rough', related_labor_line_id: laborLineId,
-        ...lineApprovalDefaults,
-      })
-    }
+  if (!result.ok) {
+    const body: Record<string, unknown> = { error: result.error }
+    if (result.rollback) body.rollback = result.rollback
+    return NextResponse.json(body, { status: result.status })
   }
 
-  // ══ INVARIANT: at least one labor/job line must be persisted for non-draft WOs ══
-  if (!isDraftSave && laborLinesCreated === 0) {
-    const rb = await rollbackNewWO(s, wo.id, wo.so_number, 'zero labor lines created')
-    return NextResponse.json({ error: 'Failed to create job lines. Work order was not saved. Please try again.', rollback: rb.clean ? 'clean' : 'partial' }, { status: 500 })
-  }
-
-  } catch (childErr: unknown) {
-    const errMsg = childErr instanceof Error ? childErr.message : String(childErr)
-    const rb = await rollbackNewWO(s, wo.id, wo.so_number, `child creation threw: ${errMsg}`)
-    return NextResponse.json({ error: 'Failed to create work order lines. Please try again.', rollback: rb.clean ? 'clean' : 'partial' }, { status: 500 })
-  }
-
-  // Log activity
-  await s.from('wo_activity_log').insert({
-    wo_id: wo.id,
-    user_id: user_id || null,
-    action: isDraftSave ? `Saved draft work order ${wo.so_number}` : `Created work order ${wo.so_number}`,
-  })
-
-  // Fire and forget
-  logAction({ shop_id, user_id, action: 'wo.created', entity_type: 'service_order', entity_id: wo.id, details: { so_number: wo.so_number } }).catch(() => {})
-
-  // Notify service writers if estimate required — skip for draft saves
-  if (wo.estimate_required && !isDraftSave) {
-    try {
-      const { createNotification, getUserIdsByRole } = await import('@/lib/createNotification')
-      const writers = await getUserIdsByRole(shop_id, ['service_writer', 'service_advisor'])
-      const unitNum = assetUnitNumber
-      await createNotification({
-        shopId: shop_id, recipientId: writers, type: 'estimate_required',
-        title: 'Estimate Required', body: `WO ${wo.so_number} #${unitNum} — build and send estimate before work begins`,
-        link: `/work-orders/${wo.id}`, relatedWoId: wo.id, relatedUnit: unitNum, priority: 'high',
-      })
-    } catch {}
-  }
-
-  return NextResponse.json(wo, { status: 201 })
+  return NextResponse.json(result.wo, { status: 201 })
 }
 
 async function _DELETE(req: Request) {

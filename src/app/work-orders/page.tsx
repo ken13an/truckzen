@@ -65,6 +65,27 @@ export default function WorkOrdersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+  // Pending requests fetched from /api/service-requests in parallel and
+  // merged client-side. Failures here must not break the WO list — see
+  // fetchPendingRequests catch + render gates below.
+  const [pendingRequests, setPendingRequests] = useState<any[]>([])
+
+  // Read-only fetch of unconverted service_requests so service writers see
+  // them in the same Work Orders surface before kiosk/SR submit becomes
+  // Pending-Request-first. Excludes converted/rejected statuses; deleted
+  // rows are already filtered server-side.
+  const fetchPendingRequests = async (sid: string) => {
+    if (!sid) return
+    try {
+      const res = await fetch(`/api/service-requests?shop_id=${sid}`)
+      if (!res.ok) return
+      const data = await res.json()
+      const arr = Array.isArray(data) ? data : []
+      setPendingRequests(arr.filter((r: any) => r.status === 'new' || r.status === 'scheduled'))
+    } catch {
+      // SR fetch failure must not hide WOs
+    }
+  }
 
   // Fetch WOs from API with server-side pagination
   const fetchOrders = async (sid: string, p: number) => {
@@ -102,7 +123,7 @@ export default function WorkOrdersPage() {
       }
       setUser(p)
       setShopId(p.shop_id)
-      await fetchOrders(p.shop_id, 1)
+      await Promise.all([fetchOrders(p.shop_id, 1), fetchPendingRequests(p.shop_id)])
     }).catch(() => { /* auth error — page stays on loading state, no crash */ })
   }, [])
 
@@ -110,6 +131,7 @@ export default function WorkOrdersPage() {
   useEffect(() => {
     if (!shopId) return
     fetchOrders(shopId, page)
+    fetchPendingRequests(shopId)
   }, [page, viewFilter, statusFilter, search, shopId])
 
   // Date range filter (client-side on current page results)
@@ -129,6 +151,51 @@ export default function WorkOrdersPage() {
     }
     return list
   }, [orders, dateRange, dateFrom, dateTo])
+
+  // Pending Requests are surfaced in the Work Orders section but only on
+  // active/all views and only when status filter is unconstrained — their
+  // status vocabulary ('new'/'scheduled') doesn't intersect with WO status
+  // filters. Historical/dealer/drafts views never show pending requests.
+  const showPendingRequests = (viewFilter === 'active' || viewFilter === 'all') && statusFilter === 'all'
+
+  const filteredPending = useMemo(() => {
+    if (!showPendingRequests) return [] as any[]
+    let list = pendingRequests
+    if (dateRange !== 'all') {
+      const rangeStart = getDateRangeStart(dateRange)
+      if (rangeStart) list = list.filter(r => r.created_at && new Date(r.created_at) >= rangeStart)
+    }
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      list = list.filter(r => r.created_at && new Date(r.created_at) >= from)
+    }
+    if (dateTo) {
+      const to = new Date(dateTo + 'T23:59:59')
+      list = list.filter(r => r.created_at && new Date(r.created_at) <= to)
+    }
+    if (search) {
+      const q = search.toLowerCase()
+      list = list.filter(r =>
+        (r.company_name || '').toLowerCase().includes(q) ||
+        (r.contact_name || '').toLowerCase().includes(q) ||
+        (r.unit_number || '').toLowerCase().includes(q) ||
+        (r.description || '').toLowerCase().includes(q)
+      )
+    }
+    return list
+  }, [pendingRequests, showPendingRequests, dateRange, dateFrom, dateTo, search])
+
+  // Pending request source label (kiosk-originated SRs vs service-writer
+  // initiated, etc.). Falls back to a generic 'Request' label.
+  const pendingSourceLabel = (r: any): string => {
+    const checkInType = r?.check_in_type
+    const source = r?.source
+    if (checkInType === 'kiosk' || source === 'kiosk' || source === 'kiosk_checkin') return 'Kiosk Intake'
+    if (checkInType === 'fleet_request') return 'Fleet Request'
+    if (checkInType === 'service_writer' || source === 'service_writer') return 'Service Request'
+    if (checkInType === 'phone') return 'Phone Request'
+    return 'Request'
+  }
   const fmt = (n: number) => n ? `$${Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—'
   const effectiveRole = user?.impersonate_role || user?.role || ''
   const canBulkVoid = user && ['owner', 'gm', 'it_person', 'service_writer'].includes(effectiveRole)
@@ -212,7 +279,7 @@ export default function WorkOrdersPage() {
       <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-cardBorder)'}`, borderRadius: 12, overflow: 'hidden' }}>
         {loading ? (
           <div style={{ padding: 48, textAlign: 'center', color: 'var(--tz-textSecondary)' }}>Loading...</div>
-        ) : filtered.length === 0 ? (
+        ) : filtered.length === 0 && filteredPending.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center', color: 'var(--tz-textSecondary)', fontSize: 13 }}>
             {search || statusFilter !== 'all' || dateFrom || dateTo ? 'No results found. Try adjusting your filters.' : viewFilter === 'active' ? 'No active work orders. Create your first work order or view historical records.' : 'No work orders found'}
           </div>
@@ -228,6 +295,35 @@ export default function WorkOrdersPage() {
               </tr>
             </thead>
             <tbody>
+              {filteredPending.map(r => {
+                const reqNumber = `REQ-${String(r.id || '').slice(0, 6).toUpperCase()}`
+                return (
+                  <tr key={`pr-${r.id}`} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer', background: 'var(--tz-warningBg)' }}
+                    onClick={() => { window.location.href = `/service-requests/${r.id}` }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--tz-bgHover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--tz-warningBg)' }}>
+                    {canBulkVoid && <td style={{ padding: '10px 6px 10px 12px', width: 32 }} onClick={e => e.stopPropagation()}>
+                      <input type="checkbox" disabled style={{ cursor: 'not-allowed', opacity: 0.4 }} title="Pending requests cannot be voided here — use Review / Convert" />
+                    </td>}
+                    <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: 'var(--tz-warning)', whiteSpace: 'nowrap' }}>
+                      {reqNumber}
+                      <span style={{ marginLeft: 4, padding: '1px 5px', borderRadius: 3, background: 'var(--tz-warningBg)', color: 'var(--tz-warning)', fontSize: 8, fontWeight: 700, textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace", border: `1px solid var(--tz-warning)` }}>Pending Request</span>
+                    </td>
+                    <td style={{ padding: '10px 12px', fontSize: 11, color: 'var(--tz-textTertiary)', fontFamily: 'monospace' }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, fontWeight: 600, color: 'var(--tz-text)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.company_name || r.contact_name || '—'}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)' }}>
+                      {r.unit_number ? `#${r.unit_number}` : '—'}
+                      <div style={{ marginTop: 2, fontSize: 9, color: 'var(--tz-textTertiary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{pendingSourceLabel(r)}</div>
+                    </td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textSecondary)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.description || '—'}</td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: 'var(--tz-warningBg)', color: 'var(--tz-warning)' }}>Needs Service Writer Review</span>
+                    </td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: 'var(--tz-textTertiary)' }}>—</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, fontFamily: 'monospace', color: 'var(--tz-textTertiary)' }}>—</td>
+                  </tr>
+                )
+              })}
               {filtered.map(o => {
                 const st = STATUS_MAP[o.status] || STATUS_MAP.draft
                 const isHist = o.is_historical

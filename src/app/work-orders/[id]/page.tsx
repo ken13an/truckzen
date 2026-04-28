@@ -820,6 +820,15 @@ export default function WorkOrderDetail() {
   const partsLocked = isInvoiceHardLocked(wo.invoice_status)
   const shopCharges = wo.wo_shop_charges || []
   const notes = wo.wo_notes || []
+  // Customer-note card source: rows inserted by /api/service-requests
+  // action='convert' to preserve the original Pending Request text. The card
+  // is purely a display anchor — it does not couple to so_lines, estimates,
+  // invoices, parts, or mechanic readiness.
+  const customerRequestNotes = (notes as any[]).filter((n: any) =>
+    n?.visible_to_customer === true &&
+    typeof n?.note_text === 'string' &&
+    n.note_text.trim().toLowerCase().startsWith('note from customer:')
+  )
   const files = wo.wo_files || []
   const activity = wo.wo_activity_log || []
   const techMap: Record<string, string> = wo.techMap || {}
@@ -1047,6 +1056,33 @@ export default function WorkOrderDetail() {
       </div>
 
       </WOHeader>
+
+      {/* NOTE FROM CUSTOMER — read-only card sourced from wo_notes rows
+          inserted at conversion. Display strips the "Note from Customer:"
+          prefix; stored note_text is not mutated. Independent of operational
+          surfaces (so_lines / estimates / invoices / parts / mechanic). */}
+      {customerRequestNotes.length > 0 && (
+        <div style={{ ...cardStyle, background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: AMBER, textTransform: 'uppercase', letterSpacing: '.04em' }}>Note from Customer</span>
+            <span style={pillStyle('var(--tz-warningBg)', AMBER)}>Original Request</span>
+            <span style={pillStyle('var(--tz-accentBg)', BLUE)}>Customer Visible</span>
+          </div>
+          {customerRequestNotes.map((n: any, i: number) => {
+            const stripped = String(n.note_text || '').replace(/^\s*note from customer:\s*/i, '').trim()
+            return (
+              <div key={n.id || i} style={{ marginTop: i > 0 ? 10 : 0 }}>
+                <div style={{ fontSize: 14, color: 'var(--tz-text)', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {stripped || <span style={{ color: GRAY, fontStyle: 'italic' }}>No request text on file</span>}
+                </div>
+                {n.created_at && (
+                  <div style={{ fontSize: 11, color: GRAY, marginTop: 4 }}>{new Date(n.created_at).toLocaleString()}</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* OWNER & DRIVER INFO */}
       {wo.assets && (asset.owner_name || asset.driver_name) && (

@@ -68,9 +68,6 @@ export default function CustomerPortalPage() {
   const [error, setError] = useState('')
   const [tab, setTab] = useState(0)
   const [history, setHistory] = useState<any[]>([])
-  const [actionLoading, setActionLoading] = useState('')
-  const [declineModal, setDeclineModal] = useState(false)
-  const [declineReason, setDeclineReason] = useState('')
   const [showMyData, setShowMyData] = useState(false)
   const [myData, setMyData] = useState<any>(null)
   const [myDataLoading, setMyDataLoading] = useState(false)
@@ -116,43 +113,6 @@ export default function CustomerPortalPage() {
   async function fetchHistory() {
     const res = await fetch(`/api/portal/${token}/history`)
     if (res.ok) setHistory(await res.json())
-  }
-
-  async function approveEstimate() {
-    setActionLoading('approve')
-    await fetch(`/api/portal/${token}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-    await fetchData()
-    setActionLoading('')
-  }
-
-  async function declineEstimate() {
-    setActionLoading('decline')
-    await fetch(`/api/portal/${token}/decline`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: declineReason }) })
-    setDeclineModal(false)
-    setDeclineReason('')
-    await fetchData()
-    setActionLoading('')
-  }
-
-  async function approveJob(lineId: string) {
-    setActionLoading(lineId)
-    await fetch(`/api/portal/${token}/approve-job`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ line_id: lineId }) })
-    await fetchData()
-    setActionLoading('')
-  }
-
-  async function declineJob(lineId: string) {
-    setActionLoading(lineId)
-    await fetch(`/api/portal/${token}/decline-job`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ line_id: lineId }) })
-    await fetchData()
-    setActionLoading('')
-  }
-
-  async function approveNewItems() {
-    setActionLoading('new-items')
-    await fetch(`/api/portal/${token}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
-    await fetchData()
-    setActionLoading('')
   }
 
   if (loading) return (
@@ -202,10 +162,30 @@ export default function CustomerPortalPage() {
   const hasApprovalTruth = Boolean(wo.approved_at) || Boolean(wo.estimate_approved_date)
   const hasPricedWork = grandTotal > 0
   const isUnreviewedIntake = isDraft && !hasEstimate && !hasApprovalTruth && !hasPricedWork
+  // Portal visibility mode driven by customer-type signals already returned
+  // by /api/portal/[token]. fleet_asset and unknown ownership default to
+  // status-only for safety (legacy rows without ownership_type land here).
+  // Approve/Decline UI gates on portalMode === 'full'; backend action routes
+  // enforce the same predicate independently.
+  type PortalMode = 'pending' | 'status_only' | 'maintenance' | 'full'
+  let portalMode: PortalMode = 'status_only'
+  if (isUnreviewedIntake) portalMode = 'pending'
+  else if (wo.workorder_lane === 'maintenance_external') portalMode = 'maintenance'
+  else if (wo.ownership_type === 'owner_operator' || wo.ownership_type === 'outside_customer') portalMode = 'full'
+  else portalMode = 'status_only'
   const st = isUnreviewedIntake
     ? { label: 'Under review', color: AMBER }
     : (STATUS_MAP[wo.status] || STATUS_MAP.draft)
-  const TABS = isUnreviewedIntake ? ['Status', 'History'] : ['Status', 'Estimate', 'Pay', 'History']
+  const TABS = portalMode === 'full' ? ['Status', 'Estimate', 'Pay', 'History'] : ['Status', 'History']
+  // Canonical estimate-approval link target. The portal page no longer hosts
+  // its own approve/decline (those wrote to service_orders + so_lines without
+  // touching estimates/estimate_lines and could drift from /portal/estimate
+  // approvals). Pick the most recent estimate row that has an approval_token.
+  const estimateRows = (Array.isArray(wo.estimates) ? wo.estimates : []) as Array<{ id?: string; status?: string; approval_token?: string; created_at?: string }>
+  const canonicalEstimate = estimateRows
+    .filter(e => typeof e?.approval_token === 'string' && e.approval_token.length > 0)
+    .sort((a, b) => new Date(b?.created_at || 0).getTime() - new Date(a?.created_at || 0).getTime())[0]
+  const canonicalEstimateUrl = canonicalEstimate ? `/portal/estimate/${canonicalEstimate.approval_token}` : null
   const c = card(isMobile)
 
   return (
@@ -266,28 +246,27 @@ export default function CustomerPortalPage() {
               </div>
             )}
 
-            {/* Additional repairs alert */}
-            {!isUnreviewedIntake && additional.length > 0 && (
+            {/* Additional repairs alert (read-only; approval lives on canonical estimate link) */}
+            {portalMode === 'full' && additional.length > 0 && (
               <div style={{ ...c, border: `1px solid ${AMBER}40`, background: `${AMBER}10` }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: AMBER, marginBottom: 8 }}>Additional Repairs Recommended</div>
                 <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>Your technician found additional items that need attention.</div>
                 {additional.map((l: any) => (
                   <div key={l.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{l.description}</div>
-                    {l.finding && <div style={{ fontSize: 12, color: MUTED, marginBottom: 8 }}>{l.finding}</div>}
-                    <div style={{ display: 'flex', gap: 8, flexDirection: isMobile ? 'column' : 'row' }}>
-                      <button onClick={() => approveJob(l.id)} disabled={actionLoading === l.id} style={btn(GREEN, '#fff', isMobile)}>
-                        {actionLoading === l.id ? 'Processing...' : 'Approve'}
-                      </button>
-                      <button onClick={() => declineJob(l.id)} disabled={actionLoading === l.id} style={{ ...btn('transparent', RED, isMobile), border: `1px solid ${RED}40` }}>Decline</button>
-                    </div>
+                    {l.finding && <div style={{ fontSize: 12, color: MUTED }}>{l.finding}</div>}
                   </div>
                 ))}
-                <div style={{ marginTop: 12 }}>
-                  <button onClick={approveNewItems} disabled={actionLoading === 'new-items'} style={btn(AMBER, '#fff', isMobile)}>
-                    {actionLoading === 'new-items' ? 'Approving...' : 'Approve All New Items'}
-                  </button>
+                <div style={{ fontSize: 12, color: MUTED, marginTop: 12 }}>
+                  {canonicalEstimateUrl
+                    ? 'Review and approve these items through the estimate approval link.'
+                    : 'Estimate approval link was sent by email. Contact the shop if you need a new link.'}
                 </div>
+                {canonicalEstimateUrl && (
+                  <a href={canonicalEstimateUrl} style={{ ...btn(AMBER, '#fff', isMobile), display: 'inline-block', textDecoration: 'none', textAlign: 'center', marginTop: 8 }}>
+                    Open Estimate Approval
+                  </a>
+                )}
               </div>
             )}
 
@@ -318,15 +297,16 @@ export default function CustomerPortalPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                   <span style={pill(AMBER)}>Estimate Pending Approval</span>
                 </div>
-                <div style={{ fontSize: 13, color: MUTED, marginBottom: 12 }}>Please review the estimate below and approve or request changes.</div>
-                <div style={{ display: 'flex', gap: 10, flexDirection: isMobile ? 'column' : 'row' }}>
-                  <button onClick={approveEstimate} disabled={!!actionLoading} style={btn(GREEN, '#fff', isMobile)}>
-                    {actionLoading === 'approve' ? 'Approving...' : 'Approve Estimate'}
-                  </button>
-                  <button onClick={() => setDeclineModal(true)} style={{ ...btn('transparent', TEXT, isMobile), border: '1px solid rgba(255,255,255,0.15)' }}>
-                    Request Changes
-                  </button>
+                <div style={{ fontSize: 13, color: MUTED, marginBottom: 12 }}>
+                  {canonicalEstimateUrl
+                    ? 'Open the estimate approval link to review and respond.'
+                    : 'Estimate approval link was sent by email. Contact the shop if you need a new link.'}
                 </div>
+                {canonicalEstimateUrl && (
+                  <a href={canonicalEstimateUrl} style={{ ...btn(GREEN, '#fff', isMobile), display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>
+                    Open Estimate Approval
+                  </a>
+                )}
               </div>
             )}
             {wo.estimate_status === 'approved' && (
@@ -339,21 +319,31 @@ export default function CustomerPortalPage() {
               <div style={{ ...c, background: `${MUTED}15`, border: `1px solid ${MUTED}30`, marginBottom: 16 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: MUTED }}>Estimate Declined</div>
                 {wo.decline_reason && <div style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>Reason: {wo.decline_reason}</div>}
-                <button onClick={() => setDeclineModal(true)} style={{ ...btn(BLUE, '#fff'), marginTop: 10 }}>Request New Estimate</button>
+                {canonicalEstimateUrl ? (
+                  <a href={canonicalEstimateUrl} style={{ ...btn(BLUE, '#fff'), marginTop: 10, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>
+                    Open Estimate Approval
+                  </a>
+                ) : (
+                  <div style={{ fontSize: 12, color: MUTED, marginTop: 10 }}>
+                    Contact the shop to request a new estimate.
+                  </div>
+                )}
               </div>
             )}
-            {/* Stricter fallback: only show approve when estimate truth exists (not just auth_type=estimate_first on a $0 draft) */}
+            {/* Stricter fallback: only show approval prompt when estimate truth exists (not just auth_type=estimate_first on a $0 draft) */}
             {!wo.estimate_status && wo.estimate_required === true && hasPricedWork && !wo.approved_at && !isUnreviewedIntake && (
               <div style={{ ...c, border: `1px solid ${AMBER}40`, background: `${AMBER}10`, marginBottom: 16 }}>
                 <span style={pill(AMBER)}>Estimate Pending Approval</span>
-                <div style={{ display: 'flex', gap: 10, marginTop: 12, flexDirection: isMobile ? 'column' : 'row' }}>
-                  <button onClick={approveEstimate} disabled={!!actionLoading} style={btn(GREEN, '#fff', isMobile)}>
-                    {actionLoading === 'approve' ? 'Approving...' : 'Approve Estimate'}
-                  </button>
-                  <button onClick={() => setDeclineModal(true)} style={{ ...btn('transparent', TEXT, isMobile), border: '1px solid rgba(255,255,255,0.15)' }}>
-                    Request Changes
-                  </button>
+                <div style={{ fontSize: 13, color: MUTED, marginTop: 12 }}>
+                  {canonicalEstimateUrl
+                    ? 'Open the estimate approval link to review and respond.'
+                    : 'Estimate approval link was sent by email. Contact the shop if you need a new link.'}
                 </div>
+                {canonicalEstimateUrl && (
+                  <a href={canonicalEstimateUrl} style={{ ...btn(GREEN, '#fff', isMobile), display: 'inline-block', textDecoration: 'none', textAlign: 'center', marginTop: 8 }}>
+                    Open Estimate Approval
+                  </a>
+                )}
               </div>
             )}
             {!wo.estimate_status && wo.approved_at && (
@@ -406,15 +396,14 @@ export default function CustomerPortalPage() {
               </div>
             </div>
 
-            {/* Bottom approve button for pending estimates */}
+            {/* Bottom canonical-link / Call Shop pair for pending estimates */}
             {!isUnreviewedIntake && (wo.estimate_status === 'pending' || (!wo.estimate_status && wo.estimate_required === true && hasPricedWork && !wo.approved_at)) && (
               <div style={{ display: 'flex', gap: 10, marginTop: 8, flexDirection: isMobile ? 'column' : 'row' }}>
-                <button onClick={approveEstimate} disabled={!!actionLoading} style={btn(GREEN, '#fff', isMobile)}>
-                  {actionLoading === 'approve' ? 'Approving...' : 'Approve Estimate'}
-                </button>
-                <button onClick={() => setDeclineModal(true)} style={{ ...btn('transparent', TEXT, isMobile), border: '1px solid rgba(255,255,255,0.15)' }}>
-                  Request Changes
-                </button>
+                {canonicalEstimateUrl && (
+                  <a href={canonicalEstimateUrl} style={{ ...btn(GREEN, '#fff', isMobile), display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>
+                    Open Estimate Approval
+                  </a>
+                )}
                 {shop.phone && <a href={`tel:${shop.phone}`} style={{ ...btn('transparent', MUTED), border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none', textAlign: 'center', width: isMobile ? '100%' : undefined }}>Call Shop</a>}
               </div>
             )}
@@ -617,33 +606,6 @@ export default function CustomerPortalPage() {
         </div>
       )}
 
-      {/* Decline Modal */}
-      {declineModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999, padding: 16 }}>
-          <div style={{ background: '#1C1C2A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: isMobile ? 20 : 28, maxWidth: 440, width: '100%' }}>
-            <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Request Changes</div>
-            <div style={{ fontSize: 13, color: MUTED, marginBottom: 16 }}>Let the shop know what changes you need.</div>
-            <textarea
-              value={declineReason}
-              onChange={e => setDeclineReason(e.target.value)}
-              placeholder="Why are you declining? (optional)"
-              rows={4}
-              style={{
-                width: '100%', padding: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 10, color: TEXT, fontSize: 14, fontFamily: FONT, resize: 'vertical', outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-            <div style={{ display: 'flex', gap: 10, marginTop: 16, flexDirection: isMobile ? 'column-reverse' : 'row', justifyContent: 'flex-end' }}>
-              <button onClick={() => { setDeclineModal(false); setDeclineReason('') }} style={{ ...btn('transparent', MUTED), border: '1px solid rgba(255,255,255,0.1)', width: isMobile ? '100%' : undefined }}>
-                Cancel
-              </button>
-              <button onClick={declineEstimate} disabled={actionLoading === 'decline'} style={btn(RED, '#fff', isMobile)}>
-                {actionLoading === 'decline' ? 'Submitting...' : 'Submit'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

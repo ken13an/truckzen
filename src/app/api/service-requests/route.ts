@@ -2,10 +2,22 @@ import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/server-auth'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { SERVICE_WRITE_ROLES } from '@/lib/roles'
+import {
+  parseReviewedLines,
+  validateReviewedLines,
+  applyPendingRequestConversion,
+} from '@/lib/services/pendingRequestAdapter'
 
 // Service-request routes are shop-scoped operational tools (service-writer
 // check-in Path B). Body/query shop_id and user_id are no longer trusted —
 // shop scope and audit attribution come from the server session.
+//
+// The convert action is a thin shell over the Pending Request adapter at
+// src/lib/services/pendingRequestAdapter.ts. Raw intake sources (kiosk
+// check-ins, service writer intake, future maintenance/dispatcher/customer
+// portal sources) all flow through that adapter into the canonical
+// insertServiceOrder() helper /api/work-orders POST also uses. No source
+// is allowed to bypass that adapter with its own service_orders.insert(...).
 
 // GET /api/service-requests?status=...
 export async function GET(req: Request) {
@@ -19,7 +31,7 @@ export async function GET(req: Request) {
   const status = searchParams.get('status')
 
   let q = s.from('service_requests')
-    .select('id, shop_id, customer_id, asset_id, unit_number, company_name, contact_name, phone, description, source, check_in_type, status, urgency, priority, reject_reason, scheduled_date, expected_arrival, promised_date, parking_location, key_location, converted_so_id, created_by, created_at, kiosk_checkin_id')
+    .select('id, shop_id, customer_id, asset_id, unit_number, company_name, contact_name, phone, description, source, check_in_type, status, parking_location, key_location, converted_so_id, created_by, created_at, kiosk_checkin_id')
     .eq('shop_id', shopId)
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
@@ -126,57 +138,21 @@ export async function POST(req: Request) {
 
   switch (action) {
     case 'convert': {
-      // Generate SO number
-      const { count } = await s.from('service_orders').select('*', { count: 'exact', head: true }).eq('shop_id', sr.shop_id)
-      const year = new Date().getFullYear()
-      const soNum = `SO-${year}-${String((count ?? 0) + 1).padStart(4, '0')}`
-
-      // Snapshot ownership_type from the linked asset, same pattern as
-      // /api/work-orders/route.ts:235-245. Falls back to 'fleet_asset' if no
-      // asset is attached or asset has no ownership data.
-      let convertOwnership = 'fleet_asset'
-      if (sr.asset_id) {
-        const { data: assetData } = await s.from('assets').select('ownership_type, is_owner_operator').eq('id', sr.asset_id).single()
-        if (assetData?.ownership_type) convertOwnership = assetData.ownership_type
-        if (assetData?.is_owner_operator) convertOwnership = 'owner_operator'
+      // Raw SR + reviewed lines → adapter → canonical WO. The adapter at
+      // src/lib/services/pendingRequestAdapter.ts owns the orchestration:
+      // ownership snapshot, status/estimate derivation, source enum mapping,
+      // canonical insertServiceOrder() call, Note from Customer + reviewed
+      // so_lines + bidirectional audit links + wo.created log.
+      const reviewedLines = parseReviewedLines((body as any)?.reviewed_lines)
+      const reviewedLinesError = validateReviewedLines(reviewedLines)
+      if (reviewedLinesError) {
+        return NextResponse.json({ error: reviewedLinesError }, { status: 400 })
       }
-      const convertJobType = 'repair'
-      const convertEstimateRequired =
-        (convertOwnership === 'owner_operator' || convertOwnership === 'outside_customer')
-          && !['diagnostic', 'full_inspection'].includes(convertJobType)
-
-      // Create service order from request. source preserves the originating
-      // service_request.source ('service_writer' from the create branch) — was
-      // previously hardcoded to 'kiosk' which corrupted the audit trail.
-      const { data: so, error: soErr } = await s.from('service_orders').insert({
-        shop_id: sr.shop_id,
-        so_number: soNum,
-        asset_id: sr.asset_id || null,
-        customer_id: sr.customer_id || null,
-        complaint: sr.description,
-        source: sr.source || 'service_writer',
-        priority: 'normal',
-        status: 'draft',
-        advisor_id: ctx.actor.id,
-        service_writer_id: ctx.actor.id,
-        workorder_lane: 'shop_internal',
-        status_family: 'draft',
-        ownership_type: convertOwnership,
-        job_type: convertJobType,
-        estimate_required: convertEstimateRequired,
-      }).select().single()
-
-      if (soErr) return NextResponse.json({ error: soErr.message }, { status: 500 })
-
-      // Update request status
-      await s.from('service_requests').update({ status: 'converted', converted_so_id: so.id }).eq('id', request_id)
-
-      // Also update the kiosk_checkin if linked
-      if (sr.kiosk_checkin_id) {
-        await s.from('kiosk_checkins').update({ converted_so_id: so.id, status: 'converted' }).eq('id', sr.kiosk_checkin_id)
+      const result = await applyPendingRequestConversion({ s, sr, reviewedLines, ctx })
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status ?? 500 })
       }
-
-      return NextResponse.json({ ok: true, so_id: so.id, so_number: so.so_number })
+      return NextResponse.json({ ok: true, so_id: result.so_id, so_number: result.so_number })
     }
 
     case 'schedule': {
