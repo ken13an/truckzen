@@ -19,7 +19,7 @@ import { getDefaultLaborHours } from '@/lib/labor-hours'
 import { calcInvoiceTotals, calcWoOperationalTotals } from '@/lib/invoice-calc'
 import { isInvoiceHardLocked, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { SERVICE_WRITE_ROLES, ACCOUNTING_ROLES } from '@/lib/roles'
-import { validateJobLine, type JobLineValidationResult } from '@/lib/work-orders/jobLineValidation'
+import { validateJobLine, isTireRelatedDescription, type JobLineValidationResult } from '@/lib/work-orders/jobLineValidation'
 import { useTheme } from '@/hooks/useTheme'
 import { getWorkorderRoute } from '@/lib/navigation/workorder-route'
 import { THEME } from '@/lib/config/colors'
@@ -167,7 +167,7 @@ export default function WorkOrderDetail() {
   // can be in inline-edit mode at a time. The generic WO-level Edit button
   // does NOT control this — it controls the WO header edit.
   const [editingJobLineId, setEditingJobLineId] = useState<string | null>(null)
-  const [editingJobLineForm, setEditingJobLineForm] = useState<{ description: string; tire_position: string; estimated_hours: string }>({ description: '', tire_position: '', estimated_hours: '' })
+  const [editingJobLineForm, setEditingJobLineForm] = useState<{ description: string; tire_positions: string[]; estimated_hours: string }>({ description: '', tire_positions: [], estimated_hours: '' })
   const [savingJobLineEdit, setSavingJobLineEdit] = useState(false)
   const [approvalConfirmModal, setApprovalConfirmModal] = useState<{ method: string; notes: string } | null>(null)
   const [printedReady, setPrintedReady] = useState(false)
@@ -1509,7 +1509,7 @@ export default function WorkOrderDetail() {
                       onClick={() => {
                         setEditingJobLineForm({
                           description: line.description || '',
-                          tire_position: line.tire_position || '',
+                          tire_positions: (line.tire_position || '').split(',').map((p: string) => p.trim()).filter(Boolean),
                           estimated_hours: line.estimated_hours != null ? String(line.estimated_hours) : '',
                         })
                         setEditingJobLineId(line.id)
@@ -1524,8 +1524,36 @@ export default function WorkOrderDetail() {
                   const estHoursRaw = editingJobLineForm.estimated_hours.trim()
                   const estHoursNum = estHoursRaw === '' ? null : Number(estHoursRaw)
                   const estHoursInvalid = estHoursRaw !== '' && (!Number.isFinite(estHoursNum as number) || (estHoursNum as number) < 0)
+                  const draftDesc = editingJobLineForm.description
+                  const tireRelatedFromDraft = isTireRelatedDescription(draftDesc)
+                  const existingHadTire = !!(line.tire_position && String(line.tire_position).trim())
+                  const showTireUI = tireRelatedFromDraft || existingHadTire
+                  const transitioningOff = existingHadTire && !tireRelatedFromDraft
+                  const positionsEmptyButTire = tireRelatedFromDraft && editingJobLineForm.tire_positions.length === 0
+                  // Linked auto-generated rough tire parts on the same labor line.
+                  // Used to decide whether non-tire transition can safely cancel them.
+                  const linkedTireParts = (wo?.so_lines || []).filter((p: any) =>
+                    p.line_type === 'part' &&
+                    p.related_labor_line_id === line.id &&
+                    p.parts_status !== 'canceled' &&
+                    isTireRelatedDescription(p.rough_name || p.description || '')
+                  )
+                  const safeToCancelTireParts = linkedTireParts.filter((p: any) =>
+                    p.parts_status === 'rough' &&
+                    !p.real_name &&
+                    !p.part_number &&
+                    !p.parts_cost_price &&
+                    !p.parts_sell_price
+                  )
+                  const unsafeLinkedTireParts = linkedTireParts.filter((p: any) => !safeToCancelTireParts.includes(p))
+                  const togglePosition = (pos: string) => setEditingJobLineForm(f => ({
+                    ...f,
+                    tire_positions: f.tire_positions.includes(pos)
+                      ? f.tire_positions.filter(p => p !== pos)
+                      : [...f.tire_positions, pos],
+                  }))
                   return (
-                  <div style={{ marginBottom: 10, padding: '12px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgLight)' }}>
+                  <div style={{ marginBottom: 10, padding: '12px 14px', borderRadius: 8, border: `1px solid ${'var(--tz-border)'}`, background: 'var(--tz-bgCard)', color: 'var(--tz-text)' }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 8 }}>Edit Job Line</div>
                     <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Description</label>
                     <textarea
@@ -1534,21 +1562,57 @@ export default function WorkOrderDetail() {
                       rows={3}
                       style={{ ...inputStyle, fontSize: 13, width: '100%', resize: 'vertical', marginBottom: 10 }}
                     />
-                    <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Tire position (required for tire jobs)</label>
-                    <select
-                      value={editingJobLineForm.tire_position}
-                      onChange={e => setEditingJobLineForm(f => ({ ...f, tire_position: e.target.value }))}
-                      style={{ ...inputStyle, fontSize: 13, width: '100%', marginBottom: 10 }}
-                    >
-                      <option value="">— None / not applicable —</option>
-                      {TIRE_POSITION_OPTIONS.map(g => (
-                        <optgroup key={g.group} label={g.group}>
-                          {g.positions.map(pos => (
-                            <option key={pos} value={pos}>{pos}</option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
+                    {showTireUI && (
+                      <>
+                        <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>
+                          Tire position{tireRelatedFromDraft ? ' (required for tire jobs)' : ''}
+                        </label>
+                        {transitioningOff && (
+                          <div style={{ fontSize: 11, color: AMBER, background: 'var(--tz-warningBg)', border: `1px solid ${AMBER}33`, borderRadius: 6, padding: '6px 10px', marginBottom: 8, lineHeight: 1.4 }}>
+                            Changing this job away from tire will clear the tire position{safeToCancelTireParts.length > 0 ? ` and remove ${safeToCancelTireParts.length} auto-generated tire request${safeToCancelTireParts.length > 1 ? 's' : ''}` : ''}.
+                            {unsafeLinkedTireParts.length > 0 && ` ${unsafeLinkedTireParts.length} tire part${unsafeLinkedTireParts.length > 1 ? 's have' : ' has'} activity and will be left for manual review.`}
+                          </div>
+                        )}
+                        {!transitioningOff && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8, opacity: tireRelatedFromDraft ? 1 : 0.7 }}>
+                            {TIRE_POSITION_OPTIONS.map(g => (
+                              <div key={g.group} style={{ width: '100%' }}>
+                                <div style={{ fontSize: 10, fontWeight: 600, color: GRAY, marginBottom: 4 }}>{g.group}</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
+                                  {g.positions.map(pos => {
+                                    const selected = editingJobLineForm.tire_positions.includes(pos)
+                                    return (
+                                      <button
+                                        key={pos}
+                                        type="button"
+                                        onClick={() => togglePosition(pos)}
+                                        disabled={!tireRelatedFromDraft}
+                                        style={{
+                                          padding: '4px 10px',
+                                          borderRadius: 6,
+                                          fontSize: 11,
+                                          fontWeight: 600,
+                                          fontFamily: FONT,
+                                          cursor: tireRelatedFromDraft ? 'pointer' : 'not-allowed',
+                                          background: selected ? BLUE : 'var(--tz-bgCard)',
+                                          color: selected ? 'var(--tz-bgLight)' : 'var(--tz-text)',
+                                          border: `1px solid ${selected ? BLUE : 'var(--tz-inputBorder)'}`,
+                                        }}
+                                      >
+                                        {pos}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {positionsEmptyButTire && !transitioningOff && (
+                          <div style={{ fontSize: 11, color: RED, marginBottom: 8 }}>Select at least one tire position.</div>
+                        )}
+                      </>
+                    )}
                     <label style={{ fontSize: 11, color: GRAY, marginBottom: 4, display: 'block' }}>Estimated Hours</label>
                     <input
                       type="number"
@@ -1564,7 +1628,7 @@ export default function WorkOrderDetail() {
                     )}
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                       <button
-                        onClick={() => { setEditingJobLineId(null); setEditingJobLineForm({ description: '', tire_position: '', estimated_hours: '' }) }}
+                        onClick={() => { setEditingJobLineId(null); setEditingJobLineForm({ description: '', tire_positions: [], estimated_hours: '' }) }}
                         disabled={savingJobLineEdit}
                         style={{ ...btnStyle('transparent', GRAY), padding: '6px 12px', fontSize: 12, border: `1px solid ${'var(--tz-border)'}` }}
                       >
@@ -1576,18 +1640,53 @@ export default function WorkOrderDetail() {
                           if (estHoursInvalid) return
                           setSavingJobLineEdit(true)
                           try {
+                            const newDesc = draftDesc.trim()
+                            const willBeTire = isTireRelatedDescription(newDesc)
+                            const trimmedPositions = editingJobLineForm.tire_positions.map(p => p.trim()).filter(Boolean)
+                            const newPos: string | null = willBeTire
+                              ? (trimmedPositions.length > 0 ? trimmedPositions.join(', ') : null)
+                              : null
                             const updates: Record<string, unknown> = {}
-                            const newDesc = editingJobLineForm.description.trim()
-                            const newPos = editingJobLineForm.tire_position.trim() || null
                             if (newDesc !== (line.description || '')) updates.description = newDesc
                             if ((newPos || '') !== (line.tire_position || '')) updates.tire_position = newPos
                             const oldHours = line.estimated_hours == null ? null : Number(line.estimated_hours)
                             if (estHoursNum !== oldHours) updates.estimated_hours = estHoursNum
+
+                            const willTransitionOff = existingHadTire && !willBeTire
+                            const partsToCancel = willTransitionOff ? safeToCancelTireParts : []
+
+                            const ops: Array<Promise<Response>> = []
                             if (Object.keys(updates).length > 0) {
-                              await patchLine(line.id, updates)
+                              ops.push(fetch(`/api/so-lines/${line.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ ...updates, expected_updated_at: line.updated_at }),
+                              }))
                             }
+                            for (const p of partsToCancel) {
+                              ops.push(fetch(`/api/so-lines/${p.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ parts_status: 'canceled', expected_updated_at: p.updated_at }),
+                              }))
+                            }
+
+                            if (ops.length > 0) {
+                              const responses = await Promise.all(ops)
+                              if (responses.some(r => r.status === 409)) {
+                                setToastMsg('This record was updated by someone else. Refresh and try again.')
+                                setTimeout(() => setToastMsg(''), 4000)
+                              }
+                              await loadData()
+                            }
+
+                            if (willTransitionOff && unsafeLinkedTireParts.length > 0) {
+                              setToastMsg(`${unsafeLinkedTireParts.length} tire part${unsafeLinkedTireParts.length > 1 ? 's have' : ' has'} activity — review the Parts tab to clean up manually.`)
+                              setTimeout(() => setToastMsg(''), 5000)
+                            }
+
                             setEditingJobLineId(null)
-                            setEditingJobLineForm({ description: '', tire_position: '', estimated_hours: '' })
+                            setEditingJobLineForm({ description: '', tire_positions: [], estimated_hours: '' })
                           } finally {
                             setSavingJobLineEdit(false)
                           }

@@ -67,6 +67,13 @@ function isLaborLine(line: JobLineValidationInput): boolean {
   return (line.line_type || 'labor') !== 'part'
 }
 
+// Live-edit helper: lets the WO detail editor decide whether to surface
+// tire-position UI based on the description being typed, using the same
+// vocabulary as the deterministic validator above.
+export function isTireRelatedDescription(description: string | null | undefined): boolean {
+  return GENERIC_TIRE_RE.test((description || '').trim())
+}
+
 export function validateJobLine(line: JobLineValidationInput): JobLineValidationResult {
   if (!isLaborLine(line)) return { valid: true }
   if (isLineCanceled(line)) return { valid: true }
