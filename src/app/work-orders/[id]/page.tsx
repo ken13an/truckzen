@@ -168,6 +168,10 @@ export default function WorkOrderDetail() {
   // does NOT control this — it controls the WO header edit.
   const [editingJobLineId, setEditingJobLineId] = useState<string | null>(null)
   const [editingJobLineForm, setEditingJobLineForm] = useState<{ description: string; tire_positions: string[]; estimated_hours: string }>({ description: '', tire_positions: [], estimated_hours: '' })
+  // TruckZen-styled "Add Part" modal — replaces native prompt() on the Parts
+  // tab. Both Add Part call sites POST the same payload, so a single shared
+  // modal covers them.
+  const [addPartModal, setAddPartModal] = useState<{ open: boolean; name: string; saving: boolean }>({ open: false, name: '', saving: false })
   const [savingJobLineEdit, setSavingJobLineEdit] = useState(false)
   const [approvalConfirmModal, setApprovalConfirmModal] = useState<{ method: string; notes: string } | null>(null)
   const [printedReady, setPrintedReady] = useState(false)
@@ -1717,9 +1721,64 @@ export default function WorkOrderDetail() {
                             const oldHours = line.estimated_hours == null ? null : Number(line.estimated_hours)
                             if (estHoursNum !== oldHours) updates.estimated_hours = estHoursNum
 
-                            const willTransitionOff = existingHadTire && !willBeTire
-                            const partsToCancel = willTransitionOff ? safeToCancelTireParts : []
+                            const descriptionChanged = newDesc !== (line.description || '')
 
+                            // Generalized parts-truth sync: when the description
+                            // changes, the deterministic auto-rough-parts set
+                            // shifts. Linked rough children whose name no longer
+                            // appears in the new suggestion set are obsolete and
+                            // should leave parts truth (hard delete, not just a
+                            // canceled-noise row). Children with downstream
+                            // activity (real_name, part_number, prices, manual
+                            // parts_requirement) stay — surface a non-blocking
+                            // toast asking the writer to review them.
+                            const linkedActive = (wo?.so_lines || []).filter((p: any) =>
+                              p.line_type === 'part' &&
+                              p.related_labor_line_id === line.id &&
+                              p.parts_status !== 'canceled'
+                            )
+                            const isSafeAutoRemove = (p: any): boolean => (
+                              String(p.parts_status || '').toLowerCase() === 'rough' &&
+                              !p.real_name &&
+                              !p.part_number &&
+                              !p.parts_cost_price &&
+                              !p.parts_sell_price &&
+                              !p.parts_requirement
+                            )
+                            const newSuggestions = descriptionChanged
+                              ? getAutoRoughParts(newDesc).filter(s => !s.is_labor)
+                              : []
+                            const newSuggestionNamesLower = new Set(
+                              newSuggestions
+                                .map(s => String(s.rough_name || '').trim().toLowerCase())
+                                .filter(Boolean)
+                            )
+                            const obsoleteAll = descriptionChanged
+                              ? linkedActive.filter((p: any) => {
+                                  const name = String(p.rough_name || p.description || '').trim().toLowerCase()
+                                  return !!name && !newSuggestionNamesLower.has(name)
+                                })
+                              : []
+                            const obsoleteSafeToDelete = obsoleteAll.filter(isSafeAutoRemove)
+                            const obsoleteUnsafe = obsoleteAll.filter((p: any) => !isSafeAutoRemove(p))
+                            // Survivors after delete — used to dedupe new
+                            // suggestion creation so we don't re-insert a part
+                            // the writer has already kept on the line.
+                            const obsoleteSafeIds = new Set(obsoleteSafeToDelete.map((p: any) => p.id))
+                            const survivorNamesLower = new Set(
+                              linkedActive
+                                .filter((p: any) => !obsoleteSafeIds.has(p.id))
+                                .map((p: any) => String(p.rough_name || p.real_name || p.description || '').trim().toLowerCase())
+                                .filter(Boolean)
+                            )
+                            const partsToCreate = newSuggestions.filter(s => {
+                              const name = String(s.rough_name || '').trim().toLowerCase()
+                              return !!name && !survivorNamesLower.has(name)
+                            })
+
+                            // Phase 1: labor PATCH + safe-obsolete DELETE in
+                            // parallel. Each so_lines DELETE sub-request returns
+                            // 200/204; PATCH may return 409 on stale OCC.
                             const ops: Array<Promise<Response>> = []
                             if (Object.keys(updates).length > 0) {
                               ops.push(fetch(`/api/so-lines/${line.id}`, {
@@ -1728,29 +1787,64 @@ export default function WorkOrderDetail() {
                                 body: JSON.stringify({ ...updates, expected_updated_at: line.updated_at }),
                               }))
                             }
-                            for (const p of partsToCancel) {
-                              ops.push(fetch(`/api/so-lines/${p.id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ parts_status: 'canceled', expected_updated_at: p.updated_at }),
-                              }))
+                            for (const p of obsoleteSafeToDelete) {
+                              ops.push(fetch(`/api/so-lines/${p.id}`, { method: 'DELETE' }))
                             }
 
+                            let phase1Conflict = false
                             if (ops.length > 0) {
                               const responses = await Promise.all(ops)
                               if (responses.some(r => r.status === 409)) {
+                                phase1Conflict = true
                                 setToastMsg('This record was updated by someone else. Refresh and try again.')
                                 setTimeout(() => setToastMsg(''), 4000)
-                              } else {
-                                // Either the labor line or a linked tire part
-                                // changed; both invalidate the snapshot.
-                                await refreshOpenEstimateIfAny()
                               }
+                            }
+
+                            // Phase 2: insert replacement rough parts. Run
+                            // sequentially after Phase 1 so we never insert
+                            // duplicates of a row that's still in the process
+                            // of being deleted. Skip on Phase 1 conflict.
+                            if (!phase1Conflict && partsToCreate.length > 0) {
+                              for (const s of partsToCreate) {
+                                const partName = String(s.rough_name || '').trim()
+                                if (!partName) continue
+                                await fetch('/api/so-lines', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    so_id: id,
+                                    line_type: 'part',
+                                    description: partName,
+                                    rough_name: partName,
+                                    quantity: s.quantity || 1,
+                                    parts_status: 'rough',
+                                    related_labor_line_id: line.id,
+                                  }),
+                                })
+                              }
+                            }
+
+                            // Phase 3: refresh estimate snapshot (no-op when
+                            // estimate is approved/locked) and reload WO.
+                            const anyMutation = ops.length > 0 || partsToCreate.length > 0
+                            if (anyMutation && !phase1Conflict) {
+                              await refreshOpenEstimateIfAny()
+                            }
+                            if (anyMutation) {
                               await loadData()
                             }
 
-                            if (willTransitionOff && unsafeLinkedTireParts.length > 0) {
-                              setToastMsg(`${unsafeLinkedTireParts.length} tire part${unsafeLinkedTireParts.length > 1 ? 's have' : ' has'} activity — review the Parts tab to clean up manually.`)
+                            // Toast the unsafe obsolete parts the writer must
+                            // resolve manually. Keeps the older tire-specific
+                            // banner copy for transitioningOff, otherwise
+                            // generic.
+                            if (obsoleteUnsafe.length > 0) {
+                              const noun = obsoleteUnsafe.length === 1 ? 'part has' : 'parts have'
+                              const tireScoped = transitioningOff && obsoleteUnsafe.every((p: any) => isTireRelatedDescription(p.rough_name || p.description || ''))
+                              setToastMsg(tireScoped
+                                ? `${obsoleteUnsafe.length} tire ${noun} activity — review the Parts tab to clean up manually.`
+                                : `${obsoleteUnsafe.length} linked ${noun} activity — review the Parts tab to clean up manually.`)
                               setTimeout(() => setToastMsg(''), 5000)
                             }
 
@@ -2127,12 +2221,7 @@ export default function WorkOrderDetail() {
           {partLines.length === 0 && !partsLocked && !wo.is_historical && !isViewOnly && (
             <div style={{ ...cardStyle, textAlign: 'center', padding: 30 }}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: GRAY }}>No parts on this work order</div>
-              <button onClick={() => {
-                const name = prompt('Part name or description:')
-                if (!name?.trim()) return
-                fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) })
-                  .then(async () => { await refreshOpenEstimateIfAny(); await loadData() })
-              }} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '8px 20px' }}>
+              <button onClick={() => setAddPartModal({ open: true, name: '', saving: false })} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '8px 20px' }}>
                 + Add Part
               </button>
             </div>
@@ -2142,12 +2231,7 @@ export default function WorkOrderDetail() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>Parts ({partLines.length})</div>
                 {!partsLocked && !wo.is_historical && !isViewOnly && (
-                  <button onClick={() => {
-                    const name = prompt('Part name or description:')
-                    if (!name?.trim()) return
-                    fetch('/api/so-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ so_id: id, line_type: 'part', description: name.trim(), rough_name: name.trim(), parts_status: 'rough', quantity: 1 }) })
-                      .then(async () => { await refreshOpenEstimateIfAny(); await loadData() })
-                  }} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '5px 12px', fontSize: 11 }}>
+                  <button onClick={() => setAddPartModal({ open: true, name: '', saving: false })} style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), padding: '5px 12px', fontSize: 11 }}>
                     + Add Part
                   </button>
                 )}
@@ -3668,6 +3752,71 @@ export default function WorkOrderDetail() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setAssignModal(null)} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
               <button onClick={saveAssignments} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>Save Assignments</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Part Modal — TruckZen-styled replacement for native prompt() */}
+      {addPartModal.open && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => { if (!addPartModal.saving) setAddPartModal({ open: false, name: '', saving: false }) }}>
+          <div style={{ background: 'var(--tz-bgCard)', borderRadius: 12, padding: 24, width: 380, maxWidth: '90vw' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <span style={{ fontSize: 16, fontWeight: 700 }}>Add Part</span>
+              <button onClick={() => { if (!addPartModal.saving) setAddPartModal({ open: false, name: '', saving: false }) }} style={{ background: 'none', border: 'none', cursor: addPartModal.saving ? 'not-allowed' : 'pointer' }} disabled={addPartModal.saving}><X size={18} /></button>
+            </div>
+            <span style={labelStyle}>Part name or description</span>
+            <input
+              autoFocus
+              type="text"
+              value={addPartModal.name}
+              onChange={e => setAddPartModal(p => ({ ...p, name: e.target.value }))}
+              onKeyDown={async e => {
+                if (e.key === 'Enter' && !addPartModal.saving) {
+                  const name = addPartModal.name.trim()
+                  if (!name) return
+                  setAddPartModal(p => ({ ...p, saving: true }))
+                  try {
+                    await fetch('/api/so-lines', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ so_id: id, line_type: 'part', description: name, rough_name: name, parts_status: 'rough', quantity: 1 }),
+                    })
+                    await refreshOpenEstimateIfAny()
+                    await loadData()
+                  } finally {
+                    setAddPartModal({ open: false, name: '', saving: false })
+                  }
+                }
+              }}
+              placeholder="e.g. Oil Filter"
+              style={inputStyle}
+              disabled={addPartModal.saving}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+              <button onClick={() => setAddPartModal({ open: false, name: '', saving: false })} disabled={addPartModal.saving} style={btnStyle('var(--tz-bgLight)', GRAY)}>Cancel</button>
+              <button
+                onClick={async () => {
+                  const name = addPartModal.name.trim()
+                  if (!name || addPartModal.saving) return
+                  setAddPartModal(p => ({ ...p, saving: true }))
+                  try {
+                    await fetch('/api/so-lines', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ so_id: id, line_type: 'part', description: name, rough_name: name, parts_status: 'rough', quantity: 1 }),
+                    })
+                    await refreshOpenEstimateIfAny()
+                    await loadData()
+                  } finally {
+                    setAddPartModal({ open: false, name: '', saving: false })
+                  }
+                }}
+                disabled={addPartModal.saving || !addPartModal.name.trim()}
+                style={{ ...btnStyle(BLUE, 'var(--tz-bgLight)'), opacity: (addPartModal.saving || !addPartModal.name.trim()) ? 0.5 : 1, cursor: (addPartModal.saving || !addPartModal.name.trim()) ? 'not-allowed' : 'pointer' }}
+              >
+                {addPartModal.saving ? 'Adding…' : 'Add'}
+              </button>
             </div>
           </div>
         </div>
