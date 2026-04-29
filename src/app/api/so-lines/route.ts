@@ -69,7 +69,7 @@ async function _POST(req: Request) {
     return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
   }
 
-  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status, is_historical, ownership_type, estimate_approved').eq('id', so_id).single()
+  const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status, is_historical, ownership_type, estimate_approved, estimate_status').eq('id', so_id).single()
   if (!so || so.shop_id !== ctx.shopId) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
 
   if (so.is_historical) {
@@ -95,7 +95,21 @@ async function _POST(req: Request) {
   // !is_additional && wo.estimate_approved → APPROVED). customer_approved is
   // intentionally left at DB default (null) so the pending-supplement portal
   // surfaces it for customer approval.
-  const isPostApprovalLine = so.estimate_approved === true
+  //
+  // Parent-approval truth comes from EITHER estimate_approved=true OR
+  // estimate_status='approved' because TruckZen approval routes write these
+  // two fields inconsistently:
+  //   - /api/portal/[token]/estimate/approve and /api/estimates/[id]/respond
+  //     write both estimate_approved=true AND estimate_status='approved'
+  //   - /api/portal/[token]/approve (legacy whole-WO approve) writes ONLY
+  //     estimate_status='approved' and leaves estimate_approved untouched
+  // Treating either as canonical-approved here closes the post-approval
+  // supplement window for both routes without inventing a new field or
+  // touching the legacy /portal/[token]/approve writer.
+  const isPostApprovalLine = so.estimate_approved === true || so.estimate_status === 'approved'
+  if (isPostApprovalLine) {
+    console.log('[so-lines] post-approval add-line', { wo: so_id, estimate_approved: so.estimate_approved, estimate_status: so.estimate_status, line_type })
+  }
 
   const { data, error } = await ctx.admin.from('so_lines').insert({
     so_id,
