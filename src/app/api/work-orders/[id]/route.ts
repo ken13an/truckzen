@@ -70,7 +70,7 @@ async function _GET(_req: Request, { params }: Params) {
     base.assigned_tech
       ? ctx.admin.from('users').select('id, full_name, role, team').eq('id', base.assigned_tech).single()
       : Promise.resolve({ data: null }),
-    ctx.admin.from('so_lines').select('id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, updated_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price, related_labor_line_id, tire_position').eq('so_id', id),
+    ctx.admin.from('so_lines').select('id, so_id, line_type, description, part_number, quantity, unit_price, total_price, created_at, updated_at, assigned_to, finding, resolution, estimated_hours, actual_hours, billed_hours, line_status, required_skills, labor_rate, approval_status, approval_required, approved_by, approved_at, approval_notes, rough_parts, real_name, rough_name, parts_status, parts_cost_price, parts_sell_price, related_labor_line_id, tire_position, is_additional, customer_approved, supplement_batch_id').eq('so_id', id),
     ctx.admin.from('estimates').select('id, estimate_number, status, total, subtotal, tax_amount, customer_email, customer_phone, approval_method, approved_at, customer_notes, sent_at, updated_at').eq('wo_id', id),
     ctx.admin.from('invoices').select('id, invoice_number, status, total, balance_due, amount_paid, due_date').eq('so_id', id),
     ctx.admin.from('wo_notes').select('id, user_id, note_text, visible_to_customer, created_at').eq('wo_id', id),
