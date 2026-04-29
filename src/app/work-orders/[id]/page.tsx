@@ -1737,14 +1737,30 @@ export default function WorkOrderDetail() {
                               p.related_labor_line_id === line.id &&
                               p.parts_status !== 'canceled'
                             )
-                            const isSafeAutoRemove = (p: any): boolean => (
-                              String(p.parts_status || '').toLowerCase() === 'rough' &&
-                              !p.real_name &&
-                              !p.part_number &&
-                              !p.parts_cost_price &&
-                              !p.parts_sell_price &&
-                              !p.parts_requirement
-                            )
+                            // Workflow + manual-decision check only. Inventory
+                            // suggestion fields (real_name / part_number /
+                            // parts_cost_price / parts_sell_price) are auto-
+                            // populated at rough creation by workOrderCreation
+                            // and addJob whenever the shop has a matching part
+                            // in inventory — they are NOT proof the writer
+                            // touched the row. Treating them as "activity"
+                            // (the prior predicate's mistake) caused obsolete
+                            // tire roughs to survive a tire→bumper edit
+                            // whenever the shop stocked tires. The row is
+                            // safe to auto-remove iff:
+                            //   1) parts_status is still rough/requested
+                            //      (canceled is already filtered upstream),
+                            //   2) no explicit parts_requirement decision was
+                            //      recorded by the writer (customer_supplied,
+                            //      not_needed, override, or writer-typed
+                            //      'needed').
+                            const ROUGH_STATUSES = new Set(['', 'rough', 'requested'])
+                            const isSafeAutoRemove = (p: any): boolean => {
+                              const status = String(p.parts_status || '').toLowerCase()
+                              if (!ROUGH_STATUSES.has(status)) return false
+                              if (p.parts_requirement) return false
+                              return true
+                            }
                             const newSuggestions = descriptionChanged
                               ? getAutoRoughParts(newDesc).filter(s => !s.is_labor)
                               : []
