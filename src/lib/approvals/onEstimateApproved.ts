@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { sendEmail, getShopInfo } from '@/lib/services/email'
 import { repairTrackingLinkEmail } from '@/lib/emails/repairTrackingLink'
 
-export type OnEstimateApprovedSource = 'portal_estimate_approve' | 'portal_approve'
+export type OnEstimateApprovedSource = 'portal_estimate_approve' | 'portal_approve' | 'estimate_email_respond'
 
 export interface OnEstimateApprovedInput {
   supabase: SupabaseClient

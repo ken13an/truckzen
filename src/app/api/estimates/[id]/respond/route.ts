@@ -4,6 +4,7 @@ import { sendEmail, getShopInfo, getStaffEmails } from '@/lib/services/email'
 import { safeRoute } from '@/lib/api-handler'
 import { assertPartsRequirementResolved } from '@/lib/parts-status'
 import { checkPortalLimits } from '@/lib/ratelimit/portal-guard'
+import { onEstimateApproved } from '@/lib/approvals/onEstimateApproved'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -80,6 +81,12 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
       }
       if (wo?.status === 'waiting_approval') woUpdate.status = 'in_progress'
       await supabase.from('service_orders').update(woUpdate).eq('id', estimate.repair_order_id)
+
+      await onEstimateApproved({
+        supabase,
+        serviceOrderId: estimate.repair_order_id,
+        source: 'estimate_email_respond',
+      })
     }
   } else if (action === 'approve_with_notes') {
     await supabase.from('estimates').update({
@@ -106,6 +113,12 @@ async function _POST(req: Request, { params }: { params: Promise<{ id: string }>
       }
       if (wo2?.status === 'waiting_approval') woUpdate2.status = 'in_progress'
       await supabase.from('service_orders').update(woUpdate2).eq('id', estimate.repair_order_id)
+
+      await onEstimateApproved({
+        supabase,
+        serviceOrderId: estimate.repair_order_id,
+        source: 'estimate_email_respond',
+      })
     }
   } else {
     // Decline - save reason to notes
