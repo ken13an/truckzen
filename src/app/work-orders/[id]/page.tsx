@@ -1474,11 +1474,28 @@ export default function WorkOrderDetail() {
             const lineParts = woParts.filter((p: any) => p.line_id === line.id)
             void lineParts
             const expanded = !!expandedJobLines[line.id]
+            // Defense backstop: a line whose created_at is strictly after the
+            // parent WO's approval timestamp must be treated as a supplement
+            // even when is_additional is missing/false on the row (e.g. when
+            // the API SELECT did not project is_additional, or when an older
+            // write path created the row before the supplement-flagging fix
+            // shipped). Uses already-loaded fields only — no API widening.
+            const parentApprovedAt = wo.estimate_approved_date || wo.approved_at || null
+            const parentApprovedAtMs = parentApprovedAt ? Date.parse(parentApprovedAt) : NaN
+            const lineCreatedAtMs = line.created_at ? Date.parse(line.created_at) : NaN
+            const lineCreatedAfterApproval = Number.isFinite(parentApprovedAtMs) && Number.isFinite(lineCreatedAtMs) && lineCreatedAtMs > parentApprovedAtMs
             // Primary status pill — priority-resolved (packet-1: two-row header).
             // Declined > Waiting > Approved > In Progress > Completed > Waiting Assignment > fallback.
             const primary = (() => {
               if (line.is_additional === true && line.customer_approved === false) return { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
               if (line.approval_status === 'declined') return { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
+              // Defense rules for post-approval lines (mirror the explicit
+              // is_additional=true triad below). Fire BEFORE the originally-
+              // approved rule so a line created after parent approval cannot
+              // inherit Estimate-1 approval.
+              if (lineCreatedAfterApproval && line.customer_approved === false) return { label: 'DECLINED', bg: 'var(--tz-dangerBg)', color: RED }
+              if (lineCreatedAfterApproval && line.customer_approved == null) return { label: 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
+              if (lineCreatedAfterApproval && line.customer_approved === true) return { label: 'APPROVED', bg: 'var(--tz-accentBg)', color: BLUE }
               if (line.is_additional === true && line.customer_approved == null) return { label: 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
               if (!line.is_additional && !wo.estimate_approved && (line.approval_status === 'needs_approval' || line.approval_status === 'pending')) return { label: isUnreviewedIntake ? 'PENDING REVIEW' : 'WAITING FOR APPROVAL', bg: 'var(--tz-warningBg)', color: AMBER }
               if (line.is_additional === true && line.customer_approved === true) return { label: 'APPROVED', bg: 'var(--tz-accentBg)', color: BLUE }
