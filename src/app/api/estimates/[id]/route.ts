@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { INVOICE_ACTION_ROLES } from '@/lib/roles'
 import { safeRoute } from '@/lib/api-handler'
+import { assertPartsRequirementResolved } from '@/lib/parts-status'
 import { z } from 'zod'
 
 // No canonical estimate-status enum exists in the repo; validate shape only.
@@ -88,6 +89,29 @@ async function _PATCH(req: Request, { params }: { params: Promise<{ id: string }
     updates.valid_until = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
   }
   if (body?.status === 'approved') updates.approved_by = ctx.actor.id
+
+  // Parts-readiness gate — close the staff-side approve gap. Every other
+  // approve route (customer portal × 3, supplement × 2, estimate-email
+  // respond, send-estimate) calls assertPartsRequirementResolved before
+  // flipping an estimate to 'approved'. The Approve In Person / Print &
+  // Sign paths use this PATCH and were the only approve surface bypassing
+  // the gate. Mirrors src/app/api/portal/[token]/estimate/approve/route.ts
+  // and src/app/api/estimates/[id]/respond/route.ts. 422 with
+  // unresolved_lines so the existing modal can surface them.
+  if (body?.status === 'approved') {
+    const repairOrderId = (estimate as any).repair_order_id || (estimate as any).wo_id
+    if (repairOrderId) {
+      const actorRole = ctx.actor.impersonate_role || ctx.actor.role
+      const partsGate = await assertPartsRequirementResolved(ctx.admin, repairOrderId, actorRole)
+      if (!partsGate.ok) {
+        console.warn('[estimate-patch-approve] parts gate blocked', { estimateId: id, woId: repairOrderId, failures: partsGate.failures })
+        return NextResponse.json({
+          error: 'Resolve parts decisions before approving this estimate.',
+          unresolved_lines: partsGate.failures,
+        }, { status: 422 })
+      }
+    }
+  }
 
   // Optimistic concurrency: when client provides last-seen updated_at,
   // require match. Missing value preserves legacy behavior.
