@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentUser, type UserProfile } from '@/lib/auth'
-import { ChevronLeft, ChevronDown, ChevronRight, User, Users, MessageSquare, Clock, DollarSign, MoreHorizontal, Plus, Mic, Upload, X, Paperclip } from 'lucide-react'
+import { ChevronLeft, ChevronDown, ChevronRight, User, Users, MessageSquare, Clock, DollarSign, MoreHorizontal, Plus, Mic, Upload, X, Paperclip, Pencil, TrendingUp, FileText, ShieldCheck, Trash2 } from 'lucide-react'
 import AITextInput from '@/components/ai-text-input'
 import SourceBadge from '@/components/ui/SourceBadge'
 import OwnershipTypeBadge from '@/components/OwnershipTypeBadge'
@@ -1512,49 +1512,65 @@ export default function WorkOrderDetail() {
             void isAdditional
 
             return (
-              <div key={line.id} style={{ ...cardStyle, position: 'relative', ...(lineInvalid ? { border: '1px solid rgba(220,38,38,0.45)', boxShadow: 'inset 4px 0 0 0 var(--tz-danger)' } : {}) }}>
-                {/* Two-row collapsible header (packet-1):
-                    Row 1 = chrome (checkbox, chevron, Job #) + one resolved
-                    status pill + outlined chips for mechanic, concern count
-                    (when ≥2), and Est hours (right-aligned).
-                    Row 2 = concern preview joined by " • ".
-                    Border stays neutral; status is conveyed by the pill. */}
-                <div onClick={() => setExpandedJobLines(m => ({ ...m, [line.id]: !m[line.id] }))} style={{ cursor: 'pointer', marginBottom: expanded ? 10 : 0 }}>
-                  {/* Row 1 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div key={line.id} style={{ ...cardStyle, position: 'relative', padding: 18, borderRadius: 14, ...(lineInvalid ? { boxShadow: 'inset 3px 0 0 0 var(--tz-danger)' } : {}) }}>
+                {/* Single-row collapsible header (jobline redesign):
+                    chrome (checkbox, chevron, Job #) + complaints count +
+                    primary status pill + assignee pill + Est hours pill +
+                    right-aligned compact Edit button. */}
+                <div onClick={() => setExpandedJobLines(m => ({ ...m, [line.id]: !m[line.id] }))} style={{ cursor: 'pointer', marginBottom: expanded ? 14 : 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     {!wo.is_historical && !isViewOnly && jobLines.length > 1 && (
                       <input type="checkbox" checked={mergeSelected.has(line.id)} onClick={e => e.stopPropagation()} onChange={() => setMergeSelected(prev => { const n = new Set(prev); n.has(line.id) ? n.delete(line.id) : n.add(line.id); return n })} style={{ cursor: 'pointer', accentColor: 'var(--tz-accent)', width: 16, height: 16, flexShrink: 0 }} />
                     )}
-                    {expanded ? <ChevronDown size={14} color={GRAY} /> : <ChevronRight size={14} color={GRAY} />}
-                    <span style={{ fontSize: 14, fontWeight: 700 }}>Job {idx + 1}</span>
-                    <span style={pillStyle(primary.bg, primary.color)}>{primary.label}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      {expanded ? <ChevronDown size={16} color={GRAY} /> : <ChevronRight size={16} color={GRAY} />}
+                      <span style={{ fontSize: 16, fontWeight: 700 }}>Job {idx + 1}</span>
+                    </span>
+                    {concernItems.length >= 1 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, color: 'var(--tz-textSecondary)', fontSize: 13 }}>
+                        <span style={{ width: 1, height: 18, background: 'var(--tz-border)' }} />
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <MessageSquare size={13} />
+                          {concernItems.length} {concernItems.length === 1 ? 'complaint' : 'complaints'}
+                        </span>
+                      </span>
+                    )}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', background: primary.bg, color: primary.color }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: primary.color, flexShrink: 0 }} />
+                      {primary.label}
+                    </span>
                     {lineInvalid && (
                       <span style={pillStyle('var(--tz-dangerBg)', RED)} title={lineValidation && !lineValidation.valid ? lineValidation.message : ''}>
                         Tire position required
                       </span>
                     )}
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 600, background: 'transparent', color: lineAssignments.length > 0 ? 'var(--tz-text)' : GRAY, border: `1px solid ${'var(--tz-border)'}` }}>
-                      <User size={12} />
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 100, fontSize: 13, fontWeight: 500, background: 'var(--tz-bgCard)', color: lineAssignments.length > 0 ? 'var(--tz-text)' : 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}` }}>
+                      <User size={13} />
                       {mechanicLabel}
                     </span>
-                    {concernItems.length >= 2 && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}` }}>
-                        <MessageSquare size={12} />
-                        {concernItems.length} concerns
-                      </span>
-                    )}
                     {estHoursCompact > 0 && !isUnreviewedIntake && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 100, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--tz-textSecondary)', border: `1px solid ${'var(--tz-border)'}`, marginLeft: 'auto' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 12px', borderRadius: 100, fontSize: 13, fontWeight: 500, background: 'var(--tz-bgCard)', color: 'var(--tz-text)', border: `1px solid ${'var(--tz-border)'}` }}>
                         Est {estHoursCompact}h
                       </span>
                     )}
+                    {!wo.is_historical && !isViewOnly && !isEditingThisLine && (
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          setEditingJobLineForm({
+                            description: line.description || '',
+                            tire_positions: (line.tire_position || '').split(',').map((p: string) => p.trim()).filter(Boolean),
+                            estimated_hours: line.estimated_hours != null ? String(line.estimated_hours) : '',
+                          })
+                          setEditingJobLineId(line.id)
+                          setExpandedJobLines(m => ({ ...m, [line.id]: true }))
+                        }}
+                        style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: FONT, cursor: 'pointer', background: 'var(--tz-bgCard)', color: lineInvalid ? RED : 'var(--tz-text)', border: `1px solid ${lineInvalid ? 'var(--tz-danger)' : 'var(--tz-border)'}`, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <Pencil size={13} /> Edit
+                      </button>
+                    )}
                   </div>
-                  {/* Row 2 — concern preview, dot-separated */}
-                  {concernItems.length > 0 && (
-                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${'var(--tz-border)'}`, fontSize: 13, color: 'var(--tz-textSecondary)', wordBreak: 'break-word', lineHeight: 1.5 }}>
-                      {concernItems.join(' • ')}
-                    </div>
-                  )}
                 </div>
 
                 {expanded && (
@@ -1572,23 +1588,8 @@ export default function WorkOrderDetail() {
                     </div>
                   </div>
                 )}
-                {!wo.is_historical && !isViewOnly && !isEditingThisLine && (
-                  <div style={{ marginBottom: 10 }}>
-                    <button
-                      onClick={() => {
-                        setEditingJobLineForm({
-                          description: line.description || '',
-                          tire_positions: (line.tire_position || '').split(',').map((p: string) => p.trim()).filter(Boolean),
-                          estimated_hours: line.estimated_hours != null ? String(line.estimated_hours) : '',
-                        })
-                        setEditingJobLineId(line.id)
-                      }}
-                      style={{ ...btnStyle('var(--tz-bgLight)', 'var(--tz-text)'), padding: '6px 12px', fontSize: 12, border: `1px solid ${lineInvalid ? 'rgba(220,38,38,0.45)' : 'var(--tz-border)'}`, color: lineInvalid ? RED : 'var(--tz-text)' }}
-                    >
-                      Edit Job Line
-                    </button>
-                  </div>
-                )}
+                {/* Edit-line trigger lives in the header (jobline redesign);
+                    the inline editor still renders here when isEditingThisLine. */}
                 {isEditingThisLine && (() => {
                   const estHoursRaw = editingJobLineForm.estimated_hours.trim()
                   const estHoursNum = estHoursRaw === '' ? null : Number(estHoursRaw)
@@ -1925,6 +1926,137 @@ export default function WorkOrderDetail() {
                   </div>
                   )
                 })()}
+                {/* Two-column body (jobline redesign):
+                    Left = full numbered complaint list (every item visible —
+                    no truncation, no "+N more"). Right = three small summary
+                    cards for Estimated / Actual / Billed hours. Source fields
+                    are unchanged from the prior layout. */}
+                {(() => {
+                  const actualHours = line.actual_hours || (line.labor_minutes ? line.labor_minutes / 60 : 0)
+                  const estimatedHours = line.estimated_hours || 0
+                  const billedHours = line.billed_hours || 0
+                  const summaryCards: Array<{ label: string; value: number; Icon: typeof Clock; tint: string; iconColor: string }> = [
+                    { label: 'Estimated', value: estimatedHours, Icon: Clock, tint: 'var(--tz-warningBg)', iconColor: AMBER },
+                    { label: 'Actual', value: Math.round(actualHours * 100) / 100, Icon: TrendingUp, tint: 'var(--tz-successBg)', iconColor: GREEN },
+                    { label: 'Billed', value: billedHours, Icon: FileText, tint: 'var(--tz-accentBg)', iconColor: BLUE },
+                  ]
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 12, marginBottom: 12, alignItems: 'start' }}>
+                      <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10 }}>
+                        {concernItems.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            {concernItems.map((c, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', borderTop: i === 0 ? 'none' : `1px solid ${'var(--tz-border)'}` }}>
+                                <span style={{ width: 22, height: 22, borderRadius: 5, background: 'var(--tz-bgHover)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: 'var(--tz-textSecondary)', flexShrink: 0 }}>{i + 1}</span>
+                                <span style={{ fontSize: 13, color: 'var(--tz-text)', lineHeight: 1.4 }}>{c}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ padding: '12px 14px', fontSize: 13, color: GRAY, fontStyle: 'italic' }}>{wo.is_historical ? 'No work description' : 'No complaints yet'}</div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {summaryCards.map(({ label, value, Icon, tint, iconColor }) => (
+                          <div key={label} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 30, height: 30, borderRadius: 7, background: tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <Icon size={14} color={iconColor} />
+                            </div>
+                            <span style={{ flex: 1, fontSize: 13, color: 'var(--tz-textSecondary)' }}>{label}</span>
+                            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--tz-text)' }}>{value || 0}h</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Approval-required banner (jobline redesign).
+                    Same condition as the prior assignment-row italic span;
+                    no logic change, no new derivation. */}
+                {!wo.is_historical && !isViewOnly && isWaitingOrDeclined && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 10, background: 'var(--tz-warningBg)', color: AMBER, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
+                    <ShieldCheck size={15} />
+                    <span>Approval required before assignment.</span>
+                  </div>
+                )}
+
+                {/* Mechanic Notes — compact row (jobline redesign).
+                    All notes still rendered (no truncation, no "+N more").
+                    Note data + write flow are unchanged. */}
+                {(() => {
+                  const notes: any[] = Array.isArray(line.mechanic_notes) ? line.mechanic_notes : []
+                  return (
+                    <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 10, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <MessageSquare size={15} color={GRAY} style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)', flexShrink: 0 }}>Notes</span>
+                      <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--tz-textSecondary)', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {notes.length === 0 ? (
+                          <span style={{ fontSize: 13, color: 'var(--tz-textSecondary)' }}>No notes yet</span>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {notes.map((n: any, ni: number) => (
+                              <div key={ni} style={{ fontSize: 13, color: 'var(--tz-text)', lineHeight: 1.4 }}>
+                                <span>{n.text || n.note || String(n)}</span>
+                                {n.created_at && <span style={{ fontSize: 11, color: GRAY, marginLeft: 6 }}>· {new Date(n.created_at).toLocaleString()}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <ChevronRight size={15} color={GRAY} style={{ flexShrink: 0 }} />
+                    </div>
+                  )
+                })()}
+
+                {/* Actions — bottom action row (jobline redesign).
+                    Handlers unchanged; visual layout only. */}
+                {!wo.is_historical && !isViewOnly && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', alignItems: 'center', borderTop: `1px solid ${'var(--tz-border)'}`, marginTop: 4 }}>
+                    <button onClick={() => {
+                      setNewPartForms(prev => ({ ...prev, [line.id]: prev[line.id] || { desc: '', pn: '', qty: '', cost: '' } }))
+                    }} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8, padding: '12px 4px', fontSize: 13, fontWeight: 700, fontFamily: FONT, cursor: 'pointer', background: 'transparent', color: BLUE, border: 'none' }}>
+                      <Plus size={15} /> Add Parts
+                    </button>
+                    <button onClick={() => setHoursModal({ id: line.id, estimated_hours: line.estimated_hours || '', actual_hours: line.actual_hours || '', billed_hours: line.billed_hours || '' })} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 4px', fontSize: 13, fontWeight: 700, fontFamily: FONT, cursor: 'pointer', background: 'transparent', color: 'var(--tz-textSecondary)', border: 'none', borderLeft: `1px solid ${'var(--tz-border)'}`, borderRight: `1px solid ${'var(--tz-border)'}` }}>
+                      <Clock size={15} /> Log Hours
+                    </button>
+                    <button onClick={() => removeJobLine(line.id)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 4px', fontSize: 13, fontWeight: 700, fontFamily: FONT, cursor: 'pointer', background: 'transparent', color: RED, border: 'none' }}>
+                      <Trash2 size={15} /> Remove Job
+                    </button>
+                  </div>
+                )}
+
+                {/* Inline add part form */}
+                {newPartForms[line.id] && (
+                  <div style={{ marginTop: 10, display: 'flex', gap: 6, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 2, minWidth: 120 }}>
+                      <span style={labelStyle}>Description</span>
+                      <input value={newPartForms[line.id].desc} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], desc: e.target.value } }))} style={inputStyle} placeholder="Part description" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 80 }}>
+                      <span style={labelStyle}>Part #</span>
+                      <input value={newPartForms[line.id].pn} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], pn: e.target.value } }))} style={inputStyle} placeholder="PN" />
+                    </div>
+                    <div style={{ width: 60 }}>
+                      <span style={labelStyle}>Qty</span>
+                      <input value={newPartForms[line.id].qty} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], qty: e.target.value } }))} style={inputStyle} placeholder="1" type="number" />
+                    </div>
+                    <div style={{ width: 80 }}>
+                      <span style={labelStyle}>Cost</span>
+                      <input value={newPartForms[line.id].cost} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], cost: e.target.value } }))} style={inputStyle} placeholder="0.00" type="number" step="0.01" />
+                    </div>
+                    <button onClick={() => addPart(line.id)} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>Add</button>
+                    <button onClick={() => setNewPartForms(p => { const n = { ...p }; delete n[line.id]; return n })} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
+                  </div>
+                )}
+
+                {/* Secondary working sections (correction patch).
+                    Restored from the base commit verbatim — handlers,
+                    conditions, and behavior unchanged. Placed below the
+                    main approved design so they don't dominate the card. */}
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${'var(--tz-border)'}`, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {/* Editable line_status control (expanded only). For waiting/declined
                     lines the dropdown is suppressed — read-only approval state
                     lives in the header pill (packet-1). */}
@@ -1978,9 +2110,6 @@ export default function WorkOrderDetail() {
                   ) : (
                     <span style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>Unassigned</span>
                   )}
-                  {!wo.is_historical && !isViewOnly && isWaitingOrDeclined && (
-                    <span style={{ fontSize: 11, color: AMBER, fontStyle: 'italic' }}>Approval required before assignment.</span>
-                  )}
                   {!wo.is_historical && !isViewOnly && !isWaitingOrDeclined && (
                     <button onClick={() => {
                       const bypassJobTypes = ['diagnostic', 'full_inspection']
@@ -1994,76 +2123,6 @@ export default function WorkOrderDetail() {
                     </button>
                   )}
                 </div>
-
-                {/* Hours grid */}
-                {(() => {
-                  const actualHours = line.actual_hours || (line.labor_minutes ? line.labor_minutes / 60 : 0)
-                  const estimatedHours = line.estimated_hours || 0
-                  return (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
-                      {[
-                        { label: 'Est. Hours', value: estimatedHours },
-                        { label: 'Actual', value: Math.round(actualHours * 100) / 100 },
-                        { label: 'Billed', value: line.billed_hours || 0 },
-                      ].map(h => (
-                        <div key={h.label} style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: '8px 12px' }}>
-                          <div style={labelStyle}>{h.label}</div>
-                          <div style={{ fontSize: 16, fontWeight: 700 }}>{h.value || 0}</div>
-                        </div>
-                      ))}
-                      {(estimatedHours > 0 || actualHours > 0) && (
-                        <div style={{ gridColumn: '1 / -1', fontSize: 12, color: GRAY }}>
-                          {estimatedHours > 0 && <span>Est: {estimatedHours}h</span>}
-                          {estimatedHours > 0 && actualHours > 0 && <span> | </span>}
-                          {actualHours > 0 && <span>Actual: {Math.round(actualHours * 100) / 100}h</span>}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })()}
-
-                {/* Concern / Work Description — numbered list for multi-item
-                    descriptions (packet-1). Single items render as plain text.
-                    Display only — DB value is not mutated. */}
-                {line.description && (
-                  <div style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: '10px 12px', marginBottom: 6, fontSize: 13, color: 'var(--tz-textSecondary)' }}>
-                    <span style={{ ...labelStyle, marginBottom: 6 }}>{wo.is_historical ? 'Work Description' : 'Concern'}</span>
-                    {concernItems.length > 1 ? (
-                      <ol style={{ margin: '4px 0 0 0', paddingLeft: 22, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {concernItems.map((c, i) => (
-                          <li key={i} style={{ color: 'var(--tz-text)' }}>{c}</li>
-                        ))}
-                      </ol>
-                    ) : (
-                      <div>{line.description}</div>
-                    )}
-                  </div>
-                )}
-
-                {/* Mechanic Notes */}
-                {(() => {
-                  const notes: any[] = Array.isArray(line.mechanic_notes) ? line.mechanic_notes : []
-                  return (
-                    <div style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: '10px 12px', marginBottom: 6 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: notes.length > 0 ? 8 : 0 }}>
-                        <MessageSquare size={12} style={{ color: GRAY }} />
-                        <span style={{ ...labelStyle, marginBottom: 0 }}>Mechanic Notes</span>
-                      </div>
-                      {notes.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {notes.map((n: any, ni: number) => (
-                            <div key={ni} style={{ fontSize: 12, color: 'var(--tz-textSecondary)', padding: '4px 0', borderBottom: ni < notes.length - 1 ? `1px solid ${'var(--tz-border)'}` : 'none' }}>
-                              <div>{n.text || n.note || String(n)}</div>
-                              {n.created_at && <div style={{ fontSize: 10, color: GRAY, marginTop: 2 }}>{new Date(n.created_at).toLocaleString()}</div>}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>No mechanic notes yet</span>
-                      )}
-                    </div>
-                  )
-                })()}
 
                 {/* AI Parts Suggestion Bar */}
                 {!wo.is_historical && !isViewOnly && !isUnreviewedIntake && line.description && line.description.length >= 10 && (
@@ -2142,52 +2201,7 @@ export default function WorkOrderDetail() {
                     </div>
                   )
                 })()}
-
-                {/* Billable parts list moved to the Parts tab (packet-1).
-                    Parts tab remains the source of parts truth; backend parts
-                    gate (parts-status.ts) is unchanged. Add Parts action below
-                    still opens the inline form for adding a rough part line. */}
-
-                {/* Actions */}
-                {!wo.is_historical && !isViewOnly && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button onClick={() => {
-                      setNewPartForms(prev => ({ ...prev, [line.id]: prev[line.id] || { desc: '', pn: '', qty: '', cost: '' } }))
-                    }} style={{ ...btnStyle( 'var(--tz-bgLight)', BLUE), padding: '6px 12px', fontSize: 11 }}>
-                      <Plus size={12} /> Add Parts
-                    </button>
-                    <button onClick={() => setHoursModal({ id: line.id, estimated_hours: line.estimated_hours || '', actual_hours: line.actual_hours || '', billed_hours: line.billed_hours || '' })} style={{ ...btnStyle( 'var(--tz-bgLight)', GRAY), padding: '6px 12px', fontSize: 11 }}>
-                      <Clock size={12} /> Log Hours
-                    </button>
-                    <button onClick={() => removeJobLine(line.id)} style={{ ...btnStyle('transparent', RED), padding: '6px 12px', fontSize: 11, border: 'none' }}>
-                      <X size={12} /> Remove Job
-                    </button>
-                  </div>
-                )}
-
-                {/* Inline add part form */}
-                {newPartForms[line.id] && (
-                  <div style={{ marginTop: 10, display: 'flex', gap: 6, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 2, minWidth: 120 }}>
-                      <span style={labelStyle}>Description</span>
-                      <input value={newPartForms[line.id].desc} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], desc: e.target.value } }))} style={inputStyle} placeholder="Part description" />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 80 }}>
-                      <span style={labelStyle}>Part #</span>
-                      <input value={newPartForms[line.id].pn} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], pn: e.target.value } }))} style={inputStyle} placeholder="PN" />
-                    </div>
-                    <div style={{ width: 60 }}>
-                      <span style={labelStyle}>Qty</span>
-                      <input value={newPartForms[line.id].qty} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], qty: e.target.value } }))} style={inputStyle} placeholder="1" type="number" />
-                    </div>
-                    <div style={{ width: 80 }}>
-                      <span style={labelStyle}>Cost</span>
-                      <input value={newPartForms[line.id].cost} onChange={e => setNewPartForms(p => ({ ...p, [line.id]: { ...p[line.id], cost: e.target.value } }))} style={inputStyle} placeholder="0.00" type="number" step="0.01" />
-                    </div>
-                    <button onClick={() => addPart(line.id)} style={btnStyle(BLUE, 'var(--tz-bgLight)')}>Add</button>
-                    <button onClick={() => setNewPartForms(p => { const n = { ...p }; delete n[line.id]; return n })} style={btnStyle( 'var(--tz-bgLight)', GRAY)}>Cancel</button>
-                  </div>
-                )}
+                </div>
                 </>
                 )}
               </div>
