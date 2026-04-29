@@ -1808,12 +1808,24 @@ export default function WorkOrderDetail() {
                             }
 
                             let phase1Conflict = false
+                            // Tracked so the Activity Log entries reflect what
+                            // actually happened, not what was attempted. A
+                            // silently-failed DELETE (rare — see safety filter
+                            // already restricts this set) shouldn't be logged
+                            // as removed.
+                            let deletedCount = 0
                             if (ops.length > 0) {
                               const responses = await Promise.all(ops)
                               if (responses.some(r => r.status === 409)) {
                                 phase1Conflict = true
                                 setToastMsg('This record was updated by someone else. Refresh and try again.')
                                 setTimeout(() => setToastMsg(''), 4000)
+                              } else {
+                                // ops layout: [labor PATCH (if any updates), …obsolete DELETEs].
+                                const deleteOffset = Object.keys(updates).length > 0 ? 1 : 0
+                                for (let i = deleteOffset; i < responses.length; i++) {
+                                  if (responses[i].ok) deletedCount++
+                                }
                               }
                             }
 
@@ -1821,11 +1833,12 @@ export default function WorkOrderDetail() {
                             // sequentially after Phase 1 so we never insert
                             // duplicates of a row that's still in the process
                             // of being deleted. Skip on Phase 1 conflict.
+                            let createdCount = 0
                             if (!phase1Conflict && partsToCreate.length > 0) {
                               for (const s of partsToCreate) {
                                 const partName = String(s.rough_name || '').trim()
                                 if (!partName) continue
-                                await fetch('/api/so-lines', {
+                                const res = await fetch('/api/so-lines', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
@@ -1838,6 +1851,7 @@ export default function WorkOrderDetail() {
                                     related_labor_line_id: line.id,
                                   }),
                                 })
+                                if (res.ok) createdCount++
                               }
                             }
 
@@ -1849,6 +1863,38 @@ export default function WorkOrderDetail() {
                             }
                             if (anyMutation) {
                               await loadData()
+                            }
+
+                            // Activity Log — emit only on success (no Phase 1
+                            // conflict). Truthful counts: only fields that
+                            // actually changed and only mutations that actually
+                            // succeeded show up. Fire-and-forget via the same
+                            // page-local helper used by the rest of the WO
+                            // detail page, so one user action becomes at most
+                            // three concise entries (labor edit / removed /
+                            // created) and zero on a no-op or conflict.
+                            if (!phase1Conflict) {
+                              const fmtHours = (n: number | null): string => (n == null ? '—' : String(n))
+                              const oldDescOrig = line.description || ''
+                              const oldPosOrig = line.tire_position || ''
+                              const newPosOrig = newPos || ''
+                              const laborChanges: string[] = []
+                              if (descriptionChanged) laborChanges.push(`"${oldDescOrig}" → "${newDesc}"`)
+                              if (estHoursNum !== oldHours) laborChanges.push(`est hrs ${fmtHours(oldHours)} → ${fmtHours(estHoursNum)}`)
+                              if (newPosOrig !== oldPosOrig) {
+                                const before = oldPosOrig ? `"${oldPosOrig}"` : 'cleared'
+                                const after = newPosOrig ? `"${newPosOrig}"` : 'cleared'
+                                laborChanges.push(`tire position ${before} → ${after}`)
+                              }
+                              if (laborChanges.length > 0) {
+                                logActivity(`Edited job line: ${laborChanges.join('; ')}`)
+                              }
+                              if (deletedCount > 0) {
+                                logActivity(`Auto-removed ${deletedCount} rough part${deletedCount > 1 ? 's' : ''} no longer needed for the edited job`)
+                              }
+                              if (createdCount > 0) {
+                                logActivity(`Auto-created ${createdCount} rough part suggestion${createdCount > 1 ? 's' : ''} for the edited job`)
+                              }
                             }
 
                             // Toast the unsafe obsolete parts the writer must
