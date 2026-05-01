@@ -121,7 +121,6 @@ export async function POST(req: Request) {
     description:     description.trim(),
     category:        category || 'Other',
     on_hand:         parseInt(on_hand) || 0,
-    reserved_qty:    0,
     reorder_point:   parseInt(reorder_point) || 2,
     cost_price:      parseFloat(cost_price) || 0,
     sell_price:      parseFloat(sell_price) || 0,

@@ -290,8 +290,8 @@ export default function PartDetailPage() {
                 <Field t={t} label="In Stock" value={editing ? undefined : fmtQty(onHand)} valueColor={onHand > 0 ? 'var(--tz-accent)' : 'var(--tz-textTertiary)'}>
                   {editing && <input {...qtyInputProps} value={form.on_hand ?? 0} onChange={e => setForm({ ...form, on_hand: parseQtyInput(e.target.value) ?? 0 })} style={inputStyle(t)} />}
                 </Field>
-                <Field t={t} label="Allocated" value={editing ? undefined : fmtQty(part.allocated ?? part.reserved_qty ?? 0)}>
-                  {editing && <input {...qtyInputProps} value={form.allocated ?? form.reserved_qty ?? 0} onChange={e => setForm({ ...form, allocated: parseQtyInput(e.target.value) ?? 0 })} style={inputStyle(t)} />}
+                <Field t={t} label="Allocated" value={editing ? undefined : fmtQty(part.allocated ?? 0)}>
+                  {editing && <input {...qtyInputProps} value={form.allocated ?? 0} onChange={e => setForm({ ...form, allocated: parseQtyInput(e.target.value) ?? 0 })} style={inputStyle(t)} />}
                 </Field>
                 <Field t={t} label="In Transit" value={editing ? undefined : fmtQty(part.in_transit)}>
                   {editing && <input {...qtyInputProps} value={form.in_transit ?? ''} onChange={e => setForm({ ...form, in_transit: parseQtyInput(e.target.value) })} style={inputStyle(t)} />}
