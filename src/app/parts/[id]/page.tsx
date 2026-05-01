@@ -86,7 +86,21 @@ export default function PartDetailPage() {
   const canEdit = ['owner', 'gm', 'it_person', 'shop_manager', 'parts_manager', 'office_admin'].includes(user?.role)
 
   const fmt = (n: number | null | undefined) => n != null ? '$' + Number(n).toFixed(2) : '--'
-  const fmtQty = (n: number | null | undefined) => n != null ? Number(n).toFixed(2) : '--'
+  const isTrackedEach = (part?.uom ?? 'each') === 'each' && part?.track_quantity !== false
+  const fmtQty = (n: number | null | undefined) => {
+    if (n == null) return '--'
+    const num = Number(n)
+    return isTrackedEach ? String(Math.round(num)) : num.toFixed(2)
+  }
+  const parseQtyInput = (v: string) => {
+    if (v === '' || v == null) return null
+    const num = Number(v)
+    if (!Number.isFinite(num)) return null
+    return isTrackedEach ? Math.round(num) : num
+  }
+  const qtyInputProps = isTrackedEach
+    ? { type: 'number' as const, step: 1, inputMode: 'numeric' as const }
+    : { type: 'number' as const, step: '0.01' }
   const fmtPct = (n: number | null | undefined) => n != null ? Number(n).toFixed(2) + '%' : '--'
 
   function getStatus() { return part?.status || 'active' }
@@ -274,19 +288,19 @@ export default function PartDetailPage() {
               <div style={sectionTitle(t)}>Inventory</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <Field t={t} label="In Stock" value={editing ? undefined : fmtQty(onHand)} valueColor={onHand > 0 ? 'var(--tz-accent)' : 'var(--tz-textTertiary)'}>
-                  {editing && <input type="number" step="0.01" value={form.on_hand ?? 0} onChange={e => setForm({ ...form, on_hand: parseFloat(e.target.value) || 0 })} style={inputStyle(t)} />}
+                  {editing && <input {...qtyInputProps} value={form.on_hand ?? 0} onChange={e => setForm({ ...form, on_hand: parseQtyInput(e.target.value) ?? 0 })} style={inputStyle(t)} />}
                 </Field>
                 <Field t={t} label="Allocated" value={editing ? undefined : fmtQty(part.allocated ?? part.reserved_qty ?? 0)}>
-                  {editing && <input type="number" step="0.01" value={form.allocated ?? form.reserved_qty ?? 0} onChange={e => setForm({ ...form, allocated: parseFloat(e.target.value) || 0 })} style={inputStyle(t)} />}
+                  {editing && <input {...qtyInputProps} value={form.allocated ?? form.reserved_qty ?? 0} onChange={e => setForm({ ...form, allocated: parseQtyInput(e.target.value) ?? 0 })} style={inputStyle(t)} />}
                 </Field>
                 <Field t={t} label="In Transit" value={editing ? undefined : fmtQty(part.in_transit)}>
-                  {editing && <input type="number" step="0.01" value={form.in_transit ?? ''} onChange={e => setForm({ ...form, in_transit: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle(t)} />}
+                  {editing && <input {...qtyInputProps} value={form.in_transit ?? ''} onChange={e => setForm({ ...form, in_transit: parseQtyInput(e.target.value) })} style={inputStyle(t)} />}
                 </Field>
                 <Field t={t} label="Min Qty" value={editing ? undefined : fmtQty(part.min_qty)}>
-                  {editing && <input type="number" step="0.01" value={form.min_qty ?? ''} onChange={e => setForm({ ...form, min_qty: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle(t)} />}
+                  {editing && <input {...qtyInputProps} value={form.min_qty ?? ''} onChange={e => setForm({ ...form, min_qty: parseQtyInput(e.target.value) })} style={inputStyle(t)} />}
                 </Field>
                 <Field t={t} label="Max Qty" value={editing ? undefined : fmtQty(part.max_qty)}>
-                  {editing && <input type="number" step="0.01" value={form.max_qty ?? ''} onChange={e => setForm({ ...form, max_qty: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle(t)} />}
+                  {editing && <input {...qtyInputProps} value={form.max_qty ?? ''} onChange={e => setForm({ ...form, max_qty: parseQtyInput(e.target.value) })} style={inputStyle(t)} />}
                 </Field>
                 <Field t={t} label="Default Location" value={editing ? undefined : (part.default_location || part.bin_location || '--')}>
                   {editing && <input value={form.default_location || form.bin_location || ''} onChange={e => setForm({ ...form, default_location: e.target.value })} style={inputStyle(t)} />}

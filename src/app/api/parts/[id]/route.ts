@@ -58,6 +58,19 @@ export async function PATCH(req: Request, { params }: P) {
 
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
 
+  // Tracked-each integer truth: coerce quantity fields to whole numbers when the
+  // effective UOM is "each" and quantity tracking is on. Money/balance fields stay decimal.
+  const effectiveUom = (update.uom ?? current.uom ?? 'each')
+  const effectiveTrack = (update.track_quantity ?? current.track_quantity) !== false
+  if (effectiveUom === 'each' && effectiveTrack) {
+    for (const qf of ['on_hand', 'reserved', 'allocated', 'in_transit', 'min_qty', 'max_qty'] as const) {
+      if (update[qf] !== undefined && update[qf] !== null) {
+        const n = Number(update[qf])
+        if (Number.isFinite(n)) update[qf] = Math.round(n)
+      }
+    }
+  }
+
   const { data, error } = await s.from('parts').update(update).eq('id', id).eq('shop_id', shopId).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

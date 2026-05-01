@@ -552,7 +552,10 @@ async function importParts(supabase: any, shopId: string, rows: RawPart[], optio
           // Update existing
           const existingId = pnMap.get(pn.toLowerCase())!
           const updates: any = {}
-          if (row.quantity != null) updates.on_hand = row.quantity
+          if (row.quantity != null) {
+            const q = Number(row.quantity)
+            updates.on_hand = Number.isFinite(q) ? Math.max(0, Math.round(q)) : 0
+          }
           if (row.unit_cost != null) updates.cost_price = row.unit_cost
           if (row.sell_price != null) updates.sell_price = row.sell_price
           if (row.vendor) updates.vendor = row.vendor
@@ -571,13 +574,18 @@ async function importParts(supabase: any, shopId: string, rows: RawPart[], optio
           continue
         }
 
+        const importedQty = (() => {
+          if (row.quantity == null) return 0
+          const q = Number(row.quantity)
+          return Number.isFinite(q) ? Math.max(0, Math.round(q)) : 0
+        })()
         const { error } = await supabase.from('parts').insert({
           shop_id: shopId,
           source: 'csv_import',
           part_number: pn || null,
           description: row.description || pn,
           category: row.category || 'other',
-          on_hand: row.quantity || 0,
+          on_hand: importedQty,
           reorder_point: row.min_stock || 2,
           cost_price: row.unit_cost || 0,
           sell_price: row.sell_price || 0,

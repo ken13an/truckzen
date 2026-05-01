@@ -272,7 +272,7 @@ export default function PartsPage() {
       const payload = {
         lines: receiveLines.map((l: any) => ({
           id: l.id,
-          quantity_received: Number(l.input_received) || 0,
+          quantity_received: Math.max(0, Math.round(Number(l.input_received) || 0)),
         })),
       }
       const res = await fetch(`/api/purchase-orders/${receivePo.id}`, {
@@ -337,7 +337,13 @@ export default function PartsPage() {
   }
 
   const fmt = (n: number | null | undefined) => n != null ? '$' + Number(n).toFixed(2) : '--'
-  const fmtQty = (n: number | null | undefined) => n != null ? Number(n).toFixed(2) : '--'
+  const isPartTrackedEach = (p: any) => (p?.uom ?? 'each') === 'each' && p?.track_quantity !== false
+  const fmtQty = (n: number | null | undefined, p?: any) => {
+    if (n == null) return '--'
+    const num = Number(n)
+    const trackedEach = p ? isPartTrackedEach(p) : true
+    return trackedEach ? String(Math.round(num)) : num.toFixed(2)
+  }
 
   function getPartCategory(p: any) { return p.part_category || p.category || '--' }
   function getVendor(p: any) { return p.preferred_vendor || p.vendor || '--' }
@@ -589,17 +595,17 @@ export default function PartsPage() {
                           <td style={{ padding: '10px 10px', fontSize: 11, color: 'var(--tz-textSecondary)' }}>{p.uom || '--'}</td>
                           <td style={{ padding: '10px 10px', textAlign: 'right' }}>
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                              <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: onHand > 0 ? 'var(--tz-text)' : 'var(--tz-textTertiary)' }}>{fmtQty(onHand)}</span>
+                              <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 700, color: onHand > 0 ? 'var(--tz-text)' : 'var(--tz-textTertiary)' }}>{fmtQty(onHand, p)}</span>
                               <span style={{ padding: '1px 6px', borderRadius: 100, fontSize: 9, fontWeight: 700, background: stockStatus.bg, color: stockStatus.color, whiteSpace: 'nowrap' }}>{stockStatus.label}</span>
                             </span>
                           </td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-textSecondary)' }}>{fmtQty(getAllocated(p))}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-textSecondary)' }}>{fmtQty(getAllocated(p), p)}</td>
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-textSecondary)' }}>{canViewCostPrice ? fmt(getAvgCost(p)) : '***'}</td>
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-text)', fontWeight: 600 }}>{fmt(getPriceUgl(p))}</td>
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-text)', fontWeight: 600 }}>{fmt(getPriceOwnerOp(p))}</td>
                           <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-text)', fontWeight: 600 }}>{fmt(getPriceOutside(p))}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-textSecondary)' }}>{fmtQty(p.min_qty)}</td>
-                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-textSecondary)' }}>{fmtQty(p.max_qty)}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-textSecondary)' }}>{fmtQty(p.min_qty, p)}</td>
+                          <td style={{ padding: '10px 10px', fontFamily: MONO, fontSize: 11, textAlign: 'right', color: 'var(--tz-textSecondary)' }}>{fmtQty(p.max_qty, p)}</td>
                           <td style={{ padding: '10px 10px', fontSize: 11, color: 'var(--tz-textSecondary)' }}>{getLocation(p)}</td>
                           <td style={{ padding: '10px 10px', fontSize: 11, color: 'var(--tz-textSecondary)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{canViewVendorInfo ? getVendor(p) : '***'}</td>
                           <td style={{ padding: '10px 10px', fontSize: 11, color: 'var(--tz-textSecondary)' }}>{getPartCategory(p)}</td>
@@ -882,9 +888,13 @@ export default function PartsPage() {
                             type="number"
                             min={0}
                             step={1}
-                            inputMode="decimal"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             value={l.input_received}
-                            onChange={e => setReceiveLines(prev => prev.map((p, i) => i === idx ? { ...p, input_received: e.target.value } : p))}
+                            onChange={e => {
+                              const cleaned = e.target.value.replace(/[^0-9]/g, '')
+                              setReceiveLines(prev => prev.map((p, i) => i === idx ? { ...p, input_received: cleaned } : p))
+                            }}
                             style={{ width: 90, padding: '4px 8px', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 6, background: 'var(--tz-inputBg)', color: 'var(--tz-text)', fontSize: 12, textAlign: 'right', fontFamily: MONO }}
                           />
                         </td>
