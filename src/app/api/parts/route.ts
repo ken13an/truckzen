@@ -51,6 +51,7 @@ export async function GET(req: Request) {
       'manufacturer, part_category, item_type, status, search_tags, track_quantity, count_group, cogs_account, ' +
       'fee_discount, shop_supply_amount, website_link, upc, notes, cross_references, source, ' +
       'category, cost_price, sell_price, vendor, bin_location, reorder_point, reserved, core_charge, warranty_months, ' +
+      'fullbay_shop_title, fullbay_location_raw, ' +
       'created_at, updated_at',
       { count: 'exact' }
     )
