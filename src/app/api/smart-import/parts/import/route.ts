@@ -61,6 +61,7 @@ export async function POST(req: Request) {
       } else {
         const { data: newPart } = await s.from('parts').insert({
           shop_id,
+          source: 'csv_import',
           part_number: row.part_number?.trim() || null,
           description: row.description.trim(),
           category: row.category || 'Other',

@@ -115,6 +115,7 @@ export async function POST(req: Request) {
 
   const { data, error } = await db().from('parts').insert({
     shop_id: shopId,
+    source:          'truckzen',
     part_number:     part_number?.trim() || null,
     description:     description.trim(),
     category:        category || 'Other',

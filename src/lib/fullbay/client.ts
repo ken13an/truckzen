@@ -186,6 +186,7 @@ export function mapServiceOrder(inv: any): Record<string, any> {
 
 export function mapPart(p: any): Record<string, any> {
   return {
+    source: 'fullbay',
     part_number: p.shopPartNumber || p.vendorPartNumber || null,
     description: p.description || '',
     cost_price: parseFloat(p.cost) || 0,

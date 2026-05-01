@@ -134,7 +134,7 @@ export async function POST(req: Request) {
           return
         }
       }
-      await s.from('parts').insert({ shop_id: shopId, part_number: row.part_number?.trim() || null, description: row.description.trim(), category: row.category || null, cost_price: costPrice, sell_price: sellPrice, on_hand: onHand, reorder_point: reorderPoint, vendor: row.vendor || null, bin_location: row.bin_location || null, import_batch_id: batchId || null })
+      await s.from('parts').insert({ shop_id: shopId, source: 'csv_import', part_number: row.part_number?.trim() || null, description: row.description.trim(), category: row.category || null, cost_price: costPrice, sell_price: sellPrice, on_hand: onHand, reorder_point: reorderPoint, vendor: row.vendor || null, bin_location: row.bin_location || null, import_batch_id: batchId || null })
       imported++
     })
   } else {

@@ -309,6 +309,7 @@ async function importParts(supabase: any, shopId: string, rows: any[], result: a
 
     const { error } = await supabase.from('parts').insert({
       shop_id: shopId,
+      source: 'fullbay',
       part_number: pn,
       description: col(row, 'Description', 'description', 'Name', 'Part Name') || pn,
       category: mapCategory(col(row, 'Category', 'category')),

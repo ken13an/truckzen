@@ -573,6 +573,7 @@ async function importParts(supabase: any, shopId: string, rows: RawPart[], optio
 
         const { error } = await supabase.from('parts').insert({
           shop_id: shopId,
+          source: 'csv_import',
           part_number: pn || null,
           description: row.description || pn,
           category: row.category || 'other',

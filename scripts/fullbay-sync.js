@@ -206,6 +206,7 @@ async function syncParts(invoices) {
         for (const p of corr.Parts || []) {
           const pn = p.shopPartNumber || p.vendorPartNumber
           if (pn && !seen.has(pn)) seen.set(pn, {
+            source: 'fullbay',
             part_number: pn, description: p.description || '',
             cost_price: parseFloat(p.cost) || 0, sell_price: parseFloat(p.sellingPrice) || 0, on_hand: 0,
           })
