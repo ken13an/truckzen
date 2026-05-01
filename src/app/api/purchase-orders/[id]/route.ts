@@ -75,13 +75,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // Delegate the entire receive operation to the live Postgres RPC. The RPC
   // performs PO + line + parts FOR UPDATE locks, validates ownership and
   // over-receive, applies line truth, moves stock truth via on_hand delta
-  // (clamped at 0), recomputes PO header truth, and returns the same
-  // top-level response shape this route returned previously.
+  // (clamped at 0), writes a stock_movements ledger row per applied delta,
+  // recomputes PO header truth, and returns the same top-level response
+  // shape this route returned previously.
   const s = createAdminSupabaseClient()
   const { data, error } = await s.rpc('po_receive_apply', {
-    p_po_id:   poId,
-    p_shop_id: shopId,
-    p_updates: updates,
+    p_po_id:         poId,
+    p_shop_id:       shopId,
+    p_updates:       updates,
+    p_actor_user_id: actor.id,
   })
 
   if (error) {
