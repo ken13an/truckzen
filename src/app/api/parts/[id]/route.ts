@@ -128,6 +128,27 @@ export async function PATCH(req: Request, { params }: P) {
     }
   }
 
+  for (const f of ['min_qty', 'max_qty'] as const) {
+    if (update[f] !== undefined) {
+      const oldStr = String(current[f] ?? '')
+      const newStr = String(data[f] ?? '')
+      if (oldStr !== newStr) {
+        const { error: histError } = await s.from('part_field_history').insert({
+          part_id: id,
+          field_name: f,
+          old_value: oldStr,
+          new_value: newStr,
+          changed_by: user.id,
+          source: 'manual_adjust',
+          notes: null,
+        })
+        if (histError) {
+          return NextResponse.json({ error: `Field history write failed (${f}): ${histError.message}` }, { status: 500 })
+        }
+      }
+    }
+  }
+
   return NextResponse.json(data)
 }
 
