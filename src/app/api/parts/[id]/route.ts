@@ -78,6 +78,35 @@ export async function PATCH(req: Request, { params }: P) {
   if (update.on_hand !== undefined && update.on_hand !== current.on_hand) {
     await log('parts.quantity_changed', shopId, user.id, { table:'parts', recordId:id, oldData:{ on_hand: current.on_hand }, newData:{ on_hand: update.on_hand } })
   }
+
+  if (
+    update.on_hand !== undefined &&
+    Number(data.on_hand) !== Number(current.on_hand) &&
+    effectiveUom === 'each' &&
+    effectiveTrack !== false
+  ) {
+    const before_qty = Math.round(Number(current.on_hand) || 0)
+    const after_qty = Math.round(Number(data.on_hand) || 0)
+    const qty_delta = after_qty - before_qty
+    if (qty_delta !== 0) {
+      const { error: ledgerError } = await s.from('stock_movements').insert({
+        shop_id: shopId,
+        part_id: id,
+        movement_type: 'manual_adjust',
+        qty_delta,
+        before_qty,
+        after_qty,
+        source_table: 'parts',
+        source_id: id,
+        actor_user_id: user.id,
+        notes: null,
+      })
+      if (ledgerError) {
+        return NextResponse.json({ error: `Ledger write failed: ${ledgerError.message}` }, { status: 500 })
+      }
+    }
+  }
+
   return NextResponse.json(data)
 }
 
