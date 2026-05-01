@@ -73,9 +73,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     updates.push({ id: l.id, quantity_received: qr })
   }
 
-  const dbUrl = process.env.DATABASE_URL
+  // Production uses DATABASE_URL_POOLER (Supabase session-mode pooler).
+  // Local dev / scripts may use DATABASE_URL — fall back to it.
+  const dbUrl = process.env.DATABASE_URL_POOLER || process.env.DATABASE_URL
   if (!dbUrl) {
-    logErr('database_url_missing', { purchase_order_id: poId, shop_id: shopId })
+    logErr('db_connection_string_missing', {
+      purchase_order_id: poId,
+      shop_id: shopId,
+      checked_envs: 'DATABASE_URL_POOLER, DATABASE_URL',
+    })
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
   }
 
