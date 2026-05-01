@@ -23,3 +23,9 @@ next-env.d.ts
 # local data archives (migration/recovery/backup artifacts; never deploy)
 backups/
 mapping/
+
+# supabase cli local cache
+supabase/.temp/
+
+# local audit artifact (untracked report at repo root)
+TRUCKZEN_FULL_PLATFORM_SECURITY_DEADCODE_AUDIT_REPORT.md
