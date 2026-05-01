@@ -881,7 +881,8 @@ export default function PartsPage() {
                           <input
                             type="number"
                             min={0}
-                            step="0.01"
+                            step={1}
+                            inputMode="decimal"
                             value={l.input_received}
                             onChange={e => setReceiveLines(prev => prev.map((p, i) => i === idx ? { ...p, input_received: e.target.value } : p))}
                             style={{ width: 90, padding: '4px 8px', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 6, background: 'var(--tz-inputBg)', color: 'var(--tz-text)', fontSize: 12, textAlign: 'right', fontFamily: MONO }}
