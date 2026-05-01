@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { Client } from 'pg'
 import { createAdminSupabaseClient, getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 
 type LineUpdate = { id: string; quantity_received: number }
@@ -73,140 +72,116 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     updates.push({ id: l.id, quantity_received: qr })
   }
 
-  // Production uses DATABASE_URL_POOLER (Supabase session-mode pooler).
-  // Local dev / scripts may use DATABASE_URL — fall back to it.
-  const dbUrl = process.env.DATABASE_URL_POOLER || process.env.DATABASE_URL
-  if (!dbUrl) {
-    logErr('db_connection_string_missing', {
-      purchase_order_id: poId,
-      shop_id: shopId,
-      checked_envs: 'DATABASE_URL_POOLER, DATABASE_URL',
-    })
-    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
+  // Use the canonical supabase admin client (same path every other production
+  // route uses). Atomicity: the bulk line upsert is one SQL statement, and the
+  // header recompute is a second one — line-level updates remain all-or-nothing,
+  // and the header is reconciled from the just-written full line state.
+  const s = createAdminSupabaseClient()
+
+  // 1. PO lookup + shop scope
+  const { data: po, error: poErr } = await s
+    .from('purchase_orders')
+    .select('id, status, received_date')
+    .eq('id', poId)
+    .eq('shop_id', shopId)
+    .maybeSingle()
+  if (poErr) {
+    logErr('po_lookup_failed', { purchase_order_id: poId, shop_id: shopId, db_error: poErr.message })
+    return NextResponse.json({ error: poErr.message }, { status: 500 })
+  }
+  if (!po) return jsonError('Not found', 404)
+
+  // 2. Read every line on this PO for ownership + over-receive validation
+  const { data: existingLines, error: linesErr } = await s
+    .from('purchase_order_lines')
+    .select('id, purchase_order_id, quantity, quantity_received, received_at')
+    .eq('purchase_order_id', poId)
+  if (linesErr) {
+    logErr('po_lines_lookup_failed', { purchase_order_id: poId, shop_id: shopId, db_error: linesErr.message })
+    return NextResponse.json({ error: linesErr.message }, { status: 500 })
   }
 
-  // Atomic receive: PO lookup + line lock + bulk line update + header recompute
-  // all run inside one Postgres transaction. Any failure rolls back every line
-  // change so PO header truth and line truth stay consistent.
-  const client = new Client({
-    connectionString: dbUrl,
-    ssl: { rejectUnauthorized: false },
+  const lineMap = new Map((existingLines || []).map(l => [l.id, l]))
+
+  // 3. Validate each update line against the just-read snapshot
+  for (const u of updates) {
+    const existing = lineMap.get(u.id)
+    if (!existing) {
+      logErr('line_validation_failed', { purchase_order_id: poId, shop_id: shopId, line_id: u.id, reason: 'not_in_po' })
+      return jsonError('Line does not belong to this PO', 400)
+    }
+    const ordered = existing.quantity == null ? null : Number(existing.quantity)
+    if (ordered != null && u.quantity_received > ordered) {
+      logErr('line_validation_failed', { purchase_order_id: poId, shop_id: shopId, line_id: u.id, reason: 'over_receipt', ordered, requested: u.quantity_received })
+      return jsonError('quantity_received exceeds ordered quantity', 400)
+    }
+  }
+
+  // 4. Build upsert rows. received_at flips to now on the first non-zero qr
+  //    and clears when qr is zeroed; otherwise it is preserved.
+  const nowIso = new Date().toISOString()
+  const upsertRows = updates.map(u => {
+    const existing = lineMap.get(u.id)!
+    const prevQr = existing.quantity_received == null ? 0 : Number(existing.quantity_received)
+    const setReceivedAt = u.quantity_received > 0 && prevQr === 0
+    const clearReceivedAt = u.quantity_received === 0 && prevQr > 0
+    return {
+      id: u.id,
+      purchase_order_id: poId,
+      quantity_received: u.quantity_received,
+      received_at: setReceivedAt ? nowIso : (clearReceivedAt ? null : existing.received_at),
+    }
   })
 
-  try {
-    await client.connect()
-  } catch (connErr: any) {
-    logErr('db_connect_failed', { purchase_order_id: poId, shop_id: shopId, db_error: String(connErr?.message || connErr) })
-    return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
+  // 5. Apply all line updates in a single atomic statement
+  const { error: upErr } = await s
+    .from('purchase_order_lines')
+    .upsert(upsertRows, { onConflict: 'id' })
+  if (upErr) {
+    logErr('bulk_line_update_failed', { purchase_order_id: poId, shop_id: shopId, db_error: upErr.message })
+    return NextResponse.json({ error: upErr.message }, { status: 500 })
   }
 
-  try {
-    await client.query('BEGIN')
-
-    // 1. lock the PO row + verify shop scope
-    const poRes = await client.query(
-      `SELECT id, status, received_date
-         FROM public.purchase_orders
-        WHERE id = $1 AND shop_id = $2
-        FOR UPDATE`,
-      [poId, shopId]
-    )
-    if (poRes.rowCount === 0) {
-      await client.query('ROLLBACK')
-      return jsonError('Not found', 404)
-    }
-
-    // 2. lock + read every line on this PO under the same transaction
-    const linesRes = await client.query<{ id: string; quantity: string | null; quantity_received: string | null }>(
-      `SELECT id, quantity, quantity_received
-         FROM public.purchase_order_lines
-        WHERE purchase_order_id = $1
-        FOR UPDATE`,
-      [poId]
-    )
-    const lineMap = new Map(linesRes.rows.map(l => [l.id, l]))
-
-    // 3. validate each update line against the just-locked snapshot
-    for (const u of updates) {
-      const existing = lineMap.get(u.id)
-      if (!existing) {
-        logErr('line_validation_failed', { purchase_order_id: poId, shop_id: shopId, line_id: u.id, reason: 'not_in_po' })
-        await client.query('ROLLBACK')
-        return jsonError('Line does not belong to this PO', 400)
-      }
-      const ordered = existing.quantity == null ? null : Number(existing.quantity)
-      if (ordered != null && u.quantity_received > ordered) {
-        logErr('line_validation_failed', { purchase_order_id: poId, shop_id: shopId, line_id: u.id, reason: 'over_receipt', ordered, requested: u.quantity_received })
-        await client.query('ROLLBACK')
-        return jsonError('quantity_received exceeds ordered quantity', 400)
-      }
-    }
-
-    // 4. apply ALL line updates in a single bulk UPDATE FROM VALUES.
-    //    received_at flips to now() on the first non-zero qr and back to NULL
-    //    when qr is zeroed; otherwise it is preserved.
-    const params: unknown[] = []
-    const valuesSql = updates.map((u, i) => {
-      params.push(u.id, u.quantity_received)
-      return `($${i * 2 + 1}::uuid, $${i * 2 + 2}::numeric)`
-    }).join(',')
-    params.push(poId)
-    const lineUpdateSql = `
-      UPDATE public.purchase_order_lines p
-         SET quantity_received = u.qr,
-             received_at = CASE
-               WHEN u.qr > 0 AND COALESCE(p.quantity_received, 0) = 0 THEN now()
-               WHEN u.qr = 0 AND COALESCE(p.quantity_received, 0) > 0 THEN NULL
-               ELSE p.received_at
-             END
-        FROM (VALUES ${valuesSql}) AS u(id, qr)
-       WHERE p.id = u.id
-         AND p.purchase_order_id = $${updates.length * 2 + 1}::uuid
-    `
-    await client.query(lineUpdateSql, params)
-
-    // 5. recompute PO header truth from the just-updated full line state.
-    //    Status flips:
-    //      all lines fully received -> 'received' (set received_date if absent)
-    //      any line received        -> 'partially_received'
-    //      otherwise                -> preserve current status
-    await client.query(
-      `WITH ls AS (
-         SELECT
-           COUNT(*)                                                     AS line_count,
-           COUNT(*) FILTER (WHERE quantity_received >= COALESCE(quantity, 0)) AS fully_count,
-           COALESCE(SUM(quantity_received), 0)                          AS total_qr
-           FROM public.purchase_order_lines
-          WHERE purchase_order_id = $1
-       )
-       UPDATE public.purchase_orders po
-          SET status = CASE
-                WHEN ls.line_count > 0 AND ls.fully_count = ls.line_count THEN 'received'
-                WHEN ls.total_qr > 0                                       THEN 'partially_received'
-                ELSE po.status
-              END,
-              received_date = CASE
-                WHEN ls.line_count > 0 AND ls.fully_count = ls.line_count
-                  THEN COALESCE(po.received_date, CURRENT_DATE)
-                ELSE po.received_date
-              END,
-              updated_at = now()
-         FROM ls
-        WHERE po.id = $1 AND po.shop_id = $2`,
-      [poId, shopId]
-    )
-
-    await client.query('COMMIT')
-  } catch (err: any) {
-    try { await client.query('ROLLBACK') } catch {}
-    logErr('atomic_receive_failed', { purchase_order_id: poId, shop_id: shopId, db_error: String(err?.message || err) })
-    return NextResponse.json({ error: err?.message || 'Receive failed' }, { status: 500 })
-  } finally {
-    try { await client.end() } catch {}
+  // 6. Re-read full line state to recompute header truth
+  const { data: freshLines, error: freshErr } = await s
+    .from('purchase_order_lines')
+    .select('id, quantity, quantity_received')
+    .eq('purchase_order_id', poId)
+  if (freshErr) {
+    logErr('po_lines_refresh_failed', { purchase_order_id: poId, shop_id: shopId, db_error: freshErr.message })
+    return NextResponse.json({ error: freshErr.message }, { status: 500 })
   }
 
-  // 6. read final state for the response (separate transaction; safe — no writes)
-  const s = createAdminSupabaseClient()
+  // 7. Recompute PO header status from the just-written full line state
+  const lineCount = (freshLines || []).length
+  let totalReceived = 0
+  let allFullyReceived = lineCount > 0
+  for (const l of freshLines || []) {
+    const qr = l.quantity_received == null ? 0 : Number(l.quantity_received)
+    const q = l.quantity == null ? 0 : Number(l.quantity)
+    totalReceived += qr
+    if (qr < q) allFullyReceived = false
+  }
+
+  const headerPatch: Record<string, unknown> = { updated_at: nowIso }
+  if (allFullyReceived && lineCount > 0) {
+    headerPatch.status = 'received'
+    if (!po.received_date) headerPatch.received_date = nowIso.slice(0, 10)
+  } else if (totalReceived > 0) {
+    headerPatch.status = 'partially_received'
+  }
+
+  const { error: hdrErr } = await s
+    .from('purchase_orders')
+    .update(headerPatch)
+    .eq('id', poId)
+    .eq('shop_id', shopId)
+  if (hdrErr) {
+    logErr('header_update_failed', { purchase_order_id: poId, shop_id: shopId, db_error: hdrErr.message })
+    return NextResponse.json({ error: hdrErr.message }, { status: 500 })
+  }
+
+  // 8. Read final state for the response
   const { data: refreshedPo } = await s
     .from('purchase_orders')
     .select('id, po_number, vendor_name, status, total, received_date, expected_date, source, fullbay_id, created_at')
