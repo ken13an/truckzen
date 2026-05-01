@@ -74,6 +74,11 @@ export default function PartsPage() {
   const [poTotal, setPoTotal] = useState(0)
   const [poPage, setPoPage] = useState(1)
   const [poLoading, setPoLoading] = useState(false)
+  const [receivePo, setReceivePo] = useState<any>(null)
+  const [receiveLines, setReceiveLines] = useState<any[]>([])
+  const [receiveLoading, setReceiveLoading] = useState(false)
+  const [receiveSaving, setReceiveSaving] = useState(false)
+  const [receiveErr, setReceiveErr] = useState<string | null>(null)
 
   // Sorting
   const [sortField, setSortField] = useState<SortField>('part_number')
@@ -228,6 +233,70 @@ export default function PartsPage() {
   }, [user, poPage])
 
   useEffect(() => { if (subTab === 'purchase_orders') fetchPOs() }, [fetchPOs, subTab])
+
+  // Open receiving panel for a PO: fetch canonical PO + lines
+  async function openReceive(poId: string) {
+    setReceiveErr(null)
+    setReceiveLoading(true)
+    setReceivePo({ id: poId })
+    try {
+      const res = await fetch(`/api/purchase-orders/${poId}`)
+      const json = await res.json()
+      if (!res.ok) {
+        setReceiveErr(json?.error || 'Failed to load PO')
+        setReceiveLines([])
+      } else {
+        setReceivePo(json)
+        setReceiveLines((json.lines || []).map((l: any) => ({
+          ...l,
+          input_received: l.quantity_received != null ? String(l.quantity_received) : '0',
+        })))
+      }
+    } catch (e: any) {
+      setReceiveErr(e?.message || 'Failed to load PO')
+    }
+    setReceiveLoading(false)
+  }
+
+  function closeReceive() {
+    setReceivePo(null)
+    setReceiveLines([])
+    setReceiveErr(null)
+  }
+
+  async function saveReceive() {
+    if (!receivePo?.id) return
+    setReceiveErr(null)
+    setReceiveSaving(true)
+    try {
+      const payload = {
+        lines: receiveLines.map((l: any) => ({
+          id: l.id,
+          quantity_received: Number(l.input_received) || 0,
+        })),
+      }
+      const res = await fetch(`/api/purchase-orders/${receivePo.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setReceiveErr(json?.error || 'Save failed')
+      } else {
+        setReceivePo(json)
+        setReceiveLines((json.lines || []).map((l: any) => ({
+          ...l,
+          input_received: l.quantity_received != null ? String(l.quantity_received) : '0',
+        })))
+        // refresh list so header status/received_date reflect truth
+        fetchPOs()
+      }
+    } catch (e: any) {
+      setReceiveErr(e?.message || 'Save failed')
+    }
+    setReceiveSaving(false)
+  }
 
   // Filter by stock level, then sort client-side
   const sorted = useMemo(() => {
@@ -750,7 +819,8 @@ export default function PartsPage() {
                   </thead>
                   <tbody>
                     {poData.map((po: any) => (
-                      <tr key={po.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}
+                      <tr key={po.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, cursor: 'pointer' }}
+                        onClick={() => openReceive(po.id)}
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--tz-bgHover)')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}>
                         <td style={{ padding: '10px 12px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: 'var(--tz-accent)' }}>{po.po_number || '-'}</td>
@@ -772,6 +842,72 @@ export default function PartsPage() {
           </div>
           <Pagination currentPage={poPage} totalPg={Math.ceil(poTotal / 25) || 1} totalCount={poTotal} onPrev={() => setPoPage(p => p - 1)} onNext={() => setPoPage(p => p + 1)} />
         </>
+      )}
+
+      {/* ==================== RECEIVE PO MODAL ==================== */}
+      {receivePo && (
+        <div onClick={closeReceive} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, width: '100%', maxWidth: 720, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: 16, borderBottom: `1px solid ${'var(--tz-border)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Receive {receivePo.po_number || 'PO'}</div>
+                <div style={{ fontSize: 11, color: 'var(--tz-textSecondary)', marginTop: 2 }}>
+                  {receivePo.vendor_name || ''} {receivePo.status ? `· ${receivePo.status}` : ''}
+                </div>
+              </div>
+              <button onClick={closeReceive} style={{ padding: '6px 12px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'transparent', color: 'var(--tz-textSecondary)', cursor: 'pointer', fontSize: 12 }}>Close</button>
+            </div>
+            <div style={{ padding: 16, overflowY: 'auto' }}>
+              {receiveLoading ? (
+                <div style={{ textAlign: 'center', padding: 32, color: 'var(--tz-textTertiary)' }}>Loading...</div>
+              ) : receiveLines.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 32, color: 'var(--tz-textTertiary)', fontSize: 13 }}>No lines on this PO</div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                      {['Part #', 'Description', 'Ordered', 'Received'].map(h => (
+                        <th key={h} style={{ padding: '8px 10px', textAlign: h === 'Ordered' || h === 'Received' ? 'right' : 'left', fontSize: 10, fontWeight: 600, color: 'var(--tz-textSecondary)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {receiveLines.map((l: any, idx: number) => (
+                      <tr key={l.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                        <td style={{ padding: '8px 10px', fontFamily: MONO, fontSize: 11, color: 'var(--tz-textSecondary)' }}>{l.part_number || '-'}</td>
+                        <td style={{ padding: '8px 10px', fontSize: 12, color: 'var(--tz-text)' }}>{l.description || '-'}</td>
+                        <td style={{ padding: '8px 10px', fontFamily: MONO, fontSize: 12, color: 'var(--tz-text)', textAlign: 'right' }}>{l.quantity ?? 0}</td>
+                        <td style={{ padding: '8px 10px', textAlign: 'right' }}>
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={l.input_received}
+                            onChange={e => setReceiveLines(prev => prev.map((p, i) => i === idx ? { ...p, input_received: e.target.value } : p))}
+                            style={{ width: 90, padding: '4px 8px', border: `1px solid ${'var(--tz-inputBorder)'}`, borderRadius: 6, background: 'var(--tz-inputBg)', color: 'var(--tz-text)', fontSize: 12, textAlign: 'right', fontFamily: MONO }}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {receiveErr && (
+                <div style={{ marginTop: 12, padding: 10, background: 'rgba(239,68,68,.1)', color: 'var(--tz-danger)', borderRadius: 6, fontSize: 12 }}>{receiveErr}</div>
+              )}
+            </div>
+            <div style={{ padding: 16, borderTop: `1px solid ${'var(--tz-border)'}`, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button onClick={closeReceive} disabled={receiveSaving} style={{ padding: '8px 14px', borderRadius: 6, border: `1px solid ${'var(--tz-border)'}`, background: 'transparent', color: 'var(--tz-textSecondary)', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+              <button
+                onClick={saveReceive}
+                disabled={receiveSaving || receiveLoading || receiveLines.length === 0}
+                style={{ padding: '8px 14px', borderRadius: 6, border: 'none', background: 'var(--tz-accent)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: receiveSaving ? 'default' : 'pointer', opacity: receiveSaving || receiveLoading ? 0.6 : 1 }}
+              >
+                {receiveSaving ? 'Saving...' : 'Save Received'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

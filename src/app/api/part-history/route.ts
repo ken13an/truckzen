@@ -24,7 +24,7 @@ export async function GET(req: Request) {
   let q = s
     .from('purchase_order_lines')
     .select(
-      'id, part_number, description, quantity, cost_price, created_at, purchase_orders!inner(id, po_number, vendor_name, received_date, shop_id)',
+      'id, part_number, description, quantity, quantity_received, received_at, cost_price, created_at, purchase_orders!inner(id, po_number, vendor_name, status, received_date, shop_id)',
       { count: 'exact' }
     )
     .eq('purchase_orders.shop_id', shopId)
@@ -44,9 +44,12 @@ export async function GET(req: Request) {
     part_number: line.part_number,
     description: line.description,
     quantity: line.quantity,
+    quantity_received: line.quantity_received,
+    received_at: line.received_at,
     cost_price: line.cost_price,
     date: line.purchase_orders?.received_date || line.created_at,
     po_number: line.purchase_orders?.po_number,
+    po_status: line.purchase_orders?.status,
     vendor: line.purchase_orders?.vendor_name,
   }))
 
