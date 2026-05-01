@@ -63,7 +63,7 @@ export async function PATCH(req: Request, { params }: P) {
   const effectiveUom = (update.uom ?? current.uom ?? 'each')
   const effectiveTrack = (update.track_quantity ?? current.track_quantity) !== false
   if (effectiveUom === 'each' && effectiveTrack) {
-    for (const qf of ['on_hand', 'reserved', 'allocated', 'in_transit', 'min_qty', 'max_qty'] as const) {
+    for (const qf of ['on_hand', 'allocated', 'in_transit', 'min_qty', 'max_qty'] as const) {
       if (update[qf] !== undefined && update[qf] !== null) {
         const n = Number(update[qf])
         if (Number.isFinite(n)) update[qf] = Math.round(n)
@@ -107,7 +107,7 @@ export async function PATCH(req: Request, { params }: P) {
     }
   }
 
-  for (const f of ['allocated', 'in_transit', 'reserved'] as const) {
+  for (const f of ['allocated', 'in_transit'] as const) {
     if (update[f] !== undefined) {
       const oldStr = String(current[f] ?? '')
       const newStr = String(data[f] ?? '')

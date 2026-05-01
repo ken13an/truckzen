@@ -352,7 +352,7 @@ export default function PartsPage() {
   function getPriceOwnerOp(p: any) { return p.price_ugl_owner_operator ?? null }
   function getPriceOutside(p: any) { return p.price_outside ?? p.sell_price ?? null }
   function getOnHand(p: any) { return p.on_hand ?? 0 }
-  function getAllocated(p: any) { return p.allocated ?? p.reserved ?? 0 }
+  function getAllocated(p: any) { return p.allocated ?? 0 }
   function getStockStatus(p: any): { label: string; bg: string; color: string } {
     const onHand = p.on_hand ?? 0
     const inTransit = p.in_transit ?? 0
