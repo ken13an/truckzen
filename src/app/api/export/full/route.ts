@@ -9,6 +9,8 @@ const TABLE_MAP: Record<string, { table: string; fileName: string; select: strin
   so_lines: { table: 'so_lines', fileName: 'job_lines', select: 'id, so_id, line_type, description, finding, resolution, quantity, unit_price, total_price, estimated_hours, actual_hours, line_status, part_number, created_at' },
   customers: { table: 'customers', fileName: 'customers', select: 'id, company_name, contact_name, phone, email, address, city, state, zip, dot_number, mc_number, customer_type, is_owner_operator, source, created_at' },
   assets: { table: 'assets', fileName: 'trucks_units', select: 'id, unit_number, vin, year, make, model, unit_type, status, odometer, license_plate, customer_id, source, created_at' },
+  // `reserved` is intentionally preserved here for external CSV consumer back-compat.
+  // Internal readers were deprecated; column is uniformly 0 across all prod rows.
   parts: { table: 'parts', fileName: 'parts_inventory', select: 'id, part_number, description, category, on_hand, reserved, reorder_point, cost_price, sell_price, vendor, bin_location, source, created_at' },
   invoices: { table: 'invoices', fileName: 'invoices', select: 'id, invoice_number, service_order_id, customer_id, status, subtotal, tax_amount, total, amount_paid, balance_due, payment_method, payment_terms, due_date, sent_at, paid_at, source, created_at' },
   users: { table: 'users', fileName: 'team_members', select: 'id, email, full_name, role, team, language, active, created_at' },

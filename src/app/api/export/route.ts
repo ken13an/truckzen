@@ -58,6 +58,8 @@ export async function GET(req: Request) {
       break
     }
     case 'parts': {
+      // `reserved` is intentionally preserved here for external CSV consumer back-compat.
+      // Internal readers were deprecated; column is uniformly 0 across all prod rows.
       const { data: rows } = await s.from('parts').select('part_number, description, category, on_hand, reserved, reorder_point, cost_price, sell_price, vendor, bin_location, created_at').eq('shop_id', shopId).is('deleted_at', null).order('description')
       data = rows || []
       allCols = ['part_number', 'description', 'category', 'on_hand', 'reserved', 'reorder_point', 'cost_price', 'sell_price', 'vendor', 'bin_location', 'created_at']
