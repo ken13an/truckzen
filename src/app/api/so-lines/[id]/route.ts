@@ -66,6 +66,76 @@ async function _PATCH(req: Request, { params }: P) {
     }
   }
 
+  // Return-unused movement: a single-purpose PATCH shape that drains
+  // picked_up_qty back into inventory atomically via the
+  // so_line_part_return_unused_apply RPC. Mutually exclusive with regular
+  // field updates so the request stays unambiguous. Mechanic restriction
+  // above already blocks mechanics (multi-key body); return is performed
+  // by service writer / parts staff. Resolves part_id by (shop_id,
+  // part_number) — refuses to act on ambiguous resolution rather than
+  // restocking the wrong inventory row.
+  if (body.return_unused_qty !== undefined) {
+    const returnQtyRaw = Number(body.return_unused_qty)
+    if (!Number.isFinite(returnQtyRaw) || returnQtyRaw <= 0 || !Number.isInteger(returnQtyRaw)) {
+      return NextResponse.json({ error: 'return_unused_qty must be a positive integer' }, { status: 400 })
+    }
+    const returnReason = typeof body.reason === 'string' ? body.reason : null
+    const returnExpectedUpdatedAt = typeof body.expected_updated_at === 'string' ? body.expected_updated_at : null
+    if (!returnExpectedUpdatedAt) {
+      return NextResponse.json({ error: 'expected_updated_at is required' }, { status: 400 })
+    }
+    const allowedKeys = new Set(['return_unused_qty', 'reason', 'expected_updated_at'])
+    for (const k of Object.keys(body)) {
+      if (!allowedKeys.has(k)) {
+        return NextResponse.json({ error: `return_unused_qty PATCH cannot be combined with field "${k}"` }, { status: 400 })
+      }
+    }
+    if ((line as any).line_type !== 'part') {
+      return NextResponse.json({ error: 'return_unused_qty only applies to part lines' }, { status: 400 })
+    }
+    if (!lineShopId) {
+      return NextResponse.json({ error: 'Cannot resolve shop for return-unused' }, { status: 400 })
+    }
+    // OCC: confirm the row hasn't moved since the client read it. The RPC
+    // also locks the row FOR UPDATE, so the window between this check and
+    // the RPC call is small but non-zero — acceptable for now.
+    const { data: occLine } = await ctx.admin.from('so_lines')
+      .select('updated_at, part_number')
+      .eq('id', id)
+      .maybeSingle()
+    if (!occLine || occLine.updated_at !== returnExpectedUpdatedAt) {
+      return NextResponse.json({ error: 'Conflict', message: 'This record was updated by someone else. Refresh and try again.' }, { status: 409 })
+    }
+    const partNumber = typeof occLine.part_number === 'string' ? occLine.part_number.trim() : ''
+    if (!partNumber) {
+      return NextResponse.json({ error: 'Cannot return: line has no part_number to resolve against inventory' }, { status: 400 })
+    }
+    const { data: matches } = await ctx.admin.from('parts')
+      .select('id')
+      .eq('shop_id', lineShopId)
+      .eq('part_number', partNumber)
+      .eq('status', 'active')
+      .is('deleted_at', null)
+    if (!matches || matches.length === 0) {
+      return NextResponse.json({ error: `Cannot return: no active inventory part matches "${partNumber}"` }, { status: 400 })
+    }
+    if (matches.length > 1) {
+      return NextResponse.json({ error: `Cannot return: part_number "${partNumber}" matches ${matches.length} inventory rows. Resolve duplicates first.` }, { status: 400 })
+    }
+    const { data: rpcRow, error: rpcErr } = await ctx.admin.rpc('so_line_part_return_unused_apply', {
+      p_so_line_id: id,
+      p_shop_id: lineShopId,
+      p_part_id: matches[0].id,
+      p_qty: returnQtyRaw,
+      p_reason: returnReason,
+      p_actor_user_id: ctx.actor.id,
+    })
+    if (rpcErr) return NextResponse.json({ error: rpcErr.message }, { status: 400 })
+    const recalcSoIdReturn = (rpcRow as any)?.so_id || soId
+    const grandTotalReturn = recalcSoIdReturn ? await recalcTotals(ctx.admin, recalcSoIdReturn) : null
+    return NextResponse.json({ ...(rpcRow as any), updated_grand_total: grandTotalReturn })
+  }
+
   // total_price is a generated column — never write it directly. tire_position
   // was settable at line creation but not editable afterwards; Phase 2B opens
   // it for service-writer roles so generic tire jobs can be qualified before

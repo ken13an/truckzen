@@ -111,6 +111,38 @@ async function _POST(req: Request) {
     console.log('[so-lines] post-approval add-line', { wo: so_id, estimate_approved: so.estimate_approved, estimate_status: so.estimate_status, line_type })
   }
 
+  const trimmedPartNumber = typeof part_number === 'string' ? part_number.trim() : ''
+
+  // Pre-flight resolve the inventory part_id for live part lines so we can
+  // either reserve atomically after insert or refuse the create when the
+  // resolution is ambiguous. Lines that are not part rows, lack a
+  // part_number, or are explicitly canceled bypass reservation entirely
+  // (rough/draft estimate lines stay unaffected).
+  const isLivePartLine =
+    line_type === 'part' &&
+    trimmedPartNumber.length > 0 &&
+    (parts_status ?? '') !== 'canceled' &&
+    qty > 0
+  let resolvedPartId: string | null = null
+  if (isLivePartLine) {
+    const { data: matches } = await ctx.admin.from('parts')
+      .select('id')
+      .eq('shop_id', ctx.shopId)
+      .eq('part_number', trimmedPartNumber)
+      .eq('status', 'active')
+      .is('deleted_at', null)
+    if (matches && matches.length > 1) {
+      return NextResponse.json({
+        error: `Cannot reserve: part_number "${trimmedPartNumber}" matches ${matches.length} inventory rows for this shop. Resolve duplicates before adding to a work order.`,
+      }, { status: 400 })
+    }
+    if (matches && matches.length === 1) {
+      resolvedPartId = matches[0].id
+    }
+    // Zero matches: line proceeds without reservation. Demand is captured;
+    // a future workflow step (PO receive, manual stock add) can reserve later.
+  }
+
   const { data, error } = await ctx.admin.from('so_lines').insert({
     so_id,
     line_type,
@@ -128,8 +160,32 @@ async function _POST(req: Request) {
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Atomic reserve when we have a single resolved inventory part. Failure
+  // here (insufficient on_hand, race against another writer) rolls back the
+  // just-inserted so_lines row so the response is fail-closed: either the
+  // line exists with a real reservation, or it doesn't exist at all. Lines
+  // without a resolved part_id keep the existing zero-reserve behavior.
+  let lineRow: any = data
+  if (resolvedPartId) {
+    const reserveQty = Math.max(1, Math.round(qty))
+    const { data: rpcRow, error: rpcErr } = await ctx.admin.rpc('so_line_part_reserve_apply', {
+      p_so_line_id: data.id,
+      p_shop_id: ctx.shopId,
+      p_part_id: resolvedPartId,
+      p_qty: reserveQty,
+      p_reason: null,
+      p_actor_user_id: ctx.actor?.id ?? null,
+    })
+    if (rpcErr) {
+      await ctx.admin.from('so_lines').delete().eq('id', data.id)
+      return NextResponse.json({ error: `Reserve failed: ${rpcErr.message}` }, { status: 400 })
+    }
+    if (rpcRow) lineRow = rpcRow
+  }
+
   await recalcTotals(ctx.admin, so_id)
-  return NextResponse.json(data, { status: 201 })
+  return NextResponse.json(lineRow, { status: 201 })
 }
 
 export const GET = safeRoute(_GET)
