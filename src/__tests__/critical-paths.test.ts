@@ -209,9 +209,15 @@ describe('invoice critical path', () => {
   })
 
   // Patch 128 regression guard: converted API routes must use canonical actor
-  // scoping via getAuthenticatedUserProfile + getActorShopId, not raw user.shop_id
-  // from getCurrentUser. Guards against silent reintroduction of impersonation
-  // scope leaks in the proven risk set.
+  // scoping, not raw user.shop_id from getCurrentUser. Guards against silent
+  // reintroduction of impersonation scope leaks in the proven risk set.
+  //
+  // Canonical scoping = either of the two equivalent forms:
+  //   (a) literal helpers: getAuthenticatedUserProfile + getActorShopId
+  //   (b) the canonical wrapper requireRouteContext (src/lib/api-route-auth.ts),
+  //       which internally calls both helpers and returns the resolved shopId
+  //       plus a service-role admin client. Helper-behavior coverage for the
+  //       wrapper lives alongside the canonical helpers.
   it('shop scoping: converted API routes use canonical actor helpers, not raw user.shop_id', () => {
     const converted = [
       'src/app/api/invoices/route.ts',
@@ -231,8 +237,13 @@ describe('invoice critical path', () => {
     ]
     for (const path of converted) {
       const c = readFile(path)
-      expect(c, `${path} must import getAuthenticatedUserProfile`).toMatch(/getAuthenticatedUserProfile/)
-      expect(c, `${path} must import getActorShopId`).toMatch(/getActorShopId/)
+      const literalCanonical =
+        /getAuthenticatedUserProfile/.test(c) && /getActorShopId/.test(c)
+      const wrappedCanonical = /requireRouteContext/.test(c)
+      expect(
+        literalCanonical || wrappedCanonical,
+        `${path} must use canonical actor scoping (getAuthenticatedUserProfile + getActorShopId, or requireRouteContext wrapper)`,
+      ).toBe(true)
       expect(c, `${path} must not use raw user.shop_id`).not.toMatch(/\buser\.shop_id\b/)
     }
   })
