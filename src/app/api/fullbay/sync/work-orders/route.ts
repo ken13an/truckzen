@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     const { data: users } = await s.from('users').select('id, full_name, role').eq('shop_id', shop_id).or('is_autobot.is.null,is_autobot.eq.false')
     const userList = users || []
 
-    let imported = 0, updated = 0, skipped = 0
+    let imported = 0, updated = 0, skipped = 0, preserved = 0
     const errors: string[] = []
 
     for (const inv of invoices) {
@@ -176,8 +176,15 @@ export async function POST(req: Request) {
         }
 
         if (existing && existing.length > 0) {
-          await s.from('service_orders').update(woData).eq('id', existing[0].id)
-          updated++
+          // Non-destructive resync: existing Fullbay-imported WOs are preserved.
+          // Once a row lands in TruckZen, accounting can correct labor/parts/
+          // grand totals, customer/asset assignments, and status. A Fullbay
+          // re-pull is a point-in-time snapshot, so overwriting an existing
+          // row would silently erase those corrections. Insert-on-miss is the
+          // intended import path; re-pulls treat already-known rows as
+          // preserved. Mirrors the line-level "skip if exists" pattern used
+          // immediately below for so_lines.
+          preserved++
         } else {
           // Generate so_number
           const roNum = so.repairOrderNumber || fbId
@@ -245,7 +252,7 @@ export async function POST(req: Request) {
       completed_at: new Date().toISOString(),
     }).then(() => {})
 
-    return NextResponse.json({ imported, updated, skipped, total_pulled: invoices.length, errors: errors.slice(0, 20) })
+    return NextResponse.json({ imported, updated, skipped, preserved, total_pulled: invoices.length, errors: errors.slice(0, 20) })
   } catch (err: any) {
     Sentry.captureException(err, { extra: { sync_type: 'work-orders' } })
     return NextResponse.json({ error: err.message }, { status: 500 })
