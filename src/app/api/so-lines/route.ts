@@ -3,6 +3,7 @@ import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { NextResponse } from 'next/server'
 import { requireRouteContext } from '@/lib/api-route-auth'
 import { safeRoute } from '@/lib/api-handler'
+import { SoLineCreateSchema, soLinesBadInput } from '@/lib/validators/so-lines-route'
 
 async function recalcTotals(admin: any, soId: string) {
   const { data: lines } = await admin.from('so_lines').select('line_type, quantity, unit_price, parts_sell_price, parts_status, billed_hours, actual_hours, estimated_hours').eq('so_id', soId)
@@ -62,12 +63,13 @@ async function _GET(req: Request) {
 async function _POST(req: Request) {
   const ctx = await requireRouteContext([...SERVICE_PARTS_ROLES])
   if (ctx.error || !ctx.shopId || !ctx.admin) return ctx.error!
-  const body = await req.json()
-  const { so_id, line_type, description, part_number, quantity, unit_price, estimated_hours, line_status, rough_name, parts_status, related_labor_line_id } = body
-
-  if (!so_id || !line_type || !description) {
-    return NextResponse.json({ error: 'so_id, line_type, description required' }, { status: 400 })
+  const raw = await req.json().catch(() => null)
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
+  const parsed = SoLineCreateSchema.safeParse(raw)
+  if (!parsed.success) return soLinesBadInput(parsed.error)
+  const { so_id, line_type, description, part_number, quantity, unit_price, estimated_hours, line_status, rough_name, parts_status, related_labor_line_id } = parsed.data
 
   const { data: so } = await ctx.admin.from('service_orders').select('id, shop_id, invoice_status, is_historical, ownership_type, estimate_approved, estimate_status').eq('id', so_id).single()
   if (!so || so.shop_id !== ctx.shopId) return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
@@ -81,8 +83,8 @@ async function _POST(req: Request) {
     return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
   }
 
-  const qty = parseFloat(quantity) || 1
-  const price = parseFloat(unit_price) || 0
+  const qty = quantity || 1
+  const price = unit_price || 0
 
   const lineApprovalDefaults = (so.ownership_type === 'owner_operator' || so.ownership_type === 'outside_customer')
     ? { approval_status: 'needs_approval' as const, approval_required: true }
