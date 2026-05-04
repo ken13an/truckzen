@@ -9,6 +9,7 @@ import { deriveWOETC } from '@/lib/wo-etc'
 import { deriveWOAlerts, alertDedupKey } from '@/lib/wo-alerts'
 import { requireRouteContext, getWorkOrderForActor } from '@/lib/api-route-auth'
 import { safeRoute } from '@/lib/api-handler'
+import { WorkOrderPatchSchema, workOrderBadInput } from '@/lib/validators/work-order-route'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -191,39 +192,24 @@ async function _PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
   }
 
-  const body = await req.json().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+  const raw = await req.json().catch(() => null)
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
-  const allowedFields = ['status', 'priority', 'team', 'bay', 'assigned_tech', 'complaint', 'cause', 'correction', 'internal_notes', 'customer_id', 'grand_total', 'due_date', 'service_writer_id', 'parts_person_id', 'customer_contact_name', 'customer_contact_phone', 'fleet_contact_name', 'fleet_contact_phone', 'po_number', 'estimate_date', 'promised_date', 'estimate_approved', 'estimate_status', 'approval_method', 'estimate_declined_reason', 'customer_estimate_notes', 'submitted_at']
-  // Shape rules for fields that must be a specific primitive type. Enum
-  // allowlists for status/priority/team are not hardcoded here — status
-  // transitions are policed by VALID_WO_TRANSITIONS below, and no canonical
-  // priority/team constant exists.
-  const fieldTypes: Record<string, 'string' | 'boolean' | 'number'> = {
-    status: 'string', priority: 'string', team: 'string', bay: 'string',
-    assigned_tech: 'string', complaint: 'string', cause: 'string', correction: 'string',
-    internal_notes: 'string', customer_id: 'string', grand_total: 'number',
-    due_date: 'string', service_writer_id: 'string', parts_person_id: 'string',
-    customer_contact_name: 'string', customer_contact_phone: 'string',
-    fleet_contact_name: 'string', fleet_contact_phone: 'string', po_number: 'string',
-    estimate_date: 'string', promised_date: 'string', estimate_approved: 'boolean',
-    estimate_status: 'string', approval_method: 'string',
-    estimate_declined_reason: 'string', customer_estimate_notes: 'string',
-    submitted_at: 'string',
-  }
+  const parsed = WorkOrderPatchSchema.safeParse(raw)
+  if (!parsed.success) return workOrderBadInput(parsed.error)
+  const body = parsed.data
+  // Allow-list mirrors the schema's optional updateable fields. Per-field
+  // type / enum / length / uuid / finite-number validation now lives in
+  // src/lib/validators/work-order-route.ts; this loop just copies the
+  // already-validated values into the update payload, preserving the
+  // route's `null` carve-out (explicit clear) and the "at least one field"
+  // gate below.
+  const allowedFields = ['status', 'priority', 'team', 'bay', 'assigned_tech', 'complaint', 'cause', 'correction', 'internal_notes', 'customer_id', 'grand_total', 'due_date', 'service_writer_id', 'parts_person_id', 'customer_contact_name', 'customer_contact_phone', 'fleet_contact_name', 'fleet_contact_phone', 'po_number', 'estimate_date', 'promised_date', 'estimate_approved', 'estimate_status', 'approval_method', 'estimate_declined_reason', 'customer_estimate_notes', 'submitted_at'] as const
   const update: Record<string, any> = {}
   for (const f of allowedFields) {
-    if (body[f] === undefined) continue
-    const val = body[f]
-    if (val === null) { update[f] = null; continue }
-    const expected = fieldTypes[f]
-    if (typeof val !== expected) {
-      return NextResponse.json({ error: `Field "${f}" must be ${expected} or null` }, { status: 400 })
-    }
-    if (expected === 'string' && (val as string).length > 5000) {
-      return NextResponse.json({ error: `Field "${f}" too long` }, { status: 400 })
-    }
+    const val = (body as any)[f]
+    if (val === undefined) continue
     update[f] = val
   }
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'No fields' }, { status: 400 })
