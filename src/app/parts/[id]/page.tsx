@@ -312,6 +312,17 @@ export default function PartDetailPage() {
                   {editing && <input value={form.preferred_vendor || form.vendor || ''} onChange={e => setForm({ ...form, preferred_vendor: e.target.value })} style={inputStyle(t)} />}
                 </Field>
               </div>
+              {/* Movement aggregate across non-canceled live so_lines for this
+                  part_number in this shop. Read-only — these counters move
+                  only via the reserve / pickup / return / consume RPCs. */}
+              {part.movement_aggregate && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 16, paddingTop: 12, borderTop: `1px solid ${'var(--tz-border)'}` }}>
+                  <Field t={t} label="Reserved (in WOs)" value={fmtQty(part.movement_aggregate.reserved)} />
+                  <Field t={t} label="Out / Picked Up" value={fmtQty(part.movement_aggregate.picked_up)} />
+                  <Field t={t} label="Installed" value={fmtQty(part.movement_aggregate.installed)} />
+                  <Field t={t} label="Returned Unused" value={fmtQty(part.movement_aggregate.returned_unused)} />
+                </div>
+              )}
             </div>
           </div>
         </div>

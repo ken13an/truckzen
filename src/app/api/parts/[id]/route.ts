@@ -16,7 +16,8 @@ export async function GET(_req: Request, { params }: P) {
   const shopId = getActorShopId(user)
   if (!shopId) return jsonError('No shop context', 400)
 
-  const { data, error } = await db()
+  const s = db()
+  const { data, error } = await s
     .from('parts')
     .select('*')
     .eq('id', id)
@@ -24,7 +25,32 @@ export async function GET(_req: Request, { params }: P) {
     .single()
 
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(data)
+
+  // Aggregate per-part movement state across non-canceled live so_lines
+  // matching this part_number for this shop. The aggregation keys on
+  // part_number because so_lines has no part_id FK; for shops with
+  // duplicate part_number rows this value will be the same across both
+  // parts rows. Always safe to read; never mutates anything.
+  let movement_aggregate: { reserved: number; picked_up: number; installed: number; returned_unused: number } | null = null
+  if (data.part_number) {
+    const { data: rows } = await s
+      .from('so_lines')
+      .select('reserved_qty, picked_up_qty, installed_qty, returned_unused_qty, service_orders!inner(shop_id)')
+      .eq('line_type', 'part')
+      .eq('part_number', data.part_number)
+      .eq('service_orders.shop_id', shopId)
+      .neq('parts_status', 'canceled')
+    let r = 0, p = 0, i = 0, u = 0
+    for (const m of (rows || []) as Array<any>) {
+      r += Number(m.reserved_qty || 0)
+      p += Number(m.picked_up_qty || 0)
+      i += Number(m.installed_qty || 0)
+      u += Number(m.returned_unused_qty || 0)
+    }
+    movement_aggregate = { reserved: r, picked_up: p, installed: i, returned_unused: u }
+  }
+
+  return NextResponse.json({ ...data, movement_aggregate })
 }
 
 export async function PATCH(req: Request, { params }: P) {
