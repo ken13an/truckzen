@@ -66,6 +66,13 @@ async function _POST(req: Request) {
     }
   }
 
+  // Notification block error captured here so the route's response can
+  // honestly report partial success when assignment commits but the
+  // mechanic was never told. The assignment + so_lines update + activity
+  // log are the primary state change; notification is a secondary courtesy
+  // — returning 500 would falsely imply the whole request failed.
+  let notificationError: string | null = null
+
   await ctx.admin.from('wo_job_assignments').delete().eq('line_id', line_id)
   if (assignments.length > 0) {
     const rows = assignments.filter((a: any) => a.user_id).map((a: any) => ({ line_id, user_id: a.user_id, percentage: a.percentage || 100 }))
@@ -86,7 +93,10 @@ async function _POST(req: Request) {
             .eq('is_dismissed', false)
         }
         await createNotification({ shopId: (wo as any).shop_id, recipientId: rows.map((r: any) => r.user_id), type: 'job_assigned', title: 'New Job Assigned', body: `You've been assigned to ${(wo as any).so_number} #${unitNum}`, link: `/work-orders/${targetWoId}`, relatedWoId: targetWoId, relatedUnit: unitNum })
-      } catch {}
+      } catch (err: any) {
+        notificationError = (err && (err.message || String(err))) || 'Notification failed'
+        console.error('[wo-job-assignments] notification failure', { line_id, wo_id: targetWoId, error: notificationError })
+      }
     }
   } else {
     await ctx.admin.from('so_lines').update({ assigned_to: null, line_status: 'unassigned' }).eq('id', line_id)
@@ -103,7 +113,10 @@ async function _POST(req: Request) {
 
   const names = assignments.map((a: any) => `${a.name || 'Mechanic'} (${a.percentage || 100}%)`).join(', ')
   await ctx.admin.from('wo_activity_log').insert({ wo_id: targetWoId, user_id: ctx.actor.id, action: assignments.length > 0 ? `Assigned mechanics: ${names}` : 'Unassigned all mechanics' })
-  return NextResponse.json({ ok: true })
+  // Happy path stays { ok: true }. On notification failure the response is
+  // additive: { ok: true, notification_error: '<msg>' } so callers can show
+  // a soft warning without misreading the assignment as failed.
+  return NextResponse.json(notificationError ? { ok: true, notification_error: notificationError } : { ok: true })
 }
 
 async function _DELETE(req: Request) {
