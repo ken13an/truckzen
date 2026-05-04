@@ -41,14 +41,16 @@ async function _PATCH(req: Request, { params }: P) {
 
   // Lock ALL lines after invoice sent/paid/closed
   const soId = (line as any).so_id || (line as any).service_order_id
+  let lineShopId: string | null = null
   if (soId) {
-    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status, is_historical').eq('id', soId).single()
+    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status, is_historical, shop_id').eq('id', soId).single()
     if (wo?.is_historical) {
       return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
     }
     if (isInvoiceHardLocked(wo?.invoice_status)) {
       return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
     }
+    lineShopId = (wo as any)?.shop_id || null
   }
 
   const body = await req.json().catch(() => null)
@@ -121,13 +123,53 @@ async function _PATCH(req: Request, { params }: P) {
   if (!expectedUpdatedAt) return NextResponse.json({ error: 'expected_updated_at is required' }, { status: 400 })
   let soLineQ = ctx.admin.from('so_lines').update(update).eq('id', id)
   if (expectedUpdatedAt) soLineQ = soLineQ.eq('updated_at', expectedUpdatedAt)
-  const { data, error } = await soLineQ.select().maybeSingle()
+  const { data: writeResult, error } = await soLineQ.select().maybeSingle()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  if (!data) {
+  if (!writeResult) {
     return NextResponse.json({ error: 'Conflict', message: 'This record was updated by someone else. Refresh and try again.' }, { status: 409 })
   }
+  let data: any = writeResult
 
-  const recalcSoId = (data as any).so_id || soId
+  // Atomic movement-state shifts when parts_status flips on a part row.
+  // Pickup drains reserved into picked_up; consume drains picked_up (then
+  // reserved as fallback) into installed. Both are state-only events: they
+  // bump so_lines projection columns inside one Postgres transaction without
+  // touching parts.on_hand or stock_movements (those belong to reserve and
+  // return_unused, which are wired by future patches once a real trigger
+  // exists for them).
+  if (data.line_type === 'part' && update.parts_status !== undefined && lineShopId) {
+    const lineQty = Math.max(0, Math.round(Number(data.quantity ?? 1)))
+    const pickedUp = Number(data.picked_up_qty ?? 0)
+    const installed = Number(data.installed_qty ?? 0)
+    const returnedUnused = Number(data.returned_unused_qty ?? 0)
+    if (update.parts_status === PARTS_PICKUP_STATUS) {
+      const pickupDelta = lineQty - pickedUp - installed - returnedUnused
+      if (pickupDelta > 0) {
+        const { data: rpcRow, error: rpcErr } = await ctx.admin.rpc('so_line_part_pickup_apply', {
+          p_so_line_id: id,
+          p_shop_id: lineShopId,
+          p_qty: pickupDelta,
+          p_actor_user_id: ctx.actor.id,
+        })
+        if (rpcErr) return NextResponse.json({ error: rpcErr.message }, { status: 500 })
+        if (rpcRow) data = rpcRow
+      }
+    } else if (update.parts_status === 'installed') {
+      const consumeDelta = lineQty - installed - returnedUnused
+      if (consumeDelta > 0) {
+        const { data: rpcRow, error: rpcErr } = await ctx.admin.rpc('so_line_part_consume_apply', {
+          p_so_line_id: id,
+          p_shop_id: lineShopId,
+          p_qty: consumeDelta,
+          p_actor_user_id: ctx.actor.id,
+        })
+        if (rpcErr) return NextResponse.json({ error: rpcErr.message }, { status: 500 })
+        if (rpcRow) data = rpcRow
+      }
+    }
+  }
+
+  const recalcSoId = data.so_id || soId
   const grandTotal = recalcSoId ? await recalcTotals(ctx.admin, recalcSoId) : null
 
   // Auto-clear hours-request queue items when estimated_hours is updated
