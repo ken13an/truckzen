@@ -71,40 +71,44 @@ export async function PATCH(req: Request, { params }: P) {
     }
   }
 
-  const { data, error } = await s.from('parts').update(update).eq('id', id).eq('shop_id', shopId).select().single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  invalidateCache(`parts:${shopId}`)
-  if (update.on_hand !== undefined && update.on_hand !== current.on_hand) {
-    await log('parts.quantity_changed', shopId, user.id, { table:'parts', recordId:id, oldData:{ on_hand: current.on_hand }, newData:{ on_hand: update.on_hand } })
-  }
-
-  if (
+  // on_hand truth is owned by the parts_manual_adjust_apply RPC so the qty
+  // mutation and the stock_movements insert land in one transaction. The
+  // route still owns every other parts column + field-history writes.
+  const useAdjustRpc =
     update.on_hand !== undefined &&
-    Number(data.on_hand) !== Number(current.on_hand) &&
     effectiveUom === 'each' &&
     effectiveTrack !== false
-  ) {
-    const before_qty = Math.round(Number(current.on_hand) || 0)
-    const after_qty = Math.round(Number(data.on_hand) || 0)
-    const qty_delta = after_qty - before_qty
-    if (qty_delta !== 0) {
-      const { error: ledgerError } = await s.from('stock_movements').insert({
-        shop_id: shopId,
-        part_id: id,
-        movement_type: 'manual_adjust',
-        qty_delta,
-        before_qty,
-        after_qty,
-        source_table: 'parts',
-        source_id: id,
-        actor_user_id: user.id,
-        notes: null,
-      })
-      if (ledgerError) {
-        return NextResponse.json({ error: `Ledger write failed: ${ledgerError.message}` }, { status: 500 })
-      }
+  const requestedOnHand = update.on_hand
+  if (useAdjustRpc) {
+    delete update.on_hand
+  }
+
+  let data: any
+  if (useAdjustRpc) {
+    const { data: rpcRow, error: rpcError } = await s.rpc('parts_manual_adjust_apply', {
+      p_part_id: id,
+      p_shop_id: shopId,
+      p_new_on_hand: Math.round(Number(requestedOnHand) || 0),
+      p_reason: null,
+      p_actor_user_id: user.id,
+    })
+    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 500 })
+    if (Object.keys(update).length > 0) {
+      const { data: upd, error } = await s.from('parts').update(update).eq('id', id).eq('shop_id', shopId).select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      data = upd
+    } else {
+      data = rpcRow
     }
+  } else {
+    const { data: upd, error } = await s.from('parts').update(update).eq('id', id).eq('shop_id', shopId).select().single()
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    data = upd
+  }
+
+  invalidateCache(`parts:${shopId}`)
+  if (requestedOnHand !== undefined && Number(requestedOnHand) !== Number(current.on_hand)) {
+    await log('parts.quantity_changed', shopId, user.id, { table:'parts', recordId:id, oldData:{ on_hand: current.on_hand }, newData:{ on_hand: requestedOnHand } })
   }
 
   for (const f of ['allocated', 'in_transit'] as const) {
