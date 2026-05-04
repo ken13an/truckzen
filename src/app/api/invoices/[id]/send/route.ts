@@ -41,19 +41,22 @@ async function _POST(_req: Request, { params }: P) {
   if (!recipientEmail) return NextResponse.json({ error: 'No email address found for owner/customer or kiosk contact' }, { status: 400 })
 
   // Generate invoice PDF — direct call, no HTTP.
-  // PDF failure is logged clearly but does not block the email; customer
-  // still receives the invoice email and the server log records the missing
-  // attachment for follow-up.
-  let pdfAttachments: { filename: string; content: Buffer }[] | undefined
+  // PDF generation is part of the send contract: the email body claims an
+  // attachment, so a missing PDF would deliver a misleading invoice. On
+  // either failure mode (generator returns null, generator throws), block
+  // the send with a 500 and leave the invoice's status untouched so the
+  // operator can retry without manual cleanup.
+  let pdfAttachments: { filename: string; content: Buffer }[]
   try {
     const pdfResult = await generateInvoicePdf(id)
     if (!pdfResult) {
-      console.error('[invoice.send] PDF generator returned null — sending email without attachment', { invoiceId: id })
-    } else {
-      pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
+      console.error('[invoice.send] PDF generator returned null — blocking send', { invoiceId: id })
+      return NextResponse.json({ error: 'Failed to generate invoice PDF' }, { status: 500 })
     }
+    pdfAttachments = [{ filename: pdfResult.filename, content: Buffer.from(pdfResult.pdfBytes) }]
   } catch (err: any) {
-    console.error('[invoice.send] PDF generation failed — sending email without attachment', { invoiceId: id, error: err?.message || String(err) })
+    console.error('[invoice.send] PDF generation failed — blocking send', { invoiceId: id, error: err?.message || String(err) })
+    return NextResponse.json({ error: 'Failed to generate invoice PDF' }, { status: 500 })
   }
 
   const emailData = {
