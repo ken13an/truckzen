@@ -1,7 +1,14 @@
 export type WOStatus = 'draft' | 'not_approved' | 'waiting_approval' | 'in_progress' | 'waiting_parts' | 'done' | 'ready_final_inspection' | 'good_to_go' | 'failed_inspection' | 'void'
 export type WOPriority = 'low' | 'normal' | 'high' | 'critical'
 export type LineType = 'labor' | 'job' | 'part' | 'shop_charge' | 'sublet'
-export type LineStatus = 'unassigned' | 'assigned' | 'in_progress' | 'completed' | 'void'
+// LineStatus is owned by src/lib/state/line-status.ts. The previous local
+// union here drifted from the values the API validator actually accepts
+// ('assigned' / 'void' were never valid; 'pending_review' / 'approved' were
+// missing). Imported once and re-exported so existing `from '@/types'`
+// consumers keep their import path AND the WOLine interface below can
+// reference the type by name.
+import type { LineStatus } from '@/lib/state/line-status'
+export type { LineStatus }
 
 export interface WorkOrder {
   id: string

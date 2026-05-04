@@ -40,16 +40,12 @@ export function isPartReceived(status: string | null | undefined): boolean {
   return (PARTS_RECEIVED_STATES as readonly string[]).includes(status)
 }
 
-// All valid line_status values for so_lines
-export const VALID_LINE_STATUSES = [
-  'unassigned',
-  'pending_review',
-  'approved',
-  'in_progress',
-  'completed',
-] as const
-
-export type LineStatus = typeof VALID_LINE_STATUSES[number]
+// Line-status truth lives in src/lib/state/line-status.ts. Re-exported here
+// for one release so the existing so-lines route import path stays valid;
+// new code should import from '@/lib/state/line-status' directly. Relative
+// import path used so the regression suite (vitest, no alias config) can
+// follow this transitively when helper-behavior.test.ts imports parts-status.
+export { VALID_LINE_STATUSES, type LineStatus } from './state/line-status'
 
 /**
  * Server-side close-job guard for parts movement truth.
