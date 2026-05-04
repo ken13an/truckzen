@@ -1,13 +1,20 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase'
-import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
+import { requireRouteContext } from '@/lib/api-route-auth'
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createServerSupabaseClient()
-  const actor = await getAuthenticatedUserProfile()
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const shopId = getActorShopId(actor)
+  // Use the project's standard admin/service-role auth path. The previous
+  // implementation used createServerSupabaseClient (anon key + cookies), but
+  // the anon Postgres role lacks SELECT grants on service_orders/assets/
+  // customers in this project, so every authenticated request silently
+  // returned empty data. Every sibling route in the customer-unit-profile
+  // fetch chain (/api/assets/[id], /api/customers/[id], /api/so-lines,
+  // /api/service-orders) already uses requireRouteContext().admin — this
+  // route was the outlier.
+  const ctx = await requireRouteContext()
+  if (ctx.error) return ctx.error!
+  const shopId = ctx.shopId
   if (!shopId) return NextResponse.json({ error: 'No shop context' }, { status: 400 })
+  const supabase = ctx.admin!
 
   const { id: assetId } = await params
   const { searchParams } = new URL(req.url)

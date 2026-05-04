@@ -40,9 +40,11 @@ export default function UnitProfilePage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState(0)
   const [workOrders, setWorkOrders] = useState<any[]>([])
+  const [historySummary, setHistorySummary] = useState<any>(null)
   const [activeWO, setActiveWO] = useState<any | null>(null)
   const [woParts, setWoParts] = useState<any[]>([])
   const [woLines, setWoLines] = useState<any[]>([])
+  const [woSnapshots, setWoSnapshots] = useState<Record<string, any>>({})
   const [editForm, setEditForm] = useState<any | null>(null)
   const [saving, setSaving] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -55,10 +57,16 @@ export default function UnitProfilePage() {
 
       const shopId = profile.shop_id
 
-      const [unitData, custData, allWos] = await Promise.all([
+      const [unitData, custData, historyRes, liveActiveRes] = await Promise.all([
         fetch(`/api/assets/${unitId}`).then((r) => r.ok ? r.json() : null),
         fetch(`/api/customers/${id}?shop_id=${shopId}`).then((r) => r.ok ? r.json() : null),
-        fetch(`/api/service-orders?shop_id=${shopId}&limit=200`).then((r) => r.ok ? r.json() : []),
+        // Asset-scoped, historical-aware. Returns inhouse service_orders for this
+        // unit (live + historical Fullbay) plus a summary block for stat cards.
+        fetch(`/api/assets/${unitId}/history?source=inhouse&page=1&limit=200`).then((r) => r.ok ? r.json() : { data: [], summary: null }),
+        // Small live-only fetch for the Active WO banner. Default
+        // excludeHistorical filtering is intentional — historical rows can't be
+        // "active". Mirrors the pattern at fleet/[id]/page.tsx:50-51.
+        fetch(`/api/service-orders?shop_id=${shopId}&limit=20`).then((r) => r.ok ? r.json() : []),
       ])
 
       if (unitData) {
@@ -67,29 +75,83 @@ export default function UnitProfilePage() {
       }
       if (custData) setCustomer(custData)
 
-      // Filter work orders for this specific asset client-side
-      // The API returns assets as a nested object { id, ... }, not a flat asset_id field
-      const wos: any[] = (Array.isArray(allWos) ? allWos : []).filter(
-        (w: any) => w.assets?.id === unitId || w.asset_id === unitId
-      )
-      // The API already excludes deleted_at and void; re-sort descending by created_at
-      wos.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      // Map asset history rows into the workOrders shape the existing renderers
+      // expect. mileage_at_checkin is not returned by the history endpoint, so
+      // the Maintenance tab's mileage rules will degrade to "unknown" for
+      // historical rows — correct, since we don't know the mileage at that
+      // historical service.
+      const wos: any[] = (historyRes.data || []).map((r: any) => ({
+        id: r.id,
+        so_number: r.reference_number,
+        status: r.status,
+        wo_status: r.status,
+        grand_total: r.total_cost,
+        created_at: r.date,
+        customer_name: r.customer_name,
+        assigned_to: r.assigned_to,
+        mileage_at_checkin: null,
+      }))
       setWorkOrders(wos)
+      setHistorySummary(historyRes.summary || null)
 
       const woIds = wos.map((w: any) => w.id)
 
       if (woIds.length > 0) {
-        const [linesArrays, partsRes] = await Promise.all([
+        const [linesArrays, snapshotsRes] = await Promise.all([
           Promise.all(woIds.map((soId: string) =>
             fetch(`/api/so-lines?so_id=${soId}`).then((r) => r.ok ? r.json() : [])
           )),
-          supabase.from('wo_parts').select('*, so_lines(description), service_orders(so_number, created_at)').in('wo_id', woIds),
+          // external_data is not returned by /api/assets/[id]/history. Pull it
+          // page-local for these WOs so the Service History expanded view can
+          // surface historical complaint/correction text. Non-historical rows
+          // simply have no historical_fullbay_snapshot key — entry skipped.
+          supabase.from('service_orders').select('id, external_data').in('id', woIds),
         ])
-        setWoLines((linesArrays as any[][]).flat())
-        setWoParts(partsRes.data || [])
+        const allLines = (linesArrays as any[][]).flat()
+        setWoLines(allLines)
+
+        const snapshotMap: Record<string, any> = {}
+        for (const r of (snapshotsRes.data || [])) {
+          const snap = r.external_data?.historical_fullbay_snapshot
+          if (snap) snapshotMap[r.id] = snap
+        }
+        setWoSnapshots(snapshotMap)
+
+        // Parts History on the truck profile is derived from so_lines so that
+        // historical Fullbay part rows (which never get wo_parts entries) are
+        // included alongside live ones. wo_parts is the procurement-tracking
+        // layer above so_lines; for an asset-history view, so_lines is the
+        // canonical financial ledger. Single source — no merge, no dedup.
+        const woMap = Object.fromEntries(wos.map((w: any) => [w.id, w]))
+        const parts = allLines
+          .filter((l: any) => l.line_type === 'part' && l.parts_status !== 'canceled')
+          .map((l: any) => {
+            const wo = woMap[l.so_id]
+            return {
+              id: l.id,
+              wo_id: l.so_id,
+              service_orders: wo ? { so_number: wo.so_number, created_at: wo.created_at } : null,
+              part_number: l.part_number,
+              description: l.description,
+              quantity: l.quantity,
+              cost: l.parts_cost_price ?? l.unit_price ?? null,
+              status: l.parts_status || l.line_status || 'imported',
+            }
+          })
+          .sort((a: any, b: any) => {
+            const da = a.service_orders ? new Date(a.service_orders.created_at).getTime() : 0
+            const db = b.service_orders ? new Date(b.service_orders.created_at).getTime() : 0
+            return db - da
+          })
+        setWoParts(parts)
       }
 
-      const active = wos.find(
+      // Active WO detection runs against the small live-only fetch, scoped to
+      // this asset. Historical Fullbay rows are excluded by the endpoint default.
+      const liveForAsset = (Array.isArray(liveActiveRes) ? liveActiveRes : []).filter(
+        (w: any) => w.assets?.id === unitId || w.asset_id === unitId
+      )
+      const active = liveForAsset.find(
         (w: any) =>
           !['done', 'completed', 'invoiced', 'closed'].includes(w.wo_status) ||
           !['good_to_go', 'done', 'void'].includes(w.status)
@@ -139,7 +201,12 @@ export default function UnitProfilePage() {
   const typeBadgeColor = isTrailer ? AMBER : BLUE
   const typeLabel = UNIT_TYPE_LABEL[unit.unit_type] || (unit.unit_type || 'UNKNOWN').toUpperCase()
 
-  const totalSpend = workOrders.reduce((s: number, w: any) => s + (Number(w.grand_total) || 0), 0)
+  // Stat values prefer historySummary (server-computed over the full asset
+  // history, no 200-row cap). Local workOrders is the page-cap of 200 most
+  // recent rows for rendering — fine for the list, but not authoritative for
+  // counts/totals when a truck has more than 200 lifetime services.
+  const totalServices = (historySummary?.inhouse_count != null) ? Number(historySummary.inhouse_count) : workOrders.length
+  const totalSpend = (historySummary?.inhouse_total != null) ? Number(historySummary.inhouse_total) : workOrders.reduce((s: number, w: any) => s + (Number(w.grand_total) || 0), 0)
   const lastService = workOrders.length > 0 ? workOrders[0].created_at : null
 
   const vinDisplay = (vin: string | null) => {
@@ -189,6 +256,23 @@ export default function UnitProfilePage() {
   }
 
   /* Maintenance calculation */
+  // Combine all searchable text from a historical snapshot (complaint notes +
+  // recommended/actual corrections) into one lowercase string. Used so keyword
+  // matching can pick up signals from the snapshot's rich source text — not
+  // just from flat so_lines descriptions. Returns '' when no snapshot.
+  function snapshotTextOf(snap: any): string {
+    if (!snap) return ''
+    const out: string[] = []
+    for (const cmp of (snap.complaints || [])) {
+      if (cmp?.note) out.push(String(cmp.note))
+      for (const corr of (cmp?.corrections || [])) {
+        if (corr?.recommended_correction) out.push(String(corr.recommended_correction))
+        if (corr?.actual_correction) out.push(String(corr.actual_correction))
+      }
+    }
+    return out.join(' ').toLowerCase()
+  }
+
   function getMaintenanceItems() {
     const rules = [
       { keyword: 'oil', label: 'Oil Change', mileageInterval: 25000, monthInterval: null },
@@ -199,20 +283,34 @@ export default function UnitProfilePage() {
     return rules.map((rule) => {
       const matchingWOs = workOrders.filter((wo: any) => {
         const lines = woLines.filter((l: any) => l.so_id === wo.id)
-        return lines.some((l: any) => (l.description || '').toLowerCase().includes(rule.keyword))
+        if (lines.some((l: any) => (l.description || '').toLowerCase().includes(rule.keyword))) return true
+        // Fallback: search the WO's snapshot complaint/correction text. Lets
+        // the rule fire on historical Fullbay rows where the part-line
+        // description alone wouldn't carry the maintenance signal.
+        const snapText = snapshotTextOf(woSnapshots[wo.id])
+        return snapText.length > 0 && snapText.includes(rule.keyword)
       })
       const lastWO = matchingWOs.length > 0 ? matchingWOs[0] : null
       let nextDue: string | null = null
       let status: 'ok' | 'due_soon' | 'overdue' | 'unknown' = 'unknown'
 
       if (lastWO && rule.mileageInterval) {
-        const lastMi = Number(lastWO.mileage_at_checkin) || 0
-        const nextMi = lastMi + rule.mileageInterval
-        const currentMi = Number(unit.odometer) || 0
-        nextDue = nextMi.toLocaleString() + ' mi'
-        if (currentMi >= nextMi) status = 'overdue'
-        else if (currentMi >= nextMi - rule.mileageInterval * 0.1) status = 'due_soon'
-        else status = 'ok'
+        // Distinguish "no mileage captured" (historical/imported with null
+        // mileage_at_checkin) from a real zero. Null/0 means we cannot anchor
+        // a next-due mileage. Degrade to 'unknown' instead of pretending the
+        // last service happened at 0 mi (which would falsely flag overdue
+        // immediately on every modern truck).
+        const rawMi = lastWO.mileage_at_checkin
+        const lastMi = rawMi != null ? Number(rawMi) : null
+        if (lastMi != null && lastMi > 0) {
+          const nextMi = lastMi + rule.mileageInterval
+          const currentMi = Number(unit.odometer) || 0
+          nextDue = nextMi.toLocaleString() + ' mi'
+          if (currentMi >= nextMi) status = 'overdue'
+          else if (currentMi >= nextMi - rule.mileageInterval * 0.1) status = 'due_soon'
+          else status = 'ok'
+        }
+        // else: status stays 'unknown', nextDue stays null
       } else if (lastWO && rule.monthInterval) {
         const lastDate = new Date(lastWO.created_at)
         const nextDate = new Date(lastDate)
@@ -237,12 +335,24 @@ export default function UnitProfilePage() {
     const twelveMonthsAgo = new Date()
     twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1)
     const recentWOs = workOrders.filter((w: any) => new Date(w.created_at) >= twelveMonthsAgo)
-    const recentWOIds = recentWOs.map((w: any) => w.id)
-    const recentLines = woLines.filter((l: any) => recentWOIds.includes(l.so_id))
+    const recentWOIds = new Set(recentWOs.map((w: any) => w.id))
+    const recentLines = woLines.filter((l: any) => recentWOIds.has(l.so_id))
 
     const issues: { keyword: string; count: number }[] = []
     keywords.forEach((kw) => {
-      const count = recentLines.filter((l: any) => (l.description || '').toLowerCase().includes(kw)).length
+      // Count UNIQUE WO ids that match the keyword via either flat line text
+      // or snapshot complaint/correction text. Per-WO de-dup so a single WO
+      // with 3 keyword-matching part lines doesn't masquerade as "3 recurring
+      // events".
+      const matched = new Set<string>()
+      for (const l of recentLines) {
+        if ((l.description || '').toLowerCase().includes(kw)) matched.add(l.so_id)
+      }
+      for (const wo of recentWOs) {
+        const t = snapshotTextOf(woSnapshots[wo.id])
+        if (t.length > 0 && t.includes(kw)) matched.add(wo.id)
+      }
+      const count = matched.size
       if (count >= 3) issues.push({ keyword: kw, count })
     })
     return issues
@@ -277,8 +387,46 @@ export default function UnitProfilePage() {
           {firstLine && (
             <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{firstLine.description || firstLine.concern || '—'}</div>
           )}
-          {isExpanded && lines.length > 0 && (
+          {isExpanded && (lines.length > 0 || woSnapshots[wo.id]) && (
             <div style={{ marginTop: 12, borderTop: `1px solid ${'var(--tz-border)'}`, paddingTop: 10 }}>
+              {/* Historical snapshot complaint/correction text — only shown when
+                  external_data.historical_fullbay_snapshot exists for this WO.
+                  Non-historical rows skip this block entirely. */}
+              {woSnapshots[wo.id] && (woSnapshots[wo.id].complaints || []).length > 0 && (
+                <div style={{ marginBottom: lines.length > 0 ? 12 : 0 }}>
+                  {(woSnapshots[wo.id].complaints || []).map((cmp: any, ci: number) => {
+                    const note = (cmp?.note || '').toString().trim()
+                    const corrs = cmp?.corrections || []
+                    return (
+                      <div key={`c${ci}`} style={{ marginBottom: 8 }}>
+                        {note && (
+                          <div style={{ fontSize: 11, color: GRAY, marginBottom: 4 }}>
+                            <span style={{ fontWeight: 600, color: AMBER }}>Complaint:</span> {note}
+                          </div>
+                        )}
+                        {corrs.map((corr: any, cri: number) => {
+                          const rec = (corr?.recommended_correction || '').toString().trim()
+                          const act = (corr?.actual_correction || '').toString().trim()
+                          return (
+                            <div key={`c${ci}r${cri}`} style={{ marginLeft: 8 }}>
+                              {rec && rec !== act && (
+                                <div style={{ fontSize: 11, color: GRAY, marginBottom: 2 }}>
+                                  <span style={{ fontWeight: 600, color: BLUE }}>Recommended:</span> {rec}
+                                </div>
+                              )}
+                              {act && (
+                                <div style={{ fontSize: 11, color: GRAY }}>
+                                  <span style={{ fontWeight: 600, color: GREEN }}>Performed:</span> {act}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
               {lines.map((line: any, i: number) => (
                 <div key={line.id || i} style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tz-text)', marginBottom: 2 }}>{line.description || 'Line ' + (i + 1)}</div>
@@ -607,7 +755,7 @@ export default function UnitProfilePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
           <div style={cardStyle}>
             <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Services</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)' }}>{workOrders.length}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--tz-text)' }}>{totalServices}</div>
           </div>
           <div style={cardStyle}>
             <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Spend</div>

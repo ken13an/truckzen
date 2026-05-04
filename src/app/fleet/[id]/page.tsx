@@ -33,6 +33,7 @@ export default function FleetDetailPage() {
   const [historySource, setHistorySource] = useState('all')
   const [historySearch, setHistorySearch] = useState('')
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [historySnapshots, setHistorySnapshots] = useState<Record<string, any>>({})
 
   useEffect(() => {
     async function load() {
@@ -54,6 +55,21 @@ export default function FleetDetailPage() {
       const activeFiltered = (Array.isArray(activeRes) ? activeRes : []).filter((wo: any) => wo.assets?.id === String(params.id) && !['done','good_to_go','closed','void'].includes(wo.status))
 
       setAsset(a); setEdit(a); setHistory(h); setPMs([]); setActiveWos(activeFiltered)
+
+      // Snapshot text fetch — page-local. external_data is not returned by the
+      // history endpoint, so pull it for the rows we just listed and merge into
+      // historySnapshots keyed by SO id. Non-historical rows simply have no
+      // historical_fullbay_snapshot key and are skipped.
+      const histIds = h.map((r: any) => r.id).filter(Boolean)
+      if (histIds.length > 0) {
+        const { data: snapRows } = await supabase.from('service_orders').select('id, external_data').in('id', histIds)
+        const next: Record<string, any> = {}
+        for (const r of (snapRows || [])) {
+          const snap = r.external_data?.historical_fullbay_snapshot
+          if (snap) next[r.id] = snap
+        }
+        if (Object.keys(next).length > 0) setHistorySnapshots(prev => ({ ...prev, ...next }))
+      }
       setWarrantyMode(a.warranty_provider || a.warranty_expiry ? 'has' : 'none')
       setLoading(false)
     }
@@ -72,10 +88,23 @@ export default function FleetDetailPage() {
         setHistoryData(json.data || [])
         setHistoryTotal(json.total || 0)
         setHistorySummary(json.summary || null)
+
+        // Snapshot text fetch for inhouse rows on this page. Pull external_data
+        // and merge into historySnapshots keyed by SO id. Outside rows skipped.
+        const inhouseIds = (json.data || []).filter((r: any) => r.source === 'inhouse').map((r: any) => r.id).filter(Boolean)
+        if (inhouseIds.length > 0) {
+          const { data: snapRows } = await supabase.from('service_orders').select('id, external_data').in('id', inhouseIds)
+          const next: Record<string, any> = {}
+          for (const r of (snapRows || [])) {
+            const snap = r.external_data?.historical_fullbay_snapshot
+            if (snap) next[r.id] = snap
+          }
+          if (Object.keys(next).length > 0) setHistorySnapshots(prev => ({ ...prev, ...next }))
+        }
       }
     } catch { /* ignore */ }
     setHistoryLoading(false)
-  }, [params.id, historyPage, historySource, historySearch])
+  }, [params.id, historyPage, historySource, historySearch, supabase])
 
   useEffect(() => {
     if (pageTab === 'history') fetchHistory()
@@ -85,6 +114,46 @@ export default function FleetDetailPage() {
     setSaving(true)
     await fetch(`/api/assets/${params.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ unit_number:edit.unit_number, year:edit.year, make:edit.make, model:edit.model, engine:edit.engine, odometer:edit.odometer, status:edit.status, ownership_type:edit.ownership_type, unit_type:edit.unit_type }) })
     setAsset(edit); setSaving(false)
+  }
+
+  // Render the Description cell for a fleet history row. When a historical
+  // Fullbay snapshot is available for the row, surface complaint note +
+  // recommended/actual correction text. Otherwise fall back to the flat
+  // description string. Mirrors the customer unit profile pattern at
+  // src/app/customers/[id]/units/[unitId]/page.tsx renderServiceHistory.
+  function renderHistoryComplaint(rowId: string, fallbackText: string | undefined): React.ReactNode {
+    const snap = historySnapshots[rowId]
+    const cmps = (snap?.complaints || []) as any[]
+    if (cmps.length === 0) return <span>{fallbackText || '—'}</span>
+    return (
+      <div style={{ display:'flex', flexDirection:'column', gap:2, fontSize:11 }}>
+        {cmps.map((cmp: any, ci: number) => {
+          const note = (cmp?.note || '').toString().trim()
+          const corrs = (cmp?.corrections || []) as any[]
+          return (
+            <div key={`c${ci}`}>
+              {note && (
+                <div><span style={{ fontWeight:700, color:'#D4882A' }}>Complaint:</span> {note}</div>
+              )}
+              {corrs.map((corr: any, cri: number) => {
+                const rec = (corr?.recommended_correction || '').toString().trim()
+                const act = (corr?.actual_correction || '').toString().trim()
+                return (
+                  <div key={`c${ci}r${cri}`} style={{ marginLeft: 8 }}>
+                    {rec && rec !== act && (
+                      <div><span style={{ fontWeight:700, color:'var(--tz-accentLight)' }}>Recommended:</span> {rec}</div>
+                    )}
+                    {act && (
+                      <div><span style={{ fontWeight:700, color:'#1DB870' }}>Performed:</span> {act}</div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
   const S: Record<string, React.CSSProperties> = {
@@ -329,7 +398,7 @@ export default function FleetDetailPage() {
                       <tr key={so.id} style={{ cursor:'pointer' }} onClick={() => window.location.href=`/orders/${so.id}`}>
                         <td style={{ ...S.td, fontFamily:'monospace', fontSize:10, color: 'var(--tz-accentLight)' }}>{so.so_number}</td>
                         <td style={{ ...S.td, color:'var(--tz-textSecondary)' }}>{new Date(so.created_at).toLocaleDateString()}</td>
-                        <td style={{ ...S.td, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{so.complaint}</td>
+                        <td style={{ ...S.td, maxWidth:240, verticalAlign:'top' }} onClick={(e) => { if (historySnapshots[so.id]) e.stopPropagation() }}>{renderHistoryComplaint(so.id, so.complaint)}</td>
                         <td style={{ ...S.td, fontFamily:'monospace' }}>{so.grand_total?`$${so.grand_total.toFixed(0)}`:'—'}</td>
                         <td style={{ ...S.td, fontFamily:'monospace', fontSize:9, color:'var(--tz-textSecondary)' }}>{so.status?.replace(/_/g,' ')}</td>
                       </tr>
@@ -464,8 +533,8 @@ export default function FleetDetailPage() {
                         <td style={{ ...S.td, fontSize:10, color:'var(--tz-textSecondary)' }}>
                           {row.source === 'inhouse' ? 'Service Order' : 'Road Repair'}
                         </td>
-                        <td style={{ ...S.td, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                          {row.description || '—'}
+                        <td style={{ ...S.td, maxWidth:320, verticalAlign:'top' }} onClick={(e) => { if (historySnapshots[row.id]) e.stopPropagation() }}>
+                          {renderHistoryComplaint(row.id, row.description)}
                         </td>
                         <td style={{ ...S.td, color:'var(--tz-text)' }}>
                           {row.assigned_to || '—'}

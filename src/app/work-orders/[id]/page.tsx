@@ -915,6 +915,70 @@ export default function WorkOrderDetail() {
   const jobLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'labor')
   const partLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'part')
   const feeLines = (wo.so_lines || []).filter((l: any) => l.line_type === 'fee')
+  // Historical Fullbay grouped source truth, when the import has been
+  // backfilled into service_orders.external_data. When present, historical
+  // Jobs/Parts/Estimate render directly from this read-only snapshot instead
+  // of reconstructing from flat so_lines. Live (non-historical) WOs ignore it.
+  const historicalSnapshot: any = wo.is_historical ? (wo.external_data?.historical_fullbay_snapshot ?? null) : null
+  const snapshotComplaints: any[] = historicalSnapshot?.complaints ?? []
+  const snapshotMiscCharges: any[] = historicalSnapshot?.misc_charges ?? []
+  const snapshotTotals: any = historicalSnapshot?.totals ?? null
+  const snapshotParts: any[] = snapshotComplaints.flatMap((cmp: any, ci: number) =>
+    ((cmp?.corrections) || []).flatMap((corr: any, coi: number) =>
+      ((corr?.parts) || []).map((p: any, pi: number) => ({
+        ...p,
+        _complaint_idx: ci,
+        _correction_idx: coi,
+        _part_idx: pi,
+        _complaint_note: cmp?.note || '',
+      }))
+    )
+  )
+
+  // Historical-only DISPLAY parser. Splits one raw labor row's description
+  // into readable items WITHOUT grouping across DB rows or inventing per-item
+  // financials. Each raw labor row keeps its own identity, hours, and total —
+  // only the description text is parsed for display when it contains an
+  // imported numbered or multi-line complaint list.
+  const parseHistoricalLaborItems = (desc: any): string[] => {
+    const raw = String(desc || '').trim()
+    if (!raw) return []
+    let items = raw.split(/\r?\n+/).map(s => s.trim()).filter(Boolean)
+    if (items.length <= 1) {
+      const numbered = raw.split(/(?:^|\s)\d+[\.\)]\s+/).map(s => s.trim()).filter(Boolean)
+      if (numbered.length > 1) items = numbered
+    }
+    items = items.map(s => s.replace(/^\d+[\.\)]\s*/, '').replace(/\s+/g, ' ').trim()).filter(Boolean)
+    if (items.length > 1) {
+      const PLACEHOLDERS = new Set(['performed', 'service'])
+      const meaningful = items.filter(s => !PLACEHOLDERS.has(s.toLowerCase()))
+      if (meaningful.length > 0 && meaningful.length < items.length) items = meaningful
+    }
+    return items.length > 0 ? items : [raw]
+  }
+  // Display-only post-processor for the parsed list of ONE raw historical
+  // labor row. Never merges across rows, never invents totals/hours. Only
+  // collapses exact adjacent duplicates and one exact repeated full block
+  // (A+B+C+D+A+B+C+D -> A+B+C+D). If no exact duplicate structure is
+  // proven, the original list is returned unchanged.
+  const dedupeHistoricalLaborDisplayItems = (items: string[]): string[] => {
+    if (!Array.isArray(items) || items.length < 2) return items
+    const norm = (s: string) => String(s || '').trim().replace(/\s+/g, ' ').toLowerCase()
+    const adjacent: string[] = []
+    for (const it of items) {
+      const last = adjacent[adjacent.length - 1]
+      if (last === undefined || norm(last) !== norm(it)) adjacent.push(it)
+    }
+    if (adjacent.length >= 2 && adjacent.length % 2 === 0) {
+      const half = adjacent.length / 2
+      let exactRepeat = true
+      for (let i = 0; i < half; i++) {
+        if (norm(adjacent[i]) !== norm(adjacent[i + half])) { exactRepeat = false; break }
+      }
+      if (exactRepeat) return adjacent.slice(0, half)
+    }
+    return adjacent
+  }
   // Phase 2B: derive per-line validation results so the UI can render
   // warnings and the Send Estimate button can be gated. Pure derivation;
   // safe to compute every render.
@@ -957,7 +1021,9 @@ export default function WorkOrderDetail() {
   const laborRate = isImportedHistory ? 0 : (ownershipRate?.rate_per_hour || shop.labor_rate || shop.default_labor_rate || DEFAULT_LABOR_RATE_FALLBACK)
   const taxRate = isImportedHistory ? 0 : (shop.tax_rate || 0)
   const woStatus = WO_STATUS[wo.status] || { label: wo.status, bg: 'var(--tz-surfaceMuted)', color: GRAY }
-  const vinDisplay = asset.vin ? asset.vin.slice(-6).toUpperCase() : '—'
+  const vinDisplay = asset.vin
+    ? (wo.is_historical ? asset.vin.toUpperCase() : asset.vin.slice(-6).toUpperCase())
+    : '—'
   const createdByName = wo.createdByName || 'Unknown'
 
   // Compute totals — for imported history, use stored totals instead of recalculating
@@ -1159,7 +1225,7 @@ export default function WorkOrderDetail() {
                 {[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}
               </div>
               <div style={{ fontSize: 13, marginTop: 2 }}>
-                VIN: <span style={{ fontWeight: 700 }}>...{vinDisplay}</span>
+                VIN: <span style={{ fontWeight: 700 }}>{wo.is_historical ? '' : '...'}{vinDisplay}</span>
               </div>
               {mileage && <div style={{ fontSize: 12, color: GRAY, marginTop: 2 }}>{parseInt(mileage).toLocaleString()} mi</div>}
               <div style={{ marginTop: 4 }}><OwnershipTypeBadge type={asset.is_owner_operator ? 'owner_operator' : (wo.ownership_type || asset.ownership_type)} size="lg" /></div>
@@ -1313,16 +1379,21 @@ export default function WorkOrderDetail() {
         </div>
       )}
 
-      {/* TAB BAR */}
+      {/* TAB BAR — historical WOs hide the Estimate tab; full historical
+          detail lives on the Invoice tab. Indices stay aligned with the
+          original TABS positions so per-tab `tab === N` content still works. */}
       <div data-no-print style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${'var(--tz-border)'}`, marginBottom: 16, overflowX: 'auto' }}>
-        {TABS.map((tabLabel, i) => (
-          <button key={tabLabel} onClick={() => setTab(i)} style={{
-            padding: '10px 18px', background: 'transparent', border: 'none', borderBottom: tab === i ? `2px solid ${'var(--tz-accent)'}` : '2px solid transparent',
-            color: tab === i ? 'var(--tz-accent)' : 'var(--tz-textTertiary)', fontWeight: tab === i ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
-          }}>
-            {tabLabel}
-          </button>
-        ))}
+        {TABS.map((tabLabel, i) => {
+          if (wo.is_historical && tabLabel === 'Estimate') return null
+          return (
+            <button key={tabLabel} onClick={() => setTab(i)} style={{
+              padding: '10px 18px', background: 'transparent', border: 'none', borderBottom: tab === i ? `2px solid ${'var(--tz-accent)'}` : '2px solid transparent',
+              color: tab === i ? 'var(--tz-accent)' : 'var(--tz-textTertiary)', fontWeight: tab === i ? 700 : 500, fontSize: 13, cursor: 'pointer', fontFamily: FONT, whiteSpace: 'nowrap',
+            }}>
+              {tabLabel}
+            </button>
+          )
+        })}
       </div>
 
       {/* QUICK ACTIONS */}
@@ -1460,7 +1531,111 @@ export default function WorkOrderDetail() {
               <button onClick={() => setMergeSelected(new Set())} style={{ background: 'none', border: 'none', color: 'var(--tz-textTertiary)', fontSize: 11, cursor: 'pointer' }}>Cancel</button>
             </div>
           )}
-          {jobLines.map((line: any, idx: number) => {
+          {/* Historical-only read-only labor summary. When the imported
+              Fullbay snapshot is present we render one card per source
+              Complaint (with its Corrections nested as bullet text). Without
+              the snapshot we fall back to one card per raw labor so_lines
+              row, parsed for multi-line descriptions. Money never appears on
+              Jobs cards. */}
+          {wo.is_historical && historicalSnapshot && (
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Imported Labor</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: GRAY, padding: '2px 8px', borderRadius: 100, background: 'var(--tz-bgHover)' }}>read-only</span>
+                {snapshotComplaints.length > 0 && <span style={{ fontSize: 11, color: GRAY, marginLeft: 'auto' }}>{snapshotComplaints.length} {snapshotComplaints.length === 1 ? 'complaint' : 'complaints'}</span>}
+              </div>
+              {snapshotComplaints.length === 0 && (
+                <div style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>No complaints recorded on this imported work order.</div>
+              )}
+              {snapshotComplaints.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {snapshotComplaints.map((cmp: any, ci: number) => {
+                    const note = (cmp?.note || '').toString().trim()
+                    const noteLines = note ? note.split(/\r?\n+/).map((s: string) => s.trim()).filter(Boolean) : []
+                    const hrs = Number(cmp?.labor_hours_total) || 0
+                    const corrections = (cmp?.corrections || []).filter((c: any) =>
+                      (c?.recommended_correction || c?.actual_correction || c?.correction_performed || c?.title)
+                    )
+                    return (
+                      <div key={ci} style={{ border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, padding: 12, background: 'var(--tz-bgCard)' }}>
+                        {noteLines.length <= 1 ? (
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>{noteLines[0] || '—'}</span>
+                        ) : (
+                          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {noteLines.map((it: string, i: number) => (
+                              <li key={i} style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)' }}>{it}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {corrections.length > 0 && (
+                          <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: `2px solid ${'var(--tz-border)'}` }}>
+                            {corrections.map((c: any, i: number) => {
+                              const rec = (c?.recommended_correction || '').toString().trim()
+                              const act = (c?.actual_correction || '').toString().trim()
+                              const perf = (c?.correction_performed || '').toString().trim()
+                              return (
+                                <div key={i} style={{ fontSize: 12, color: 'var(--tz-textSecondary)', marginLeft: 10, marginBottom: i === corrections.length - 1 ? 0 : 6 }}>
+                                  {rec ? <div><strong style={{ color: GRAY }}>Recommended:</strong> {rec}</div> : null}
+                                  {act ? <div><strong style={{ color: GRAY }}>Actual:</strong> {act}</div> : null}
+                                  {perf && perf !== rec && perf !== act ? <div><strong style={{ color: GRAY }}>Performed:</strong> {perf}</div> : null}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                        {hrs > 0 && (
+                          <div style={{ fontSize: 11, color: GRAY, marginTop: 6 }}>
+                            <strong style={{ color: 'var(--tz-textSecondary)' }}>Hours:</strong> {hrs}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+          {wo.is_historical && !historicalSnapshot && (
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Imported Labor</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: GRAY, padding: '2px 8px', borderRadius: 100, background: 'var(--tz-bgHover)' }}>read-only</span>
+                {jobLines.length > 0 && <span style={{ fontSize: 11, color: GRAY, marginLeft: 'auto' }}>{jobLines.length} {jobLines.length === 1 ? 'item' : 'items'}</span>}
+              </div>
+              {jobLines.length === 0 && (
+                <div style={{ fontSize: 12, color: GRAY, fontStyle: 'italic' }}>No labor lines on this imported work order.</div>
+              )}
+              {jobLines.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {jobLines.map((l: any) => {
+                    const items = dedupeHistoricalLaborDisplayItems(parseHistoricalLaborItems(l.description))
+                    const hrs = Number(l.billed_hours || l.actual_hours || l.estimated_hours || 0) || 0
+                    return (
+                      <div key={l.id} style={{ border: `1px solid ${'var(--tz-border)'}`, borderRadius: 8, padding: 12, background: 'var(--tz-bgCard)' }}>
+                        {items.length === 1 ? (
+                          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tz-text)' }}>{items[0]}</span>
+                        ) : (
+                          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {items.map((it, i) => (
+                              <li key={i} style={{ fontSize: 13, fontWeight: 600, color: 'var(--tz-text)' }}>{it}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {(hrs || l.finding || l.resolution) ? (
+                          <div style={{ fontSize: 11, color: GRAY, marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {hrs ? <span><strong style={{ color: 'var(--tz-textSecondary)' }}>Hours:</strong> {hrs}</span> : null}
+                            {l.finding ? <span><strong style={{ color: 'var(--tz-textSecondary)' }}>Finding:</strong> {l.finding}</span> : null}
+                            {l.resolution ? <span><strong style={{ color: 'var(--tz-textSecondary)' }}>Resolution:</strong> {l.resolution}</span> : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+          {(wo.is_historical ? [] as any[] : jobLines).map((line: any, idx: number) => {
             const st = LINE_STATUS[line.line_status] || LINE_STATUS.unassigned
             const lineAssignments = jobAssignments.filter((a: any) => a.line_id === line.id)
             const isAdditional = line.is_additional
@@ -2228,7 +2403,16 @@ export default function WorkOrderDetail() {
         <PartsTab>
         <div>
           {/* Parts workspace */}
-          {partLines.length === 0 && wo.is_historical && (
+          {/* Historical empty state — pick the right source for "is empty":
+              snapshot-based when snapshot present, flat partLines fallback
+              otherwise. */}
+          {wo.is_historical && historicalSnapshot && snapshotParts.length === 0 && partLines.length === 0 && (
+            <div style={{ ...cardStyle, textAlign: 'center', padding: 30 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: GRAY }}>No parts recorded</div>
+              <div style={{ fontSize: 12, color: GRAY }}>This imported historical work order has no part line items.</div>
+            </div>
+          )}
+          {wo.is_historical && !historicalSnapshot && partLines.length === 0 && (
             <div style={{ ...cardStyle, textAlign: 'center', padding: 30 }}>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: GRAY }}>No parts recorded</div>
               <div style={{ fontSize: 12, color: GRAY }}>This imported historical work order has no part line items.</div>
@@ -2242,7 +2426,94 @@ export default function WorkOrderDetail() {
               </button>
             </div>
           )}
-          {partLines.length > 0 && (
+          {/* Historical Imported Parts — snapshot path. Source-grouped truth
+              from external_data.historical_fullbay_snapshot. Selling price
+              and totals come straight from Fullbay (no markup math). */}
+          {wo.is_historical && historicalSnapshot && snapshotParts.length > 0 && partLines.length === 0 && (
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Imported Parts</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: GRAY, padding: '2px 8px', borderRadius: 100, background: 'var(--tz-bgHover)' }}>read-only</span>
+                <span style={{ fontSize: 11, color: GRAY, marginLeft: 'auto' }}>{snapshotParts.length} {snapshotParts.length === 1 ? 'item' : 'items'}</span>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '6px 8px' }}>Description</th>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '6px 8px', width: 120 }}>Part #</th>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '6px 8px', width: 50 }}>Qty</th>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right', padding: '6px 8px', width: 90 }}>Unit Price</th>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right', padding: '6px 8px', width: 100 }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {snapshotParts.map((p: any, i: number) => {
+                    const desc = p.description || '—'
+                    const partNum = p.shop_part_number || p.vendor_part_number || '—'
+                    const qty = Number(p.quantity) || 1
+                    const unit = Number(p.selling_price) || 0
+                    const total = +(qty * unit).toFixed(2)
+                    return (
+                      <tr key={i} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                        <td style={{ padding: '6px 8px' }}>{desc}</td>
+                        <td style={{ padding: '6px 8px', color: GRAY }}>{partNum}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(unit)}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(total)}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right' }}>Parts Total</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(Number(snapshotTotals?.parts_total) || 0)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+          {/* Historical Imported Parts — flat fallback when no snapshot. */}
+          {wo.is_historical && partLines.length > 0 && (
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tz-text)' }}>Imported Parts</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: GRAY, padding: '2px 8px', borderRadius: 100, background: 'var(--tz-bgHover)' }}>read-only</span>
+                <span style={{ fontSize: 11, color: GRAY, marginLeft: 'auto' }}>{partLines.length} {partLines.length === 1 ? 'item' : 'items'}</span>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '6px 8px' }}>Description</th>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: '6px 8px', width: 120 }}>Part #</th>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'center', padding: '6px 8px', width: 50 }}>Qty</th>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right', padding: '6px 8px', width: 90 }}>Unit Price</th>
+                    <th style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right', padding: '6px 8px', width: 100 }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {partLines.map((p: any) => {
+                    const desc = p.description || p.real_name || p.rough_name || '—'
+                    const unit = Number(p.parts_sell_price || p.unit_price || 0) || 0
+                    const qty = Number(p.quantity || 1) || 1
+                    const total = Number(p.total_price || qty * unit) || 0
+                    return (
+                      <tr key={p.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                        <td style={{ padding: '6px 8px' }}>{desc}</td>
+                        <td style={{ padding: '6px 8px', color: GRAY }}>{p.part_number || '—'}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(unit)}</td>
+                        <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(total)}</td>
+                      </tr>
+                    )
+                  })}
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right' }}>Parts Total</td>
+                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(partsLineTotal || 0)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+          {!wo.is_historical && partLines.length > 0 && (
             <div style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>Parts ({partLines.length})</div>
@@ -2540,6 +2811,9 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
+          {/* Historical full-detail surface lives on the Invoice tab now;
+              the Estimate tab is hidden from the historical tab strip. */}
+
           {/* Estimate approval status + contact fields (only when estimate required) */}
           {wo.estimate_required && !wo.is_historical && (() => {
             const estStatus = wo.estimate_status || 'draft'
@@ -2639,16 +2913,14 @@ export default function WorkOrderDetail() {
           })()}
 
           {/* Summary cards */}
-          {(() => {
+          {!wo.is_historical && (() => {
             const partsAmt = woPartsTotal + partsLineTotal
-            const displayTotal = wo.is_historical && wo.grand_total ? wo.grand_total : grandTotal
             const items = [
               laborTotal > 0 ? { label: 'Labor', value: fmt(laborTotal), color: BLUE } : null,
               partsAmt > 0 ? { label: 'Parts', value: fmt(partsAmt), color: AMBER } : null,
               chargesTotal > 0 ? { label: 'Charges', value: fmt(chargesTotal), color: GRAY } : null,
-              // Tax: only show for live WOs with real calculated tax
-              !wo.is_historical && taxAmt > 0 ? { label: 'Tax', value: fmt(taxAmt), color: GRAY } : null,
-              { label: 'Total', value: fmt(displayTotal), color: GREEN },
+              taxAmt > 0 ? { label: 'Tax', value: fmt(taxAmt), color: GRAY } : null,
+              { label: 'Total', value: fmt(grandTotal), color: GREEN },
             ].filter(Boolean) as { label: string; value: string; color: string }[]
             return (
               <div style={{ display: 'grid', gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 12, marginBottom: 16 }}>
@@ -2674,7 +2946,7 @@ export default function WorkOrderDetail() {
               /api/estimates/[id]/supplement-respond routes. Current
               destination approval UX (Send Estimate / Approve In Person
               buttons above, next to the status banner) is preserved. */}
-          {(() => {
+          {!wo.is_historical && (() => {
             type LaborRow = { description: string; hours: number; rate: number; total: number }
             type PartRow = { part: string; qty: number; price: number; total: number; nonBillable?: 'customer_supplied' | 'no_part_needed' | null }
             type CardStatus = { label: string; bg: string; color: string }
@@ -3010,48 +3282,6 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* Imported fee / misc / supplies detail */}
-          {wo.is_historical && feeLines.length > 0 && (
-            <div style={cardStyle}>
-              <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Fees & Charges</span>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', ...labelStyle }}>Description</th>
-                    <th style={{ textAlign: 'center', padding: '6px 8px', ...labelStyle, width: 40 }}>Qty</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Amount</th>
-                    <th style={{ textAlign: 'right', padding: '6px 8px', ...labelStyle }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {feeLines.map((f: any) => {
-                    const lineTotal = f.total_price || (f.quantity || 1) * (f.unit_price || 0)
-                    return (
-                      <tr key={f.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
-                        <td style={{ padding: '6px 8px' }}>{f.description || '—'}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'center' }}>{f.quantity || 1}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(f.unit_price || 0)}</td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(lineTotal)}</td>
-                      </tr>
-                    )
-                  })}
-                  <tr style={{ fontWeight: 700 }}>
-                    <td colSpan={3} style={{ padding: '8px 8px', textAlign: 'right' }}>Fees Total</td>
-                    <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(chargesTotal)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Historical parts summary — shown only when no summary card above already displays parts */}
-          {wo.is_historical && partLines.length === 0 && wo.parts_total > 0 && !partsLineTotal && (
-            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13, background: 'var(--tz-bgCard)' }}>
-              <span style={{ color: GRAY }}>Parts (imported summary)</span>
-              <span style={{ fontWeight: 700 }}>{fmt(wo.parts_total)}</span>
-            </div>
-          )}
-
           {/* Tax — live WOs only */}
           {!wo.is_historical && taxRate > 0 && taxAmt > 0 && (
             <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
@@ -3060,22 +3290,28 @@ export default function WorkOrderDetail() {
             </div>
           )}
 
-          {/* Grand Total */}
-          <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', background: 'var(--tz-successBg)', border: `1px solid ${GREEN}` }}>
-            <span style={{ fontSize: 16, fontWeight: 800 }}>Total</span>
-            <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>{fmt(wo.is_historical && wo.grand_total ? wo.grand_total : grandTotal)}</span>
-          </div>
+          {/* Grand Total — live WOs only; historical grand total is shown
+              inside the single read-only Estimate card above. */}
+          {!wo.is_historical && (
+            <div style={{ ...cardStyle, display: 'flex', justifyContent: 'space-between', background: 'var(--tz-successBg)', border: `1px solid ${GREEN}` }}>
+              <span style={{ fontSize: 16, fontWeight: 800 }}>Total</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>{fmt(grandTotal)}</span>
+            </div>
+          )}
 
-          {/* Signature area */}
-          <div style={cardStyle}>
-            <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Authorization</span>
-            <div style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: 20, textAlign: 'center', border: `1px dashed ${'var(--tz-border)'}`, minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontSize: 13 }}>
-              Customer signature area (canvas placeholder)
+          {/* Signature area — live workflow only; historical records have no
+              real captured signature so the placeholder is misleading there. */}
+          {!wo.is_historical && (
+            <div style={cardStyle}>
+              <span style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, display: 'block' }}>Authorization</span>
+              <div style={{ background: 'var(--tz-bgHover)', borderRadius: 8, padding: 20, textAlign: 'center', border: `1px dashed ${'var(--tz-border)'}`, minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontSize: 13 }}>
+                Customer signature area (canvas placeholder)
+              </div>
+              <div style={{ marginTop: 8, fontSize: 11, color: GRAY }}>
+                Authorized by: {customer.contact_name || customer.company_name || '—'} | {customer.email || '—'}
+              </div>
             </div>
-            <div style={{ marginTop: 8, fontSize: 11, color: GRAY }}>
-              Authorized by: {customer.contact_name || customer.company_name || '—'} | {customer.email || '—'}
-            </div>
-          </div>
+          )}
         </div>
         </EstimateTab>
       )}
@@ -3246,7 +3482,7 @@ export default function WorkOrderDetail() {
                   {(asset?.year || asset?.make || asset?.model) && (
                     <div>{[asset.year, asset.make, asset.model].filter(Boolean).join(' ')}</div>
                   )}
-                  {asset?.vin && <div style={{ color: GRAY, fontSize: 11 }}>VIN: ...{vinDisplay}</div>}
+                  {asset?.vin && <div style={{ color: GRAY, fontSize: 11 }}>VIN: {wo.is_historical ? '' : '...'}{vinDisplay}</div>}
                 </div>
               </div>
             </div>
@@ -3585,44 +3821,370 @@ export default function WorkOrderDetail() {
         </div>
       )}
 
-      {/* ========== TAB 5: IMPORTED HISTORICAL INVOICE (read-only) ========== */}
+      {/* ========== TAB 5: IMPORTED HISTORICAL INVOICE (read-only) ==========
+          For historical imported WOs the Invoice tab is the single rich
+          read-only detail page. Above-the-fold: invoice metadata (number /
+          status / balance due). Below: the same Labor / Parts / Fees /
+          Grand Total surface that used to live on the Estimate tab,
+          rendered from external_data.historical_fullbay_snapshot when
+          present, falling back to flat so_lines otherwise. */}
       {tab === 5 && wo.is_historical && (
         <div style={{ background: 'var(--tz-bgElevated)', borderRadius: 16, border: `1px solid ${'var(--tz-border)'}`, padding: 'clamp(12px, 3vw, 24px)' }}>
           <div style={{ marginBottom: 16 }}>
             <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--tz-text)' }}>Invoice (Imported History)</span>
           </div>
-          {wo.invoices?.[0] ? (
-            <div style={{ background: 'var(--tz-bgCard)', border: `1px solid ${'var(--tz-border)'}`, borderRadius: 12, padding: '16px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
-                <span>Invoice #</span><span style={{ fontWeight: 600 }}>{wo.invoices[0].invoice_number || '—'}</span>
+          {wo.invoices?.[0] && (
+            <div style={{ ...cardStyle, marginBottom: 12, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, fontSize: 13 }}>
+                <div><span style={{ color: GRAY, marginRight: 6 }}>Invoice #</span><span style={{ fontWeight: 700 }}>{wo.invoices[0].invoice_number || '—'}</span></div>
+                <div><span style={{ color: GRAY, marginRight: 6 }}>Status</span><span style={{ fontWeight: 700, color: wo.invoices[0].status === 'paid' ? GREEN : undefined }}>{(wo.invoices[0].status || '—').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span></div>
+                {wo.invoices[0].balance_due > 0 && wo.invoices[0].status !== 'paid' && (
+                  <div><span style={{ color: GRAY, marginRight: 6 }}>Balance Due</span><span style={{ fontWeight: 700, color: AMBER }}>{fmt(wo.invoices[0].balance_due)}</span></div>
+                )}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
-                <span>Status</span><span style={{ fontWeight: 600, color: wo.invoices[0].status === 'paid' ? GREEN : undefined }}>{(wo.invoices[0].status || '—').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
-                <span>Labor</span><span style={{ fontWeight: 600 }}>{fmt(laborTotal)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
-                <span>Parts</span><span style={{ fontWeight: 600 }}>{fmt(partsLineTotal)}</span>
-              </div>
-              {chargesTotal > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13, color: 'var(--tz-textSecondary)' }}>
-                  <span>Fees</span><span style={{ fontWeight: 600 }}>{fmt(chargesTotal)}</span>
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 4px', borderTop: `1px solid ${'var(--tz-border)'}`, marginTop: 8 }}>
-                <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--tz-text)' }}>Total</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: GREEN }}>{fmt(wo.invoices[0].total || wo.grand_total || 0)}</span>
-              </div>
-              {wo.invoices[0].balance_due > 0 && wo.invoices[0].status !== 'paid' && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: AMBER }}>
-                  <span>Balance Due</span><span style={{ fontWeight: 600 }}>{fmt(wo.invoices[0].balance_due)}</span>
-                </div>
-              )}
             </div>
-          ) : (
-            <div style={{ color: GRAY, fontSize: 13, padding: 20, textAlign: 'center' }}>No invoice record available for this imported work order.</div>
           )}
+          {(() => {
+            const thStyle: React.CSSProperties = {
+              fontSize: 10,
+              fontWeight: 700,
+              color: GRAY,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              padding: '6px 8px',
+            }
+
+            // ── SNAPSHOT PATH ── grouped Fullbay source truth from external_data
+            if (historicalSnapshot) {
+              const snapLabor = snapshotComplaints.filter((c: any) => Number(c?.labor_total) > 0 || Number(c?.labor_hours_total) > 0 || (c?.note || '').trim())
+              // Parts source: prefer repaired so_lines (partLines) over raw snapshot
+              // when both exist, so anomaly-clamped quantities render instead of the
+              // raw snapshot junk preserved for audit. Snapshot is fallback only.
+              const partsUseRel = partLines.length > 0
+              const showParts = partsUseRel || snapshotParts.length > 0
+              const suppliesAmount = Number(snapshotTotals?.supplies_total) || 0
+              const showFees = snapshotMiscCharges.length > 0 || suppliesAmount > 0
+              const histGrand = Number(snapshotTotals?.total ?? snapshotTotals?.sub_total) || (wo.grand_total ? wo.grand_total : grandTotal)
+              const laborTotalSnap = Number(snapshotTotals?.labor_total) || 0
+              const partsTotalSnap = Number(snapshotTotals?.parts_total) || 0
+              const miscTotalSnap = Number(snapshotTotals?.misc_charge_total) || 0
+              const feesTotalSnap = miscTotalSnap + suppliesAmount
+              const allLaborZero = laborTotalSnap === 0 && snapLabor.every((c: any) => Number(c?.labor_total) === 0 && Number(c?.labor_hours_total) === 0)
+              const isHistoricalFeeOnly = allLaborZero && partsTotalSnap === 0 && showFees
+              const showLabor = snapLabor.length > 0 && !isHistoricalFeeOnly
+              const referenceLines: string[] = isHistoricalFeeOnly
+                ? snapLabor.flatMap((c: any) => (c?.note || '').toString().trim().split(/\r?\n+/).map((s: string) => s.trim()).filter(Boolean))
+                : []
+              if (!showLabor && !showParts && !showFees && !histGrand) {
+                return <div style={{ color: GRAY, fontSize: 13, padding: 20, textAlign: 'center' }}>No detail recorded for this imported work order.</div>
+              }
+              return (
+                <div style={{ ...cardStyle, marginBottom: 12 }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12, color: 'var(--tz-text)' }}>
+                    Detail
+                    <span style={{ fontSize: 11, fontWeight: 600, color: GRAY, marginLeft: 8, padding: '2px 8px', borderRadius: 100, background: 'var(--tz-bgHover)' }}>read-only</span>
+                  </div>
+
+                  {referenceLines.length > 0 && (
+                    <div style={{ marginBottom: 16, padding: '8px 10px', borderRadius: 6, background: 'var(--tz-bgHover)', fontSize: 12, color: 'var(--tz-textSecondary)' }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Reference</div>
+                      {referenceLines.length === 1 ? (
+                        <div>{referenceLines[0]}</div>
+                      ) : (
+                        <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {referenceLines.map((it: string, i: number) => <li key={i}>{it}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+
+                  {showLabor && (
+                    <div style={{ marginBottom: 16 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: 'block' }}>Labor</span>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                            <th style={{ ...thStyle, textAlign: 'left' }}>Description</th>
+                            <th style={{ ...thStyle, textAlign: 'center', width: 60 }}>Hours</th>
+                            <th style={{ ...thStyle, textAlign: 'right', width: 110 }}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {snapLabor.map((cmp: any, i: number) => {
+                            const note = (cmp?.note || '').toString().trim()
+                            const noteLines = note ? note.split(/\r?\n+/).map((s: string) => s.trim()).filter(Boolean) : []
+                            const hrs = Number(cmp?.labor_hours_total) || 0
+                            const total = Number(cmp?.labor_total) || 0
+                            return (
+                              <tr key={i} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, verticalAlign: 'top' }}>
+                                <td style={{ padding: '6px 8px' }}>
+                                  {noteLines.length <= 1 ? (noteLines[0] || '—') : (
+                                    <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                      {noteLines.map((it: string, j: number) => <li key={j}>{it}</li>)}
+                                    </ul>
+                                  )}
+                                </td>
+                                <td style={{ padding: '6px 8px', textAlign: 'center' }}>{hrs || '—'}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(total)}</td>
+                              </tr>
+                            )
+                          })}
+                          <tr style={{ fontWeight: 700 }}>
+                            <td colSpan={2} style={{ padding: '8px 8px', textAlign: 'right' }}>Labor Total</td>
+                            <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(laborTotalSnap)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {showParts && (
+                    <div style={{ marginBottom: 16 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: 'block' }}>Parts</span>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                            <th style={{ ...thStyle, textAlign: 'left' }}>Description</th>
+                            <th style={{ ...thStyle, textAlign: 'left', width: 120 }}>Part #</th>
+                            <th style={{ ...thStyle, textAlign: 'center', width: 50 }}>Qty</th>
+                            <th style={{ ...thStyle, textAlign: 'right', width: 90 }}>Unit Price</th>
+                            <th style={{ ...thStyle, textAlign: 'right', width: 100 }}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(partsUseRel ? partLines : snapshotParts).map((p: any, i: number) => {
+                            const desc = partsUseRel ? (p.description || p.real_name || p.rough_name || '—') : (p.description || '—')
+                            const partNum = partsUseRel ? (p.part_number || '—') : (p.shop_part_number || p.vendor_part_number || '—')
+                            const qty = partsUseRel ? (Number(p.quantity || 1) || 1) : (Number(p.quantity) || 1)
+                            const unit = partsUseRel ? (Number(p.parts_sell_price || p.unit_price || 0) || 0) : (Number(p.selling_price) || 0)
+                            const total = partsUseRel ? (Number(p.total_price || qty * unit) || 0) : +(qty * unit).toFixed(2)
+                            return (
+                              <tr key={partsUseRel ? p.id : `s${i}`} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                                <td style={{ padding: '6px 8px' }}>{desc}</td>
+                                <td style={{ padding: '6px 8px', color: GRAY }}>{partNum}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(unit)}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(total)}</td>
+                              </tr>
+                            )
+                          })}
+                          <tr style={{ fontWeight: 700 }}>
+                            <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right' }}>Parts Total</td>
+                            <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(partsUseRel ? (partsLineTotal || 0) : partsTotalSnap)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {showFees && (
+                    <div style={{ marginBottom: 16 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: 'block' }}>Fees & Charges</span>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                            <th style={{ ...thStyle, textAlign: 'left' }}>Description</th>
+                            <th style={{ ...thStyle, textAlign: 'center', width: 40 }}>Qty</th>
+                            <th style={{ ...thStyle, textAlign: 'right' }}>Amount</th>
+                            <th style={{ ...thStyle, textAlign: 'right' }}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {snapshotMiscCharges.map((m: any, i: number) => {
+                            const qty = Number(m?.quantity) || 1
+                            const rate = Number(m?.rate) || 0
+                            const amount = Number(m?.amount) || +(qty * rate).toFixed(2)
+                            return (
+                              <tr key={`m${i}`} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                                <td style={{ padding: '6px 8px' }}>{m?.description || '—'}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(rate)}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(amount)}</td>
+                              </tr>
+                            )
+                          })}
+                          {suppliesAmount > 0 && (
+                            <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                              <td style={{ padding: '6px 8px' }}>Shop Supplies (imported)</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'center' }}>1</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(suppliesAmount)}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(suppliesAmount)}</td>
+                            </tr>
+                          )}
+                          <tr style={{ fontWeight: 700 }}>
+                            <td colSpan={3} style={{ padding: '8px 8px', textAlign: 'right' }}>Fees Total</td>
+                            <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(feesTotalSnap)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12, borderTop: `2px solid ${'var(--tz-border)'}` }}>
+                    <span style={{ fontSize: 16, fontWeight: 800 }}>Grand Total</span>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>{fmt(histGrand)}</span>
+                  </div>
+                </div>
+              )
+            }
+
+            // ── FALLBACK PATH ── flat so_lines (historical WO without snapshot)
+            const importedPartsFallback = partLines.length === 0 && (wo.parts_total || 0) > 0 && !partsLineTotal
+            const showParts = partLines.length > 0 || importedPartsFallback
+            const showFees = feeLines.length > 0
+            const histGrand = wo.grand_total ? wo.grand_total : grandTotal
+            const fallbackFeeOnly = (Number(laborTotal) || 0) === 0 && (Number(partsLineTotal) || 0) === 0 && (Number(wo.parts_total) || 0) === 0 && showFees
+            const showLabor = jobLines.length > 0 && !fallbackFeeOnly
+            const fallbackReferenceLines: string[] = fallbackFeeOnly
+              ? jobLines.flatMap((l: any) => dedupeHistoricalLaborDisplayItems(parseHistoricalLaborItems(l.description))).filter(Boolean)
+              : []
+            if (!showLabor && !showParts && !showFees && !histGrand) {
+              return <div style={{ color: GRAY, fontSize: 13, padding: 20, textAlign: 'center' }}>No detail recorded for this imported work order.</div>
+            }
+            return (
+              <div style={{ ...cardStyle, marginBottom: 12 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12, color: 'var(--tz-text)' }}>
+                  Detail
+                  <span style={{ fontSize: 11, fontWeight: 600, color: GRAY, marginLeft: 8, padding: '2px 8px', borderRadius: 100, background: 'var(--tz-bgHover)' }}>read-only</span>
+                </div>
+
+                {fallbackReferenceLines.length > 0 && (
+                  <div style={{ marginBottom: 16, padding: '8px 10px', borderRadius: 6, background: 'var(--tz-bgHover)', fontSize: 12, color: 'var(--tz-textSecondary)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: GRAY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Reference</div>
+                    {fallbackReferenceLines.length === 1 ? (
+                      <div>{fallbackReferenceLines[0]}</div>
+                    ) : (
+                      <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {fallbackReferenceLines.map((it: string, i: number) => <li key={i}>{it}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {showLabor && (
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: 'block' }}>Labor</span>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                          <th style={{ ...thStyle, textAlign: 'left' }}>Description</th>
+                          <th style={{ ...thStyle, textAlign: 'center', width: 60 }}>Hours</th>
+                          <th style={{ ...thStyle, textAlign: 'right', width: 110 }}>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {jobLines.map((l: any) => {
+                          const items = dedupeHistoricalLaborDisplayItems(parseHistoricalLaborItems(l.description))
+                          const hrs = Number(l.billed_hours || l.actual_hours || l.estimated_hours || 0) || 0
+                          const total = Number(l.total_price || (l.quantity || 1) * (l.unit_price || 0)) || 0
+                          return (
+                            <tr key={l.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}`, verticalAlign: 'top' }}>
+                              <td style={{ padding: '6px 8px' }}>
+                                {items.length === 1 ? items[0] : (
+                                  <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    {items.map((it, i) => <li key={i}>{it}</li>)}
+                                  </ul>
+                                )}
+                              </td>
+                              <td style={{ padding: '6px 8px', textAlign: 'center' }}>{hrs || '—'}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(total)}</td>
+                            </tr>
+                          )
+                        })}
+                        <tr style={{ fontWeight: 700 }}>
+                          <td colSpan={2} style={{ padding: '8px 8px', textAlign: 'right' }}>Labor Total</td>
+                          <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(laborTotal)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {showParts && (
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: 'block' }}>Parts</span>
+                    {partLines.length > 0 ? (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                            <th style={{ ...thStyle, textAlign: 'left' }}>Description</th>
+                            <th style={{ ...thStyle, textAlign: 'left', width: 120 }}>Part #</th>
+                            <th style={{ ...thStyle, textAlign: 'center', width: 50 }}>Qty</th>
+                            <th style={{ ...thStyle, textAlign: 'right', width: 90 }}>Unit Price</th>
+                            <th style={{ ...thStyle, textAlign: 'right', width: 100 }}>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {partLines.map((p: any) => {
+                            const desc = p.description || p.real_name || p.rough_name || '—'
+                            const unit = Number(p.parts_sell_price || p.unit_price || 0) || 0
+                            const qty = Number(p.quantity || 1) || 1
+                            const total = Number(p.total_price || qty * unit) || 0
+                            return (
+                              <tr key={p.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                                <td style={{ padding: '6px 8px' }}>{desc}</td>
+                                <td style={{ padding: '6px 8px', color: GRAY }}>{p.part_number || '—'}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'center' }}>{qty}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(unit)}</td>
+                                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(total)}</td>
+                              </tr>
+                            )
+                          })}
+                          <tr style={{ fontWeight: 700 }}>
+                            <td colSpan={4} style={{ padding: '8px 8px', textAlign: 'right' }}>Parts Total</td>
+                            <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(partsLineTotal || 0)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '6px 8px', borderTop: `1px solid ${'var(--tz-border)'}`, borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                        <span style={{ color: GRAY }}>Parts (imported summary)</span>
+                        <span style={{ fontWeight: 700 }}>{fmt(wo.parts_total || 0)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {showFees && (
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, display: 'block' }}>Fees & Charges</span>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                          <th style={{ ...thStyle, textAlign: 'left' }}>Description</th>
+                          <th style={{ ...thStyle, textAlign: 'center', width: 40 }}>Qty</th>
+                          <th style={{ ...thStyle, textAlign: 'right' }}>Amount</th>
+                          <th style={{ ...thStyle, textAlign: 'right' }}>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feeLines.map((f: any) => {
+                          const lineTotal = f.total_price || (f.quantity || 1) * (f.unit_price || 0)
+                          return (
+                            <tr key={f.id} style={{ borderBottom: `1px solid ${'var(--tz-border)'}` }}>
+                              <td style={{ padding: '6px 8px' }}>{f.description || '—'}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'center' }}>{f.quantity || 1}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmt(f.unit_price || 0)}</td>
+                              <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }}>{fmt(lineTotal)}</td>
+                            </tr>
+                          )
+                        })}
+                        <tr style={{ fontWeight: 700 }}>
+                          <td colSpan={3} style={{ padding: '8px 8px', textAlign: 'right' }}>Fees Total</td>
+                          <td style={{ padding: '8px 8px', textAlign: 'right' }}>{fmt(chargesTotal)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 12, borderTop: `2px solid ${'var(--tz-border)'}` }}>
+                  <span style={{ fontSize: 16, fontWeight: 800 }}>Grand Total</span>
+                  <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>{fmt(histGrand)}</span>
+                </div>
+              </div>
+            )
+          })()}
         </div>
       )}
 
@@ -4424,7 +4986,9 @@ export default function WorkOrderDetail() {
           </button>
           {showExternalData && (
             <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {Object.entries(wo.external_data).map(([key, val]) => (
+              {Object.entries(wo.external_data)
+                .filter(([key, val]) => key !== 'historical_fullbay_snapshot' && (val === null || typeof val !== 'object'))
+                .map(([key, val]) => (
                 <div key={key} style={{ fontSize: 12 }}>
                   <span style={{ color: GRAY, fontWeight: 600 }}>{key.replace(/_/g, ' ')}: </span>
                   <span style={{ color: 'var(--tz-textSecondary)' }}>{val != null ? String(val) : '\u2014'}</span>
