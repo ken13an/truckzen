@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
 
 import { isInvoiceHardLocked } from '@/lib/invoice-lock'
+import { isEstimateGated } from '@/lib/estimate-gate'
 import { safeRoute } from '@/lib/api-handler'
 
 async function recalcTotals(admin: any, soId: string) {
@@ -42,8 +43,9 @@ async function _PATCH(req: Request, { params }: P) {
   // Lock ALL lines after invoice sent/paid/closed
   const soId = (line as any).so_id || (line as any).service_order_id
   let lineShopId: string | null = null
+  let woGate: { estimate_required: boolean | null; estimate_approved: boolean | null; job_type: string | null } | null = null
   if (soId) {
-    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status, is_historical, shop_id').eq('id', soId).single()
+    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status, is_historical, shop_id, estimate_required, estimate_approved, job_type').eq('id', soId).single()
     if (wo?.is_historical) {
       return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
     }
@@ -51,6 +53,7 @@ async function _PATCH(req: Request, { params }: P) {
       return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
     }
     lineShopId = (wo as any)?.shop_id || null
+    woGate = wo ? { estimate_required: (wo as any).estimate_required ?? null, estimate_approved: (wo as any).estimate_approved ?? null, job_type: (wo as any).job_type ?? null } : null
   }
 
   const body = await req.json().catch(() => null)
@@ -134,6 +137,18 @@ async function _PATCH(req: Request, { params }: P) {
     const recalcSoIdReturn = (rpcRow as any)?.so_id || soId
     const grandTotalReturn = recalcSoIdReturn ? await recalcTotals(ctx.admin, recalcSoIdReturn) : null
     return NextResponse.json({ ...(rpcRow as any), updated_grand_total: grandTotalReturn })
+  }
+
+  // Estimate-approval gate — service-writer line edits.
+  // Mirrors the UI gate at src/app/work-orders/[id]/page.tsx:1404-1405 and :2307-2308.
+  // Mechanics confirming parts pickup (single-key parts_status === picked_up)
+  // and parts staff doing return_unused are operational, not editorial — the
+  // mechanic restriction above and the return_unused early-return already
+  // exempt those flows. By the time we reach here, any remaining body is a
+  // writer/staff edit subject to the gate.
+  const isMechanicPickup = MECHANIC_ROLES.includes(effectiveRole) && Object.keys(body).length === 1 && body.parts_status === PARTS_PICKUP_STATUS
+  if (!isMechanicPickup && isEstimateGated(woGate)) {
+    return NextResponse.json({ error: 'Estimate must be approved before editing lines' }, { status: 403 })
   }
 
   // total_price is a generated column — never write it directly. tire_position
@@ -298,12 +313,16 @@ async function _DELETE(_req: Request, { params }: P) {
   // Lock ALL lines after invoice sent/paid/closed
   const soIdDel = (line as any).so_id || (line as any).service_order_id
   if (soIdDel) {
-    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status, is_historical').eq('id', soIdDel).single()
+    const { data: wo } = await ctx.admin.from('service_orders').select('invoice_status, is_historical, estimate_required, estimate_approved, job_type').eq('id', soIdDel).single()
     if (wo?.is_historical) {
       return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
     }
     if (isInvoiceHardLocked(wo?.invoice_status)) {
       return NextResponse.json({ error: 'Lines are locked — invoice has been sent to customer' }, { status: 403 })
+    }
+    // Estimate-approval gate — DELETE is a writer edit.
+    if (isEstimateGated(wo as any)) {
+      return NextResponse.json({ error: 'Estimate must be approved before editing lines' }, { status: 403 })
     }
   }
 
