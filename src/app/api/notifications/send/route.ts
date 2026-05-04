@@ -59,7 +59,22 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(messages),
     })
-    const result = await res.json()
+    // Parse defensively — non-JSON error bodies on upstream failure shouldn't
+    // throw and re-route through the network catch.
+    const result = await res.json().catch(() => null)
+    // Truthful delivery: only the request reaching upstream successfully
+    // counts as 'sent'. HTTP 4xx/5xx from Expo previously fell through to
+    // the success return below; clients now see the upstream failure
+    // surface as 502 with the provider's status + body for diagnosis.
+    // Per-token errors that come back inside a 200 response (Expo's
+    // {data:[{status:'error',...}]} shape) are out of this patch's scope.
+    if (!res.ok) {
+      console.error('[Push] Upstream error:', { status: res.status, result })
+      return NextResponse.json(
+        { error: 'Push provider error', upstream_status: res.status, result },
+        { status: 502 },
+      )
+    }
     return NextResponse.json({ sent: messages.length, result })
   } catch (err) {
     console.error('[Push] Send failed:', err)
