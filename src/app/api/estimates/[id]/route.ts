@@ -74,6 +74,22 @@ async function _PATCH(req: Request, { params }: { params: Promise<{ id: string }
   if (ctx.error || !ctx.admin || !ctx.actor) return ctx.error!
   const { data: estimate } = await getEstimateForActor(ctx.admin, ctx.actor, id)
   if (!estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
+
+  // Historical guard — mirrors sibling write routes (service-orders, invoices,
+  // so-lines). The estimates table itself has no is_historical column;
+  // historical truth lives on the parent service_order, looked up via
+  // repair_order_id with wo_id fallback (same pattern used elsewhere in this
+  // file at the GET and post-approve branches). Blocks ALL writes — header
+  // updates, totals, and the estimate_lines delete-and-rebuild — when the
+  // parent is a Fullbay import, matching the canonical read-only contract.
+  const parentSoId = (estimate as any).repair_order_id || (estimate as any).wo_id
+  if (parentSoId) {
+    const { data: parentWo } = await ctx.admin.from('service_orders').select('is_historical').eq('id', parentSoId).single()
+    if (parentWo?.is_historical) {
+      return NextResponse.json({ error: 'Historical Fullbay records are read-only' }, { status: 403 })
+    }
+  }
+
   const raw = await req.json().catch(() => null)
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
