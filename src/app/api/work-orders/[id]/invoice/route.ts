@@ -12,6 +12,7 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 type Params = { params: Promise<{ id: string }> }
 
 import { INVOICE_ACTION_ROLES, REOPEN_ROLES, DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
+import { canTransitionInvoiceStatus } from '@/lib/state/invoice-transitions'
 import { safeRoute } from '@/lib/api-handler'
 
 async function _POST(req: Request, { params }: Params) {
@@ -31,16 +32,10 @@ async function _POST(req: Request, { params }: Params) {
   const { data: wo } = await s.from('service_orders').select('id, invoice_status, shop_id, so_number, customer_id, ownership_type, assets(ownership_type)').eq('id', id).single()
   if (!wo) return NextResponse.json({ error: 'WO not found' }, { status: 404 })
 
-  // Guard invoice status transitions
-  const VALID_INVOICE_TRANSITIONS: Record<string, string[]> = {
-    submit_to_accounting: [null, '', 'draft', 'quality_check_failed'].map(v => v ?? ''),
-    approve_invoicing: ['accounting_review', 'pending_accounting', 'accounting_approved'],
-    mark_paid: ['sent', 'sent_to_customer'],
-    close_wo: ['paid'],
-  }
+  // Guard invoice status transitions — see src/lib/state/invoice-transitions.ts
+  // for the canonical action → allowed-from-state map.
   const currentInvoiceStatus = wo.invoice_status || ''
-  const allowedFrom = VALID_INVOICE_TRANSITIONS[action]
-  if (allowedFrom && !allowedFrom.includes(currentInvoiceStatus)) {
+  if (!canTransitionInvoiceStatus(action, currentInvoiceStatus)) {
     return NextResponse.json({ error: `Cannot "${action}" when invoice_status is "${currentInvoiceStatus || 'none'}"` }, { status: 400 })
   }
 
