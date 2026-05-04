@@ -83,8 +83,13 @@ async function _POST(_req: Request, { params }: P) {
     await supabase.from('service_orders').update({ invoice_status: 'sent', updated_at: now }).eq('id', inv.so_id)
   }
 
-  // Fire and forget
-  logAction({ shop_id: shopId, user_id: actor.id, action: 'invoice.sent', entity_type: 'invoice', entity_id: id }).catch(() => {})
+  // Fire-and-forget (non-blocking by helper contract — see
+  // src/lib/services/auditLog.ts: "never fail the primary request because
+  // audit logging failed"). Replaced silent .catch(()=>{}) with a
+  // console.error so a rare helper-level rejection becomes visible in
+  // server logs without changing the primary-request success contract.
+  logAction({ shop_id: shopId, user_id: actor.id, action: 'invoice.sent', entity_type: 'invoice', entity_id: id })
+    .catch((err) => console.error('[invoice.sent] audit-log error', err))
 
   return NextResponse.json({ success: true, messageId: result.id })
 }

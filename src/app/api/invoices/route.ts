@@ -146,8 +146,13 @@ async function _POST(req: Request) {
 
   await log('invoice.created', shopId, actor.id, { table:'invoices', recordId: inv.id, newData:{ invoice_number: invNum, total } })
 
-  // Fire and forget
-  logAction({ shop_id: shopId, user_id: actor.id, action: 'invoice.created', entity_type: 'invoice', entity_id: inv.id, details: { invoice_number: invNum } }).catch(() => {})
+  // Fire-and-forget (non-blocking by helper contract — see
+  // src/lib/services/auditLog.ts: "never fail the primary request because
+  // audit logging failed"). Replaced silent .catch(()=>{}) with a
+  // console.error so a rare helper-level rejection becomes visible in
+  // server logs without changing the primary-request success contract.
+  logAction({ shop_id: shopId, user_id: actor.id, action: 'invoice.created', entity_type: 'invoice', entity_id: inv.id, details: { invoice_number: invNum } })
+    .catch((err) => console.error('[invoice.created] audit-log error', err))
 
   // Notify accounting team
   try {
