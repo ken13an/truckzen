@@ -2538,6 +2538,15 @@ export default function WorkOrderDetail() {
                     canceled: { label: 'Canceled', bg: 'var(--tz-dangerBg)', color: 'var(--tz-danger)' },
                   }
                   const st = statusColors[p.parts_status || 'rough'] || statusColors.rough
+                  // Movement-state truth (so_lines projection columns). Render
+                  // only the non-zero counters to keep the row header compact;
+                  // when none are set the block is omitted entirely so rough
+                  // estimate lines don't pick up phantom badges.
+                  const mvReserved = Number(p.reserved_qty || 0)
+                  const mvPickedUp = Number(p.picked_up_qty || 0)
+                  const mvInstalled = Number(p.installed_qty || 0)
+                  const mvReturned = Number(p.returned_unused_qty || 0)
+                  const mvHasAny = mvReserved + mvPickedUp + mvInstalled + mvReturned > 0
                   return (
                     <div key={p.id} style={{ border: `1px solid ${isConfirmed ? 'var(--tz-successBg)' : 'var(--tz-warning)'}`, borderRadius: 10, padding: 12, background: isConfirmed ? 'var(--tz-successBg)' : 'var(--tz-warningBg)' }}>
                       {/* Request layer — always visible */}
@@ -2546,6 +2555,14 @@ export default function WorkOrderDetail() {
                           Request: <strong style={{ color: 'var(--tz-warning)' }}>{p.rough_name || p.description || '—'}</strong>
                         </div>
                         <span style={pillStyle(st.bg, st.color)}>{st.label}</span>
+                        {mvHasAny && (
+                          <span style={{ display: 'inline-flex', gap: 4, marginLeft: 6, fontSize: 10, color: 'var(--tz-textSecondary)' }} title={`Reserved ${mvReserved} · Picked Up ${mvPickedUp} · Installed ${mvInstalled} · Returned ${mvReturned}`}>
+                            {mvReserved > 0 && <span style={{ padding: '1px 6px', borderRadius: 4, background: 'var(--tz-warningBg)', color: 'var(--tz-warning)', fontWeight: 700 }}>R {mvReserved}</span>}
+                            {mvPickedUp > 0 && <span style={{ padding: '1px 6px', borderRadius: 4, background: 'var(--tz-accentBg)', color: BLUE, fontWeight: 700 }}>Out {mvPickedUp}</span>}
+                            {mvInstalled > 0 && <span style={{ padding: '1px 6px', borderRadius: 4, background: 'var(--tz-successBg)', color: GREEN, fontWeight: 700 }}>Inst {mvInstalled}</span>}
+                            {mvReturned > 0 && <span style={{ padding: '1px 6px', borderRadius: 4, background: 'var(--tz-surfaceMuted)', color: GRAY, fontWeight: 700 }}>Ret {mvReturned}</span>}
+                          </span>
+                        )}
                         {!wo.is_historical && !partsLocked && !isMechanic && p.parts_status !== 'canceled' && !['ready_for_job', 'picked_up', 'installed'].includes(p.parts_status) && (
                           <div style={{ display: 'flex', gap: 4, marginLeft: 6 }}>
                             {p.parts_status !== 'received' && <button onClick={async () => { await patchLine(p.id, { parts_status: 'received' }) }} style={{ padding: '2px 8px', borderRadius: 4, border: `1px solid ${BLUE}44`, background: `${BLUE}0A`, color: BLUE, fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>Preparing</button>}
