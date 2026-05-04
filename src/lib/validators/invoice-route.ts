@@ -50,17 +50,19 @@ export const InvoiceCreateSchema = z.object({
 
 // PATCH /api/invoices/[id] — update body
 // Required: expected_updated_at (route line 74 enforces).
-// Optional fields mirror the route's `updateable` allow-list at line 65.
-// expected_updated_at uses a permissive datetime check so existing UI
-// timestamps continue to validate. Server-owned totals (subtotal/tax_amount/
-// total) remain accepted here per Patch 9 scope; the strip is Patch 12.
+// Server-owned totals (subtotal / tax_amount / total) intentionally absent
+// from this schema — the canonical snapshot is stamped at approval time via
+// calcWoOperationalTotals (src/lib/invoice-calc.ts), consumed by
+// /api/accounting/approve and /api/work-orders/[id]/invoice. Direct client
+// writes for those fields would let UI math overwrite the server snapshot.
+// .strip() below silently drops them if the UI continues to send them, so
+// no client breakage. amount_paid stays for now — it's owned by the payment
+// routes (/api/invoice-payments and the Stripe webhook), not by direct
+// edits, but Patch 12 is scoped explicitly to the three named totals.
 export const InvoicePatchSchema = z.object({
   expected_updated_at: z.string().min(1),
   status: InvoiceStatusEnum.optional(),
   due_date: z.string().min(1).optional().nullable(),
-  tax_amount: numCoerce.optional().nullable(),
-  subtotal: numCoerce.optional().nullable(),
-  total: numCoerce.optional().nullable(),
   amount_paid: numCoerce.optional().nullable(),
   notes: z.string().max(5000).optional().nullable(),
   payment_method: PaymentMethodEnum.optional().nullable(),

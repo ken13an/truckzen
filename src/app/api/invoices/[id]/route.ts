@@ -69,7 +69,11 @@ async function _PATCH(req: Request, { params }: P) {
     return NextResponse.json({ error: `Invoice is locked — ${current.status} invoices cannot be edited directly` }, { status: 403 })
   }
 
-  const updateable = ['status','due_date','tax_amount','subtotal','total','amount_paid','notes','payment_method','paid_at'] as const
+  // Server-owned totals (subtotal / tax_amount / total) are intentionally
+  // absent — they are stamped at approval time via calcWoOperationalTotals
+  // and must never be set directly from a PATCH body. The schema strips
+  // them upstream; this allow-list mirrors that contract.
+  const updateable = ['status','due_date','amount_paid','notes','payment_method','paid_at'] as const
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }
   // Bump updated_at so optimistic-concurrency precondition works on this route.
