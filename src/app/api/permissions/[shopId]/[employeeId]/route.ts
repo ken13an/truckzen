@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 
 // Settings/permissions audience — same as src/app/settings/permissions/page.tsx
 // MANAGER_ROLES (the page that owns this UI). Kept inline because no canonical
@@ -10,13 +11,9 @@ const PERMISSIONS_SETTINGS_ROLES = [
   'parts_manager', 'maintenance_manager', 'office_admin',
 ]
 
-function actorShopId(user: any): string | null {
-  return (user?.effective_shop_id as string) || (user?.shop_id as string) || null
-}
-
 export async function GET(req: Request, { params }: { params: Promise<{ shopId: string; employeeId: string }> }) {
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
+  const user = await getAuthenticatedUserProfile()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!user.is_platform_owner && !PERMISSIONS_SETTINGS_ROLES.includes(user.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -24,7 +21,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ shopId: 
 
   const { shopId, employeeId } = await params
 
-  if (!user.is_platform_owner && actorShopId(user) !== shopId) {
+  if (!user.is_platform_owner && getActorShopId(user) !== shopId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -49,7 +46,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ shopId: 
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ shopId: string; employeeId: string }> }) {
   const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
+  const user = await getAuthenticatedUserProfile()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!user.is_platform_owner && !PERMISSIONS_SETTINGS_ROLES.includes(user.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -57,7 +54,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ shopId
 
   const { shopId, employeeId } = await params
 
-  if (!user.is_platform_owner && actorShopId(user) !== shopId) {
+  if (!user.is_platform_owner && getActorShopId(user) !== shopId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

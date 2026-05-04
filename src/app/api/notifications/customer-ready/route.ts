@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 import { rateLimit } from '@/lib/ratelimit/core'
 import { WO_FULL_ACCESS_ROLES } from '@/lib/roles'
 
@@ -11,8 +11,7 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 // without this gate, any authed user could spam SMS+email to any shop's
 // customers using the canonical WO id as a pivot.
 export async function POST(req: Request) {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
+  const user = await getAuthenticatedUserProfile()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!user.is_platform_owner && !WO_FULL_ACCESS_ROLES.includes(user.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -44,7 +43,7 @@ export async function POST(req: Request) {
 
   // Cross-shop guard: prevent spamming another shop's customer using a
   // foreign WO id. 404 (not 403) so we don't leak whether the WO exists.
-  const actorShopId = (user as any).effective_shop_id || (user as any).shop_id || null
+  const actorShopId = getActorShopId(user)
   if (!user.is_platform_owner && (wo as any).shop_id !== actorShopId) {
     return NextResponse.json({ error: 'WO not found' }, { status: 404 })
   }

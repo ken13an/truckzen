@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { getAuthenticatedUserProfile } from '@/lib/server-auth'
 import { randomUUID } from 'crypto'
 import { safeRoute } from '@/lib/api-handler'
 
@@ -8,8 +8,7 @@ function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proce
 
 // POST — called after successful login to create a session token
 async function _POST() {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
+  const user = await getAuthenticatedUserProfile()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const token = randomUUID()
@@ -32,8 +31,7 @@ async function _POST() {
 
 // DELETE — called on logout to clear session token
 async function _DELETE() {
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
+  const user = await getAuthenticatedUserProfile()
 
   if (user) {
     const s = db()

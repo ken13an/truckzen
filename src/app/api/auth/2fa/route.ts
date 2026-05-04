@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerSupabaseClient, getCurrentUser } from '@/lib/supabase'
+import { getAuthenticatedUserProfile } from '@/lib/server-auth'
 import { verifySync, generateSecret, generateURI } from 'otplib'
 import * as QRCode from 'qrcode'
 import { safeRoute } from '@/lib/api-handler'
@@ -41,8 +41,7 @@ async function _POST(req: Request) {
   }
 
   // All other actions require authenticated session
-  const supabase = await createServerSupabaseClient()
-  const user = await getCurrentUser(supabase)
+  const user = await getAuthenticatedUserProfile()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const s = db()
@@ -51,7 +50,7 @@ async function _POST(req: Request) {
     if (!TWO_FA_ROLES.includes(user.role)) return NextResponse.json({ error: 'Not available for your role' }, { status: 403 })
 
     const secret = generateSecret()
-    const otpauth = generateURI({ secret, issuer: 'TruckZen', label: user.email })
+    const otpauth = generateURI({ secret, issuer: 'TruckZen', label: user.email ?? '' })
     const qrDataUrl = await QRCode.toDataURL(otpauth)
 
     await s.from('users').update({ totp_secret: secret }).eq('id', user.id)
