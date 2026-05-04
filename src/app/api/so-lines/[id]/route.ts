@@ -1,5 +1,5 @@
 import { WO_FULL_ACCESS_ROLES, SERVICE_WRITE_ROLES, MECHANIC_ROLES } from '@/lib/roles'
-import { VALID_PARTS_STATUSES, VALID_LINE_STATUSES, PARTS_PICKUP_STATUS, VALID_PARTS_REQUIREMENTS } from '@/lib/parts-status'
+import { VALID_PARTS_STATUSES, VALID_LINE_STATUSES, PARTS_PICKUP_STATUS, VALID_PARTS_REQUIREMENTS, checkPartMovementUnresolvedForLine } from '@/lib/parts-status'
 import { DEFAULT_LABOR_RATE_FALLBACK } from '@/lib/invoice-lock'
 import { NextResponse } from 'next/server'
 import { getSoLineForActor, requireRouteContext } from '@/lib/api-route-auth'
@@ -181,6 +181,17 @@ async function _PATCH(req: Request, { params }: P) {
   if (update.parts_requirement !== undefined && update.parts_requirement !== null) {
     if (!(VALID_PARTS_REQUIREMENTS as readonly string[]).includes(update.parts_requirement)) {
       return NextResponse.json({ error: `Invalid parts_requirement "${update.parts_requirement}"` }, { status: 400 })
+    }
+  }
+
+  // Close-job guard: refuse line completion via this route when parts
+  // movement on the target line (or any related child part line) is still
+  // reserved or picked up. Mirrors the floor-manager jobs PATCH guard so
+  // the rule is consistent across both line-completion paths.
+  if (update.line_status === 'completed') {
+    const guard = await checkPartMovementUnresolvedForLine(ctx.admin, id)
+    if (guard.blocked) {
+      return NextResponse.json({ error: guard.message }, { status: 409 })
     }
   }
 

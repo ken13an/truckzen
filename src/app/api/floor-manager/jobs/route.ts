@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getAuthenticatedUserProfile, getActorShopId, jsonError } from '@/lib/server-auth'
 import { deriveLineAutomation } from '@/lib/wo-automation'
+import { checkPartMovementUnresolvedForLine } from '@/lib/parts-status'
 
 function db() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!) }
 
@@ -86,6 +87,16 @@ export async function PATCH(req: Request) {
   const s = db()
   const { id, status, assignment_id } = await req.json()
   if (!id || !status) return NextResponse.json({ error: 'id and status required' }, { status: 400 })
+
+  // Close-job guard: refuse completion when parts movement on this line
+  // (or any related child part line) is still reserved or picked up.
+  // installed_qty and returned_unused_qty are terminal and never block.
+  if (status === 'completed') {
+    const guard = await checkPartMovementUnresolvedForLine(s, id)
+    if (guard.blocked) {
+      return NextResponse.json({ error: guard.message }, { status: 409 })
+    }
+  }
 
   // Update assignment timestamp if exists
   if (assignment_id) {

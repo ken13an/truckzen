@@ -51,6 +51,47 @@ export const VALID_LINE_STATUSES = [
 
 export type LineStatus = typeof VALID_LINE_STATUSES[number]
 
+/**
+ * Server-side close-job guard for parts movement truth.
+ *
+ * Reads the so_lines per-line projection columns added by the movement
+ * schema patch (reserved_qty / picked_up_qty / installed_qty /
+ * returned_unused_qty) and blocks completion of a line when parts on
+ * that line — or any child part line linked via related_labor_line_id —
+ * are still reserved (not yet picked up or released) or still picked up
+ * (not yet installed or returned). installed_qty and returned_unused_qty
+ * are terminal states and never block.
+ *
+ * Returns { blocked: false } when safe to complete; { blocked: true,
+ * message } with the canonical user-facing error when not. The caller
+ * (route handler) is responsible for returning the error response.
+ */
+export async function checkPartMovementUnresolvedForLine(
+  admin: any,
+  lineId: string,
+): Promise<{ blocked: boolean; message: string | null }> {
+  const { data: rows } = await admin.from('so_lines')
+    .select('line_type, reserved_qty, picked_up_qty')
+    .or(`id.eq.${lineId},related_labor_line_id.eq.${lineId}`)
+  let totalReserved = 0
+  let totalPickedUp = 0
+  for (const r of (rows || []) as Array<{ line_type?: string; reserved_qty?: number; picked_up_qty?: number }>) {
+    if (r.line_type !== 'part') continue
+    totalReserved += Number(r.reserved_qty || 0)
+    totalPickedUp += Number(r.picked_up_qty || 0)
+  }
+  if (totalReserved <= 0 && totalPickedUp <= 0) {
+    return { blocked: false, message: null }
+  }
+  const segments: string[] = []
+  if (totalReserved > 0) segments.push(`reserved (${totalReserved})`)
+  if (totalPickedUp > 0) segments.push(`picked up (${totalPickedUp})`)
+  return {
+    blocked: true,
+    message: `Cannot complete this job line: parts are still ${segments.join(' and ')}. Confirm install or return unused parts first.`,
+  }
+}
+
 // Typed parts-requirement signal on labor so_lines. Used by the estimate
 // approval gate to distinguish "labor-only by design" from "writer forgot to
 // add required parts". Stored as so_lines.parts_requirement (nullable).
