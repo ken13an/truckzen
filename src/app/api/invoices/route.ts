@@ -4,6 +4,7 @@ import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 import { log } from '@/lib/security'
 import { logAction } from '@/lib/services/auditLog'
 import { safeRoute } from '@/lib/api-handler'
+import { InvoiceCreateSchema, invoiceBadInput } from '@/lib/validators/invoice-route'
 
 // ── GET list + POST create ────────────────────────────────────
 async function _GET(req: Request) {
@@ -100,9 +101,13 @@ async function _POST(req: Request) {
   const effectiveRole = actor.impersonate_role || actor.role
   if (!allowed.includes(effectiveRole)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
-  const body = await req.json()
-  const { so_id, customer_id, due_date, tax_rate, notes } = body
-  if (!so_id) return NextResponse.json({ error: 'so_id required' }, { status: 400 })
+  const raw = await req.json().catch(() => null)
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+  const parsed = InvoiceCreateSchema.safeParse(raw)
+  if (!parsed.success) return invoiceBadInput(parsed.error)
+  const { so_id, customer_id, due_date, tax_rate, notes } = parsed.data
 
   // Fetch SO and line items
   const { data: so } = await supabase

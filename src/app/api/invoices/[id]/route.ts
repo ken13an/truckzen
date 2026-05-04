@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 import { getAuthenticatedUserProfile, getActorShopId } from '@/lib/server-auth'
 import { log } from '@/lib/security'
 import { safeRoute } from '@/lib/api-handler'
+import { InvoicePatchSchema, invoiceBadInput } from '@/lib/validators/invoice-route'
 
 // Route-local direct-PATCH lock rule (Security_P1_Patch1_InvoiceHardLock_2).
 // TruckZen accounting workflow allows correction-after-send while the invoice
@@ -45,7 +46,13 @@ async function _PATCH(req: Request, { params }: P) {
   const effectiveRole = actor.impersonate_role || actor.role
   if (!allowed.includes(effectiveRole)) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
-  const body = await req.json()
+  const raw = await req.json().catch(() => null)
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+  const parsed = InvoicePatchSchema.safeParse(raw)
+  if (!parsed.success) return invoiceBadInput(parsed.error)
+  const body = parsed.data
   const { data: current } = await supabase.from('invoices').select('*').eq('id', id).eq('shop_id', shopId).single()
   if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -62,16 +69,16 @@ async function _PATCH(req: Request, { params }: P) {
     return NextResponse.json({ error: `Invoice is locked — ${current.status} invoices cannot be edited directly` }, { status: 403 })
   }
 
-  const updateable = ['status','due_date','tax_amount','subtotal','total','amount_paid','notes','payment_method','paid_at']
+  const updateable = ['status','due_date','tax_amount','subtotal','total','amount_paid','notes','payment_method','paid_at'] as const
   const update: Record<string, any> = {}
   for (const f of updateable) { if (body[f] !== undefined) update[f] = body[f] }
   // Bump updated_at so optimistic-concurrency precondition works on this route.
   update.updated_at = new Date().toISOString()
 
   // Optimistic concurrency: when client provides last-seen updated_at,
-  // require match before writing. Missing value preserves legacy behavior.
-  const expectedUpdatedAt = typeof body.expected_updated_at === 'string' ? body.expected_updated_at : null
-  if (!expectedUpdatedAt) return NextResponse.json({ error: 'expected_updated_at is required' }, { status: 400 })
+  // require match before writing. Schema enforces presence (min(1)) above;
+  // this read is for the actual eq() filter on the update query.
+  const expectedUpdatedAt = body.expected_updated_at
   let invQ = supabase.from('invoices').update(update).eq('id', id).eq('shop_id', shopId)
   if (expectedUpdatedAt) invQ = invQ.eq('updated_at', expectedUpdatedAt)
   const { data, error } = await invQ.select().maybeSingle()
